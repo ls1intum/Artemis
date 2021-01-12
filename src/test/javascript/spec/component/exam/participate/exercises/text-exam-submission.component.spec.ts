@@ -32,7 +32,6 @@ describe('TextExamSubmissionComponent', () => {
 
     beforeEach(() => {
         textSubmission = new TextSubmission();
-        textSubmission.text = 'Hello World';
         exercise = new TextExercise(new Course(), new ExerciseGroup());
 
         return TestBed.configureTestingModule({
@@ -59,24 +58,47 @@ describe('TextExamSubmissionComponent', () => {
 
     it('should initialize', () => {
         component.exercise = exercise;
+        textSubmission.text = 'Hello World';
         component.studentSubmission = textSubmission;
 
         fixture.detectChanges();
-        expect(component.answer).to.equal('Hello World');
 
+        expect(component.answer).to.equal('Hello World');
         expect(component.wordCount).to.equal(2);
         expect(component.characterCount).to.equal(11);
         expect(component.getExercise()).to.equal(exercise);
         expect(component.getSubmission()).to.equal(textSubmission);
     });
 
+    it('should initialize with empty answer', () => {
+        component.exercise = exercise;
+        component.studentSubmission = textSubmission;
+
+        fixture.detectChanges();
+
+        expect(component.answer).to.equal('');
+        expect(component.wordCount).to.equal(0);
+        expect(component.characterCount).to.equal(0);
+    });
+
+    it('should return the negation of student submission isSynced value', () => {
+        component.exercise = exercise;
+        component.studentSubmission = textSubmission;
+        component.studentSubmission.isSynced = false;
+
+        fixture.detectChanges();
+
+        expect(component.hasUnsavedChanges()).to.equal(true);
+    });
+
     it('should update text of the submission', () => {
         component.exercise = exercise;
+        textSubmission.text = 'Text';
         component.studentSubmission = textSubmission;
 
         fixture.detectChanges();
         component.updateSubmissionFromView();
 
-        expect(component.studentSubmission.text).to.equal('Hello World');
+        expect(component.studentSubmission.text).to.equal('Text');
     });
 });
