@@ -42,9 +42,6 @@ export class CourseManagementStatisticsComponent implements OnInit {
     // Left arrow -> decrease, right arrow -> increase
     private currentPeriod = 0;
 
-    // mock
-    courseScore = 100;
-
     constructor(private service: CourseManagementService, private translateService: TranslateService) {}
 
     ngOnInit(): void {
