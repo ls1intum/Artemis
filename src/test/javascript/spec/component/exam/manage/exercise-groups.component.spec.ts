@@ -21,12 +21,14 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { BuildPlanLinkDirective } from 'app/exercises/programming/shared/utils/build-plan-link.directive';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 describe('Exercise Groups Component', () => {
     const course = new Course();
@@ -149,11 +151,68 @@ describe('Exercise Groups Component', () => {
         expect(comp.exerciseGroups).toHaveLength(groups.length - 1);
     }));
 
-    it('opens the import modal', fakeAsync(() => {
+    it('returns the exercise icon type quiz', () => {
+        const icon = 'check-double';
+        const exercise = { type: ExerciseType.QUIZ } as Exercise;
+
+        expect(comp.exerciseIcon(exercise)).toEqual(icon);
+    });
+
+    it('returns the exercise icon type file upload', () => {
+        const icon = 'file-upload';
+        const exercise = { type: ExerciseType.FILE_UPLOAD } as Exercise;
+
+        expect(comp.exerciseIcon(exercise)).toEqual(icon);
+    });
+
+    it('returns the exercise icon type modeling', () => {
+        const icon = 'project-diagram';
+        const exercise = { type: ExerciseType.MODELING } as Exercise;
+
+        expect(comp.exerciseIcon(exercise)).toEqual(icon);
+    });
+
+    it('returns the exercise icon type programming', () => {
+        const icon = 'keyboard';
+        const exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
+
+        expect(comp.exerciseIcon(exercise)).toEqual(icon);
+    });
+
+    it('returns the exercise icon type text', () => {
+        const icon = 'font';
+        const exercise = { type: ExerciseType.TEXT } as Exercise;
+
+        expect(comp.exerciseIcon(exercise)).toEqual(icon);
+    });
+
+    it('opens the import modal for programming exercises', fakeAsync(() => {
         const mockReturnValue = { result: Promise.resolve({ id: 1 } as ProgrammingExercise) };
         spyOn(modalService, 'open').and.returnValue(mockReturnValue);
 
         comp.openImportModal(groups[0], ExerciseType.PROGRAMMING);
+        tick();
+
+        expect(modalService.open).toHaveBeenCalled();
+        expect(router.navigate).toHaveBeenCalled();
+    }));
+
+    it('opens the import modal for text exercises', fakeAsync(() => {
+        const mockReturnValue = { result: Promise.resolve({ id: 1 } as TextExercise) };
+        spyOn(modalService, 'open').and.returnValue(mockReturnValue);
+
+        comp.openImportModal(groups[0], ExerciseType.TEXT);
+        tick();
+
+        expect(modalService.open).toHaveBeenCalled();
+        expect(router.navigate).toHaveBeenCalled();
+    }));
+
+    it('opens the import modal for modeling exercises', fakeAsync(() => {
+        const mockReturnValue = { result: Promise.resolve({ id: 1 } as ModelingExercise) };
+        spyOn(modalService, 'open').and.returnValue(mockReturnValue);
+
+        comp.openImportModal(groups[0], ExerciseType.MODELING);
         tick();
 
         expect(modalService.open).toHaveBeenCalled();
