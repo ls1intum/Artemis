@@ -49,7 +49,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
     private static final List<String> FILES_TO_DELETE = List.of("testUtils", "StructuralTest.java");
 
-    private static final List<String> FILES_TO_OVERWRITE = List.of("StructuralTest.java", "AttributeTest", "ClassTest", "ConstructorTest", "MethodTest");
+    private static final List<String> FILES_TO_OVERWRITE = List.of("AttributeTest.java", "ClassTest.java", "ConstructorTest.java", "MethodTest.java");
 
     private final Logger log = LoggerFactory.getLogger(JavaTemplateUpgradeService.class);
 
@@ -268,33 +268,35 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
         return plugin -> plugin.getGroupId().equals(groupId) && plugin.getArtifactId().equals(artifactId);
     }
 
-    private Optional<File> getFileByName(Repository repository, String fileName) {
-        return gitService.listFilesAndFolders(repository).keySet().stream().filter(file -> Objects.equals(fileName, file.getName())).findFirst();
+    private Optional<File> getFileByName(Repository repository, String filename) {
+        return gitService.listFilesAndFolders(repository).keySet().stream().filter(file -> Objects.equals(filename, file.getName())).findFirst();
     }
 
-    private Optional<Resource> getFileByName(Resource[] resources, String fileName) {
-        return Arrays.stream(resources).filter(resource -> Objects.equals(resource.getFilename(), fileName)).findFirst();
+    private Optional<Resource> getFileByName(Resource[] resources, String filename) {
+        return Arrays.stream(resources).filter(resource -> Objects.equals(resource.getFilename(), filename)).findFirst();
     }
 
     private void deleteLegacyTestClassesIfPresent(Repository repository) throws IOException {
-        for (String fileName : FILES_TO_DELETE) {
-            deleteFileIfPresent(repository, fileName);
+        for (String filename : FILES_TO_DELETE) {
+            deleteFileIfPresent(repository, filename);
         }
     }
 
-    private void deleteFileIfPresent(Repository repository, String fileName) throws IOException {
-        Optional<File> optionalFile = getFileByName(repository, fileName);
+    private void deleteFileIfPresent(Repository repository, String filename) throws IOException {
+        Optional<File> optionalFile = getFileByName(repository, filename);
         if (optionalFile.isPresent()) {
             repositoryService.deleteFile(repository, optionalFile.get().toString());
         }
     }
 
     private void overwriteFilesIfPresent(Repository repository, Resource[] templateResources) throws IOException {
-        for (String fileName : FILES_TO_OVERWRITE) {
-            Optional<File> repoFile = getFileByName(repository, fileName);
-            Optional<Resource> templateResource = getFileByName(templateResources, fileName);
+        for (String filename : FILES_TO_OVERWRITE) {
+            Optional<File> repoFile = getFileByName(repository, filename);
+            Optional<Resource> templateResource = getFileByName(templateResources, filename);
             if (repoFile.isPresent() && templateResource.isPresent()) {
-                Files.copy(templateResource.get().getInputStream(), repoFile.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
+                try (InputStream inputStream = templateResource.get().getInputStream()) {
+                    Files.copy(inputStream, repoFile.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
+                }
             }
         }
     }
