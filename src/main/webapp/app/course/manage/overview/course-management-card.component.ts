@@ -50,7 +50,6 @@ export class CourseManagementCardComponent implements OnInit {
     }
 
     getStatisticForExercise(exercise: Exercise) {
-        const x = this.statistics[exercise.id!];
-        return x;
+        return this.statistics[exercise.id!];
     }
 }
