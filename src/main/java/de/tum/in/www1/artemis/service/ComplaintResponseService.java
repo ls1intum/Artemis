@@ -47,7 +47,7 @@ public class ComplaintResponseService {
      * The empty complaint response acts as a lock. Only the reviewer of the empty complaint response and instructors can resolve the complaint as long as the lock
      * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. This methods removes the current empty complaint response thus removing the lock
      *
-     * @param complaintId if of the complaint for which to remove the empty response for
+     * @param complaintId of the complaint for which to remove the empty response for
      */
     @Transactional // ok because of modifying query
     public void removeEmptyComplaintResponse(Long complaintId) {
