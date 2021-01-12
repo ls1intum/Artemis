@@ -537,7 +537,7 @@ public class BambooService implements ContinuousIntegrationService {
             }
 
             List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findByParticipationIdAndResultsIsNullOrderBySubmissionDateDesc(participation.getId());
-            Optional<ProgrammingSubmission> latestMatchingPendingSubmission = submissions.stream().filter(submission -> {
+            Optional<ProgrammingSubmission> latestMatchingSubmission = submissions.stream().filter(submission -> {
                 String matchingCommitHashInBuildMap = getCommitHash(buildResult, submission.getType());
                 return matchingCommitHashInBuildMap != null && matchingCommitHashInBuildMap.equals(submission.getCommitHash());
             }).findFirst();
@@ -545,14 +545,14 @@ public class BambooService implements ContinuousIntegrationService {
             Result result = createResultFromBuildResult(buildResult, participation);
             ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
             ProgrammingSubmission programmingSubmission;
-            if (latestMatchingPendingSubmission.isPresent()) {
-                programmingSubmission = latestMatchingPendingSubmission.get();
+            if (latestMatchingSubmission.isPresent()) {
+                programmingSubmission = latestMatchingSubmission.get();
             }
-            else {
-                // There can be two reasons for the case that there is no programmingSubmission:
-                // 1) Manual build triggered from Bamboo.
-                // 2) An unknown error that caused the programming submission not to be created when the code commits have been pushed
-                // we can still get the commit hash from the payload of the Bamboo REST Call and "reverse engineer" the programming submission object to be consistent
+            else { // try to recover the submission
+                   // There can be two reasons for the case that there is no programmingSubmission:
+                   // 1) Manual build triggered directly in Bamboo (e.g. by the instructor).
+                   // 2) An unknown error that caused the programming submission not to be created when the code commits have been pushed
+                   // we can still get the commit hash from the payload of the Bamboo REST Call and "reverse engineer" the programming submission object to be consistent
                 String commitHash = getCommitHash(buildResult, SubmissionType.MANUAL);
                 log.warn("Could not find pending ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create a new one subsequently...", commitHash,
                         participation.getId(), participation.getBuildPlanId());
@@ -562,6 +562,7 @@ public class BambooService implements ContinuousIntegrationService {
                 programmingSubmission.setType(SubmissionType.OTHER);
                 programmingSubmission.setCommitHash(commitHash);
                 // In this case we don't know the submission time, so we use the result completion time as a fallback.
+                // TODO: we should actually ask the git service to retrieve the actuall commit date in the git repository here and only use result.getCompletionDate() as fallback
                 programmingSubmission.setSubmissionDate(result.getCompletionDate());
                 // Save to avoid TransientPropertyValueException.
             }

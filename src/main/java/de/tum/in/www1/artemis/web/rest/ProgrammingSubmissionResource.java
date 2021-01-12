@@ -141,7 +141,8 @@ public class ProgrammingSubmissionResource {
         }
 
         try {
-            ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, submissionType);
+            ProgrammingSubmission submission = programmingSubmissionService.getOrCreateSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation,
+                    submissionType);
             programmingSubmissionService.triggerBuildAndNotifyUser(submission);
         }
         catch (IllegalStateException ex) {

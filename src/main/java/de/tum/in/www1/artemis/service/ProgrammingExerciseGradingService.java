@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
@@ -92,7 +92,7 @@ public class ProgrammingExerciseGradingService {
         try {
             result = continuousIntegrationService.get().onBuildCompleted(participation, requestBody);
         }
-        catch (ContinousIntegrationException ex) {
+        catch (ContinuousIntegrationException ex) {
             log.error("Result for participation " + participation.getId() + " could not be created due to the following exception: " + ex);
             return Optional.empty();
         }
