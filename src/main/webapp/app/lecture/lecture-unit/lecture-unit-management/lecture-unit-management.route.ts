@@ -9,166 +9,82 @@ import { CreateTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-m
 import { EditTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-text-unit/edit-text-unit.component';
 import { CreateVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-video-unit/create-video-unit.component';
 import { EditVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-video-unit/edit-video-unit.component';
-import { CourseResolve } from 'app/course/manage/course-management.route';
-import { LectureResolve } from 'app/lecture/lecture.route';
 
-// TODO: The /edit routes have no crumb because individual attachments have no route => make child of overview
 export const lectureUnitRoute: Routes = [
     {
-        path: ':courseId/lectures/:lectureId/unit-management',
+        path: 'unit-management',
         component: LectureUnitManagementComponent,
-        resolve: {
-            course: CourseResolve,
-            lecture: LectureResolve,
-        },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            // HACK: The path is a composite, so we need to define both parts
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.lecture.home.title', path: 'lectures' },
-                { variable: 'lecture.title', path: 'lecture.id' },
-                { label: 'artemisApp.lectureUnit.home.title', path: 'unit-management' },
-            ],
             pageTitle: 'artemisApp.lectureUnit.home.title',
+            breadcrumbLabelVariable: '',
         },
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/lectures/:lectureId/unit-management/exercise-units/create',
-        component: CreateExerciseUnitComponent,
-        resolve: {
-            course: CourseResolve,
-            lecture: LectureResolve,
-        },
+        // Create a new path without a component defined to prevent the LectureUnitManagementComponent from being always rendered
+        path: 'unit-management',
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            // HACK: The path is a composite, so we need to define both parts
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.lecture.home.title', path: 'lectures' },
-                { variable: 'lecture.title', path: 'lecture.id' },
-                { label: 'artemisApp.lectureUnit.home.title', path: 'unit-management' },
-                { label: 'artemisApp.videoUnit.createExerciseUnit.title', path: 'create' },
-            ],
-            pageTitle: 'artemisApp.exerciseUnit.createExerciseUnit.title',
+            pageTitle: 'artemisApp.lectureUnit.home.title',
+            breadcrumbLabelVariable: '',
         },
-    },
-    {
-        path: ':courseId/lectures/:lectureId/unit-management/attachment-units/create',
-        component: CreateAttachmentUnitComponent,
-        resolve: {
-            course: CourseResolve,
-            lecture: LectureResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            // HACK: The path is a composite, so we need to define both parts
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.lecture.home.title', path: 'lectures' },
-                { variable: 'lecture.title', path: 'lecture.id' },
-                { label: 'artemisApp.lectureUnit.home.title', path: 'unit-management' },
-                { label: 'artemisApp.videoUnit.createAttachmentUnit.title', path: 'create' },
-            ],
-            pageTitle: 'artemisApp.attachmentUnit.createAttachmentUnit.title',
-        },
-    },
-    {
-        path: ':courseId/lectures/:lectureId/unit-management/attachment-units/:attachmentUnitId/edit',
-        component: EditAttachmentUnitComponent,
-        resolve: {
-            course: CourseResolve,
-            lecture: LectureResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            // HACK: The path is a composite, so we need to define both parts
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.lecture.home.title', path: 'lectures' },
-                { variable: 'lecture.title', path: 'lecture.id' },
-                { label: 'artemisApp.lectureUnit.home.title', path: 'unit-management' },
-            ],
-            pageTitle: 'artemisApp.attachmentUnit.editAttachmentUnit.title',
-        },
-    },
-    {
-        path: ':courseId/lectures/:lectureId/unit-management/video-units/create',
-        component: CreateVideoUnitComponent,
-        resolve: {
-            course: CourseResolve,
-            lecture: LectureResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            // HACK: The path is a composite, so we need to define both parts
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.lecture.home.title', path: 'lectures' },
-                { variable: 'lecture.title', path: 'lecture.id' },
-                { label: 'artemisApp.lectureUnit.home.title', path: 'unit-management' },
-                { label: 'artemisApp.videoUnit.createVideoUnit.title', path: 'create' },
-            ],
-            pageTitle: 'artemisApp.videoUnit.createVideoUnit.title',
-        },
-    },
-    {
-        path: ':courseId/lectures/:lectureId/unit-management/video-units/:videoUnitId/edit',
-        component: EditVideoUnitComponent,
-        resolve: {
-            course: CourseResolve,
-            lecture: LectureResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            // HACK: The path is a composite, so we need to define both parts
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.lecture.home.title', path: 'lectures' },
-                { variable: 'lecture.title', path: 'lecture.id' },
-                { label: 'artemisApp.lectureUnit.home.title', path: 'unit-management' },
-            ],
-            pageTitle: 'artemisApp.videoUnit.editVideoUnit.title',
-        },
-    },
-    {
-        path: ':courseId/lectures/:lectureId/unit-management/text-units/create',
-        component: CreateTextUnitComponent,
-        resolve: {
-            course: CourseResolve,
-            lecture: LectureResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            // HACK: The path is a composite, so we need to define both parts
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.lecture.home.title', path: 'lectures' },
-                { variable: 'lecture.title', path: 'lecture.id' },
-                { label: 'artemisApp.lectureUnit.home.title', path: 'unit-management' },
-                { label: 'artemisApp.videoUnit.createVideoUnit.title', path: 'create' },
-            ],
-            pageTitle: 'artemisApp.textUnit.createTextUnit.title',
-        },
-    },
-    {
-        path: ':courseId/lectures/:lectureId/unit-management/text-units/:textUnitId/edit',
-        component: EditTextUnitComponent,
-        resolve: {
-            course: CourseResolve,
-            lecture: LectureResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            // HACK: The path is a composite, so we need to define both parts
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.lecture.home.title', path: 'lectures' },
-                { variable: 'lecture.title', path: 'lecture.id' },
-                { label: 'artemisApp.lectureUnit.home.title', path: 'unit-management' },
-            ],
-            pageTitle: 'artemisApp.textUnit.editTextUnit.title',
-        },
+        children: [
+            {
+                path: 'exercise-units/create',
+                component: CreateExerciseUnitComponent,
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.exerciseUnit.createExerciseUnit.title',
+                },
+            },
+            {
+                path: 'attachment-units/create',
+                component: CreateAttachmentUnitComponent,
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.attachmentUnit.createAttachmentUnit.title',
+                },
+            },
+            {
+                path: 'video-units/create',
+                component: CreateVideoUnitComponent,
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.videoUnit.createVideoUnit.title',
+                },
+            },
+            {
+                path: 'text-units/create',
+                component: CreateTextUnitComponent,
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.textUnit.createTextUnit.title',
+                },
+            },
+            {
+                path: 'attachment-units/:attachmentUnitId/edit',
+                component: EditAttachmentUnitComponent,
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.attachmentUnit.editAttachmentUnit.title',
+                },
+            },
+            {
+                path: 'video-units/:videoUnitId/edit',
+                component: EditVideoUnitComponent,
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.videoUnit.editVideoUnit.title',
+                },
+            },
+            {
+                path: 'text-units/:textUnitId/edit',
+                component: EditTextUnitComponent,
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.textUnit.editTextUnit.title',
+                },
+            },
+        ],
     },
 ];

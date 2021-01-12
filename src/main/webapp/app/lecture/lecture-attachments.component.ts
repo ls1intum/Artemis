@@ -53,7 +53,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.notificationText = undefined;
-        this.activatedRoute.data.subscribe(({ lecture }) => {
+        this.activatedRoute.parent!.data.subscribe(({ lecture }) => {
             this.lecture = lecture;
             this.attachmentService.findAllByLectureId(this.lecture.id!).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
                 this.attachments = attachmentsResponse.body!;

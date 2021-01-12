@@ -7,6 +7,7 @@ import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-manageme
 import { onError } from 'app/shared/util/global.utils';
 import { JhiAlertService } from 'ng-jhipster';
 import { finalize } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
 
 @Component({
     selector: 'jhi-create-video-unit',
@@ -22,9 +23,10 @@ export class CreateVideoUnitComponent implements OnInit {
     constructor(private activatedRoute: ActivatedRoute, private router: Router, private videoUnitService: VideoUnitService, private alertService: JhiAlertService) {}
 
     ngOnInit(): void {
-        this.activatedRoute.paramMap.subscribe((params) => {
+        const lectureRoute = this.activatedRoute.parent!.parent!;
+        combineLatest(lectureRoute.paramMap, lectureRoute.parent!.paramMap).subscribe(([params, parentParams]) => {
             this.lectureId = Number(params.get('lectureId'));
-            this.courseId = Number(params.get('courseId'));
+            this.courseId = Number(parentParams.get('courseId'));
         });
         this.videoUnitToCreate = new VideoUnit();
     }
