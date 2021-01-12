@@ -368,8 +368,6 @@ public class CourseService {
      * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
      */
     public Integer[] getCourseStatistics(Long courseId, Integer periodIndex) {
-        Integer[] result = new Integer[12];
-        Arrays.fill(result, 0);
         ZonedDateTime now = ZonedDateTime.now();
 
         LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
@@ -379,8 +377,8 @@ public class CourseService {
         ZonedDateTime endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(12 * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
                 : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
         List<Map<String, Object>> outcome = courseRepository.getCourseStatistics(courseId, startDate, endDate);
-        List<Map<String, Object>> distinctOutcome = convertMapList(outcome, startDate);
-        return createResultArray(distinctOutcome, result, endDate);
+        List<Map<String, Object>> distinctOutcome = removeDuplicatesFromMapList(outcome, startDate);
+        return createResultArray(distinctOutcome, endDate);
     }
 
     /**
@@ -391,7 +389,7 @@ public class CourseService {
      * @param startDate the startDate of the period
      * @return A List<Map<String, Object>> containing date and amount of active users in this period
      */
-    private List<Map<String, Object>> convertMapList(List<Map<String, Object>> result, ZonedDateTime startDate) {
+    private List<Map<String, Object>> removeDuplicatesFromMapList(List<Map<String, Object>> result, ZonedDateTime startDate) {
         Map<Object, List<String>> users = new HashMap<>();
         for (Map<String, Object> listElement : result) {
             ZonedDateTime date = (ZonedDateTime) listElement.get("day");
@@ -427,11 +425,12 @@ public class CourseService {
      * containing the values for each bar of the graph
      *
      * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
-     * @param result the array in which the converted outcome should be inserted
      * @param endDate the endDate
      * @return an array, containing the values for each bar in the graph
      */
-    private Integer[] createResultArray(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
+    private Integer[] createResultArray(List<Map<String, Object>> outcome, ZonedDateTime endDate) {
+        Integer[] result = new Integer[12];
+        Arrays.fill(result, 0);
         int week;
         for (Map<String, Object> map : outcome) {
             ZonedDateTime date = (ZonedDateTime) map.get("day");
