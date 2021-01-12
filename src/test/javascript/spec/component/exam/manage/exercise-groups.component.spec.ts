@@ -36,17 +36,7 @@ describe('Exercise Groups Component', () => {
     exam.course = course;
     exam.id = 123;
 
-    const groups: ExerciseGroup[] = [
-        {
-            id: 0,
-            exercises: [
-                { id: 3, type: ExerciseType.TEXT },
-                { id: 4, type: ExerciseType.PROGRAMMING },
-            ],
-        } as ExerciseGroup,
-        { id: 1 } as ExerciseGroup,
-        { id: 2 } as ExerciseGroup,
-    ];
+    let groups: ExerciseGroup[];
 
     let comp: ExerciseGroupsComponent;
     let fixture: ComponentFixture<ExerciseGroupsComponent>;
@@ -90,6 +80,18 @@ describe('Exercise Groups Component', () => {
         jhiEventManager = TestBed.inject(JhiEventManager);
         modalService = TestBed.inject(NgbModal);
         router = TestBed.inject(Router);
+
+        groups = [
+            {
+                id: 0,
+                exercises: [
+                    { id: 3, type: ExerciseType.TEXT },
+                    { id: 4, type: ExerciseType.PROGRAMMING },
+                ],
+            } as ExerciseGroup,
+            { id: 1 } as ExerciseGroup,
+            { id: 2 } as ExerciseGroup,
+        ];
     });
 
     // Always initialized and bind before tests
