@@ -70,6 +70,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
         expect(fixture).to.be.ok;
         expect(domainServiceSpy.calledOnce);
         expect(component.repositoryIsLocked).to.equal(false);
+        expect(component.getExercise()).to.equal(exercise);
     });
 
     it('should set the repositoryIsLocked value to true', () => {
@@ -120,5 +121,13 @@ describe('ProgrammingExamSubmissionComponent', () => {
         if (studentParticipation.submissions) {
             expect(component.getSubmission()).to.equal(studentParticipation.submissions[0]);
         }
+    });
+
+    it('should return false if no unsaved changes', () => {
+        exercise.allowOfflineIde = true;
+        exercise.allowOnlineEditor = false;
+        component.exercise = exercise;
+
+        expect(component.hasUnsavedChanges()).to.equal(false);
     });
 });

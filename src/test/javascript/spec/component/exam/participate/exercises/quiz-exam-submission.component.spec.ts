@@ -161,13 +161,17 @@ describe('QuizExamSubmissionComponent', () => {
     });
 
     it('should create multiple choice submission from users selection ', () => {
-        exercise.quizQuestions = [multipleChoiceQuestion, shortAnswerQuestion];
+        exercise.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion];
         component.studentSubmission = new QuizSubmission();
         component.exercise = exercise;
 
         const multipleChoiceSelectedOptions = new AnswerOption();
         multipleChoiceSelectedOptions.id = 1;
         component.selectedAnswerOptions.set(1, [multipleChoiceSelectedOptions]);
+
+        const dragAndDropMapping = new DragAndDropMapping(new DragItem(), new DropLocation());
+        dragAndDropMapping.id = 2;
+        component.dragAndDropMappings.set(2, [dragAndDropMapping]);
 
         const shortAnswerSubmittedText = new ShortAnswerSubmittedText();
         shortAnswerSubmittedText.id = 3;
@@ -177,6 +181,11 @@ describe('QuizExamSubmissionComponent', () => {
         multipleChoiceSubmittedAnswer.quizQuestion = multipleChoiceQuestion;
         multipleChoiceSubmittedAnswer.selectedOptions = [multipleChoiceSelectedOptions];
 
+        const dragAndDropSubmittedAnswer = new DragAndDropSubmittedAnswer();
+        dragAndDropSubmittedAnswer.quizQuestion = dragAndDropQuestion;
+        dragAndDropSubmittedAnswer.mappings = [dragAndDropMapping];
+        dragAndDropQuestion.correctMappings = [dragAndDropMapping];
+
         const shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
         shortAnswerSubmittedAnswer.quizQuestion = shortAnswerQuestion;
         shortAnswerSubmittedAnswer.submittedTexts = [shortAnswerSubmittedText];
@@ -184,7 +193,9 @@ describe('QuizExamSubmissionComponent', () => {
         component.updateSubmissionFromView();
         fixture.detectChanges();
 
-        expect(component.studentSubmission.submittedAnswers?.length).to.equal(2);
-        expect(JSON.stringify(component.studentSubmission.submittedAnswers)).to.equal(JSON.stringify([multipleChoiceSubmittedAnswer, shortAnswerSubmittedAnswer]));
+        expect(component.studentSubmission.submittedAnswers?.length).to.equal(3);
+        expect(JSON.stringify(component.studentSubmission.submittedAnswers)).to.equal(
+            JSON.stringify([multipleChoiceSubmittedAnswer, dragAndDropSubmittedAnswer, shortAnswerSubmittedAnswer]),
+        );
     });
 });
