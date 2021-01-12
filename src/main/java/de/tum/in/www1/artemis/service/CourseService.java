@@ -364,8 +364,8 @@ public class CourseService {
     /**
      * Get the active students for this particular course
      *
-     * @param courseId         the id of the course
-     * @param periodIndex      an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
+     * @param courseId the id of the course
+     * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
      */
     public Integer[] getCourseStatistics(Long courseId, Integer periodIndex) {
         Integer[] result = new Integer[12];
@@ -380,15 +380,16 @@ public class CourseService {
                 : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
         List<Map<String, Object>> outcome = courseRepository.getCourseStatistics(courseId, startDate, endDate);
         List<Map<String, Object>> distinctOutcome = convertMapList(outcome, startDate);
-        return createResultArrayForQuarter(distinctOutcome, result, endDate);
+        return createResultArray(distinctOutcome, result, endDate);
     }
 
     /**
-     * XXXXXX
+     * the List of maps result contains duplicated entries. This method compares the values and returns a List<Map<String, Object>>
+     * without duplicated entries
      *
      * @param result the result given by the Repository call
      * @param startDate the startDate of the period
-     * @return A List<Map<String, Object>> analogue to other database calls
+     * @return A List<Map<String, Object>> containing date and amount of active users in this period
      */
     private List<Map<String, Object>> convertMapList(List<Map<String, Object>> result, ZonedDateTime startDate) {
         Map<Object, List<String>> users = new HashMap<>();
@@ -422,14 +423,15 @@ public class CourseService {
 
     /**
      * Gets a list of maps, each map describing an entry in the database. The map has the two keys "day" and "amount",
-     * which map to the date and the amount of the findings. This method handles the spanType WEEKS_ORDERED
+     * which map to the date and the amount of the findings. This Map-List is taken and converted into a Integer array,
+     * containing the values for each bar of the graph
      *
      * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
      * @param result the array in which the converted outcome should be inserted
      * @param endDate the endDate
      * @return an array, containing the values for each bar in the graph
      */
-    private Integer[] createResultArrayForQuarter(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
+    private Integer[] createResultArray(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
         int week;
         for (Map<String, Object> map : outcome) {
             ZonedDateTime date = (ZonedDateTime) map.get("day");

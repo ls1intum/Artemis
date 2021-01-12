@@ -25,8 +25,7 @@ export class CourseManagementStatisticsComponent implements OnInit {
     Graphs = Graphs;
 
     // Chart
-    // chartName: string;
-    chartName = 'ACTIVE STUDENTS';
+    chartName: string;
     chartTime: any;
 
     // Histogram related properties
