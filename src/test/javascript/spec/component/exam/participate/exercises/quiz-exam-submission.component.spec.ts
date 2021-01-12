@@ -22,6 +22,7 @@ import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.mode
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { stub } from 'sinon';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -138,5 +139,41 @@ describe('QuizExamSubmissionComponent', () => {
 
         expect(component.shortAnswerSubmittedTexts.size).to.equal(1);
         expect(component.shortAnswerSubmittedTexts.has(3)).to.equal(true);
+    });
+
+    it('should trigger navigation towards the corrensponding question of the quiz', () => {
+        const element = document.createElement('exam-navigation-bar');
+        const getNavigationStub = stub(document, 'getElementById').returns(element);
+
+        const yOffsetRect = element.getBoundingClientRect() as DOMRect;
+        const yOffsetStub = stub(element, 'getBoundingClientRect').returns(yOffsetRect);
+
+        const windowSpy = sinon.spy(window, 'scrollTo');
+
+        component.navigateToQuestion(1);
+        component.exercise = exercise;
+        fixture.detectChanges();
+        expect(getNavigationStub).to.have.been.called;
+        expect(yOffsetStub).to.have.been.called;
+        expect(windowSpy).to.have.been.called;
+    });
+
+    it('should create multiple choice submission from users selection ', () => {
+        exercise.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion];
+        component.studentSubmission = new QuizSubmission();
+        component.exercise = exercise;
+
+        const multipleChoiceSelectedOptions = new AnswerOption();
+        multipleChoiceSelectedOptions.id = 1;
+        component.selectedAnswerOptions.set(1, [multipleChoiceSelectedOptions]);
+
+        const multipleChoiceSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
+        multipleChoiceSubmittedAnswer.quizQuestion = multipleChoiceQuestion;
+        multipleChoiceSubmittedAnswer.selectedOptions = [multipleChoiceSelectedOptions];
+
+        component.updateSubmissionFromView();
+        fixture.detectChanges();
+
+        expect(JSON.stringify(component.studentSubmission.submittedAnswers)).to.equal(JSON.stringify([multipleChoiceSubmittedAnswer]));
     });
 });
