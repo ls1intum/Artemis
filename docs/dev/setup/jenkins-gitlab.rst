@@ -737,11 +737,11 @@ Alternative local build agents setup using docker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 An alternative way of adding a build agent that will use docker (similar to the remote agents below) but running
-locally, can be done using the jenkins/ssh-agent docker image (https://hub.docker.com/r/jenkins/ssh-agent).
+locally, can be done using the jenkins/ssh-agent docker image `docker image <https://hub.docker.com/r/jenkins/ssh-agent>`__.
 
 Prerequisites:
 
-1. Make sure to have Docker installed: https://docs.docker.com/engine/install/ubuntu/
+1. Make sure to have Docker `installed <https://docs.docker.com/engine/install/ubuntu/>`__
 
 Agent setup:
 
@@ -749,7 +749,10 @@ Agent setup:
 
 2. Copy the public key content (e.g. in ~/.ssh/id_rsa.pub)
 
-3. Run ``docker run -d --name jenkins_agent -v /var/run/docker.sock:/var/run/docker.sock jenkins/ssh-agent:latest "<copied_public_key>"``
+3. Run::
+
+    docker run -d --name jenkins_agent -v /var/run/docker.sock:/var/run/docker.sock \
+    jenkins/ssh-agent:latest "<copied_public_key>"
 
 4. Get the GID of the 'docker' group with ``cat /etc/groups`` and remember it for later
 
@@ -781,43 +784,52 @@ Add agent in Jenkins:
 
 2. Go to Manage Jenkins -> Manage Credentials -> (global) -> Add Credentials
 
-    Kind: SSH Username with private key
+    - Kind: SSH Username with private key
 
-    ID: leave blank
+    - ID: leave blank
 
-    Description: Up to you
+    - Description: Up to you
 
-    Username: jenkins
+    - Username: jenkins
 
-    Private Key: <content of the previous generated private key> (e.g /root/.ssh/id_rsa)
+    - Private Key: <content of the previous generated private key> (e.g /root/.ssh/id_rsa)
 
-    Passphrase: <the previous entered passphrase> (you can leave it blank if none has been specified)
+    - Passphrase: <the previous entered passphrase> (you can leave it blank if none has been specified)
+
+   .. figure:: jenkins-gitlab/alternative_jenkins_node_credentials.png
+      :align: center
 
 3. Go to Manage Jenkins -> Manage Nodes and Clouds -> New Node
 
-    Node name: Up to you (e.g. Docker)
+    - Node name: Up to you (e.g. Docker)
 
-    Check 'Permanent Agent'
+    - Check 'Permanent Agent'
+
+   .. figure:: jenkins-gitlab/alternative_jenkins_node_setup.png
+      :align: center
 
 4. Node settings:
 
-    # of executors: Up to you (e.g. 4)
+    - # of executors: Up to you (e.g. 4)
 
-    Remote root directory: /home/jenkins/agent
+    - Remote root directory: /home/jenkins/agent
 
-    Labels: docker
+    - Labels: docker
 
-    Usage: Only build jobs with label expressions matching this node
+    - Usage: Only build jobs with label expressions matching this node
 
-    Launch method: Launch agents via SSH
+    - Launch method: Launch agents via SSH
 
-    Host: output of command ``docker inspect --format '{{ .Config.Hostname }}' jenkins_agent``
+    - Host: output of command ``docker inspect --format '{{ .Config.Hostname }}' jenkins_agent``
 
-    Credentials: <the previously created SSH credential>
+    - Credentials: <the previously created SSH credential>
 
-    Host Key Verification Strategy: Non verifying Verification Strategy
+    - Host Key Verification Strategy: Non verifying Verification Strategy
 
-    Availability: Keep this agent online as much as possible
+    - Availability: Keep this agent online as much as possible
+
+   .. figure:: jenkins-gitlab/alternative_jenkins_node.png
+      :align: center
 
 5. Save the new node
 
