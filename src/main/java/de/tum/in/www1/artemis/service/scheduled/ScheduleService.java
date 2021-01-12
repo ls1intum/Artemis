@@ -20,7 +20,7 @@ public class ScheduleService {
 
     private final Logger log = LoggerFactory.getLogger(ScheduleService.class);
 
-    private ExerciseLifecycleService exerciseLifecycleService;
+    private final ExerciseLifecycleService exerciseLifecycleService;
 
     private final Map<Tuple<Long, ExerciseLifecycle>, Set<ScheduledFuture<?>>> scheduledTasks = new HashMap<>();
 
