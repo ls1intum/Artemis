@@ -23,6 +23,8 @@
             "minimum-score-tooltip": "Consider only submissions whose score is greater or equal to this value",
             "minimum-size": "Minimum Size",
             "minimum-size-tooltip": "Consider only submissions whose size is greater or equal to this value",
+            "minimum-size-tooltip-modeling": "Consider only submissions that have at least as many modeling elements as the specified value",
+            "minimum-size-tooltip-text": "Consider only submissions that have at least as many characters as the specified value",
             "no-info-available": "No information available",
             "caution": "Plagiarism detection can take a long time for large courses."
         }

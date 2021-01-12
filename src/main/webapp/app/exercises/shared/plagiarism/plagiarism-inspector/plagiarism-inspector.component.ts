@@ -219,4 +219,23 @@ export class PlagiarismInspectorComponent implements OnInit {
             csvExporter.generateCsv(csvData);
         }
     }
+
+    /**
+     * Return the translation identifier of the minimum size tooltip for the current exercise type.
+     */
+    getMinimumSizeTooltip() {
+        const tooltip = 'artemisApp.plagiarism.minimum-size-tooltip';
+
+        switch (this.exercise.type) {
+            case ExerciseType.TEXT: {
+                return tooltip + '-text';
+            }
+            case ExerciseType.MODELING: {
+                return tooltip + '-modeling';
+            }
+            default: {
+                return tooltip;
+            }
+        }
+    }
 }

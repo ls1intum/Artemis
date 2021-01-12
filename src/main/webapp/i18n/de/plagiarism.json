@@ -23,6 +23,8 @@
             "minimum-score-tooltip": "Berücksichtige nur Einreichungen, deren Bewertung mindestens diesem Wert entspricht",
             "minimum-size": "Minimale Größe",
             "minimum-size-tooltip": "Berücksichtige nur Einreichungen, deren Größe mindestens diesem Wert entspricht",
+            "minimum-size-tooltip-modeling": "Berücksichtige nur Einreichungen, die mindestens so viele Modeling-Elemente wie der angegebene Wert haben",
+            "minimum-size-tooltip-text": "Berücksichtige nur Einreichungen, die mindestens so viele Zeichen wie der angegebene Wert haben",
             "no-info-available": "Keine Information verfügbar",
             "caution": "Die Plagiatskontrolle kann für große Kurse sehr lange dauern."
         }
