@@ -360,7 +360,7 @@ public class SubmissionService {
         var savedResult = resultRepository.save(result);
         savedResult.setSubmission(submission);
         submission.addResult(savedResult);
-        // submissionRepository.save(submission);
+        submissionRepository.save(submission);
         return savedResult;
     }
 
