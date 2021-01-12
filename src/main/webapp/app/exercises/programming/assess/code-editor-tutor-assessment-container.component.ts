@@ -301,15 +301,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     nextSubmission() {
         console.log('NextSubmission:');
-        this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true).subscribe(
+        this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe(
             (response: ProgrammingSubmission) => {
                 const unassessedSubmission = response;
                 this.router.onSameUrlNavigation = 'reload';
                 // navigate to the new assessment page to trigger re-initialization of the components
-                this.router.navigateByUrl(
-                    `/course-management/${this.course!.id}/programming-exercises/${this.exercise.id}/code-editor/${unassessedSubmission.participation?.id}/assessment`,
-                    {},
-                );
+                let url = `/course-management/${this.course!.id}/programming-exercises/${this.exercise.id}/code-editor/${unassessedSubmission.participation?.id}/assessment`;
+                url += `?correction-round=${this.correctionRound}`;
+                this.router.navigateByUrl(url, {});
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
