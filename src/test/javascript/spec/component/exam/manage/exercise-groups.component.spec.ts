@@ -3,6 +3,8 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { ActivatedRoute, convertToParamMap, Router, RouterModule } from '@angular/router';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslatePipe } from '@ngx-translate/core';
+import * as moment from 'moment';
+import { JhiEventManager } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
@@ -23,6 +25,8 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ExamInformationDTO } from 'app/entities/exam-information.model';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
 describe('Exercise Groups Component', () => {
     const course = new Course();
@@ -46,7 +50,10 @@ describe('Exercise Groups Component', () => {
 
     let comp: ExerciseGroupsComponent;
     let fixture: ComponentFixture<ExerciseGroupsComponent>;
+
+    let exerciseGroupService: ExerciseGroupService;
     let examManagementService: ExamManagementService;
+    let jhiEventManager: JhiEventManager;
     let modalService: NgbModal;
     let router: Router;
 
@@ -78,7 +85,9 @@ describe('Exercise Groups Component', () => {
         fixture = TestBed.createComponent(ExerciseGroupsComponent);
         comp = fixture.componentInstance;
 
+        exerciseGroupService = TestBed.inject(ExerciseGroupService);
         examManagementService = TestBed.inject(ExamManagementService);
+        jhiEventManager = TestBed.inject(JhiEventManager);
         modalService = TestBed.inject(NgbModal);
         router = TestBed.inject(Router);
     });
@@ -100,6 +109,42 @@ describe('Exercise Groups Component', () => {
         });
 
         tick();
+    }));
+
+    it('loads exam information', fakeAsync(() => {
+        const latestIndividualEndDate = moment();
+        const mockResponse = new HttpResponse<ExamInformationDTO>({ body: { latestIndividualEndDate } });
+
+        spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').and.returnValue(of(mockResponse));
+
+        comp.loadLatestIndividualEndDateOfExam().subscribe((response) => {
+            expect(response).not.toBeNull();
+            expect(response!.body).not.toBeNull();
+            expect(response!.body!.latestIndividualEndDate).toEqual(latestIndividualEndDate);
+        });
+
+        tick();
+    }));
+
+    it('removes an exercise from group', fakeAsync(() => {
+        comp.exerciseGroups = groups.slice();
+
+        comp.removeExercise(3, 0);
+
+        expect(comp.exerciseGroups[0].exercises).toHaveLength(1);
+    }));
+
+    it('deletes an exercise group', fakeAsync(() => {
+        comp.exerciseGroups = groups.slice();
+
+        spyOn(exerciseGroupService, 'delete').and.returnValue(of({}));
+        spyOn(jhiEventManager, 'broadcast');
+
+        comp.deleteExerciseGroup(0, {});
+        tick();
+
+        expect(exerciseGroupService.delete).toHaveBeenCalled();
+        expect(comp.exerciseGroups).toHaveLength(groups.length - 1);
     }));
 
     it('opens the import modal', fakeAsync(() => {
