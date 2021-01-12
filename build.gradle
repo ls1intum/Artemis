@@ -31,7 +31,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.8.6"
+version = "4.9.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -222,11 +222,11 @@ dependencies {
     implementation "org.springframework.data:spring-data-ldap:2.4.2"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.1"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.12.RELEASE"
 
     implementation "io.netty:netty-all:4.1.56.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.0.2"
+    implementation "io.projectreactor.netty:reactor-netty:1.0.3"
     implementation "org.springframework:spring-messaging:5.3.2"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
@@ -325,7 +325,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.7.1"
+    gradleVersion = "6.8"
 }
 
 task stage(dependsOn: "bootWar") {

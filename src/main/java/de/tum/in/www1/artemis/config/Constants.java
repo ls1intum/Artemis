@@ -74,6 +74,8 @@ public final class Constants {
     // Used as a value for <sourceDirectory> for the Java template pom.xml
     public static final String STUDENT_WORKING_DIRECTORY = ASSIGNMENT_DIRECTORY + "src";
 
+    // TODO: the following numbers should be configurable in the yml files
+
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
 
     public static final long MAX_UPLOAD_FILESIZE_BYTES = 2 * 1024 * 1024; // 2 MiB
@@ -106,10 +108,11 @@ public final class Constants {
 
     public static final String SOLUTION_CHECKOUT_PATH = "solution";
 
-    public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE = 100;
+    // TODO: the following numbers should be configurable in the yml files
 
-    // Currently 10s.
-    public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS = 10 * 1000; // 10s
+    public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE = 50;
+
+    public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS = 30 * 1000; // 30s
 
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
