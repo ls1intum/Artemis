@@ -86,8 +86,7 @@ public class ComplaintResponseService {
         if (complaintFromDatabase.getComplaintResponse().getSubmittedTime() != null) {
             throw new IllegalArgumentException("Complaint response is already submitted");
         }
-        ComplaintResponse unfinishedComplaintResponse = complaintFromDatabase.getComplaintResponse();
-        return unfinishedComplaintResponse;
+        return complaintFromDatabase.getComplaintResponse();
     }
 
     /**

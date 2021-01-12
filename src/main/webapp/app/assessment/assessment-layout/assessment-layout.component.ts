@@ -33,11 +33,11 @@ export class AssessmentLayoutComponent {
     @Input() canOverride: boolean;
     @Input() isTestRun = false;
 
-    @Input() result: Result | null;
+    @Input() result?: Result;
     @Input() assessmentsAreValid: boolean;
-    @Input() complaint: Complaint | null;
-    @Input() exercise: Exercise | undefined;
-    @Input() submission: Submission | undefined;
+    @Input() complaint?: Complaint;
+    @Input() exercise?: Exercise;
+    @Input() submission?: Submission;
     @Input() hasAssessmentDueDatePassed: boolean;
 
     @Output() save = new EventEmitter<void>();

@@ -37,10 +37,8 @@ export class ComplaintResponseService {
      * @param complaintResponse complaint response to check
      */
     isComplaintResponseLockedByLoggedInUser(complaintResponse: ComplaintResponse) {
-        return !!(
-            complaintResponse.isCurrentlyLocked &&
-            complaintResponse.submittedTime === undefined &&
-            complaintResponse.reviewer?.login === this.accountService.userIdentity?.login
+        return (
+            complaintResponse.isCurrentlyLocked && complaintResponse.submittedTime === undefined && complaintResponse.reviewer?.login === this.accountService.userIdentity?.login
         );
     }
 
