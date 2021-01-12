@@ -741,7 +741,7 @@ locally, can be done using the jenkins/ssh-agent docker image `docker image <htt
 
 Prerequisites:
 
-1. Make sure to have Docker `installed <https://docs.docker.com/engine/install/ubuntu/>`__
+1. Make sure to have Docker `installed <https://docs.docker.com/engine/install/>`__
 
 Agent setup:
 
