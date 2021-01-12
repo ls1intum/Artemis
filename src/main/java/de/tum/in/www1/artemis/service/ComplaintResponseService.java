@@ -238,7 +238,7 @@ public class ComplaintResponseService {
     }
 
     /**
-     * Checks if a user is blocked by a lock
+     * Checks if an user is blocked by a lock
      * @param emptyComplaintResponseFromDatabase the lock
      * @param user user to check
      * @param studentParticipation used to find out if user is instructor of exercise
