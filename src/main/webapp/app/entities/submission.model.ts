@@ -93,13 +93,12 @@ export function setLatestSubmissionResult(submission: Submission | undefined, re
     } else {
         submission.results = [result];
     }
-    //make sure relationship is correct
+    // make sure relationship is correct
     result.submission = submission;
     submission.latestResult = result;
 }
 
 export function setSubmissionResultByCorrectionRound(submission: Submission, result: Result, correctionRound: number) {
-    console.log('setSubmissionResultByCorrectionRound', result, correctionRound);
     if (!submission || !result || !submission.results) {
         return;
     }

@@ -7,7 +7,6 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Injectable({ providedIn: 'root' })
 export class NewStudentParticipationResolver implements Resolve<number | undefined> {
@@ -22,7 +21,6 @@ export class NewStudentParticipationResolver implements Resolve<number | undefin
         const correctionRound = Number(route.queryParamMap.get('correction-round'));
 
         if (exerciseId) {
-            console.log('resovle New:');
             const returnValue = this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, correctionRound).pipe(
                 map((submission) => submission.participation!.id!),
                 catchError((error) => {
@@ -32,7 +30,6 @@ export class NewStudentParticipationResolver implements Resolve<number | undefin
                     return Observable.of(error);
                 }),
             );
-            console.log(returnValue);
             return returnValue;
         }
         return Observable.of(undefined);
@@ -51,10 +48,9 @@ export class StudentParticipationResolver implements Resolve<number | undefined>
     resolve(route: ActivatedRouteSnapshot) {
         const participationId = Number(route.paramMap.get('participationId'));
         const correctionRound = Number(route.queryParamMap.get('correction-round'));
-        console.log('progAssmRoute: lockAndGetProgrammingSubmissionParticipation', correctionRound);
 
         if (participationId) {
-            return this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(participationId).pipe(
+            return this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(participationId, correctionRound).pipe(
                 map((participation) => participation.id),
                 catchError((error) => {
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
