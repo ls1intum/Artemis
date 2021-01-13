@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,8 +19,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
-
-import jplag.ExitException;
 
 import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -61,6 +61,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
+import jplag.ExitException;
 
 /** REST controller for managing ProgrammingExercise. */
 @RestController
@@ -1162,6 +1163,56 @@ public class ProgrammingExerciseResource {
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 
+    /**
+     * Unlock all repositories of the given programming exercise.
+     *
+     * @param exerciseId of the exercise
+     * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
+     */
+    @PutMapping(value = Endpoints.UNLOCK_ALL_REPOSITORIES)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
+        log.info("REST request to unlock all repositories of programming exercise {}", exerciseId);
+
+        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(exerciseId);
+        if (programmingExerciseOptional.isEmpty()) {
+            return notFound();
+        }
+        ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
+            return forbidden();
+        }
+
+        programmingExerciseService.unlockAllRepositories(exerciseId);
+        log.info("Unlocked all repositories of programming exercise {} upon manual request", exerciseId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Lock all repositories of the given programming exercise.
+     *
+     * @param exerciseId of the exercise
+     * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
+     */
+    @PutMapping(value = Endpoints.LOCK_ALL_REPOSITORIES)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
+        log.info("REST request to lock all repositories of programming exercise {}", exerciseId);
+
+        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(exerciseId);
+        if (programmingExerciseOptional.isEmpty()) {
+            return notFound();
+        }
+        ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
+            return forbidden();
+        }
+
+        programmingExerciseService.lockAllRepositories(exerciseId);
+        log.info("Locked all repositories of programming exercise {} upon manual request", exerciseId);
+        return ResponseEntity.ok().build();
+    }
+
     public static final class Endpoints {
 
         public static final String ROOT = "/api";
@@ -1193,6 +1244,10 @@ public class ProgrammingExerciseResource {
         public static final String CHECK_PLAGIARISM_JPLAG_REPORT = PROGRAMMING_EXERCISE + "/check-plagiarism-jplag-report";
 
         public static final String TEST_CASE_STATE = PROGRAMMING_EXERCISE + "/test-case-state";
+
+        public static final String UNLOCK_ALL_REPOSITORIES = PROGRAMMING_EXERCISE + "/unlock-all-repositories";
+
+        public static final String LOCK_ALL_REPOSITORIES = PROGRAMMING_EXERCISE + "/lock-all-repositories";
 
         private Endpoints() {
         }
