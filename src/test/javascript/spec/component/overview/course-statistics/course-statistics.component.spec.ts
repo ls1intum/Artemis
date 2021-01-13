@@ -20,6 +20,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -138,6 +139,46 @@ describe('CourseStatisticsComponent', () => {
             totalNumberOfAssessments: new DueDateStat(),
             numberOfComplaints: 0,
         },
+        {
+            type: 'modeling',
+            id: 195,
+            title: 'Until 18:20 too',
+            dueDate: moment('2019-06-16T18:15:03+02:00'),
+            assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
+            maxScore: 12.0,
+            studentParticipations: [
+                {
+                    id: 249,
+                    initializationState: 'FINISHED',
+                    initializationDate: moment('2019-06-16T18:10:28.293+02:00'),
+                    results: [
+                        {
+                            id: 230,
+                            resultString: '9 of 12 points',
+                            completionDate: moment('2019-06-17T09:30:17.761+02:00'),
+                            successful: false,
+                            score: 75,
+                            rated: true,
+                            hasFeedback: false,
+                            assessmentType: 'MANUAL',
+                            hasComplaint: false,
+                        },
+                    ],
+                    student: {
+                        id: 9,
+                        login: 'artemis_test_user_1',
+                        firstName: 'Artemis Test User 1',
+                        email: 'krusche+testuser_1@in.tum.de',
+                        activated: true,
+                        langKey: 'en',
+                    },
+                },
+            ],
+            diagramType: 'ClassDiagram',
+            numberOfSubmissions: new DueDateStat(),
+            totalNumberOfAssessments: new DueDateStat(),
+            numberOfComplaints: 0,
+        },
     ] as ModelingExercise[];
 
     const course = new Course();
@@ -186,6 +227,12 @@ describe('CourseStatisticsComponent', () => {
             });
     });
 
+    afterEach(function () {
+        // has to be done so the component can cleanup properly
+        spyOn(comp, 'ngOnDestroy').and.callFake(() => {});
+        fixture.destroy();
+    });
+
     it('should group all exercises', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [...modelingExercises];
@@ -207,5 +254,85 @@ describe('CourseStatisticsComponent', () => {
         expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate']);
         expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseNotParticipated']);
         expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseMissedScore']);
+    });
+
+    it('should calculate scores correctly', () => {
+        const courseToAdd = { ...course };
+        courseToAdd.exercises = [...modelingExercises];
+        spyOn(courseScoreCalculationService, 'getCourse').and.returnValue(courseToAdd);
+        fixture.detectChanges();
+        comp.ngOnInit();
+        fixture.detectChanges();
+        expect(comp.groupedExercises.length).to.equal(1);
+        let exercise: any = comp.groupedExercises[0];
+        expect(exercise.absoluteScore).to.equal(20);
+        expect(exercise.reachableScore).to.equal(36);
+        expect(exercise.totalMaxScore).to.equal(60);
+
+        const newExercise = [
+            ({
+                type: 'text',
+                id: 200,
+                title: 'Until 18:20 too',
+                dueDate: moment('2019-06-16T18:15:03+02:00'),
+                assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
+                maxScore: 10.0,
+                studentParticipations: [
+                    {
+                        id: 289,
+                        initializationState: 'FINISHED',
+                        initializationDate: moment('2019-06-16T18:10:28.293+02:00'),
+                        results: [
+                            {
+                                id: 222,
+                                resultString: '5.5 of 10 points',
+                                completionDate: moment('2019-06-17T09:30:17.761+02:00'),
+                                successful: false,
+                                score: 55,
+                                rated: true,
+                                hasFeedback: false,
+                                assessmentType: 'MANUAL',
+                                hasComplaint: false,
+                            },
+                        ],
+                        student: {
+                            id: 9,
+                            login: 'artemis_test_user_1',
+                            firstName: 'Artemis Test User 1',
+                            email: 'krusche+testuser_1@in.tum.de',
+                            activated: true,
+                            langKey: 'en',
+                        },
+                    },
+                ],
+                diagramType: 'ClassDiagram',
+                numberOfSubmissions: new DueDateStat(),
+                totalNumberOfAssessments: new DueDateStat(),
+                numberOfComplaints: 0,
+            } as unknown) as TextExercise,
+        ];
+        courseToAdd.exercises = [...modelingExercises, ...newExercise];
+        fixture.detectChanges();
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        // check that exerciseGroup scores are untouched
+        exercise = comp.groupedExercises[0];
+        expect(exercise.absoluteScore).to.equal(20);
+        expect(exercise.reachableScore).to.equal(36);
+        expect(exercise.totalMaxScore).to.equal(60);
+
+        // check that overall course score is adapted accordingly
+        expect(comp.totalScore).to.equal(25.5);
+        expect(comp.reachableScore).to.equal(46);
+        expect(comp.totalMaxScore).to.equal(70);
+
+        // check that html file displays the correct elements
+        let debugElement = fixture.debugElement.query(By.css('#absolute-course-score'));
+        expect(debugElement.nativeElement.textContent).to.equal('artemisApp.courseOverview.statistics.yourPoints');
+        debugElement = fixture.debugElement.query(By.css('#reachable-course-score'));
+        expect(debugElement.nativeElement.textContent).to.equal(' artemisApp.courseOverview.statistics.reachablePoints ');
+        debugElement = fixture.debugElement.query(By.css('#max-course-score'));
+        expect(debugElement.nativeElement.textContent).to.equal(' artemisApp.courseOverview.statistics.totalPoints ');
     });
 });

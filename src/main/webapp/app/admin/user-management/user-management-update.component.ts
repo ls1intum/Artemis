@@ -11,7 +11,7 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 export class UserManagementUpdateComponent implements OnInit {
     user: User;
     languages: string[];
-    authorities: any[];
+    authorities: string[];
     isSaving: boolean;
 
     constructor(private languageHelper: JhiLanguageHelper, private userService: UserService, private route: ActivatedRoute) {}
@@ -68,7 +68,6 @@ export class UserManagementUpdateComponent implements OnInit {
 
     /**
      * Set isSaving to false and navigate to previous page
-     * @param result
      */
     private onSaveSuccess() {
         this.isSaving = false;
