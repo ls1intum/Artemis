@@ -892,13 +892,17 @@ public class DatabaseUtilService {
         ModelFactory.generateExerciseGroup(true, exam); // quiz
         ModelFactory.generateExerciseGroup(true, exam); // file upload
         ModelFactory.generateExerciseGroup(true, exam); // modeling
-        exam.setNumberOfExercisesInExam(4);
+        ModelFactory.generateExerciseGroup(true, exam); // bonus text
+        ModelFactory.generateExerciseGroup(true, exam); // not included text
+        exam.setNumberOfExercisesInExam(6);
         exam = examRepository.save(exam);
         // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
         var exerciseGroup0 = exam.getExerciseGroups().get(0);
         var exerciseGroup1 = exam.getExerciseGroups().get(1);
         var exerciseGroup2 = exam.getExerciseGroups().get(2);
         var exerciseGroup3 = exam.getExerciseGroups().get(3);
+        var exerciseGroup4 = exam.getExerciseGroups().get(4);
+        var exerciseGroup5 = exam.getExerciseGroups().get(5);
 
         TextExercise textExercise1 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
         TextExercise textExercise2 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
@@ -924,18 +928,28 @@ public class DatabaseUtilService {
         exerciseRepo.save(modelingExercise1);
         exerciseRepo.save(modelingExercise2);
 
+        TextExercise bonusTextExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup4);
+        bonusTextExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        exerciseGroup4.setExercises(Set.of(bonusTextExercise));
+        exerciseRepo.save(bonusTextExercise);
+
+        TextExercise notIncludedTextExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup5);
+        notIncludedTextExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        exerciseGroup5.setExercises(Set.of(notIncludedTextExercise));
+        exerciseRepo.save(notIncludedTextExercise);
+
         if (withProgrammingExercise) {
             ModelFactory.generateExerciseGroup(true, exam); // programming
-            exam.setNumberOfExercisesInExam(5);
+            exam.setNumberOfExercisesInExam(7);
             exam = examRepository.save(exam);
-            var exerciseGroup4 = exam.getExerciseGroups().get(4);
+            var exerciseGroup6 = exam.getExerciseGroups().get(6);
             // Programming exercises need a proper setup for 'prepare exam start' to work
-            ProgrammingExercise programmingExercise1 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup4);
+            ProgrammingExercise programmingExercise1 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup6);
             exerciseRepo.save(programmingExercise1);
             addTemplateParticipationForProgrammingExercise(programmingExercise1);
             addSolutionParticipationForProgrammingExercise(programmingExercise1);
 
-            exerciseGroup4.setExercises(Set.of(programmingExercise1));
+            exerciseGroup6.setExercises(Set.of(programmingExercise1));
         }
 
         return exam;
