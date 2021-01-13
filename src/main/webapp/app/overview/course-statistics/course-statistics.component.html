@@ -27,7 +27,7 @@
                 </span>
                 <fa-icon id="reachable-help" class="mr-1" [icon]="'question-circle'" ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelp' | translate }}"></fa-icon>
             </h4>
-            <h4 class="text-center" id="max-course-score">
+            <h4 class="text-center mb-5" id="max-course-score">
                 <span>
                     {{ 'artemisApp.courseOverview.statistics.totalPoints' | translate: { number: totalMaxScore, relative: totalRelativeScore } }}
                 </span>
@@ -73,14 +73,19 @@
                             id="reachable-help"
                             class="mr-1"
                             [icon]="'question-circle'"
-                            ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelp' | translate }}"
+                            ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelpExerciseGroup' | translate }}"
                         ></fa-icon>
                     </h4>
                     <h4 id="max-score">
                         <span>
                             {{ 'artemisApp.courseOverview.statistics.totalPoints' | translate: { number: exerciseGroup.totalMaxScore, relative: exerciseGroup.relativeScore } }}
                         </span>
-                        <fa-icon id="total-help" class="mr-1" [icon]="'question-circle'" ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelp' | translate }}"></fa-icon>
+                        <fa-icon
+                            id="total-help"
+                            class="mr-1"
+                            [icon]="'question-circle'"
+                            ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelpExerciseGroup' | translate }}"
+                        ></fa-icon>
                     </h4>
                     <h4 *ngIf="exerciseGroup.presentationScoreEnabled && course.presentationScore !== 0" id="presentation-score">
                         {{ 'artemisApp.courseOverview.statistics.presentationScore' | translate: { number: exerciseGroup.presentationScore } }}

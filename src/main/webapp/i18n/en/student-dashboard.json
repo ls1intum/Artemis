@@ -98,8 +98,10 @@
                 "exerciseParticipatedAfterDueDate": "You have participated in {{ exercise }}, but after the due date.",
                 "noPointsForExercise": "You can't receive points for this exercise.",
                 "description": "Here you see all results that influence your score of the course, where the assessment due date is over.",
+                "reachableHelpExerciseGroup": "Reachable points are the sum of the maximum points of all exercises of this type which have already been assessed, independent of your participation",
+                "totalHelpExerciseGroup": "Total points are the sum of the maximum points of all exercises of this type.",
                 "reachableHelp": "Reachable points are the sum of the maximum points of all exercises which have already been assessed, independent of your participation",
-                "totalHelp": "Total points are the sum of the maximum points of all exercises of this type."
+                "totalHelp": "Total points are the sum of the maximum points of all exercises."
             },
             "lectureList": {
                 "lectureGroupHeader": "Lectures: {{ total }}",
