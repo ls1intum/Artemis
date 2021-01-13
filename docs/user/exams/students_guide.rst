@@ -299,7 +299,7 @@ Summary
 ^^^^^^^
 - After you hand in, you can view the summary of your exam.
 - You always have access to the summary. You can find it by following the steps displayed in: `Accessing the Exam`_.
-- Further you have the opportunity to export the summary as a PDF file by clicking the "Export PDF" button.
+- Further you have the opportunity to export the summary as a PDF file by clicking on |export_pdf|.
 - The summary contains an aggregated view of all your submissions. For programming exercises, it also contains the latest commit hash and repository URL so you can review your code.
 
 .. figure:: student/summary.png
@@ -350,4 +350,4 @@ Summary
 .. |exit_fullscreen| image:: student/buttons/exit_fullscreen.png
 .. |building_and_testing| image:: student/buttons/building_and_testing.png
 .. |no_results_found| image:: student/buttons/no_results_found.png
-.. |export_pdf| image:: 
+.. |export_pdf| image:: student/buttons/export_pdf.png
