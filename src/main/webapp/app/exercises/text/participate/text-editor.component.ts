@@ -24,7 +24,7 @@ import { Result } from 'app/entities/result.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -99,8 +99,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
         if (participation.submissions && participation.submissions.length > 0) {
             this.submission = participation.submissions[0] as TextSubmission;
-            if (this.submission && participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate)) {
-                this.result = participation.results.find((r) => r.submission!.id === this.submission.id)!;
+            setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
+            if (this.submission && this.submission.results && participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate)) {
+                this.result = this.submission.latestResult!;
                 this.result.participation = participation;
             }
 
@@ -122,6 +123,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             if (this.submission.id) {
                 this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe((response) => {
                     this.submission = response.body!;
+                    setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
                     // reconnect so that the submission status is displayed correctly in the result.component
                     this.submission.participation!.submissions = [this.submission];
                     this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.textExercise);
@@ -224,9 +226,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
         this.isSaving = true;
         this.submission = this.submissionForAnswer(this.answer);
+        setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
+
         this.textSubmissionService.update(this.submission, this.textExercise.id!).subscribe(
             (response) => {
                 this.submission = response.body!;
+                setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
                 this.submissionChange.next(this.submission);
                 // reconnect so that the submission status is displayed correctly in the result.component
                 this.submission.participation!.submissions = [this.submission];
@@ -235,7 +240,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
                 this.textExercise.studentParticipations = [this.participation];
                 this.textExercise.participationStatus = participationStatus(this.textExercise);
-                this.result = getLatestSubmissionResult(this.submission)!;
+                this.result = this.submission.latestResult!;
+                this.result.participation = this.submission.participation;
                 this.isSaving = false;
 
                 if (!this.isAllowedToSubmitAfterDeadline) {

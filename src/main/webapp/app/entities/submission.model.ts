@@ -93,6 +93,8 @@ export function setLatestSubmissionResult(submission: Submission | undefined, re
     } else {
         submission.results = [result];
     }
+    //make sure relationship is correct
+    result.submission = submission;
     submission.latestResult = result;
 }
 
