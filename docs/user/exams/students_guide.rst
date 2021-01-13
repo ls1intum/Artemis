@@ -35,7 +35,7 @@ Prerequisites
 Offline Mode
 ^^^^^^^^^^^^
 - The exam mode in Artemis tolerates issues with the Internet connection.
-- If you loose your connection, you can continue working on text-, quiz- and modeling exercises, but you might get warnings that your solutions cannot be saved.
+- If you lose your connection, you can continue working on text-, quiz- and modeling exercises, but you might get warnings that your solutions cannot be saved.
 - If your Internet connection recovers, Artemis will save your solution.
 - Artemis tries to save your solution every 30 seconds, when you navigate between exercises, and when you click |save| or |save_continue|.
 - Programming exercises have 2 modes.
@@ -47,7 +47,7 @@ Offline Mode
 
     2. **Local IDE:** you only need to be online when you clone the repository and when you push your commits (i.e. submit your solution).
 
-- At the end of the online exercise, you must be online within a given ``grace period`` and submit your exam, otherwise it will not be graded.
+- At the end of the online exam, you must be online within a given ``grace period`` and submit your exam, otherwise it will not be graded.
 
 Suggestions
 ^^^^^^^^^^^
@@ -91,7 +91,7 @@ Welcome Screen
 ^^^^^^^^^^^^^^
 - The welcome screen gives you an overview of all the important information you need about the exam. 
 - Carefully read through the instructions.
-- Once you have read them, confirm that you will follow the rule, sign with your full name and click |start|.
+- Once you have read them, confirm that you will follow the rules, sign with your full name and click |start|.
 
     .. note::
         Your full name represents your signature. You can find your full name as registered on Artemis below the input field.
@@ -299,6 +299,7 @@ Summary
 ^^^^^^^
 - After you hand in, you can view the summary of your exam.
 - You always have access to the summary. You can find it by following the steps displayed in: `Accessing the Exam`_.
+- Further you have the opportunity to export the summary as a PDF file by clicking on |export_pdf|.
 - The summary contains an aggregated view of all your submissions. For programming exercises, it also contains the latest commit hash and repository URL so you can review your code.
 
 .. figure:: student/summary.png
@@ -310,6 +311,8 @@ Summary
 - Once the results have been published, you can view your score in the summary.
 - Additionally, if within the student review period, you have the option to complain about manual assessments made. To do this, simply click on |complain| and explain your rationale.
 - A second assessor, different from the original one will have the opportunity to review your complaint and respond to it.
+- The complaint response will become visible to you as soon as it has been assessed.
+- Again, you can export the summary including your score as a PDF file by clicking on |export_pdf|. The PDF will also contain any complaints and complaint assessments.
         
     .. note::
         The results will automatically be updated, if your complaint was successful.
@@ -348,3 +351,4 @@ Summary
 .. |exit_fullscreen| image:: student/buttons/exit_fullscreen.png
 .. |building_and_testing| image:: student/buttons/building_and_testing.png
 .. |no_results_found| image:: student/buttons/no_results_found.png
+.. |export_pdf| image:: student/buttons/export_pdf.png

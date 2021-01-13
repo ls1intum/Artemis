@@ -5,7 +5,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -43,7 +47,9 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
     private static final String SCA_CONFIG_FOLDER = "staticCodeAnalysisConfig";
 
-    private static final String TEST_UTILS_FOLDER = "testUtils";
+    private static final List<String> FILES_TO_DELETE = List.of("testUtils", "StructuralTest.java");
+
+    private static final List<String> FILES_TO_OVERWRITE = List.of("AttributeTest.java", "ClassTest.java", "ConstructorTest.java", "MethodTest.java");
 
     private final Logger log = LoggerFactory.getLogger(JavaTemplateUpgradeService.class);
 
@@ -91,21 +97,25 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
      */
     private void upgradeTemplateFiles(ProgrammingExercise exercise, RepositoryType repositoryType) {
         try {
-            String templateDir = repositoryType == RepositoryType.TESTS ? "test/projectTemplate" : repositoryType.getName();
-            Resource[] templatePoms = getTemplateResources(exercise, templateDir + "/**/" + POM_FILE);
+            String templatePomDir = repositoryType == RepositoryType.TESTS ? "test/projectTemplate" : repositoryType.getName();
+            Resource[] templatePoms = getTemplateResources(exercise, templatePomDir + "/**/" + POM_FILE);
             Repository repository = gitService.getOrCheckoutRepository(exercise.getRepositoryURL(repositoryType), true);
-            List<File> repositoryPoms = gitService.listFiles(repository).stream().filter(file -> POM_FILE.equals(file.getName())).collect(Collectors.toList());
+            List<File> repositoryPoms = gitService.listFiles(repository).stream().filter(file -> Objects.equals(file.getName(), POM_FILE)).collect(Collectors.toList());
 
             // Validate that template and repository have the same number of pom.xml files, otherwise no upgrade will take place
-            // TODO: Improve matching of repository and template poms
             if (templatePoms.length == 1 && repositoryPoms.size() == 1) {
                 Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0], repositoryPoms.get(0), Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
                 writeProjectObjectModel(updatedRepoModel, repositoryPoms.get(0));
             }
 
             if (repositoryType == RepositoryType.TESTS) {
-                // Remove legacy testUtils folder
-                deleteFileIfPresent(repository, TEST_UTILS_FOLDER);
+                // Remove legacy test files
+                deleteLegacyTestClassesIfPresent(repository);
+
+                // Overwrite old test classes with new templates if they are present in the repository
+                Resource[] testFileTemplates = getTemplateResources(exercise, "test/testFiles/**/*");
+                overwriteFilesIfPresent(repository, testFileTemplates);
+                programmingExerciseService.replacePlaceholders(exercise, repository);
 
                 // Add latest static code analysis tool configurations or remove configurations
                 if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
@@ -126,20 +136,20 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
     }
 
     private Resource[] getTemplateResources(ProgrammingExercise exercise, String filePattern) {
-        // Get general template poms
+        // Get general template resources
         String programmingLanguageTemplate = programmingExerciseService.getProgrammingLanguageTemplatePath(exercise.getProgrammingLanguage());
         String templatePomPath = programmingLanguageTemplate + "/" + filePattern;
 
         Resource[] templatePoms = resourceLoaderService.getResources(templatePomPath);
 
-        // Get project type specific template poms
+        // Get project type specific template resources
         if (exercise.getProjectType() != null) {
             String projectTypeTemplate = programmingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(), exercise.getProjectType());
             String projectTypePomPath = projectTypeTemplate + "/" + filePattern;
 
             Resource[] projectTypePoms = resourceLoaderService.getResources(projectTypePomPath);
 
-            // Prefer project type specific poms
+            // Prefer project type specific resources
             templatePoms = projectTypePoms.length > 0 ? projectTypePoms : templatePoms;
         }
         return templatePoms;
@@ -259,10 +269,36 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
         return plugin -> plugin.getGroupId().equals(groupId) && plugin.getArtifactId().equals(artifactId);
     }
 
-    private void deleteFileIfPresent(Repository repository, String fileName) throws IOException {
-        Optional<File> optionalFile = gitService.listFilesAndFolders(repository).keySet().stream().filter(file -> fileName.equals(file.getName())).findFirst();
+    private Optional<File> getFileByName(Repository repository, String filename) {
+        return gitService.listFilesAndFolders(repository).keySet().stream().filter(file -> Objects.equals(filename, file.getName())).findFirst();
+    }
+
+    private Optional<Resource> getFileByName(Resource[] resources, String filename) {
+        return Arrays.stream(resources).filter(resource -> Objects.equals(resource.getFilename(), filename)).findFirst();
+    }
+
+    private void deleteLegacyTestClassesIfPresent(Repository repository) throws IOException {
+        for (String filename : FILES_TO_DELETE) {
+            deleteFileIfPresent(repository, filename);
+        }
+    }
+
+    private void deleteFileIfPresent(Repository repository, String filename) throws IOException {
+        Optional<File> optionalFile = getFileByName(repository, filename);
         if (optionalFile.isPresent()) {
             repositoryService.deleteFile(repository, optionalFile.get().toString());
+        }
+    }
+
+    private void overwriteFilesIfPresent(Repository repository, Resource[] templateResources) throws IOException {
+        for (String filename : FILES_TO_OVERWRITE) {
+            Optional<File> repoFile = getFileByName(repository, filename);
+            Optional<Resource> templateResource = getFileByName(templateResources, filename);
+            if (repoFile.isPresent() && templateResource.isPresent()) {
+                try (InputStream inputStream = templateResource.get().getInputStream()) {
+                    Files.copy(inputStream, repoFile.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
         }
     }
 }

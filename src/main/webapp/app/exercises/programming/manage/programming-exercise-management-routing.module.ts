@@ -5,7 +5,6 @@ import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/ma
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { map } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
@@ -105,13 +104,7 @@ export const routes: Routes = [
     },
     {
         path: ':courseId/programming-exercises',
-        component: ProgrammingExerciseComponent,
-        data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
+        redirectTo: ':courseId/exercises',
     },
 ];
 

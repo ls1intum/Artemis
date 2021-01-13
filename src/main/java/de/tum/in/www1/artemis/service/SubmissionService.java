@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -30,36 +31,45 @@ public class SubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(SubmissionService.class);
 
-    protected SubmissionRepository submissionRepository;
+    private ExamService examService;
 
-    protected ResultRepository resultRepository;
+    private CourseService courseService;
 
-    protected AuthorizationCheckService authCheckService;
+    protected final SubmissionRepository submissionRepository;
 
-    protected StudentParticipationRepository studentParticipationRepository;
+    protected final ResultRepository resultRepository;
 
-    protected ParticipationService participationService;
+    protected final AuthorizationCheckService authCheckService;
 
-    private final ExamService examService;
+    protected final StudentParticipationRepository studentParticipationRepository;
+
+    protected final ParticipationService participationService;
 
     protected final UserService userService;
 
-    private final CourseService courseService;
-
     protected final FeedbackRepository feedbackRepository;
 
-    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService,
-            ResultRepository resultRepository, ExamService examService, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
-            FeedbackRepository feedbackRepository) {
+    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
+            StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, FeedbackRepository feedbackRepository) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
-        this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
-        this.examService = examService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.feedbackRepository = feedbackRepository;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setExamService(ExamService examService) {
+        this.examService = examService;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setCourseService(CourseService courseService) {
+        this.courseService = courseService;
     }
 
     /**

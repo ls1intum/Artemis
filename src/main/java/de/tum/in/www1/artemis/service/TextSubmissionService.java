@@ -37,12 +37,10 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, TextClusterRepository textClusterRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
             Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService,
-            CourseService courseService, ExamService examService, FeedbackRepository feedbackRepository) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository, participationService,
-                feedbackRepository);
+            FeedbackRepository feedbackRepository) {
+        super(submissionRepository, userService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.textClusterRepository = textClusterRepository;
-        this.resultRepository = resultRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
         this.submissionVersionService = submissionVersionService;
     }
@@ -149,7 +147,7 @@ public class TextSubmissionService extends SubmissionService {
      *
      * @param textExercise the exercise for which we want to retrieve a submission without manual result
      * @param correctionRound - the correction round we want our submission to have results for
-     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param examMode flag to determine if test runs should be ignored. This should be set to true for exam exercises
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean examMode, long correctionRound) {
@@ -276,11 +274,11 @@ public class TextSubmissionService extends SubmissionService {
      *
      * @param textExercise the exercise the submission should belong to
      * @param correctionRound get submission with results in the correction round
-     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param ignoreTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a locked modeling submission that needs an assessment
      */
-    public TextSubmission findAndLockTextSubmissionToBeAssessed(TextExercise textExercise, boolean removeTestRunParticipations, long correctionRound) {
-        TextSubmission textSubmission = getRandomTextSubmissionEligibleForNewAssessment(textExercise, removeTestRunParticipations, correctionRound)
+    public TextSubmission findAndLockTextSubmissionToBeAssessed(TextExercise textExercise, boolean ignoreTestRunParticipations, long correctionRound) {
+        TextSubmission textSubmission = getRandomTextSubmissionEligibleForNewAssessment(textExercise, ignoreTestRunParticipations, correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission for exercise " + textExercise.getId() + " could not be found"));
         lockSubmission(textSubmission, correctionRound);
         return textSubmission;

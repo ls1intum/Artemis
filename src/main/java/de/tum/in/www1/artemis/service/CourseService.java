@@ -262,7 +262,7 @@ public class CourseService {
         // delete the Exams
         List<Exam> exams = examService.findAllByCourseId(course.getId());
         for (Exam exam : exams) {
-            examService.deleteById(exam.getId());
+            examService.delete(exam.getId());
         }
     }
 
