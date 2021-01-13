@@ -76,11 +76,11 @@ public class ModelingSubmissionService extends SubmissionService {
      *
      * @param modelingExercise the exercise the submission should belong to
      * @param correctionRound - the correction round we want our submission to have results for
-     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param ignoreTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a locked modeling submission that needs an assessment
      */
-    public ModelingSubmission lockModelingSubmissionWithoutResult(ModelingExercise modelingExercise, boolean removeTestRunParticipations, long correctionRound) {
-        ModelingSubmission modelingSubmission = getRandomModelingSubmissionEligibleForNewAssessment(modelingExercise, removeTestRunParticipations, correctionRound)
+    public ModelingSubmission lockModelingSubmissionWithoutResult(ModelingExercise modelingExercise, boolean ignoreTestRunParticipations, long correctionRound) {
+        ModelingSubmission modelingSubmission = getRandomModelingSubmissionEligibleForNewAssessment(modelingExercise, ignoreTestRunParticipations, correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
         modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
         lockSubmission(modelingSubmission, modelingExercise);
@@ -96,7 +96,7 @@ public class ModelingSubmissionService extends SubmissionService {
      *
      * @param modelingExercise the modeling exercise for which we want to get a modeling submission without result
      * @param correctionRound - the correction round we want our submission to have results for
-     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param examMode flag to determine if test runs should be ignored. This should be set to true for exam exercises
      * @return a modeling submission without any result
      */
     public Optional<ModelingSubmission> getRandomModelingSubmissionEligibleForNewAssessment(ModelingExercise modelingExercise, boolean examMode, long correctionRound) {
