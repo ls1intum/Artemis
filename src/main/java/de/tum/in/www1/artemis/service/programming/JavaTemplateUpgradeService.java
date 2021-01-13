@@ -97,15 +97,14 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
      */
     private void upgradeTemplateFiles(ProgrammingExercise exercise, RepositoryType repositoryType) {
         try {
-            String templateDir = repositoryType == RepositoryType.TESTS ? "test/projectTemplate" : repositoryType.getName();
-            Resource[] templateResources = getTemplateResources(exercise, templateDir + "/**/*");
-            List<Resource> templatePoms = Arrays.stream(templateResources).filter(resource -> Objects.equals(resource.getFilename(), POM_FILE)).collect(Collectors.toList());
+            String templatePomDir = repositoryType == RepositoryType.TESTS ? "test/projectTemplate" : repositoryType.getName();
+            Resource[] templatePoms = getTemplateResources(exercise, templatePomDir + "/**/" + POM_FILE);
             Repository repository = gitService.getOrCheckoutRepository(exercise.getRepositoryURL(repositoryType), true);
             List<File> repositoryPoms = gitService.listFiles(repository).stream().filter(file -> Objects.equals(file.getName(), POM_FILE)).collect(Collectors.toList());
 
             // Validate that template and repository have the same number of pom.xml files, otherwise no upgrade will take place
-            if (templatePoms.size() == 1 && repositoryPoms.size() == 1) {
-                Model updatedRepoModel = upgradeProjectObjectModel(templatePoms.get(0), repositoryPoms.get(0), Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
+            if (templatePoms.length == 1 && repositoryPoms.size() == 1) {
+                Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0], repositoryPoms.get(0), Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
                 writeProjectObjectModel(updatedRepoModel, repositoryPoms.get(0));
             }
 
@@ -114,7 +113,9 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
                 deleteLegacyTestClassesIfPresent(repository);
 
                 // Overwrite old test classes with new templates if they are present in the repository
-                overwriteFilesIfPresent(repository, templateResources);
+                Resource[] testFileTemplates = getTemplateResources(exercise, "test/testFiles/**/*");
+                overwriteFilesIfPresent(repository, testFileTemplates);
+                programmingExerciseService.replacePlaceholders(exercise, repository);
 
                 // Add latest static code analysis tool configurations or remove configurations
                 if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
