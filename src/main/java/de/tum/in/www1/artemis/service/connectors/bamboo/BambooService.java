@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.http.HttpException;
@@ -58,10 +60,11 @@ import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
+import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 @Service
 @Profile("bamboo")
-public class BambooService implements ContinuousIntegrationService {
+public class BambooService extends AbstractContinuousService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
@@ -75,8 +78,6 @@ public class BambooService implements ContinuousIntegrationService {
     private Boolean isEmptyCommitNecessary;
 
     private final GitService gitService;
-
-    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private final ResultRepository resultRepository;
 
@@ -102,8 +103,8 @@ public class BambooService implements ContinuousIntegrationService {
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackService feedbackService,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
             UrlService urlService, ResultRepository resultRepository, BuildLogEntryService buildLogService) {
+        super(programmingSubmissionRepository);
         this.gitService = gitService;
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
@@ -528,64 +529,43 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) {
-        final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
         log.debug("Retrieving build result (NEW) ...");
+        final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
         try {
             // Filter the first build plan in case it was automatically executed when the build plan was created.
             if (isFirstBuildForThisPlan(buildResult)) {
                 return null;
             }
 
-            List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findByParticipationIdAndResultsIsNullOrderBySubmissionDateDesc(participation.getId());
-            Optional<ProgrammingSubmission> latestMatchingSubmission = submissions.stream().filter(submission -> {
-                String matchingCommitHashInBuildMap = getCommitHash(buildResult, submission.getType());
-                return matchingCommitHashInBuildMap != null && matchingCommitHashInBuildMap.equals(submission.getCommitHash());
-            }).findFirst();
+            var result = createResultFromBuildResult(buildResult, participation);
 
-            Result result = createResultFromBuildResult(buildResult, participation);
-            ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-            ProgrammingSubmission programmingSubmission;
-            if (latestMatchingSubmission.isPresent()) {
-                programmingSubmission = latestMatchingSubmission.get();
-            }
-            else { // try to recover the submission
-                   // There can be two reasons for the case that there is no programmingSubmission:
-                   // 1) Manual build triggered directly in Bamboo (e.g. by the instructor).
-                   // 2) An unknown error that caused the programming submission not to be created when the code commits have been pushed
-                   // we can still get the commit hash from the payload of the Bamboo REST Call and "reverse engineer" the programming submission object to be consistent
-                String commitHash = getCommitHash(buildResult, SubmissionType.MANUAL);
-                log.warn("Could not find pending ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create a new one subsequently...", commitHash,
-                        participation.getId(), participation.getBuildPlanId());
-                programmingSubmission = new ProgrammingSubmission();
-                programmingSubmission.setParticipation((Participation) participation);
-                programmingSubmission.setSubmitted(true);
-                programmingSubmission.setType(SubmissionType.OTHER);
-                programmingSubmission.setCommitHash(commitHash);
-                // In this case we don't know the submission time, so we use the result completion time as a fallback.
-                // TODO: we should actually ask the git service to retrieve the actuall commit date in the git repository here and only use result.getCompletionDate() as fallback
-                programmingSubmission.setSubmissionDate(result.getCompletionDate());
-                // Save to avoid TransientPropertyValueException.
-            }
+            // Fetch submission or create a fallback
+            var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult);
+            // In this case we don't know the submission time, so we use the result completion time as a fallback.
+            // TODO: we should actually ask the git service to retrieve the actuall commit date in the git repository here and only use result.getCompletionDate() as fallback
+            final var submissionDate = result.getCompletionDate();
+            var latestSubmissionOrFallback = latestSubmission.orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult, submissionDate));
+
             final var hasArtifact = buildResult.getBuild().isArtifact();
-            programmingSubmission.setBuildArtifact(hasArtifact);
-            programmingSubmission.setBuildFailed(result.getResultString().equals("No tests found"));
+            latestSubmissionOrFallback.setBuildArtifact(hasArtifact);
+            latestSubmissionOrFallback.setBuildFailed(result.getResultString().equals("No tests found"));
             // Do not remove this save, otherwise Hibernate will throw an order column index null exception on saving the build logs
-            programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
+            latestSubmissionOrFallback = programmingSubmissionRepository.save(latestSubmissionOrFallback);
 
             // save result to create entry in DB before establishing relation with submission for ordering
             result = resultRepository.save(result);
 
             var buildLogs = extractAndFilterBuildLogs(buildResult);
-            var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, programmingSubmission);
+            var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmissionOrFallback);
 
-            programmingSubmission = programmingSubmissionRepository.findWithEagerResultsAndBuildLogEntriesById(programmingSubmission.getId()).get();
-            result.setSubmission(programmingSubmission);
-            programmingSubmission.addResult(result);
+            latestSubmissionOrFallback = programmingSubmissionRepository.findWithEagerResultsAndBuildLogEntriesById(latestSubmissionOrFallback.getId()).get();
+            result.setSubmission(latestSubmissionOrFallback);
+            latestSubmissionOrFallback.addResult(result);
             // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-            programmingSubmission.setBuildLogEntries(savedBuildLogs);
+            latestSubmissionOrFallback.setBuildLogEntries(savedBuildLogs);
 
-            programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
-            result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
+            latestSubmissionOrFallback = programmingSubmissionRepository.save(latestSubmissionOrFallback);
+            result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), latestSubmissionOrFallback);
             // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
             // This seems like a bug in Hibernate/JPA: https://stackoverflow.com/questions/6763329/ordercolumn-onetomany-null-index-column-for-collection.
             return result;
@@ -594,6 +574,18 @@ public class BambooService implements ContinuousIntegrationService {
             log.error("Error when creating build result from Bamboo notification: " + e.getMessage(), e);
             throw new BambooException("Could not create build result from Bamboo notification", e);
         }
+    }
+
+    @NotNull
+    private ProgrammingSubmission createAndSaveFallbackSubmission(ProgrammingExerciseParticipation participation, BambooBuildResultNotificationDTO buildResult,
+            ZonedDateTime submissionDate) {
+        final var commitHash = getCommitHash(buildResult, SubmissionType.MANUAL);
+        log.warn("Could not find pending ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create a new one subsequently...", commitHash,
+                participation.getId(), participation.getBuildPlanId());
+        var submission = super.createFallbackSubmission(participation, submissionDate, commitHash.orElse(null));
+        // Save to avoid TransientPropertyValueException.
+        programmingSubmissionRepository.save(submission);
+        return submission;
     }
 
     private List<BuildLogEntry> extractAndFilterBuildLogs(BambooBuildResultNotificationDTO buildResult) {
@@ -686,7 +678,8 @@ public class BambooService implements ContinuousIntegrationService {
      * @param submissionType describes why the build was started.
      * @return if the commit hash for the given submission type was found, otherwise null.
      */
-    private String getCommitHash(BambooBuildResultNotificationDTO buildResult, SubmissionType submissionType) {
+    @Override
+    protected Optional<String> getCommitHash(AbstractBuildResultNotificationDTO buildResult, SubmissionType submissionType) {
         final Optional<String> optionalRelevantRepoName;
         if (List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR).contains(submissionType)) {
             optionalRelevantRepoName = Optional.of(ASSIGNMENT_REPO_NAME);
@@ -698,9 +691,11 @@ public class BambooService implements ContinuousIntegrationService {
             optionalRelevantRepoName = Optional.empty();
         }
 
-        return optionalRelevantRepoName.flatMap(relevantRepoName -> buildResult.getBuild().getVcs().stream()
-                .filter(change -> change.getRepositoryName().equalsIgnoreCase(relevantRepoName)).findFirst().map(BambooBuildResultNotificationDTO.BambooVCSDTO::getId))
+        var commitHashOrNull = optionalRelevantRepoName
+                .flatMap(relevantRepoName -> ((BambooBuildResultNotificationDTO) buildResult).getBuild().getVcs().stream()
+                        .filter(change -> change.getRepositoryName().equalsIgnoreCase(relevantRepoName)).findFirst().map(BambooBuildResultNotificationDTO.BambooVCSDTO::getId))
                 .orElse(null);
+        return commitHashOrNull != null ? Optional.of(commitHashOrNull) : Optional.empty();
     }
 
     /**
