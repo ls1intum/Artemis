@@ -327,7 +327,7 @@ describe('CourseStatisticsComponent', () => {
         expect(comp.reachableScore).to.equal(46);
         expect(comp.totalMaxScore).to.equal(70);
 
-        // check that html file dsiplays the correct elements
+        // check that html file displays the correct elements
         let debugElement = fixture.debugElement.query(By.css('#absolute-course-score'));
         expect(debugElement.nativeElement.textContent).to.equal('artemisApp.courseOverview.statistics.yourPoints');
         debugElement = fixture.debugElement.query(By.css('#reachable-course-score'));
