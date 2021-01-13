@@ -82,7 +82,9 @@ public class TextPlagiarismDetectionService {
         var textSubmissions = exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().map(Participation::findLatestSubmission)
                 .filter(Optional::isPresent).map(Optional::get).filter(submission -> submission instanceof TextSubmission).map(submission -> (TextSubmission) submission)
                 .filter(submission -> minimumSize == 0 || submission.getText() != null && submission.getText().length() >= minimumSize)
-                .filter(submission -> minimumScore == 0 || submission.getLatestResult() != null && submission.getLatestResult().getScore() >= minimumScore).collect(toList());
+                .filter(submission -> minimumScore == 0
+                        || submission.getLatestResult() != null && submission.getLatestResult().getScore() != null && submission.getLatestResult().getScore() >= minimumScore)
+                .collect(toList());
 
         log.info("Found " + textSubmissions.size() + " text submissions in exercise " + exerciseWithParticipationsAndSubmissions.getId());
 
