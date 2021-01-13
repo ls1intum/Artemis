@@ -25,9 +25,9 @@ const expect = chai.expect;
 let fixture: ComponentFixture<ExamPointsSummaryComponent>;
 let component: ExamPointsSummaryComponent;
 
-const visibleDate = moment().subtract(6, 'hours');
-const startDate = moment().subtract(5, 'hours');
-const endDate = moment().subtract(4, 'hours');
+const visibleDate = moment().subtract(7, 'hours');
+const startDate = moment().subtract(6, 'hours');
+const endDate = moment().subtract(5, 'hours');
 const publishResultsDate = moment().subtract(3, 'hours');
 const reviewStartDate = moment().subtract(2, 'hours');
 const reviewEndDate = moment().add(1, 'hours');
@@ -35,12 +35,12 @@ const reviewEndDate = moment().add(1, 'hours');
 const exam = {
     id: 1,
     title: 'Test Exam',
-    visibleDate: visibleDate,
-    startDate: startDate,
-    endDate: endDate,
-    publishResultsDate: publishResultsDate,
-    examStudentReviewStart: reviewStartDate,
-    examStudentReviewEnd: reviewEndDate,
+    visibleDate,
+    startDate,
+    endDate,
+    publishResultsDate,
+    reviewStartDate,
+    reviewEndDate,
 } as Exam;
 
 const textResult = { id: 1, score: 50 } as Result;
@@ -72,7 +72,7 @@ const programmingExerciseTwo = {
     type: ExerciseType.PROGRAMMING,
     studentParticipations: [programmingParticipationTwo],
 } as ProgrammingExercise;
-let exercises = [textExercise, quizExercise, modelingExercise, programmingExercise, programmingExerciseTwo];
+const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise, programmingExerciseTwo];
 
 describe('ExamPointsSummaryComponent', function () {
     beforeEach(() => {

@@ -59,7 +59,7 @@ describe('Exam Update Component', function () {
                         data: {
                             subscribe: (fn: (value: Params) => void) =>
                                 fn({
-                                    exam: exam,
+                                    exam,
                                 }),
                         },
                         snapshot: {
@@ -143,7 +143,7 @@ describe('Exam Update Component', function () {
 
         const updateSpy = sinon.spy(examManagementService, 'update');
 
-        //trigger save
+        // trigger save
         component.save();
         tick();
         expect(updateSpy).to.have.been.calledOnce;
@@ -158,7 +158,7 @@ describe('Exam Update Component', function () {
         const alertServiceSpy = sinon.spy(alertService, 'error');
         const updateStub = sinon.stub(examManagementService, 'update').returns(throwError(httpError));
 
-        //trigger save
+        // trigger save
         component.save();
         tick();
         expect(alertServiceSpy).to.have.been.calledOnce;
@@ -173,7 +173,7 @@ describe('Exam Update Component', function () {
 
         const createSpy = sinon.spy(examManagementService, 'create');
 
-        //trigger save
+        // trigger save
         component.save();
         tick();
         expect(createSpy).to.have.been.calledOnce;
@@ -188,7 +188,7 @@ describe('Exam Update Component', function () {
         const alertServiceSpy = sinon.spy(alertService, 'error');
         const createStub = sinon.stub(examManagementService, 'create').returns(throwError(httpError));
 
-        //trigger save
+        // trigger save
         component.save();
         tick();
         expect(alertServiceSpy).to.have.been.calledOnce;

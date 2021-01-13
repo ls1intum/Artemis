@@ -57,12 +57,12 @@ const reviewEndDate = moment().add(1, 'hours');
 const exam = {
     id: 1,
     title: 'Test Exam',
-    visibleDate: visibleDate,
-    startDate: startDate,
-    endDate: endDate,
-    publishResultsDate: publishResultsDate,
-    examStudentReviewStart: reviewStartDate,
-    examStudentReviewEnd: reviewEndDate,
+    visibleDate,
+    startDate,
+    endDate,
+    publishResultsDate,
+    reviewStartDate,
+    reviewEndDate,
 } as Exam;
 
 const textSubmission = { id: 1, submitted: true } as TextSubmission;
@@ -81,7 +81,7 @@ const modelingExercise = { id: 3, type: ExerciseType.MODELING, studentParticipat
 const programmingExercise = { id: 4, type: ExerciseType.PROGRAMMING, studentParticipations: [programmingParticipation] } as ProgrammingExercise;
 const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise];
 
-const studentExam = { id: 1, exam: exam, user: user, exercises: exercises } as StudentExam;
+const studentExam = { id: 1, exam, user, exercises } as StudentExam;
 
 function sharedSetup(url: string[]) {
     beforeEach(() => {
@@ -109,7 +109,7 @@ function sharedSetup(url: string[]) {
                     provide: ActivatedRoute,
                     useValue: {
                         snapshot: {
-                            url: url,
+                            url,
                             paramMap: convertToParamMap({
                                 courseId: '1',
                             }),

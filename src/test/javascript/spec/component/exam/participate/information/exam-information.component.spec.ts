@@ -27,11 +27,11 @@ const endDate = moment().subtract(4, 'hours');
 const exam = {
     id: 1,
     title: 'Test Exam',
-    startDate: startDate,
-    endDate: endDate,
+    startDate,
+    endDate,
 } as Exam;
 
-const studentExam = { id: 1, exam: exam, user: user, workingTime: 60 } as StudentExam;
+const studentExam = { id: 1, exam, user, workingTime: 60 } as StudentExam;
 
 describe('ExamInformationComponent', function () {
     beforeEach(() => {
