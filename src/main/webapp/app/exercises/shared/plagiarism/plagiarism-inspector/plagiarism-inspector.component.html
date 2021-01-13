@@ -71,7 +71,7 @@
         </div>
     </div>
 
-    <div class="plagiarism-body" *ngIf="plagiarismResult">
+    <div class="plagiarism-body" *ngIf="plagiarismResult && !detectionInProgress">
         <jhi-plagiarism-sidebar
             [(showRunDetails)]="showRunDetails"
             [comparisons]="plagiarismResult?.comparisons"
@@ -84,7 +84,7 @@
         <jhi-plagiarism-run-details [hidden]="!showRunDetails" [plagiarismResult]="plagiarismResult"></jhi-plagiarism-run-details>
     </div>
 
-    <div class="plagiarism-empty" *ngIf="!plagiarismResult">
+    <div class="plagiarism-empty" *ngIf="!plagiarismResult || detectionInProgress">
         <div class="spinner-border text-primary" role="status" *ngIf="detectionInProgress">
             <span class="sr-only">Loading...</span>
         </div>
