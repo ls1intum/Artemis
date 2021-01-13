@@ -71,6 +71,16 @@ export class PlagiarismInspectorComponent implements OnInit {
      */
     minimumSize = 0;
 
+    /**
+     * The minimumScore option is only configurable, if this value is true.
+     */
+    enableMinimumScore = false;
+
+    /**
+     * The minimumSize option is only configurable, if this value is true.
+     */
+    enableMinimumSize = false;
+
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -86,7 +96,10 @@ export class PlagiarismInspectorComponent implements OnInit {
     }
 
     checkPlagiarism() {
-        const options = new PlagiarismOptions(this.similarityThreshold, this.minimumScore, this.minimumSize);
+        const minimumScore = this.enableMinimumScore ? this.minimumScore : 0;
+        const minimumSize = this.enableMinimumSize ? this.minimumSize : 0;
+
+        const options = new PlagiarismOptions(this.similarityThreshold, minimumScore, minimumSize);
 
         if (this.exercise.type === ExerciseType.MODELING) {
             this.checkPlagiarismModeling(options);

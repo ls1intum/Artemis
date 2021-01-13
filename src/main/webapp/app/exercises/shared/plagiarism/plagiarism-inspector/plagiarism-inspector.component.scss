@@ -76,8 +76,16 @@ $footer-height: 31px;
                 display: flex;
                 flex-shrink: 0;
 
+                &.disabled .form-control {
+                    opacity: 0.4;
+                }
+
                 &-label {
                     flex-shrink: 0;
+                    margin-right: 0.5rem;
+                }
+
+                &-checkbox {
                     margin-right: 0.5rem;
                 }
 
@@ -120,6 +128,7 @@ $footer-height: 31px;
         align-items: center;
         display: flex;
         margin: 0;
+        flex-shrink: 0;
 
         #generateJPlagReport {
             margin-right: 0.5rem;

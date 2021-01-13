@@ -30,14 +30,9 @@
         </div>
 
         <div class="plagiarism-header-options" [hidden]="!showOptions">
-            <label *ngIf="isProgrammingExercise()" class="plagiarism-checkbox" for="generateJPlagReport">
-                <input type="checkbox" id="generateJPlagReport" [(ngModel)]="generateJPlagReport" checked />
-                <span jhiTranslate="artemisApp.plagiarism.generate-jplag-report">Generate JPlag Report</span>
-            </label>
-
             <div class="plagiarism-option">
                 <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.similarity-threshold">Similarity Threshold</div>
-                <fa-icon [icon]="'question-circle'" placement="top" [ngbTooltip]="'artemisApp.plagiarism.similarity-threshold-tooltip' | translate" container="body"></fa-icon>
+                <fa-icon [icon]="'question-circle'" placement="bottom" [ngbTooltip]="'artemisApp.plagiarism.similarity-threshold-tooltip' | translate" container="body"></fa-icon>
                 <input
                     required
                     type="number"
@@ -51,17 +46,28 @@
                 />
             </div>
 
-            <div class="plagiarism-option">
-                <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.minimum-score">Minimum Score</div>
-                <fa-icon [icon]="'question-circle'" placement="top" [ngbTooltip]="'artemisApp.plagiarism.minimum-score-tooltip' | translate" container="body"></fa-icon>
-                <input required type="number" class="form-control" min="0" max="100" id="plagiarism-minimum-score" [(ngModel)]="minimumScore" />
+            <div class="plagiarism-option" [class.disabled]="!enableMinimumScore">
+                <label class="plagiarism-checkbox" for="enableMinimumScore">
+                    <input type="checkbox" id="enableMinimumScore" class="plagiarism-option-checkbox" [(ngModel)]="enableMinimumScore" checked />
+                    <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.minimum-score">Minimum Score</div>
+                </label>
+                <fa-icon [icon]="'question-circle'" placement="bottom" [ngbTooltip]="'artemisApp.plagiarism.minimum-score-tooltip' | translate" container="body"></fa-icon>
+                <input required type="number" [disabled]="!enableMinimumScore" class="form-control" min="0" max="100" id="plagiarism-minimum-score" [(ngModel)]="minimumScore" />
             </div>
 
-            <div class="plagiarism-option" *ngIf="!isProgrammingExercise()">
-                <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.minimum-size">Minimum Size</div>
-                <fa-icon [icon]="'question-circle'" placement="top" [ngbTooltip]="getMinimumSizeTooltip() | translate" container="body"></fa-icon>
-                <input required type="number" class="form-control" min="0" max="100" id="plagiarism-minimum-size" [(ngModel)]="minimumSize" />
+            <div class="plagiarism-option" *ngIf="!isProgrammingExercise()" [class.disabled]="!enableMinimumSize">
+                <label class="plagiarism-checkbox" for="enableMinimumSize">
+                    <input type="checkbox" id="enableMinimumSize" class="plagiarism-option-checkbox" [(ngModel)]="enableMinimumSize" checked />
+                    <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.minimum-size">Minimum Size</div>
+                </label>
+                <fa-icon [icon]="'question-circle'" placement="bottom" [ngbTooltip]="getMinimumSizeTooltip() | translate" container="body"></fa-icon>
+                <input required type="number" [disabled]="!enableMinimumSize" class="form-control" min="0" max="100" id="plagiarism-minimum-size" [(ngModel)]="minimumSize" />
             </div>
+
+            <label *ngIf="isProgrammingExercise()" class="plagiarism-checkbox" for="generateJPlagReport">
+                <input type="checkbox" id="generateJPlagReport" [(ngModel)]="generateJPlagReport" checked />
+                <span jhiTranslate="artemisApp.plagiarism.generate-jplag-report">Generate JPlag Report</span>
+            </label>
         </div>
     </div>
 
