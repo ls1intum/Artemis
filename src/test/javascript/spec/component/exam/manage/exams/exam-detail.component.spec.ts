@@ -111,8 +111,8 @@ describe('ExamDetailComponent', () => {
     it('should correctly route to student exams subpage', fakeAsync(() => {
         const location = examDetailComponentFixture.debugElement.injector.get(Location);
         examDetailComponentFixture.detectChanges();
-        const editButton = examDetailComponentFixture.debugElement.query(By.css('#studentExamsButton')).nativeElement;
-        editButton.click();
+        const studentExamsButton = examDetailComponentFixture.debugElement.query(By.css('#studentExamsButton')).nativeElement;
+        studentExamsButton.click();
         examDetailComponentFixture.whenStable().then(() => {
             expect(location.path()).to.equal('/course-management/1/exams/1/student-exams');
         });
