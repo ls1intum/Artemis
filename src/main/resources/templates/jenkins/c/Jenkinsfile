@@ -26,19 +26,23 @@ pipeline {
                     timestamps {
                         sh '''
                             cd $WORKSPACE
+                            echo &quot;--------------------setup-------------------&quot;
+                            echo &quot;User:&quot;
+                            whoami
+                            echo &quot;Updating assignment and test-reports ownership...&quot;
+                            echo &quot;--------------------setup-------------------&quot;
                             echo &quot;--------------------info--------------------&quot;
                             python3 --version
                             pip3 --version
+                            gcc --version
                             # Generic debug infos:
-                            # whoami
                             # tree
-
-                            echo &quot;--------------------tests--------------------&quot;
+                            echo &quot;--------------------tests-------------------&quot;
                             ls -la tests
-                            echo &quot;--------------------tests--------------------&quot;
-                            echo &quot;--------------------assignment--------------------&quot;
+                            echo &quot;--------------------tests-------------------&quot;
+                            echo &quot;--------------------assignment--------------&quot;
                             ls -la assignment
-                            echo &quot;--------------------assignment--------------------&quot;
+                            echo &quot;--------------------assignment--------------&quot;
 
                             cd tests
                             REQ_FILE=requirements.txt

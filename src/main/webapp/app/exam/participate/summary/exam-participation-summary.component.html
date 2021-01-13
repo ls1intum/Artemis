@@ -1,4 +1,4 @@
-<jhi-test-run-ribbon *ngIf="isTestRun"></jhi-test-run-ribbon>
+<jhi-test-run-ribbon id="testRunRibbon" *ngIf="isTestRun"></jhi-test-run-ribbon>
 <div>
     <h2>
         <ng-container *ngIf="!instructorView">
@@ -7,7 +7,7 @@
         <ng-container *ngIf="instructorView">
             {{ 'artemisApp.exam.examSummary.studentSubmissionTo' | translate: { examTitle: studentExam.exam!.title!, studentName: studentExam.user!.name! } }}
         </ng-container>
-        <button class="btn btn-primary float-right" (click)="printPDF()">
+        <button id="exportToPDFButton" class="btn btn-primary float-right" (click)="printPDF()">
             <fa-icon [icon]="'print'"></fa-icon>
             <span jhiTranslate="artemisApp.exam.examSummary.exportPDF">Export PDF</span>
         </button>
@@ -29,6 +29,7 @@
                 <jhi-result [participation]="exercise.studentParticipations![0]"></jhi-result>
             </div>
             <button
+                id="{{ 'toggleCollapseExerciseButton-' + i }}"
                 class="btn btn-light question-collapse"
                 (click)="toggleCollapseExercise(exercise.id)"
                 [attr.aria-expanded]="!isCollapsed(exercise.id)"
