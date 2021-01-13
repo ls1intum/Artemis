@@ -122,6 +122,9 @@ describe('ExamScoresComponent', () => {
         studentResults: [studentResult1, studentResult2, studentResult3],
     } as ExamScoreDTO;
 
+    global.URL.createObjectURL = jest.fn(() => 'http://some.test.com');
+    global.URL.revokeObjectURL = jest.fn(() => '');
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ChartsModule],
@@ -209,9 +212,9 @@ describe('ExamScoresComponent', () => {
     });
 
     it('histogram should skip not submitted exams', () => {
-        comp.filterForSubmittedExams = true;
         spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
         fixture.detectChanges();
+        comp.toggleFilterForSubmittedExam();
 
         expectCorrectExamScoreDto(comp, examScoreDTO);
 
@@ -252,6 +255,24 @@ describe('ExamScoresComponent', () => {
                 expect(exResult.averagePercentage).to.equal((averageExPoints / exInfo.maxPoints) * 100);
             }
         });
+    });
+
+    it('should download a correct csv', () => {
+        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        fixture.detectChanges();
+
+        expectCorrectExamScoreDto(comp, examScoreDTO);
+
+        const noOfSubmittedExercises = examScoreDTO.studentResults.length;
+
+        // check histogram
+        expectCorrectHistogram(comp, examScoreDTO);
+        // expect three distinct scores
+        expect(comp.histogramData.filter((hd) => hd === 1).length).to.equal(3);
+        expect(comp.noOfExamsFiltered).to.equal(noOfSubmittedExercises);
+
+        // create csv
+        comp.exportToCsv();
     });
 });
 
