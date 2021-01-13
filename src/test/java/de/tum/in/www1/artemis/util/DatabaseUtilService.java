@@ -771,6 +771,7 @@ public class DatabaseUtilService {
         exam.setRandomizeExerciseOrder(true);
         exam.setStartDate(ZonedDateTime.now().plusHours(2));
         exam.setEndDate(ZonedDateTime.now().plusHours(4));
+        exam.setMaxPoints(20);
         exam = examRepository.save(exam);
 
         // add exercise groups: 3 mandatory, 2 optional
@@ -895,6 +896,7 @@ public class DatabaseUtilService {
         ModelFactory.generateExerciseGroup(true, exam); // bonus text
         ModelFactory.generateExerciseGroup(true, exam); // not included text
         exam.setNumberOfExercisesInExam(6);
+        exam.setMaxPoints(24);
         exam = examRepository.save(exam);
         // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
         var exerciseGroup0 = exam.getExerciseGroups().get(0);
@@ -941,6 +943,7 @@ public class DatabaseUtilService {
         if (withProgrammingExercise) {
             ModelFactory.generateExerciseGroup(true, exam); // programming
             exam.setNumberOfExercisesInExam(7);
+            exam.setMaxPoints(29);
             exam = examRepository.save(exam);
             var exerciseGroup6 = exam.getExerciseGroups().get(6);
             // Programming exercises need a proper setup for 'prepare exam start' to work
