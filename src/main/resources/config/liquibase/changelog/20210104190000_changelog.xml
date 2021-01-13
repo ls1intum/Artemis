@@ -2,9 +2,6 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
     <changeSet author="stefanwaldhauser" id="20210104190000-1">
-        <dropColumn columnName="created_time" tableName="complaint_response"/>
-    </changeSet>
-    <changeSet author="stefanwaldhauser" id="20210104190000-2">
         <addColumn tableName="complaint_response">
             <column name="created_by" type="VARCHAR(45)"/>
             <column name="created_date" type="TIMESTAMP"/>
