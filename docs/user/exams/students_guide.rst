@@ -312,6 +312,7 @@ Summary
 - Additionally, if within the student review period, you have the option to complain about manual assessments made. To do this, simply click on |complain| and explain your rationale.
 - A second assessor, different from the original one will have the opportunity to review your complaint and respond to it.
 - The complaint response will become visible to you as soon as it has been assessed.
+- Again, you have the opportunity to export the summary including your score as a PDF file by clicking on |export_pdf|. The PDF will also contain any complaints and complaint assessments.
         
     .. note::
         The results will automatically be updated, if your complaint was successful.
