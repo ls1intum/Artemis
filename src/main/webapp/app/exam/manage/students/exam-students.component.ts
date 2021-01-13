@@ -5,7 +5,6 @@ import { JhiEventManager } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, of, Subject } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
-import { onError } from 'app/shared/util/global.utils';
 import { User } from 'app/core/user/user.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -153,9 +152,8 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                     // Flash green background color to signal to the user that this student was registered
                     this.flashRowClass(cssClasses.newlyRegistered);
                 },
-                (res: HttpErrorResponse) => {
-                    onError(this.jhiAlertService, res);
-                    this.isTransitioning = false;
+                (error: HttpErrorResponse) => {
+                    this.onError(`artemisApp.exam.${error.headers.get('x-null-error')}`);
                 },
             );
         } else {
@@ -225,4 +223,14 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.rowClass = className;
         setTimeout(() => (this.rowClass = undefined));
     };
+
+    /**
+     * Show an error as an alert in the top of the editor html.
+     * Used by other components to display errors.
+     * The error must already be provided translated by the emitting component.
+     */
+    onError(error: string) {
+        this.jhiAlertService.error(error);
+        this.isTransitioning = false;
+    }
 }
