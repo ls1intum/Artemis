@@ -162,14 +162,28 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         // Set test cases changed to true; after the build run it should be false;
         exercise.setTestCasesChanged(true);
         programmingExerciseRepository.save(exercise);
+
         bambooRequestMockProvider.mockTriggerBuild(firstParticipation);
         bambooRequestMockProvider.mockTriggerBuild(secondParticipation);
         bambooRequestMockProvider.mockTriggerBuild(thirdParticipation);
-        request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all", null, HttpStatus.OK, new HttpHeaders());
+        // Each trigger build is mocked twice per participation so that we test
+        // that no new submission is created on re-trigger
+        bambooRequestMockProvider.mockTriggerBuild(firstParticipation);
+        bambooRequestMockProvider.mockTriggerBuild(secondParticipation);
+        bambooRequestMockProvider.mockTriggerBuild(thirdParticipation);
 
-        await().until(() -> submissionRepository.count() == 3);
+        // Perform a call to trigger-instructor-build-all twice. We want to check that the submissions
+        // aren't being re-created.
+        var url = "/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all";
+        request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
+        request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
+
+        await().until(() -> submissionRepository.count() >= 3);
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
+
+        // Make sure submissions aren't re-created.
+        assertThat(submissions.size()).isEqualTo(3);
 
         List<ProgrammingExerciseParticipation> participations = new ArrayList<>();
         for (ProgrammingSubmission submission : submissions) {
@@ -215,10 +229,20 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         // We only trigger two participations here: 1 and 3.
         bambooRequestMockProvider.mockTriggerBuild(participation1);
         bambooRequestMockProvider.mockTriggerBuild(participation3);
+
+        // Mock again because we call the trigger request two times
+        bambooRequestMockProvider.mockTriggerBuild(participation1);
+        bambooRequestMockProvider.mockTriggerBuild(participation3);
+
         List<Long> participationsToTrigger = new ArrayList<>(Arrays.asList(participation1.getId(), participation3.getId()));
 
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
-        request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build", participationsToTrigger, HttpStatus.OK, new HttpHeaders());
+
+        // Perform a call to trigger-instructor-build-all twice. We want to check that the submissions
+        // aren't being re-created.
+        var url = "/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build";
+        request.postWithoutLocation(url, participationsToTrigger, HttpStatus.OK, new HttpHeaders());
+        request.postWithoutLocation(url, participationsToTrigger, HttpStatus.OK, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
         assertThat(submissions).hasSize(2);
@@ -263,10 +287,19 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         bambooRequestMockProvider.enableMockingOfRequests();
         var buildPlan = new BambooBuildPlanDTO(true, false);
         bambooRequestMockProvider.mockGetBuildPlan(participation.getBuildPlanId(), buildPlan);
+        // Mock again because we call the trigger request two times
+        bambooRequestMockProvider.mockGetBuildPlan(participation.getBuildPlanId(), buildPlan);
 
-        request.postWithoutLocation("/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
+        var url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build";
+        request.postWithoutLocation(url, null, HttpStatus.OK, null);
 
         verify(messagingTemplate).convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission);
+
+        // Perform the request again and make sure no new submission was created
+        request.postWithoutLocation(url, null, HttpStatus.OK, null);
+        var updatedSubmissions = submissionRepository.findAll();
+        assertThat(updatedSubmissions.size()).isEqualTo(1);
+        assertThat(updatedSubmissions.get(0).getId()).isEqualTo(submission.getId());
     }
 
     @Test
