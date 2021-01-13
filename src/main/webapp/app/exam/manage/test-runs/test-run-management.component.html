@@ -8,6 +8,7 @@
             <div class="d-flex mb-1">
                 <div [ngbTooltip]="'artemisApp.examManagement.testRun.createTestRunDisabled' | translate" [disableTooltip]="examContainsExercises">
                     <button
+                        id="createTestRunButton"
                         class="btn btn-primary btn-sm mr-1 mb-1"
                         style="height: 40px"
                         (click)="openCreateTestRunModal()"

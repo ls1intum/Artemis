@@ -12,8 +12,6 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +24,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -35,6 +32,7 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -55,19 +53,11 @@ public class ExamResource {
 
     private final CourseService courseService;
 
-    private final ExamRepository examRepository;
-
     private final ExamService examService;
 
-    private final StudentExamService studentExamService;
+    private final ExamRepository examRepository;
 
     private final ExamAccessService examAccessService;
-
-    private final ExerciseService exerciseService;
-
-    private final ParticipationService participationService;
-
-    private final AuditEventRepository auditEventRepository;
 
     private final InstanceMessageSendService instanceMessageSendService;
 
@@ -77,20 +67,15 @@ public class ExamResource {
 
     private final AssessmentDashboardService assessmentDashboardService;
 
-    public ExamResource(UserService userService, CourseService courseService, ExamRepository examRepository, ExamService examService, ExamAccessService examAccessService,
-            ExerciseService exerciseService, AuditEventRepository auditEventRepository, InstanceMessageSendService instanceMessageSendService,
-            StudentExamService studentExamService, ParticipationService participationService, AuthorizationCheckService authCheckService,
+    public ExamResource(UserService userService, CourseService courseService, ExamService examService, ExamAccessService examAccessService,
+            InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, AuthorizationCheckService authCheckService,
             TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService) {
         this.userService = userService;
         this.courseService = courseService;
-        this.examRepository = examRepository;
         this.examService = examService;
+        this.examRepository = examRepository;
         this.examAccessService = examAccessService;
-        this.exerciseService = exerciseService;
-        this.auditEventRepository = auditEventRepository;
         this.instanceMessageSendService = instanceMessageSendService;
-        this.studentExamService = studentExamService;
-        this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.assessmentDashboardService = assessmentDashboardService;
@@ -373,16 +358,13 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to delete exam : {}", examId);
+        var exam = examRepository.findById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
         Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
-        User user = userService.getUser();
-        Exam exam = examService.findOneWithExercisesGroupsAndStudentExamsByExamId(examId);
-        log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
-        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
-        auditEventRepository.add(auditEvent);
-        examService.delete(exam);
+
+        examService.delete(examId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
     }
 
@@ -411,20 +393,8 @@ public class ExamResource {
         if (student.isEmpty()) {
             return notFound();
         }
-        exam.addRegisteredUser(student.get());
-        // NOTE: we intentionally add the user to the course group, because the user only has access to the exam of a course, if the student also
-        // has access to the course of the exam.
-        // we only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course)
-        if (!student.get().getGroups().contains(course.getStudentGroupName())) {
-            userService.addUserToGroup(student.get(), course.getStudentGroupName());
-        }
-        examRepository.save(exam);
 
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
-        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "user=" + studentLogin);
-        auditEventRepository.add(auditEvent);
-        log.info("User " + currentUser.getLogin() + " has added user " + studentLogin + " to the exam " + exam.getTitle() + " with id " + exam.getId());
-
+        examService.registerStudentToExam(course, exam, student.get());
         return ResponseEntity.ok().body(null);
     }
 
@@ -653,38 +623,8 @@ public class ExamResource {
         if (optionalStudent.isEmpty()) {
             return notFound();
         }
-        var exam = examService.findOneWithRegisteredUsers(examId);
-        User student = optionalStudent.get();
-        exam.removeRegisteredUser(student);
 
-        // Note: we intentionally do not remove the user from the course, because the student might just have "deregistered" from the exam, but should
-        // still have access to the course.
-        examRepository.save(exam);
-
-        // The student exam might not be generated yet
-        Optional<StudentExam> optionalStudentExam = studentExamService.findOneWithExercisesByUserIdAndExamIdOptional(student.getId(), exam.getId());
-        if (optionalStudentExam.isPresent()) {
-            StudentExam studentExam = optionalStudentExam.get();
-
-            // Optionally delete participations and submissions
-            if (withParticipationsAndSubmission) {
-                List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student.getId(),
-                        studentExam.getExercises());
-                for (var participation : participations) {
-                    participationService.delete(participation.getId(), true, true);
-                }
-            }
-
-            // Delete the student exam
-            studentExamService.deleteStudentExam(studentExam.getId());
-        }
-
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
-        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_USER_FROM_EXAM, "exam=" + exam.getTitle(), "user=" + studentLogin);
-        auditEventRepository.add(auditEvent);
-        log.info("User " + currentUser.getLogin() + " has removed user " + studentLogin + " from the exam " + exam.getTitle() + " with id " + exam.getId()
-                + ". This also deleted a potentially existing student exam with all its participations and submissions.");
-
+        examService.unregisterStudentFromExam(examId, withParticipationsAndSubmission, optionalStudent.get());
         return ResponseEntity.ok().body(null);
     }
 

@@ -90,11 +90,17 @@ public class BambooBuildPlanService {
 
     /**
      * Creates a Build Plan for a Programming Exercise
-     * @param programmingExercise  programming exercise with the required information to create the base build plan
-     * @param planKey the key of the build plan
-     * @param repositoryName the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
-     * @param testRepositoryName the slug of the test repository, i.e. the unique identifier
-     * @param solutionRepositoryName the slug of the solution repository, i.e. the unique identifier
+     * 
+     * @param programmingExercise    programming exercise with the required
+     *                               information to create the base build plan
+     * @param planKey                the key of the build plan
+     * @param repositoryName         the slug of the assignment repository (used to
+     *                               separate between exercise and solution), i.e.
+     *                               the unique identifier
+     * @param testRepositoryName     the slug of the test repository, i.e. the
+     *                               unique identifier
+     * @param solutionRepositoryName the slug of the solution repository, i.e. the
+     *                               unique identifier
      */
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName,
             String solutionRepositoryName) {
@@ -114,8 +120,11 @@ public class BambooBuildPlanService {
 
     /**
      * Set Build Plan Permissions for admins, instructors and teaching assistants.
-     * @param programmingExercise   a programming exercise with the required information to set the needed build plan permissions
-     * @param planKey              The name of the source plan
+     * 
+     * @param programmingExercise a programming exercise with the required
+     *                            information to set the needed build plan
+     *                            permissions
+     * @param planKey             The name of the source plan
      */
     public void setBuildPlanPermissionsForExercise(ProgrammingExercise programmingExercise, String planKey) {
         // Get course over exerciseGroup in exam mode
@@ -179,8 +188,20 @@ public class BambooBuildPlanService {
                             new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
                 }
             }
-            case PYTHON, C -> {
+            case PYTHON -> {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, "test-reports/*results.xml");
+            }
+            case C -> {
+                // Default tasks:
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns, false);
+                tasks.add(0, checkoutTask);
+                defaultJob.tasks(tasks.toArray(new Task[0]));
+                // Final tasks:
+                final TestParserTask testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
+                final ScriptTask cleanupTask = new ScriptTask().description("cleanup").inlineBody("sudo rm -rf tests/\nsudo rm -rf assignment/\nsudo rm -rf test-reports/");
+                defaultJob.finalTasks(new Task[] { testParserTask, cleanupTask });
+                defaultStage.jobs(defaultJob);
+                return defaultStage;
             }
             case HASKELL -> {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, "**/test-reports/*.xml");
@@ -204,7 +225,8 @@ public class BambooBuildPlanService {
                 }
                 return defaultStage.jobs(defaultJob);
             }
-            // this is needed, otherwise the compiler complaints with missing return statement
+            // this is needed, otherwise the compiler complaints with missing return
+            // statement
             default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
         }
     }
@@ -222,7 +244,8 @@ public class BambooBuildPlanService {
         List<VcsRepositoryIdentifier> vcsTriggerRepositories = new LinkedList<>();
         // Trigger the build when a commit is pushed to the ASSIGNMENT_REPO.
         vcsTriggerRepositories.add(new VcsRepositoryIdentifier(ASSIGNMENT_REPO_NAME));
-        // Trigger the build when a commit is pushed to the TEST_REPO only for the solution repository!
+        // Trigger the build when a commit is pushed to the TEST_REPO only for the
+        // solution repository!
         if (planKey.equals(BuildPlanType.SOLUTION.getName())) {
             vcsTriggerRepositories.add(new VcsRepositoryIdentifier(TEST_REPO_NAME));
         }
@@ -264,7 +287,8 @@ public class BambooBuildPlanService {
 
     private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug) {
         return new BitbucketServerRepository().name(name).repositoryViewer(new BitbucketServerRepositoryViewer()).server(new ApplicationLink().name(vcsApplicationLinkName))
-                // make sure to use lower case to avoid problems in change detection between Bamboo and Bitbucket
+                // make sure to use lower case to avoid problems in change detection between
+                // Bamboo and Bitbucket
                 .projectKey(vcsProjectKey).repositorySlug(repositorySlug.toLowerCase()).shallowClonesEnabled(true).remoteAgentCacheEnabled(false)
                 .changeDetection(new VcsChangeDetection());
     }
@@ -289,10 +313,11 @@ public class BambooBuildPlanService {
             scriptResources.sort(Comparator.comparing(Resource::getFilename));
             for (final var resource : scriptResources) {
                 // 1_some_description.sh --> "some description"
-                if (resource.getFilename() != null) {
-                    final var descriptionElements = Arrays.stream((resource.getFilename().split("\\.")[0] // cut .sh suffix
-                            .split("_"))).collect(Collectors.toList());
-                    descriptionElements.remove(0);  // Remove the index prefix: 1 some description --> some description
+                String fileName = resource.getFilename();
+                if (fileName != null) {
+                    final var descriptionElements = Arrays.stream(fileName.split("\\.")[0] // cut .sh suffix
+                            .split("_")).collect(Collectors.toList());
+                    descriptionElements.remove(0); // Remove the index prefix: 1 some description --> some description
                     final var scriptDescription = String.join(" ", descriptionElements);
                     try (final var inputStream = resource.getInputStream()) {
                         tasks.add(new ScriptTask().description(scriptDescription).inlineBody(IOUtils.toString(inputStream, Charset.defaultCharset())));
