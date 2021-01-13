@@ -68,7 +68,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         });
     }
 
-    reloadExamWithRegisterdUsers() {
+    reloadExamWithRegisteredUsers() {
         this.isLoading = true;
         this.examManagementService.find(this.courseId, this.exam.id!, true).subscribe((examResponse: HttpResponse<Exam>) => {
             this.exam = examResponse.body!;

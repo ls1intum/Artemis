@@ -41,6 +41,8 @@ common common-tests
     -- this flag is necessary as it allows interrupts of non-allocating loops
     -- https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/bugs.html#bugs-in-ghc
     -fno-omit-yields
+  if flag(Prod)
+    cpp-options: -DPROD
 
 -- build a submission
 library submission
@@ -49,8 +51,11 @@ library submission
   default-extensions: Safe
   -- The base package by Haskell can be trusted.
   -- See https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/safe_haskell.html#package-trust
-  -- for a description of the flags.
-  ghc-options: -fpackage-trust -trust base
+  -- for a description of the flags. Add more trusted packages if needed.
+  -- `-pgmP nonExistentCPP` disables the pre-processor for security reasons
+  -- by setting it to a non-existent program called `nonExistentCPP`. See
+  -- https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/phases.html
+  ghc-options: -fpackage-trust -trust base -pgmP nonExistentCPP
   hs-source-dirs: assignment/src
   exposed-modules: Exercise
 

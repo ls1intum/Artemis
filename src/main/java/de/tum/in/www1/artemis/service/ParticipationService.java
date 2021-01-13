@@ -1181,16 +1181,7 @@ public class ParticipationService {
             }
 
             // delete local repository cache
-            try {
-                if (repositoryUrl != null && gitService.repositoryAlreadyExists(repositoryUrl)) {
-                    // We need to close the possibly still open repository otherwise an IOException will be thrown on Windows
-                    Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, false);
-                    gitService.deleteLocalRepository(repo);
-                }
-            }
-            catch (Exception ex) {
-                log.error("Error while deleting local repository", ex);
-            }
+            gitService.deleteLocalRepository(repositoryUrl);
         }
 
         complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);
