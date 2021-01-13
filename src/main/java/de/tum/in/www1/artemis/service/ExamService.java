@@ -594,7 +594,7 @@ public class ExamService {
     public Exam findWithStudentExams(long examId) {
         Exam exam = examRepository.findWithStudentExamsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id " + examId + " does not exist"));
         // drop all test runs and set the remaining student exams to the exam
-        exam.setStudentExams(exam.getStudentExams().stream().dropWhile(StudentExam::getTestRun).collect(Collectors.toSet()));
+        exam.setStudentExams(exam.getStudentExams().stream().dropWhile(StudentExam::isTestRun).collect(Collectors.toSet()));
         return exam;
     }
 
