@@ -358,9 +358,10 @@ public class JenkinsService extends AbstractContinuousService {
     public Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) {
         final var buildResult = TestResultsDTO.convert(requestBody);
         var newResult = createResultFromBuildResult(buildResult, (Participation) participation);
-        var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult);
 
-        final ProgrammingSubmission latestSubmissionOrFallback = latestSubmission.orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
+        // Fetch submission or create a fallback
+        var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult);
+        var latestSubmissionOrFallback = latestSubmission.orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
         latestSubmissionOrFallback.setBuildFailed(newResult.getResultString().equals("No tests found"));
 
         // save result to create entry in DB before establishing relation with submission for ordering

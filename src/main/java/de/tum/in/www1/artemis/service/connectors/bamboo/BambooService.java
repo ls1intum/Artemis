@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -530,45 +529,44 @@ public class BambooService extends AbstractContinuousService {
     @Override
     public Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) {
         log.debug("Retrieving build result (NEW) ...");
-        final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
         try {
+            final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
             // Filter the first build plan in case it was automatically executed when the build plan was created.
             if (isFirstBuildForThisPlan(buildResult)) {
                 return null;
             }
 
-            var result = createResultFromBuildResult(buildResult, participation);
+            var newResult = createResultFromBuildResult(buildResult, participation);
 
             // Fetch submission or create a fallback
             var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult);
-            // In this case we don't know the submission time, so we use the result completion time as a fallback.
-            // TODO: we should actually ask the git service to retrieve the actuall commit date in the git repository here and only use result.getCompletionDate() as fallback
-            final var submissionDate = result.getCompletionDate();
-            var latestSubmissionOrFallback = latestSubmission.orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult, submissionDate));
+            var latestSubmissionOrFallback = latestSubmission.orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
+            latestSubmissionOrFallback.setBuildFailed(newResult.getResultString().equals("No tests found"));
 
+            // Add artifacts to submission
             final var hasArtifact = buildResult.getBuild().isArtifact();
             latestSubmissionOrFallback.setBuildArtifact(hasArtifact);
-            latestSubmissionOrFallback.setBuildFailed(result.getResultString().equals("No tests found"));
+
             // Do not remove this save, otherwise Hibernate will throw an order column index null exception on saving the build logs
             latestSubmissionOrFallback = programmingSubmissionRepository.save(latestSubmissionOrFallback);
 
             // save result to create entry in DB before establishing relation with submission for ordering
-            result = resultRepository.save(result);
+            newResult = resultRepository.save(newResult);
 
             var buildLogs = extractAndFilterBuildLogs(buildResult);
             var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmissionOrFallback);
 
             latestSubmissionOrFallback = programmingSubmissionRepository.findWithEagerResultsAndBuildLogEntriesById(latestSubmissionOrFallback.getId()).get();
-            result.setSubmission(latestSubmissionOrFallback);
-            latestSubmissionOrFallback.addResult(result);
+            newResult.setSubmission(latestSubmissionOrFallback);
+            latestSubmissionOrFallback.addResult(newResult);
             // Set the received logs in order to avoid duplicate entries (this removes existing logs)
             latestSubmissionOrFallback.setBuildLogEntries(savedBuildLogs);
 
             latestSubmissionOrFallback = programmingSubmissionRepository.save(latestSubmissionOrFallback);
-            result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), latestSubmissionOrFallback);
+            newResult.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), latestSubmissionOrFallback);
             // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
             // This seems like a bug in Hibernate/JPA: https://stackoverflow.com/questions/6763329/ordercolumn-onetomany-null-index-column-for-collection.
-            return result;
+            return newResult;
         }
         catch (Exception e) {
             log.error("Error when creating build result from Bamboo notification: " + e.getMessage(), e);
@@ -577,12 +575,13 @@ public class BambooService extends AbstractContinuousService {
     }
 
     @NotNull
-    private ProgrammingSubmission createAndSaveFallbackSubmission(ProgrammingExerciseParticipation participation, BambooBuildResultNotificationDTO buildResult,
-            ZonedDateTime submissionDate) {
+    private ProgrammingSubmission createAndSaveFallbackSubmission(ProgrammingExerciseParticipation participation, BambooBuildResultNotificationDTO buildResult) {
         final var commitHash = getCommitHash(buildResult, SubmissionType.MANUAL);
         log.warn("Could not find pending ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create a new one subsequently...", commitHash,
                 participation.getId(), participation.getBuildPlanId());
-        var submission = super.createFallbackSubmission(participation, submissionDate, commitHash.orElse(null));
+        // In this case we don't know the submission time, so we use the result completion time as a fallback.
+        // TODO: we should actually ask the git service to retrieve the actuall commit date in the git repository here and only use result.getCompletionDate() as fallback
+        var submission = super.createFallbackSubmission(participation, buildResult.getBuild().getBuildCompletedDate(), commitHash.orElse(null));
         // Save to avoid TransientPropertyValueException.
         programmingSubmissionRepository.save(submission);
         return submission;
