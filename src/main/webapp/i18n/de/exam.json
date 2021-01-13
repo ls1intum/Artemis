@@ -53,6 +53,10 @@
             "validation": {
                 "startAndEndMustBeSet": "Start- und Enddatum der Klausur müssen festgelegt werden.",
                 "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",
+                "allExercisesInExerciseGroupOfSameIncludedType": "Alle Aufgaben in einer Aufgabengruppe müssen alle die selbe Bedeutung haben für das Klausurergebnis (Normale Aufgabe, Bonusaufgabe, Keine Bedeutung).",
+                "allExercisesInExerciseGroupGiveSameNumberOfPoints": "Alle Aufgaben in einer Aufgabengruppe müssen dieselbe Anzahl an Punkte oder Bonuspunkte geben",
+                "tooManyMaxPoints": "Überprüfe die maximale Punkteanzahl in der Klausur! Die maximalen Punkte die ein Student in den verpflichtenden Aufgaben erreichen kann ist zu gross.",
+                "tooFewMaxPoints": "Überprüfe die maximale Punkteanzahl in der Klausur! Die maximalen Punkte die ein Student in den Aufgaben erreichen kann ist zu niedrig.",
                 "numberOfExercisesMustBeSet": "Die Anzahl der Aufgaben für die Klasur muss gesetzt sein.",
                 "numberOfExercisesInExamNotSet": "Die Anzahl an Aufgaben in der Klausur ist nicht gesetzt.",
                 "tooFewExerciseGroups": "Die Anzahl der Aufgabengruppen ist zu klein.",

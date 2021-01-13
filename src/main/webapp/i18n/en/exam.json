@@ -53,6 +53,10 @@
             "validation": {
                 "startAndEndMustBeSet": "The start and end date must be set for the exam",
                 "atLeastOneExercisePerExerciseGroup": "All exercise groups must have at least one exercise.",
+                "allExercisesInExerciseGroupOfSameIncludedType": "All exercises in an exercise group need to have the same meaning for the exam score calculation (normal exercise, bonus exercise, not included).",
+                "allExercisesInExerciseGroupGiveSameNumberOfPoints": "All exercises in an exercise group need to give the same number of points or bonus points",
+                "tooManyMaxPoints": "Check that you set the exam max points correctly! The max points a student can earn in the mandatory exercise groups is too big",
+                "tooFewMaxPoints": "Check that you set the exam max points correctly! The max points a student can earn in the exercise groups is too low",
                 "numberOfExercisesMustBeSet": "The number of exercises must be set for the exam.",
                 "numberOfExercisesInExamNotSet": "The number of exercises in the exam is not set.",
                 "tooFewExerciseGroups": "The number of exercise groups is too small.",
