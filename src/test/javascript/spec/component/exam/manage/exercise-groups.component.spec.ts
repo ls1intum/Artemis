@@ -131,7 +131,7 @@ describe('Exercise Groups Component', () => {
     }));
 
     it('removes an exercise from group', fakeAsync(() => {
-        comp.exerciseGroups = groups.slice();
+        comp.exerciseGroups = groups;
 
         comp.removeExercise(3, 0);
 
@@ -139,7 +139,7 @@ describe('Exercise Groups Component', () => {
     }));
 
     it('deletes an exercise group', fakeAsync(() => {
-        comp.exerciseGroups = groups.slice();
+        comp.exerciseGroups = groups;
 
         spyOn(exerciseGroupService, 'delete').and.returnValue(of({}));
         spyOn(jhiEventManager, 'broadcast');
@@ -220,29 +220,35 @@ describe('Exercise Groups Component', () => {
     }));
 
     it('moves up an exercise group', () => {
-        comp.exerciseGroups = groups.slice();
+        comp.exerciseGroups = groups;
         const from = 1;
         const to = 0;
 
+        const fromId = comp.exerciseGroups[from].id;
+        const toId = comp.exerciseGroups[to].id;
+
         comp.moveUp(from);
 
-        expect(comp.exerciseGroups[to].id).toEqual(groups[from].id);
-        expect(comp.exerciseGroups[from].id).toEqual(groups[to].id);
+        expect(comp.exerciseGroups[to].id).toEqual(fromId);
+        expect(comp.exerciseGroups[from].id).toEqual(toId);
     });
 
     it('moves down an exercise group', () => {
-        comp.exerciseGroups = groups.slice();
+        comp.exerciseGroups = groups;
         const from = 0;
         const to = 1;
 
+        const fromId = comp.exerciseGroups[from].id;
+        const toId = comp.exerciseGroups[to].id;
+
         comp.moveDown(from);
 
-        expect(comp.exerciseGroups[to].id).toEqual(groups[from].id);
-        expect(comp.exerciseGroups[from].id).toEqual(groups[to].id);
+        expect(comp.exerciseGroups[to].id).toEqual(fromId);
+        expect(comp.exerciseGroups[from].id).toEqual(toId);
     });
 
     it('maps exercise types to exercise groups', () => {
-        comp.exerciseGroups = groups.slice();
+        comp.exerciseGroups = groups;
         const firstGroupId = groups[0].id!;
         const expectedResult = [ExerciseType.TEXT, ExerciseType.PROGRAMMING];
 
