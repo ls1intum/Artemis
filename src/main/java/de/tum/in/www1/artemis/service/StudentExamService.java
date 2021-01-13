@@ -135,7 +135,7 @@ public class StudentExamService {
             log.error("saveSubmissions threw an exception", e);
         }
 
-        if (!studentExam.getTestRun()) {
+        if (!studentExam.isTestRun()) {
             try {
                 // lock the programming exercise repository access (important in case of early exam submissions)
                 lockStudentRepositories(currentUser, existingStudentExam);
