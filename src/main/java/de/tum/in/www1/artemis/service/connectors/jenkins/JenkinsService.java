@@ -357,7 +357,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) {
         final var report = TestResultsDTO.convert(requestBody);
-        final var latestPendingSubmission = programmingSubmissionRepository.findByParticipationIdAndResultsIsNullOrderBySubmissionDateDesc(participation.getId()).stream()
+        final var latestPendingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId()).stream()
                 .filter(submission -> {
                     final var commitHash = getCommitHash(report, submission.getType());
                     return commitHash.isPresent() && submission.getCommitHash().equals(commitHash.get());
