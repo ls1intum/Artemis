@@ -299,6 +299,7 @@ Summary
 ^^^^^^^
 - After you hand in, you can view the summary of your exam.
 - You always have access to the summary. You can find it by following the steps displayed in: `Accessing the Exam`_.
+- Further you have the opportunity to export the summary as a PDF file by clicking on |export_pdf|.
 - The summary contains an aggregated view of all your submissions. For programming exercises, it also contains the latest commit hash and repository URL so you can review your code.
 
 .. figure:: student/summary.png
@@ -310,6 +311,8 @@ Summary
 - Once the results have been published, you can view your score in the summary.
 - Additionally, if within the student review period, you have the option to complain about manual assessments made. To do this, simply click on |complain| and explain your rationale.
 - A second assessor, different from the original one will have the opportunity to review your complaint and respond to it.
+- The complaint response will become visible to you as soon as it has been assessed.
+- Again, you can export the summary including your score as a PDF file by clicking on |export_pdf|. The PDF will also contain any complaints and complaint assessments.
         
     .. note::
         The results will automatically be updated, if your complaint was successful.
@@ -348,3 +351,4 @@ Summary
 .. |exit_fullscreen| image:: student/buttons/exit_fullscreen.png
 .. |building_and_testing| image:: student/buttons/building_and_testing.png
 .. |no_results_found| image:: student/buttons/no_results_found.png
+.. |export_pdf| image:: student/buttons/export_pdf.png
