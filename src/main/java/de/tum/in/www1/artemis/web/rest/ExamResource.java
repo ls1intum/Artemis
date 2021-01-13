@@ -412,7 +412,7 @@ public class ExamResource {
             return notFound();
         }
         if (student.get().getGroups().contains(exam.getCourse().getInstructorGroupName()) || authCheckService.isAdmin(student.get())) {
-            return forbidden("exam", "cannotRegisterInstructor", "You cannot register instructors and administrators to exams.");
+            return forbidden("exam", "cannotRegisterInstructor", "You cannot register instructors or administrators to exams.");
         }
         exam.addRegisteredUser(student.get());
         // NOTE: we intentionally add the user to the course group, because the user only has access to the exam of a course, if the student also

@@ -59,7 +59,7 @@
                 "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß."
             },
             "error": {
-                "cannotRegisterInstructor": "Du kannst keine Instruktoren und Administratoren zu Klausuren anmelden."
+                "cannotRegisterInstructor": "Du kannst keine Dozenten oder Administratoren zu Klausuren anmelden."
             }
         },
         "examScores": {

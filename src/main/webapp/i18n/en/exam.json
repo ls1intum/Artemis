@@ -59,7 +59,7 @@
                 "tooManyMandatoryExerciseGroups": "The number of mandatory exercise groups is too large."
             },
             "error": {
-                "cannotRegisterInstructor": "You cannot register instructors and administrators to exams."
+                "cannotRegisterInstructor": "You cannot register instructors or administrators to exams."
             }
         },
         "examScores": {
