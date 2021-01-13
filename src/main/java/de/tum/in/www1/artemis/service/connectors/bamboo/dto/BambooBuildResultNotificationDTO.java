@@ -4,10 +4,12 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class BambooBuildResultNotificationDTO {
+public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotificationDTO {
 
     private String secret;
 

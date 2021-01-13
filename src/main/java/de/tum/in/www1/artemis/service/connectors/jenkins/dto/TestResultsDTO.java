@@ -6,10 +6,12 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TestResultsDTO {
+public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
     private int successful;
 
