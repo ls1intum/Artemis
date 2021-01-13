@@ -6,18 +6,15 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.ComplaintResponse;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintResponseService;
@@ -37,12 +34,9 @@ public class ComplaintResponseResource {
 
     public static final String ENTITY_NAME = "complaintResponse";
 
-    private static final String MORE_FEEDBACK_RESPONSE_ENITY_NAME = "moreFeedbackResponse";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
     private final ComplaintResponseRepository complaintResponseRepository;
+
+    private final ComplaintRepository complaintRepository;
 
     private final ComplaintResponseService complaintResponseService;
 
@@ -51,9 +45,10 @@ public class ComplaintResponseResource {
     private final UserService userService;
 
     public ComplaintResponseResource(ComplaintResponseRepository complaintResponseRepository, ComplaintResponseService complaintResponseService,
-            AuthorizationCheckService authorizationCheckService, UserService userService) {
+            AuthorizationCheckService authorizationCheckService, UserService userService, ComplaintRepository complaintRepository) {
         this.complaintResponseRepository = complaintResponseRepository;
         this.complaintResponseService = complaintResponseService;
+        this.complaintRepository = complaintRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userService = userService;
     }
@@ -68,7 +63,8 @@ public class ComplaintResponseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ComplaintResponse> lockComplaint(@PathVariable long complaintId) {
         log.debug("REST request to create empty complaint response for complaint with id: {}", complaintId);
-        ComplaintResponse savedComplaintResponse = complaintResponseService.createEmptyComplaintResponse(complaintId);
+        Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
+        ComplaintResponse savedComplaintResponse = complaintResponseService.createComplaintResponseRepresentingLock(complaint);
         // always remove the student from the complaint as we don't need it in the corresponding client use case
         savedComplaintResponse.getComplaint().filterSensitiveInformation();
         return new ResponseEntity<>(savedComplaintResponse, HttpStatus.CREATED);
@@ -84,7 +80,8 @@ public class ComplaintResponseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ComplaintResponse> refreshLockOnComplaint(@PathVariable long complaintId) {
         log.debug("REST request to refresh empty complaint response for complaint with id: {}", complaintId);
-        ComplaintResponse savedComplaintResponse = complaintResponseService.refreshEmptyComplaintResponse(complaintId);
+        Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
+        ComplaintResponse savedComplaintResponse = complaintResponseService.refreshComplaintResponseRepresentingLock(complaint);
         // always remove the student from the complaint as we don't need it in the corresponding client use case
         savedComplaintResponse.getComplaint().filterSensitiveInformation();
         return new ResponseEntity<>(savedComplaintResponse, HttpStatus.CREATED);
@@ -100,7 +97,8 @@ public class ComplaintResponseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> removeLockFromComplaint(@PathVariable long complaintId) {
         log.debug("REST request to remove the lock on the complaint with the id: {}", complaintId);
-        complaintResponseService.removeEmptyComplaintResponse(complaintId);
+        Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
+        complaintResponseService.removeComplaintResponseRepresentingLock(complaint);
         return ResponseEntity.ok().build();
     }
 
@@ -115,6 +113,7 @@ public class ComplaintResponseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ComplaintResponse> resolveComplaint(@RequestBody ComplaintResponse complaintResponse, @PathVariable long complaintId) {
         log.debug("REST request to resolve the complaint with id: {}", complaintId);
+        getComplaintFromDatabaseAndCheckAccessRights(complaintId);
         ComplaintResponse updatedComplaintResponse = complaintResponseService.resolveComplaint(complaintResponse);
         // always remove the student from the complaint as we don't need it in the corresponding client use case
         updatedComplaintResponse.getComplaint().filterSensitiveInformation();
@@ -183,5 +182,18 @@ public class ComplaintResponseResource {
         else {
             throw new Error("Unknown Participant type");
         }
+    }
+
+    private Complaint getComplaintFromDatabaseAndCheckAccessRights(long complaintId) {
+        Optional<Complaint> complaintFromDatabaseOptional = complaintRepository.findByIdWithEagerAssessor(complaintId);
+        if (complaintFromDatabaseOptional.isEmpty()) {
+            throw new IllegalArgumentException("Complaint was not found in database");
+        }
+        Complaint complaint = complaintFromDatabaseOptional.get();
+        User user = this.userService.getUser();
+        if (!complaintResponseService.isUserAuthorizedToRespondToComplaint(complaint, user)) {
+            throw new AccessForbiddenException("Insufficient permission for modifying the lock on the complaint");
+        }
+        return complaint;
     }
 }

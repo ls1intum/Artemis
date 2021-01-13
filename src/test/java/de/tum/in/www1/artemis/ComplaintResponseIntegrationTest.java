@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -48,9 +47,6 @@ public class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationB
 
     @Autowired
     ComplaintResponseRepository complaintResponseRepository;
-
-    @Autowired
-    JdbcTemplate jdbcTemplate;
 
     Complaint complaint;
 
