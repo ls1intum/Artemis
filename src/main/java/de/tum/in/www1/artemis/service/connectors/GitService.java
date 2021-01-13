@@ -870,31 +870,20 @@ public class GitService {
     }
 
     /**
-     * Deletes a local repository folder for a repoUrl (expected in default path).
+     * Deletes a local repository folder for a repoUrl.
      *
      * @param repoUrl url of the repository.
      */
     public void deleteLocalRepository(VcsRepositoryUrl repoUrl) {
-        deleteLocalRepository(repoUrl, repoClonePath);
-    }
-
-    /**
-     * Deletes a local repository folder for a repoUrl.
-     *
-     * @param repoUrl url of the repository.
-     * @param targetPath path where the repo is located on disk
-     */
-    public void deleteLocalRepository(VcsRepositoryUrl repoUrl, String targetPath) {
-        Path repoPath = new java.io.File(targetPath + folderNameForRepositoryUrl(repoUrl)).toPath();
-        cachedRepositories.remove(repoPath);
-        if (Files.exists(repoPath)) {
-            try {
-                FileUtils.deleteDirectory(repoPath.toFile());
-                log.info("Deleted Repository at " + repoPath);
+        try {
+            if (repoUrl != null && repositoryAlreadyExists(repoUrl)) {
+                // We need to close the possibly still open repository otherwise an IOException will be thrown on Windows
+                Repository repo = getOrCheckoutRepository(repoUrl, false);
+                deleteLocalRepository(repo);
             }
-            catch (IOException e) {
-                log.error("Could not delete repository at " + repoPath, e);
-            }
+        }
+        catch (InterruptedException | IOException | GitAPIException e) {
+            log.error("Error while deleting local repository", e);
         }
     }
 
@@ -953,7 +942,7 @@ public class GitService {
      * @return True if repo exists on disk
      */
     public boolean repositoryAlreadyExists(VcsRepositoryUrl repoUrl) {
-        Path localPath = new java.io.File(repoClonePath + folderNameForRepositoryUrl(repoUrl)).toPath();
+        Path localPath = Paths.get(repoClonePath, folderNameForRepositoryUrl(repoUrl));
         return Files.exists(localPath);
     }
 

@@ -147,7 +147,7 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     // TODO: find usages of similar logic -> put into utils method
-    private getSubmissionForExercise(exercise: Exercise) {
+    getSubmissionForExercise(exercise: Exercise) {
         if (
             exercise &&
             exercise.studentParticipations &&
