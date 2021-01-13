@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
@@ -49,7 +48,6 @@ public class ComplaintResponseService {
      *
      * @param complaintId of the complaint for which to remove the empty response for
      */
-    @Transactional // ok because of modifying query
     public void removeEmptyComplaintResponse(Long complaintId) {
         if (complaintId == null) {
             throw new IllegalArgumentException("Complaint id should not be null");
@@ -104,7 +102,6 @@ public class ComplaintResponseService {
      * @param complaintId if of the complaint for which to refresh the empty response for
      * @return refreshed empty complaint response
      */
-    @Transactional // ok because of modifying query
     public ComplaintResponse refreshEmptyComplaintResponse(Long complaintId) {
         if (complaintId == null) {
             throw new IllegalArgumentException("Complaint id should not be null");
@@ -190,7 +187,6 @@ public class ComplaintResponseService {
      * @param updatedComplaintResponse complaint response containing the information necessary for resolving the complaint
      * @return complaintResponse of resolved complaint
      */
-    @Transactional // ok because of modifying query
     public ComplaintResponse resolveComplaint(ComplaintResponse updatedComplaintResponse) {
         if (updatedComplaintResponse.getId() == null) {
             throw new IllegalArgumentException("The complaint response needs to have an id");
