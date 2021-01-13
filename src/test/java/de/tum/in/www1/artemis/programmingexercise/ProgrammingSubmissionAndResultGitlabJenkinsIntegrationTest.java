@@ -118,6 +118,10 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
         var result = assertBuildError(participation.getId(), userLogin);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
+
+        // Call again and assert that no new submissions have been created
+        postResult(notification, HttpStatus.OK, false);
+        assertNoNewSubmissions(submission);
     }
 
     @ParameterizedTest
@@ -177,6 +181,12 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         verify(buildWithDetails, times(1)).getConsoleOutputHtml();
 
         return result;
+    }
+
+    private void assertNoNewSubmissions(ProgrammingSubmission submission) {
+        var updatedSubmissions = submissionRepository.findAll();
+        assertThat(updatedSubmissions.size()).isEqualTo(1);
+        assertThat(updatedSubmissions.get(0).getId()).isEqualTo(submission.getId());
     }
 
     private void postResult(TestResultsDTO requestBodyMap, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {

@@ -111,6 +111,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         String login = "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
         bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
+        bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
@@ -120,6 +121,12 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         assertThat(submissionRepository.findWithEagerResultsById(submission.getId()).get().getLatestResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
+
+        // Trigger the call again and make sure that the submission shouldn't be recreated
+        request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
+        var updatedSubmissions = submissionRepository.findAll();
+        assertThat(updatedSubmissions).hasSize(1);
+        assertThat(updatedSubmissions.get(0).getId()).isEqualTo(submission.getId());
     }
 
     @Test
