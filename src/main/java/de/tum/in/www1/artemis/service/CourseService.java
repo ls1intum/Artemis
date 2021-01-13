@@ -324,7 +324,7 @@ public class CourseService {
      */
     public Course retrieveCourseOverExerciseGroupOrCourseId(Exercise exercise) {
 
-        if (exercise.hasExerciseGroup()) {
+        if (exercise.isExamExercise()) {
             ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(exercise.getExerciseGroup().getId());
             exercise.setExerciseGroup(exerciseGroup);
             return exerciseGroup.getExam().getCourse();

@@ -6,7 +6,10 @@ import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -125,7 +128,7 @@ public class ProgrammingExerciseImportService {
         }
 
         // An exam exercise can only be in individual mode
-        if (!newExercise.hasCourse()) {
+        if (!newExercise.isCourseExercise()) {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
             newExercise.setTeamAssignmentConfig(null);
         }

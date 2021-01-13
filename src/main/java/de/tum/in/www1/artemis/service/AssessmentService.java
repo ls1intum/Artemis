@@ -75,7 +75,7 @@ public class AssessmentService {
         double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
 
         // Exam results and manual results of programming exercises are always to rated
-        if (exercise.hasExerciseGroup() || exercise instanceof ProgrammingExercise) {
+        if (exercise.isExamExercise() || exercise instanceof ProgrammingExercise) {
             result.setRated(true);
         }
         else {
@@ -155,7 +155,7 @@ public class AssessmentService {
      */
     public boolean isAllowedToCreateOrOverrideResult(Result existingResult, Exercise exercise, StudentParticipation participation, User user, boolean isAtLeastInstructor) {
 
-        final boolean isExamMode = exercise.hasExerciseGroup();
+        final boolean isExamMode = exercise.isExamExercise();
         ZonedDateTime assessmentDueDate;
 
         // For exam exercises, tutors cannot override submissions when the publish result date is in the past (assessmentDueDate)

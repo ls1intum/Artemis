@@ -536,8 +536,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         const submission: Submission = complaint.result?.submission!;
         // For programming exercises we need the participationId
         submission.participation = complaint.result?.participation;
-        // TODO: NR, SE: change to depend on correctionround
-        this.openAssessmentEditor(submission, submission.results?.length);
+        this.openAssessmentEditor(submission, submission.results!.length - 1);
     }
 
     /**

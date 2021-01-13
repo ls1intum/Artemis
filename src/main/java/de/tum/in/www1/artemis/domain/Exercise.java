@@ -385,8 +385,7 @@ public abstract class Exercise extends DomainObject {
     }
 
     @JsonIgnore
-    // TODO: refactor to "isCourseExercise"
-    public boolean hasCourse() {
+    public boolean isCourseExercise() {
         return this.course != null;
     }
 
@@ -399,8 +398,7 @@ public abstract class Exercise extends DomainObject {
     }
 
     @JsonIgnore
-    // TODO: refactor to "isExamExercise"
-    public boolean hasExerciseGroup() {
+    public boolean isExamExercise() {
         return this.exerciseGroup != null;
     }
 
@@ -412,7 +410,7 @@ public abstract class Exercise extends DomainObject {
      */
     @JsonIgnore
     public Course getCourseViaExerciseGroupOrCourseMember() {
-        if (hasExerciseGroup()) {
+        if (isExamExercise()) {
             return this.getExerciseGroup().getExam().getCourse();
         }
         else {
@@ -760,7 +758,7 @@ public abstract class Exercise extends DomainObject {
     public boolean isReleased() {
         // Exam
         ZonedDateTime releaseDate;
-        if (this.hasExerciseGroup()) {
+        if (this.isExamExercise()) {
             releaseDate = this.getExerciseGroup().getExam().getStartDate();
         }
         else {

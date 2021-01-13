@@ -601,7 +601,7 @@ public class ParticipationService {
     }
 
     private boolean isExamExercise(Exercise exercise) {
-        return !exercise.hasCourse();
+        return !exercise.isCourseExercise();
     }
 
     /**

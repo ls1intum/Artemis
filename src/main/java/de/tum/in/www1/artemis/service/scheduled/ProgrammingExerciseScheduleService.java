@@ -342,7 +342,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private static boolean isExamExercise(ProgrammingExercise exercise) {
-        return exercise.hasExerciseGroup();
+        return exercise.isExamExercise();
     }
 
     private static ZonedDateTime getExamProgrammingExerciseReleaseDate(ProgrammingExercise exercise) {

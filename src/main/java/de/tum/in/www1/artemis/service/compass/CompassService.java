@@ -74,7 +74,7 @@ public class CompassService {
 
         // only use compass for course exercises, in exam exercises the additional delay is too much so it is currently deactivated
         // TODO: we should support compass also for the exam mode
-        if (modelingExercise.hasExerciseGroup()) {
+        if (modelingExercise.isExamExercise()) {
             return false;
         }
 

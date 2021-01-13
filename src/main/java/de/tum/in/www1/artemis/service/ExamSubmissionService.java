@@ -153,7 +153,7 @@ public class ExamSubmissionService {
     }
 
     private boolean isExamSubmission(Exercise exercise) {
-        return exercise.hasExerciseGroup();
+        return exercise.isExamExercise();
     }
 
     private boolean isSubmissionInTime(Exercise exercise, StudentExam studentExam) {

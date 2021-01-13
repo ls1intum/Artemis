@@ -671,17 +671,17 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return a locked programming submission that needs an assessment
      */
     public ProgrammingSubmission lockAndGetProgrammingSubmissionWithoutResult(ProgrammingExercise exercise, long correctionRound) {
-        ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.hasExerciseGroup(), correctionRound)
+        ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.isExamExercise(), correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission for exercise " + exercise.getId() + " could not be found"));
         Result newManualResult = lockSubmission(programmingSubmission, correctionRound);
         return (ProgrammingSubmission) newManualResult.getSubmission();
     }
 
-    // TODO explain in what context this method is even called
+    // TODO SE: explain in what context this method is even called
     @Override
     protected Result lockSubmission(Submission submission, Long correctionRound) {
         Result existingResult;
-        // TODO write explanaiton
+        // TODO SE: write explanation
         ProgrammingSubmission newSubmission;
 
         if (correctionRound == 0) {
@@ -697,7 +697,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
         else {
             existingResult = submission.getResultByCorrectionRound(correctionRound - 1);
-            // Create a new result (manual result) and a new submission for it and set assessor and type to manua
             newSubmission = (ProgrammingSubmission) submission;
         }
 

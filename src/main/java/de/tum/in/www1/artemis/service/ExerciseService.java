@@ -308,7 +308,7 @@ public class ExerciseService {
         // make sure tutor participations are deleted before the exercise is deleted
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
 
-        if (exercise.hasExerciseGroup()) {
+        if (exercise.isExamExercise()) {
             Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(exercise.getExerciseGroup().getExam().getId());
             for (StudentExam studentExam : exam.getStudentExams()) {
                 if (studentExam.getExercises().contains(exercise)) {
@@ -428,7 +428,7 @@ public class ExerciseService {
      * @throws BadRequestAlertException if course and exerciseGroup are set or course and exerciseGroup are not set
      */
     public void checkCourseAndExerciseGroupExclusivity(Exercise exercise, String entityName) throws BadRequestAlertException {
-        if (exercise.hasCourse() == exercise.hasExerciseGroup()) {
+        if (exercise.isCourseExercise() == exercise.isExamExercise()) {
             throw new BadRequestAlertException("An exercise must have either a course or an exerciseGroup", entityName, "eitherCourseOrExerciseGroupSet");
         }
     }
@@ -442,7 +442,7 @@ public class ExerciseService {
      * @throws BadRequestAlertException if updated exercise was converted
      */
     public void checkForConversionBetweenExamAndCourseExercise(Exercise updatedExercise, Exercise oldExercise, String entityName) throws BadRequestAlertException {
-        if (updatedExercise.hasExerciseGroup() != oldExercise.hasExerciseGroup() || updatedExercise.hasCourse() != oldExercise.hasCourse()) {
+        if (updatedExercise.isExamExercise() != oldExercise.isExamExercise() || updatedExercise.isCourseExercise() != oldExercise.isCourseExercise()) {
             throw new BadRequestAlertException("Course exercise cannot be converted to exam exercise and vice versa", entityName, "conversionBetweenExamAndCourseExercise");
         }
     }
@@ -558,7 +558,7 @@ public class ExerciseService {
             }
             Exercise exerciseFromDb = exerciseFromDbOptional.get();
 
-            if (!exerciseFromDb.hasCourse()) {
+            if (!exerciseFromDb.isCourseExercise()) {
                 throw new IllegalArgumentException("Exercise is not a course exercise");
             }
 

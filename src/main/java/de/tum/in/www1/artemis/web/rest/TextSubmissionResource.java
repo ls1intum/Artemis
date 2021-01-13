@@ -202,7 +202,7 @@ public class TextSubmissionResource {
         }
 
         List<TextSubmission> textSubmissions;
-        final boolean examMode = exercise.hasExerciseGroup();
+        final boolean examMode = exercise.isExamExercise();
         if (assessedByTutor) {
             textSubmissions = textSubmissionService.getAllTextSubmissionsAssessedByTutorWithForExercise(exerciseId, user, examMode, correctionRound);
         }
@@ -266,17 +266,17 @@ public class TextSubmissionResource {
 
         final TextSubmission textSubmission;
         if (lockSubmission) {
-            textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise, exercise.hasExerciseGroup(), correctionRound);
+            textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise, exercise.isExamExercise(), correctionRound);
             textAssessmentService.prepareSubmissionForAssessment(textSubmission, correctionRound);
         }
         else {
             Optional<TextSubmission> optionalTextSubmission;
             if (skipAssessmentOrderOptimization) {
-                optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, true, exercise.hasExerciseGroup(),
+                optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, true, exercise.isExamExercise(),
                         correctionRound);
             }
             else {
-                optionalTextSubmission = this.textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, exercise.hasExerciseGroup(),
+                optionalTextSubmission = this.textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, exercise.isExamExercise(),
                         correctionRound);
             }
             if (optionalTextSubmission.isEmpty()) {

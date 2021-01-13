@@ -363,7 +363,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
         assertThat(newModelingExercise.getTitle()).as("modeling exercise title was correctly set").isEqualTo(title);
         assertThat(newModelingExercise.getDifficulty()).as("modeling exercise difficulty was correctly set").isEqualTo(difficulty);
-        assertThat(!newModelingExercise.hasCourse()).as("course was not set for exam exercise");
+        assertThat(!newModelingExercise.isCourseExercise()).as("course was not set for exam exercise");
         assertThat(newModelingExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(newModelingExercise.getExerciseGroup().getId()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
     }

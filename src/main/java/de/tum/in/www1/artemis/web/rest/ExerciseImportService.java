@@ -46,7 +46,7 @@ public abstract class ExerciseImportService {
     public abstract Exercise importExercise(final Exercise templateExercise, final Exercise importedExercise);
 
     void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise) {
-        if (importedExercise.hasCourse()) {
+        if (importedExercise.isCourseExercise()) {
             newExercise.setCourse(importedExercise.getCourseViaExerciseGroupOrCourseMember());
         }
         else {

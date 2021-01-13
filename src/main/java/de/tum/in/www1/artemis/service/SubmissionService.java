@@ -323,8 +323,7 @@ public class SubmissionService {
      * @param oldResult result to copy from
      * @return the newly created copy of the oldResult
      */
-    // TODO: this method name is not good, I would rather say copyResultFromPreviousRoundAndSave
-    public Result saveNewCopyResult(Submission submission, Result oldResult) {
+    public Result copyResultFromPreviousRoundAndSave(Submission submission, Result oldResult) {
         if (oldResult == null) {
             return saveNewEmptyResult(submission);
         }
@@ -365,7 +364,6 @@ public class SubmissionService {
     }
 
     /**
-     * TODO: NR, SE: Used exclusively to add results to zero point submissions?
      * Add a result to the last {@link Submission} of a {@link StudentParticipation}, see {@link StudentParticipation#findLatestSubmission()}, with a feedback of type {@link FeedbackType#AUTOMATIC}.
      * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment, see {@link StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation}.
      * Sets the feedback text and result score.
@@ -376,7 +374,7 @@ public class SubmissionService {
      * @param feedbackText the feedback text for the
      */
     public void addResultWithFeedback(StudentParticipation studentParticipation, User assessor, long score, String feedbackText) {
-        if (studentParticipation.getExercise().hasExerciseGroup() && studentParticipation.findLatestSubmission().isPresent()
+        if (studentParticipation.getExercise().isExamExercise() && studentParticipation.findLatestSubmission().isPresent()
                 && studentParticipation.findLatestSubmission().get().getLatestResult() == null) {
             final var latestSubmission = studentParticipation.findLatestSubmission().get();
             Result result = new Result();
@@ -412,7 +410,7 @@ public class SubmissionService {
         Result result = submission.getResultByCorrectionRound(correctionRound);
         if (result == null && correctionRound > 0L) {
             // copy the result of the previous correction round
-            result = saveNewCopyResult(submission, submission.getResultByCorrectionRound(correctionRound - 1));
+            result = copyResultFromPreviousRoundAndSave(submission, submission.getResultByCorrectionRound(correctionRound - 1));
         }
         else if (result == null) {
             result = saveNewEmptyResult(submission);
@@ -477,7 +475,7 @@ public class SubmissionService {
      * @return boolean
      */
     public boolean checkIfExerciseDueDateIsReached(Exercise exercise) {
-        final boolean isExamMode = exercise.hasExerciseGroup();
+        final boolean isExamMode = exercise.isExamExercise();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (isExamMode) {
             ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());

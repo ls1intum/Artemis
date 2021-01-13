@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.security.Principal;
 import java.util.*;
@@ -16,7 +17,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -218,7 +222,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         final var modelingExercise = (ModelingExercise) exercise;
-        final var isExamMode = modelingExercise.hasExerciseGroup();
+        final var isExamMode = modelingExercise.isExamExercise();
 
         // Check if tutors can start assessing the students submission
         boolean startAssessingSubmissions = this.modelingSubmissionService.checkIfExerciseDueDateIsReached(exercise);

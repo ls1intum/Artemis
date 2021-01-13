@@ -758,7 +758,7 @@ public class DatabaseUtilService {
             else {
                 submission = markProgrammingParticipationForTestRun((ProgrammingExercise) exercise, instructor.getLogin());
             }
-            assertThat(exercise.hasExerciseGroup()).isTrue();
+            assertThat(exercise.isExamExercise()).isTrue();
             assertThat(submission.getLatestResult().getAssessor().getLogin()).isEqualTo(instructor.getLogin());
             assertThat(((StudentParticipation) submission.getParticipation()).getStudent().get().getLogin()).isEqualTo(instructor.getLogin());
         }

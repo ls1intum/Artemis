@@ -221,11 +221,11 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         final FileUploadSubmission fileUploadSubmission;
         if (lockSubmission) {
             fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise,
-                    fileUploadExercise.hasExerciseGroup(), correctionRound);
+                    fileUploadExercise.isExamExercise(), correctionRound);
         }
         else {
             Optional<FileUploadSubmission> optionalFileUploadSubmission = fileUploadSubmissionService
-                    .getRandomFileUploadSubmissionEligibleForNewAssessment((FileUploadExercise) fileUploadExercise, fileUploadExercise.hasExerciseGroup(), correctionRound);
+                    .getRandomFileUploadSubmissionEligibleForNewAssessment((FileUploadExercise) fileUploadExercise, fileUploadExercise.isExamExercise(), correctionRound);
 
             if (optionalFileUploadSubmission.isEmpty()) {
                 return notFound();

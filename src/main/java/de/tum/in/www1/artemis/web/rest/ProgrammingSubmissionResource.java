@@ -348,7 +348,7 @@ public class ProgrammingSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        final boolean examMode = exercise.hasExerciseGroup();
+        final boolean examMode = exercise.isExamExercise();
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
             User user = userService.getUserWithGroupsAndAuthorities();
@@ -437,7 +437,7 @@ public class ProgrammingSubmissionResource {
         }
         else {
             Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionService.getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise,
-                    programmingExercise.hasExerciseGroup(), correctionRound);
+                    programmingExercise.isExamExercise(), correctionRound);
             if (optionalProgrammingSubmission.isEmpty()) {
                 return notFound();
             }

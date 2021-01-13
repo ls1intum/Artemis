@@ -169,7 +169,7 @@ public class BitbucketRequestMockProvider {
         final var projectKey = exercise.getProjectKey();
         final var repoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
         for (User user : users) {
-            if (exercise.hasCourse()) {
+            if (exercise.isCourseExercise()) {
                 // add mock for userExists() check, if the username contains edx_ or u4i_
                 String loginName = user.getLogin();
                 if (userPrefixEdx.isPresent() && loginName.startsWith(userPrefixEdx.get()) || userPrefixU4I.isPresent() && loginName.startsWith(userPrefixU4I.get())) {

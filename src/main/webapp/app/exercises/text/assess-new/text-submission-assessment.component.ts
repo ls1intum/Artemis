@@ -58,7 +58,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     assessmentsAreValid: boolean;
     noNewSubmissions: boolean;
     hasAssessmentDueDatePassed: boolean;
-    correctionRound: number; // TODO: NR, SE + is latestResult set correctly?
+    correctionRound: number;
 
     /*
      * Non-resetted properties:

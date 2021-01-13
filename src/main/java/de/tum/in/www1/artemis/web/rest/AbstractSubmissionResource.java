@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -61,7 +63,7 @@ public abstract class AbstractSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        final boolean examMode = exercise.hasExerciseGroup();
+        final boolean examMode = exercise.isExamExercise();
         List<Submission> submissions;
         if (assessedByTutor) {
             submissions = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user, examMode, correctionRound);
