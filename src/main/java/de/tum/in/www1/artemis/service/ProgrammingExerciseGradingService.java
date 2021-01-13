@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -129,7 +128,7 @@ public class ProgrammingExerciseGradingService {
                 Optional<Result> latestManualOrSemiAutomaticResult = studentParticipation.flatMap(p -> p.getResults().stream().findFirst());
 
                 if (latestManualOrSemiAutomaticResult.isPresent()) {
-                    Result newManualResult = createNewSemiAutomaticResult(newResult, latestManualOrSemiAutomaticResult.get(), programmingExercise);
+                    Result newManualResult = updateSemiAutomaticResult(latestManualOrSemiAutomaticResult.get(), newResult, programmingExercise);
                     return Optional.of(newManualResult);
                 }
 
@@ -139,50 +138,36 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Combines a new automatic result and an existing semi automatic result (with manual feedback) into a new semi automatic result
+     * Updates an existing semi-automatic result with automatic feedback from another result.
      *
      * Note: for the second correction it is important that we do not create additional semi automatic results
      *
-     * @param newAutomaticResult The new automatic result
      * @param semiAutomaticResult The latest manual result for the same submission
+     * @param newAutomaticResult The new automatic result
      * @param programmingExercise The programming exercise
-     * @return A new manual result
+     * @return The updated semi-automatic result
      */
-    private Result createNewSemiAutomaticResult(Result newAutomaticResult, Result semiAutomaticResult, ProgrammingExercise programmingExercise) {
-
-        // create a new manual result for the same submission as the automatic result
-        Result newResult = programmingSubmissionService.saveNewEmptyResult(newAutomaticResult.getSubmission());
-
-        newResult.setAssessor(semiAutomaticResult.getAssessor());
-        newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+    private Result updateSemiAutomaticResult(Result semiAutomaticResult, Result newAutomaticResult, ProgrammingExercise programmingExercise) {
         // this makes it the most recent result, but optionally keeps the draft state of an unfinished manual result
-        newResult.setCompletionDate(semiAutomaticResult.getCompletionDate() != null ? newAutomaticResult.getCompletionDate().plusSeconds(1) : null);
-        newResult.setHasFeedback(semiAutomaticResult.getHasFeedback());
-        newResult.setRated(semiAutomaticResult.isRated());
+        semiAutomaticResult.setCompletionDate(semiAutomaticResult.getCompletionDate() != null ? newAutomaticResult.getCompletionDate().plusSeconds(1) : null);
+
+        // remove old automatic feedback
+        for (Feedback feedback : semiAutomaticResult.getFeedbacks()) {
+            if (feedback != null && feedback.getType() == FeedbackType.AUTOMATIC) {
+                semiAutomaticResult.removeFeedback(feedback);
+            }
+        }
 
         // copy all feedback from the automatic result
         for (Feedback feedback : newAutomaticResult.getFeedbacks()) {
             Feedback newFeedback = feedback.copyFeedback();
-            newResult.addFeedback(newFeedback);
+            semiAutomaticResult.addFeedback(newFeedback);
         }
 
-        // copy only the non-automatic feedback from the manual result
-        for (Feedback feedback : semiAutomaticResult.getFeedbacks()) {
-            if (feedback != null && feedback.getType() != FeedbackType.AUTOMATIC) {
-                Feedback newFeedback = feedback.copyFeedback();
-                newResult.addFeedback(newFeedback);
-            }
-        }
+        String resultString = updateManualResultString(newAutomaticResult.getResultString(), semiAutomaticResult, programmingExercise);
+        semiAutomaticResult.setResultString(resultString);
 
-        String resultString = updateManualResultString(newAutomaticResult.getResultString(), newResult, programmingExercise);
-        newResult.setResultString(resultString);
-
-        // workaround to prevent that result.submission suddenly turns into a proxy and cannot be used any more later after returning this method
-        Submission tmpSubmission = newResult.getSubmission();
-        newResult = resultRepository.save(newResult);
-        newResult.setSubmission(tmpSubmission);
-
-        return newResult;
+        return resultRepository.save(semiAutomaticResult);
     }
 
     /**
