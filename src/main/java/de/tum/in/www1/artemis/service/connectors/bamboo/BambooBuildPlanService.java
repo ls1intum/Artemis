@@ -216,7 +216,6 @@ public class BambooBuildPlanService {
                 defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask);
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
                     // Create artifacts and a final task for the execution of static code analysis
-                    // TODO: change to SWIFT -> requires change in sca-parser
                     List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.SWIFT);
                     Artifact[] artifacts = staticCodeAnalysisTools.stream()
                             .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);

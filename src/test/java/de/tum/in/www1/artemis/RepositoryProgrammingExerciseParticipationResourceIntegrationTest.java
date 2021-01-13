@@ -65,15 +65,15 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     private ProgrammingExercise programmingExercise;
 
-    private String currentLocalFileName = "currentFileName";
+    private final String currentLocalFileName = "currentFileName";
 
-    private String currentLocalFileContent = "testContent";
+    private final String currentLocalFileContent = "testContent";
 
-    private String currentLocalFolderName = "currentFolderName";
+    private final String currentLocalFolderName = "currentFolderName";
 
-    private String newLocalFileName = "newFileName";
+    private final String newLocalFileName = "newFileName";
 
-    private String newLocalFolderName = "newFolderName";
+    private final String newLocalFolderName = "newFolderName";
 
     LocalRepository studentRepository = new LocalRepository();
 

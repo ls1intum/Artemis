@@ -106,7 +106,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         replacements.put(REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
         replacements.put(REPLACE_DOCKER_IMAGE_NAME, jenkinsService.getDockerImageName(programmingLanguage));
         replacements.put(REPLACE_JENKINS_TIMEOUT, buildTimeout);
-        // at the moment, only Java is supported
+        // at the moment, only Java and Swift are supported
         if (isStaticCodeAnalysisEnabled) {
             String staticCodeAnalysisScript = createStaticCodeAnalysisScript(programmingLanguage);
             replacements.put(REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript);
@@ -155,18 +155,30 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         }
     }
 
-    // at the moment, only Java is supported
+    // at the moment, only Java and Swift are supported
     private String createStaticCodeAnalysisScript(ProgrammingLanguage programmingLanguage) {
         StringBuilder script = new StringBuilder();
         String lineEnding = "&#xd;";
-        script.append("mvn ");
-        // Execute all static code analysis tools for Java
-        script.append(StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(programmingLanguage)).append(lineEnding);
-        // Make directory for generated static code analysis reports
+        // Delete a possible old directory for generated static code analysis reports and create a new one
+        script.append("rm -rf ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
         script.append("mkdir ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
-        // Copy all static code analysis reports to new directory
-        for (var tool : StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage)) {
-            script.append("cp target/").append(tool.getFilePattern()).append(" ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
+        if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            script.append("mvn ");
+            // Execute all static code analysis tools for Java
+            script.append(StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(programmingLanguage)).append(lineEnding);
+            // Copy all static code analysis reports to new directory
+            for (var tool : StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage)) {
+                script.append("cp target/").append(tool.getFilePattern()).append(" ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
+            }
+        }
+        else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
+            StaticCodeAnalysisTool tool = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage).get(0);
+            script.append("echo \"---------- execute static code analysis ----------\"").append(lineEnding);
+            // Copy swiftlint configuration into student's repository
+            script.append("cp .swiftlint.yml assignment || true").append(lineEnding);
+            // Execute swiftlint within the student's repository and save the report into the sca directory
+            // sh command: swiftlint lint assignment > <scaDir>/<result>.xml
+            script.append("swiftlint lint assignment > ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append("/").append(tool.getFilePattern()).append(lineEnding);
         }
         return script.toString();
     }

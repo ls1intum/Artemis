@@ -1,0 +1,233 @@
+
+Started by user <a href='/user/ga65niv' class='model-link'>Ivan Chimeno</a>
+Replayed <a href='/job/CS1PE2/job/CS1PE2-ARTEMISADMINBACKUP/12/' class='model-link'>#12</a>
+Running in Durability level: MAX_SURVIVABILITY
+<span class="pipeline-new-node" nodeId="2" startId="2">[Pipeline] Start of Pipeline
+</span><span class="pipeline-new-node" nodeId="3" startId="3" enclosingId="2">[Pipeline] node
+</span><span class="pipeline-node-3">Running on <a href='/computer/(master)/' class='model-link'>Jenkins</a> in /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP
+</span><span class="pipeline-new-node" nodeId="4" startId="4" enclosingId="3">[Pipeline] {
+    </span><span class="pipeline-new-node" nodeId="5" enclosingId="4">[Pipeline] isUnix
+    </span><span class="pipeline-new-node" nodeId="6" enclosingId="4">[Pipeline] sh
+    </span><span class="pipeline-node-6">+ docker inspect -f . ls1tum/artemis-maven-template:java15-4
+    .
+    </span><span class="pipeline-new-node" nodeId="7" startId="7" enclosingId="4">[Pipeline] withDockerContainer
+    </span><span class="pipeline-node-7">Jenkins seems to be running inside container 646509beb288ccd372d6212100c3cc4bfc197d1b9f74ff4c4181e66b262c99a8
+    $ docker run -t -d -u 0:0 -w /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP --volumes-from 646509beb288ccd372d6212100c3cc4bfc197d1b9f74ff4c4181e66b262c99a8 -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** ls1tum/artemis-maven-template:java15-4 cat
+    $ docker top 20d9ad9aa70f915d5ae65b40f26ef9d09ce791487244b21de45ace935f309b81 -eo pid,comm
+    </span><span class="pipeline-new-node" nodeId="8" startId="8" enclosingId="7">[Pipeline] {
+</span><span class="pipeline-new-node" nodeId="9" startId="9" enclosingId="8">[Pipeline] timeout
+</span><span class="pipeline-node-9">Timeout set to expire in 30 min
+</span><span class="pipeline-new-node" nodeId="10" startId="10" enclosingId="9">[Pipeline] {
+    </span><span class="pipeline-new-node" nodeId="11" startId="11" enclosingId="10">[Pipeline] stage
+    </span><span class="pipeline-new-node" nodeId="12" startId="12" enclosingId="11" label="Checkout">[Pipeline] { (Checkout)
+</span><span class="pipeline-new-node" nodeId="13" enclosingId="12">[Pipeline] checkout
+</span><span class="pipeline-node-13">The recommended git tool is: NONE
+using credential 477444bc-083e-478c-90fd-ce3037063361
+Warning: JENKINS-30600: special launcher org.jenkinsci.plugins.docker.workflow.WithContainerStep$Decorator$1@53c12ddc; decorates hudson.Launcher$LocalLauncher@5d06c9d4 will be ignored (a typical symptom is the Git executable not being run inside a designated container)
+Cloning the remote Git repository
+Cloning repository <a href='http://172.18.0.1:80/CS1PE2/cs1pe2-tests.git'>http://172.18.0.1:80/CS1PE2/cs1pe2-tests.git</a>
+ &gt; git init /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP # timeout=10
+Fetching upstream changes from <a href='http://172.18.0.1:80/CS1PE2/cs1pe2-tests.git'>http://172.18.0.1:80/CS1PE2/cs1pe2-tests.git</a>
+ &gt; git --version # timeout=10
+ &gt; git --version # 'git version 2.11.0'
+using GIT_ASKPASS to set credentials
+ &gt; git fetch --tags --progress -- <a href='http://172.18.0.1:80/CS1PE2/cs1pe2-tests.git'>http://172.18.0.1:80/CS1PE2/cs1pe2-tests.git</a> +refs/heads/*:refs/remotes/tests/* # timeout=10
+ &gt; git config remote.tests.url <a href='http://172.18.0.1:80/CS1PE2/cs1pe2-tests.git'>http://172.18.0.1:80/CS1PE2/cs1pe2-tests.git</a> # timeout=10
+ &gt; git config --add remote.tests.fetch +refs/heads/*:refs/remotes/tests/* # timeout=10
+Avoid second fetch
+ &gt; git rev-parse refs/remotes/tests/master^{commit} # timeout=10
+Checking out Revision 935345ef1eaf73177e68881eb5f4d53c92c094ac (refs/remotes/tests/master)
+ &gt; git config core.sparsecheckout # timeout=10
+ &gt; git checkout -f 935345ef1eaf73177e68881eb5f4d53c92c094ac # timeout=10
+Commit message: "Test-Template pushed by Artemis"
+ &gt; git rev-list --no-walk 935345ef1eaf73177e68881eb5f4d53c92c094ac # timeout=10
+</span><span class="pipeline-new-node" nodeId="14" startId="14" enclosingId="12">[Pipeline] dir
+</span><span class="pipeline-node-14">Running in /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/assignment
+</span><span class="pipeline-new-node" nodeId="15" startId="15" enclosingId="14">[Pipeline] {
+    </span><span class="pipeline-new-node" nodeId="16" enclosingId="15">[Pipeline] checkout
+    </span><span class="pipeline-node-16">The recommended git tool is: NONE
+    using credential 477444bc-083e-478c-90fd-ce3037063361
+    Warning: JENKINS-30600: special launcher org.jenkinsci.plugins.docker.workflow.WithContainerStep$Decorator$1@74491c7e; decorates hudson.Launcher$LocalLauncher@56bad9c6 will be ignored (a typical symptom is the Git executable not being run inside a designated container)
+    Cloning the remote Git repository
+    Cloning repository <a href='http://172.18.0.1:80/CS1PE2/cs1pe2-artemis_admin_backup.git'>http://172.18.0.1:80/CS1PE2/cs1pe2-artemis_admin_backup.git</a>
+ &gt; git init /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/assignment # timeout=10
+Fetching upstream changes from <a href='http://172.18.0.1:80/CS1PE2/cs1pe2-artemis_admin_backup.git'>http://172.18.0.1:80/CS1PE2/cs1pe2-artemis_admin_backup.git</a>
+ &gt; git --version # timeout=10
+ &gt; git --version # 'git version 2.11.0'
+using GIT_ASKPASS to set credentials
+ &gt; git fetch --tags --progress -- <a href='http://172.18.0.1:80/CS1PE2/cs1pe2-artemis_admin_backup.git'>http://172.18.0.1:80/CS1PE2/cs1pe2-artemis_admin_backup.git</a> +refs/heads/*:refs/remotes/assignment/* # timeout=10
+ &gt; git config remote.assignment.url <a href='http://172.18.0.1:80/CS1PE2/cs1pe2-artemis_admin_backup.git'>http://172.18.0.1:80/CS1PE2/cs1pe2-artemis_admin_backup.git</a> # timeout=10
+ &gt; git config --add remote.assignment.fetch +refs/heads/*:refs/remotes/assignment/* # timeout=10
+Avoid second fetch
+ &gt; git rev-parse refs/remotes/assignment/master^{commit} # timeout=10
+Checking out Revision 5dd053fd43b1616309749439e3a8ebed14c6cb63 (refs/remotes/assignment/master)
+ &gt; git config core.sparsecheckout # timeout=10
+ &gt; git checkout -f 5dd053fd43b1616309749439e3a8ebed14c6cb63 # timeout=10
+Commit message: "Changes by Online Editor"
+ &gt; git rev-list --no-walk 5dd053fd43b1616309749439e3a8ebed14c6cb63 # timeout=10
+</span><span class="pipeline-new-node" nodeId="17" startId="15">[Pipeline] }
+</span><span class="pipeline-new-node" nodeId="18" startId="14">[Pipeline] // dir
+</span><span class="pipeline-new-node" nodeId="19" startId="12">[Pipeline] }
+</span><span class="pipeline-new-node" nodeId="20" startId="11">[Pipeline] // stage
+</span><span class="pipeline-new-node" nodeId="21" startId="21" enclosingId="10">[Pipeline] stage
+</span><span class="pipeline-new-node" nodeId="22" startId="22" enclosingId="21" label="Build">[Pipeline] { (Build)
+</span><span class="pipeline-new-node" nodeId="23" startId="23" enclosingId="22">[Pipeline] timestamps
+</span><span class="pipeline-new-node" nodeId="24" startId="24" enclosingId="23">[Pipeline] {
+    </span><span class="pipeline-new-node" nodeId="25" startId="25" enclosingId="24">[Pipeline] withMaven
+    </span><span class="pipeline-node-25"><span class="timestamp"><b>2021-01-07T17:36:20Z</b> </span><span style="display: none">[2021-01-07T17:36:20.102Z]</span> [withMaven] Options: []
+    <span class="timestamp"><b>2021-01-07T17:36:20Z</b> </span><span style="display: none">[2021-01-07T17:36:20.103Z]</span> [withMaven] Available options:
+    <span class="timestamp"><b>2021-01-07T17:36:20Z</b> </span><span style="display: none">[2021-01-07T17:36:20.104Z]</span> [withMaven] IMPORTANT "withMaven(){...}" step running within a Docker container. See <a href='https://github.com/jenkinsci/pipeline-maven-plugin/FAQ.adoc'>Pipeline Maven Plugin FAQ</a> in case of problem.
+<span class="timestamp"><b>2021-01-07T17:36:20Z</b> </span><span style="display: none">[2021-01-07T17:36:20.104Z]</span> [withMaven] using JDK installation provided by the build agent
+<span class="timestamp"><b>2021-01-07T17:36:20Z</b> </span><span style="display: none">[2021-01-07T17:36:20.114Z]</span> $ docker exec 20d9ad9aa70f915d5ae65b40f26ef9d09ce791487244b21de45ace935f309b81 printenv MAVEN_HOME
+<span class="timestamp"><b>2021-01-07T17:36:20Z</b> </span><span style="display: none">[2021-01-07T17:36:20.401Z]</span> $ docker exec 20d9ad9aa70f915d5ae65b40f26ef9d09ce791487244b21de45ace935f309b81 printenv M2_HOME
+<span class="timestamp"><b>2021-01-07T17:36:20Z</b> </span><span style="display: none">[2021-01-07T17:36:20.476Z]</span> [withMaven] using Maven installation provided by the build agent with the environment variable M2_HOME=/usr/share/maven
+</span><span class="pipeline-new-node" nodeId="26" startId="26" enclosingId="25">[Pipeline] {
+</span><span class="pipeline-new-node" nodeId="27" enclosingId="26">[Pipeline] sh
+</span><span class="pipeline-node-27"><span class="timestamp"><b>2021-01-07T17:36:20Z</b> </span><span style="display: none">[2021-01-07T17:36:20.779Z]</span> + mvn clean test -B
+<span class="timestamp"><b>2021-01-07T17:36:21Z</b> </span><span style="display: none">[2021-01-07T17:36:21.032Z]</span> Picked up JAVA_TOOL_OPTIONS: -Dmaven.ext.class.path="/var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP@tmp/withMaven61809989/pipeline-maven-spy.jar" -Dorg.jenkinsci.plugins.pipeline.maven.reportsFolder="/var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP@tmp/withMaven61809989"
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.375Z]</span> WARNING: An illegal reflective access operation has occurred
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.375Z]</span> WARNING: Illegal reflective access by com.google.inject.internal.cglib.core.$ReflectUtils$1 (file:/usr/share/maven/lib/guice.jar) to method java.lang.ClassLoader.defineClass(java.lang.String,byte[],int,int,java.security.ProtectionDomain)
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.375Z]</span> WARNING: Please consider reporting this to the maintainers of com.google.inject.internal.cglib.core.$ReflectUtils$1
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.375Z]</span> WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.375Z]</span> WARNING: All illegal access operations will be denied in a future release
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.375Z]</span> [INFO] [jenkins-event-spy] Generate /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP@tmp/withMaven61809989/maven-spy-20210107-173622-242365886583382781618.log.tmp ...
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.625Z]</span> [INFO] Scanning for projects...
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.625Z]</span> [INFO]
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.625Z]</span> [INFO] ----------------&lt; com.pe2:Programming-Exercise-2-Tests &gt;----------------
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.625Z]</span> [INFO] Building Programming Exercise 2 Tests 1.0
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.625Z]</span> [INFO] --------------------------------[ jar ]---------------------------------
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.876Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.pom'>https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.426Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.pom'>https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.pom</a> (8.1 kB at 22 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.426Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.jar'>https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.jar</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.426Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.jar'>https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.jar</a> (30 kB at 339 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.677Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar'>https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.677Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/json/json/20201115/json-20201115.jar'>https://repo.maven.apache.org/maven2/org/json/json/20201115/json-20201115.jar</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.677Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar'>https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar</a> (41 kB at 749 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.677Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/json/json/20201115/json-20201115.jar'>https://repo.maven.apache.org/maven2/org/json/json/20201115/json-20201115.jar</a> (69 kB at 667 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.677Z]</span> [INFO]
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-0<b class=maven-mojo>1-07T17:36:23.677Z]</span> [INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ Programming-Exercise-2-Tests ---
+    </b><span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.677Z]</span> [INFO]
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-0<b class=maven-mojo>1-07T17:36:23.677Z]</span> [INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ Programming-Exercise-2-Tests ---
+    </b><span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.677Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.pom'>https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.pom'>https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.pom</a> (5.8 kB at 156 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.12/plexus-interpolation-1.12.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.12/plexus-interpolation-1.12.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.12/plexus-interpolation-1.12.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.12/plexus-interpolation-1.12.pom</a> (889 B at 25 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.pom'>https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.pom'>https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.pom</a> (2.9 kB at 87 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/spice/spice-parent/10/spice-parent-10.pom'>https://repo.maven.apache.org/maven2/org/sonatype/spice/spice-parent/10/spice-parent-10.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/spice/spice-parent/10/spice-parent-10.pom'>https://repo.maven.apache.org/maven2/org/sonatype/spice/spice-parent/10/spice-parent-10.pom</a> (3.0 kB at 79 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/forge/forge-parent/3/forge-parent-3.pom'>https://repo.maven.apache.org/maven2/org/sonatype/forge/forge-parent/3/forge-parent-3.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/forge/forge-parent/3/forge-parent-3.pom'>https://repo.maven.apache.org/maven2/org/sonatype/forge/forge-parent/3/forge-parent-3.pom</a> (5.0 kB at 140 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.pom</a> (890 B at 26 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-components/1.1.15/plexus-components-1.1.15.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-components/1.1.15/plexus-components-1.1.15.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-components/1.1.15/plexus-components-1.1.15.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-components/1.1.15/plexus-components-1.1.15.pom</a> (2.8 kB at 66 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus/2.0.3/plexus-2.0.3.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus/2.0.3/plexus-2.0.3.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus/2.0.3/plexus-2.0.3.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus/2.0.3/plexus-2.0.3.pom</a> (15 kB at 387 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/classworlds/classworlds/1.1/classworlds-1.1.jar'>https://repo.maven.apache.org/maven2/classworlds/classworlds/1.1/classworlds-1.1.jar</a>
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.jar'>https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.jar</a>
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/2.0.5/plexus-utils-2.0.5.jar'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/2.0.5/plexus-utils-2.0.5.jar</a>
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.jar'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.jar</a>
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.jar'>https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.jar</a>
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.jar'>https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.jar</a> (43 kB at 798 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.jar'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.jar</a> (61 kB at 1.0 MB/s)
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.jar'>https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.jar</a> (6.8 kB at 48 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/classworlds/classworlds/1.1/classworlds-1.1.jar'>https://repo.maven.apache.org/maven2/classworlds/classworlds/1.1/classworlds-1.1.jar</a> (38 kB at 267 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/2.0.5/plexus-utils-2.0.5.jar'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/2.0.5/plexus-utils-2.0.5.jar</a> (223 kB at 1.3 MB/s)
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.428Z]</span> [INFO] Using 'UTF-8' encoding to copy filtered resources.
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.428Z]</span> [INFO] skip non existing resourceDirectory /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/src/main/resources
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.428Z]</span> [INFO]
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-0<b class=maven-mojo>1-07T17:36:24.428Z]</span> [INFO] --- maven-compiler-plugin:3.8.1:compile (default-compile) @ Programming-Exercise-2-Tests ---
+    </b><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.428Z]</span> [INFO] Changes detected - recompiling the module!
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.429Z]</span> [INFO] Compiling 3 source files to /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/target/classes
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] -------------------------------------------------------------
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] COMPILATION ERROR :
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] -------------------------------------------------------------
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/assignment/src/com/pe2/BubbleSort.java:[15,18] ';' expected
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/assignment/src/com/pe2/BubbleSort.java:[15,33] ';' expected
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] 2 errors
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] -------------------------------------------------------------
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] ------------------------------------------------------------------------
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] BUILD FAILURE
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] ------------------------------------------------------------------------
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] Total time:  2.335 s
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] Finished at: 2021-01-07T17:36:24Z
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] ------------------------------------------------------------------------
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] [jenkins-event-spy] Generated /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP@tmp/withMaven61809989/maven-spy-20210107-173622-242365886583382781618.log
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.8.1:compile (default-compile) on project Programming-Exercise-2-Tests: Compilation failure: Compilation failure:
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/assignment/src/com/pe2/BubbleSort.java:[15,18] ';' expected
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/assignment/src/com/pe2/BubbleSort.java:[15,33] ';' expected
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] -&gt; [Help 1]
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR]
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] Re-run Maven using the -X switch to enable full debug logging.
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR]
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.980Z]</span> [ERROR] For more information about the errors and possible solutions, please read the following articles:
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.980Z]</span> [ERROR] [Help 1] <a href='http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException'>http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException</a>
+</span></span><span class="pipeline-new-node" nodeId="28" startId="26">[Pipeline] }
+</span><span class="pipeline-node-28"><span class="timestamp"><b>2021-01-07T17:36:25Z</b> </span><span style="display: none">[2021-01-07T17:36:25.038Z]</span> [withMaven] Jenkins <a href='https://wiki.jenkins-ci.org/display/JENKINS/Task+Scanner+Plugin'>Task Scanner Plugin</a> not found, don't display results of source code scanning for 'TODO' and 'FIXME' in pipeline screen.
+<span class="timestamp"><b>2021-01-07T17:36:25Z</b> </span><span style="display: none">[2021-01-07T17:36:25.038Z]</span> [withMaven] Publishers: Pipeline Graph Publisher: 2 ms, Generated Artifacts Publisher: 1 ms
+</span><span class="pipeline-new-node" nodeId="29" startId="25">[Pipeline] // withMaven
+</span><span class="pipeline-new-node" nodeId="30" startId="24">[Pipeline] }
+</span><span class="pipeline-new-node" nodeId="31" startId="23">[Pipeline] // timestamps
+</span><span class="pipeline-new-node" nodeId="32" startId="22">[Pipeline] }
+</span><span class="pipeline-new-node" nodeId="33" startId="21">[Pipeline] // stage
+</span><span class="pipeline-new-node" nodeId="34" startId="34" enclosingId="10">[Pipeline] stage
+</span><span class="pipeline-new-node" nodeId="35" startId="35" enclosingId="34" label="Declarative: Post Actions">[Pipeline] { (Declarative: Post Actions)
+</span><span class="pipeline-new-node" nodeId="36" enclosingId="35">[Pipeline] sh
+</span><span class="pipeline-node-36">+ rm -rf results
+</span><span class="pipeline-new-node" nodeId="37" enclosingId="35">[Pipeline] sh
+</span><span class="pipeline-node-37">+ mkdir results
+</span><span class="pipeline-new-node" nodeId="38" enclosingId="35">[Pipeline] sh
+</span><span class="pipeline-node-38">+ cp target/surefire-reports/*.xml /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/results/
+cp: cannot stat 'target/surefire-reports/*.xml': No such file or directory
++ true
+</span><span class="pipeline-new-node" nodeId="39" enclosingId="35">[Pipeline] sendTestResults
+</span>Error when executing cleanup post condition:
+java.net.ConnectException: Connection refused (Connection refused)
+at java.net.PlainSocketImpl.socketConnect(Native Method)
+at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:350)
+at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:206)
+at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:188)
+at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+at java.net.Socket.connect(Socket.java:607)
+at org.apache.http.conn.socket.PlainConnectionSocketFactory.connectSocket(PlainConnectionSocketFactory.java:75)
+at org.apache.http.impl.conn.DefaultHttpClientConnectionOperator.connect(DefaultHttpClientConnectionOperator.java:142)
+Caused: org.apache.http.conn.HttpHostConnectException: Connect to 172.17.0.1:8081 [/172.17.0.1] failed: Connection refused (Connection refused)
+at org.apache.http.impl.conn.DefaultHttpClientConnectionOperator.connect(DefaultHttpClientConnectionOperator.java:156)
+at org.apache.http.impl.conn.PoolingHttpClientConnectionManager.connect(PoolingHttpClientConnectionManager.java:374)
+at org.apache.http.impl.execchain.MainClientExec.establishRoute(MainClientExec.java:393)
+at org.apache.http.impl.execchain.MainClientExec.execute(MainClientExec.java:236)
+at org.apache.http.impl.execchain.ProtocolExec.execute(ProtocolExec.java:186)
+at org.apache.http.impl.execchain.RetryExec.execute(RetryExec.java:89)
+at org.apache.http.impl.execchain.RedirectExec.execute(RedirectExec.java:110)
+at org.apache.http.impl.client.InternalHttpClient.doExecute(InternalHttpClient.java:185)
+at org.apache.http.impl.client.CloseableHttpClient.execute(CloseableHttpClient.java:83)
+at org.apache.http.impl.client.CloseableHttpClient.execute(CloseableHttpClient.java:56)
+at org.apache.http.client.fluent.Request.internalExecute(Request.java:173)
+at org.apache.http.client.fluent.Request.execute(Request.java:177)
+at de.tum.in.www1.jenkins.notifications.HttpHelper.postTestResults(HttpHelper.java:23)
+at de.tum.in.www1.jenkins.notifications.SendTestResultsNotificationPostBuildTask.perform(SendTestResultsNotificationPostBuildTask.java:81)
+at jenkins.tasks.SimpleBuildStep.perform(SimpleBuildStep.java:123)
+at org.jenkinsci.plugins.workflow.steps.CoreStep$Execution.run(CoreStep.java:116)
+at org.jenkinsci.plugins.workflow.steps.CoreStep$Execution.run(CoreStep.java:71)
+at org.jenkinsci.plugins.workflow.steps.SynchronousNonBlockingStepExecution.lambda$start$0(SynchronousNonBlockingStepExecution.java:47)
+at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+at java.lang.Thread.run(Thread.java:748)
+
+<span class="pipeline-new-node" nodeId="40" startId="35">[Pipeline] }
+</span><span class="pipeline-new-node" nodeId="41" startId="34">[Pipeline] // stage
+</span><span class="pipeline-new-node" nodeId="42" startId="10">[Pipeline] }
+</span><span class="pipeline-new-node" nodeId="43" startId="9">[Pipeline] // timeout
+</span><span class="pipeline-new-node" nodeId="44" startId="8">[Pipeline] }
+</span><span class="pipeline-node-44">$ docker stop --time=1 20d9ad9aa70f915d5ae65b40f26ef9d09ce791487244b21de45ace935f309b81
+$ docker rm -f 20d9ad9aa70f915d5ae65b40f26ef9d09ce791487244b21de45ace935f309b81
+</span><span class="pipeline-new-node" nodeId="45" startId="7">[Pipeline] // withDockerContainer
+</span><span class="pipeline-new-node" nodeId="46" startId="4">[Pipeline] }
+</span><span class="pipeline-new-node" nodeId="47" startId="3">[Pipeline] // node
+</span><span class="pipeline-new-node" nodeId="48" startId="2">[Pipeline] End of Pipeline
+</span>ERROR: script returned exit code 1
+Finished: FAILURE

@@ -1,11 +1,8 @@
-import { filter } from 'rxjs/operators';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-
-import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
-
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -34,7 +31,6 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     predicate: string;
     previousPage: number;
     reverse: boolean;
-    isVisible: boolean;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -66,13 +62,6 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
             this.currentAccount = user!;
             this.loadAll();
             this.registerChangeInUsers();
-        });
-        this.isVisible = this.activatedRoute.children.length === 0;
-        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
-            this.isVisible = this.activatedRoute.children.length === 0;
-            if (this.isVisible) {
-                this.loadAll();
-            }
         });
     }
 
