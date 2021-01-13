@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -586,7 +587,19 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(long exerciseId, User tutor, boolean examMode,
             Long correctionRound) {
-        var submissions = super.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, tutor, examMode, correctionRound);
+        List<Submission> submissions;
+        if (examMode) {
+            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
+            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                    .map(submission -> (ProgrammingSubmission) submission).filter(submission -> submission.getManualResults().size() - 1 >= correctionRound
+                            && submission.getResultByCorrectionRoundIgnoreAutomatic(correctionRound) != null)
+                    .collect(toList());
+        }
+        else {
+            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
+        }
+
+        submissions.forEach(submission -> submission.getLatestResult().setSubmission(null));
         return submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
     }
 
@@ -678,31 +691,29 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     // TODO SE: explain in what context this method is even called
+
+    /**
+     * Locks the programmingSubmission submission. If the submission only has automatic results, and no manual,
+     * create a new manual result. In the second correction round add a second manual result to the submission
+     *
+     * @param submission the submission to lock
+     * @param correctionRound
+     * @return
+     */
     @Override
     protected Result lockSubmission(Submission submission, Long correctionRound) {
-        Result existingResult;
-        // TODO SE: write explanation
-        ProgrammingSubmission newSubmission;
 
-        if (correctionRound == 0) {
-            existingResult = submission.getFirstResult();
-            // Create a new result (manual result) and a new submission for it and set assessor and type to manual/semi-automatic
-            if (submission.getFirstResult().getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)
-                    || submission.getFirstResult().getAssessmentType().equals(AssessmentType.MANUAL)) {
-                newSubmission = (ProgrammingSubmission) submission;
-            }
-            else {
-                newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(), SubmissionType.MANUAL);
-            }
+        Result existingResult;
+        if (correctionRound == 0 && submission.getLatestResult().getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
+            existingResult = submission.getLatestResult();
         }
         else {
-            existingResult = submission.getResultByCorrectionRound(correctionRound - 1);
-            newSubmission = (ProgrammingSubmission) submission;
+            existingResult = submission.getResultByCorrectionRoundIgnoreAutomatic(correctionRound - 1);
         }
 
         List<Feedback> automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
 
-        Result newResult = saveNewEmptyResult(newSubmission);
+        Result newResult = saveNewEmptyResult(submission);
         newResult.setAssessor(userService.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         // Copy automatic feedbacks into the manual result
@@ -716,7 +727,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         newResult = resultRepository.save(newResult);
         log.debug("Assessment locked with result id: " + newResult.getId() + " for assessor: " + newResult.getAssessor().getName());
         // Make sure that submission is set back after saving
-        newResult.setSubmission(newSubmission);
+        newResult.setSubmission(submission);
         return newResult;
     }
 

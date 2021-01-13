@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -16,6 +17,7 @@ import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -120,9 +122,26 @@ public abstract class Submission extends DomainObject {
     }
 
     @Nullable
+    @JsonIgnore
+    public Result getResultByCorrectionRoundIgnoreAutomatic(Long id) {
+        List<Result> withoutAutomaticResults = results.stream().filter(result -> result != null && !result.getAssessmentType().equals(AssessmentType.AUTOMATIC))
+                .collect(Collectors.toList());
+        if (withoutAutomaticResults != null && withoutAutomaticResults.size() > id) {
+            return withoutAutomaticResults.get(id.intValue());
+        }
+        return null;
+    }
+
+    @Nullable
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
     public List<Result> getResults() {
         return results;
+    }
+
+    @Nullable
+    @JsonIgnore
+    public List<Result> getManualResults() {
+        return results.stream().filter(result -> result != null && !result.getAssessmentType().equals(AssessmentType.AUTOMATIC)).collect(Collectors.toList());
     }
 
     /**

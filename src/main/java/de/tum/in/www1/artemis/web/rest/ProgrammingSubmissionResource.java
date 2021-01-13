@@ -358,7 +358,8 @@ public class ProgrammingSubmissionResource {
         else {
             programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly, examMode, correctionRound);
         }
-
+        // only send the manual results to the client
+        programmingSubmissions.forEach(programmingSubmission -> programmingSubmission.setResults(programmingSubmission.getManualResults()));
         return ResponseEntity.ok().body(programmingSubmissions);
     }
 
@@ -384,7 +385,6 @@ public class ProgrammingSubmissionResource {
 
         Submission newestSubmission = participation.getSubmissions().stream().max(Comparator.comparing(Submission::getId)).get();
         Result result1 = newestSubmission.getResultByCorrectionRound(correctionRound);
-
         result1 = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(result1.getId()).get();
 
         Optional<Result> manualResult = participation.getResults().stream().filter(Result::isManualResult).findFirst();
@@ -449,6 +449,8 @@ public class ProgrammingSubmissionResource {
         StudentParticipation studentParticipation = (StudentParticipation) programmingSubmission.getParticipation();
         studentParticipation.setExercise(programmingExercise);
         programmingSubmissionService.hideDetails(programmingSubmission, user);
+        // remove automatic results before sending to client
+        programmingSubmission.setResults(programmingSubmission.getManualResults());
         return ResponseEntity.ok(programmingSubmission);
     }
 }
