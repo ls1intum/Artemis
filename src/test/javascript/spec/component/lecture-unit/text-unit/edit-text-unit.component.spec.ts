@@ -50,12 +50,18 @@ describe('EditTextUnitComponent', () => {
                     useValue: {
                         paramMap: Observable.of({
                             get: () => {
-                                return {
-                                    textUnitId: 1,
-                                    lectureId: 1,
-                                };
+                                return { textUnitId: 1 };
                             },
                         }),
+                        parent: {
+                            parent: {
+                                paramMap: Observable.of({
+                                    get: () => {
+                                        return { lectureId: 1 };
+                                    },
+                                }),
+                            },
+                        },
                     },
                 },
             ],

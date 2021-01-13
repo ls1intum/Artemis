@@ -85,11 +85,13 @@ describe('LectureAttachmentsComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        data: {
-                            subscribe: (fn: (value: any) => void) =>
-                                fn({
-                                    lecture,
-                                }),
+                        parent: {
+                            data: {
+                                subscribe: (fn: (value: any) => void) =>
+                                    fn({
+                                        lecture,
+                                    }),
+                            },
                         },
                     },
                 },
