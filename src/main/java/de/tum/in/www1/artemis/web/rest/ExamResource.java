@@ -411,6 +411,9 @@ public class ExamResource {
         if (student.isEmpty()) {
             return notFound();
         }
+        if (student.get().getGroups().contains(exam.getCourse().getInstructorGroupName()) || authCheckService.isAdmin(student.get())) {
+            return forbidden();
+        }
         exam.addRegisteredUser(student.get());
         // NOTE: we intentionally add the user to the course group, because the user only has access to the exam of a course, if the student also
         // has access to the course of the exam.

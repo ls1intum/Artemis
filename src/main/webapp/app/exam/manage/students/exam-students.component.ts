@@ -5,6 +5,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, of, Subject } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
+import { onError } from 'app/shared/util/global.utils';
 import { User } from 'app/core/user/user.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -152,7 +153,8 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                     // Flash green background color to signal to the user that this student was registered
                     this.flashRowClass(cssClasses.newlyRegistered);
                 },
-                () => {
+                (res: HttpErrorResponse) => {
+                    onError(this.jhiAlertService, res);
                     this.isTransitioning = false;
                 },
             );
