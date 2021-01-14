@@ -7,8 +7,7 @@ import java.util.regex.Pattern;
  */
 public final class Constants {
 
-    // Todo change to 24h after testing period
-    public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 5; // 24h
+    public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 1440; // 24h
 
     // Regex for acceptable logins
     public static final String LOGIN_REGEX = "^[_'.@A-Za-z0-9-]*$";
