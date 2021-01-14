@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -539,6 +540,18 @@ public class ExamService {
         List<StudentDTO> notFoundStudentsDtos = new ArrayList<>();
         for (var studentDto : studentDtos) {
             var registrationNumber = studentDto.getRegistrationNumber();
+
+            // If no registration number is given try to fetch it via the login
+            if (!StringUtils.hasText(registrationNumber)) {
+                var userOptional = userService.getUserByLogin(studentDto.getLogin());
+                if (userOptional.isEmpty()) {
+                    notFoundStudentsDtos.add(studentDto);
+                    continue;
+                }
+
+                registrationNumber = userOptional.get().getRegistrationNumber();
+            }
+
             try {
                 // 1) we use the registration number and try to find the student in the Artemis user database
                 Optional<User> optionalStudent = userService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);

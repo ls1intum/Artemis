@@ -14,6 +14,7 @@ const csvColumns = Object.freeze({
     registrationNumber: 'REGISTRATION_NUMBER',
     firstName: 'FIRST_NAME_OF_STUDENT',
     lastName: 'FAMILY_NAME_OF_STUDENT',
+    login: 'LOGIN',
 });
 
 type CsvStudent = object;
@@ -89,7 +90,8 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
         return csvStudents.map(
             (student) =>
                 ({
-                    registrationNumber: student[csvColumns.registrationNumber],
+                    registrationNumber: student[csvColumns.registrationNumber] || '',
+                    login: student[csvColumns.login] || '',
                     firstName: student[csvColumns.firstName] || '',
                     lastName: student[csvColumns.lastName] || '',
                 } as StudentDTO),
@@ -108,12 +110,12 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
         if (invalidStudentEntries) {
             const msg = (body: string) => `
                 Could not read file <b>${csvFile.name}</b> due to the following error:
-                <ul class="mt-1"><li><b>Rows without value in required column ${body}</b></li></ul>
+                <ul class="mt-1"><li><b>Rows without value in column ${body}</b></li></ul>
                 Please repair the file and try again.
             `;
             const maxLength = 30;
             const entriesFormatted = invalidStudentEntries.length <= maxLength ? invalidStudentEntries : invalidStudentEntries.slice(0, maxLength) + '...';
-            this.validationError = msg(`"${csvColumns.registrationNumber}": ${entriesFormatted}`);
+            this.validationError = msg(`"${csvColumns.registrationNumber}" or "${csvColumns.login}": ${entriesFormatted}`);
         }
     }
 
@@ -124,7 +126,7 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
     computeInvalidStudentEntries(csvStudents: CsvStudent[]): string | null {
         const invalidList: number[] = [];
         for (const [i, student] of csvStudents.entries()) {
-            if (!student[csvColumns.registrationNumber]) {
+            if (!student[csvColumns.registrationNumber] && !student[csvColumns.login]) {
                 invalidList.push(i + 2); // +2 instead of +1 due to header column in csv file
             }
         }
