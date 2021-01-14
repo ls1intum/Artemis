@@ -60,14 +60,4 @@ describe('AssessmentLayoutComponent', () => {
         complaintsForTutorComponent = fixture.debugElement.query(By.directive(ComplaintsForTutorComponent));
         expect(complaintsForTutorComponent).toBeTruthy();
     });
-
-    it('Assessors should be allowed to respond if test run ', () => {
-        component.complaint = new Complaint();
-        component.isTestRun = true;
-        component.isAssessor = true;
-        fixture.detectChanges();
-        const isAllowedToRespond = component.isAllowedToRespond;
-
-        expect(isAllowedToRespond).toBeTruthy();
-    });
 });

@@ -28,6 +28,13 @@ describe('ShortAnswerQuestionUtil', () => {
             ['<p><code>last code paragraph</code></p>'],
         ];
         expect(shortAnswerQuestionUtil.transformTextPartsIntoHTML(originalTextParts2, artemisMarkdownService)).to.eql(formattedTextParts2);
+        const originalTextParts3 = [['`random code`'], ['    [-spot 1]', '`some more code`', '[-spot 1]'], ['`last code paragraph`']];
+        const formattedTextParts3 = [
+            ['<p><code>random code</code></p>'],
+            ['<p>&nbsp;&nbsp;&nbsp;&nbsp;[-spot 1]</p>', '<p><code>some more code</code></p>', '<p>[-spot 1]</p>'],
+            ['<p><code>last code paragraph</code></p>'],
+        ];
+        expect(shortAnswerQuestionUtil.transformTextPartsIntoHTML(originalTextParts3, artemisMarkdownService)).to.eql(formattedTextParts3);
     }));
 
     it('Should return the correct indentation', fakeAsync(() => {

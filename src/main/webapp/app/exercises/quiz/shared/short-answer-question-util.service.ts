@@ -442,7 +442,16 @@ export class ShortAnswerQuestionUtil {
     addIndentationToTextParts(originalTextParts: string[][], formattedTextParts: string[][]): string[][] {
         for (let i = 0; i < formattedTextParts.length; i++) {
             const element = formattedTextParts[i][0];
-            const firstWord = this.getFirstWord(originalTextParts[i][0]);
+            let firstWord = '';
+            // check if first word is a spot (first array element will be an empty string)
+            if (originalTextParts[i].length > 1) {
+                firstWord =
+                    formattedTextParts[i][0] === '' && originalTextParts[i][1].startsWith('[-spot')
+                        ? this.getFirstWord(originalTextParts[i][1])
+                        : this.getFirstWord(originalTextParts[i][0]);
+            } else {
+                firstWord = this.getFirstWord(originalTextParts[i][0]);
+            }
             if (firstWord === '') {
                 continue;
             }
@@ -459,6 +468,9 @@ export class ShortAnswerQuestionUtil {
      * @param text {string} the text for which we get the indentation
      */
     getIndentation(text: string): string {
+        if (!text) {
+            return '';
+        }
         if (text.startsWith('`')) {
             text = text.substring(1);
         }
@@ -477,7 +489,13 @@ export class ShortAnswerQuestionUtil {
      * @param text {string} for which the first word is returned
      */
     getFirstWord(text: string): string {
-        const words = text.split(' ').filter((word) => word !== '');
+        if (!text) {
+            return '';
+        }
+        const words = text
+            .trim()
+            .split(' ')
+            .filter((word) => word !== '');
         if (words.length === 0) {
             return '';
         } else if (words[0] === '`') {

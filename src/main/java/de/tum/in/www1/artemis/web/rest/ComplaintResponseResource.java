@@ -1,32 +1,26 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.ComplaintResponse;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintResponseService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
 /**
@@ -38,14 +32,11 @@ public class ComplaintResponseResource {
 
     private final Logger log = LoggerFactory.getLogger(SubmissionResource.class);
 
-    private static final String ENTITY_NAME = "complaintResponse";
-
-    private static final String MORE_FEEDBACK_RESPONSE_ENITY_NAME = "moreFeedbackResponse";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
+    public static final String ENTITY_NAME = "complaintResponse";
 
     private final ComplaintResponseRepository complaintResponseRepository;
+
+    private final ComplaintRepository complaintRepository;
 
     private final ComplaintResponseService complaintResponseService;
 
@@ -54,34 +45,79 @@ public class ComplaintResponseResource {
     private final UserService userService;
 
     public ComplaintResponseResource(ComplaintResponseRepository complaintResponseRepository, ComplaintResponseService complaintResponseService,
-            AuthorizationCheckService authorizationCheckService, UserService userService) {
+            AuthorizationCheckService authorizationCheckService, UserService userService, ComplaintRepository complaintRepository) {
         this.complaintResponseRepository = complaintResponseRepository;
         this.complaintResponseService = complaintResponseService;
+        this.complaintRepository = complaintRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userService = userService;
     }
 
     /**
-     * POST /complaint-responses: create a new complaint response
+     * POST /complaint-responses/complaint/:complaintId/create-lock: locks the complaint by creating an empty complaint response
      *
-     * @param complaintResponse the complaint response to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new complaint response
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @param complaintId - id of the complaint to lock
+     * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
      */
-    @PostMapping("/complaint-responses")
+    @PostMapping("/complaint-responses/complaint/{complaintId}/create-lock")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ComplaintResponse> createComplaintResponse(@RequestBody ComplaintResponse complaintResponse) throws URISyntaxException {
-        log.debug("REST request to save ComplaintResponse: {}", complaintResponse);
-        ComplaintResponse savedComplaintResponse = complaintResponseService.createComplaintResponse(complaintResponse);
-
-        // To build correct creation alert on the client we must check which type is the complaint to apply correct i18n key.
-        String entityName = complaintResponse.getComplaint().getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_RESPONSE_ENITY_NAME : ENTITY_NAME;
-
+    public ResponseEntity<ComplaintResponse> lockComplaint(@PathVariable long complaintId) {
+        log.debug("REST request to create empty complaint response for complaint with id: {}", complaintId);
+        Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
+        ComplaintResponse savedComplaintResponse = complaintResponseService.createComplaintResponseRepresentingLock(complaint);
         // always remove the student from the complaint as we don't need it in the corresponding client use case
-        complaintResponse.getComplaint().filterSensitiveInformation();
+        savedComplaintResponse.getComplaint().filterSensitiveInformation();
+        return new ResponseEntity<>(savedComplaintResponse, HttpStatus.CREATED);
+    }
 
-        return ResponseEntity.created(new URI("/api/complaint-responses/" + savedComplaintResponse.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaintResponse.getId().toString())).body(savedComplaintResponse);
+    /**
+     * POST /complaint-responses/complaint/:complaintId/refresh-lock: locks the complaint again by replace the empty complaint response
+     *
+     * @param complaintId - id of the complaint to lock again
+     * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
+     */
+    @PostMapping("/complaint-responses/complaint/{complaintId}/refresh-lock")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ComplaintResponse> refreshLockOnComplaint(@PathVariable long complaintId) {
+        log.debug("REST request to refresh empty complaint response for complaint with id: {}", complaintId);
+        Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
+        ComplaintResponse savedComplaintResponse = complaintResponseService.refreshComplaintResponseRepresentingLock(complaint);
+        // always remove the student from the complaint as we don't need it in the corresponding client use case
+        savedComplaintResponse.getComplaint().filterSensitiveInformation();
+        return new ResponseEntity<>(savedComplaintResponse, HttpStatus.CREATED);
+    }
+
+    /**
+     * DELETE /complaint-responses/complaint/:complaintId/remove-lock: removes the lock on a complaint by removing the empty complaint response
+     *
+     * @param complaintId - id of the complaint to remove the lock for
+     * @return the ResponseEntity with status 200 (Ok)
+     */
+    @DeleteMapping("/complaint-responses/complaint/{complaintId}/remove-lock")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> removeLockFromComplaint(@PathVariable long complaintId) {
+        log.debug("REST request to remove the lock on the complaint with the id: {}", complaintId);
+        Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
+        complaintResponseService.removeComplaintResponseRepresentingLock(complaint);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * PUT /complaint-responses/complaint/:complaintId/resolve: resolve a complaint by updating the complaint and the associated empty complaint response
+     *
+     * @param complaintId - id of the complaint to resolve
+     * @param complaintResponse the complaint response used for resolving the complaint
+     * @return the ResponseEntity with status 200 (Ok) and with body the complaint response used for resolving the complaint
+     */
+    @PutMapping("/complaint-responses/complaint/{complaintId}/resolve")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ComplaintResponse> resolveComplaint(@RequestBody ComplaintResponse complaintResponse, @PathVariable long complaintId) {
+        log.debug("REST request to resolve the complaint with id: {}", complaintId);
+        getComplaintFromDatabaseAndCheckAccessRights(complaintId);
+        ComplaintResponse updatedComplaintResponse = complaintResponseService.resolveComplaint(complaintResponse);
+        // always remove the student from the complaint as we don't need it in the corresponding client use case
+        updatedComplaintResponse.getComplaint().filterSensitiveInformation();
+        return ResponseEntity.ok().body(updatedComplaintResponse);
     }
 
     /**
@@ -146,5 +182,18 @@ public class ComplaintResponseResource {
         else {
             throw new Error("Unknown Participant type");
         }
+    }
+
+    private Complaint getComplaintFromDatabaseAndCheckAccessRights(long complaintId) {
+        Optional<Complaint> complaintFromDatabaseOptional = complaintRepository.findByIdWithEagerAssessor(complaintId);
+        if (complaintFromDatabaseOptional.isEmpty()) {
+            throw new IllegalArgumentException("Complaint was not found in database");
+        }
+        Complaint complaint = complaintFromDatabaseOptional.get();
+        User user = this.userService.getUser();
+        if (!complaintResponseService.isUserAuthorizedToRespondToComplaint(complaint, user)) {
+            throw new AccessForbiddenException("Insufficient permission for modifying the lock on the complaint");
+        }
+        return complaint;
     }
 }
