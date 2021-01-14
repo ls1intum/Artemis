@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -21,7 +21,7 @@ describe('ExamTimerComponent', function () {
     let dateService: ArtemisServerDateService;
 
     const now = moment();
-    const inOneMinute = moment().add(1, 'minutes');
+    const inFuture = moment().add(100, 'ms');
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -40,19 +40,22 @@ describe('ExamTimerComponent', function () {
         fixture = TestBed.createComponent(ExamTimerComponent);
         component = fixture.componentInstance;
         dateService = TestBed.inject(ArtemisServerDateService);
-        component.endDate = inOneMinute;
+        component.endDate = inFuture;
     });
 
     it('should call ngOnInit', () => {
         spyOn(dateService, 'now').and.returnValue(now);
-        component.criticalTime = moment.duration(5, 'minutes');
-        expect(component.endDate).to.equal(inOneMinute);
+        component.criticalTime = moment.duration(200);
+        expect(component.endDate).to.equal(inFuture);
         component.ngOnInit();
         expect(component).to.be.ok;
+        expect(component.isCriticalTime).to.be.true;
     });
 
     it('should update display times', () => {
-        const duration = moment.duration(15, 'minutes');
+        let duration = moment.duration(15, 'minutes');
         expect(component.updateDisplayTime(duration)).to.equal('15 min');
+        duration = moment.duration(-15, 'seconds');
+        expect(component.updateDisplayTime(duration)).to.equal('00 : 00');
     });
 });
