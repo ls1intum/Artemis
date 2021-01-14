@@ -22,9 +22,14 @@ pipeline {
             stage('Build') {
                 steps {
                     timestamps {
-                        sh '''
-                            pytest --junitxml=test-reports/results.xml
-                            exit 0
+                        sh  '''
+                            python3 -m compileall . -q || error=true
+                            if [ ! $error ]
+                            then
+                                pytest --junitxml=test-reports/results.xml
+                            else
+                                exit 1
+                            fi
                             '''
                     }
                 }
@@ -32,12 +37,15 @@ pipeline {
         }
         post {
             cleanup {
-                sh '''
-                   rm -rf results
-                   mkdir results
-                   sed -i 's/<testsuites>//g ; s/<\/testsuites>//g' test-reports/results.xml
-                   cp test-reports/*.xml $WORKSPACE/results/ || true
-                   '''
+                sh  '''
+                    rm -rf results
+                    mkdir results
+                    if [ -e test-reports/results.xml ]
+                    then
+                        sed -i 's/<testsuites>//g ; s/<\/testsuites>//g' test-reports/results.xml
+                    fi
+                    cp test-reports/*.xml $WORKSPACE/results/ || true
+                    '''
                 sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
                 cleanWs()
             }

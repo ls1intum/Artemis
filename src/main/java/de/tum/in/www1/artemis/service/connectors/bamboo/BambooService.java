@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
@@ -64,9 +63,6 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
 public class BambooService implements ContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
-
-    // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/
-    private static final Pattern ASSIGNMENT_PATH = Pattern.compile("(/[^\0]+)*" + ASSIGNMENT_DIRECTORY);
 
     @Value("${artemis.continuous-integration.url}")
     private URL bambooServerUrl;
@@ -315,8 +311,9 @@ public class BambooService implements ContinuousIntegrationService {
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
         // Return the logs from Bamboo (and filter them now)
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
+        ProgrammingLanguage programmingLanguage = programmingExerciseParticipation.getProgrammingExercise().getProgrammingLanguage();
 
-        var buildLogEntries = filterBuildLogs(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()));
+        var buildLogEntries = filterBuildLogs(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()), programmingLanguage);
         var savedBuildLogs = buildLogService.saveBuildLogs(buildLogEntries, programmingSubmission);
 
         // Set the received logs in order to avoid duplicate entries (this removes existing logs) & save them into the database
@@ -574,7 +571,7 @@ public class BambooService implements ContinuousIntegrationService {
             // save result to create entry in DB before establishing relation with submission for ordering
             result = resultRepository.save(result);
 
-            var buildLogs = extractAndFilterBuildLogs(buildResult);
+            var buildLogs = extractAndFilterBuildLogs(buildResult, programmingExercise.getProgrammingLanguage());
             var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, programmingSubmission);
 
             programmingSubmission = programmingSubmissionRepository.findWithEagerResultsAndBuildLogEntriesById(programmingSubmission.getId()).get();
@@ -595,7 +592,7 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
-    private List<BuildLogEntry> extractAndFilterBuildLogs(BambooBuildResultNotificationDTO buildResult) {
+    private List<BuildLogEntry> extractAndFilterBuildLogs(BambooBuildResultNotificationDTO buildResult, ProgrammingLanguage programmingLanguage) {
         List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
         // Store logs into database. Append logs of multiple jobs.
@@ -611,7 +608,7 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         // Filter unwanted logs
-        var filteredLogs = filterBuildLogs(buildLogEntries);
+        var filteredLogs = filterBuildLogs(buildLogEntries, programmingLanguage);
 
         return filteredLogs;
     }
@@ -852,7 +849,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param unfilteredBuildLogs the original, unfiltered list
      * @return the filtered list
      */
-    private List<BuildLogEntry> filterBuildLogs(List<BuildLogEntry> unfilteredBuildLogs) {
+    private List<BuildLogEntry> filterBuildLogs(List<BuildLogEntry> unfilteredBuildLogs, ProgrammingLanguage programmingLanguage) {
         List<BuildLogEntry> filteredBuildLogs = new ArrayList<>();
         for (BuildLogEntry unfilteredBuildLog : unfilteredBuildLogs) {
             boolean compilationErrorFound = false;
@@ -867,27 +864,8 @@ public class BambooService implements ContinuousIntegrationService {
                 break;
             }
 
-            // filter unnecessary logs
-            if ((logString.startsWith("[INFO]") && !logString.contains("error")) || logString.startsWith("[WARNING]") || logString.startsWith("[ERROR] [Help 1]")
-                    || logString.startsWith("[ERROR] For more information about the errors and possible solutions") || logString.startsWith("[ERROR] Re-run Maven using")
-                    || logString.startsWith("[ERROR] To see the full stack trace of the errors") || logString.startsWith("[ERROR] -> [Help 1]")
-                    || logString.startsWith("Unable to publish artifact") || logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS")
-                    || logString.startsWith("[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin") || logString.startsWith("[INFO] Downloading")
-                    || logString.startsWith("[INFO] Downloaded")) {
-                continue;
-            }
-
-            // filter illegal reflection logs
-            if (logString.startsWith("WARNING") && (logString.contains("An illegal reflective access operation has occurred")
-                    || logString.contains("WARNING: Illegal reflective access by") || logString.contains("WARNING: Please consider reporting this to the maintainers of")
-                    || logString.contains("to enable warnings of further illegal reflective access operations")
-                    || logString.contains("All illegal access operations will be denied in a future release"))) {
-                continue;
-            }
-
-            // filter unnecessary Swift logs
-            if (logString.contains("Unable to find image") || logString.contains(": Pull") || logString.contains(": Waiting") || logString.contains(": Verifying")
-                    || logString.contains(": Download") || logString.startsWith("Digest:") || logString.startsWith("Status:") || logString.contains("github.com")) {
+            // filter unnecessary logs and illegal reflection logs
+            if (buildLogService.isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage) || buildLogService.isIllegalReflectionLog(logString)) {
                 continue;
             }
 
@@ -895,8 +873,7 @@ public class BambooService implements ContinuousIntegrationService {
             final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
 
             // Avoid duplicate log entries
-            var existingLog = filteredBuildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
-            if (existingLog.isEmpty()) {
+            if (buildLogService.checkIfBuildLogIsNotADuplicate(filteredBuildLogs, shortenedLogString)) {
                 filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), shortenedLogString, unfilteredBuildLog.getProgrammingSubmission()));
             }
         }

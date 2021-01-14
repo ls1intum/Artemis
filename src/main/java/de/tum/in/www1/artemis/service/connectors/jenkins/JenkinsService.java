@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -517,6 +516,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
         String projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
         String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
+        ProgrammingLanguage programmingLanguage = programmingExerciseParticipation.getProgrammingExercise().getProgrammingLanguage();
 
         try {
             final var build = getJob(projectKey, buildPlanId).getLastBuild();
@@ -533,25 +533,27 @@ public class JenkinsService implements ContinuousIntegrationService {
             // Jenkins logs all steps of the build pipeline. We remove those as they are irrelevant to the students
             List<BuildLogEntry> prunedBuildLogs = new ArrayList<>();
             for (BuildLogEntry entry : buildLog) {
-                if (entry.getLog().contains("Compilation failure")) {
+                String logString = entry.getLog();
+                if (logString.contains("Compilation failure")) {
                     break;
                 }
 
-                // filter unnecessary logs
-                if (!((entry.getLog().startsWith("[INFO]") && !entry.getLog().contains("error")) || !entry.getLog().startsWith("[ERROR]") || entry.getLog().startsWith("[WARNING]")
-                        || entry.getLog().startsWith("[ERROR] [Help 1]") || entry.getLog().startsWith("[ERROR] For more information about the errors and possible solutions")
-                        || entry.getLog().startsWith("[ERROR] Re-run Maven using") || entry.getLog().startsWith("[ERROR] To see the full stack trace of the errors")
-                        || entry.getLog().startsWith("[ERROR] -> [Help 1]") || entry.getLog().equals("[ERROR] "))) {
+                // filter unnecessary logs and illegal reflection logs
+                if (buildLogService.isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage) || buildLogService.isIllegalReflectionLog(logString)) {
+                    continue;
+                }
 
-                    // Remove the path from the log entries
-                    // When using local agents, this is the path where the workspace should be located
-                    String path = "/var/jenkins_home/workspace/" + projectKey + "/" + buildPlanId + "/";
-                    entry.setLog(entry.getLog().replace(path, ""));
+                // Jenkins outputs each executed shell command with '+ <shell command>'
+                if (logString.startsWith("+ ")) {
+                    continue;
+                }
 
-                    // When using remote agents, this is the path where the workspace should be located
-                    path = "/home/jenkins/remote_agent/workspace/" + projectKey + "/" + buildPlanId + "/";
-                    entry.setLog(entry.getLog().replace(path, ""));
+                // Remove the path from the log entries
+                final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
 
+                // Avoid duplicate log entries
+                if (buildLogService.checkIfBuildLogIsNotADuplicate(prunedBuildLogs, shortenedLogString)) {
+                    entry.setLog(shortenedLogString);
                     prunedBuildLogs.add(entry);
                 }
             }
