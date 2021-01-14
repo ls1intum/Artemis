@@ -52,6 +52,7 @@ public class ModelingSubmissionService extends SubmissionService {
      *
      * @param submissionId     the id of the modeling submission
      * @param modelingExercise the corresponding exercise
+     * @param correctionRound the correction round for which we want the lock
      * @return the locked modeling submission
      */
     public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise, long correctionRound) {

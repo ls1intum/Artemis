@@ -368,6 +368,7 @@ public class ProgrammingSubmissionResource {
      * GET /programming-submissions/:participationId/lock : get the programmingSubmissions participation by it's id and locks the corresponding submission for assessment
      *
      * @param participationId the id of the participation to retrieve
+     * @param correctionRound correction round for which we prepare the submission
      * @return the ResponseEntity with status 200 (OK) and with body the programmingSubmissions participation
      */
     @GetMapping("/programming-submissions/{participationId}/lock")

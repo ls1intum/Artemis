@@ -170,6 +170,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * assigned to the submission.
      *
      * @param submissionId the id of the modelingSubmission to retrieve
+     * @param correctionRound correction round for which we prepare the submission
      * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id, or with status 404 (Not Found) if the modelingSubmission could not be
      *         found
      */
@@ -250,6 +251,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * not supported by Compass we just get an array with the id of a random submission without manual assessment.
      *
      * @param exerciseId the id of the modeling exercise for which we want to get a submission without manual result
+     * @param correctionRound correction round for which we prepare the submission
      * @return an array of modeling submission id(s) without a manual result
      */
     @Deprecated(since = "4.9.0", forRemoval = true)

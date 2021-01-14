@@ -135,7 +135,14 @@ public abstract class AssessmentResource {
         Submission submission = exampleSubmission.getSubmission();
         Exercise exercise = exampleSubmission.getExercise();
         checkAuthorization(exercise, user);
-        Result result = assessmentService.saveManualAssessment(submission, feedbacks);
+        // as parameter resultId is not set, we use the latest Result, if no latest Result exists, we use null
+        Result result;
+        if (submission.getLatestResult() == null) {
+            result = assessmentService.saveManualAssessment(submission, feedbacks, null);
+        }
+        else {
+            result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId());
+        }
         return ResponseEntity.ok(result);
     }
 

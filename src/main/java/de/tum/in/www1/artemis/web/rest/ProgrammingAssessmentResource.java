@@ -104,6 +104,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      *
      * @param participationId the id of the participation that should be sent to the client
      * @param submit       defines if assessment is submitted or saved
+     * @param correctionRound correction round for which we prepare the submission
      * @param newManualResult    result with list of feedbacks to be saved to the database
      * @return the result saved to the database
      */

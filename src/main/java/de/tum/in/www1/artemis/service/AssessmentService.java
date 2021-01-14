@@ -356,22 +356,6 @@ public class AssessmentService {
         return resultRepository.save(result);
     }
 
-    /**
-     * Overloads saveManualAssessment method
-     * TODO: NR, SE, refactor into one call
-     * @param submission
-     * @param feedbackList
-     * @return
-     */
-    public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList) {
-        // as parameter resultId is not set, we use the latest Result, if no latest Result exists, we use null
-        if (submission.getLatestResult() == null) {
-            return saveManualAssessment(submission, feedbackList, null);
-        }
-        else
-            return saveManualAssessment(submission, feedbackList, submission.getLatestResult().getId());
-    }
-
     private List<Feedback> saveFeedbacks(List<Feedback> feedbackList) {
         log.debug("Save new feedback: " + feedbackList);
         List<Feedback> updatedFeedbackList = new ArrayList<>();

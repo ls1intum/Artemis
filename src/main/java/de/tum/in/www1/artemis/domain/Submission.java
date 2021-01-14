@@ -112,22 +112,32 @@ public abstract class Submission extends DomainObject {
         return null;
     }
 
+    /**
+     * Used to get result by correction round
+     * @param correctionRound to get result by
+     * @return the result based on the given correction-round
+     */
     @Nullable
     @JsonIgnore
-    public Result getResultByCorrectionRound(Long id) {
-        if (results != null && results.size() > id) {
-            return results.get(id.intValue());
+    public Result getResultByCorrectionRound(Long correctionRound) {
+        if (results != null && results.size() > correctionRound) {
+            return results.get(correctionRound.intValue());
         }
         return null;
     }
 
+    /**
+     * Used to get result by correction round ignoring all automatic results
+     * @param correctionRound to get result by
+     * @return the result based on the given correction-round
+     */
     @Nullable
     @JsonIgnore
-    public Result getResultByCorrectionRoundIgnoreAutomatic(Long id) {
+    public Result getResultByCorrectionRoundIgnoreAutomatic(Long correctionRound) {
         List<Result> withoutAutomaticResults = results.stream().filter(result -> result != null && !result.getAssessmentType().equals(AssessmentType.AUTOMATIC))
                 .collect(Collectors.toList());
-        if (withoutAutomaticResults != null && withoutAutomaticResults.size() > id) {
-            return withoutAutomaticResults.get(id.intValue());
+        if (withoutAutomaticResults != null && withoutAutomaticResults.size() > correctionRound) {
+            return withoutAutomaticResults.get(correctionRound.intValue());
         }
         return null;
     }
