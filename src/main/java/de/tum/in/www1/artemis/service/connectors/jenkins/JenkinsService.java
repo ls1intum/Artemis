@@ -11,7 +11,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -357,7 +356,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) {
         final var buildResult = TestResultsDTO.convert(requestBody);
-        var newResult = createResultFromBuildResult(buildResult, (Participation) participation);
+        var newResult = createResultFromBuildResult(buildResult, participation);
 
         // Fetch submission or create a fallback
         var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
@@ -380,25 +379,15 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         return Optional.of(jenkinsServerUrl + "/project/" + projectKey + "/" + buildPlanId);
     }
 
-    @NotNull
-    private ProgrammingSubmission createAndSaveFallbackSubmission(ProgrammingExerciseParticipation participation, TestResultsDTO buildResult) {
-        final var commitHash = getCommitHash(buildResult, SubmissionType.MANUAL);
-        log.warn("Could not find pending ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create a new one subsequently...", commitHash,
-                participation.getId(), participation.getBuildPlanId());
-        var submission = super.createFallbackSubmission(participation, buildResult.getRunDate(), commitHash.orElse(null));
-        // Save to avoid TransientPropertyValueException.
-        programmingSubmissionRepository.save(submission);
-        return submission;
-    }
-
-    private Result createResultFromBuildResult(TestResultsDTO report, Participation participation) {
+    private Result createResultFromBuildResult(TestResultsDTO report, ProgrammingExerciseParticipation participation) {
+        // TODO: move some duplicated code into the abstract super class
         final var result = new Result();
         final var testSum = report.getSkipped() + report.getFailures() + report.getErrors() + report.getSuccessful();
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(report.getSuccessful() == testSum);
         result.setCompletionDate(report.getRunDate());
         result.setScore((long) calculateResultScore(report, testSum));
-        result.setParticipation(participation);
+        result.setParticipation((Participation) participation);
         addFeedbackToResult(result, report);
         // We assume the build has failed if no test case feedback has been sent. Static code analysis feedback might exist even though the build failed
         boolean hasTestCaseFeedback = result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isStaticCodeAnalysisFeedback());

@@ -51,6 +51,11 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
         this.build = build;
     }
 
+    @Override
+    public ZonedDateTime getBuildRunDate() {
+        return getBuild().getBuildCompletedDate();
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class BambooBuildDTO {
 

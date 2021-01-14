@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.http.HttpException;
@@ -574,19 +573,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
         }
     }
 
-    @NotNull
-    private ProgrammingSubmission createAndSaveFallbackSubmission(ProgrammingExerciseParticipation participation, BambooBuildResultNotificationDTO buildResult) {
-        final var commitHash = getCommitHash(buildResult, SubmissionType.MANUAL);
-        log.warn("Could not find pending ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create a new one subsequently...", commitHash,
-                participation.getId(), participation.getBuildPlanId());
-        // In this case we don't know the submission time, so we use the result completion time as a fallback.
-        // TODO: we should actually ask the git service to retrieve the actual commit date in the git repository here and only use result.getCompletionDate() as fallback
-        var submission = super.createFallbackSubmission(participation, buildResult.getBuild().getBuildCompletedDate(), commitHash.orElse(null));
-        // Save to avoid TransientPropertyValueException.
-        programmingSubmissionRepository.save(submission);
-        return submission;
-    }
-
     private List<BuildLogEntry> extractAndFilterBuildLogs(BambooBuildResultNotificationDTO buildResult) {
         List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
@@ -649,6 +635,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
      * @return the created result (is not persisted in this method, only constructed!)
      */
     private Result createResultFromBuildResult(BambooBuildResultNotificationDTO buildResult, ProgrammingExerciseParticipation participation) {
+        // TODO: move some duplicated code into the abstract super class
         Result result = new Result();
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(buildResult.getBuild().isSuccessful());

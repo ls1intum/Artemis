@@ -79,6 +79,11 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
         return runDate;
     }
 
+    @Override
+    public ZonedDateTime getBuildRunDate() {
+        return getRunDate();
+    }
+
     public void setRunDate(ZonedDateTime runDate) {
         this.runDate = runDate;
     }

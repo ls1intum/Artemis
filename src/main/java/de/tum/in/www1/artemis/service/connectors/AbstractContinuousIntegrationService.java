@@ -5,6 +5,9 @@ import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -13,6 +16,8 @@ import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 public abstract class AbstractContinuousIntegrationService implements ContinuousIntegrationService {
+
+    private final Logger log = LoggerFactory.getLogger(AbstractContinuousIntegrationService.class);
 
     protected ProgrammingSubmissionRepository programmingSubmissionRepository;
 
@@ -58,6 +63,19 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
         submission.setType(SubmissionType.OTHER);
         submission.setCommitHash(commitHash);
         submission.setSubmissionDate(submissionDate);
+        return submission;
+    }
+
+    @NotNull
+    protected ProgrammingSubmission createAndSaveFallbackSubmission(ProgrammingExerciseParticipation participation, AbstractBuildResultNotificationDTO buildResult) {
+        final var commitHash = getCommitHash(buildResult, SubmissionType.MANUAL);
+        log.warn("Could not find pending ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create a new one subsequently...", commitHash,
+                participation.getId(), participation.getBuildPlanId());
+        // In this case we don't know the submission time, so we use the result completion time as a fallback.
+        // TODO: we should actually ask the git service to retrieve the actual commit date in the git repository here and only use result.getCompletionDate() as fallback
+        var submission = createFallbackSubmission(participation, buildResult.getBuildRunDate(), commitHash.orElse(null));
+        // Save to avoid TransientPropertyValueException.
+        programmingSubmissionRepository.save(submission);
         return submission;
     }
 
