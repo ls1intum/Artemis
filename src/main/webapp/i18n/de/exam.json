@@ -57,6 +57,9 @@
                 "numberOfExercisesInExamNotSet": "Die Anzahl an Aufgaben in der Klausur ist nicht gesetzt.",
                 "tooFewExerciseGroups": "Die Anzahl der Aufgabengruppen ist zu klein.",
                 "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß."
+            },
+            "error": {
+                "cannotRegisterInstructor": "Du kannst keine Dozenten oder Administratoren zu Klausuren anmelden."
             }
         },
         "examScores": {

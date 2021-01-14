@@ -152,8 +152,8 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                     // Flash green background color to signal to the user that this student was registered
                     this.flashRowClass(cssClasses.newlyRegistered);
                 },
-                () => {
-                    this.isTransitioning = false;
+                (error: HttpErrorResponse) => {
+                    this.onError(`artemisApp.exam.${error.headers.get('x-null-error')}`);
                 },
             );
         } else {
@@ -223,4 +223,14 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.rowClass = className;
         setTimeout(() => (this.rowClass = undefined));
     };
+
+    /**
+     * Show an error as an alert in the top of the editor html.
+     * Used by other components to display errors.
+     * The error must already be provided translated by the emitting component.
+     */
+    onError(error: string) {
+        this.jhiAlertService.error(error);
+        this.isTransitioning = false;
+    }
 }
