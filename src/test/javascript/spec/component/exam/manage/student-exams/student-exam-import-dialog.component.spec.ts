@@ -132,6 +132,12 @@ describe('StudentExamImportDialogComponent', () => {
         rowNumbersOrNull = component.computeInvalidStudentEntries([{ firstnameofstudent: 'Max' }, { registrationnumber: '1' }, { login: 'username' }]);
         expect(rowNumbersOrNull).to.equal('2');
 
+        rowNumbersOrNull = component.computeInvalidStudentEntries([{ benutzer: 'Max' }, { benutzername: '1' }, { user: 'username' }]);
+        expect(rowNumbersOrNull).to.be.null;
+
+        rowNumbersOrNull = component.computeInvalidStudentEntries([{ matriculationnumber: '1' }, { matrikelnummer: '1' }]);
+        expect(rowNumbersOrNull).to.be.null;
+
         rowNumbersOrNull = component.computeInvalidStudentEntries([{ firstnameofstudent: 'Max' }, { familynameofstudent: 'Mustermann' }]);
         expect(rowNumbersOrNull).to.equal('2, 3');
 

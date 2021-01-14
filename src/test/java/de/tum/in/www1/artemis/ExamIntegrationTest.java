@@ -139,32 +139,46 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var student1 = database.getUserByLogin("student1");
         var student2 = database.getUserByLogin("student2");
         var student3 = database.getUserByLogin("student3");
+        var student5 = database.getUserByLogin("student5");
+        var student6 = database.getUserByLogin("student6");
         var registrationNumber1 = "1111111";
         var registrationNumber2 = "1111112";
         var registrationNumber3 = "1111113";
         var registrationNumber3WithTypo = registrationNumber3 + "0";
+        var registrationNumber5 = "1111115";
+        var registrationNumber5WithTypo = registrationNumber5 + "1";
+        var registrationNumber6 = "1111116";
         var registrationNumber99 = "1111199";
         var registrationNumber100 = "1111100";
+        var emptyRegistrationNumber = "";
         student1.setRegistrationNumber(registrationNumber1);
         student2.setRegistrationNumber(registrationNumber2);
         student3.setRegistrationNumber(registrationNumber3);
+        student5.setRegistrationNumber(registrationNumber5);
+        student6.setRegistrationNumber(registrationNumber6);
         student1 = userRepo.save(student1);
         student2 = userRepo.save(student2);
         userRepo.save(student3);
+        userRepo.save(student5);
+        userRepo.save(student6);
 
         // mock the ldap service
         doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber3WithTypo);
+        doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(emptyRegistrationNumber);
+        doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber5WithTypo);
         var ldapUser100Dto = new LdapUserDto().registrationNumber(registrationNumber100).firstName("Student100").lastName("Student100").username("student100")
                 .email("student100@tum.de");
         doReturn(Optional.of(ldapUser100Dto)).when(ldapUserService).findByRegistrationNumber(registrationNumber100);
 
-        // first mocked call expected to add student 99 to course student
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());  // expect once for student 99
-        // second mocked call expected to create student 100
+        // first and second mocked calls are expected to add student 5 and 99 to the course students
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
+        // third mocked call expected to create student 100
         jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser100Dto.getUsername(), ldapUser100Dto.getFirstName() + " " + ldapUser100Dto.getLastName(),
                 ldapUser100Dto.getEmail());
-        // thirs mocked call expected to add student 100 to course student group
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());  // expect once for student 100
+        // the last two mocked calls are expected to add student 100 and 6 to the course student group
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
 
         var student99 = ModelFactory.generateActivatedUser("student99");     // not registered for the course
         student99.setRegistrationNumber(registrationNumber99);
@@ -188,9 +202,15 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var studentDto1 = new StudentDTO().registrationNumber(registrationNumber1);
         var studentDto2 = new StudentDTO().registrationNumber(registrationNumber2);
         var studentDto3 = new StudentDTO().registrationNumber(registrationNumber3WithTypo); // explicit typo, should be a registration failure later
+        var studentDto5 = new StudentDTO().registrationNumber(registrationNumber5WithTypo); // explicit typo, should fall back to login name later
+        studentDto5.setLogin(student5.getLogin());
         var studentDto99 = new StudentDTO().registrationNumber(registrationNumber99);
         var studentDto100 = new StudentDTO().registrationNumber(registrationNumber100);
-        var studentsToRegister = List.of(studentDto1, studentDto2, studentDto3, studentDto99, studentDto100);
+
+        // Add a student with login but empty registration number
+        var studentDto6 = new StudentDTO().registrationNumber(emptyRegistrationNumber);
+        studentDto6.setLogin(student6.getLogin());
+        var studentsToRegister = List.of(studentDto1, studentDto2, studentDto3, studentDto5, studentDto99, studentDto100, studentDto6);
 
         // now we register all these students for the exam.
         List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
@@ -201,7 +221,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // now a new user student100 should exist
         var student100 = database.getUserByLogin("student100");
 
-        assertThat(storedExam.getRegisteredUsers()).containsExactlyInAnyOrder(student1, student2, student99, student100);
+        assertThat(storedExam.getRegisteredUsers()).containsExactlyInAnyOrder(student1, student2, student5, student99, student100, student6);
 
         for (var user : storedExam.getRegisteredUsers()) {
             // all registered users must have access to the course
