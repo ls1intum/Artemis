@@ -57,6 +57,9 @@
                 "numberOfExercisesInExamNotSet": "The number of exercises in the exam is not set.",
                 "tooFewExerciseGroups": "The number of exercise groups is too small.",
                 "tooManyMandatoryExerciseGroups": "The number of mandatory exercise groups is too large."
+            },
+            "error": {
+                "cannotRegisterInstructor": "You cannot register instructors or administrators to exams."
             }
         },
         "examScores": {

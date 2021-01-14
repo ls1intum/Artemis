@@ -394,6 +394,10 @@ public class ExamResource {
             return notFound();
         }
 
+        if (student.get().getGroups().contains(exam.getCourse().getInstructorGroupName()) || authCheckService.isAdmin(student.get())) {
+            return forbidden("exam", "cannotRegisterInstructor", "You cannot register instructors or administrators to exams.");
+        }
+
         examService.registerStudentToExam(course, exam, student.get());
         return ResponseEntity.ok().body(null);
     }
