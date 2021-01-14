@@ -136,8 +136,7 @@
                 </span>
                 <button
                     id="unlockAllRepositoriesButton"
-                    class="btn btn-danger ml-1"
-                    style="height: 40px"
+                    class="btn btn-danger btn-sm mr-1"
                     (click)="handleUnlockAllRepositories()"
                     *ngIf="programmingExercise.isAtLeastInstructor"
                     [disabled]="lockingOrUnlockingRepositories"
@@ -148,8 +147,7 @@
                 </button>
                 <button
                     id="lockAllRepositoriesButton"
-                    class="btn btn-danger ml-1"
-                    style="height: 40px"
+                    class="btn btn-danger btn-sm mr-1"
                     (click)="handleLockAllRepositories()"
                     *ngIf="programmingExercise.isAtLeastInstructor"
                     [disabled]="lockingOrUnlockingRepositories"
