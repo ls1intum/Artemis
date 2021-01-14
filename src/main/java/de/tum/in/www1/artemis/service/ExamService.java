@@ -555,6 +555,15 @@ public class ExamService {
             try {
                 // 1) we use the registration number and try to find the student in the Artemis user database
                 Optional<User> optionalStudent = userService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+                if (optionalStudent.isEmpty()) {
+                    // An invalid registration number might be corrected by getting the number from the login
+                    var userOptional = userService.getUserByLogin(studentDto.getLogin());
+                    if (userOptional.isPresent()) {
+                        registrationNumber = userOptional.get().getRegistrationNumber();
+                        optionalStudent = userService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+                    }
+                }
+
                 if (optionalStudent.isPresent()) {
                     var student = optionalStudent.get();
                     // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course)
@@ -564,9 +573,19 @@ public class ExamService {
                     exam.addRegisteredUser(student);
                     continue;
                 }
+
                 // 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential
                 // external user management system
                 optionalStudent = userService.createUserFromLdap(registrationNumber);
+                if (optionalStudent.isEmpty()) {
+                    // An invalid registration number might be corrected by getting the number from the login
+                    var userOptional = userService.getUserByLogin(studentDto.getLogin());
+                    if (userOptional.isPresent()) {
+                        registrationNumber = userOptional.get().getRegistrationNumber();
+                        optionalStudent = userService.createUserFromLdap(registrationNumber);
+                    }
+                }
+
                 if (optionalStudent.isPresent()) {
                     var student = optionalStudent.get();
                     // the newly created student needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
@@ -574,6 +593,7 @@ public class ExamService {
                     exam.addRegisteredUser(student);
                     continue;
                 }
+
                 // 3) if we cannot find the user in the (TUM) LDAP, we report this to the client
                 log.warn("User with registration number " + registrationNumber + " not found in Artemis user database and not found in (TUM) LDAP");
             }
