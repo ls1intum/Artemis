@@ -203,7 +203,10 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
         }
 
         for (const notFound of this.notFoundStudents) {
-            if (notFound.registrationNumber === student.registrationNumber || notFound.login === student.login) {
+            if (
+                (notFound.registrationNumber?.length > 0 && notFound.registrationNumber === student.registrationNumber) ||
+                (notFound.login?.length > 0 && notFound.login === student.login)
+            ) {
                 return true;
             }
         }

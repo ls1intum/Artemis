@@ -373,8 +373,22 @@ public class UserService {
         return Optional.empty();
     }
 
+    /**
+     * Finds a single user with groups and authorities using the registration number
+     *
+     * @param registrationNumber user registration number as string
+     */
     public Optional<User> findUserWithGroupsAndAuthoritiesByRegistrationNumber(String registrationNumber) {
         return userRepository.findOneWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+    }
+
+    /**
+     * Finds a single user with groups and authorities using the login name
+     *
+     * @param login user login string
+     */
+    public Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login) {
+        return userRepository.findOneWithGroupsAndAuthoritiesByLogin(login);
     }
 
     /**
