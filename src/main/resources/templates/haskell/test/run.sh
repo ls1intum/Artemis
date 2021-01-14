@@ -26,7 +26,7 @@ done < <(find assignment/src -type f)
 stack build --allow-different-user --flag test:Prod && \
   # delete the solution and tests (so that students cannot access it) when in safe mode
   ($safe && \
-    (rm -rf solution && rm -rf test/hs) \
+    (rm -rf solution && rm -rf test) \
   ) \
   # run the test executable and return 0
   # Note: as a convention, a failed haskell tasty test suite returns 1, but this stops the JUnit Parser from running.
