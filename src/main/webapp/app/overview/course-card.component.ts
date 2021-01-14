@@ -31,7 +31,7 @@ export class CourseCardComponent implements OnChanges {
 
     displayTotalRelativeScore(): number {
         if (this.course.exercises && this.course.exercises.length > 0) {
-            return this.courseScoreCalculationService.calculateTotalScores(this.course.exercises).get('relativeScore')!;
+            return this.courseScoreCalculationService.calculateTotalScores(this.course.exercises).get('currentRelativeScore')!;
         } else {
             return 0;
         }
