@@ -344,15 +344,13 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         Result result = results.get(0);
         assertThat(submission.getCommitHash()).isEqualTo("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
         // The submission should be other as it was not created by a commit.
-        assertThat(submission.getType()).isEqualTo(SubmissionType.OTHER);
+        assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
         assertThat(participation.getSubmissions().size()).isEqualTo(1);
 
-        /*
-         * TODO: This fails because when a submission is created with SubmissionType::Other, getCommitHash doesn't find the submission // Do another call to new-result again and
-         * assert that no new submission is created. postResult(participationType, 0, HttpStatus.OK, false); assertNoNewSubmissionsAndIsSubmission(submission);
-         */
+        postResult(participationType, 0, HttpStatus.OK, false);
+        assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
     /**
@@ -533,11 +531,10 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
         assertBuildError(participation.getId(), userLogin);
 
-        // TODO: This fails because when a submission is created with SubmissionType::Other, getCommitHash doesn't find the submission
-        /*
-         * // Do another call to new-result again and assert that no new submission is created. var submisstion = submissionRepository.findAll().get(0);
-         * postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false); assertNoNewSubmissionsAndIsSubmission(submisstion);
-         */
+        // Do another call to new-result again and assert that no new submission is created.
+        var submisstion = submissionRepository.findAll().get(0);
+        postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
+        assertNoNewSubmissionsAndIsSubmission(submisstion);
     }
 
     private void assertNoNewSubmissionsAndIsSubmission(ProgrammingSubmission submission) {
