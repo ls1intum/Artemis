@@ -111,12 +111,22 @@ public class ProgrammingExerciseResultTestService {
         assertThat(testCases).usingElementComparatorIgnoringFields("exercise", "id").isEqualTo(expectedTestCases);
         assertThat(optionalResult).isPresent();
         assertThat(optionalResult.get().getScore()).isEqualTo(100L);
+
+        // Call again and shouln't re-create new submission.
+        gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
+        var latestSubmissions = programmingSubmissionRepository.findAll();
+        // One submission from the student participation andd the other from solution participation
+        assertThat(latestSubmissions.size()).isEqualTo(2);
     }
 
     // Test
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification, ProgrammingLanguage programmingLanguage) {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
         final var savedResult = resultService.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
+
+        // Should be one because programmingExerciseStudentParticipationStaticCodeAnalysis doesn't have a submission
+        var submissions = programmingSubmissionRepository.findAll();
+        assertThat(submissions.size()).isEqualTo(1);
 
         // Create comparator to explicitly compare feedback attributes (equals only compares id)
         Comparator<? super Feedback> scaFeedbackComparator = (Comparator<Feedback>) (fb1, fb2) -> {
@@ -134,6 +144,10 @@ public class ProgrammingExerciseResultTestService {
         assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(savedResult.getFeedbacks());
         assertThat(result.getFeedbacks().stream().filter(Feedback::isStaticCodeAnalysisFeedback).count())
                 .isEqualTo(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage).size());
+
+        // Call again and shouln't re-create new submission.
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
+        assertThat(programmingSubmissionRepository.findAll().size()).isEqualTo(submissions.size());
     }
 
     // Test
@@ -145,6 +159,10 @@ public class ProgrammingExerciseResultTestService {
         var expectedNoOfLogs = getNumberOfBuildLogs(resultNotification);
         assertThat(((ProgrammingSubmission) optionalResult.get().getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);
         assertThat(submissionWithLogs.get().getBuildLogEntries()).hasSize(expectedNoOfLogs);
+
+        // Call again and shouln't re-create new submission.
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        assertThat(programmingSubmissionRepository.findAll().size()).isEqualTo(1);
     }
 
     public void shouldSaveBuildLogsInBuildLogRepository(Object resultNotification) {
@@ -158,6 +176,10 @@ public class ProgrammingExerciseResultTestService {
         savedBuildLogs.forEach(buildLogEntry -> {
             assertThat(buildLogEntry.getProgrammingSubmission().getParticipation().getId()).isEqualTo(programmingExerciseStudentParticipation.getId());
         });
+
+        // Call again and shouln't re-create new submission.
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        assertThat(programmingSubmissionRepository.findAll().size()).isEqualTo(1);
     }
 
     // Test
@@ -180,6 +202,10 @@ public class ProgrammingExerciseResultTestService {
         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         assertThat(result.getFeedbacks()).hasSize(6);
         assertThat(result.getFeedbacks().stream().filter((fb) -> fb.getType() == FeedbackType.AUTOMATIC).count()).isEqualTo(3);
+
+        // Call again and shouln't re-create new submission.
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        assertThat(programmingSubmissionRepository.findAll().size()).isEqualTo(1);
     }
 
     private int getNumberOfBuildLogs(Object resultNotification) {
