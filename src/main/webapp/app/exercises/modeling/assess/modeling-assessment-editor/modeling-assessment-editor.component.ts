@@ -77,6 +77,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         private structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
+        console.log('constr. called');
     }
 
     private get feedback(): Feedback[] {
@@ -99,7 +100,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.isTestRun = queryParams.get('testRun') === 'true';
             this.correctionRound = Number(queryParams.get('correction-round'));
         });
-
+        console.log('called');
         this.route.paramMap.subscribe((params) => {
             this.courseId = Number(params.get('courseId'));
             const exerciseId = Number(params.get('exerciseId'));
@@ -107,12 +108,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             if (submissionId === 'new') {
                 this.loadRandomSubmission(exerciseId);
             } else {
+                console.log('else part');
                 this.loadSubmission(Number(submissionId));
             }
         });
     }
 
     private loadSubmission(submissionId: number): void {
+        console.log('load sub');
         this.modelingSubmissionService.getSubmission(submissionId).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
@@ -151,11 +154,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
+        console.log('handle receveid ', this.correctionRound);
         this.submission = submission;
         setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
         this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
+        console.log('result', this.result);
         this.hasAssessmentDueDatePassed = !!this.modelingExercise!.assessmentDueDate && moment(this.modelingExercise!.assessmentDueDate).isBefore(now());
         if (this.result?.hasComplaint) {
             this.getComplaint(this.result.id);
@@ -165,6 +170,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.handleFeedback(this.result.feedbacks);
         } else {
             this.result!.feedbacks = [];
+            //this.generalFeedback = null;
+            this.unreferencedFeedback = [];
+            this.referencedFeedback = [];
         }
         if (this.result && this.submission?.participation) {
             this.submission.participation.results = [this.result];
@@ -400,7 +408,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             (unassessedSubmission: ModelingSubmission) => {
                 this.nextSubmissionBusy = false;
                 this.router.onSameUrlNavigation = 'reload';
-                this.router.navigateByUrl(`/course-management/${this.courseId}/modeling-exercises/${this.modelingExercise!.id}/submissions/${unassessedSubmission.id}/assessment`);
+                const url = `/course-management/${this.courseId}/modeling-exercises/${this.modelingExercise!.id}/submissions/${unassessedSubmission.id}/assessment`;
+                this.router.navigate([url], { queryParams: { 'correction-round': this.correctionRound } });
             },
             (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy = false;

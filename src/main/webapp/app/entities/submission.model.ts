@@ -70,7 +70,6 @@ export function getLatestSubmissionResult(submission: Submission | undefined): R
  */
 export function getSubmissionResultByCorrectionRound(submission: Submission | undefined, correctionRound: number): Result | undefined {
     if (submission?.results) {
-        console.log(submission.results[correctionRound]);
         return submission.results[correctionRound];
     }
 }

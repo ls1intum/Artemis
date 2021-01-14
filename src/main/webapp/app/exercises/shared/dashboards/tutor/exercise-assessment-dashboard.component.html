@@ -264,7 +264,7 @@
                                     <jhi-result [participation]="submission.participation" [correctionRound]="correctionRound"></jhi-result>
                                 </td>
                                 <td>
-                                    {{ calculateSubmissionStatus(submission) }}
+                                    {{ calculateSubmissionStatus(submission, correctionRound) }}
                                 </td>
                                 <td>
                                     <span *ngIf="submission.results[correctionRound] != undefined && submission.results[correctionRound]!.score != undefined"
@@ -278,7 +278,7 @@
                                     <ng-container *ngIf="(isTestRun && complaints.length === 0) || !isTestRun">
                                         <ng-container>
                                             <button
-                                                *ngIf="submission && calculateSubmissionStatus(submission) === 'DRAFT'; else continueButton"
+                                                *ngIf="submission && calculateSubmissionStatus(submission, correctionRound) === 'DRAFT'; else continueButton"
                                                 (click)="openAssessmentEditor(submission, correctionRound)"
                                                 class="btn btn-warning btn-sm"
                                             >
