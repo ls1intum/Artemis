@@ -203,6 +203,10 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         assertThat(submission.getLatestResult().getId()).isEqualTo(createdResult.getId());
         assertThat(updatedParticipation.getSubmissions()).hasSize(1);
         assertThat(updatedParticipation.getSubmissions().stream().anyMatch(s -> s.getId().equals(submissionId))).isTrue();
+
+        // Do a call to new-result again and assert that no new submission is created.
+        postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
+        assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
     /**
@@ -234,6 +238,10 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         assertThat(submission.getLatestResult().getId()).isEqualTo(createdResult.getId());
         assertThat(participation.getSubmissions()).hasSize(1);
         assertThat(participation.getSubmissions().stream().anyMatch(s -> s.getId().equals(submissionId))).isTrue();
+
+        // Do a call to new-result again and assert that no new submission is created.
+        postResult(participationType, 0, HttpStatus.OK, additionalCommit);
+        assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
     private static Stream<Arguments> participationTypeAndAdditionalCommitProvider() {
@@ -255,26 +263,31 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     void shouldNotLinkTwoResultsToTheSameSubmission(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         // Create 1 submission.
-        postSubmission(participationId, HttpStatus.OK);
+        var submission = postSubmission(participationId, HttpStatus.OK);
         // Create 2 results for the same submission.
         postResult(participationType, 0, HttpStatus.OK, false);
         postResult(participationType, 0, HttpStatus.OK, false);
 
-        // Make sure there are now 2 submission: 1 that was created on submit and 1 when the second result came in.
-        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
-        assertThat(submissions).hasSize(2);
-        ProgrammingSubmission submission1 = submissionRepository.findWithEagerResultsById(submissions.get(0).getId()).get();
-        ProgrammingSubmission submission2 = submissionRepository.findWithEagerResultsById(submissions.get(1).getId()).get();
+        // Make sure there's only 1 submission
+        assertNoNewSubmissionsAndIsSubmission(submission);
 
-        // There should be 1 result linked to each submission.
+        // The results should be linked to the submission.
         List<Result> results = resultRepository.findAll();
         assertThat(results).hasSize(2);
-        Result result1 = resultRepository.findWithEagerSubmissionAndFeedbackById(results.get(0).getId()).get();
-        Result result2 = resultRepository.findWithEagerSubmissionAndFeedbackById(results.get(1).getId()).get();
-        assertThat(result1.getSubmission()).isNotNull();
-        assertThat(result2.getSubmission()).isNotNull();
-        assertThat(submission1.getLatestResult().getId()).isEqualTo(result1.getId());
-        assertThat(submission2.getLatestResult().getId()).isEqualTo(result2.getId());
+        results.forEach(result -> {
+            var resultWithSubmission = resultRepository.findWithEagerSubmissionAndFeedbackById(result.getId());
+            assertThat(resultWithSubmission).isPresent();
+            assertThat(resultWithSubmission.get().getSubmission()).isNotNull();
+            assertThat(resultWithSubmission.get().getSubmission().getId()).isEqualTo(submission.getId());
+        });
+
+        // Make sure the latest result is the last result
+        var latestSubmissionOrEmpty = submissionRepository.findWithEagerResultsById(submission.getId());
+        assertThat(latestSubmissionOrEmpty).isPresent();
+        var latestSubmission = latestSubmissionOrEmpty.get();
+        var latestResult = latestSubmission.getLatestResult();
+        assertThat(latestResult).isNotNull();
+        assertThat(latestResult.getId()).isEqualTo(results.get(1).getId());
     }
 
     /**
@@ -302,6 +315,10 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.getLatestResult().getId()).isEqualTo(result.getId());
+
+        // Do another call to new-result again and assert that no new submission is created.
+        postResult(participationType, 0, HttpStatus.OK, false);
+        assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
     // TODO: write a test case that invokes notifyPush on ProgrammingSubmissionService with two identical commits. This test should then expect an IllegalStateException
@@ -331,6 +348,11 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
         assertThat(participation.getSubmissions().size()).isEqualTo(1);
+
+        /*
+         * TODO: This fails because when a submission is created with SubmissionType::Other, getCommitHash doesn't find the submission // Do another call to new-result again and
+         * assert that no new submission is created. postResult(participationType, 0, HttpStatus.OK, false); assertNoNewSubmissionsAndIsSubmission(submission);
+         */
     }
 
     /**
@@ -368,6 +390,10 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         Result result = results.get(0);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
         assertThat(participation.getSubmissions().size()).isEqualTo(1);
+
+        // Do another call to new-result again and assert that no new submission is created.
+        postResult(participationType, 0, HttpStatus.OK, false);
+        assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
     /**
@@ -409,6 +435,10 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
         assertThat(participation.getSubmissions().size()).isEqualTo(1);
         assertThat(result.isRated()).isTrue();
+
+        // Do another call to new-result again and assert that no new submission is created.
+        postResult(participationType, 0, HttpStatus.OK, false);
+        assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
     /**
@@ -484,6 +514,10 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
         var result = assertBuildError(participation.getId(), userLogin);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
+
+        // Do another call to new-result again and assert that no new submission is created.
+        postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
+        assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
     @ParameterizedTest
@@ -497,8 +531,19 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
         // Call programming-exercises/new-result which includes build log entries
         postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
-
         assertBuildError(participation.getId(), userLogin);
+
+        // TODO: This fails because when a submission is created with SubmissionType::Other, getCommitHash doesn't find the submission
+        /*
+         * // Do another call to new-result again and assert that no new submission is created. var submisstion = submissionRepository.findAll().get(0);
+         * postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false); assertNoNewSubmissionsAndIsSubmission(submisstion);
+         */
+    }
+
+    private void assertNoNewSubmissionsAndIsSubmission(ProgrammingSubmission submission) {
+        var submissions = submissionRepository.findAll();
+        assertThat(submissions.size()).isEqualTo(1);
+        assertThat(submissions.get(0).getId()).isEqualTo(submission.getId());
     }
 
     private Result assertBuildError(Long participationId, String userLogin) throws Exception {
