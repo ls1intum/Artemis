@@ -248,7 +248,7 @@
                     "introText": "Mit diesem Dialog können Studenten in diese Klausur importiert werden.",
                     "csvFile": {
                         "label": ".csv Datei auswählen",
-                        "tooltip": "Bitte wählen Sie die .csv Datei mit den Studenten zum Import aus."
+                        "tooltip": "Bitte wähle die .csv Datei mit den Studierenden zum Import aus. Pro Eintrag muss entweder die 'LOGIN' oder 'REGISTRATION_NUMBER' Spalte ausgefüllt sein."
                     },
                     "studentsForImport": {
                         "label": "Studenten zum Importieren",
