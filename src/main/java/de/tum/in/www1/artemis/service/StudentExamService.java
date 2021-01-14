@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -40,9 +41,9 @@ public class StudentExamService {
 
     private final UserService userService;
 
-    private final ExamService examService;
+    private ExamService examService;
 
-    private final SubmissionService submissionService;
+    private SubmissionService submissionService;
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
@@ -56,21 +57,31 @@ public class StudentExamService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    public StudentExamService(StudentExamRepository studentExamRepository, ExamService examService, UserService userService, SubmissionService submissionService,
-            ParticipationService participationService, QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository,
-            ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionRepository programmingSubmissionRepository) {
+    public StudentExamService(StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
+            QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
+            SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
-        this.examService = examService;
         this.userService = userService;
-        this.submissionService = submissionService;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.submissionVersionService = submissionVersionService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setExamService(ExamService examService) {
+        this.examService = examService;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setSubmissionService(SubmissionService submissionService) {
+        this.submissionService = submissionService;
     }
 
     /**

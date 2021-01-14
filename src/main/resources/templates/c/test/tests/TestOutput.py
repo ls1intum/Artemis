@@ -1,71 +1,39 @@
 from testUtils.AbstractProgramTest import AbstractProgramTest
-from time import sleep
 from os.path import join
 from typing import List
 from testUtils.Utils import printTester, studSaveStrComp
 
 
 class TestOutput(AbstractProgramTest):
-    def __init__(self, executionDirectory: str, rot: int, input: str, requirements: List[str] = list(), name: str = "TestOutput", executable: str = "rotX.out"):
-        super(TestOutput, self).__init__(
-            name, executionDirectory, executable, requirements, timeoutSec=10)
-        self.rot = rot
-        self.input = input
+
+    def __init__(self, makefileLocation: str, requirements: List[str] = None, name: str = "TestOutput", executable: str = "helloWorld.out"):
+        super(TestOutput, self).__init__(name, makefileLocation, executable, requirements, timeoutSec=10)
 
     def _run(self):
         # Start the program:
-        self.pWrap = self._createPWrap(
-            [join(".", self.executionDirectory, self.executable)])
+        self.pWrap = self._createPWrap([join(".", self.executionDirectory, self.executable)])
         self._startPWrap(self.pWrap)
 
-        # Wait for child beeing ready:
-        self.__waitForInput("Enter Rot:")
-
-        # Send rot:
-        self.pWrap.writeStdin("{}\n".format(self.rot))
-        sleep(0.25)
-        self.__waitForInput("Enter text:")
-
-        # Send input text:
-        self.pWrap.writeStdin("{}\n".format(self.input))
-
-        # Compare result:
-        self.__waitForInput(self.__getExpectedRotX(self.rot, self.input))
-
-        # Wait reading until the programm terminates:
-        printTester("Waiting for the programm to terminate...")
-        if(not self.pWrap.waitUntilTerminationReading(3)):
-            printTester("Programm did not terminate - killing it!")
-            self.pWrap.kill()
-            self._failWith("Programm did not terminate at the end.")
-
-        # Always cleanup to make sure all threads get joined:
-        self.pWrap.cleanup()
-
-    def __getExpectedRotX(self, rot: int, input: str):
-        output: str = ""
-        for i in range(0, len(input)):
-            if input[i].isalpha():
-                if input[i].isupper():
-                    output += chr(ord('A') +
-                                  ((ord(input[i]) - ord('A')) + rot) % 26)
-                else:
-                    output += chr(ord('a') +
-                                  ((ord(input[i]) - ord('a')) + rot) % 26)
-            else:
-                output += input[i]
-        return output
-
-    def __waitForInput(self, expected: str):
-        printTester("Waiting for: '{}'".format(expected))
+        # Wait for child being ready:
+        printTester("Waiting for: 'Hello world!'")
+        expected: str = "Hello world!"
         while True:
             if self.pWrap.hasTerminated() and not self.pWrap.canReadLineStdout():
                 self._progTerminatedUnexpectedly()
-            # Read a single line form the programm output:
+            # Read a single line form the program output:
             line: str = self.pWrap.readLineStdout()
             # Perform a "student save" compare:
             if studSaveStrComp(expected, line):
                 break
             else:
-                printTester(
-                    "Expected '{}' but received '{}'".format(expected, line))
+                printTester(f"Expected '{expected}' but received read '{line}'")
+
+        # Wait reading until the program terminates:
+        printTester("Waiting for the program to terminate...")
+        if not self.pWrap.waitUntilTerminationReading(3):
+            printTester("Program did not terminate - killing it!")
+            self.pWrap.kill()
+            self._failWith("Program did not terminate at the end.")
+
+        # Always cleanup to make sure all threads get joined:
+        self.pWrap.cleanup()

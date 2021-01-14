@@ -38,11 +38,9 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository, FileService fileService,
-            AuthorizationCheckService authCheckService, CourseService courseService, ExamService examService, FeedbackRepository feedbackRepository) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository, participationService,
-                feedbackRepository);
+            AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository) {
+        super(submissionRepository, userService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
-        this.resultRepository = resultRepository;
         this.fileService = fileService;
     }
 
