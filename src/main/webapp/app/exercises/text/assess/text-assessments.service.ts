@@ -105,7 +105,6 @@ export class TextAssessmentsService {
                 // Wire up Result and Submission
                 tap((response) => {
                     const participation = response.body!;
-                    console.log('participation: ', participation);
                     const submission = participation.submissions![0];
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     submission.participation = participation;

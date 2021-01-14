@@ -564,7 +564,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, lock = false, correctionRound = 0): Observable<ProgrammingSubmission> {
         const url = `api/exercises/${exerciseId}/programming-submission-without-assessment`;
         let params = new HttpParams();
-        console.log('correction round: ', correctionRound);
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());
         }
@@ -572,7 +571,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             params = params.set('lock', 'true');
         }
         const returnValue = this.http.get<ProgrammingSubmission>(url, { params });
-        console.log(returnValue);
         return returnValue;
     }
 

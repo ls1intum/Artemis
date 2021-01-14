@@ -25,14 +25,12 @@ export class ProgrammingAssessmentManualResultService {
         if (submit) {
             params = params.set('submit', 'true');
         }
-        console.log('correctionRoundBeforeSave: ', correctionRound);
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());
         }
 
         const url = `${this.resourceUrl}/participations/${participationId}/manual-results`;
         const copy = this.resultService.convertDateFromClient(result);
-        console.log('copy: ', copy);
         return this.http
             .put<Result>(url, copy, { params, observe: 'response' })
             .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));

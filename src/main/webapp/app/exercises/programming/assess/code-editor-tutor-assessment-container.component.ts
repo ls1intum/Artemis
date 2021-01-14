@@ -155,12 +155,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                             // Set domain to make file editor work properly
                             this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResult]);
                             this.participation = participationWithResult;
-                            console.log(participationWithResult);
                             this.manualResult = this.participation.results![0];
 
                             // Either submission from latest manual or automatic result
                             this.submission = this.manualResult.submission as ProgrammingSubmission;
-                            console.log(this.submission);
                             this.submission.participation = this.participation;
                             this.exercise = this.participation.exercise as ProgrammingExercise;
                             this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
@@ -300,7 +298,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Go to next submission
      */
     nextSubmission() {
-        console.log('NextSubmission:');
         this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe(
             (response: ProgrammingSubmission) => {
                 const unassessedSubmission = response;
@@ -438,7 +435,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
-        console.log('handleSaveOrSubmitSuccess');
         this.participation.results![0] = this.manualResult = response.body!;
         this.jhiAlertService.clear();
         this.jhiAlertService.success(translationKey);

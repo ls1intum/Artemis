@@ -79,7 +79,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        console.log('in modeling assessment dashboard');
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
