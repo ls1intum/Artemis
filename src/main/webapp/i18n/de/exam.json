@@ -246,6 +246,7 @@
                     "buttonLabel": "Studenten importieren",
                     "dialogTitle": "Studenten importieren nach:",
                     "introText": "Mit diesem Dialog können Studenten in diese Klausur importiert werden.",
+                    "dialogText": "Jeder Eintrag in der Datei muss einen Wert für die Matrikel Nummer oder den Login beinhalten.<br>Werte für Vor- und Nachnamen sind optional.",
                     "csvFile": {
                         "label": ".csv Datei auswählen",
                         "tooltip": "Bitte wähle die .csv Datei mit den Studierenden zum Import aus. Pro Eintrag muss entweder die 'LOGIN' oder 'REGISTRATION_NUMBER' Spalte ausgefüllt sein."
