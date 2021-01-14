@@ -101,14 +101,12 @@ public class AssessmentService {
      * @param assessmentUpdate the assessment update containing a ComplaintResponse and the updated Feedback list
      * @return the updated Result
      */
-    // NOTE: transactional makes sense here because we change multiple objects in the database and the changes might be invalid in case, one save operation fails
-    @Transactional // ok
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdate assessmentUpdate) {
         if (assessmentUpdate.getFeedbacks() == null || assessmentUpdate.getComplaintResponse() == null) {
             throw new BadRequestAlertException("Feedbacks and complaint response must not be null.", "AssessmentUpdate", "notnull");
         }
         // Save the complaint response
-        ComplaintResponse complaintResponse = complaintResponseService.createComplaintResponse(assessmentUpdate.getComplaintResponse());
+        ComplaintResponse complaintResponse = complaintResponseService.resolveComplaint(assessmentUpdate.getComplaintResponse());
 
         try {
             // Store the original result with the complaint
@@ -336,7 +334,11 @@ public class AssessmentService {
             result = submissionService.saveNewEmptyResult(submission);
         }
 
-        result.setHasComplaint(false);
+        // important to not lose complaint information when overriding an assessment
+        if (result.getHasComplaint().isEmpty()) {
+            result.setHasComplaint(false);
+        }
+
         result.setExampleResult(submission.isExampleSubmission());
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();

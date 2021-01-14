@@ -36,6 +36,7 @@ import { Exam } from 'app/entities/exam.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { Result } from 'app/entities/result.model';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -129,13 +130,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         private programmingSubmissionService: ProgrammingSubmissionService,
         private modalService: NgbModal,
         private guidedTourService: GuidedTourService,
+        private artemisDatePipe: ArtemisDatePipe,
     ) {}
 
     /**
      * Extracts the course and exercise ids from the route params and fetches the exercise from the server
      */
     ngOnInit(): void {
-        console.log('in exercise assessment dashboard component');
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.isTestRun = this.route.snapshot.url[3]?.toString() === 'test-run-tutor-dashboard';
@@ -348,6 +349,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     return submission;
                 });
+
                 this.submissionsByCorrectionRound!.set(correctionRound, sub); // todo NR
             });
     }
@@ -470,12 +472,39 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      * Calculates the status of a submission by inspecting the result
      * @param submission Submission which to check
      */
-    calculateStatus(submission: Submission, correctionRound = 0) {
+    calculateSubmissionStatus(submission: Submission, correctionRound = 0) {
         const tmpResult = submission.results?.[correctionRound];
         if (tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!)) {
             return 'DONE';
         }
         return 'DRAFT';
+    }
+
+    calculateComplaintStatus(complaint: Complaint) {
+        // a complaint is handled if it is either accepted or denied and a complaint response exists
+        const handled = complaint.accepted !== undefined && complaint.complaintResponse !== undefined;
+        if (handled) {
+            return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.complaintEvaluated');
+        } else {
+            if (this.complaintService.isComplaintLocked(complaint)) {
+                if (this.complaintService.isComplaintLockedByLoggedInUser(complaint)) {
+                    const endDate = this.artemisDatePipe.transform(complaint.complaintResponse?.lockEndDate);
+                    return this.translateService.instant('artemisApp.locks.lockInformationYou', {
+                        endDate,
+                    });
+                } else {
+                    const endDate = this.artemisDatePipe.transform(complaint.complaintResponse?.lockEndDate);
+                    const user = complaint.complaintResponse?.reviewer?.login;
+
+                    return this.translateService.instant('artemisApp.locks.lockInformation', {
+                        endDate,
+                        user,
+                    });
+                }
+            } else {
+                return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.complaintNotEvaluated');
+            }
+        }
     }
 
     /**
@@ -499,6 +528,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         }
 
         this.router.navigate([route], { queryParams });
+    }
+
+    isComplaintLocked(complaint: Complaint) {
+        return this.complaintService.isComplaintLockedForLoggedInUser(complaint, this.exercise);
     }
 
     /**

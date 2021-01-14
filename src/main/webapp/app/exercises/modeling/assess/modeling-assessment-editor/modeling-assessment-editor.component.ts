@@ -365,9 +365,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
             },
-            () => {
+            (httpErrorResponse: HttpErrorResponse) => {
                 this.jhiAlertService.clear();
-                this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+                const error = httpErrorResponse.error;
+                if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                    this.jhiAlertService.error(error.message, error.params);
+                } else {
+                    this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+                }
             },
         );
     }

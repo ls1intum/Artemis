@@ -141,7 +141,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             this.correctionRound = Number(queryParams.get('correction-round'));
         });
 
-        console.log('SUBSCIBED croer: ', this.correctionRound);
         this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
@@ -218,7 +217,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Submit the assessment
      */
     submit(): void {
-        if (!this.result!.id) {
+        if (!this.result?.id) {
             return; // We need to have saved the result before
         }
 
@@ -300,9 +299,14 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, this.textBlocksWithFeedback, complaintResponse, this.submission?.id!).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
-            () => {
+            (httpErrorResponse: HttpErrorResponse) => {
                 this.jhiAlertService.clear();
-                this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
+                const error = httpErrorResponse.error;
+                if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                    this.jhiAlertService.error(error.message, error.params);
+                } else {
+                    this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
+                }
             },
         );
     }
@@ -386,7 +390,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     get canOverride(): boolean {
         if (this.exercise) {
             if (this.isAtLeastInstructor) {
-                // Instructors can override any latest assessment at any time.
+                // Instructors can override any assessment at any time.
                 return true;
             }
             if (this.complaint && this.isAssessor) {

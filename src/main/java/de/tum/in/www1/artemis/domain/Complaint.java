@@ -10,6 +10,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
@@ -41,6 +42,10 @@ public class Complaint extends DomainObject {
     @Column(name = "result_before_complaint")
     @Lob
     private String resultBeforeComplaint;
+
+    @OneToOne(mappedBy = "complaint")
+    @JsonIgnoreProperties(value = "complaint", allowGetters = true)
+    private ComplaintResponse complaintResponse;
 
     @OneToOne
     @JoinColumn(unique = true)
@@ -136,6 +141,14 @@ public class Complaint extends DomainObject {
     public Complaint participant(Participant participant) {
         setParticipant(participant);
         return this;
+    }
+
+    public ComplaintResponse getComplaintResponse() {
+        return complaintResponse;
+    }
+
+    public void setComplaintResponse(ComplaintResponse complaintResponse) {
+        this.complaintResponse = complaintResponse;
     }
 
     /**

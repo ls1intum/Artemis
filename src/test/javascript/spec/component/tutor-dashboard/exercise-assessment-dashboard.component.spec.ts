@@ -329,7 +329,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     it('should calculateStatus DRAFT', () => {
         expect(modelingSubmission.latestResult).to.be.undefined;
-        expect(comp.calculateStatus(modelingSubmission)).to.be.equal('DRAFT');
+        expect(comp.calculateSubmissionStatus(modelingSubmission)).to.be.equal('DRAFT');
     });
 
     describe('test languages', () => {
