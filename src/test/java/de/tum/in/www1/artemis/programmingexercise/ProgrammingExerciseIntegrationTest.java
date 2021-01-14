@@ -45,6 +45,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -805,6 +806,37 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         programmingExercise.setCheckoutSolutionRepository(true);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_invalidMaxScore_badRequest() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        programmingExercise.setId(null);
+        programmingExercise.setMaxScore(0.0);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_includedAsBonus_invalidBonusPoints_badRequest() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        programmingExercise.setId(null);
+        programmingExercise.setMaxScore(10.0);
+        programmingExercise.setBonusPoints(1.0);
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        programmingExercise.setId(null);
+        programmingExercise.setMaxScore(10.0);
+        programmingExercise.setBonusPoints(1.0);
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
