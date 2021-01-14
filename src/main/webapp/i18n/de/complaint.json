@@ -1,5 +1,8 @@
 {
     "artemisApp": {
+        "errors": {
+            "complaintLock": "Diese Beschwerde ist gesperrt von {{user}} bis {{lockEnd}}!"
+        },
         "complaint": {
             "title": "Beschwerde",
             "info": "Die Limitierung der Beschwerdenanzahl bezieht sich auf offene und abgelehnte Beschwerden. Wenn deine Beschwerde angenommen wird, wird sie nicht auf deine Gesamtzahl der Beschwerden angerechnet.",
