@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -54,6 +58,21 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     @Override
     public ZonedDateTime getBuildRunDate() {
         return getBuild().getBuildCompletedDate();
+    }
+
+    @Override
+    public Optional<String> getCommitHashFromAssignmentRepo() {
+        return getCommitHashFromRepo(ASSIGNMENT_REPO_NAME);
+    }
+
+    @Override
+    public Optional<String> getCommitHashFromTestsRepo() {
+        return getCommitHashFromRepo(TEST_REPO_NAME);
+    }
+
+    private Optional<String> getCommitHashFromRepo(String repoName) {
+        var repo = getBuild().getVcs().stream().filter(vcs -> vcs.getRepositoryName().equalsIgnoreCase(repoName)).findFirst();
+        return repo.map(BambooVCSDTO::getId);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

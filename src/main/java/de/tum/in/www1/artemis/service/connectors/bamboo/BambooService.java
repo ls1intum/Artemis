@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.connectors.bamboo;
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
-import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -46,7 +45,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
@@ -58,7 +56,6 @@ import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
-import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 @Service
 @Profile("bamboo")
@@ -655,34 +652,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
         addFeedbackToResult(result, buildResult.getBuild().getJobs(), participation.getProgrammingExercise().isStaticCodeAnalysisEnabled());
         return result;
-    }
-
-    /**
-     * Get the commit hash from the build map, the commit hash will be different for submission types or null.
-     *
-     * @param buildResult    Build result data provided by build notification.
-     * @param submissionType describes why the build was started.
-     * @return if the commit hash for the given submission type was found, otherwise null.
-     */
-    @Override
-    protected Optional<String> getCommitHash(AbstractBuildResultNotificationDTO buildResult, SubmissionType submissionType) {
-        final var isAssignmentSubmission = List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR).contains(submissionType);
-        final Optional<String> optionalRelevantRepoName;
-        if (isAssignmentSubmission) {
-            optionalRelevantRepoName = Optional.of(ASSIGNMENT_REPO_NAME);
-        }
-        else if (submissionType.equals(SubmissionType.TEST)) {
-            optionalRelevantRepoName = Optional.of(TEST_REPO_NAME);
-        }
-        else {
-            optionalRelevantRepoName = Optional.empty();
-        }
-
-        var commitHashOrNull = optionalRelevantRepoName
-                .flatMap(relevantRepoName -> ((BambooBuildResultNotificationDTO) buildResult).getBuild().getVcs().stream()
-                        .filter(change -> change.getRepositoryName().equalsIgnoreCase(relevantRepoName)).findFirst().map(BambooBuildResultNotificationDTO.BambooVCSDTO::getId))
-                .orElse(null);
-        return commitHashOrNull != null ? Optional.of(commitHashOrNull) : Optional.empty();
     }
 
     /**

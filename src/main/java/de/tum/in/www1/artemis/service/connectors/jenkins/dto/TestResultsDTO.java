@@ -2,11 +2,13 @@ package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
@@ -82,6 +84,20 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     @Override
     public ZonedDateTime getBuildRunDate() {
         return getRunDate();
+    }
+
+    @Override
+    public Optional<String> getCommitHashFromAssignmentRepo() {
+        final var testRepoNameSuffix = RepositoryType.TESTS.getName();
+        final var firstCommit = getCommits().stream().filter(commit -> !commit.getRepositorySlug().endsWith(testRepoNameSuffix)).findFirst();
+        return firstCommit.map(CommitDTO::getHash);
+    }
+
+    @Override
+    public Optional<String> getCommitHashFromTestsRepo() {
+        final var testRepoNameSuffix = RepositoryType.TESTS.getName();
+        final var firstCommit = getCommits().stream().filter(commit -> commit.getRepositorySlug().endsWith(testRepoNameSuffix)).findFirst();
+        return firstCommit.map(CommitDTO::getHash);
     }
 
     public void setRunDate(ZonedDateTime runDate) {

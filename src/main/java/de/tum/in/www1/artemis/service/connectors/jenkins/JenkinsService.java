@@ -42,8 +42,6 @@ import com.offbytwo.jenkins.model.JobWithDetails;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -54,9 +52,7 @@ import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
-import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
@@ -398,18 +394,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private double calculateResultScore(TestResultsDTO report, int testSum) {
         return ((1.0 * report.getSuccessful()) / testSum) * 100;
-    }
-
-    @Override
-    protected Optional<String> getCommitHash(AbstractBuildResultNotificationDTO buildResult, SubmissionType submissionType) {
-        final var isAssignmentSubmission = List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR).contains(submissionType);
-        final var isTestSubmission = submissionType == SubmissionType.TEST;
-        final var testSlugSuffix = RepositoryType.TESTS.getName();
-
-        // It's either an assignment submission, so then we return the hash of the assignment (*-exercise, *-studentId),
-        // or the hash of the test repository for test repo changes (*-tests)
-        return ((TestResultsDTO) buildResult).getCommits().stream().filter(commitDTO -> (isAssignmentSubmission && !commitDTO.getRepositorySlug().endsWith(testSlugSuffix))
-                || (isTestSubmission && commitDTO.getRepositorySlug().endsWith(testSlugSuffix))).map(CommitDTO::getHash).findFirst();
     }
 
     @Override

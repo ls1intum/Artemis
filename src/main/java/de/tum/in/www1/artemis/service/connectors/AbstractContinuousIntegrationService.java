@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
@@ -88,5 +89,16 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      * @param submissionType describes why the build was started.
      * @return if the commit hash for the given submission type was found, otherwise empty.
      */
-    protected abstract Optional<String> getCommitHash(AbstractBuildResultNotificationDTO buildResult, SubmissionType submissionType);
+    protected Optional<String> getCommitHash(AbstractBuildResultNotificationDTO buildResult, SubmissionType submissionType) {
+        final var isAssignmentSubmission = List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR).contains(submissionType);
+        if (isAssignmentSubmission) {
+            return buildResult.getCommitHashFromAssignmentRepo();
+        }
+        else if (submissionType.equals(SubmissionType.TEST)) {
+            return buildResult.getCommitHashFromTestsRepo();
+        }
+        else {
+            return Optional.empty();
+        }
+    }
 }
