@@ -555,12 +555,12 @@ public class ExamService {
             try {
                 // 1) we use the registration number and try to find the student in the Artemis user database
                 Optional<User> optionalStudent = userService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+                Optional<User> fallbackUser = Optional.empty();
                 if (optionalStudent.isEmpty()) {
                     // An invalid registration number might be corrected by getting the number from the login
-                    var userOptional = userService.getUserByLogin(studentDto.getLogin());
-                    if (userOptional.isPresent()) {
-                        registrationNumber = userOptional.get().getRegistrationNumber();
-                        optionalStudent = userService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+                    fallbackUser = userService.getUserByLogin(studentDto.getLogin());
+                    if (fallbackUser.isPresent()) {
+                        optionalStudent = userService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(fallbackUser.get().getRegistrationNumber());
                     }
                 }
 
@@ -579,10 +579,8 @@ public class ExamService {
                 optionalStudent = userService.createUserFromLdap(registrationNumber);
                 if (optionalStudent.isEmpty()) {
                     // An invalid registration number might be corrected by getting the number from the login
-                    var userOptional = userService.getUserByLogin(studentDto.getLogin());
-                    if (userOptional.isPresent()) {
-                        registrationNumber = userOptional.get().getRegistrationNumber();
-                        optionalStudent = userService.createUserFromLdap(registrationNumber);
+                    if (fallbackUser.isPresent()) {
+                        optionalStudent = userService.createUserFromLdap(fallbackUser.get().getRegistrationNumber());
                     }
                 }
 
