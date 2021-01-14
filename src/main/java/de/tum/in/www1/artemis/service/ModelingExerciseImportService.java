@@ -1,11 +1,11 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.service;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -15,14 +15,17 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 
-@Repository
+@Service
 public class ModelingExerciseImportService extends ExerciseImportService {
 
     private final Logger log = LoggerFactory.getLogger(TextExerciseImportService.class);
 
-    public ModelingExerciseImportService(ModelingExerciseRepository exerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
+    private final ModelingExerciseRepository modelingExerciseRepository;
+
+    public ModelingExerciseImportService(ModelingExerciseRepository modelingExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository) {
-        super(exerciseRepository, exampleSubmissionRepository, submissionRepository, resultRepository, textBlockRepository);
+        super(exampleSubmissionRepository, submissionRepository, resultRepository, textBlockRepository);
+        this.modelingExerciseRepository = modelingExerciseRepository;
     }
 
     @Override
@@ -47,13 +50,13 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise.getId());
         ModelingExercise newExercise = copyModelingExerciseBasis(importedExercise);
 
-        exerciseRepository.save(newExercise);
+        modelingExerciseRepository.save(newExercise);
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise));
         return newExercise;
     }
 
     /** This helper method copies all attributes of the {@code importedExercise} into the new exercise.
-     * Here we ignore all external entities as well as the start-, end-, and assemessment due date.
+     * Here we ignore all external entities as well as the start-, end-, and asseessment due date.
      *
      * @param importedExercise The exercise from which to copy the basis
      * @return the cloned TextExercise basis
