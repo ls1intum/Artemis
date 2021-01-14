@@ -213,10 +213,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.lockingOrUnlockingRepositories = false;
             },
             (err: HttpErrorResponse) => {
-                this.jhiAlertService.error(err.error.errorKey);
-                const errorMessage = err.error.headers.get('X-artemisApp-alert');
-                const jhiAlert = this.jhiAlertService.error(errorMessage);
-                jhiAlert.msg = errorMessage;
+                this.lockingOrUnlockingRepositories = false;
+                this.onError(err);
             },
         );
     }
@@ -253,10 +251,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             },
             (err: HttpErrorResponse) => {
                 this.lockingOrUnlockingRepositories = false;
-                const errorMessage = err.error.headers.get('X-artemisApp-alert');
-                const jhiAlert = this.jhiAlertService.error(errorMessage);
-                jhiAlert.msg = errorMessage;
+                this.onError(err);
             },
         );
+    }
+
+    private onError(error: HttpErrorResponse) {
+        this.jhiAlertService.error(error.message);
     }
 }
