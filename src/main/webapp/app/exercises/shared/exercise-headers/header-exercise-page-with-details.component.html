@@ -75,6 +75,16 @@
                     </h5>
                 </div>
             </div>
+            <div class="row" *ngIf="exercise.includedInOverallScore != undefined">
+                <div class="col-6">
+                    <h5>{{ 'artemisApp.exercise.includedInOverallScore' | translate }}:</h5>
+                </div>
+                <div class="col-6">
+                    <h5>
+                        <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+                    </h5>
+                </div>
+            </div>
         </div>
     </div>
 </div>

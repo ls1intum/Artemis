@@ -47,7 +47,10 @@
                     <span class="badge text-white mr-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
                 </h4>
                 <h4>
-                    <jhi-difficulty-badge [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
+                    <jhi-difficulty-badge class="mr-1" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
+                </h4>
+                <h4>
+                    <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
                 </h4>
             </div>
             <div class="col-sm-auto mb-2" *ngIf="exercise.dueDate; else noDate" [ngClass]="getUrgentClass(exercise.dueDate ? exercise.dueDate : exercise.releaseDate)">

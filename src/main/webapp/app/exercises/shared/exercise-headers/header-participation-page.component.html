@@ -28,6 +28,11 @@
                             <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | translate }} {{ exercise.bonusPoints }})</span>
                         </span>
                         <jhi-difficulty-badge *ngIf="exercise.difficulty" class="ml-1" [exercise]="exercise"></jhi-difficulty-badge>
+                        <jhi-included-in-score-badge
+                            *ngIf="exercise.includedInOverallScore"
+                            class="ml-1"
+                            [includedInOverallScore]="exercise.includedInOverallScore"
+                        ></jhi-included-in-score-badge>
                     </td>
                 </tr>
                 <tr *ngIf="exercise.assessmentDueDate">
