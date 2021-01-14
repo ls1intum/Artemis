@@ -212,6 +212,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * returns an error
      *
      * @param submissionId the id of the submission we want
+     * @param correctionRound correction round for which we want the submission
      * @return a Participation of the tutor in the submission
      */
     @GetMapping("/submission/{submissionId}")

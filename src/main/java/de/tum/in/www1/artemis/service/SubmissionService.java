@@ -314,6 +314,12 @@ public class SubmissionService {
         return result;
     }
 
+    /**
+     * Copy Feedbacks from one Result to a another Result
+     * @param newResult new result to copy feedback to
+     * @param oldResult old result to copy feedback from
+     * @return the list of newly created feedbacks
+     */
     public List<Feedback> copyFeedbacktoNewResult(Result newResult, Result oldResult) {
         List<Feedback> oldFeedback = oldResult.getFeedbacks();
         oldFeedback.forEach(feedback -> {
