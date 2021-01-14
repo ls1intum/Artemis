@@ -158,12 +158,14 @@ public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void submitComplaintResponse_rejectComplaint() throws Exception {
-        complaintRepo.save(complaint);
+        complaint = complaintRepo.saveAndFlush(complaint);
 
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
-        request.post("/api/complaint-responses", complaintResponse, HttpStatus.CREATED);
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor1", complaint);
+        complaintResponse.getComplaint().setAccepted(false);
+        complaintResponse.setResponseText("rejected");
+
+        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", complaintResponse, HttpStatus.OK);
         assertThat(complaintResponse.getComplaint().getParticipant()).isNull();
-
         Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
         Result storedResult = resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(modelingAssessment.getId()).get();
@@ -174,10 +176,13 @@ public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
     public void submitComplaintResponse_rejectComplaint_asOtherTutor_forbidden() throws Exception {
-        complaintRepo.save(complaint);
+        complaint = complaintRepo.save(complaint);
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(false);
+        complaintResponse.setResponseText("rejected");
 
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
-        request.post("/api/complaint-responses", complaintResponse, HttpStatus.FORBIDDEN);
+        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", complaintResponse, HttpStatus.FORBIDDEN);
+
     }
 
     @Test
@@ -186,7 +191,10 @@ public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegr
         complaint = complaintRepo.save(complaint);
 
         List<Feedback> feedback = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(true)).responseText("accepted");
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor1", complaint);
+        complaintResponse.getComplaint().setAccepted(true);
+        complaintResponse.setResponseText("accepted");
+
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedback).complaintResponse(complaintResponse);
         Result receivedResult = request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
@@ -210,7 +218,10 @@ public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegr
         complaint = complaintRepo.save(complaint);
 
         List<Feedback> feedback = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(true)).responseText("accepted");
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(true);
+        complaintResponse.setResponseText("accepted");
+
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedback).complaintResponse(complaintResponse);
         request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
                 HttpStatus.FORBIDDEN);

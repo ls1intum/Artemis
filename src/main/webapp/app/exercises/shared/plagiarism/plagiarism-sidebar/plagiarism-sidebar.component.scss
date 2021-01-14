@@ -101,6 +101,14 @@
         }
     }
 
+    .plagiarism-empty {
+        align-items: center;
+        display: flex;
+        flex-grow: 1;
+        justify-content: center;
+        opacity: 0.5;
+    }
+
     .plagiarism-status-indicator {
         background-color: $body-bg;
         border-radius: 50%;

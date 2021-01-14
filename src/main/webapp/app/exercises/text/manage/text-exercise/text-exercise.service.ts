@@ -9,6 +9,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
+import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
@@ -102,13 +103,15 @@ export class TextExerciseService {
      * Check plagiarism with JPlag
      *
      * @param exerciseId
+     * @param options
      */
-    checkPlagiarismJPlag(exerciseId: number): Observable<TextPlagiarismResult> {
+    checkPlagiarismJPlag(exerciseId: number, options?: PlagiarismOptions): Observable<TextPlagiarismResult> {
         return this.http
             .get<TextPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
                 observe: 'response',
                 params: {
                     strategy: 'JPlag',
+                    ...options?.toParams(),
                 },
             })
             .pipe(map((response: HttpResponse<TextPlagiarismResult>) => response.body!));

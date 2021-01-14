@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_DIRECTORY;
+
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.apache.http.HttpException;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +19,9 @@ import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
  * Abstract service for managing entities related to continuous integration.
  */
 public interface ContinuousIntegrationService {
+
+    // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/
+    Pattern ASSIGNMENT_PATH = Pattern.compile("(/[^\0]+)*" + ASSIGNMENT_DIRECTORY);
 
     enum BuildStatus {
         INACTIVE, QUEUED, BUILDING

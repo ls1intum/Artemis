@@ -1482,4 +1482,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(isUserRegistered).isTrue();
         assertThat(isCurrentUserRegistered).isFalse();
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRegisterInstructorToExam() throws Exception {
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/instructor1", null, HttpStatus.FORBIDDEN, null);
+    }
 }
