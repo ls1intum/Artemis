@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import de.tum.in.www1.artemis.domain.enumeration.TestCaseVisibility;
+
 /**
  * This is a dto for updating a programming exercise test case.
  * It is only allowed to alter the weight, bonus multiplier, bonus points and afterDueDate flag of a test case from an
@@ -15,7 +17,9 @@ public class ProgrammingExerciseTestCaseDTO {
 
     private Double bonusPoints;
 
-    private boolean afterDueDate;
+    // private boolean afterDueDate;
+
+    private TestCaseVisibility visibility;
 
     public Long getId() {
         return id;
@@ -33,12 +37,12 @@ public class ProgrammingExerciseTestCaseDTO {
         this.weight = weight;
     }
 
-    public boolean isAfterDueDate() {
-        return afterDueDate;
+    public TestCaseVisibility getVisibility() {
+        return visibility;
     }
 
-    public void setAfterDueDate(boolean afterDueDate) {
-        this.afterDueDate = afterDueDate;
+    public void setVisibility(TestCaseVisibility visibility) {
+        this.visibility = visibility;
     }
 
     public Double getBonusMultiplier() {

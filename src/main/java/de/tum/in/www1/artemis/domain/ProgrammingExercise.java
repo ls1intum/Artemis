@@ -559,7 +559,7 @@ public class ProgrammingExercise extends Exercise {
 
     @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
-        return participation.getResults().stream().filter(result -> checkForRatedAndAssessedResult(result)).collect(Collectors.toSet());
+        return participation.getResults().stream().filter(this::checkForRatedAndAssessedResult).collect(Collectors.toSet());
     }
 
     /**

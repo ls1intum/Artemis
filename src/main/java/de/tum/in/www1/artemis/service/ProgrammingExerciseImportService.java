@@ -254,7 +254,7 @@ public class ProgrammingExerciseImportService {
 
             // Copy everything except for the referenced exercise
             copy.setActive(testCase.isActive());
-            copy.setAfterDueDate(testCase.isAfterDueDate());
+            copy.setVisibility(testCase.getVisibility());
             copy.setTestName(testCase.getTestName());
             copy.setWeight(testCase.getWeight());
             copy.setBonusMultiplier(testCase.getBonusMultiplier());

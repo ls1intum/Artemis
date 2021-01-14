@@ -494,19 +494,21 @@ public class ExerciseService {
 
             Set<Result> results = Set.of();
 
+            boolean isBeforeDueDate = exercise.getDueDate() != null && ZonedDateTime.now().isBefore(exercise.getDueDate());
+
             if (latestSubmissionWithRatedResult != null && latestSubmissionWithRatedResult.getLatestResult() != null) {
                 results = Set.of(latestSubmissionWithRatedResult.getLatestResult());
                 // remove inner participation from result
                 latestSubmissionWithRatedResult.getLatestResult().setParticipation(null);
                 // filter sensitive information about the assessor if the current user is a student
                 if (isStudent) {
-                    latestSubmissionWithRatedResult.getLatestResult().filterSensitiveInformation();
+                    latestSubmissionWithRatedResult.getLatestResult().filterSensitiveInformation(isBeforeDueDate);
                 }
             }
 
             // filter sensitive information in submission's result
             if (isStudent && submission != null && submission.getLatestResult() != null) {
-                submission.getLatestResult().filterSensitiveInformation();
+                submission.getLatestResult().filterSensitiveInformation(isBeforeDueDate);
             }
 
             // add submission to participation

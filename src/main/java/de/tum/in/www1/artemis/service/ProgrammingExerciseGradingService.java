@@ -323,11 +323,17 @@ public class ProgrammingExerciseGradingService {
         log.info("User " + user.getLogin() + " requested to reset the grading configuration for exercise {} with id {}", exercise.getTitle(), exercise.getId());
     }
 
+    /**
+     * Filter all test cases from the score calculation that are never executed or only executed after due date if the due date has not yet passed.
+     * @param exercise to which the test cases belong to.
+     * @param testCases which should be filtered.
+     * @return testCases, but the ones based on the described visibility criterion removed.
+     */
     private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(ProgrammingExercise exercise, Set<ProgrammingExerciseTestCase> testCases) {
         boolean shouldTestsWithAfterDueDateFlagBeRemoved = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                 && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
-        // Filter all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
-        return testCases.stream().filter(testCase -> !shouldTestsWithAfterDueDateFlagBeRemoved || !testCase.isAfterDueDate()).collect(Collectors.toSet());
+        return testCases.stream().filter(testCase -> !testCase.isInvisible()).filter(testCase -> !(shouldTestsWithAfterDueDateFlagBeRemoved && testCase.isAfterDueDate()))
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -361,8 +367,17 @@ public class ProgrammingExerciseGradingService {
 
         // Case 1: There are tests and test case feedback, find out which tests were not executed or should only count to the score after the due date.
         if (testCasesForCurrentDate.size() > 0 && testCaseFeedback.size() > 0 && result.getFeedbacks().size() > 0) {
-            // Remove feedbacks that the student should not see yet because of the due date.
-            removeFeedbacksForAfterDueDateTests(result, testCasesForCurrentDate);
+            // Remove automatic feedbacks not associated with test cases
+            result.getFeedbacks().removeIf(feedback -> feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()
+                    && testCases.stream().noneMatch(test -> test.getTestName().equals(feedback.getText())));
+
+            // Copy the visibility from test case to corresponding feedback
+            setVisibilityForFeedbacksWithTestCase(result, testCases);
+
+            // If there are no feedbacks left after filtering those not valid, also setHasFeedback to false.
+            if (result.getFeedbacks().stream().noneMatch(feedback -> Boolean.FALSE.equals(feedback.isPositive())
+                    || feedback.getType() != null && (feedback.getType().equals(FeedbackType.MANUAL) || feedback.getType().equals(FeedbackType.MANUAL_UNREFERENCED))))
+                result.setHasFeedback(false);
 
             Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(isSuccessful(result)).collect(Collectors.toSet());
 
@@ -370,7 +385,7 @@ public class ProgrammingExerciseGradingService {
             createFeedbackForNotExecutedTests(result, testCasesForCurrentDate);
 
             // Recalculate the achieved score by including the test cases individual weight.
-            // The score is always calculated from ALL test cases, regardless of the current date!
+            // The score is always calculated from ALL (except visibility=never) test cases, regardless of the current date!
             updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
@@ -389,6 +404,17 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
+     * Sets the visibility on all feedbacks associated with a test case with the same name.
+     * @param result of the build run.
+     * @param allTests of the given programming exercise.
+     */
+    private void setVisibilityForFeedbacksWithTestCase(Result result, final Set<ProgrammingExerciseTestCase> allTests) {
+        for (Feedback feedback : result.getFeedbacks()) {
+            allTests.stream().filter(t -> t.getTestName().equals(feedback.getText())).findFirst().ifPresent(testCase -> feedback.setVisibility(testCase.getVisibility()));
+        }
+    }
+
+    /**
      * Check which tests were not executed and add a new Feedback for them to the exercise.
      * @param result of the build run.
      * @param allTests of the given programming exercise.
@@ -400,25 +426,9 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Check which tests were executed but which result should not be made public to the student yet.
-     * @param result of the build run.
-     * @param testCasesForCurrentDate of the given programming exercise.
-     */
-    private void removeFeedbacksForAfterDueDateTests(Result result, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate) {
-        // Find feedback which is not associated with test cases for the current date. Does not remove static code analysis feedback
-        List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback()
-                && feedback.getType() == FeedbackType.AUTOMATIC && testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText())))
-                .collect(Collectors.toList());
-        feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
-        // If there are no feedbacks left after filtering those not valid for the current date, also setHasFeedback to false.
-        if (result.getFeedbacks().stream().noneMatch(feedback -> Boolean.FALSE.equals(feedback.isPositive())
-                || feedback.getType() != null && (feedback.getType().equals(FeedbackType.MANUAL) || feedback.getType().equals(FeedbackType.MANUAL_UNREFERENCED))))
-            result.setHasFeedback(false);
-    }
-
-    /**
-     * Update the score given the positive tests score divided by all tests's score.
-     * Takes weight, bonus multiplier and absolute bonus points into account
+     * Update the score given the positive tests score divided by all tests' score.
+     * Takes weight, bonus multiplier and absolute bonus points into account.
+     * All tests in this case does not include ones with visibility=never.
      *
      * @param result of the build run.
      * @param successfulTestCases test cases with positive feedback.
@@ -429,7 +439,7 @@ public class ProgrammingExerciseGradingService {
         if (successfulTestCases.size() > 0) {
 
             double maxScoreRespectingZeroPointExercises = getMaxScoreRespectingZeroPointExercises(programmingExercise);
-            double weightSum = allTests.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
+            double weightSum = allTests.stream().filter(t -> !t.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
 
             // calculate the achieved points from the passed test cases
             double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {
@@ -442,12 +452,11 @@ public class ProgrammingExerciseGradingService {
                 return testPointsWithBonus;
             }).sum();
 
-            /**
-             * The points are capped by the maximum achievable points.
-             * The cap is applied before the static code analysis penalty is subtracted as otherwise the penalty won't have
-             * any effect in some cases. For example with maxPoints=20, successfulTestPoints=30 and penalty=10, a student would still
-             * receive the full 20 points, if the points are not capped before the penalty is subtracted. With the implemented order in place
-             * successfulTestPoints will be capped to 20 points first, then the penalty is subtracted resulting in 10 points.
+            /*
+             * The points are capped by the maximum achievable points. The cap is applied before the static code analysis penalty is subtracted as otherwise the penalty won't have
+             * any effect in some cases. For example with maxPoints=20, successfulTestPoints=30 and penalty=10, a student would still receive the full 20 points, if the points are
+             * not capped before the penalty is subtracted. With the implemented order in place successfulTestPoints will be capped to 20 points first, then the penalty is
+             * subtracted resulting in 10 points.
              */
             double maxPoints;
             if (programmingExercise.getMaxScore() > 0) {

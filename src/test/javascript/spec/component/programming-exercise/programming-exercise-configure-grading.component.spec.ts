@@ -16,7 +16,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase, TestCaseVisibility } from 'app/entities/programming-exercise-test-case.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisProgrammingExerciseGradingModule } from 'app/exercises/programming/manage/grading/programming-exercise-grading.module';
 import { expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
@@ -93,7 +93,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             weight: 1,
             bonusMultiplier: 1,
             bonusPoints: 0,
-            afterDueDate: false,
+            visibility: TestCaseVisibility.Always,
         },
         {
             id: 2,
@@ -102,7 +102,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             weight: 1,
             bonusMultiplier: 1,
             bonusPoints: 0,
-            afterDueDate: true,
+            visibility: TestCaseVisibility.AfterDueDate,
         },
         {
             id: 3,
@@ -111,7 +111,16 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             weight: 1,
             bonusMultiplier: 1,
             bonusPoints: 0,
-            afterDueDate: false,
+            visibility: TestCaseVisibility.Always,
+        },
+        {
+            id: 4,
+            testName: 'invisibleTestToStudents',
+            active: true,
+            weight: 1,
+            bonusMultiplier: 1,
+            bonusPoints: 0,
+            visibility: TestCaseVisibility.Never,
         },
     ] as ProgrammingExerciseTestCase[];
     const codeAnalysisCategories1 = [
@@ -349,7 +358,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         let testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
         expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
-            new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 2, testThatWasUpdated.afterDueDate),
+            new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 2, testThatWasUpdated.visibility),
         ]);
         expect(testThatWasUpdated.weight).to.equal(20);
         expect(testThatWasUpdated.bonusMultiplier).to.equal(2);
@@ -391,7 +400,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
         expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
-            new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 1, testThatWasUpdated.afterDueDate),
+            new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 1, testThatWasUpdated.visibility),
         ]);
         expect(testThatWasUpdated.weight).to.equal(20);
         expect(testThatWasUpdated.bonusMultiplier).to.equal(1);
@@ -449,7 +458,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(alertServiceSpy).to.be.calledOnce;
     });
 
-    it('should be able to update the value of the afterDueDate boolean', async () => {
+    it('should be able to update the value of the visibility', async () => {
         initGradingComponent({ showInactive: true });
 
         fixture.detectChanges();
@@ -458,9 +467,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const orderedTests = _sortBy(testCases1, 'testName');
 
         const table = debugElement.query(By.css(testCaseTableId));
-        const checkboxes = table.queryAll(By.css('.table-editable-field__checkbox'));
-        expect(checkboxes).to.have.lengthOf(testCases1.length);
-        checkboxes[0].nativeElement.click();
+        const dropdowns = table.queryAll(By.all()).filter((elem) => elem.name === 'select');
+        expect(dropdowns).to.have.lengthOf(testCases1.length);
+        dropdowns[0].nativeElement.value = TestCaseVisibility.AfterDueDate;
+        dropdowns[0].nativeElement.dispatchEvent(new Event('change'));
 
         await fixture.whenStable();
         fixture.detectChanges();
@@ -487,16 +497,16 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         fixture.destroy();
     });
 
-    it('should not be able to update the value of the afterDueDate boolean if the programming exercise does not have a buildAndTestAfterDueDate', async () => {
+    it('should not be able to select after due date as visibility option if the programming exercise does not have a buildAndTestAfterDueDate', async () => {
         initGradingComponent({ hasBuildAndTestAfterDueDate: false, showInactive: true });
 
         fixture.detectChanges();
         await fixture.whenStable();
 
         const table = debugElement.query(By.css(testCaseTableId));
-        const checkboxes = table.queryAll(By.css('.table-editable-field__checkbox'));
-        expect(checkboxes).to.have.lengthOf(testCases1.length);
-        expect(checkboxes.every(({ nativeElement: { disabled } }) => disabled)).to.be.true;
+        const options = table.queryAll(By.all()).filter((elem) => elem.name === 'option');
+        expect(options).to.have.lengthOf(testCases1.length * 2);
+        expect(options.every((option) => option.properties.value !== TestCaseVisibility.AfterDueDate)).to.be.true;
 
         fixture.destroy();
     });
@@ -698,8 +708,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         const percentageCharts = debugElement.queryAll(By.directive(TestCasePassedBuildsChartComponent)).map((d) => d.componentInstance);
 
-        expect(percentageCharts[0].tooltip).to.equal('40% passed, 60% failed of 5 students.');
-        expect(percentageCharts[1].tooltip).to.equal('20% passed, 80% failed of 5 students.');
+        expect(percentageCharts[0].tooltip).to.equal('0% passed, 0% failed, 100% not executed of 5 students.');
+        expect(percentageCharts[1].tooltip).to.equal('40% passed, 60% failed of 5 students.');
+        expect(percentageCharts[2].tooltip).to.equal('20% passed, 80% failed of 5 students.');
 
         tick();
         fixture.destroy();

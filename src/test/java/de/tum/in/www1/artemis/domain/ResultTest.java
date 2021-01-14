@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.enumeration.TestCaseVisibility;
 import de.tum.in.www1.artemis.service.AssessmentService;
 
 public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -81,5 +83,27 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         assertThat(result.getScore()).isEqualTo(0);
         assertThat(result.getResultString()).isEqualToIgnoringCase("0 of 7 points");
+    }
+
+    @Test
+    public void filterSensitiveInformationAfterDueDate() {
+        Feedback feedback1 = new Feedback().visibility(TestCaseVisibility.ALWAYS);
+        Feedback feedback2 = new Feedback().visibility(TestCaseVisibility.AFTER_DUE_DATE);
+        Feedback feedback3 = new Feedback().visibility(TestCaseVisibility.NEVER);
+        result.setFeedbacks(new ArrayList<>(List.of(feedback1, feedback2, feedback3)));
+
+        result.filterSensitiveInformation(false);
+        assertThat(result.getFeedbacks()).isEqualTo(List.of(feedback1, feedback2));
+    }
+
+    @Test
+    public void filterSensitiveInformationBeforeDueDate() {
+        Feedback feedback1 = new Feedback().visibility(TestCaseVisibility.ALWAYS);
+        Feedback feedback2 = new Feedback().visibility(TestCaseVisibility.AFTER_DUE_DATE);
+        Feedback feedback3 = new Feedback().visibility(TestCaseVisibility.NEVER);
+        result.setFeedbacks(new ArrayList<>(List.of(feedback1, feedback2, feedback3)));
+
+        result.filterSensitiveInformation(true);
+        assertThat(result.getFeedbacks()).isEqualTo(List.of(feedback1));
     }
 }

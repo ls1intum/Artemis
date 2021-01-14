@@ -48,6 +48,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.TestCaseVisibility;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -1061,7 +1062,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         final var updates = testCases.stream().map(testCase -> {
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
             testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setAfterDueDate(true);
+            testCaseUpdate.setVisibility(TestCaseVisibility.AFTER_DUE_DATE);
             testCaseUpdate.setWeight(testCase.getId() + 42.0);
             testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
@@ -1108,7 +1109,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         final var updates = testCases.stream().map(testCase -> {
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
             testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setAfterDueDate(true);
+            testCaseUpdate.setVisibility(TestCaseVisibility.AFTER_DUE_DATE);
             testCaseUpdate.setWeight(0D);
             testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);

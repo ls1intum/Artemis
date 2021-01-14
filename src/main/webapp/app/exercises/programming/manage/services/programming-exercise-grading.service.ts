@@ -4,15 +4,15 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase, TestCaseVisibility } from 'app/entities/programming-exercise-test-case.model';
 import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-category.model';
 import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 
 export class ProgrammingExerciseTestCaseUpdate {
-    constructor(public id?: number, public weight?: number, public bonusPoints?: number, public bonusMultiplier?: number, public afterDueDate?: boolean) {}
+    constructor(public id?: number, public weight?: number, public bonusPoints?: number, public bonusMultiplier?: number, public visibility?: TestCaseVisibility) {}
 
     static from(testCase: ProgrammingExerciseTestCase) {
-        return new ProgrammingExerciseTestCaseUpdate(testCase.id, testCase.weight, testCase.bonusPoints, testCase.bonusMultiplier, testCase.afterDueDate);
+        return new ProgrammingExerciseTestCaseUpdate(testCase.id, testCase.weight, testCase.bonusPoints, testCase.bonusMultiplier, testCase.visibility);
     }
 }
 export class StaticCodeAnalysisCategoryUpdate {

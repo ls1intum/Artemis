@@ -22,6 +22,7 @@ import com.google.common.base.Strings;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.TestCaseVisibility;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -81,7 +82,7 @@ public class Result extends DomainObject {
     @JsonIgnoreProperties({ "results", "participation" })
     private Submission submission;
 
-    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderColumn
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -471,9 +472,23 @@ public class Result extends DomainObject {
     /**
      * Removes the assessor from the result, can be invoked to make sure that sensitive information is not sent to the client. E.g. students should not see information about
      * their assessor.
+     * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should be removed
      */
-    public void filterSensitiveInformation() {
+    public void filterSensitiveInformation(boolean isBeforeDueDate) {
         setAssessor(null);
+        filterFeedbacks(isBeforeDueDate);
+    }
+
+    /**
+     * Remove all feedbacks marked with visibility never.
+     * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should also be removed.
+     */
+    private void filterFeedbacks(boolean isBeforeDueDate) {
+        feedbacks.removeIf(Feedback::isInvisible);
+
+        if (isBeforeDueDate) {
+            feedbacks.removeIf(f -> f.getVisibility() == TestCaseVisibility.AFTER_DUE_DATE);
+        }
     }
 
     /**
