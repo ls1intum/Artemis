@@ -522,8 +522,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.manualResult!.resultString = resultStringParts.join(', ');
         }
 
-        // TODO: rene: remove 100
-        this.manualResult!.score = this.exercise.maxScore ? Math.round((totalScore / this.exercise.maxScore!) * 100) : 100;
+        this.manualResult!.score = Math.round((totalScore / this.exercise.maxScore!) * 100);
         // This is done to update the result string in result.component.ts
         this.manualResult = cloneDeep(this.manualResult);
     }
