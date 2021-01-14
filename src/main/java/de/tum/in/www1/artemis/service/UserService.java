@@ -25,6 +25,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
@@ -354,6 +355,9 @@ public class UserService {
      * @return a new user or null if the LDAP user was not found
      */
     public Optional<User> createUserFromLdap(String registrationNumber) {
+        if (!StringUtils.hasText(registrationNumber)) {
+            return Optional.empty();
+        }
         if (ldapUserService.isPresent()) {
             Optional<LdapUserDto> ldapUserOptional = ldapUserService.get().findByRegistrationNumber(registrationNumber);
             if (ldapUserOptional.isPresent()) {
@@ -380,6 +384,9 @@ public class UserService {
      * @return the user with groups and authorities
      */
     public Optional<User> findUserWithGroupsAndAuthoritiesByRegistrationNumber(String registrationNumber) {
+        if (!StringUtils.hasText(registrationNumber)) {
+            return Optional.empty();
+        }
         return userRepository.findOneWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
     }
 
@@ -390,6 +397,9 @@ public class UserService {
      * @return the user with groups and authorities
      */
     public Optional<User> findUserWithGroupsAndAuthoritiesByLogin(String login) {
+        if (!StringUtils.hasText(login)) {
+            return Optional.empty();
+        }
         return userRepository.findOneWithGroupsAndAuthoritiesByLogin(login);
     }
 
