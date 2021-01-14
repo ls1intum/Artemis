@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router, NavigationExtras } from '@angular/router';
+import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
+import { now } from 'moment';
 
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -23,7 +24,6 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submissi
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess-new/text-assessment-base.component';
-import { now } from 'moment';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
@@ -293,9 +293,14 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, this.textBlocksWithFeedback, complaintResponse, this.submission?.id!).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
-            () => {
+            (httpErrorResponse: HttpErrorResponse) => {
                 this.jhiAlertService.clear();
-                this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
+                const error = httpErrorResponse.error;
+                if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                    this.jhiAlertService.error(error.message, error.params);
+                } else {
+                    this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
+                }
             },
         );
     }
