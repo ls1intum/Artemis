@@ -259,10 +259,10 @@
             },
             "unlockAllRepositories": "Alle Repositories entsperren",
             "lockAllRepositories": "Alle Repositories sperren",
-            "unlockAllRepositoriesModalText": "Alle Repositories werden sofort entsperrt! Studenten können sofort wieder pushen, auch wenn die Aufgabe schon vorbei ist!\n\nDiese Operation wird automatisch ausgeführt, sobald Studierende mit der Bearbeitung beginnen. Nutzen Sie diese Option daher nur, falls das automatische Entsperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich gesperrt wurden!",
-            "lockAllRepositoriesModalText": "Alle Repositories werden sofort gesperrt! Studenten werden nicht mehr pushen können, auch wenn die Aufgabe noch läuft!\n\nDie Operation wird automatisch am Ende der Aufgabe ausgeführt, sofern 'Testlauf nach der Einreichungsfrist' oder 'Manuelle Review' aktiviert ist. Nutzen Sie diese Option daher nur, falls das automatische Sperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich entsperrt wurden!",
-            "unlockAllRepositoriesSuccess": "Die Repositories werden nun entsperrt. Bitte haben Sie ein wenig Geduld. Sie erhalten bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
-            "lockAllRepositoriesSuccess": "Die Repositories werden nun gesperrt. Bitte haben Sie ein wenig Geduld. Sie erhalten bald eine Benachrichtigung, ob der Vorgang erfolgreich war."
+            "unlockAllRepositoriesModalText": "Alle Repositories werden sofort entsperrt! Studenten können sofort wieder pushen, auch wenn die Aufgabe schon vorbei ist!\n\nDiese Operation wird automatisch ausgeführt, sobald Studierende mit der Bearbeitung beginnen. Nutze diese Option daher nur, falls das automatische Entsperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich gesperrt wurden!",
+            "lockAllRepositoriesModalText": "Alle Repositories werden sofort gesperrt! Studenten werden nicht mehr pushen können, auch wenn die Aufgabe noch läuft!\n\nDie Operation wird automatisch am Ende der Aufgabe ausgeführt, sofern 'Testlauf nach der Einreichungsfrist' oder 'Manuelle Review' aktiviert ist. Nutze diese Option daher nur, falls das automatische Sperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich entsperrt wurden!",
+            "unlockAllRepositoriesSuccess": "Die Repositories werden nun entsperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
+            "lockAllRepositoriesSuccess": "Die Repositories werden nun gesperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war."
         },
         "error": {
             "noparticipations": "Kein existierender User wurde angegeben oder es existieren keine Abgaben."
