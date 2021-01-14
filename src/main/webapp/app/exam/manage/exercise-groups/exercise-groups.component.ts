@@ -42,7 +42,7 @@ export class ExerciseGroupsComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private exerciseGroupService: ExerciseGroupService,
-        private exerciseService: ExerciseService,
+        public exerciseService: ExerciseService,
         private examManagementService: ExamManagementService,
         private courseManagementService: CourseManagementService,
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
