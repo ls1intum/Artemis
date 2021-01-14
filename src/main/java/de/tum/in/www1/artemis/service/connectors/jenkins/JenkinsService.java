@@ -52,7 +52,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.FeedbackService;
-import de.tum.in.www1.artemis.service.connectors.AbstractContinuousService;
+import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
@@ -63,7 +63,7 @@ import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Profile("jenkins")
 @Service
-public class JenkinsService extends AbstractContinuousService {
+public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsService.class);
 
@@ -360,17 +360,16 @@ public class JenkinsService extends AbstractContinuousService {
         var newResult = createResultFromBuildResult(buildResult, (Participation) participation);
 
         // Fetch submission or create a fallback
-        var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult);
-        var latestSubmissionOrFallback = latestSubmission.orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
-        latestSubmissionOrFallback.setBuildFailed(newResult.getResultString().equals("No tests found"));
+        var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
+        latestSubmission.setBuildFailed(newResult.getResultString().equals("No tests found"));
 
         // save result to create entry in DB before establishing relation with submission for ordering
         newResult = resultRepository.save(newResult);
-        newResult.setSubmission(latestSubmissionOrFallback);
-        newResult.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), latestSubmissionOrFallback);
+        newResult.setSubmission(latestSubmission);
+        newResult.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), latestSubmission);
 
-        latestSubmissionOrFallback.addResult(newResult);
-        programmingSubmissionRepository.save(latestSubmissionOrFallback);
+        latestSubmission.addResult(newResult);
+        programmingSubmissionRepository.save(latestSubmission);
         // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
         // This seems like a bug in Hibernate/JPA: https://stackoverflow.com/questions/6763329/ordercolumn-onetomany-null-index-column-for-collection.
         return newResult;
@@ -414,14 +413,14 @@ public class JenkinsService extends AbstractContinuousService {
 
     @Override
     protected Optional<String> getCommitHash(AbstractBuildResultNotificationDTO buildResult, SubmissionType submissionType) {
-        final var assignmentSubmission = List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR).contains(submissionType);
-        final var testSubmission = submissionType == SubmissionType.TEST;
+        final var isAssignmentSubmission = List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR).contains(submissionType);
+        final var isTestSubmission = submissionType == SubmissionType.TEST;
         final var testSlugSuffix = RepositoryType.TESTS.getName();
 
         // It's either an assignment submission, so then we return the hash of the assignment (*-exercise, *-studentId),
         // or the hash of the test repository for test repo changes (*-tests)
-        return ((TestResultsDTO) buildResult).getCommits().stream().filter(commitDTO -> (assignmentSubmission && !commitDTO.getRepositorySlug().endsWith(testSlugSuffix))
-                || (testSubmission && commitDTO.getRepositorySlug().endsWith(testSlugSuffix))).map(CommitDTO::getHash).findFirst();
+        return ((TestResultsDTO) buildResult).getCommits().stream().filter(commitDTO -> (isAssignmentSubmission && !commitDTO.getRepositorySlug().endsWith(testSlugSuffix))
+                || (isTestSubmission && commitDTO.getRepositorySlug().endsWith(testSlugSuffix))).map(CommitDTO::getHash).findFirst();
     }
 
     @Override

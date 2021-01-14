@@ -12,11 +12,11 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
-public abstract class AbstractContinuousService implements ContinuousIntegrationService {
+public abstract class AbstractContinuousIntegrationService implements ContinuousIntegrationService {
 
     protected ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    public AbstractContinuousService(ProgrammingSubmissionRepository programmingSubmissionRepository) {
+    public AbstractContinuousIntegrationService(ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
