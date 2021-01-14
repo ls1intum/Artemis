@@ -19,7 +19,7 @@ $safe && find assignment/ -type l | grep -q . && echo "Cannot build with symlink
 $safe && \
 while IFS= read file; do
   cat $file | tr -d '\n' | grep -qim 1 "{-#[[:space:]]*options" && \
-    echo "Cannot build with \"OPTIONS\" string in source." && exit 1
+    echo "Cannot build with \"{-# OPTIONS..\" pragma in source." && exit 1
 done < <(find assignment/src -type f)
 
 # build the libraries - do not forget to set the right compilation flag (Prod)
