@@ -1,13 +1,12 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
-
-import { ArtemisTestModule } from '../../../test.module';
+import { of, throwError } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockPipe, MockModule } from 'ng-mocks';
+import { TranslateModule, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -15,19 +14,30 @@ import { Exam } from 'app/entities/exam.model';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Course } from 'app/entities/course.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockActiveModal } from '../../../helpers/mocks/service/mock-active-modal.service';
 import * as sinon from 'sinon';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { NgbModal, NgbModule, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { HttpClientModule } from '@angular/common/http';
+import { RouterTestingModule } from '@angular/router/testing';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { JhiAlertService, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
+import { By } from '@angular/platform-browser';
+import { SortService } from 'app/shared/service/sort.service';
 
 describe('Test Run Management Component', () => {
-    let comp: TestRunManagementComponent;
+    let component: TestRunManagementComponent;
     let fixture: ComponentFixture<TestRunManagementComponent>;
     let examManagementService: ExamManagementService;
     let accountService: AccountService;
+    let modalService: NgbModal;
 
-    const course = { id: 1 } as Course;
+    const course = { id: 1, isAtLeastInstructor: true } as Course;
     const exam = { id: 1, course, started: true } as Exam;
     const user = { id: 99 } as User;
     const studentExams = [
@@ -38,93 +48,140 @@ describe('Test Run Management Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [TestRunManagementComponent],
+            imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), FontAwesomeTestingModule, TranslateModule.forRoot(), HttpClientModule],
+
+            declarations: [
+                TestRunManagementComponent,
+                MockComponent(AlertErrorComponent),
+                MockComponent(AlertComponent),
+                MockPipe(TranslatePipe),
+                MockPipe(ArtemisDurationFromSecondsPipe),
+                MockPipe(ArtemisDatePipe),
+                MockDirective(JhiSortDirective),
+                MockDirective(DeleteButtonDirective),
+            ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
-                { provide: NgbModal, useClass: MockActiveModal },
+                MockDirective(JhiTranslateDirective),
             ],
         })
-            .overrideTemplate(TestRunManagementComponent, '')
-            .compileComponents();
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(TestRunManagementComponent);
+                component = fixture.componentInstance;
+                examManagementService = TestBed.inject(ExamManagementService);
+                accountService = TestBed.inject(AccountService);
+                modalService = modalService = TestBed.inject(NgbModal);
+                spyOn(examManagementService, 'find').and.returnValue(of(new HttpResponse({ body: exam })));
+                spyOn(examManagementService, 'findAllTestRunsForExam').and.returnValue(of(new HttpResponse({ body: studentExams })));
+                spyOn(accountService, 'fetch').and.returnValue(of(new HttpResponse({ body: user })));
+                spyOn(accountService, 'isAtLeastInstructorInCourse').and.returnValue(true);
+                spyOn(examManagementService, 'deleteTestRun').and.returnValue(of(new HttpResponse({ body: {} })));
+            });
+    });
 
-        fixture = TestBed.createComponent(TestRunManagementComponent);
-        comp = fixture.componentInstance;
-        examManagementService = fixture.debugElement.injector.get(ExamManagementService);
-        accountService = fixture.debugElement.injector.get(AccountService);
+    afterEach(() => {
+        sinon.restore();
     });
 
     describe('onInit', () => {
         it('should fetch exam with test runs and user on init', fakeAsync(() => {
-            // GIVEN
-            spyOn(examManagementService, 'find').and.returnValue(of(new HttpResponse({ body: exam })));
-            spyOn(examManagementService, 'findAllTestRunsForExam').and.returnValue(of(new HttpResponse({ body: studentExams })));
-            spyOn(accountService, 'fetch').and.returnValue(of(new HttpResponse({ body: user })));
+            fixture.detectChanges();
 
-            // WHEN
-            comp.ngOnInit();
-            tick(); // simulate async
-
-            // THEN
             expect(examManagementService.find).toHaveBeenCalledWith(course.id!, exam.id!, false, true);
             expect(examManagementService.findAllTestRunsForExam).toHaveBeenCalledWith(course.id!, exam.id!);
             expect(accountService.fetch).toHaveBeenCalledWith();
 
-            expect(comp.exam).toEqual(exam);
-            expect(comp.isExamStarted).toEqual(exam.started!);
-            expect(comp.course).toEqual(course);
-            expect(comp.testRuns).toEqual(studentExams);
-            expect(comp.instructor).toEqual(user);
+            expect(component.exam).toEqual(exam);
+            expect(component.isExamStarted).toEqual(exam.started!);
+            expect(component.course).toEqual(course);
+            expect(component.testRuns).toEqual(studentExams);
+            expect(component.instructor).toEqual(user);
         }));
     });
     describe('Delete', () => {
         it('should call delete for test run', fakeAsync(() => {
-            comp.testRuns = studentExams;
-            comp.course = course;
-            comp.exam = exam;
-            const responseFakeDelete = {} as HttpResponse<StudentExam>;
-            sinon.replace(examManagementService, 'deleteTestRun', sinon.fake.returns(of(responseFakeDelete)));
-            spyOn(examManagementService, 'deleteTestRun').and.returnValue(of(responseFakeDelete));
+            fixture.detectChanges();
 
-            // WHEN
-            comp.deleteTestRun(studentExams[0].id!);
-
-            // THEN
+            component.deleteTestRun(studentExams[0].id!);
             expect(examManagementService.deleteTestRun).toHaveBeenCalledWith(course.id!, exam.id!, studentExams[0].id!);
         }));
     });
 
     describe('Create test runs', () => {
-        it('Test Run cannot be created because the exam contains no exercises', fakeAsync(() => {
-            comp.exam = exam;
+        it('should not create test run if the exam contains no exercises', () => {
             fixture.detectChanges();
-            expect(comp.examContainsExercises).toBeFalsy();
-        }));
-        it('Test Run can can be created', fakeAsync(() => {
+            expect(component.examContainsExercises).toBeFalsy();
+        });
+
+        it('should create test run', () => {
             const exercise = { id: 1 } as Exercise;
             const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
             exam.exerciseGroups = [exerciseGroup];
-            comp.exam = exam;
+
+            const componentInstance = { title: String, text: String };
+            const result = new Promise((resolve) => resolve({} as StudentExam));
+            spyOn(modalService, 'open').and.returnValue(<NgbModalRef>{ componentInstance, result });
+            spyOn(examManagementService, 'createTestRun').and.returnValue(of(new HttpResponse({ body: { id: 3, user: { id: 90 }, exercises: [exercise] } as StudentExam })));
             fixture.detectChanges();
-            expect(comp.examContainsExercises).toBeTruthy();
-        }));
+
+            expect(component.examContainsExercises).toBeTruthy();
+            const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
+            expect(createTestRunButton).toBeTruthy();
+            expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
+            createTestRunButton.nativeElement.click();
+            expect(component.testRuns.length).toEqual(3);
+        });
+
+        it('should correctly catch error after creating test run', () => {
+            const alertService = TestBed.inject(JhiAlertService);
+            const exercise = { id: 1 } as Exercise;
+            const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
+            exam.exerciseGroups = [exerciseGroup];
+            const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
+
+            const componentInstance = { title: String, text: String };
+            const result = new Promise((resolve) => resolve({} as StudentExam));
+            spyOn(modalService, 'open').and.returnValue(<NgbModalRef>{ componentInstance, result });
+            spyOn(examManagementService, 'createTestRun').and.returnValue(throwError(httpError));
+            spyOn(alertService, 'error');
+            fixture.detectChanges();
+
+            expect(component.examContainsExercises).toBeTruthy();
+            const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
+            expect(createTestRunButton).toBeTruthy();
+            expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
+            createTestRunButton.nativeElement.click();
+            expect(alertService.error).toHaveBeenCalled();
+        });
     });
 
     describe('Assessment of test runs', () => {
-        it('Test Run cannot be assessed because the logged in user does not have a test run which is submitted', fakeAsync(() => {
-            comp.testRuns = studentExams;
-            comp.testRuns[0].submitted = false;
+        it('should not be able to assess test run because the logged in user does not have a test run which is submitted', () => {
+            studentExams[0].submitted = false;
             fixture.detectChanges();
-            expect(comp.testRunCanBeAssessed).toBeFalsy();
-        }));
-        it('Test Run can be assessed', fakeAsync(() => {
-            comp.testRuns = studentExams;
-            comp.testRuns[0].submitted = true;
+            expect(component.testRunCanBeAssessed).toBeFalsy();
+        });
+
+        it('should be able to assess test run', () => {
+            studentExams[0].submitted = true;
             fixture.detectChanges();
-            expect(comp.testRunCanBeAssessed).toBeTruthy();
+            expect(component.testRunCanBeAssessed).toBeTruthy();
+        });
+    });
+
+    describe('sort rows', () => {
+        it('should forward request to ', fakeAsync(() => {
+            const sortService = TestBed.inject(SortService);
+            spyOn(sortService, 'sortByProperty').and.returnValue(studentExams);
+            fixture.detectChanges();
+
+            component.sortRows();
+            tick();
+            expect(sortService.sortByProperty).toHaveBeenCalled();
         }));
     });
 });

@@ -587,7 +587,7 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        final List<TextSubmission> textSubmissions = textPlagiarismDetectionService.textSubmissionsForComparison(textExercise);
+        final List<TextSubmission> textSubmissions = textPlagiarismDetectionService.textSubmissionsForComparison(textExercise, 0, 0);
         textSubmissions.forEach(submission -> {
             submission.getParticipation().setExercise(null);
             submission.setResults(new ArrayList<Result>());
@@ -613,11 +613,15 @@ public class TextExerciseResource {
      * GET /check-plagiarism : Use JPlag to detect plagiarism in text exercises
      *
      * @param exerciseId ID of the exercise for which to detect plagiarism
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
+     * @param minimumScore consider only submissions whose score is greater or equal to this value
+     * @param minimumSize consider only submissions whose size is greater or equal to this value
      * @return the result of the JPlag plagiarism detection
      */
     @GetMapping(value = "/text-exercises/{exerciseId}/check-plagiarism", params = { "strategy=JPlag" })
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<TextPlagiarismResult> checkPlagiarismJPlag(@PathVariable long exerciseId) throws ExitException {
+    public ResponseEntity<TextPlagiarismResult> checkPlagiarismJPlag(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
+            @RequestParam int minimumSize) throws ExitException {
         Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissionsAndResults(exerciseId);
 
         if (optionalTextExercise.isEmpty()) {
@@ -630,7 +634,7 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise);
+        TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise, similarityThreshold, minimumScore, minimumSize);
 
         return ResponseEntity.ok(result);
     }

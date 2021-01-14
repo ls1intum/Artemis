@@ -36,7 +36,6 @@ const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
         ArtemisSharedComponentModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisProgrammingAssessmentModule,
-        ArtemisResultModule,
         ArtemisAssessmentSharedModule,
         ArtemisTutorParticipationGraphModule,
     ],

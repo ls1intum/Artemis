@@ -461,7 +461,7 @@ public class ComplaintResource {
         complaints.forEach(this::filterOutUselessDataFromComplaint);
     }
 
-    private List<Complaint> buildComplaintsListForAssessor(List<Complaint> complaints, Principal principal, boolean assessorSameAsCaller, boolean testRun) {
+    private List<Complaint> buildComplaintsListForAssessor(List<Complaint> complaints, Principal principal, boolean assessorSameAsCaller, boolean isTestRun) {
         List<Complaint> responseComplaints = new ArrayList<>();
 
         if (complaints.isEmpty()) {
@@ -474,7 +474,7 @@ public class ComplaintResource {
             User student = complaint.getStudent();
 
             if (assessor != null && assessor.getLogin().equals(submissorName) == assessorSameAsCaller
-                    && (student != null && assessor.getLogin().equals(student.getLogin())) == testRun) {
+                    && (student != null && assessor.getLogin().equals(student.getLogin())) == isTestRun) {
                 // Remove data about the student
                 StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
                 studentParticipation.setParticipant(null);
