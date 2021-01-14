@@ -360,8 +360,13 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         database.addProgrammingSubmission(exercise, submission, "student1");
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
         database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), programmingExerciseStudentParticipation);
+        var submissions = submissionRepository.findAll();
 
         request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.OK, Participation.class);
+
+        // Make sure no new submissions are created
+        var latestSubmissions = submissionRepository.findAll();
+        assertThat(submissions.size()).isEqualTo(latestSubmissions.size());
     }
 
     @Test
@@ -370,12 +375,17 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         var result = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), programmingExerciseStudentParticipation);
         database.addProgrammingSubmissionToResultAndParticipation(result, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+        var submissions = submissionRepository.findAll();
 
         Participation response = request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.OK, Participation.class);
         var participation = programmingExerciseStudentParticipationRepository
                 .findByIdWithLatestManualOrSemiAutomaticResultAndFeedbacksAndRelatedSubmissionAndAssessor(response.getId());
         var newManualResult = participation.get().getResults().stream().filter(Result::isManualResult).collect(Collectors.toList()).get(0);
         assertThat(newManualResult.getAssessor().getLogin()).isEqualTo("tutor1");
+
+        // Make sure no new submissions are created
+        var latestSubmissions = submissionRepository.findAll();
+        assertThat(submissions.size()).isEqualTo(latestSubmissions.size());
     }
 
     @Test
@@ -419,6 +429,11 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         assertThat(storedSubmission.getLatestResult().getFeedbacks().size()).isEqualTo(automaticResults.size());
         assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         assertThat(storedSubmission.getLatestResult().getResultString()).isEqualTo(submission.getLatestResult().getResultString());
+
+        // Make sure no new submissions are created
+        var latestSubmissions = submissionRepository.findAll();
+        assertThat(latestSubmissions.size()).isEqualTo(1);
+        assertThat(latestSubmissions.get(0).getId()).isEqualTo(submission.getId());
     }
 
     @Test
