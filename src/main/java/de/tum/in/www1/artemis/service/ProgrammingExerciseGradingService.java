@@ -152,11 +152,7 @@ public class ProgrammingExerciseGradingService {
         semiAutomaticResult.setCompletionDate(semiAutomaticResult.getCompletionDate() != null ? newAutomaticResult.getCompletionDate().plusSeconds(1) : null);
 
         // remove old automatic feedback
-        for (Feedback feedback : semiAutomaticResult.getFeedbacks()) {
-            if (feedback != null && feedback.getType() == FeedbackType.AUTOMATIC) {
-                semiAutomaticResult.removeFeedback(feedback);
-            }
-        }
+        semiAutomaticResult.getFeedbacks().removeIf(feedback -> feedback != null && feedback.getType() == FeedbackType.AUTOMATIC);
 
         // copy all feedback from the automatic result
         for (Feedback feedback : newAutomaticResult.getFeedbacks()) {
