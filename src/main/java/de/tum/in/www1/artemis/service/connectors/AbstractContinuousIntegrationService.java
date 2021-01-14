@@ -26,7 +26,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
     }
 
     /**
-     * Retrieves the submission that is assigned to the specified particiation and its commit hash matches the one from
+     * Retrieves the submission that is assigned to the specified participation and its commit hash matches the one from
      * the build result.
      * @param participationId id of the participation
      * @param buildResult The build results
@@ -60,7 +60,9 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
         submission = new ProgrammingSubmission();
         submission.setParticipation((Participation) participation);
         submission.setSubmitted(true);
-        submission.setType(SubmissionType.OTHER);
+        // We set this to manual because all programming submissions should correspond to a student commit in the git history.
+        // In case we cannot find the appropriate submission, it means something has not worked before, but there will still be a commit in the student repository
+        submission.setType(SubmissionType.MANUAL);
         submission.setCommitHash(commitHash);
         submission.setSubmissionDate(submissionDate);
         return submission;
@@ -71,7 +73,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
         final var commitHash = getCommitHash(buildResult, SubmissionType.MANUAL);
         log.warn("Could not find pending ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create a new one subsequently...", commitHash,
                 participation.getId(), participation.getBuildPlanId());
-        // In this case we don't know the submission time, so we use the result completion time as a fallback.
+        // In this case we don't know the submission time, so we use the build result build run date as a fallback.
         // TODO: we should actually ask the git service to retrieve the actual commit date in the git repository here and only use result.getCompletionDate() as fallback
         var submission = createFallbackSubmission(participation, buildResult.getBuildRunDate(), commitHash.orElse(null));
         // Save to avoid TransientPropertyValueException.
