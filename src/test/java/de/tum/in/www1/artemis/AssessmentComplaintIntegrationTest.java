@@ -25,11 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -177,11 +173,13 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
     public void submitComplaintResponse_rejectComplaint() throws Exception {
-        complaintRepo.save(complaint);
+        complaint = complaintRepo.save(complaint);
+        // creating the initial complaintResponse
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(false);
+        complaintResponse.setResponseText("Rejected");
 
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
-        request.post("/api/complaint-responses", complaintResponse, HttpStatus.CREATED);
-        assertThat(complaintResponse.getComplaint().getParticipant()).isNull();
+        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", complaintResponse, HttpStatus.OK);
 
         Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
@@ -194,9 +192,12 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "tutor2", roles = "TA")
     public void submitComplaintResponse_updateAssessment() throws Exception {
         complaint = complaintRepo.save(complaint);
+        // creating the initial complaintResponse
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(true);
+        complaintResponse.setResponseText("Accepted");
 
         List<Feedback> feedback = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(true)).responseText("accepted");
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedback).complaintResponse(complaintResponse);
         Result receivedResult = request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
@@ -212,18 +213,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
         checkFeedbackCorrectlyStored(feedback, storedResult.getFeedbacks());
         assertThat(storedResult.getAssessor()).as("assessor is still the original one").isEqualTo(modelingAssessment.getAssessor());
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void submitComplaintResponse_asAssessor_forbidden() throws Exception {
-        complaintRepo.save(complaint);
-
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
-        request.post("/api/complaint-responses", complaintResponse, HttpStatus.FORBIDDEN);
-
-        Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
-        assertThat(storedComplaint.isAccepted()).as("accepted flag of complaint is not set").isNull();
     }
 
     @Test
@@ -333,9 +322,15 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "tutor1")
     public void getComplaintResponseByComplaintId_sensitiveDataHiddenForTutor() throws Exception {
         complaint.setParticipant(database.getUserByLogin("student1"));
-        complaintRepo.save(complaint);
 
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
+        complaint = complaintRepo.save(complaint);
+        ComplaintResponse complaintResponse = new ComplaintResponse();
+        complaintResponse.setComplaint(complaint);
+        complaintResponse.getComplaint().setAccepted(false);
+        complaintResponse.setResponseText("rejected");
+        complaintResponse = complaintResponseRepo.save(complaintResponse);
+        complaintResponse.setReviewer(database.getUserByLogin("tutor1"));
+
         complaintResponseRepo.save(complaintResponse);
 
         ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/complaint/" + complaint.getId(), HttpStatus.OK, ComplaintResponse.class);
@@ -351,10 +346,14 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "instructor1")
     public void getComplaintResponseByComplaintId_sensitiveDataHiddenForInstructor() throws Exception {
         complaint.setParticipant(database.getUserByLogin("student1"));
-        complaintRepo.save(complaint);
+        complaint = complaintRepo.save(complaint);
+        ComplaintResponse complaintResponse = new ComplaintResponse();
+        complaintResponse.setComplaint(complaint);
+        complaintResponse.getComplaint().setAccepted(false);
+        complaintResponse.setResponseText("rejected");
+        complaintResponse = complaintResponseRepo.save(complaintResponse);
+        complaintResponse.setReviewer(database.getUserByLogin("instructor1"));
 
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected")
-                .reviewer(database.getUserByLogin("instructor1"));
         complaintResponseRepo.save(complaintResponse);
 
         ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/complaint/" + complaint.getId(), HttpStatus.OK, ComplaintResponse.class);

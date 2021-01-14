@@ -56,16 +56,19 @@
                         ><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="student.login" *ngIf="hasStudentInformation">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentLogin' | translate }}</a
-                        ><fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentLogin' | translate }}</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="student.name" *ngIf="hasStudentInformation">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentName' | translate }}</a
-                        ><fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentName' | translate }}</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="accepted">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.status' | translate }}</a
-                        ><fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.status' | translate }}</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th>
+                        <span>{{ 'artemisApp.locks.lockStatus' | translate }}</span>
                     </th>
                     <th>{{ 'artemisApp.complaint.listOfComplaints.actions' | translate }}</th>
                 </tr>
@@ -110,6 +113,9 @@
                             'artemisApp.moreFeedback.accepted' | translate
                         }}</span>
                         <span class="text-danger" *ngIf="complaint.accepted == false">{{ 'artemisApp.complaint.listOfComplaints.rejected' | translate }}</span>
+                    </td>
+                    <td>
+                        {{ calculateComplaintLockStatus(complaint) }}
                     </td>
 
                     <td class="text-center">

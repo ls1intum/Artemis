@@ -1,27 +1,67 @@
 <div class="plagiarism-inspector">
     <div class="plagiarism-header">
         <div class="plagiarism-header-top">
-            <h3 class="plagiarism-page-title">{{ 'artemisApp.plagiarism.plagiarism-detection' | translate }}</h3>
+            <div class="plagiarism-header-top-left">
+                <h4 class="plagiarism-page-title" (click)="showOptions = !showOptions" [class.active]="showOptions">
+                    <fa-icon class="plagiarism-options-toggle" icon="chevron-right"></fa-icon>
+                    <span>{{ 'artemisApp.plagiarism.plagiarism-detection' | translate }}</span>
+                </h4>
 
-            <div class="plagiarism-warning">
-                <fa-icon [icon]="'exclamation-triangle'" id="plagiarismCaution"></fa-icon>
-                <span>{{ 'artemisApp.plagiarism.caution' | translate }}</span>
+                <div class="plagiarism-warning">
+                    <fa-icon [icon]="'exclamation-triangle'" id="plagiarismCaution"></fa-icon>
+                    <span>{{ 'artemisApp.plagiarism.caution' | translate }}</span>
+                </div>
+            </div>
+            <div class="plagiarism-header-top-right">
+                <button class="check-plagiarism btn btn-primary" (click)="checkPlagiarism()" [disabled]="detectionInProgress">
+                    <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
+                </button>
+
+                <div ngbDropdown *ngIf="plagiarismResult">
+                    <button class="btn btn-secondary btn-block" id="download-plagiarism" ngbDropdownToggle>
+                        <span>Download</span>
+                    </button>
+                    <div ngbDropdownMenu aria-labelledby="download-plagiarism">
+                        <button type="button" (click)="downloadPlagiarismResultsJson()" ngbDropdownItem>JSON</button>
+                        <button type="button" (click)="downloadPlagiarismResultsCsv()" ngbDropdownItem>CSV</button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="plagiarism-buttons">
-            <button class="check-plagiarism btn btn-primary" (click)="checkPlagiarism()" [disabled]="detectionInProgress">
-                <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
-            </button>
+        <div class="plagiarism-header-options" [hidden]="!showOptions">
+            <div class="plagiarism-option">
+                <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.similarity-threshold">Similarity Threshold</div>
+                <fa-icon [icon]="'question-circle'" placement="bottom" [ngbTooltip]="'artemisApp.plagiarism.similarity-threshold-tooltip' | translate" container="body"></fa-icon>
+                <input
+                    required
+                    type="number"
+                    class="form-control"
+                    min="50"
+                    max="100"
+                    step="5"
+                    onkeydown="return false"
+                    id="plagiarism-similarity-threshold"
+                    [(ngModel)]="similarityThreshold"
+                />
+            </div>
 
-            <div ngbDropdown *ngIf="plagiarismResult">
-                <button class="btn btn-secondary btn-block" id="download-plagiarism" ngbDropdownToggle>
-                    <span>Download</span>
-                </button>
-                <div ngbDropdownMenu aria-labelledby="download-plagiarism">
-                    <button type="button" (click)="downloadPlagiarismResultsJson()" ngbDropdownItem>JSON</button>
-                    <button type="button" (click)="downloadPlagiarismResultsCsv()" ngbDropdownItem>CSV</button>
-                </div>
+            <div class="plagiarism-option" [class.disabled]="!enableMinimumScore">
+                <label class="plagiarism-checkbox" for="enableMinimumScore">
+                    <input type="checkbox" id="enableMinimumScore" class="plagiarism-option-checkbox" [(ngModel)]="enableMinimumScore" checked />
+                    <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.minimum-score">Minimum Score</div>
+                </label>
+                <fa-icon [icon]="'question-circle'" placement="bottom" [ngbTooltip]="'artemisApp.plagiarism.minimum-score-tooltip' | translate" container="body"></fa-icon>
+                <input required type="number" [disabled]="!enableMinimumScore" class="form-control" min="0" max="100" id="plagiarism-minimum-score" [(ngModel)]="minimumScore" />
+            </div>
+
+            <div class="plagiarism-option" *ngIf="!isProgrammingExercise()" [class.disabled]="!enableMinimumSize">
+                <label class="plagiarism-checkbox" for="enableMinimumSize">
+                    <input type="checkbox" id="enableMinimumSize" class="plagiarism-option-checkbox" [(ngModel)]="enableMinimumSize" checked />
+                    <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.minimum-size">Minimum Size</div>
+                </label>
+                <fa-icon [icon]="'question-circle'" placement="bottom" [ngbTooltip]="getMinimumSizeTooltip() | translate" container="body"></fa-icon>
+                <input required type="number" [disabled]="!enableMinimumSize" class="form-control" min="0" max="100" id="plagiarism-minimum-size" [(ngModel)]="minimumSize" />
             </div>
 
             <label *ngIf="isProgrammingExercise()" class="plagiarism-checkbox" for="generateJPlagReport">
@@ -31,7 +71,7 @@
         </div>
     </div>
 
-    <div class="plagiarism-body" *ngIf="plagiarismResult">
+    <div class="plagiarism-body" *ngIf="plagiarismResult && !detectionInProgress">
         <jhi-plagiarism-sidebar
             [(showRunDetails)]="showRunDetails"
             [comparisons]="plagiarismResult?.comparisons"
@@ -44,7 +84,7 @@
         <jhi-plagiarism-run-details [hidden]="!showRunDetails" [plagiarismResult]="plagiarismResult"></jhi-plagiarism-run-details>
     </div>
 
-    <div class="plagiarism-empty" *ngIf="!plagiarismResult">
+    <div class="plagiarism-empty" *ngIf="!plagiarismResult || detectionInProgress">
         <div class="spinner-border text-primary" role="status" *ngIf="detectionInProgress">
             <span class="sr-only">Loading...</span>
         </div>
