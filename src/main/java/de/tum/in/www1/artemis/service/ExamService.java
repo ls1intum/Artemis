@@ -576,7 +576,7 @@ public class ExamService {
 
                 // 3) if we cannot find the user in the (TUM) LDAP, try again using the login
                 var login = studentDto.getLogin();
-                optionalStudent = userService.findOneWithGroupsAndAuthoritiesByLogin(login);
+                optionalStudent = userService.findUserWithGroupsAndAuthoritiesByLogin(login);
                 if (optionalStudent.isPresent()) {
                     var student = optionalStudent.get();
                     // the newly created student needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
