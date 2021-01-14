@@ -384,10 +384,6 @@ public class ProgrammingSubmissionResource {
             return forbidden();
         }
 
-        Submission newestSubmission = participation.getSubmissions().stream().max(Comparator.comparing(Submission::getId)).get();
-        Result result1 = newestSubmission.getResultByCorrectionRound(correctionRound);
-        result1 = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(result1.getId()).get();
-
         Optional<Result> manualResult = participation.getResults().stream().filter(Result::isManualResult).findFirst();
         if (manualResult.isPresent()) {
             return ResponseEntity.ok(participation);
