@@ -2,13 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of, Subject } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { JhiEventManager } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { JhiAlertService } from 'ng-jhipster';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
@@ -22,6 +21,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Exam } from 'app/entities/exam.model';
 import { Moment } from 'moment';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -42,6 +42,7 @@ export class ExerciseGroupsComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private exerciseGroupService: ExerciseGroupService,
+        private exerciseService: ExerciseService,
         private examManagementService: ExamManagementService,
         private courseManagementService: CourseManagementService,
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,

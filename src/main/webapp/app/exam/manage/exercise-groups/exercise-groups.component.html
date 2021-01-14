@@ -138,6 +138,12 @@
                         <th>
                             <span>{{ 'artemisApp.examManagement.exerciseGroup.points' | translate }}</span>
                         </th>
+                        <th>
+                            <span>{{ 'artemisApp.exercise.bonusPoints' | translate }}</span>
+                        </th>
+                        <th>
+                            <span>{{ 'artemisApp.exercise.includedInOverallScore' | translate }}</span>
+                        </th>
                         <ng-container *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)">
                             <th>
                                 <span>{{ 'artemisApp.exercise.shortName' | translate }}</span>
@@ -184,6 +190,8 @@
                         <td class="align-middle">
                             {{ exercise.maxScore }}
                         </td>
+                        <td>{{ exercise.bonusPoints }}</td>
+                        <td>{{ exerciseService.getTranslationForIncludedInOverallScore(exercise) }}</td>
                         <!-- Programming exercise specific cells -->
                         <ng-container *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)">
                             <ng-container *ngIf="exercise.type === exerciseType.PROGRAMMING; else emptyProgrammingCells">
