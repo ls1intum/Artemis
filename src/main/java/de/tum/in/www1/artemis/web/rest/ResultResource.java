@@ -316,6 +316,17 @@ public class ResultResource {
             return forbidden();
         }
 
+        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        boolean filterForStudent = authCheckService.isOnlyStudentInCourse(course, user);
+
+        if (filterForStudent) {
+            final ZonedDateTime dueDate = participation.getExercise().getDueDate();
+            System.out.println(dueDate);
+            boolean isBeforeDueDate = dueDate != null && ZonedDateTime.now().isBefore(dueDate);
+            result.filterSensitiveInformation(isBeforeDueDate);
+        }
+
         return new ResponseEntity<>(result.getFeedbacks(), HttpStatus.OK);
     }
 

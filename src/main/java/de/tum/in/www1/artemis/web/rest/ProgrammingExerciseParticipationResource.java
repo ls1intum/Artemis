@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -77,6 +78,12 @@ public class ProgrammingExerciseParticipationResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.get().getExercise())) {
             // hide details that should not be shown to the students
             participation.get().getExercise().filterSensitiveInformation();
+
+            final ZonedDateTime dueDate = participation.get().getExercise().getDueDate();
+            boolean isBeforeDueDate = dueDate != null && ZonedDateTime.now().isBefore(dueDate);
+            for (Result r : participation.get().getResults()) {
+                r.filterSensitiveInformation(isBeforeDueDate);
+            }
         }
         return ResponseEntity.ok(participation.get());
     }
@@ -213,8 +220,21 @@ public class ProgrammingExerciseParticipationResource {
         if (!programmingExerciseParticipationService.canAccessParticipation(participation)) {
             return forbidden();
         }
-        Optional<Result> result = resultService.findLatestResultWithFeedbacksForParticipation(participation.getId());
-        return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
-    }
 
+        Optional<Result> result = resultService.findLatestResultWithFeedbacksForParticipation(participation.getId());
+        if (result.isEmpty()) {
+            return ResponseEntity.ok(null);
+        }
+        Result latestResult = result.get();
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise())) {
+            // hide details that should not be shown to the students
+            participation.getProgrammingExercise().filterSensitiveInformation();
+            final ZonedDateTime dueDate = participation.getProgrammingExercise().getDueDate();
+            boolean isBeforeDueDate = dueDate != null && ZonedDateTime.now().isBefore(dueDate);
+            latestResult.filterSensitiveInformation(isBeforeDueDate);
+        }
+
+        return ResponseEntity.ok(latestResult);
+    }
 }

@@ -538,11 +538,11 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     public void shouldNotIncludeTestsMarkedAsNeverVisibleInScoreCalculation(boolean isAfterDueDate) throws Exception {
         // test case marked as never should not affect score for students neither before nor after due date
         if (isAfterDueDate) {
-            programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(10));
+            programmingExercise.setDueDate(ZonedDateTime.now().minusHours(10));
         }
         else {
             // Set programming exercise due date in future.
-            programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(10));
+            programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
         }
 
         var invisibleTestCase = new ProgrammingExerciseTestCase().testName("test4").exercise(programmingExercise);

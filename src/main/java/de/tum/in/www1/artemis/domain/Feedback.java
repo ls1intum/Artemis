@@ -192,6 +192,10 @@ public class Feedback extends DomainObject {
         return visibility;
     }
 
+    public boolean isAfterDueDate() {
+        return this.visibility == TestCaseVisibility.AFTER_DUE_DATE;
+    }
+
     public boolean isInvisible() {
         return this.visibility == TestCaseVisibility.NEVER;
     }
