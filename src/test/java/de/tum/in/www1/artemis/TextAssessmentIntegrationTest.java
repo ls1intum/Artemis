@@ -51,6 +51,12 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     ComplaintRepository complaintRepo;
 
     @Autowired
+    ComplaintResponseRepository complaintResponseRepository;
+
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
     ObjectMapper mapper;
 
     @Autowired
@@ -142,7 +148,9 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         complaintRepo.save(complaint);
         complaint.getResult().setParticipation(null); // Break infinite reference chain
 
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(false);
+        complaintResponse.setResponseText("rejected");
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
 
         Result updatedResult = request.putWithResponseBody("/api/text-assessments/text-submissions/" + textSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
@@ -170,7 +178,10 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         final Complaint complaint = request.get("/api/complaints/result/" + result.getId(), HttpStatus.OK, Complaint.class);
 
         // Accept Complaint and update Assessment
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(false);
+        complaintResponse.setResponseText("rejected");
+
         TextAssessmentUpdateDTO assessmentUpdate = new TextAssessmentUpdateDTO();
         assessmentUpdate.feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
         assessmentUpdate.setTextBlocks(new HashSet<>());

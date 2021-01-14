@@ -13,6 +13,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
+import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -54,11 +55,15 @@ export class ProgrammingExerciseService {
      * Check plagiarism with JPlag
      *
      * @param exerciseId
+     * @param options
      */
-    checkPlagiarism(exerciseId: number): Observable<TextPlagiarismResult> {
+    checkPlagiarism(exerciseId: number, options?: PlagiarismOptions): Observable<TextPlagiarismResult> {
         return this.http
             .get<TextPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
                 observe: 'response',
+                params: {
+                    ...options?.toParams(),
+                },
             })
             .pipe(map((response: HttpResponse<TextPlagiarismResult>) => response.body!));
     }
@@ -66,11 +71,15 @@ export class ProgrammingExerciseService {
     /**
      * Check for plagiarism
      * @param exerciseId of the programming exercise
+     * @param options
      */
-    checkPlagiarismJPlagReport(exerciseId: number): Observable<HttpResponse<Blob>> {
+    checkPlagiarismJPlagReport(exerciseId: number, options?: PlagiarismOptions): Observable<HttpResponse<Blob>> {
         return this.http.get(`${this.resourceUrl}/${exerciseId}/check-plagiarism-jplag-report`, {
             observe: 'response',
             responseType: 'blob',
+            params: {
+                ...options?.toParams(),
+            },
         });
     }
 

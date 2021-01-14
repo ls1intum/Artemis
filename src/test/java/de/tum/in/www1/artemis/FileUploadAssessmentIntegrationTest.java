@@ -222,10 +222,13 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         Result fileUploadAssessment = fileUploadSubmission.getLatestResult();
         Complaint complaint = new Complaint().result(fileUploadAssessment).complaintText("This is not fair");
 
-        complaintRepo.save(complaint);
+        complaint = complaintRepo.save(complaint);
         complaint.getResult().setParticipation(null); // Break infinite reference chain
 
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(false);
+        complaintResponse.setResponseText("rejected");
+
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
 

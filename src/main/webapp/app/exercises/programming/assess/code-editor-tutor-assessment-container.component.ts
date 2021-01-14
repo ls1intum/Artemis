@@ -29,7 +29,7 @@ import { Course } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { tap, switchMap } from 'rxjs/operators';
+import { switchMap, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { diff_match_patch } from 'diff-match-patch';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -335,9 +335,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
             },
-            () => {
+            (httpErrorResponse: HttpErrorResponse) => {
                 this.jhiAlertService.clear();
-                this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
+                const error = httpErrorResponse.error;
+                if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                    this.jhiAlertService.error(error.message, error.params);
+                } else {
+                    this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
+                }
             },
         );
     }

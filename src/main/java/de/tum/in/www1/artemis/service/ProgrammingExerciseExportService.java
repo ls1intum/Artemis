@@ -55,6 +55,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -71,6 +72,8 @@ public class ProgrammingExerciseExportService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     private final FileService fileService;
 
     private final GitService gitService;
@@ -81,9 +84,10 @@ public class ProgrammingExerciseExportService {
 
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
-    public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
-            ZipFileService zipFileService, UrlService urlService) {
+    public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
+            FileService fileService, GitService gitService, ZipFileService zipFileService, UrlService urlService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.fileService = fileService;
         this.gitService = gitService;
         this.zipFileService = zipFileService;
@@ -177,21 +181,29 @@ public class ProgrammingExerciseExportService {
      * downloads all repos of the exercise and runs JPlag
      *
      * @param programmingExerciseId the id of the programming exercises which should be checked
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
+     * @param minimumScore consider only submissions whose score is greater or equal to this value
      * @return a zip file that can be returned to the client
      * @throws ExitException is thrown if JPlag exits unexpectedly
-     * @throws IOException is thrown for file handling errors
+     * @throws IOException   is thrown for file handling errors
      */
-    public TextPlagiarismResult checkPlagiarism(long programmingExerciseId) throws ExitException, IOException {
+    public TextPlagiarismResult checkPlagiarism(long programmingExerciseId, float similarityThreshold, int minimumScore) throws ExitException, IOException {
         long start = System.nanoTime();
-        // TODO: offer the following options in the client
-        // 1) filter empty submissions, i.e. repositories with no student commits
-        // 2) filter submissions with a result score of 0%
+
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
 
         final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
         log.info("Download repositories for JPlag programming comparison with " + numberOfParticipations + " participations");
+
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
-        List<Repository> repositories = downloadRepositories(programmingExercise, targetPath);
+        List<ProgrammingExerciseParticipation> participations = studentParticipationsForComparison(programmingExercise, minimumScore);
+
+        if (participations.size() < 2) {
+            log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
+            return new TextPlagiarismResult();
+        }
+
+        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath);
         log.info("Downloading repositories done");
 
         final var projectKey = programmingExercise.getProjectKey();
@@ -205,11 +217,13 @@ public class ProgrammingExerciseExportService {
 
         // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
         // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
-        options.setSimilarityThreshold(50f);
+        options.setSimilarityThreshold(similarityThreshold);
 
         log.info("Start JPlag programming comparison");
+
         JPlag jplag = new JPlag(options);
         JPlagResult result = jplag.run();
+
         log.info("JPlag programming comparison finished with " + result.getComparisons().size() + " comparisons");
 
         cleanupResourcesAsync(programmingExercise, repositories, targetPath);
@@ -226,22 +240,29 @@ public class ProgrammingExerciseExportService {
      * downloads all repos of the exercise and runs JPlag
      *
      * @param programmingExerciseId the id of the programming exercises which should be checked
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
+     * @param minimumScore consider only submissions whose score is greater or equal to this value
+     *
      * @return a zip file that can be returned to the client
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException is thrown for file handling errors
      */
-    public File checkPlagiarismWithJPlagReport(long programmingExerciseId) throws ExitException, IOException {
+    public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore) throws ExitException, IOException {
         long start = System.nanoTime();
-        // TODO: offer the following options in the client
-        // 1) filter empty submissions, i.e. repositories with no student commits
-        // 2) filter submissions with a result score of 0%
 
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
         final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
 
         log.info("Download repositories for JPlag programming comparison with " + numberOfParticipations + " participations");
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
-        List<Repository> repositories = downloadRepositories(programmingExercise, targetPath);
+        List<ProgrammingExerciseParticipation> participations = studentParticipationsForComparison(programmingExercise, minimumScore);
+
+        if (participations.size() < 2) {
+            log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
+            return null;
+        }
+
+        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath);
         log.info("Downloading repositories done");
 
         final var output = "output";
@@ -261,7 +282,7 @@ public class ProgrammingExerciseExportService {
 
         // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
         // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
-        options.setSimilarityThreshold(50f);
+        options.setSimilarityThreshold(similarityThreshold);
 
         log.info("Start JPlag programming comparison");
         JPlag jplag = new JPlag(options);
@@ -339,22 +360,18 @@ public class ProgrammingExerciseExportService {
         }
     }
 
-    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, String targetPath) {
+    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, List<ProgrammingExerciseParticipation> participations, String targetPath) {
         List<Repository> downloadedRepositories = new ArrayList<>();
-        programmingExercise.getStudentParticipations().parallelStream().forEach(participation -> {
-            var programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
+
+        participations.forEach(participation -> {
             try {
-                if (programmingExerciseParticipation.getVcsRepositoryUrl() == null) {
-                    log.warn("Ignore participation " + participation.getId() + " for export, because its repository URL is null");
-                    return;
-                }
-                Repository repo = gitService.getOrCheckoutRepositoryForJPlag(programmingExerciseParticipation, targetPath);
+                Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
                 gitService.resetToOriginMaster(repo); // start with clean state
                 downloadedRepositories.add(repo);
             }
             catch (GitException | GitAPIException | InterruptedException ex) {
-                log.error("clone student repository " + programmingExerciseParticipation.getVcsRepositoryUrl() + " in exercise '" + programmingExercise.getTitle()
-                        + "' did not work as expected: " + ex.getMessage());
+                log.error("clone student repository " + participation.getVcsRepositoryUrl() + " in exercise '" + programmingExercise.getTitle() + "' did not work as expected: "
+                        + ex.getMessage());
             }
         });
 
@@ -370,6 +387,25 @@ public class ProgrammingExerciseExportService {
         }
 
         return downloadedRepositories;
+    }
+
+    /**
+     * Find all studentParticipations of the given exercise for plagiarism comparison.
+     *
+     * @param programmingExercise ProgrammingExercise to fetcch the participations for
+     * @param minimumScore consider only submissions whose score is greater or equal to this value
+     * @return List containing the latest text submission for every participation
+     */
+    public List<ProgrammingExerciseParticipation> studentParticipationsForComparison(ProgrammingExercise programmingExercise, int minimumScore) {
+        var studentParticipations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(programmingExercise.getId());
+
+        return studentParticipations.parallelStream().filter(participation -> participation instanceof ProgrammingExerciseParticipation)
+                .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUrl() != null)
+                .filter(participation -> {
+                    Submission submission = ((StudentParticipation) participation).findLatestSubmission().orElse(null);
+                    return minimumScore == 0 || submission != null && submission.getLatestResult() != null && submission.getLatestResult().getScore() != null
+                            && submission.getLatestResult().getScore() >= minimumScore;
+                }).collect(Collectors.toList());
     }
 
     /**

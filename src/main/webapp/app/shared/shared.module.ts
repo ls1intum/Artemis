@@ -62,5 +62,6 @@ import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.d
         CustomMinDirective,
         CustomMaxDirective,
     ],
+    providers: [ArtemisDatePipe],
 })
 export class ArtemisSharedModule {}

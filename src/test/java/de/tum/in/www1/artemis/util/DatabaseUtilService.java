@@ -2137,6 +2137,15 @@ public class DatabaseUtilService {
         return exampleSubmissionRepo.save(exampleSubmission);
     }
 
+    public ComplaintResponse createInitialEmptyResponse(String loginOfTutor, Complaint complaint) {
+        ComplaintResponse complaintResponse = new ComplaintResponse();
+        complaintResponse.setComplaint(complaint);
+        User tutor = userRepo.findOneByLogin(loginOfTutor).get();
+        complaintResponse.setReviewer(tutor);
+        complaintResponse = complaintResponseRepo.saveAndFlush(complaintResponse);
+        return complaintResponse;
+    }
+
     public List<Feedback> loadAssessmentFomResources(String path) throws Exception {
         String fileContent = FileUtils.loadFileFromResources(path);
         return mapper.readValue(fileContent, mapper.getTypeFactory().constructCollectionType(List.class, Feedback.class));
