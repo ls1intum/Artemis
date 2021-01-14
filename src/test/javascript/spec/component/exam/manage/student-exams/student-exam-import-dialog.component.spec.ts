@@ -68,8 +68,8 @@ describe('StudentExamImportDialogComponent', () => {
     });
 
     it('should reset dialog when selecting csv file', async () => {
-        component.studentsToImport = [{ registrationNumber: '1', lastName: 'lastName', firstName: 'firstName' }];
-        component.notFoundStudents = [{ registrationNumber: '2', lastName: 'lastName', firstName: 'firstName' }];
+        component.studentsToImport = [{ registrationNumber: '1', lastName: 'lastName', firstName: 'firstName', login: 'login1' }];
+        component.notFoundStudents = [{ registrationNumber: '2', lastName: 'lastName2', firstName: 'firstName2', login: 'login2' }];
         component.hasImported = true;
 
         const event = { target: { files: [studentCsvColumns] } };
@@ -108,10 +108,10 @@ describe('StudentExamImportDialogComponent', () => {
 
     it('should import students', function () {
         const studentsToImport: StudentDTO[] = [
-            { registrationNumber: '1', firstName: 'Max', lastName: 'Musetermann' },
-            { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross' },
+            { registrationNumber: '1', firstName: 'Max', lastName: 'Musetermann', login: 'login1' },
+            { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2' },
         ];
-        const studentsNotFound: StudentDTO[] = [{ registrationNumber: '2', firstName: 'Bob', lastName: 'Ross' }];
+        const studentsNotFound: StudentDTO[] = [{ registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2' }];
 
         const fakeResponse = { body: studentsNotFound } as HttpResponse<StudentDTO[]>;
         sinon.replace(examManagementService, 'addStudentsToExam', sinon.fake.returns(of(fakeResponse)));
@@ -126,13 +126,19 @@ describe('StudentExamImportDialogComponent', () => {
     });
 
     it('should compute invalid student entries', function () {
-        let rowNumbersOrNull = component.computeInvalidStudentEntries([{ FIRST_NAME_OF_STUDENT: 'Max' }]);
+        let rowNumbersOrNull = component.computeInvalidStudentEntries([{ firstnameofstudent: 'Max' }]);
         expect(rowNumbersOrNull).to.equal('2');
 
-        rowNumbersOrNull = component.computeInvalidStudentEntries([{ FIRST_NAME_OF_STUDENT: 'Max' }, { REGISTRATION_NUMBER: '1' }]);
+        rowNumbersOrNull = component.computeInvalidStudentEntries([{ firstnameofstudent: 'Max' }, { registrationnumber: '1' }, { login: 'username' }]);
         expect(rowNumbersOrNull).to.equal('2');
 
-        rowNumbersOrNull = component.computeInvalidStudentEntries([{ FIRST_NAME_OF_STUDENT: 'Max' }, { LAST_NAME_OF_STUDENT: 'Mustermann' }]);
+        rowNumbersOrNull = component.computeInvalidStudentEntries([{ benutzer: 'Max' }, { benutzername: '1' }, { user: 'username' }]);
+        expect(rowNumbersOrNull).to.be.null;
+
+        rowNumbersOrNull = component.computeInvalidStudentEntries([{ matriculationnumber: '1' }, { matrikelnummer: '1' }]);
+        expect(rowNumbersOrNull).to.be.null;
+
+        rowNumbersOrNull = component.computeInvalidStudentEntries([{ firstnameofstudent: 'Max' }, { familynameofstudent: 'Mustermann' }]);
         expect(rowNumbersOrNull).to.equal('2, 3');
 
         rowNumbersOrNull = component.computeInvalidStudentEntries([]);
@@ -141,10 +147,10 @@ describe('StudentExamImportDialogComponent', () => {
 
     it('should import correctly', function () {
         const importedStudents: StudentDTO[] = [
-            { registrationNumber: '1', firstName: 'Max', lastName: 'Musetermann' },
-            { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross' },
+            { registrationNumber: '1', firstName: 'Max', lastName: 'Musetermann', login: 'login1' },
+            { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2' },
         ];
-        const notImportedStudents: StudentDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude' }];
+        const notImportedStudents: StudentDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3' }];
 
         const fakeResponse = { body: notImportedStudents } as HttpResponse<StudentDTO[]>;
         sinon.replace(examManagementService, 'addStudentsToExam', sinon.fake.returns(of(fakeResponse)));
