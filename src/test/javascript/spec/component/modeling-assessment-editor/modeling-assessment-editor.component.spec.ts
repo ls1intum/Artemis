@@ -3,7 +3,7 @@ import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 
-import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
@@ -30,7 +30,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
-import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';

@@ -25,7 +25,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { getSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
