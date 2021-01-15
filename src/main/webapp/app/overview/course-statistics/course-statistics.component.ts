@@ -269,7 +269,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                                 groupedExercises[index].scores.footer.push(null);
                                 groupedExercises[index].missedScores.footer.push(null);
                                 groupedExercises[index].notGraded.footer.push(null);
-                                this.generateTooltip(participationResult, groupedExercises[index], exercise.includedInOverallScore);
+                                this.generateTooltip(participationResult, groupedExercises[index], exercise.includedInOverallScore!);
                             }
                         } else {
                             if (
