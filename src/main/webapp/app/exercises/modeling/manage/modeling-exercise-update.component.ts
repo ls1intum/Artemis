@@ -7,7 +7,6 @@ import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise, ExerciseCategory, ExerciseMode, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -31,7 +30,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
     modelingExercise: ModelingExercise;
     isSaving: boolean;
-    maxScorePattern = MAX_SCORE_PATTERN;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;

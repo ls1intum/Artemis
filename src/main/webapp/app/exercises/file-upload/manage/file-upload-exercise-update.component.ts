@@ -6,7 +6,6 @@ import { JhiAlertService } from 'ng-jhipster';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise, ExerciseCategory, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -24,7 +23,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     isExamMode: boolean;
     fileUploadExercise: FileUploadExercise;
     isSaving: boolean;
-    maxScorePattern = MAX_SCORE_PATTERN;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     EditorMode = EditorMode;

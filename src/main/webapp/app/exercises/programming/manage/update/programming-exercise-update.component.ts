@@ -7,7 +7,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
-import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { switchMap, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -53,7 +52,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue: ProjectType;
 
-    maxScorePattern = MAX_SCORE_PATTERN;
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
     // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations

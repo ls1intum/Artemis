@@ -7,7 +7,6 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, ExerciseCategory, ExerciseMode, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -36,7 +35,6 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     textExercise: TextExercise;
     isSaving: boolean;
-    maxScorePattern = MAX_SCORE_PATTERN;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;

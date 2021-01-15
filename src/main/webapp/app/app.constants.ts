@@ -10,7 +10,6 @@ export const BUILD_TIMESTAMP = process.env.BUILD_TIMESTAMP;
 export const MIN_POINTS_GREEN = 80;
 export const MIN_POINTS_ORANGE = 40;
 
-export const MAX_SCORE_PATTERN = '^[0-9]{0,4}$';
 export const SCORE_PATTERN = '^[0-9]{1,2}$|^100$';
 
 export const ARTEMIS_DEFAULT_COLOR = '#3E8ACC';
