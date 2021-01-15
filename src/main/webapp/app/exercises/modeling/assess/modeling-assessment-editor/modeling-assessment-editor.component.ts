@@ -37,7 +37,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     submission?: ModelingSubmission;
     model?: UMLModel;
     modelingExercise?: ModelingExercise;
-    result?: Result;
+    eri2121?: Result;
     generalFeedback = new Feedback();
     referencedFeedback: Feedback[] = [];
     unreferencedFeedback: Feedback[] = [];
@@ -93,6 +93,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
+        console.log('ngoninit');
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
 
         this.route.queryParamMap.subscribe((queryParams) => {
@@ -131,8 +132,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private loadRandomSubmission(exerciseId: number): void {
+        console.log('loadRandomSubmission');
         this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound).subscribe(
             (submission: ModelingSubmission) => {
+                console.log('received sub: ', submission);
                 this.handleReceivedSubmission(submission);
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
@@ -154,7 +157,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
-        console.log('handle receveid ', this.correctionRound);
+        console.log('handle receveid ', this.correctionRound, submission.id);
         this.submission = submission;
         setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
         const studentParticipation = this.submission.participation as StudentParticipation;
@@ -165,12 +168,16 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (this.result?.hasComplaint) {
             this.getComplaint(this.result.id);
         }
+
         if (this.result?.feedbacks) {
+            console.log('result? = true');
             this.result = this.modelingAssessmentService.convertResult(this.result);
             this.handleFeedback(this.result.feedbacks);
         } else {
+            console.log('result? = false');
+            console.log(this.referencedFeedback, this.unreferencedFeedback);
             this.result!.feedbacks = [];
-            //this.generalFeedback = null;
+            // this.generalFeedback = null;
             this.unreferencedFeedback = [];
             this.referencedFeedback = [];
         }
@@ -219,6 +226,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * highlighting of feedback elements, if necessary.
      */
     private handleFeedback(feedback?: Feedback[]): void {
+        console.log('handle Feedback', feedback);
         if (!feedback || feedback.length === 0) {
             return;
         }
@@ -242,6 +250,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private checkPermissions(): void {
         this.isAssessor = this.result?.assessor?.id === this.userId;
+        console.log(this.isAssessor);
         if (this.modelingExercise) {
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course || this.modelingExercise.exerciseGroup!.exam!.course);
         }
@@ -398,18 +407,21 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     onFeedbackChanged(feedback: Feedback[]) {
+        console.log('onFeedBackChange');
         this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference);
         this.validateFeedback();
     }
 
     assessNext() {
+        console.log('assessNext');
         this.nextSubmissionBusy = true;
         this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.modelingExercise!.id!, true, this.correctionRound).subscribe(
             (unassessedSubmission: ModelingSubmission) => {
                 this.nextSubmissionBusy = false;
                 this.router.onSameUrlNavigation = 'reload';
-                const url = `/course-management/${this.courseId}/modeling-exercises/${this.modelingExercise!.id}/submissions/${unassessedSubmission.id}/assessment`;
-                this.router.navigate([url], { queryParams: { 'correction-round': this.correctionRound } });
+                let url = `/course-management/${this.courseId}/modeling-exercises/${this.modelingExercise!.id}/submissions/${unassessedSubmission.id}/assessment`;
+                url += `?correction-round=${this.correctionRound}`;
+                this.router.navigateByUrl(url, {});
             },
             (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy = false;
@@ -431,6 +443,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      *   - Each reference feedback must have a score that is a valid number
      */
     validateFeedback() {
+        console.log('validateFeedback');
         this.calculateTotalScore();
         if (
             (!this.referencedFeedback || this.referencedFeedback.length === 0) &&
@@ -510,6 +523,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * and instead set the score boundaries on the server.
      */
     calculateTotalScore() {
+        console.log('calcScore: fedb:', this.feedback);
         this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
         // Cap totalScore to maxPoints
         const maxPoints = this.modelingExercise!.maxScore! + this.modelingExercise!.bonusPoints! ?? 0.0;
