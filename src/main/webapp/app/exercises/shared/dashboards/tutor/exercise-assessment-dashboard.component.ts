@@ -472,6 +472,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     /**
      * Calculates the status of a submission by inspecting the result
      * @param submission Submission which to check
+     * @param correctionRound for which to get status
      */
     calculateSubmissionStatus(submission: Submission, correctionRound = 0) {
         const tmpResult = submission.results?.[correctionRound];
