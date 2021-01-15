@@ -13,15 +13,15 @@ import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
-const PRESENTATION_SCORE_KEY = 'Presentation Score';
-const NAME_KEY = 'Name';
-const USERNAME_KEY = 'Username';
-const EMAIL_KEY = 'Email';
-const REGISTRATION_NUMBER_KEY = 'Registration Number';
-const TOTAL_COURSE_POINTS_KEY = 'Total Course Points';
-const TOTAL_COURSE_SCORE_KEY = 'Total Course Score';
-const POINTS_KEY = 'Points';
-const SCORE_KEY = 'Score';
+export const PRESENTATION_SCORE_KEY = 'Presentation Score';
+export const NAME_KEY = 'Name';
+export const USERNAME_KEY = 'Username';
+export const EMAIL_KEY = 'Email';
+export const REGISTRATION_NUMBER_KEY = 'Registration Number';
+export const TOTAL_COURSE_POINTS_KEY = 'Total Course Points';
+export const TOTAL_COURSE_SCORE_KEY = 'Total Course Score';
+export const POINTS_KEY = 'Points';
+export const SCORE_KEY = 'Score';
 
 @Component({
     selector: 'jhi-course-scores',
@@ -137,13 +137,16 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 exercisesOfType.map((exercise) => exercise.title!),
             );
 
-            const maxPointsOfAllExercisesOfType = exercisesOfType
+            const maxPointsOfAllExercisesOfType = exercisesOfType.map((exercise) => exercise.maxScore!);
+
+            this.exerciseMaxPointsPerType.set(exerciseType, maxPointsOfAllExercisesOfType);
+
+            const maxPointsOfAllIncludedExercisesOfType = exercisesOfType
                 // only exercises marked as included_completely increase the maximum reachable number of points
                 .filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY)
                 .map((exercise) => exercise.maxScore!);
 
-            this.exerciseMaxPointsPerType.set(exerciseType, maxPointsOfAllExercisesOfType);
-            this.maxNumberOfPointsPerExerciseType.set(exerciseType, sum(maxPointsOfAllExercisesOfType));
+            this.maxNumberOfPointsPerExerciseType.set(exerciseType, sum(maxPointsOfAllIncludedExercisesOfType));
         }
         this.maxNumberOfOverallPoints = 0;
         for (const maxNumberOfPointsPerExerciseTypeElement of this.maxNumberOfPointsPerExerciseType) {
@@ -398,26 +401,29 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 }
             }
             rows.push(rowDataParticipationSuccuessful);
-
-            const options = {
-                fieldSeparator: ';', // TODO: allow user to customize
-                quoteStrings: '"',
-                decimalSeparator: 'locale',
-                showLabels: true,
-                showTitle: false,
-                filename: 'Artemis Course ' + this.course.title + ' Scores',
-                useTextFile: false,
-                useBom: true,
-                headers: keys,
-            };
-
-            const csvExporter = new ExportToCsv(options);
-            csvExporter.generateCsv(rows); // includes download
+            this.exportAsCsv(rows, keys);
         }
     }
 
+    exportAsCsv(rows: any[], keys: string[]) {
+        const options = {
+            fieldSeparator: ';', // TODO: allow user to customize
+            quoteStrings: '"',
+            decimalSeparator: 'locale',
+            showLabels: true,
+            showTitle: false,
+            filename: 'Artemis Course ' + this.course.title + ' Scores',
+            useTextFile: false,
+            useBom: true,
+            headers: keys,
+        };
+
+        const csvExporter = new ExportToCsv(options);
+        csvExporter.generateCsv(rows); // includes download
+    }
+
     /**
-     * Return an empty line in csv-format with an empty row for each exercise type.
+     *an empty line in csv-format with an empty row for each exercise type.
      * @param firstValue The first value/name key of the line
      */
     private emptyLine(firstValue: string) {
