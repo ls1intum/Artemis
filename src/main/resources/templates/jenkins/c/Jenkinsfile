@@ -26,50 +26,55 @@ pipeline {
                     timestamps {
                         sh '''
                             cd $WORKSPACE
-                            echo &quot;--------------------setup-------------------&quot;
-                            echo &quot;User:&quot;
+                            echo "--------------------setup-------------------"
+                            echo "User:"
                             whoami
-                            echo &quot;Updating assignment and test-reports ownership...&quot;
-                            echo &quot;--------------------setup-------------------&quot;
-                            echo &quot;--------------------info--------------------&quot;
+                            echo "Updating assignment and test-reports ownership..."
+                            sudo chown artemis_user:artemis_user assignment/ -R
+                            sudo mkdir test-reports
+                            sudo chown artemis_user:artemis_user test-reports/ -R
+                            echo "--------------------setup-------------------"
+                            echo "--------------------info--------------------"
                             python3 --version
                             pip3 --version
                             gcc --version
                             # Generic debug infos:
                             # tree
-                            echo &quot;--------------------tests-------------------&quot;
+                            echo "--------------------info--------------------"
+                            echo "--------------------tests-------------------"
                             ls -la tests
-                            echo &quot;--------------------tests-------------------&quot;
-                            echo &quot;--------------------assignment--------------&quot;
+                            echo "--------------------tests-------------------"
+                            echo "--------------------assignment--------------"
                             ls -la assignment
-                            echo &quot;--------------------assignment--------------&quot;
+                            echo "--------------------assignment--------------"
 
                             cd tests
                             REQ_FILE=requirements.txt
-                            if [ -f &quot;$REQ_FILE&quot; ]; then
+                            if [ -f "$REQ_FILE" ]; then
                                 pip3 install --user -r requirements.txt
-                            else
-                                echo &quot;$REQ_FILE does not exist&quot;
+                            else 
+                                echo "$REQ_FILE does not exist"
                             fi
                             exit 0
                            '''
                         sh '''
                             #!/usr/bin/env bash
 
-                            shadowFilePath=&quot;../tests/testUtils/c/shadow_exec.c&quot;
+                            shadowFilePath="../tests/testUtils/c/shadow_exec.c"
 
-                            foundIncludeDirs=`grep -m 1 &apos;INCLUDEDIRS\s*=&apos; assignment/Makefile`
-                            echo &quot;Include: $foundIncludeDirs&quot;
+                            foundIncludeDirs=`grep -m 1 'INCLUDEDIRS\s*=' assignment/Makefile`
+                            echo "Include: $foundIncludeDirs"
 
-                            foundSource=`grep -m 1 &apos;SOURCE\s*=&apos; assignment/Makefile`
-                            foundSource=&quot;$foundSource $shadowFilePath&quot;
-                            echo &quot;Source: $foundSource&quot;
+
+                            foundSource=`grep -m 1 'SOURCE\s*=' assignment/Makefile`
+                            foundSource="$foundSource $shadowFilePath"
+                            echo "Source: $foundSource"
 
                             rm -f assignment/GNUmakefile
-                            rm -f assignment/Makefile
+                            rm -f assignment/makefile
 
                             cp -f tests/Makefile assignment/Makefile || exit 2
-                            sed -i &quot;s~INCLUDEDIRS\s*=.*~${foundIncludeDirs}~; s~SOURCE\s*=.*~${foundSource}~&quot; assignment/Makefile
+                            sed -i "s~\bINCLUDEDIRS\s*=.*~${foundIncludeDirs}~; s~\bSOURCE\s*=.*~${foundSource}~" assignment/Makefile
                            '''
                         sh '''
                             #!/bin/bash
@@ -78,8 +83,8 @@ pipeline {
                             cd tests
 
                             python3 Tests.py s
-                            rm Tests.py
-                            rm -rf ./tests
+                            #rm Tests.py
+                            #rm -rf ./tests
 
                             exit 0
                            '''
