@@ -52,7 +52,6 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge = false;
     @Input() showTestDetails = false;
-    @Input() correctionRound = 0;
 
     ParticipationType = ParticipationType;
 
