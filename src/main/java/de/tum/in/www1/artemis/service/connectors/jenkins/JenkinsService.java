@@ -40,9 +40,7 @@ import com.offbytwo.jenkins.model.FolderJob;
 import com.offbytwo.jenkins.model.JobWithDetails;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -53,6 +51,7 @@ import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationSe
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
@@ -375,27 +374,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         return Optional.of(jenkinsServerUrl + "/project/" + projectKey + "/" + buildPlanId);
     }
 
-    private Result createResultFromBuildResult(TestResultsDTO report, ProgrammingExerciseParticipation participation) {
-        // TODO: move some duplicated code into the abstract super class
-        final var result = new Result();
-        final var testSum = report.getSkipped() + report.getFailures() + report.getErrors() + report.getSuccessful();
-        result.setAssessmentType(AssessmentType.AUTOMATIC);
-        result.setSuccessful(report.getSuccessful() == testSum);
-        result.setCompletionDate(report.getRunDate());
-        result.setScore((long) calculateResultScore(report, testSum));
-        result.setParticipation((Participation) participation);
-        addFeedbackToResult(result, report);
-        // We assume the build has failed if no test case feedback has been sent. Static code analysis feedback might exist even though the build failed
-        boolean hasTestCaseFeedback = result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isStaticCodeAnalysisFeedback());
-        result.setResultString(hasTestCaseFeedback ? report.getSuccessful() + " of " + testSum + " passed" : "No tests found");
-
-        return result;
-    }
-
-    private double calculateResultScore(TestResultsDTO report, int testSum) {
-        return ((1.0 * report.getSuccessful()) / testSum) * 100;
-    }
-
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
         if (participation.getBuildPlanId() == null) {
@@ -430,13 +408,15 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         }
     }
 
-    private void addFeedbackToResult(Result result, TestResultsDTO report) {
+    @Override
+    protected void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
         final ProgrammingExercise programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
         final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
+        final var jobs = ((TestResultsDTO) buildResult).getResults();
 
         // Extract test case feedback
-        for (final var testSuite : report.getResults()) {
-            for (final var testCase : testSuite.getTestCases()) {
+        for (final var job : jobs) {
+            for (final var testCase : job.getTestCases()) {
                 var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMostInformativeMessage());
                 var failureMessage = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getMostInformativeMessage());
                 var errorList = errorMessage.or(() -> failureMessage).map(List::of).orElse(Collections.emptyList());
@@ -457,8 +437,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         }
 
         // Extract static code analysis feedback if option was enabled
-        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && report.getStaticCodeAnalysisReports() != null) {
-            var scaFeedback = feedbackService.createFeedbackFromStaticCodeAnalysisReports(report.getStaticCodeAnalysisReports());
+        var staticCodeAnalysisReports = ((TestResultsDTO) buildResult).getStaticCodeAnalysisReports();
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null) {
+            var scaFeedback = feedbackService.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
             result.addFeedbacks(scaFeedback);
         }
 

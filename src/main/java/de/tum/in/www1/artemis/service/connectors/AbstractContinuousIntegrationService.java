@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -29,8 +31,9 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
     /**
      * Retrieves the submission that is assigned to the specified participation and its commit hash matches the one from
      * the build result.
+     *
      * @param participationId id of the participation
-     * @param buildResult The build results
+     * @param buildResult     The build results
      * @return The submission or empty no submissions exist
      */
     protected Optional<ProgrammingSubmission> getSubmissionForBuildResult(Long participationId, AbstractBuildResultNotificationDTO buildResult) {
@@ -53,7 +56,6 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      * 1) Manual build triggered from CI (e.g. by the instructor)
      * 2) An unknown error that caused the programming submission not to be created when the code commits have been pushed.
      * we can still get the commit hash from the payload of the CI build result and "reverse engineer" the programming submission object to be consistent
-     *
      */
     @NotNull
     protected ProgrammingSubmission createFallbackSubmission(ProgrammingExerciseParticipation participation, ZonedDateTime submissionDate, String commitHash) {
@@ -101,4 +103,35 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
             return Optional.empty();
         }
     }
+
+    /**
+     * Generate an Artemis result object from the CI build result. Will use the test case feedback as result feedback.
+     *
+     * @param buildResult Build result data provided by build notification.
+     * @param participation to attach result to.
+     * @return the created result
+     */
+    protected Result createResultFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExerciseParticipation participation) {
+        final var result = new Result();
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        result.setSuccessful(buildResult.isBuildSuccessful());
+        result.setCompletionDate(buildResult.getBuildRunDate());
+        result.setScore(buildResult.getBuildScore());
+        result.setParticipation((Participation) participation);
+        addFeedbackToResult(result, buildResult);
+
+        // We assume the build has failed if no test case feedback has been sent. Static code analysis feedback might exist even though the build failed
+        boolean hasTestCaseFeedback = result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isStaticCodeAnalysisFeedback());
+        result.setResultString(hasTestCaseFeedback ? buildResult.getTestsPassedString() : "No tests found");
+        return result;
+    }
+
+    /**
+     * Converts build result details into feedback and stores it in the result object
+     *
+     * @param result                      the result for which the feedback should be added
+     * @param buildResult                 The build result
+     */
+    protected abstract void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult);
+
 }

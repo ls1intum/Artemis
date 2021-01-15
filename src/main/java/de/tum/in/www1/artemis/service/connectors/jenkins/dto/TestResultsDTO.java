@@ -100,6 +100,25 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
         return firstCommit.map(CommitDTO::getHash);
     }
 
+    @Override
+    public boolean isBuildSuccessful() {
+        final var testSum = getSkipped() + getFailures() + getErrors() + getSuccessful();
+        return getSuccessful() == testSum;
+    }
+
+    @Override
+    public Long getBuildScore() {
+        final var testSum = getSkipped() + getFailures() + getErrors() + getSuccessful();
+        var score = ((1.0 * getSuccessful()) / testSum) * 100;
+        return (long) score;
+    }
+
+    @Override
+    public String getTestsPassedString() {
+        final var testSum = getSkipped() + getFailures() + getErrors() + getSuccessful();
+        return String.format("%d of %d passed", getSuccessful(), testSum);
+    }
+
     public void setRunDate(ZonedDateTime runDate) {
         this.runDate = runDate;
     }

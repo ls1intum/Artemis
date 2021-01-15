@@ -11,4 +11,15 @@ public abstract class AbstractBuildResultNotificationDTO {
 
     public abstract Optional<String> getCommitHashFromTestsRepo();
 
+    public abstract boolean isBuildSuccessful();
+
+    // TODO: necessary?
+    public abstract Long getBuildScore();
+
+    /**
+     * Returns a string stating how much tests passed:
+     * Example: "1 of 10 passed"
+     * @return
+     */
+    public abstract String getTestsPassedString();
 }

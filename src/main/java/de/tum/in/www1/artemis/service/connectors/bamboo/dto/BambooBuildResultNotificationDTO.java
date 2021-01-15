@@ -70,6 +70,28 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
         return getCommitHashFromRepo(TEST_REPO_NAME);
     }
 
+    @Override
+    public boolean isBuildSuccessful() {
+        return getBuild().isSuccessful();
+    }
+
+    @Override
+    public Long getBuildScore() {
+        // the real score is calculated in the grading service
+        return 0L;
+    }
+
+    @Override
+    public String getTestsPassedString() {
+        if (getBuild().getTestSummary().getDescription().equals("No tests found")) {
+            return "No tests found";
+        }
+
+        int total = getBuild().getTestSummary().getTotalCount();
+        int passed = getBuild().getTestSummary().getSuccessfulCount();
+        return String.format("%d of %d passed", passed, total);
+    }
+
     private Optional<String> getCommitHashFromRepo(String repoName) {
         var repo = getBuild().getVcs().stream().filter(vcs -> vcs.getRepositoryName().equalsIgnoreCase(repoName)).findFirst();
         return repo.map(BambooVCSDTO::getId);

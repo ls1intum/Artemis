@@ -42,10 +42,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
@@ -56,6 +54,7 @@ import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
+import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 @Service
 @Profile("bamboo")
@@ -624,79 +623,38 @@ public class BambooService extends AbstractContinuousIntegrationService {
         return reason != null && reason.contains("First build for this plan");
     }
 
-    /**
-     * Generate an Artemis result object from the CI build result. Will use the test case feedback as result feedback.
-     *
-     * @param buildResult   Build result data provided by build notification.
-     * @param participation to attach result to.
-     * @return the created result (is not persisted in this method, only constructed!)
-     */
-    private Result createResultFromBuildResult(BambooBuildResultNotificationDTO buildResult, ProgrammingExerciseParticipation participation) {
-        // TODO: move some duplicated code into the abstract super class
-        Result result = new Result();
-        result.setAssessmentType(AssessmentType.AUTOMATIC);
-        result.setSuccessful(buildResult.getBuild().isSuccessful());
-
-        if (buildResult.getBuild().getTestSummary().getDescription().equals("No tests found")) {
-            result.setResultString("No tests found");
-        }
-        else {
-            int total = buildResult.getBuild().getTestSummary().getTotalCount();
-            int passed = buildResult.getBuild().getTestSummary().getSuccessfulCount();
-            result.setResultString(String.format("%d of %d passed", passed, total));
-        }
-
-        result.setCompletionDate(buildResult.getBuild().getBuildCompletedDate());
-        result.setScore(0L); // the real score is calculated in the grading service
-        result.setParticipation((Participation) participation);
-
-        addFeedbackToResult(result, buildResult.getBuild().getJobs(), participation.getProgrammingExercise().isStaticCodeAnalysisEnabled());
-        return result;
-    }
-
-    /**
-     * Converts build result details into feedback and stores it in the result object
-     *
-     * @param result                      the result for which the feedback should be added
-     * @param jobs                        the jobs list of the requestBody
-     * @param isStaticCodeAnalysisEnabled flag determining whether static code analysis was enabled
-     */
-    private void addFeedbackToResult(Result result, List<BambooBuildResultNotificationDTO.BambooJobDTO> jobs, Boolean isStaticCodeAnalysisEnabled) {
+    @Override
+    protected void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
+        final var jobs = ((BambooBuildResultNotificationDTO) buildResult).getBuild().getJobs();
         if (jobs == null) {
             return;
         }
 
-        try {
-            final ProgrammingLanguage programmingLanguage = ((ProgrammingExercise) result.getParticipation().getExercise()).getProgrammingLanguage();
+        final ProgrammingExercise programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
+        final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
 
-            for (final var job : jobs) {
-
-                // 1) add feedback for failed test cases
-                for (final var failedTest : job.getFailedTests()) {
-                    result.addFeedback(feedbackService.createFeedbackFromTestCase(failedTest.getName(), failedTest.getErrors(), false, programmingLanguage));
-                }
-
-                // 2) add feedback for passed test cases
-                for (final var successfulTest : job.getSuccessfulTests()) {
-                    result.addFeedback(feedbackService.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getErrors(), true, programmingLanguage));
-                }
-
-                // 3) process static code analysis feedback
-                if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled)) {
-                    var reports = job.getStaticCodeAnalysisReports();
-                    if (reports != null) {
-                        var feedbackList = feedbackService.createFeedbackFromStaticCodeAnalysisReports(reports);
-                        result.addFeedbacks(feedbackList);
-                    }
-                }
-
-                // Relevant feedback is negative
-                result.setHasFeedback(result.getFeedbacks().stream().anyMatch(fb -> !fb.isPositive()));
+        for (final var job : jobs) {
+            // 1) add feedback for failed test cases
+            for (final var failedTest : job.getFailedTests()) {
+                result.addFeedback(feedbackService.createFeedbackFromTestCase(failedTest.getName(), failedTest.getErrors(), false, programmingLanguage));
             }
 
-        }
-        catch (Exception e) {
-            log.error("Could not get feedback from jobs " + e);
+            // 2) add feedback for passed test cases
+            for (final var successfulTest : job.getSuccessfulTests()) {
+                result.addFeedback(feedbackService.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getErrors(), true, programmingLanguage));
+            }
+
+            // 3) process static code analysis feedback
+            if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
+                var reports = job.getStaticCodeAnalysisReports();
+                if (reports != null) {
+                    var feedbackList = feedbackService.createFeedbackFromStaticCodeAnalysisReports(reports);
+                    result.addFeedbacks(feedbackList);
+                }
+            }
+
+            // Relevant feedback is negative
+            result.setHasFeedback(result.getFeedbacks().stream().anyMatch(fb -> !fb.isPositive()));
         }
     }
 
