@@ -37,7 +37,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     submission?: ModelingSubmission;
     model?: UMLModel;
     modelingExercise?: ModelingExercise;
-    eri2121?: Result;
+    result?: Result;
     generalFeedback = new Feedback();
     referencedFeedback: Feedback[] = [];
     unreferencedFeedback: Feedback[] = [];
