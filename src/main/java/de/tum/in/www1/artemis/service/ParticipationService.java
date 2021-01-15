@@ -1285,6 +1285,7 @@ public class ParticipationService {
     }
 
     /**
+     * Get one participation with eager course, eager submissions and eager results.
      *
      * @param paricipationId
      * @return participation with eager course and submission
