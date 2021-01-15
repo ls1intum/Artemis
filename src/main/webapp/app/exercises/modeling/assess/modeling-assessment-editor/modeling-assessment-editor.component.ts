@@ -233,7 +233,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private checkPermissions(): void {
         this.isAssessor = this.result?.assessor?.id === this.userId;
-        console.log(this.isAssessor);
         if (this.modelingExercise) {
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course || this.modelingExercise.exerciseGroup!.exam!.course);
         }
@@ -400,6 +399,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             (unassessedSubmission: ModelingSubmission) => {
                 this.nextSubmissionBusy = false;
                 this.router.onSameUrlNavigation = 'reload';
+                // navigate to root and then to new assessment page to trigger re-initialization of the components
                 let url = `/course-management/${this.courseId}/modeling-exercises/${this.modelingExercise!.id}/submissions/${unassessedSubmission.id}/assessment`;
                 url += `?correction-round=${this.correctionRound}`;
                 this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => this.router.navigateByUrl(url));

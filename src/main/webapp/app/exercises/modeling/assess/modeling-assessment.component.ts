@@ -155,16 +155,13 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     private generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
         for (const assessment of assessments) {
             const existingFeedback = this.elementFeedback.get(assessment.modelElementId);
-            console.log('inforloop: ', existingFeedback);
             if (existingFeedback) {
-                console.log('if', assessment);
                 existingFeedback.credits = assessment.score;
                 existingFeedback.text = assessment.feedback;
             } else {
                 this.elementFeedback.set(assessment.modelElementId, Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType));
             }
         }
-        console.log('elementfeedback', [...this.elementFeedback.values()]);
         return [...this.elementFeedback.values()];
     }
 
@@ -186,8 +183,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * @param feedbacks the list of feedback to filter
      */
     private removeInvalidFeedback(feedbacks: Feedback[]): Feedback[] {
-        console.log('removeInvalidFeedback');
-        console.log(feedbacks);
         if (!feedbacks) {
             return feedbacks;
         }
@@ -209,15 +204,12 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * @param feedbacks new Feedback elements to insert
      */
     private updateElementFeedbackMapping(feedbacks: Feedback[]) {
-        console.log('updateElemFeedback: ', feedbacks);
         if (!this.elementFeedback) {
             this.elementFeedback = new Map();
         }
         if (!feedbacks) {
             return;
         }
-        console.log('updateElemFeedback: ', feedbacks);
-        console.log(this.elementFeedback);
         for (const feedback of feedbacks) {
             this.elementFeedback.set(feedback.referenceId!, feedback);
         }
