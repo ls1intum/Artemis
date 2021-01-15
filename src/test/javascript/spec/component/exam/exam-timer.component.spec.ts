@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -12,6 +12,7 @@ import { MockRouter } from '../../helpers/mocks/service/mock-route.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { MockPipe } from 'ng-mocks';
+import { By } from '@angular/platform-browser';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -59,4 +60,21 @@ describe('ExamTimerComponent', function () {
         duration = moment.duration(8, 'minutes');
         expect(component.updateDisplayTime(duration)).to.equal('08 : 00 min');
     });
+
+    it('should update time in the template correctly', fakeAsync(() => {
+        // 30 minutes left
+        component.endDate = moment(now).add(30, 'minutes');
+        spyOn(dateService, 'now').and.returnValues(moment(now), moment(now), moment(now).add(5, 'minutes'));
+        fixture.detectChanges();
+        tick();
+        let timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
+        fixture.detectChanges();
+        timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
+        expect(timeShownInTemplate).to.equal('30 min');
+        tick(100);
+        fixture.detectChanges();
+        timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
+        expect(timeShownInTemplate).to.equal('25 min');
+        discardPeriodicTasks();
+    }));
 });
