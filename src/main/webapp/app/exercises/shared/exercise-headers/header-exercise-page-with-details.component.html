@@ -75,7 +75,7 @@
                     </h5>
                 </div>
             </div>
-            <div class="row" *ngIf="exercise.includedInOverallScore != undefined">
+            <div class="row" *ngIf="exercise.includedInOverallScore != undefined && exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_COMPLETELY">
                 <div class="col-6">
                     <h5>{{ 'artemisApp.exercise.includedInOverallScore' | translate }}:</h5>
                 </div>

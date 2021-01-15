@@ -49,7 +49,7 @@
                 <h4>
                     <jhi-difficulty-badge class="mr-1" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
                 </h4>
-                <h4>
+                <h4 *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
                     <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
                 </h4>
             </div>
