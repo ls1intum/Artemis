@@ -110,7 +110,7 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
                 this.barChartLabels = this.getLabelsForMonth(daysInMonth);
                 this.chartTime = now
                     .add(this.currentPeriod, 'months')
-                    .subtract(Math.ceil(this.barChartLabels.length / 2.0) - 1, 'days')
+                    .subtract(Math.floor(this.barChartLabels.length / 2.0) - 1, 'days')
                     .format('MMMM YYYY');
                 break;
             case SpanType.QUARTER:
