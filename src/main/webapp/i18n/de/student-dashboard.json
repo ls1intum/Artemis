@@ -89,6 +89,8 @@
                 "totalPoints": "Maximale Punktzahl: {{ number }} ({{ relative }}%)",
                 "presentationScore": "Präsentationsergebnis: {{ number }} ",
                 "noStatistics": "Es sind keine Statistiken für diesen Kurs vorhanden.",
+                "bonusPointTooltip": "Bonus Aufgabe: Punkte zählen als Bonuspunkte zu deinem Kursergebnis!",
+                "notIncludedTooltip": "Nicht gezählte Aufgabe: Punkte zählen NICHT zu deinem Kursergebnis!",
                 "exerciseAchievedScore": "Erreichte Wertung: {{ points }} Punkte ({{ percentage }}%)",
                 "exerciseMissedScore": "Fehlende Wertung: {{ points }} Punkte ({{ percentage }}%)",
                 "exerciseNotGraded": "{{ exercise }} wurde noch nicht bewertet.",

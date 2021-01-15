@@ -7,7 +7,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import {
     ABSOLUTE_SCORE,
     CourseScoreCalculationService,
@@ -105,38 +105,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         },
     ];
 
-    chartColors = [
-        {
-            // green
-            backgroundColor: 'rgba(40, 167, 69, 0.8)',
-            hoverBackgroundColor: 'rgba(40, 167, 69, 1)',
-            borderColor: 'rgba(40, 167, 69, 1)',
-            pointBackgroundColor: 'rgba(40, 167, 69, 1)',
-            pointBorderColor: '#fff',
-            pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: 'rgba(40, 167, 69, 1)',
-        },
-        {
-            // red
-            backgroundColor: 'rgba(220, 53, 69, 0.8)',
-            hoverBackgroundColor: 'rgba(220, 53, 69, 1)',
-            borderColor: 'rgba(220, 53, 69, 1)',
-            pointBackgroundColor: 'rgba(220, 53, 69, 1)',
-            pointBorderColor: '#fff',
-            pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: 'rgba(220, 53, 69, 1)',
-        },
-        {
-            // blue
-            backgroundColor: 'rgba(62, 138, 204, 0.8)',
-            hoverBackgroundColor: 'rgba(62, 138, 204, 1)',
-            borderColor: 'rgba(62, 138, 204, 1)',
-            pointBackgroundColor: 'rgba(62, 138, 204, 1)',
-            pointBorderColor: '#fff',
-            pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: 'rgba(62, 138, 204, 1)',
-        },
-    ];
     public barChartOptions: any = {
         scaleShowVerticalLines: false,
         maintainAspectRatio: false,
@@ -273,9 +241,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         presentationScore: 0,
                         presentationScoreEnabled: exercise.presentationScoreEnabled,
                         names: [],
-                        scores: { data: [], label: 'Score', tooltips: [], footer: [] },
-                        missedScores: { data: [], label: 'Missed score', tooltips: [], footer: [] },
-                        notGraded: { data: [], label: 'Not graded', tooltips: [], footer: [] },
+                        scores: { data: [], label: 'Score', tooltips: [], footer: [], backgroundColor: [], hoverBackgroundColor: [] }, // part of dataset
+                        missedScores: { data: [], label: 'Missed score', tooltips: [], footer: [], backgroundColor: 'Salmon', hoverBackgroundColor: 'Salmon' }, // part of dataset
+                        notGraded: { data: [], label: 'Not graded', tooltips: [], footer: [], backgroundColor: 'SkyBlue', hoverBackgroundColor: 'SkyBlue' }, // part of dataset
                         reachableScore: 0,
                         currentRelativeScore: 0,
                     };
@@ -284,13 +252,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 if (!exercise.studentParticipations || exercise.studentParticipations.length === 0) {
                     groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title!, 'exerciseNotParticipated', false);
                 } else {
+                    const scoreColor = this.getScoreColor(exercise.includedInOverallScore!);
                     exercise.studentParticipations.forEach((participation) => {
                         if (participation.results && participation.results.length > 0) {
                             const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
                             if (participationResult && participationResult.rated) {
-                                const participationScore = participationResult.score! >= 100 ? 100 : participationResult.score!;
-                                const missedScore = 100 - participationScore;
-                                groupedExercises[index].scores.data.push(participationScore);
+                                const cappedParticipationScore = participationResult.score! >= 100 ? 100 : participationResult.score!;
+                                const missedScore = 100 - cappedParticipationScore;
+                                groupedExercises[index].scores.data.push(participationResult.score!);
+                                groupedExercises[index].scores.backgroundColor.push(scoreColor);
+                                groupedExercises[index].scores.hoverBackgroundColor.push(scoreColor);
                                 groupedExercises[index].missedScores.data.push(missedScore);
                                 groupedExercises[index].notGraded.data.push(0);
                                 groupedExercises[index].notGraded.tooltips.push(null);
@@ -298,7 +269,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                                 groupedExercises[index].scores.footer.push(null);
                                 groupedExercises[index].missedScores.footer.push(null);
                                 groupedExercises[index].notGraded.footer.push(null);
-                                this.generateTooltip(participationResult, groupedExercises[index]);
+                                this.generateTooltip(participationResult, groupedExercises[index], exercise.includedInOverallScore);
                             }
                         } else {
                             if (
@@ -327,6 +298,17 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.groupedExercises = groupedExercises;
     }
 
+    getScoreColor(includedInOverallScore: IncludedInOverallScore): string {
+        switch (includedInOverallScore) {
+            case IncludedInOverallScore.INCLUDED_COMPLETELY:
+                return 'limeGreen';
+            case IncludedInOverallScore.NOT_INCLUDED:
+                return 'lightGray';
+            case IncludedInOverallScore.INCLUDED_AS_BONUS:
+                return 'gold';
+        }
+    }
+
     createPlaceholderChartElement(chartElement: any, exerciseTitle: string, tooltipMessage: string, isNotGraded: boolean) {
         const tooltip = this.translateService.instant(`artemisApp.courseOverview.statistics.${tooltipMessage}`, { exercise: exerciseTitle });
         chartElement.notGraded.data.push(isNotGraded ? 100 : 0);
@@ -344,13 +326,24 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         return chartElement;
     }
 
-    generateTooltip(result: Result, groupedExercise: any): void {
+    generateTooltipExtension(includedInOverallScore: IncludedInOverallScore): string {
+        switch (includedInOverallScore) {
+            case IncludedInOverallScore.INCLUDED_AS_BONUS:
+                return ' | ' + this.translateService.instant('artemisApp.courseOverview.statistics.bonusPointTooltip');
+            case IncludedInOverallScore.NOT_INCLUDED:
+                return ' | ' + this.translateService.instant('artemisApp.courseOverview.statistics.notIncludedTooltip');
+            default:
+                return '';
+        }
+    }
+
+    generateTooltip(result: Result, groupedExercise: any, includedInOverallScore: IncludedInOverallScore): void {
         if (!result.resultString) {
             groupedExercise.scores.tooltips.push(
                 this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
                     points: 0,
                     percentage: 0,
-                }),
+                }) + this.generateTooltipExtension(includedInOverallScore),
             );
             groupedExercise.missedScores.tooltips.push(
                 this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
@@ -370,10 +363,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         // custom result strings
         if (!replaced.includes('passed') && !replaced.includes('points')) {
             if (result.score! >= 50) {
-                groupedExercise.scores.tooltips.push(`${result.resultString} (${result.score}%)`);
+                groupedExercise.scores.tooltips.push(`${result.resultString} (${result.score}%)` + this.generateTooltipExtension(includedInOverallScore));
                 groupedExercise.missedScores.tooltips.push(`(${100 - score}%)`);
             } else {
-                groupedExercise.scores.tooltips.push(`(${result.score}%)`);
+                groupedExercise.scores.tooltips.push(`(${result.score}%)` + this.generateTooltipExtension(includedInOverallScore));
                 groupedExercise.missedScores.tooltips.push(`${result.resultString} (${100 - score}%)`);
             }
 
@@ -387,7 +380,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
                         points: parseFloat(split[0]),
                         percentage: result.score,
-                    }),
+                    }) + this.generateTooltipExtension(includedInOverallScore),
                 );
                 groupedExercise.missedScores.tooltips.push(
                     this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
@@ -402,7 +395,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
                         points: parseFloat(split[0]),
                         percentage: result.score,
-                    }),
+                    }) + this.generateTooltipExtension(includedInOverallScore),
                 );
                 groupedExercise.missedScores.tooltips.push(
                     this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
@@ -417,12 +410,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         // programming exercise result strings are mostly 'x passed' or 'x of y passed'
         if (replaced.includes('passed')) {
             if (split.length === 2) {
-                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + result.score + '%).');
+                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + result.score + '%).' + this.generateTooltipExtension(includedInOverallScore));
                 groupedExercise.missedScores.tooltips.push('(' + (100 - score) + '%)');
                 return;
             }
             if (split.length === 4) {
-                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + result.score + '%).');
+                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + result.score + '%).' + this.generateTooltipExtension(includedInOverallScore));
                 groupedExercise.missedScores.tooltips.push(missedPoints + ' tests failed (' + (100 - score) + '%).');
                 return;
             }
