@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Arguments:
 # -s: run tests safely; in particular, remove solution and test repositories before executing the tests
 
@@ -12,11 +12,15 @@ while getopts s opt; do
 done
 shift $((OPTIND-1))
 
-# check for unsafe OPTIONS and OPTIONS_GHC pragma as they allow to overwrite command line arguments
-$safe && grep -RqFm 1 "OPTIONS" assignment/* && echo "Cannot build with \"OPTIONS\" string in source." && exit 1
-
 # check for symlinks as they might be abused to link to the sample solution
 $safe && find assignment/ -type l | grep -q . && echo "Cannot build with symlinks in submission." && exit 1
+
+# check for unsafe OPTIONS and OPTIONS_GHC pragma as they allow to overwrite command line arguments
+$safe && \
+while IFS= read file; do
+  cat $file | tr -d '\n' | grep -qim 1 "{-#[[:space:]]*options" && \
+    echo "Cannot build with \"{-# OPTIONS..\" pragma in source." && exit 1
+done < <(find assignment/src -type f)
 
 # build the libraries - do not forget to set the right compilation flag (Prod)
 stack build --allow-different-user --flag test:Prod && \

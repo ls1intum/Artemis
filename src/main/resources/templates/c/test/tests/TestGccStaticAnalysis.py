@@ -29,7 +29,7 @@ class TestGccStaticAnalysis(AbstractProgramTest):
         retCode: int = self.pWrap.getReturnCode()
         if retCode != 0:
             self._failWith(
-                "Make for directory {} failed. Returncode is {}.".format(str(self.executionDirectory), retCode))
+                f"Make for directory {str(self.executionDirectory)} failed. Returncode is {retCode}.")
 
         # Always cleanup to make sure all threads get joined:
         self.pWrap.cleanup()
