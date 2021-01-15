@@ -77,7 +77,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         private structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
-        console.log('constr. called');
     }
 
     private get feedback(): Feedback[] {
@@ -93,7 +92,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
-        console.log('ngoninit');
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
 
         this.route.queryParamMap.subscribe((queryParams) => {
@@ -101,7 +99,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.isTestRun = queryParams.get('testRun') === 'true';
             this.correctionRound = Number(queryParams.get('correction-round'));
         });
-        console.log('called');
         this.route.paramMap.subscribe((params) => {
             this.courseId = Number(params.get('courseId'));
             const exerciseId = Number(params.get('exerciseId'));
@@ -109,14 +106,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             if (submissionId === 'new') {
                 this.loadRandomSubmission(exerciseId);
             } else {
-                console.log('else part');
                 this.loadSubmission(Number(submissionId));
             }
         });
     }
 
     private loadSubmission(submissionId: number): void {
-        console.log('load sub');
         this.modelingSubmissionService.getSubmission(submissionId).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
@@ -132,10 +127,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private loadRandomSubmission(exerciseId: number): void {
-        console.log('loadRandomSubmission');
         this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound).subscribe(
             (submission: ModelingSubmission) => {
-                console.log('received sub: ', submission);
                 this.handleReceivedSubmission(submission);
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
@@ -157,29 +150,25 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
-        console.log('handle receveid ', this.correctionRound, submission.id);
         this.submission = submission;
         setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
         this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
-        console.log('result', this.result);
         this.hasAssessmentDueDatePassed = !!this.modelingExercise!.assessmentDueDate && moment(this.modelingExercise!.assessmentDueDate).isBefore(now());
         if (this.result?.hasComplaint) {
             this.getComplaint(this.result.id);
         }
 
         if (this.result?.feedbacks) {
-            console.log('result? = true');
             this.result = this.modelingAssessmentService.convertResult(this.result);
             this.handleFeedback(this.result.feedbacks);
         } else {
-            console.log('result? = false');
-            console.log(this.referencedFeedback, this.unreferencedFeedback);
             this.result!.feedbacks = [];
-            // this.generalFeedback = null;
+            this.totalScore = 0;
             this.unreferencedFeedback = [];
             this.referencedFeedback = [];
+            this.generalFeedback = new Feedback();
         }
         if (this.result && this.submission?.participation) {
             this.submission.participation.results = [this.result];
@@ -226,7 +215,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * highlighting of feedback elements, if necessary.
      */
     private handleFeedback(feedback?: Feedback[]): void {
-        console.log('handle Feedback', feedback);
         if (!feedback || feedback.length === 0) {
             return;
         }
@@ -407,13 +395,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     onFeedbackChanged(feedback: Feedback[]) {
-        console.log('onFeedBackChange');
         this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference);
         this.validateFeedback();
     }
 
     assessNext() {
-        console.log('assessNext');
         this.nextSubmissionBusy = true;
         this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.modelingExercise!.id!, true, this.correctionRound).subscribe(
             (unassessedSubmission: ModelingSubmission) => {
@@ -443,7 +429,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      *   - Each reference feedback must have a score that is a valid number
      */
     validateFeedback() {
-        console.log('validateFeedback');
         this.calculateTotalScore();
         if (
             (!this.referencedFeedback || this.referencedFeedback.length === 0) &&
@@ -523,7 +508,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * and instead set the score boundaries on the server.
      */
     calculateTotalScore() {
-        console.log('calcScore: fedb:', this.feedback);
         this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
         // Cap totalScore to maxPoints
         const maxPoints = this.modelingExercise!.maxScore! + this.modelingExercise!.bonusPoints! ?? 0.0;

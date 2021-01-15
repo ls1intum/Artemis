@@ -83,7 +83,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        console.log('ngONchanges');
         if (changes.model && changes.model.currentValue && this.apollonEditor) {
             this.apollonEditor!.model = changes.model.currentValue;
             this.handleFeedback();
@@ -112,7 +111,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * events of Apollon an passes them on to parent components.
      */
     private initializeApollonEditor() {
-        console.log('Initialize');
         if (this.apollonEditor) {
             this.apollonEditor.destroy();
         }
@@ -163,6 +161,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 this.elementFeedback.set(assessment.modelElementId, Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType));
             }
         }
+        console.log('elementfeedback', [...this.elementFeedback.values()]);
         return [...this.elementFeedback.values()];
     }
 
@@ -173,7 +172,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * This method is called before initializing Apollon and when the feedback or model is updated.
      */
     private handleFeedback(): void {
-        console.log('handleFeedback');
         this.referencedFeedbacks = this.removeInvalidFeedback(this.feedbacks);
         this.updateElementFeedbackMapping(this.referencedFeedbacks);
         this.updateApollonAssessments(this.referencedFeedbacks);
