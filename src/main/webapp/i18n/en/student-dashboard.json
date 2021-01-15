@@ -31,8 +31,8 @@
                 "exams": "Exams"
             },
             "exerciseList": {
-                "releaseDate": "Start date",
-                "dueDate": "Due date",
+                "releaseDate": "Release Date",
+                "dueDate": "Due Date",
                 "fullScore": "Hide full score",
                 "overdue": "Hide overdue",
                 "noExerciseDate": "No date associated",

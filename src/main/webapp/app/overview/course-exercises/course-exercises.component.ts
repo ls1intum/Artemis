@@ -181,11 +181,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     private getSortingAttributeFromExercise(): (exercise: Exercise) => Moment | undefined {
-        if (this.sortingAttribute === this.DUE_DATE) {
-            return (exercise) => exercise.dueDate;
-        } else {
-            return (exercise) => exercise.releaseDate;
-        }
+        return this.sortingAttribute === this.DUE_DATE ? (exercise) => exercise.dueDate : (exercise) => exercise.releaseDate;
     }
 
     private loadOrderAndAttributeForSorting() {
@@ -241,7 +237,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
                     groupedExercises[dateIndex] = {
                         start: moment(dateValue).startOf('week'),
                         end: moment(dateValue).endOf('week'),
-                        isCollapsed: this.sortingAttribute === this.DUE_DATE ? dateValue.isBefore(moment(), 'week') : dateValue.isBefore(moment().subtract(4, 'weeks'), 'week'),
+                        isCollapsed: dateValue.isBefore(moment(), 'week'),
                         isCurrentWeek: dateValue.isSame(moment(), 'week'),
                         exercises: [],
                     };

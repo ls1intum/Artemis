@@ -32,8 +32,8 @@
             },
             "exerciseList": {
                 "fullScore": "Keine mit voller Punktzahl",
-                "releaseDate": "Start datum",
-                "dueDate": "Abgabe Datum",
+                "releaseDate": "Veröffentlichungsdatum",
+                "dueDate": "Einreichungsfrist",
                 "overdue": "Keine Überfälligen",
                 "noExerciseDate": "Kein Datum zugeordnet",
                 "exerciseGroupHeader": "Aufgaben: {{ total }}",
