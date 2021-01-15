@@ -70,7 +70,7 @@
                         </span>
                     </td>
                     <td>{{ quizExercise.maxScore }}</td>
-                    <td>{{ exerciseService.getTranslationForIncludedInOverallScore(quizExercise) }}</td>
+                    <td>{{ exerciseService.isIncludedInScore(quizExercise) }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button

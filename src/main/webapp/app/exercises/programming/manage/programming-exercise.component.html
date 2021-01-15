@@ -86,7 +86,7 @@
                     <td>{{ programmingExercise.dueDate | artemisDate }}</td>
                     <td class="d-none d-md-table-cell">{{ programmingExercise.maxScore }}</td>
                     <td>{{ programmingExercise.bonusPoints }}</td>
-                    <td>{{ exerciseService.getTranslationForIncludedInOverallScore(programmingExercise) }}</td>
+                    <td>{{ exerciseService.isIncludedInScore(programmingExercise) }}</td>
                     <td *ngIf="!isOrion" class="d-flex flex-column">
                         <div class="d-flex justify-content-between">
                             <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">

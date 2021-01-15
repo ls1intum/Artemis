@@ -1,11 +1,9 @@
 <div class="btn-group btn-group-toggle" ngbRadioGroup name="includeInOverallScorePicker" [ngModel]="includedInOverallScore" (ngModelChange)="change($event)">
     <label ngbButtonLabel class="btn-primary">
-        <input ngbButton type="radio" [value]="IncludedInOverallScore.INCLUDED_COMPLETELY" /> {{ 'artemisApp.exercise.includedCompletely' | translate }}
+        <input ngbButton type="radio" [value]="IncludedInOverallScore.INCLUDED_COMPLETELY" /> {{ 'artemisApp.exercise.yes' | translate }}
     </label>
     <label ngbButtonLabel class="btn-primary">
-        <input ngbButton type="radio" [value]="IncludedInOverallScore.INCLUDED_AS_BONUS" /> {{ 'artemisApp.exercise.includedAsBonus' | translate }}
+        <input ngbButton type="radio" [value]="IncludedInOverallScore.INCLUDED_AS_BONUS" /> {{ 'artemisApp.exercise.bonus' | translate }}
     </label>
-    <label ngbButtonLabel class="btn-primary">
-        <input ngbButton type="radio" [value]="IncludedInOverallScore.NOT_INCLUDED" /> {{ 'artemisApp.exercise.notIncluded' | translate }}
-    </label>
+    <label ngbButtonLabel class="btn-primary"> <input ngbButton type="radio" [value]="IncludedInOverallScore.NOT_INCLUDED" /> {{ 'artemisApp.exercise.no' | translate }} </label>
 </div>

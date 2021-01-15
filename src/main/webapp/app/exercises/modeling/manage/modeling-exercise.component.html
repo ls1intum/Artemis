@@ -58,7 +58,7 @@
                     <td>{{ modelingExercise.assessmentDueDate | artemisDate }}</td>
                     <td>{{ modelingExercise.maxScore }}</td>
                     <td>{{ modelingExercise.bonusPoints }}</td>
-                    <td>{{ exerciseService.getTranslationForIncludedInOverallScore(modelingExercise) }}</td>
+                    <td>{{ exerciseService.isIncludedInScore(modelingExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ modelingExercise.presentationScoreEnabled }}</td>
                     <td jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>
                     <td class="text-right">

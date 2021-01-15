@@ -343,18 +343,17 @@ export class ExerciseService {
         return exercise;
     }
 
-    getTranslationForIncludedInOverallScore(exercise: Exercise | undefined) {
+    isIncludedInScore(exercise: Exercise | undefined) {
         if (!exercise?.includedInOverallScore) {
             return '';
         }
-
         switch (exercise.includedInOverallScore) {
             case IncludedInOverallScore.INCLUDED_AS_BONUS:
-                return this.translateService.instant('artemisApp.exercise.includedAsBonus');
+                return this.translateService.instant('artemisApp.exercise.bonus');
             case IncludedInOverallScore.INCLUDED_COMPLETELY:
-                return this.translateService.instant('artemisApp.exercise.includedCompletely');
+                return this.translateService.instant('artemisApp.exercise.yes');
             case IncludedInOverallScore.NOT_INCLUDED:
-                return this.translateService.instant('artemisApp.exercise.notIncluded');
+                return this.translateService.instant('artemisApp.exercise.no');
         }
     }
 }

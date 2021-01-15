@@ -191,7 +191,7 @@
                             {{ exercise.maxScore }}
                         </td>
                         <td>{{ exercise.bonusPoints }}</td>
-                        <td>{{ exerciseService.getTranslationForIncludedInOverallScore(exercise) }}</td>
+                        <td>{{ exerciseService.isIncludedInScore(exercise) }}</td>
                         <!-- Programming exercise specific cells -->
                         <ng-container *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)">
                             <ng-container *ngIf="exercise.type === exerciseType.PROGRAMMING; else emptyProgrammingCells">
