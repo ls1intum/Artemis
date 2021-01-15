@@ -590,7 +590,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
             submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> {
                 submission.setResults(submission.getManualAndNullResults());
-                return submission;// .getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound.intValue()) != null;
+                return submission;
             }).filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound.intValue()) != null).collect(toList());
         }
         else {
