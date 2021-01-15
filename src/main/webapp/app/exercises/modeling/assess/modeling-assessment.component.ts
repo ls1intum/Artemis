@@ -172,7 +172,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      */
     private handleFeedback(): void {
         this.referencedFeedbacks = this.removeInvalidFeedback(this.feedbacks);
-        console.log('thisREferecncedFeedbacks: ', this.referencedFeedbacks);
         this.updateElementFeedbackMapping(this.referencedFeedbacks);
         this.updateApollonAssessments(this.referencedFeedbacks);
     }
