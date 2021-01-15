@@ -83,6 +83,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     }
 
     ngOnChanges(changes: SimpleChanges): void {
+        // this.elementFeedback = new Map<string, Feedback>();
         if (changes.model && changes.model.currentValue && this.apollonEditor) {
             this.apollonEditor!.model = changes.model.currentValue;
             this.handleFeedback();
@@ -152,29 +153,19 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * Returns an array containing all feedback entries from the mapping.
      */
     private generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
-        console.log('Feedbacks in generateFeedbackFromAssessment: ', assessments);
-        if (assessments.length === 0) {
-            this.elementFeedback = new Map<string, Feedback>();
-            return [];
-        } else {
-            for (const assessment of assessments) {
-                const existingFeedback = this.elementFeedback.get(assessment.modelElementId);
-                console.log('inforloop: ', existingFeedback);
-                if (existingFeedback) {
-                    console.log('if', assessment);
-                    existingFeedback.credits = assessment.score;
-                    existingFeedback.text = assessment.feedback;
-                } else {
-                    console.log('else: ');
-                    this.elementFeedback.set(
-                        assessment.modelElementId,
-                        Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType),
-                    );
-                }
+        for (const assessment of assessments) {
+            const existingFeedback = this.elementFeedback.get(assessment.modelElementId);
+            console.log('inforloop: ', existingFeedback);
+            if (existingFeedback) {
+                console.log('if', assessment);
+                existingFeedback.credits = assessment.score;
+                existingFeedback.text = assessment.feedback;
+            } else {
+                this.elementFeedback.set(assessment.modelElementId, Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType));
             }
-            console.log('elementfeedback', [...this.elementFeedback.values()]);
-            return [...this.elementFeedback.values()];
         }
+        console.log('elementfeedback', [...this.elementFeedback.values()]);
+        return [...this.elementFeedback.values()];
     }
 
     /**
@@ -226,6 +217,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             return;
         }
         console.log('updateElemFeedback: ', feedbacks);
+        console.log(this.elementFeedback);
         for (const feedback of feedbacks) {
             this.elementFeedback.set(feedback.referenceId!, feedback);
         }

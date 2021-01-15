@@ -151,7 +151,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
         this.submission = submission;
-        setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
+        // setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
         this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
@@ -159,16 +159,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (this.result?.hasComplaint) {
             this.getComplaint(this.result.id);
         }
-
         if (this.result?.feedbacks) {
             this.result = this.modelingAssessmentService.convertResult(this.result);
             this.handleFeedback(this.result.feedbacks);
         } else {
             this.result!.feedbacks = [];
-            this.totalScore = 0;
-            this.unreferencedFeedback = [];
-            this.referencedFeedback = [];
-            this.generalFeedback = new Feedback();
         }
         if (this.result && this.submission?.participation) {
             this.submission.participation.results = [this.result];
@@ -407,7 +402,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.router.onSameUrlNavigation = 'reload';
                 let url = `/course-management/${this.courseId}/modeling-exercises/${this.modelingExercise!.id}/submissions/${unassessedSubmission.id}/assessment`;
                 url += `?correction-round=${this.correctionRound}`;
-                this.router.navigateByUrl(url, {});
+                this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => this.router.navigateByUrl(url));
             },
             (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy = false;
