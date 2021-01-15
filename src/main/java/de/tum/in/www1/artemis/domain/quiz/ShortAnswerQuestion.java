@@ -45,6 +45,14 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @JsonView(QuizView.After.class)
     private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
 
+    @Column(name = "similarity_value")
+    @JsonView(QuizView.Before.class)
+    private Integer similarityValue = 85;
+
+    @Column(name = "match_letter_case")
+    @JsonView(QuizView.Before.class)
+    private Boolean matchLetterCase = false;
+
     public List<ShortAnswerSpot> getSpots() {
         return spots;
     }
@@ -91,6 +99,22 @@ public class ShortAnswerQuestion extends QuizQuestion {
 
     public void setCorrectMappings(List<ShortAnswerMapping> shortAnswerMappings) {
         this.correctMappings = shortAnswerMappings;
+    }
+
+    public Integer getSimilarityValue() {
+        return this.similarityValue;
+    }
+
+    public void setSimilarityValue(Integer similarityValue) {
+        this.similarityValue = similarityValue;
+    }
+
+    public Boolean matchLetterCase() {
+        return this.matchLetterCase;
+    }
+
+    public void setMatchLetterCase(Boolean matchLetterCase) {
+        this.matchLetterCase = matchLetterCase;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 

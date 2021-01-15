@@ -33,6 +33,14 @@
         {
             "fieldName": "invalid",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "similarityValue",
+            "fieldType": "Integer"
+        },
+        {
+            "fieldName": "matchLetterCase",
+            "fieldType": "Boolean"
         }
     ],
     "relationships": [
