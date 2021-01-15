@@ -261,7 +261,10 @@
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ submission.submissionDate | artemisDate }}</td>
                                 <td>
-                                    <jhi-result [participation]="submission.participation" [correctionRound]="correctionRound"></jhi-result>
+                                    <jhi-result
+                                        [result]="getSubmissionResultByCorrectionRound(submission, correctionRound)"
+                                        [participation]="submission.participation"
+                                    ></jhi-result>
                                 </td>
                                 <td>
                                     {{ calculateSubmissionStatus(submission, correctionRound) }}
