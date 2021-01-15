@@ -288,7 +288,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND EXISTS (SELECT s FROM Submission s
                     WHERE s.participation.id = p.id
                     AND s.submitted = true
-                    AND r.assessor = :#{#assessor}
+                    AND (r.assessor = :#{#assessor} OR r.assessor.id = null)
                     AND NOT EXISTS (SELECT prs FROM p.results prs
                         WHERE prs.assessor.id = p.student.id))
             """)
