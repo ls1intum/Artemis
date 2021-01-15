@@ -545,7 +545,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
             // save result to create entry in DB before establishing relation with submission for ordering
             newResult = resultRepository.save(newResult);
 
-            var buildLogs = extractAndFilterBuildLogs(buildResult, programmingExercise.getProgrammingLanguage());
+            var programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
+            var buildLogs = extractAndFilterBuildLogs(buildResult, programmingLanguage);
             var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
 
             latestSubmission = programmingSubmissionRepository.findWithEagerResultsAndBuildLogEntriesById(latestSubmission.getId()).get();
