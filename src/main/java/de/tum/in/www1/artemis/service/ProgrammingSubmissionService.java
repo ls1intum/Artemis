@@ -588,15 +588,16 @@ public class ProgrammingSubmissionService extends SubmissionService {
         List<Submission> submissions;
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
-            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
-                    .map(submission -> (ProgrammingSubmission) submission).filter(submission -> submission.getManualResults().size() - 1 >= correctionRound
-                            && submission.getResultByCorrectionRoundIgnoreAutomatic(correctionRound) != null)
-                    .collect(toList());
+            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).filter(submission -> {
+                // maybe there is a more elegant way to do this. We need the number of automatic results of a submission, to know where the manual results start
+                int automaticResultCount = this.programmingSubmissionRepository.countAutomaticResults(submission.getId()).intValue();
+                submission.getResults().subList(0, automaticResultCount).clear();
+                return submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound.intValue()) != null;
+            }).collect(toList());
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
         }
-
         submissions.forEach(submission -> submission.getLatestResult().setSubmission(null));
         return submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
     }

@@ -358,8 +358,6 @@ public class ProgrammingSubmissionResource {
         else {
             programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly, examMode, correctionRound);
         }
-        // only send the manual results to the client
-        programmingSubmissions.forEach(programmingSubmission -> programmingSubmission.setResults(programmingSubmission.getManualResults()));
         return ResponseEntity.ok().body(programmingSubmissions);
     }
 
