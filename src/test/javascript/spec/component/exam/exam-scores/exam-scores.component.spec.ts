@@ -17,7 +17,6 @@ import { ChartsModule } from 'ng2-charts';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortService } from 'app/shared/service/sort.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 chai.use(sinonChai);
@@ -146,7 +145,6 @@ describe('ExamScoresComponent', () => {
                 MockProvider(SortService),
                 MockProvider(JhiAlertService),
                 MockProvider(JhiLanguageHelper, { language: empty() }),
-                MockProvider(LocaleConversionService),
             ],
         })
             .compileComponents()
@@ -257,22 +255,58 @@ describe('ExamScoresComponent', () => {
         });
     });
 
-    it('should download a correct csv', () => {
+    it('should generate csv correctly', () => {
+        const noOfSubmittedExercises = examScoreDTO.studentResults.length;
         spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
         fixture.detectChanges();
 
-        expectCorrectExamScoreDto(comp, examScoreDTO);
-
-        const noOfSubmittedExercises = examScoreDTO.studentResults.length;
-
-        // check histogram
-        expectCorrectHistogram(comp, examScoreDTO);
-        // expect three distinct scores
-        expect(comp.histogramData.filter((hd) => hd === 1).length).to.equal(3);
-        expect(comp.noOfExamsFiltered).to.equal(noOfSubmittedExercises);
-
+        const exportAsCsvStub = sinon.stub(comp, 'exportAsCsv');
         // create csv
         comp.exportToCsv();
+        const generatedRows = exportAsCsvStub.getCall(0).args[0];
+        expect(generatedRows.length).to.equal(noOfSubmittedExercises);
+        const user1Row = generatedRows[0];
+        validateUserRow(
+            user1Row,
+            studentResult1.name,
+            studentResult1.login,
+            studentResult1.eMail,
+            studentResult1.registrationNumber,
+            'exResult1_1',
+            '100',
+            '100',
+            '100',
+            '100',
+            studentResult1.submitted ? 'yes' : 'no',
+        );
+        const user2Row = generatedRows[1];
+        validateUserRow(
+            user2Row,
+            studentResult2.name,
+            studentResult2.login,
+            studentResult2.eMail,
+            studentResult2.registrationNumber,
+            'exResult1_2',
+            '20',
+            '20',
+            '20',
+            '20',
+            studentResult2.submitted ? 'yes' : 'no',
+        );
+        const user3Row = generatedRows[2];
+        validateUserRow(
+            user3Row,
+            studentResult3.name,
+            studentResult3.login,
+            studentResult3.eMail,
+            studentResult3.registrationNumber,
+            'exResult1_2',
+            '50',
+            '50',
+            '50',
+            '50',
+            studentResult3.submitted ? 'yes' : 'no',
+        );
     });
 });
 
@@ -296,4 +330,29 @@ function expectCorrectHistogram(comp: ExamScoresComponent, examScoreDTO: ExamSco
             expect(comp.histogramData[histogramIndex]).to.equal(0);
         }
     });
+}
+
+function validateUserRow(
+    userRow: any,
+    expectedName: string,
+    expectedUsername: string,
+    expectedEmail: string,
+    expectedRegistrationNumber: string,
+    expectedExerciseTitle: string,
+    expectedAchievedPoints: string,
+    expectedAchievedScore: string,
+    expectedOverAllPoints: string,
+    expectedOverAllScore: string,
+    expectedSubmitted: string,
+) {
+    expect(userRow.name).to.equal(expectedName);
+    expect(userRow.login).to.equal(expectedUsername);
+    expect(userRow.eMail).to.equal(expectedEmail);
+    expect(userRow.registrationNumber).to.equal(expectedRegistrationNumber);
+    expect(userRow['group1 Assigned Exercise']).to.equal(expectedExerciseTitle);
+    expect(userRow['group1 Achieved Points']).to.equal(expectedAchievedPoints);
+    expect(userRow['group1 Achieved Score (%)']).to.equal(expectedAchievedScore);
+    expect(userRow.overAllPoints).to.equal(expectedOverAllPoints);
+    expect(userRow.overAllScore).to.equal(expectedOverAllScore);
+    expect(userRow.submitted).to.equal(expectedSubmitted);
 }
