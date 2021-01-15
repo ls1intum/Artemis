@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.service;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -7,19 +7,22 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
 
-@Repository
+@Service
 public class TextExerciseImportService extends ExerciseImportService {
 
     private final Logger log = LoggerFactory.getLogger(TextExerciseImportService.class);
 
+    private final TextExerciseRepository textExerciseRepository;
+
     public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository) {
-        super(textExerciseRepository, exampleSubmissionRepository, submissionRepository, resultRepository, textBlockRepository);
+        super(exampleSubmissionRepository, submissionRepository, resultRepository, textBlockRepository);
+        this.textExerciseRepository = textExerciseRepository;
     }
 
     @Override
@@ -43,13 +46,13 @@ public class TextExerciseImportService extends ExerciseImportService {
     private TextExercise importTextExercise(final TextExercise templateExercise, TextExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         TextExercise newExercise = copyTextExerciseBasis(importedExercise);
-        exerciseRepository.save(newExercise);
+        textExerciseRepository.save(newExercise);
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise));
         return newExercise;
     }
 
     /** This helper method copies all attributes of the {@code importedExercise} into the new exercise.
-     * Here we ignore all external entities as well as the start-, end-, and assemessment due date.
+     * Here we ignore all external entities as well as the start-, end-, and asseessment due date.
      *
      * @param importedExercise The exercise from which to copy the basis
      * @return the cloned TextExercise basis

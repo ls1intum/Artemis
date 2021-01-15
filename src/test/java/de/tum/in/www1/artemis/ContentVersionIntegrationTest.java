@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 import java.net.URI;
 
@@ -30,7 +29,7 @@ public class ContentVersionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getAccountWithoutLoggedInUser() throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI("/api/account")).with(csrf())).andReturn();
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI("/api/account"))).andReturn();
         final MockHttpServletResponse response = res.getResponse();
         final String contentVersionHeader = response.getHeader(ApiVersionFilter.CONTENT_VERSION_HEADER);
 

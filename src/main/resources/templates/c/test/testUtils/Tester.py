@@ -10,7 +10,7 @@ class Tester:
     suite: TestSuite
     tests: Dict[str, AbstractTest]
 
-    def __init__(self, name: str = "GBS-Tester-1.27"):
+    def __init__(self, name: str = "GBS-Tester-1.31"):
         self.name = name
         self.suite = TestSuite(name)
         self.tests = dict()
@@ -21,7 +21,7 @@ class Tester:
         """
 
         setStdoutLimitEnabled(False)
-        printTester("Running: {}".format(self.name))
+        printTester(f"Running: {self.name}")
 
         # A dictionary of test results:
         # Test name -> result
@@ -33,7 +33,7 @@ class Tester:
                     name, test.timeoutSec))
             else:
                 printTester(
-                    "Running test case '{}' with no timeout...".format(name))
+                    f"Running test case '{name}' with no timeout...")
 
             # Reset the tester output cache:
             resetStdoutLimit()
@@ -59,17 +59,17 @@ class Tester:
 
         if test.name in self.tests:
             raise NameError(
-                "Test '{}' already registered. Test names should be unique!".format(test.name))
+                f"Test '{test.name}' already registered. Test names should be unique!")
         self.tests[test.name] = test
 
     def __printResult(self):
         print("Result".center(50, "="))
         print("{} finished {} test cases in {} seconds.".format(
             self.name, len(self.tests), self.suite.time.total_seconds()))
-        print("SUCCESS: {}".format(self.suite.successful))
-        print("FAILED: {}".format(self.suite.failures))
-        print("ERROR: {}".format(self.suite.errors))
-        print("SKIPPED: {}".format(self.suite.skipped))
+        print(f"SUCCESS: {self.suite.successful}")
+        print(f"FAILED: {self.suite.failures}")
+        print(f"ERROR: {self.suite.errors}")
+        print(f"SKIPPED: {self.suite.skipped}")
         print("".center(50, "="))
 
     def exportResult(self, outputPath: str):

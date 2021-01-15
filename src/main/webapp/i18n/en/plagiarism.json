@@ -17,6 +17,14 @@
             "no-files-found": "No files found",
             "duration": "Duration",
             "similarity-distribution": "Similarity Distribution",
+            "similarity-threshold": "Similarity Threshold in %",
+            "similarity-threshold-tooltip": "Ignore comparisons whose similarity is below this threshold. A similarity of 0% means that there is no overlap between two submissions, a similarity of 50% means that about half of two submissions are identical. A similarity of 100% means that two submissions are completely identical",
+            "minimum-score": "Minimum Score in %",
+            "minimum-score-tooltip": "Consider only submissions with a score greater than or equal to this value",
+            "minimum-size": "Minimum Size",
+            "minimum-size-tooltip": "Consider only submissions whose size is greater or equal to this value",
+            "minimum-size-tooltip-modeling": "Consider only submissions that have at least as many modeling elements as the specified value",
+            "minimum-size-tooltip-text": "Consider only submissions that have at least as many characters as the specified value",
             "no-info-available": "No information available",
             "caution": "Plagiarism detection can take a long time for large courses."
         }
