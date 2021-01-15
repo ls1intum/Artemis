@@ -7,6 +7,9 @@ import javax.validation.constraints.Size;
 public class StudentDTO {
 
     @Size(max = 50)
+    private String login;
+
+    @Size(max = 50)
     private String firstName;
 
     @Size(max = 50)
@@ -14,6 +17,14 @@ public class StudentDTO {
 
     @Size(max = 10)
     private String registrationNumber;
+
+    public String getLogin() {
+        return login;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
+    }
 
     public String getFirstName() {
         return firstName;
@@ -51,16 +62,17 @@ public class StudentDTO {
         if (o == null || getClass() != o.getClass())
             return false;
         StudentDTO that = (StudentDTO) o;
-        return Objects.equals(registrationNumber, that.registrationNumber);
+        return Objects.equals(registrationNumber, that.registrationNumber) || Objects.equals(login, that.login);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(registrationNumber);
+        return Objects.hash(registrationNumber) ^ Objects.hash(login);
     }
 
     @Override
     public String toString() {
-        return "StudentDTO{" + "firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber + '\'' + '}';
+        return "StudentDTO{" + "login='" + login + '\'' + "firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber + '\''
+                + '}';
     }
 }
