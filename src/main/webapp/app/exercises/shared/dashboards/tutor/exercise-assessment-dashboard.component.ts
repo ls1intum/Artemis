@@ -14,7 +14,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
-import { getLatestSubmissionResult, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -90,6 +90,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     formattedGradingInstructions?: SafeHtml;
     formattedProblemStatement?: SafeHtml;
     formattedSampleSolution?: SafeHtml;
+    getSubmissionResultByCorrectionRound = getSubmissionResultByCorrectionRound;
 
     readonly ExerciseType = ExerciseType;
 
