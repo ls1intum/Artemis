@@ -1297,8 +1297,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(studentResult.registrationNumber).isEqualTo(originalUser.getRegistrationNumber());
 
             // Calculate overall points achieved
-            var calculatedOverallPoints = studentExamOfUser.getExercises().stream().map(Exercise::getMaxScore).reduce(0.0,
-                    (total, maxScore) -> (Math.round((total + maxScore * resultScore / 100) * 10) / 10.0));
+
             var calculatedOverallPoints = studentExamOfUser.getExercises().stream()
                     .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).map(exercise -> exercise.getMaxScore())
                     .reduce(0.0, (total, maxScore) -> (Math.round((total + maxScore * resultScore / 100) * 10) / 10.0));
