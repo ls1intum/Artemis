@@ -1,16 +1,11 @@
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { MockRouter } from '../../helpers/mocks/service/mock-route.service';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { MockPipe } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 
@@ -29,12 +24,7 @@ describe('ExamTimerComponent', function () {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ExamTimerComponent, MockPipe(TranslatePipe)],
-            providers: [
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useValue: MockRouter },
-            ],
+            providers: [],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamTimerComponent);
@@ -46,7 +36,6 @@ describe('ExamTimerComponent', function () {
     it('should call ngOnInit', () => {
         spyOn(dateService, 'now').and.returnValue(now);
         component.criticalTime = moment.duration(200);
-        expect(component.endDate).to.equal(inFuture);
         component.ngOnInit();
         expect(component).to.be.ok;
         expect(component.isCriticalTime).to.be.true;
