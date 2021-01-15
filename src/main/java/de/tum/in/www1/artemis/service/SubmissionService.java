@@ -1,19 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static java.util.stream.Collectors.toList;
-
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -25,6 +11,19 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static java.util.stream.Collectors.toList;
 
 @Service
 public class SubmissionService {
@@ -178,6 +177,7 @@ public class SubmissionService {
      * Given an exercise id, find a random submission for that exercise which still doesn't have any manual result.
      * No manual result means that no user has started an assessment for the corresponding submission yet.
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
+     * If @param correctionRound is bigger than 0, only submission are shown for which the user has not assessed the first result.
      *
      * @param exercise the exercise for which we want to retrieve a submission without manual result
      * @param correctionRound - the correction round we want our submission to have results for
@@ -197,6 +197,12 @@ public class SubmissionService {
 
         List<Submission> submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toList());
+
+        if(correctionRound > 0){
+            //remove if user already assessed first correction round
+            submissionsWithoutResult = submissionsWithoutResult.stream()
+                .filter(submission -> !submission.getResultByCorrectionRound(correctionRound-1).getAssessor().equals(userService.getUser())).collect(Collectors.toList());
+        }
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
