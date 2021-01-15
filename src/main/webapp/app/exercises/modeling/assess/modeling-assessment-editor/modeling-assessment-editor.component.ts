@@ -151,7 +151,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
         this.submission = submission;
-        // setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
         this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);

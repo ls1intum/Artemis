@@ -83,7 +83,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        // this.elementFeedback = new Map<string, Feedback>();
         if (changes.model && changes.model.currentValue && this.apollonEditor) {
             this.apollonEditor!.model = changes.model.currentValue;
             this.handleFeedback();
