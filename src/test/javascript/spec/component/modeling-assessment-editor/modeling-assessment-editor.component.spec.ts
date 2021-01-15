@@ -3,7 +3,7 @@ import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
@@ -55,6 +55,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     let complaintService: ComplaintService;
     let modelingSubmissionStub: SinonStub;
     let complaintStub: SinonStub;
+    let router: any;
 
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
@@ -66,7 +67,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useClass: MockRouter },
             ],
         })
             .compileComponents()
@@ -76,7 +76,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 service = TestBed.inject(ModelingAssessmentService);
                 modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
                 complaintService = TestBed.inject(ComplaintService);
-
+                router = TestBed.inject(Router);
                 mockAuth = (fixture.debugElement.injector.get(AccountService) as any) as MockAccountService;
                 mockAuth.hasAnyAuthorityDirect([]);
                 mockAuth.identity();
@@ -413,14 +413,27 @@ describe('ModelingAssessmentEditorComponent', () => {
             const course = new Course();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.id = 1;
-
-            const numbers: number[] = [];
-            const fake = sinon.fake.returns(of(numbers));
+            // spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
+            const routerSpy = stub(router, 'navigateByUrl').returns(Promise.resolve(true));
+            const modelingSubmission: ModelingSubmission = { id: 1 };
+            const fake = sinon.fake.returns(of(modelingSubmission));
             sinon.replace(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment', fake);
             component.ngOnInit();
+            const correctionRound = 1;
+            const courseId = 1;
+            const exerciseId = 1;
+            component.correctionRound = correctionRound;
+            component.courseId = courseId;
+            component.modelingExercise = { id: exerciseId } as Exercise;
+            let url = `/course-management/${courseId}/modeling-exercises/${exerciseId}/submissions/${modelingSubmission.id}/assessment`;
+            url += `?correction-round=${correctionRound}`;
             tick(500);
             component.assessNext();
+            tick(500);
             expect(fake).to.have.been.calledOnce;
+            sinon.assert.calledWith(routerSpy.getCall(0), '/', { skipLocationChange: true });
+            expect(routerSpy).to.have.been.calledTwice;
+            sinon.assert.calledWith(routerSpy.getCall(1), url);
         }));
 
         it('throw error while assessNext', fakeAsync(() => {
