@@ -100,13 +100,13 @@
                         [(ngModel)]="textExercise.bonusPoints"
                         #bonusPoints="ngModel"
                     />
-                </div>
-                <div
-                    *ngIf="bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors"
-                    class="alert alert-danger"
-                    [hidden]="textExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                >
-                    {{ 'artemisApp.exercise.bonusPointsError' | translate }}
+                    <div
+                        *ngIf="bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors"
+                        class="alert alert-danger"
+                        [hidden]="textExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                    >
+                        {{ 'artemisApp.exercise.bonusPointsError' | translate }}
+                    </div>
                 </div>
             </div>
         </div>
