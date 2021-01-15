@@ -25,7 +25,7 @@ export class ProgrammingAssessmentManualResultService {
         if (submit) {
             params = params.set('submit', 'true');
         }
-        if (correctionRound !== 0) {
+        if (correctionRound > 0) {
             params = params.set('correction-round', correctionRound.toString());
         }
 

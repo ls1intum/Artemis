@@ -570,8 +570,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         if (lock) {
             params = params.set('lock', 'true');
         }
-        const returnValue = this.http.get<ProgrammingSubmission>(url, { params });
-        return returnValue;
+        return this.http.get<ProgrammingSubmission>(url, { params });
     }
 
     /**
@@ -581,10 +580,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      */
     lockAndGetProgrammingSubmissionParticipation(participationId: number, correctionRound = 0): Observable<Participation> {
         let params = new HttpParams();
-        if (correctionRound !== 0) {
+        if (correctionRound > 0) {
             params = params.set('correction-round', correctionRound.toString());
         }
-        // TODO SE rework use of correction-round
         return this.http.get<Participation>(`api/programming-submissions/${participationId}/lock`, { params });
     }
 
