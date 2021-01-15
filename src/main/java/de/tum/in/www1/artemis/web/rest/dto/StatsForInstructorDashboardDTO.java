@@ -8,7 +8,9 @@ public class StatsForInstructorDashboardDTO {
 
     private DueDateStat numberOfSubmissions;
 
-    private DueDateStat numberOfAssessments;
+    private DueDateStat totalNumberOfAssessments;
+
+    private DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
 
     private DueDateStat numberOfAutomaticAssistedAssessments;
 
@@ -43,12 +45,20 @@ public class StatsForInstructorDashboardDTO {
         this.numberOfSubmissions = numberOfSubmissions;
     }
 
-    public DueDateStat getNumberOfAssessments() {
-        return numberOfAssessments;
+    public DueDateStat getTotalNumberOfAssessments() {
+        return totalNumberOfAssessments;
     }
 
-    public void setNumberOfAssessments(DueDateStat numberOfAssessments) {
-        this.numberOfAssessments = numberOfAssessments;
+    public void setTotalNumberOfAssessments(DueDateStat totalNumberOfAssessments) {
+        this.totalNumberOfAssessments = totalNumberOfAssessments;
+    }
+
+    public DueDateStat[] getNumberOfAssessmentsOfCorrectionRounds() {
+        return numberOfAssessmentsOfCorrectionRounds;
+    }
+
+    public void setNumberOfAssessmentsOfCorrectionRounds(DueDateStat[] numberOfAssessmentsOfCorrectionRounds) {
+        this.numberOfAssessmentsOfCorrectionRounds = numberOfAssessmentsOfCorrectionRounds;
     }
 
     public DueDateStat getNumberOfAutomaticAssistedAssessments() {

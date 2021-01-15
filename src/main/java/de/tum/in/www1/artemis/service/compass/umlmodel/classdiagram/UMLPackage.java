@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLPackage extends UMLContainerElement {
 
-    public final static String UML_PACKAGE_TYPE = "Package";
+    public static final String UML_PACKAGE_TYPE = "Package";
 
     private String name;
 

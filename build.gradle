@@ -6,14 +6,10 @@ buildscript {
         mavenLocal()
         mavenCentral()
         maven { url "https://repo.spring.io/plugins-release" }
-        maven { url "https://plugins.gradle.org/m2/" }
         jcenter()
     }
     dependencies {
-        classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
-        // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-        classpath "com.github.ben-manes:gradle-versions-plugin:0.35.0"
     }
 }
 
@@ -23,37 +19,32 @@ plugins {
     id "maven-publish"
     id "idea"
     id "jacoco"
-    id "org.springframework.boot"
-    id "com.google.cloud.tools.jib" version "2.7.0"
+    id "org.springframework.boot" version "${spring_boot_version}"
+    id "com.google.cloud.tools.jib" version "2.7.1"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
-    id "com.diffplug.spotless" version "5.8.2"
+    id "com.diffplug.spotless" version "5.9.0"
+    // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
+    id "com.github.ben-manes.versions" version "0.35.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.8.4"
+version = "4.9.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
 targetCompatibility=15
 
-apply plugin: "com.github.ben-manes.versions"
-
 apply from: "gradle/docker.gradle"
 //this enables us to invoke ./gradlew liquibaseDiffChangelog
 apply from: "gradle/liquibase.gradle"
-//jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
 
 if (project.hasProperty("prod")) {
     apply from: "gradle/profile_prod.gradle"
 } else {
     apply from: "gradle/profile_dev.gradle"
-}
-
-if (project.hasProperty("zipkin")) {
-    apply from: "gradle/zipkin.gradle"
 }
 
 if (project.hasProperty("war")) {
@@ -85,33 +76,33 @@ spotless {
 defaultTasks "bootRun"
 
 springBoot {
-    mainClassName = "de.tum.in.www1.artemis.ArtemisApp"
+    mainClass = "de.tum.in.www1.artemis.ArtemisApp"
 }
 
 // Execute the test cases: ./gradlew executeTests
 
 test {
     useJUnitPlatform()
-    exclude "**/*IT*", "**/*IntTest*", "**/*CucumberIT*"
+    exclude "**/*IT*", "**/*IntTest*"
+    testLogging {
+        events 'FAILED', 'SKIPPED'
+    }
     testLogging.showStandardStreams = true
-
-    // uncomment if the tests reports are not generated
-    // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
-    // ignoreFailures true
     reports.html.enabled = false
 }
 
 task integrationTest(type: Test) {
+    useJUnitPlatform()
     description = "Execute integration tests."
     group = "verification"
     include "**/*IT*", "**/*IntTest*"
-    exclude "**/*CucumberIT*"
 
-    maxHeapSize = "2048m"
-    jvmArgs "-XX:MaxPermSize=256m"
-    // uncomment if the tests reports are not generated
-    // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
-    // ignoreFailures true
+    testLogging {
+        events 'FAILED', 'SKIPPED'
+    }
+
+    maxHeapSize = "1024m"
+    jvmArgs "-XX:MaxPermSize=512m"
     reports.html.enabled = false
 }
 
@@ -144,22 +135,18 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become at least 0.90
-                minimum = 0.82
+                minimum = 0.83
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 50
-                maximum = 145
+                maximum = 150
             }
         }
     }
 }
 check.dependsOn jacocoTestCoverageVerification
-
-if (!project.hasProperty("runList")) {
-    project.ext.runList = "main"
-}
 
 configurations {
     providedRuntime
@@ -179,6 +166,7 @@ dependencies {
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r"
+    implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:5.10.0.202012080955-r"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:8059"
     implementation "org.imsglobal:basiclti-util:1.2.0"
@@ -190,21 +178,23 @@ dependencies {
     implementation "io.sentry:sentry-logback:3.2.0"
     implementation "org.jsoup:jsoup:1.13.1"
 
+    implementation "org.springdoc:springdoc-openapi-ui:1.5.2"
+
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
 
     implementation "io.github.jhipster:jhipster-framework"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.6.2"
-    implementation "net.logstash.logback:logstash-logback-encoder:6.5"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.6.3"
+    implementation "net.logstash.logback:logstash-logback-encoder:6.6"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:${fasterxml_version}"
     implementation "com.fasterxml.jackson.core:jackson-annotations:${fasterxml_version}"
     implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
-    implementation "com.hazelcast:hazelcast:4.1"
-    implementation "com.hazelcast:hazelcast-hibernate53:2.1.1"
-    implementation "com.hazelcast:hazelcast-spring:4.1"
+    implementation "com.hazelcast:hazelcast:${hazelcast_version}"
+    implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
+    implementation "com.hazelcast:hazelcast-hibernate53:2.2.0"
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate:hibernate-core"
     implementation "com.zaxxer:HikariCP:3.4.5"
@@ -212,7 +202,7 @@ dependencies {
     implementation "javax.transaction:javax.transaction-api:1.3"
     implementation "org.hibernate:hibernate-jcache:${hibernate_version}"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
-    implementation "org.hibernate.validator:hibernate-validator:6.1.7.Final"
+    implementation "org.hibernate.validator:hibernate-validator:6.2.0.Final"
     implementation "org.liquibase:liquibase-core:4.2.2"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
@@ -229,15 +219,15 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:2.3.3.RELEASE"
-    implementation "org.springframework.data:spring-data-ldap:2.4.2"
+    implementation "org.springframework.data:spring-data-ldap:2.4.3"
 
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:2.2.6.RELEASE"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:2.2.6.RELEASE"
-    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.12.RELEASE"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.1"
+    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
-    implementation "io.netty:netty-all:4.1.56.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.0.2"
-    implementation "org.springframework:spring-messaging:5.3.1"
+    implementation "io.netty:netty-all:4.1.58.Final"
+    implementation "io.projectreactor.netty:reactor-netty:1.0.3"
+    implementation "org.springframework:spring-messaging:5.3.3"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -255,7 +245,7 @@ dependencies {
     implementation "mysql:mysql-connector-java:8.0.22"
 
     implementation "org.zalando:problem-spring-web:0.26.2"
-    implementation "com.ibm.icu:icu4j:68.1"
+    implementation "com.ibm.icu:icu4j:68.2"
     implementation "com.github.seancfoley:ipaddress:5.3.3"
     implementation "info.debatty:java-string-similarity:2.0.0"
     implementation "org.apache.maven:maven-model:3.6.3"
@@ -335,7 +325,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.7.1"
+    gradleVersion = "6.8"
 }
 
 task stage(dependsOn: "bootWar") {
@@ -350,7 +340,7 @@ if (project.hasProperty("nodeInstall")) {
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
-    toolVersion "8.38"
+    toolVersion "8.39"
     configFile file("${rootDir}/checkstyle.xml")
     checkstyleTest.enabled = false
     maxErrors = 0
@@ -402,4 +392,4 @@ tasks.named("dependencyUpdates").configure {
 // 6) Check JavaDoc:                                ./gradlew checkstyleMain -x yarn -x webpack
 // 7) Generate Liquibase diff:                      ./gradlew liquibaseDiffChangelog
 // 8) Clear Liquibase checksums:                    ./gradlew liquibaseClearChecksums
-// 9) Enforce code coverage verification:           ./gradlew jacocoTestCoverageVerification
+// 9) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification

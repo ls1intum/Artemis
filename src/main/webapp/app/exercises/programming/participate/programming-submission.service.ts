@@ -9,7 +9,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { SubmissionType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -534,27 +534,44 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * Returns programming submissions for exercise from the server
      * @param exerciseId the id of the exercise
      * @param req request parameters
+     * @param correctionRound for which to get the Submissions
      */
-    getProgrammingSubmissionsForExercise(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }): Observable<HttpResponse<ProgrammingSubmission[]>> {
-        const options = createRequestOption(req);
+    getProgrammingSubmissionsForExerciseByCorrectionRound(
+        exerciseId: number,
+        req: { submittedOnly?: boolean; assessedByTutor?: boolean },
+        correctionRound = 0,
+    ): Observable<HttpResponse<ProgrammingSubmission[]>> {
+        const url = `api/exercises/${exerciseId}/programming-submissions`;
+        let params = createRequestOption(req);
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
+        }
+
         return this.http
-            .get<ProgrammingSubmission[]>(`api/exercises/${exerciseId}/programming-submissions`, {
-                params: options,
+            .get<ProgrammingSubmission[]>(url, {
+                params,
                 observe: 'response',
             })
-            .map((res: HttpResponse<ProgrammingSubmission[]>) => this.convertArrayResponse(res));
+            .map((res: HttpResponse<ProgrammingSubmission[]>) => ProgrammingSubmissionService.convertArrayResponse(res));
     }
 
     /**
      * Returns next programming submission without assessment from the server
      * @param exerciseId the id of the exercise
+     * @param lock
+     * @param correctionRound for which to get the Submissions
      */
-    getProgrammingSubmissionForExerciseWithoutAssessment(exerciseId: number, lock = false): Observable<ProgrammingSubmission> {
-        let url = `api/exercises/${exerciseId}/programming-submission-without-assessment`;
-        if (lock) {
-            url += '?lock=true';
+    getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, lock = false, correctionRound = 0): Observable<ProgrammingSubmission> {
+        const url = `api/exercises/${exerciseId}/programming-submission-without-assessment`;
+        let params = new HttpParams();
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
         }
-        return this.http.get<ProgrammingSubmission>(url);
+        if (lock) {
+            params = params.set('lock', 'true');
+        }
+
+        return this.http.get<ProgrammingSubmission>(url, { params });
     }
 
     /**
@@ -565,13 +582,20 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         return this.http.get<Participation>(`api/programming-submissions/${participationId}/lock`);
     }
 
-    private convertArrayResponse(res: HttpResponse<ProgrammingSubmission[]>): HttpResponse<ProgrammingSubmission[]> {
-        const jsonResponse: ProgrammingSubmission[] = res.body!;
-        const body: ProgrammingSubmission[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push({ ...jsonResponse[i] });
+    private static convertArrayResponse(res: HttpResponse<ProgrammingSubmission[]>): HttpResponse<ProgrammingSubmission[]> {
+        const submissions = res.body!;
+        const convertedSubmissions: ProgrammingSubmission[] = [];
+        for (const submission of submissions) {
+            this.convertItemWithLatestSubmissionResultFromServer(submission);
+            convertedSubmissions.push({ ...submission });
         }
-        return res.clone({ body });
+        return res.clone({ body: convertedSubmissions });
+    }
+
+    private static convertItemWithLatestSubmissionResultFromServer(programmingSubmission: ProgrammingSubmission): ProgrammingSubmission {
+        const convertedProgrammingSubmission = Object.assign({}, programmingSubmission);
+        setLatestSubmissionResult(convertedProgrammingSubmission, getLatestSubmissionResult(convertedProgrammingSubmission));
+        return convertedProgrammingSubmission;
     }
 
     /**

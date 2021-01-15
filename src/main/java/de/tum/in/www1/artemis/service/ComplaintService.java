@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -29,17 +28,17 @@ public class ComplaintService {
 
     private static final String ENTITY_NAME = "complaint";
 
-    private ComplaintRepository complaintRepository;
+    private final ComplaintRepository complaintRepository;
 
-    private ResultRepository resultRepository;
+    private final ResultRepository resultRepository;
 
-    private ResultService resultService;
+    private final ResultService resultService;
 
-    private CourseService courseService;
+    private final CourseService courseService;
 
-    private UserService userService;
+    private final UserService userService;
 
-    private ExamService examService;
+    private final ExamService examService;
 
     public ComplaintService(ComplaintRepository complaintRepository, ResultRepository resultRepository, ResultService resultService, CourseService courseService,
             ExamService examService, UserService userService) {
@@ -60,7 +59,6 @@ public class ComplaintService {
      * @param examId the optional examId. This is only set if the exercise is an exam exercise
      * @return the saved complaint
      */
-    @Transactional
     public Complaint createComplaint(Complaint complaint, OptionalLong examId, Principal principal) {
         Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaint.getResult().getId())
                 .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
@@ -115,10 +113,6 @@ public class ComplaintService {
         resultRepository.save(originalResult);
 
         return complaintRepository.save(complaint);
-    }
-
-    public Optional<Complaint> getById(long complaintId) {
-        return complaintRepository.findById(complaintId);
     }
 
     public Optional<Complaint> getByResultId(long resultId) {
@@ -232,16 +226,13 @@ public class ComplaintService {
         }
 
         if (!isTimeValid) {
-            StringBuilder message = new StringBuilder("You cannot ");
-            message.append(type == ComplaintType.COMPLAINT ? "submit a complaint" : "request more feedback");
-            message.append(" for a result that is older than ");
-            message.append(switch (maxDays) {
-                case 1 -> "one day";
-                case 7 -> "one week";
-                default -> maxDays % 7 == 0 ? (maxDays / 7) + " weeks" : maxDays + " days";
-            });
-            message.append(".");
-            throw new BadRequestAlertException(message.toString(), ENTITY_NAME, "complaintOrRequestMoreFeedbackTimeInvalid");
+            String message = "You cannot " + (type == ComplaintType.COMPLAINT ? "submit a complaint" : "request more feedback") + " for a result that is older than "
+                    + switch (maxDays) {
+                    case 1 -> "one day";
+                    case 7 -> "one week";
+                    default -> maxDays % 7 == 0 ? (maxDays / 7) + " weeks" : maxDays + " days";
+                    } + ".";
+            throw new BadRequestAlertException(message, ENTITY_NAME, "complaintOrRequestMoreFeedbackTimeInvalid");
         }
     }
 

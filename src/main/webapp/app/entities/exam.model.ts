@@ -29,6 +29,7 @@ export class Exam implements BaseEntity {
     public maxPoints?: number;
     public randomizeExerciseOrder?: boolean;
     public numberOfExercisesInExam?: number;
+    public numberOfCorrectionRoundsInExam?: number;
     public course?: Course;
     public exerciseGroups?: ExerciseGroup[];
     public studentExams?: StudentExam[];
@@ -42,6 +43,7 @@ export class Exam implements BaseEntity {
 
     constructor() {
         this.randomizeExerciseOrder = false; // default value (set by server)
+        this.numberOfCorrectionRoundsInExam = 1; // default value
 
         // helper attributes (calculated by the server at the time of the last request)
         this.visible = false;

@@ -24,9 +24,6 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     predicate = 'id';
     reverse = false;
 
-    // todo NR SE remove after refactoring hmtl function calls
-    getLatestSubmissionResult = getLatestSubmissionResult;
-
     private cancelConfirmationText: string;
 
     constructor(
@@ -72,7 +69,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     private getSubmissions(exerciseId: number): Promise<void> {
         return new Promise((resolve, reject) => {
             this.fileUploadSubmissionService
-                .getFileUploadSubmissionsForExercise(exerciseId, { submittedOnly: true })
+                .getFileUploadSubmissionsForExerciseByCorrectionRound(exerciseId, { submittedOnly: true })
                 .pipe(
                     map((response: HttpResponse<FileUploadSubmission[]>) =>
                         response.body!.map((submission: FileUploadSubmission) => {

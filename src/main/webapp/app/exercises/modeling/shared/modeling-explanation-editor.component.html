@@ -1,0 +1,10 @@
+<label for="explanationText" jhiTranslate="artemisApp.modelingSubmission.explanationText">Explanation</label>
+<textarea
+    #textEditor
+    id="explanationText"
+    class="text-editor-textarea"
+    [(ngModel)]="explanation"
+    (keydown.tab)="onTextEditorTab(textEditor, $event)"
+    (ngModelChange)="onExplanationInput($event)"
+    [readOnly]="readOnly"
+></textarea>

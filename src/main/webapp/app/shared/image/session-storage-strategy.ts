@@ -22,6 +22,15 @@ export class SessionStorageStrategy extends IStorageStrategy {
         this.storeRawData(allCachedData);
     }
 
+    addMany(cachePairs: ICachePair<any>[], cacheKey: string) {
+        const allCachedData = this.getRawData();
+        if (!allCachedData[cacheKey]) {
+            allCachedData[cacheKey] = [];
+        }
+        allCachedData[cacheKey] = cachePairs;
+        this.storeRawData(allCachedData);
+    }
+
     getAll(cacheKey: string) {
         return this.getRawData()[cacheKey] || [];
     }

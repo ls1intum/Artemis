@@ -14,7 +14,7 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exam.title">Title</span></dt>
                 <dd>
-                    <span>{{ exam.title }}</span>
+                    <span id="examTitle">{{ exam.title }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.examiner">Examiner</span></dt>
                 <dd>
@@ -70,6 +70,11 @@
                     <span *ngIf="exam.numberOfExercisesInExam">{{ exam.numberOfExercisesInExam }}</span>
                     <span *ngIf="!exam.numberOfExercisesInExam" jhiTranslate="artemisApp.exam.notSet"></span>
                 </dd>
+                <dt><span jhiTranslate="artemisApp.examManagement.numberOfCorrectionRoundsInExam">Number of correction rounds in exam</span></dt>
+                <dd>
+                    <span *ngIf="exam.numberOfCorrectionRoundsInExam">{{ exam.numberOfCorrectionRoundsInExam }}</span>
+                    <span *ngIf="!exam.numberOfCorrectionRoundsInExam" jhiTranslate="artemisApp.exam.notSet"></span>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.randomizeQuestionOrder">Randomize order of exercise groups</span></dt>
                 <dd>
                     <span>{{ exam.randomizeExerciseOrder }}</span>
@@ -96,12 +101,13 @@
                 <span *ngIf="!formattedConfirmationEndText" jhiTranslate="artemisApp.exam.notSet"></span>
             </dl>
 
-            <button type="button" [routerLink]="getEditRoute()" class="btn btn-primary">
+            <button id="editButton" type="button" [routerLink]="getEditRoute()" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
 
-            <button type="submit" *ngIf="isAtLeastInstructor" [routerLink]="getStudentExamRoute()" class="btn btn-primary">
-                <fa-icon [icon]="'eye'"></fa-icon> <span>{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
+            <button id="studentExamsButton" type="submit" *ngIf="isAtLeastInstructor" [routerLink]="getStudentExamRoute()" class="btn btn-primary">
+                <fa-icon [icon]="'eye'"></fa-icon>
+                <span>{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
             </button>
         </div>
     </div>

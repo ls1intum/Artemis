@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLActivity extends UMLActivityElement {
 
-    public final static String UML_ACTIVITY_TYPE = "Activity";
+    public static final String UML_ACTIVITY_TYPE = "Activity";
 
     private final List<UMLActivityElement> childElements;
 

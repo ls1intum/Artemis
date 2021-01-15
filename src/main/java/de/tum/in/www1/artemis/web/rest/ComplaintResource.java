@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing complaints.
@@ -137,19 +136,6 @@ public class ComplaintResource {
 
         return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
-    }
-
-    /**
-     * GET /complaints/:id : get the "id" complaint.
-     *
-     * @param id the id of the complaint to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the complaint, or with status 404 (Not Found)
-     */
-    @GetMapping("/complaints/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Complaint> getComplaint(@PathVariable Long id) {
-        log.debug("REST request to get Complaint : {}", id);
-        return ResponseUtil.wrapOrNotFound(complaintService.getById(id));
     }
 
     /**
@@ -475,7 +461,7 @@ public class ComplaintResource {
         complaints.forEach(this::filterOutUselessDataFromComplaint);
     }
 
-    private List<Complaint> buildComplaintsListForAssessor(List<Complaint> complaints, Principal principal, boolean assessorSameAsCaller, boolean testRun) {
+    private List<Complaint> buildComplaintsListForAssessor(List<Complaint> complaints, Principal principal, boolean assessorSameAsCaller, boolean isTestRun) {
         List<Complaint> responseComplaints = new ArrayList<>();
 
         if (complaints.isEmpty()) {
@@ -488,7 +474,7 @@ public class ComplaintResource {
             User student = complaint.getStudent();
 
             if (assessor != null && assessor.getLogin().equals(submissorName) == assessorSameAsCaller
-                    && (student != null && assessor.getLogin().equals(student.getLogin())) == testRun) {
+                    && (student != null && assessor.getLogin().equals(student.getLogin())) == isTestRun) {
                 // Remove data about the student
                 StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
                 studentParticipation.setParticipant(null);

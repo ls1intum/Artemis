@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLComponent extends UMLContainerElement {
 
-    public final static String UML_COMPONENT_TYPE = "Component";
+    public static final String UML_COMPONENT_TYPE = "Component";
 
     private final String name;
 

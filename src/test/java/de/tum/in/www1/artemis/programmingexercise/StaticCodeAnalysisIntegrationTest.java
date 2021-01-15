@@ -9,6 +9,8 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -97,6 +99,26 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
                 .containsExactlyInAnyOrderElementsOf(categories);
     }
 
+    @ParameterizedTest
+    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void testCreateDefaultCategories(ProgrammingLanguage programmingLanguage) {
+        var testExercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1),
+                programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember(), programmingLanguage);
+        testExercise = programmingExerciseRepository.save(testExercise);
+        staticCodeAnalysisService.createDefaultCategories(testExercise);
+        // Swift has only one default category at the time of creation of this test
+        var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(testExercise.getId());
+        if (programmingLanguage == ProgrammingLanguage.SWIFT) {
+            assertThat(categories.size()).isEqualTo(6);
+            assertThat(categories.stream().filter(c -> c.getState() == CategoryState.FEEDBACK).count()).isEqualTo(1);
+        }
+        else if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            assertThat(categories.size()).isEqualTo(11);
+            assertThat(categories.stream().filter(c -> c.getState() == CategoryState.FEEDBACK).count()).isEqualTo(7);
+        }
+    }
+
     @Test
     @WithMockUser(value = "student1", roles = "STUDENT")
     void testGetStaticCodeAnalysisCategories_asStudent_forbidden() throws Exception {
@@ -119,15 +141,17 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         request.getList(endpoint, HttpStatus.BAD_REQUEST, StaticCodeAnalysisCategory.class);
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    void testUpdateStaticCodeAnalysisCategories() throws Exception {
+    void testUpdateStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage) throws Exception {
+        var programmingExSCAEnabled = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
         ProgrammingExercise exerciseWithSolutionParticipation = programmingExerciseRepository
-                .findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseSCAEnabled.getId()).get();
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExSCAEnabled.getId()).get();
         bambooRequestMockProvider.mockTriggerBuild(exerciseWithSolutionParticipation.getSolutionParticipation());
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExSCAEnabled);
         // Change the first category
-        var categoryIterator = programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator();
+        var categoryIterator = programmingExSCAEnabled.getStaticCodeAnalysisCategories().iterator();
         var firstCategory = categoryIterator.next();
         firstCategory.setState(CategoryState.GRADED);
         firstCategory.setPenalty(33D);
@@ -136,19 +160,19 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         var removedCategory = categoryIterator.next();
         categoryIterator.remove();
 
-        var responseCategories = request.patchWithResponseBody(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(),
+        var responseCategories = request.patchWithResponseBody(endpoint, programmingExSCAEnabled.getStaticCodeAnalysisCategories(),
                 new TypeReference<List<StaticCodeAnalysisCategory>>() {
                 }, HttpStatus.OK);
-        var savedCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExerciseSCAEnabled.getId());
+        var savedCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExSCAEnabled.getId());
 
         // The removed category should not be deleted
-        programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().add(removedCategory);
+        programmingExSCAEnabled.getStaticCodeAnalysisCategories().add(removedCategory);
         assertThat(responseCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("exercise")
                 .containsExactlyInAnyOrderElementsOf(savedCategories);
         assertThat(responseCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("exercise")
-                .containsExactlyInAnyOrderElementsOf(programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories());
+                .containsExactlyInAnyOrderElementsOf(programmingExSCAEnabled.getStaticCodeAnalysisCategories());
         assertThat(savedCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("exercise")
-                .containsExactlyInAnyOrderElementsOf(programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories());
+                .containsExactlyInAnyOrderElementsOf(programmingExSCAEnabled.getStaticCodeAnalysisCategories());
     }
 
     @Test

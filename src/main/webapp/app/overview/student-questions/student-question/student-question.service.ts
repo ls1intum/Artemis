@@ -55,30 +55,6 @@ export class StudentQuestionService {
     }
 
     /**
-     * find all questions for id of exercise
-     * @param {number} courseId
-     * @param {number} exerciseId
-     * @return {Observable<EntityArrayResponseType>}
-     */
-    findQuestionsForExercise(courseId: number, exerciseId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<StudentQuestion[]>(`${this.resourceUrl}${courseId}/exercises/${exerciseId}/student-questions`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
-    }
-
-    /**
-     * find all questions for id of lecture
-     * @param {number} courseId
-     * @param {number} lectureId
-     * @return {Observable<EntityArrayResponseType>}
-     */
-    findQuestionsForLecture(courseId: number, lectureId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<StudentQuestion[]>(`${this.resourceUrl}${courseId}/lectures/${lectureId}/student-questions`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
-    }
-
-    /**
      * find all questions for id of course
      * @param {number} courseId
      * @return {Observable<EntityArrayResponseType>}

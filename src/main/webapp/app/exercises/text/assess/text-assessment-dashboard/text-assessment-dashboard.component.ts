@@ -25,9 +25,6 @@ export class TextAssessmentDashboardComponent implements OnInit {
 
     private cancelConfirmationText: string;
 
-    // todo NR SE remove after refactoring hmtl function calls
-    getLatestSubmissionResult = getLatestSubmissionResult;
-
     constructor(
         private route: ActivatedRoute,
         private exerciseService: ExerciseService,
@@ -66,14 +63,15 @@ export class TextAssessmentDashboardComponent implements OnInit {
 
     private getSubmissions(): void {
         this.textSubmissionService
-            .getTextSubmissionsForExercise(this.exercise.id!, { submittedOnly: true })
+            .getTextSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
             .map((response: HttpResponse<TextSubmission[]>) =>
                 response.body!.map((submission: TextSubmission) => {
-                    if (getLatestSubmissionResult(submission)) {
+                    const tmpResult = getLatestSubmissionResult(submission);
+                    if (tmpResult) {
                         // reconnect some associations
-                        getLatestSubmissionResult(submission)!.submission = submission;
-                        getLatestSubmissionResult(submission)!.participation = submission.participation;
-                        submission.participation!.results = [getLatestSubmissionResult(submission)!];
+                        tmpResult!.submission = submission;
+                        tmpResult!.participation = submission.participation;
+                        submission.participation!.results = [tmpResult!];
                     }
 
                     return submission;

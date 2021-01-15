@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
-import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -73,16 +72,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
-            CourseService courseService, ExamService examService, FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository, participationService,
-                feedbackRepository);
+            FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository) {
+        super(submissionRepository, userService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
-        this.participationService = participationService;
         this.messagingTemplate = messagingTemplate;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.gitService = gitService;
@@ -140,7 +137,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
-            participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
+
+            participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
             // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             try {
                 continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
@@ -231,7 +229,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public void triggerInstructorBuildForExercise(Long exerciseId) throws EntityNotFoundException {
         // Async can't access the authentication object. We need to do any security checks before this point.
         SecurityUtils.setAuthorizationObject();
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId);
         if (optionalProgrammingExercise.isEmpty()) {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
         }
@@ -302,11 +301,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public ProgrammingSubmission createSubmissionWithLastCommitHashForParticipation(ProgrammingExerciseParticipation participation, SubmissionType submissionType)
             throws IllegalStateException {
         ObjectId lastCommitHash = getLastCommitHashForParticipation(participation);
+        // TODO: we should not create a new submission here, but simply use the existing one with the last CommitHash
         return createSubmissionWithCommitHashAndSubmissionType(participation, lastCommitHash, submissionType);
     }
 
     private ObjectId getLastCommitHashForParticipation(ProgrammingExerciseParticipation participation) throws IllegalStateException {
-        URL repoUrl = participation.getRepositoryUrlAsUrl();
+        var repoUrl = participation.getVcsRepositoryUrl();
         ObjectId lastCommitHash;
         try {
             lastCommitHash = gitService.getLastCommitHash(repoUrl);
@@ -320,7 +320,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     private ObjectId getLastCommitHashForTestRepository(ProgrammingExercise programmingExercise) throws IllegalStateException {
-        URL repoUrl = programmingExercise.getTestRepositoryUrlAsUrl();
+        var repoUrl = programmingExercise.getVcsTestRepositoryUrl();
         ObjectId lastCommitHash;
         try {
             lastCommitHash = gitService.getLastCommitHash(repoUrl);
@@ -346,7 +346,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 .findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
         // If no commitHash is provided, use the last commitHash for the test repository.
         if (commitHash == null) {
-            Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
+            Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
+                    .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
             if (programmingExercise.isEmpty()) {
                 throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " not found.");
             }
@@ -410,8 +411,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
         try {
             if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && (programmingExerciseParticipation.getBuildPlanId() == null
                     || !programmingExerciseParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
+
                 // in this case, we first have to resume the exercise: this includes that we again setup the build plan properly before we trigger it
-                participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
+                participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
                 // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             }
             continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
@@ -500,7 +502,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @throws EntityNotFoundException if the programming exercise does not exist.
      */
     public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
         if (optionalProgrammingExercise.isEmpty()) {
             throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " not found.");
         }
@@ -573,14 +576,17 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * Given an exercise id and a tutor id, it returns all the programming submissions where the tutor has a result associated
      *
      * @param exerciseId - the id of the exercise we are looking for
+     * @param correctionRound - the correctionRound for which the submissions should be fetched for
      * @param tutorId    - the id of the tutor we are interested in
      * @param examMode - flag should be set to ignore the test run submissions
      * @return a list of programming submissions
      */
-    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForExercise(long exerciseId, long tutorId, boolean examMode) {
+    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(long exerciseId, long tutorId, boolean examMode,
+            Long correctionRound) {
         List<StudentParticipation> participations;
         if (examMode) {
-            participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessorIgnoreTestRuns(exerciseId, tutorId);
+            participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutorId,
+                    correctionRound);
         }
         else {
             participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
@@ -594,14 +600,16 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * submissions
      *
      * @param exerciseId    - the id of the exercise we are interested into
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
      * @param examMode - set flag to ignore test run submissions for exam exercises
      * @return a list of programming submissions for the given exercise id
      */
-    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode) {
+    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode, Long correctionRound) {
         List<StudentParticipation> participations;
         if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(exerciseId,
+                    correctionRound);
         }
         else {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
@@ -620,11 +628,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param programmingExercise the exercise for which we want to retrieve a submission without manual result
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionEligibleForNewAssessment(ProgrammingExercise programmingExercise, boolean examMode) {
-        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(programmingExercise, examMode);
+    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionEligibleForNewAssessment(ProgrammingExercise programmingExercise, boolean examMode, long correctionRound) {
+        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(programmingExercise, examMode, correctionRound);
         if (submissionWithoutResult.isPresent()) {
             ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) submissionWithoutResult.get();
             return Optional.of(programmingSubmission);
@@ -663,10 +672,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * Get a programming submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
      *
      * @param exercise the exercise the submission should belong to
+     * @param correctionRound - the correction round we want our submission to have results for
      * @return a locked programming submission that needs an assessment
      */
-    public ProgrammingSubmission lockAndGetProgrammingSubmissionWithoutResult(ProgrammingExercise exercise) {
-        ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.hasExerciseGroup())
+    public ProgrammingSubmission lockAndGetProgrammingSubmissionWithoutResult(ProgrammingExercise exercise, long correctionRound) {
+        ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.hasExerciseGroup(), correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission for exercise " + exercise.getId() + " could not be found"));
         Result newManualResult = lockSubmission(programmingSubmission);
         return (ProgrammingSubmission) newManualResult.getSubmission();
@@ -675,7 +685,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     @Override
     protected Result lockSubmission(Submission submission) {
         Result automaticResult = submission.getLatestResult();
-        List<Feedback> automaticFeedbacks = automaticResult.getFeedbacks().stream().map(Feedback::copyProgrammingAutomaticFeedbackForManualResult).collect(Collectors.toList());
+        List<Feedback> automaticFeedbacks = automaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
         // Create a new result (manual result) and a new submission for it and set assessor and type to manual
         ProgrammingSubmission newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);

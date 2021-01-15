@@ -155,24 +155,24 @@ public class FileService implements DisposableBean {
 
         // check for known path to convert
         if (publicPath.contains("files/temp")) {
-            return FilePathService.getTempFilepath() + filename;
+            return Paths.get(FilePathService.getTempFilePath(), filename).toString();
         }
         if (publicPath.contains("files/drag-and-drop/backgrounds")) {
-            return FilePathService.getDragAndDropBackgroundFilepath() + filename;
+            return Paths.get(FilePathService.getDragAndDropBackgroundFilePath(), filename).toString();
         }
         if (publicPath.contains("files/drag-and-drop/drag-items")) {
-            return FilePathService.getDragItemFilepath() + filename;
+            return Paths.get(FilePathService.getDragItemFilePath(), filename).toString();
         }
         if (publicPath.contains("files/course/icons")) {
-            return FilePathService.getCourseIconFilepath() + filename;
+            return Paths.get(FilePathService.getCourseIconFilePath(), filename).toString();
         }
         if (publicPath.contains("files/attachments/lecture")) {
             String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
-            return FilePathService.getLectureAttachmentFilepath() + lectureId + filename;
+            return Paths.get(FilePathService.getLectureAttachmentFilePath(), lectureId, filename).toString();
         }
         if (publicPath.contains("files/attachments/attachment-unit")) {
             String attachmentUnitId = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "");
-            return FilePathService.getAttachmentUnitFilePath() + attachmentUnitId + filename;
+            return Paths.get(FilePathService.getAttachmentUnitFilePath(), attachmentUnitId, filename).toString();
         }
         if (publicPath.contains("files/file-upload-exercises")) {
             final var uploadSubPath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
@@ -183,7 +183,7 @@ public class FileService implements DisposableBean {
             }
             final var exerciseId = Long.parseLong(shouldBeExerciseId);
             final var submissionId = Long.parseLong(shouldBeSubmissionId);
-            return FileUploadSubmission.buildFilePath(exerciseId, submissionId) + filename;
+            return Paths.get(FileUploadSubmission.buildFilePath(exerciseId, submissionId), filename).toString();
         }
 
         // path is unknown => cannot convert
@@ -205,25 +205,25 @@ public class FileService implements DisposableBean {
         String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
 
         // check for known path to convert
-        if (actualPath.contains(FilePathService.getTempFilepath())) {
+        if (actualPath.contains(FilePathService.getTempFilePath())) {
             return "/api/files/temp/" + filename;
         }
-        if (actualPath.contains(FilePathService.getDragAndDropBackgroundFilepath())) {
+        if (actualPath.contains(FilePathService.getDragAndDropBackgroundFilePath())) {
             return "/api/files/drag-and-drop/backgrounds/" + id + "/" + filename;
         }
-        if (actualPath.contains(FilePathService.getDragItemFilepath())) {
+        if (actualPath.contains(FilePathService.getDragItemFilePath())) {
             return "/api/files/drag-and-drop/drag-items/" + id + "/" + filename;
         }
-        if (actualPath.contains(FilePathService.getCourseIconFilepath())) {
+        if (actualPath.contains(FilePathService.getCourseIconFilePath())) {
             return "/api/files/course/icons/" + id + "/" + filename;
         }
-        if (actualPath.contains(FilePathService.getLectureAttachmentFilepath())) {
+        if (actualPath.contains(FilePathService.getLectureAttachmentFilePath())) {
             return "/api/files/attachments/lecture/" + id + "/" + filename;
         }
         if (actualPath.contains(FilePathService.getAttachmentUnitFilePath())) {
             return "/api/files/attachments/attachment-unit/" + id + "/" + filename;
         }
-        if (actualPath.contains(FilePathService.getFileUploadExercisesFilepath())) {
+        if (actualPath.contains(FilePathService.getFileUploadExercisesFilePath())) {
             final var path = Paths.get(actualPath);
             final long exerciseId;
             try {
@@ -252,16 +252,16 @@ public class FileService implements DisposableBean {
     private File generateTargetFile(String originalFilename, String targetFolder, Boolean keepFileName) throws IOException {
         // determine the base for the filename
         String filenameBase = "Unspecified_";
-        if (targetFolder.equals(FilePathService.getDragAndDropBackgroundFilepath())) {
+        if (targetFolder.equals(FilePathService.getDragAndDropBackgroundFilePath())) {
             filenameBase = "DragAndDropBackground_";
         }
-        if (targetFolder.equals(FilePathService.getDragItemFilepath())) {
+        if (targetFolder.equals(FilePathService.getDragItemFilePath())) {
             filenameBase = "DragItem_";
         }
-        if (targetFolder.equals(FilePathService.getCourseIconFilepath())) {
+        if (targetFolder.equals(FilePathService.getCourseIconFilePath())) {
             filenameBase = "CourseIcon_";
         }
-        if (targetFolder.contains(FilePathService.getLectureAttachmentFilepath())) {
+        if (targetFolder.contains(FilePathService.getLectureAttachmentFilePath())) {
             filenameBase = "LectureAttachment_";
         }
         if (targetFolder.contains(FilePathService.getAttachmentUnitFilePath())) {
@@ -295,7 +295,7 @@ public class FileService implements DisposableBean {
                 filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
                         + fileExtension;
             }
-            String path = targetFolder + filename;
+            var path = Paths.get(targetFolder, filename).toString();
 
             newFile = new File(path);
             if (keepFileName && newFile.exists()) {
@@ -491,7 +491,7 @@ public class FileService implements DisposableBean {
 
         if (subDirectories != null) {
             for (String subDirectory : subDirectories) {
-                replaceVariablesInDirectoryName(directory.getAbsolutePath() + File.separator + subDirectory, targetString, replacementString);
+                replaceVariablesInDirectoryName(Paths.get(directory.getAbsolutePath(), subDirectory).toString(), targetString, replacementString);
             }
         }
     }
@@ -499,7 +499,7 @@ public class FileService implements DisposableBean {
     /**
      * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file
      *
-     * @see {@link #replaceVariablesInFile(String, Map) replaceVariablesInFile}
+     * {@link #replaceVariablesInFile(String, Map) replaceVariablesInFile}
      * @param startPath          the path where the start directory is located
      * @param replacements       the replacements that should be applied
      * @throws IOException if an issue occurs on file access for the replacement of the variables.
@@ -515,19 +515,20 @@ public class FileService implements DisposableBean {
         String[] files = directory.list((current, name) -> new File(current, name).isFile());
         if (files != null) {
             for (String file : files) {
-                replaceVariablesInFile(directory.getAbsolutePath() + File.separator + file, replacements);
+
+                replaceVariablesInFile(Paths.get(directory.getAbsolutePath(), file).toString(), replacements);
             }
         }
 
         // Recursive call: get all subdirectories
         String[] subDirectories = directory.list((current, name) -> new File(current, name).isDirectory());
         if (subDirectories != null) {
-            for (String subdirectory : subDirectories) {
-                if (subdirectory.equalsIgnoreCase(".git")) {
+            for (String subDirectory : subDirectories) {
+                if (subDirectory.equalsIgnoreCase(".git")) {
                     // ignore files in the '.git' folder
                     continue;
                 }
-                replaceVariablesInFileRecursive(directory.getAbsolutePath() + File.separator + subdirectory, replacements);
+                replaceVariablesInFileRecursive(Paths.get(directory.getAbsolutePath(), subDirectory).toString(), replacements);
             }
         }
     }
@@ -556,7 +557,7 @@ public class FileService implements DisposableBean {
     /**
      * This normalizes all line endings to UNIX-line-endings recursively from the startPath.
      *
-     * @see {@link #normalizeLineEndings(String) normalizeLineEndings}
+     * {@link #normalizeLineEndings(String) normalizeLineEndings}
      * @param startPath          the path where the start directory is located
      * @throws IOException if an issue occurs on file access for the normalizing of the line endings.
      */
@@ -599,7 +600,7 @@ public class FileService implements DisposableBean {
     /**
      * This converts all files to the UTF-8 encoding recursively from the startPath.
      *
-     * @see {@link #convertToUTF8(String) convertToUTF8}
+     * {@link #convertToUTF8(String) convertToUTF8}
      * @param startPath          the path where the start directory is located
      * @throws IOException if an issue occurs on file access when converting to UTF-8.
      */
@@ -672,5 +673,36 @@ public class FileService implements DisposableBean {
         }, delayInMinutes, TimeUnit.MINUTES);
 
         futures.put(path, future);
+    }
+
+    /**
+     * create a unique path by appending a folder named with the current milliseconds (e.g. 1609579674868) of the system
+     * Note: the method also tries to create the mentioned folder
+     *
+     * @param path the original path, e.g. /opt/artemis/repos-download
+     * @return the unique path as string, e.g. /opt/artemis/repos-download/1609579674868
+     */
+    public String getUniquePathString(String path) {
+        return getUniquePath(path).toString();
+    }
+
+    /**
+     * create a unique path by appending a folder named with the current milliseconds (e.g. 1609579674868) of the system
+     * Note: the method also tries to create the mentioned folder
+     *
+     * @param path the original path, e.g. /opt/artemis/repos-download
+     * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868
+     */
+    public Path getUniquePath(String path) {
+        var uniquePath = Paths.get(path, String.valueOf(System.currentTimeMillis()));
+        if (!Files.exists(uniquePath) && Files.isDirectory(uniquePath)) {
+            try {
+                Files.createDirectories(uniquePath);
+            }
+            catch (IOException e) {
+                log.warn("could not create the directories for the path " + uniquePath);
+            }
+        }
+        return uniquePath;
     }
 }

@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain.participation;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -39,24 +36,6 @@ public abstract class AbstractBaseProgrammingExerciseParticipation extends Parti
 
     public void setBuildPlanId(String buildPlanId) {
         this.buildPlanId = buildPlanId;
-    }
-
-    /**
-     * @return the repository URL as an URL Object
-     */
-    @JsonIgnore
-    public URL getRepositoryUrlAsUrl() {
-        if (repositoryUrl == null) {
-            return null;
-        }
-
-        try {
-            return new URL(repositoryUrl);
-        }
-        catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     @Override

@@ -7,7 +7,7 @@ import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { forkJoin } from 'rxjs';
-import { LearningGoalProgress } from 'app/course/learning-goals/learning-goal-progress-dtos.model';
+import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
 
 @Component({
     selector: 'jhi-course-learning-goals',
@@ -20,7 +20,7 @@ export class CourseLearningGoalsComponent implements OnInit {
 
     isLoading = false;
     learningGoals: LearningGoal[] = [];
-    learningGoalIdToLearningGoalProgress = new Map<number, LearningGoalProgress>();
+    learningGoalIdToLearningGoalProgress = new Map<number, IndividualLearningGoalProgress>();
 
     constructor(private activatedRoute: ActivatedRoute, private alertService: JhiAlertService, private learningGoalService: LearningGoalService) {}
 

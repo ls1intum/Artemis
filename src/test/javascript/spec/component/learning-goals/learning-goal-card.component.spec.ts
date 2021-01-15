@@ -10,8 +10,9 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { LearningGoalDetailModalComponent } from 'app/course/learning-goals/learning-goal-detail-modal/learning-goal-detail-modal.component';
 import { Component, Input } from '@angular/core';
 import { LearningGoal } from 'app/entities/learningGoal.model';
-import { LearningGoalProgress } from 'app/course/learning-goals/learning-goal-progress-dtos.model';
+import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
 import { By } from '@angular/platform-browser';
+import { LearningGoalCourseDetailModalComponent } from 'app/course/learning-goals/learning-goal-course-detail-modal/learning-goal-course-detail-modal.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,7 +39,8 @@ describe('LearningGoalCardComponent', () => {
             .then(() => {
                 learningGoalCardComponentFixture = TestBed.createComponent(LearningGoalCardComponent);
                 learningGoalCardComponent = learningGoalCardComponentFixture.componentInstance;
-                learningGoalCardComponent.ModalComponent = MockComponent(LearningGoalDetailModalComponent);
+                learningGoalCardComponent.DetailModalComponent = MockComponent(LearningGoalDetailModalComponent);
+                learningGoalCardComponent.CourseDetailModalComponent = MockComponent(LearningGoalCourseDetailModalComponent);
             });
     });
 
@@ -54,7 +56,8 @@ describe('LearningGoalCardComponent', () => {
     it('should display progress bar when progress is available', () => {
         const learningGoal = new LearningGoal();
         learningGoal.id = 1;
-        const learningGoalProgress = new LearningGoalProgress();
+        const learningGoalProgress = new IndividualLearningGoalProgress();
+        learningGoalProgress.studentId = 1;
         learningGoalProgress.learningGoalId = 1;
         learningGoalProgress.pointsAchievedByStudentInLearningGoal = 5;
         learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal = 10;

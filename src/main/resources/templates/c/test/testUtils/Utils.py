@@ -16,7 +16,7 @@ def studSaveStrComp(ref: str, other: str, strip: bool = True, ignoreCase: bool =
     """
     Student save compare between strings.
     Converts both to lower, strips them and removes all non alphanumeric chars
-    before comparision.
+    before comparison.
     """
     # Strip:
     if strip:
@@ -125,9 +125,9 @@ def printTester(text: str, addToCache: bool = True):
     """
     Prints the given string with the '[TESTER]: ' tag in front.
     Should be used instead of print() to make it easier for students
-    to determin what came from the tester and what from their programm.
+    to determine what came from the tester and what from their program.
     """
-    msg: str = "[{}][TESTER]: {}".format(__getCurDateTimeStr(), text)
+    msg: str = f"[{__getCurDateTimeStr()}][TESTER]: {text}"
     __printStdout(msg)
     if addToCache:
         testerOutputCache.append(msg)
@@ -137,9 +137,9 @@ def printProg(text: str, addToCache: bool = True):
     """
     Prints the given string with the '[PROG]: ' tag in front.
     Should be used instead of print() to make it easier for students
-    to determin what came from the tester and what from their programm.
+    to determine what came from the tester and what from their program.
     """
-    msg: str = "[{}][PROG]: {}".format(__getCurDateTimeStr(), text.rstrip())
+    msg: str = f"[{__getCurDateTimeStr()}][PROG]: {text.rstrip()}"
     __printStdout(msg)
     if addToCache:
         testerOutputCache.append(msg)
@@ -153,10 +153,10 @@ def shortenText(text: str, maxNumChars: int):
     """
 
     if len(text) > maxNumChars:
-        s: str = "\n[And {} chars more...]".format(len(text) - maxNumChars)
+        s: str = f"\n[And {len(text) - maxNumChars} chars more...]"
         l: int = maxNumChars - len(s)
         if l > 0:
-            return "{}{}".format(text[:l], s)
+            return f"{text[:l]}{s}"
         else:
             printTester("Unable to limit output to {} chars! Not enough space.".format(
                 maxNumChars), False)
@@ -166,7 +166,7 @@ def shortenText(text: str, maxNumChars: int):
 
 class ReadCache(Thread):
     """
-    Helper class that makes sure we only get one line (seperated by '\n')
+    Helper class that makes sure we only get one line (separated by '\n')
     if we read multiple lines at once.
     """
     __cacheList: List[str]
@@ -179,6 +179,7 @@ class ReadCache(Thread):
         Thread.__init__(self)
         self.__cacheList = []
         self.__cacheFile = open(filePath, "w")
+        self.__shouldRun = False
 
         # Emulate a terminal:
         self.__outFd, self.__outSlaveFd = openpty()
@@ -192,11 +193,11 @@ class ReadCache(Thread):
         try:
             os.close(self.__outFd)
         except OSError as e:
-            printTester("Closing stdout FD failed with: {}".format(e))
+            printTester(f"Closing stdout FD failed with: {e}")
         try:
             os.close(self.__outSlaveFd)
         except OSError as e:
-            printTester("Closing stdout slave FD failed with: {}".format(e))
+            printTester(f"Closing stdout slave FD failed with: {e}")
         self.__shouldRun = False
         Thread.join(self)
 
@@ -207,6 +208,24 @@ class ReadCache(Thread):
         except OSError:
             return False
         return True
+    
+    @staticmethod
+    def __decode(data: bytes):
+        """
+        Tries to decode the given string as UTF8.
+        In case this fails, it will fall back to ASCII encoding.
+        Returns the decoded result.
+
+        ---
+
+        data: bytes
+            The data that should be decoded.
+        """
+        try:
+            return data.decode("utf8", "replace")
+        except UnicodeDecodeError as e:
+            printTester(f"Failed to decode line as utf8. Using ascii ecoding - {e}")
+            return data.decode("ascii", "replace")
 
     def run(self):
         self.__shouldRun = True
@@ -223,7 +242,7 @@ class ReadCache(Thread):
             except OSError:
                 break
             if data is not None:
-                dataStr: str = data.decode("ascii", "replace")
+                dataStr: str = self.__decode(data)
                 try:
                     self.__cacheFile.write(dataStr)
                 except UnicodeEncodeError:
@@ -280,13 +299,13 @@ class PWrap:
         try:
             os.close(self.__stdinFd)
         except OSError as e:
-            printTester("Closing stdin FD failed with: {}".format(e))
+            printTester(f"Closing stdin FD failed with: {e}")
         except AttributeError as e:
             pass
         try:
             os.close(self.__stdinMasterFd)
         except OSError as e:
-            printTester("Closing stdin master FD failed with: {}".format(e))
+            printTester(f"Closing stdin master FD failed with: {e}")
         except AttributeError as e:
             pass
 
@@ -314,7 +333,7 @@ class PWrap:
             env["LOGNAME"] = pwRecord.pw_name
             env["USER"] = pwRecord.pw_name
             env["PWD"] = self.cwd
-            printTester("Starting process as: {}".format(pwRecord.pw_name))
+            printTester(f"Starting process as: {pwRecord.pw_name}")
 
             # Start the actual process:
             self.prog = Popen(self.cmd,
@@ -346,16 +365,17 @@ class PWrap:
             # self.__printIds("Finished demotion.") # Will print inside the new process and reports via the __stdOutLineCache
         return result
 
-    def __checkForRootPrivileges(self):
+    @staticmethod
+    def __checkForRootPrivileges():
         """
-        Checks if the current process has root premissions.
+        Checks if the current process has root permissions.
         Fails if not.
         """
         if os.geteuid() != 0:
             raise PermissionError("The tester has to be executed as root to be able to switch users!")
 
     def __printIds(self, msg: str):
-        printTester("uid, gid = {}, {}; {}".format(os.getuid(), os.getgid(), msg))
+        printTester(f"uid, gid = {os.getuid()}, {os.getgid()}; {msg}")
 
     def __readLine(self, lineCache: ReadCache, blocking: bool):
         """
@@ -368,7 +388,10 @@ class PWrap:
         """
         while blocking:
             if not lineCache.canReadLine():
-                sleep(0.1)
+                if not self.hasTerminated():
+                    sleep(0.1)
+                else:
+                    break
             else:
                 line: str = lineCache.readLine()
                 return line
@@ -413,7 +436,7 @@ class PWrap:
         Writes the given data string to the processes stdin.
         """
         os.write(self.__stdinFd, data.encode())
-        printTester("Wrote: {}".format(data))
+        printTester(f"Wrote: {data}")
 
     def hasTerminated(self):
         """
@@ -422,11 +445,11 @@ class PWrap:
         if self.prog is None:
             return True
 
-        # Make sure we wait 0.25 seconds after the process has terminated to
+        # Make sure we wait 1.0 seconds after the process has terminated to
         # make sure all the output arrived:
         elif self.prog.poll() is not None:
             if self.__terminatedTime:
-                if (datetime.now() - self.__terminatedTime).total_seconds() > 0.25:
+                if (datetime.now() - self.__terminatedTime).total_seconds() > 1.0:
                     return True
             else:
                 self.__terminatedTime = datetime.now()
@@ -462,7 +485,7 @@ class PWrap:
 
     def kill(self, signal: int = signal.SIGKILL):
         """
-        Sends the given signal to the complet process group started by the process.
+        Sends the given signal to the complete process group started by the process.
 
         Returns True if the process existed and had to be killed. Else False.
 

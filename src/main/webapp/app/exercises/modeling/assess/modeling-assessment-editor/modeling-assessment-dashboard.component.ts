@@ -10,7 +10,7 @@ import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -53,9 +53,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     busy: boolean;
     userId: number;
     canOverrideAssessments: boolean;
-
-    // todo NR SE remove after refactoring hmtl function calls
-    getLatestSubmissionResult = getLatestSubmissionResult;
 
     constructor(
         private route: ActivatedRoute,
@@ -113,7 +110,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
      */
     getSubmissions(forceReload: boolean) {
         this.modelingSubmissionService
-            .getModelingSubmissionsForExercise(this.modelingExercise.id!, { submittedOnly: true })
+            .getModelingSubmissionsForExerciseByCorrectionRound(this.modelingExercise.id!, { submittedOnly: true })
             .subscribe((res: HttpResponse<ModelingSubmission[]>) => {
                 // only use submissions that have already been submitted (this makes sure that unsubmitted submissions are not shown
                 // the server should have filtered these submissions already
@@ -122,6 +119,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                     const tmpResult = getLatestSubmissionResult(submission);
                     if (tmpResult) {
                         // reconnect some associations
+                        submission.latestResult = tmpResult;
                         tmpResult!.submission = submission;
                         tmpResult!.participation = submission.participation;
                         if (submission.participation) {
@@ -133,6 +131,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                 this.filterSubmissions(forceReload);
                 this.assessedSubmissions = this.submissions.filter((submission) => {
                     const result = getLatestSubmissionResult(submission);
+                    setLatestSubmissionResult(submission, result);
                     return result && result!.completionDate && result!.score;
                 }).length;
             });

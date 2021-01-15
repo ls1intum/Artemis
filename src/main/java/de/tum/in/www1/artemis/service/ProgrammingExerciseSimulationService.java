@@ -69,16 +69,14 @@ public class ProgrammingExerciseSimulationService {
      * @return returns the modified and stored programming exercise
      * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      */
-    @Transactional
+    @Transactional // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExerciseWithoutVersionControlAndContinuousIntegrationAvailable(ProgrammingExercise programmingExercise) {
         programmingExercise.generateAndSetProjectKey();
 
         programmingExerciseService.initParticipations(programmingExercise);
         setURLsAndBuildPlanIDsForNewExerciseWithoutVersionControlAndContinuousIntegrationAvailable(programmingExercise);
-        // Save participations to get the ids required for the webhooks
-        programmingExerciseService.connectBaseParticipationsToExerciseAndSave(programmingExercise);
 
-        // save to get the id required for the webhook
+        programmingExerciseService.connectBaseParticipationsToExerciseAndSave(programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // The creation of the webhooks must occur after the initial push, because the participation is

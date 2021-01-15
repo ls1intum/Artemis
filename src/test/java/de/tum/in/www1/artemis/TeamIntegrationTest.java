@@ -48,9 +48,9 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private User tutor;
 
-    private final static int numberOfStudentsInCourse = 3;
+    private static final int numberOfStudentsInCourse = 3;
 
-    private final static long nonExistingId = 123456789L;
+    private static final long nonExistingId = 123456789L;
 
     private String resourceUrl() {
         return "/api/exercises/" + exercise.getId() + "/teams";

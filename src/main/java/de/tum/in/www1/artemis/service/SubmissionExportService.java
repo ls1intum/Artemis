@@ -43,7 +43,7 @@ public abstract class SubmissionExportService {
     }
 
     @Value("${artemis.submission-export-path}")
-    private String SUBMISSION_EXPORT_PATH;
+    private String submissionExportPath;
 
     /**
      * Exports student submissions to a zip file for an exercise
@@ -109,8 +109,8 @@ public abstract class SubmissionExportService {
         String zipGroupName = course.getTitle() + "-" + exercise.getTitle() + "-submissions";
         String zipFileName = zipGroupName + "-" + ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT) + ".zip";
 
-        Path submissionsFolderPath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedSubmissions", zipGroupName);
-        Path zipFilePath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedSubmissions", zipFileName);
+        Path submissionsFolderPath = Paths.get(submissionExportPath, "zippedSubmissions", zipGroupName);
+        Path zipFilePath = Paths.get(submissionExportPath, "zippedSubmissions", zipFileName);
 
         File submissionFolder = submissionsFolderPath.toFile();
         if (!submissionFolder.exists() && !submissionFolder.mkdirs()) {

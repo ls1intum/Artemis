@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -53,6 +54,86 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("select distinct exercise from Exercise exercise left join fetch exercise.exerciseHints left join fetch exercise.studentQuestions left join fetch exercise.categories where exercise.id = :#{#exerciseId}")
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * calculates the average score and the participation rate of students for each given individual course exercise
+     * by using the last result (rated or not)
+     * @param exerciseIds - exercise ids to count the statistics for
+     * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
+     */
+    @Query("""
+            SELECT
+            e.id,
+            AVG(r.score),
+            Count(Distinct p.student.id),
+            (SELECT count(distinct u.id)
+            FROM User u
+            WHERE
+            e.course.studentGroupName member of u.groups
+            AND e.course.teachingAssistantGroupName not member of u.groups
+            AND e.course.instructorGroupName not member of u.groups
+            )
+            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            WHERE e.id IN :exerciseIds
+            AND e.course.studentGroupName member of p.student.groups
+            AND e.course.teachingAssistantGroupName not member of p.student.groups
+            AND e.course.instructorGroupName not member of p.student.groups
+            AND r.score IS NOT NULL
+            AND
+            s.id = (
+                SELECT max(s2.id)
+                FROM Submission s2 JOIN s2.results r2
+                WHERE s2.participation.id = s.participation.id
+                AND r2.score IS NOT NULL
+                )
+            GROUP BY e.id
+            """)
+    List<Object[]> calculateExerciseStatisticsForIndividualCourseExercises(@Param("exerciseIds") List<Long> exerciseIds);
+
+    /**
+     * calculates the average score and the participation rate of students for each given team course exercise
+     * by using the last result (rated or not)
+     * @param exerciseIds - exercise ids to count the statistics for
+     * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
+     */
+    @Query("""
+            SELECT
+            e.id,
+            AVG(r.score),
+            Count(Distinct p.team.id),
+            (SELECT count(distinct t.id)
+             FROM Team t JOIN t.students st2
+             WHERE st2.id IN (
+                 SELECT DISTINCT u.id
+                FROM User u
+                WHERE
+                e.course.studentGroupName member of u.groups
+                AND e.course.teachingAssistantGroupName not member of u.groups
+                AND e.course.instructorGroupName not member of u.groups
+             )
+            )
+            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r JOIN p.team.students st
+            WHERE e.id IN :exerciseIds
+            AND r.score IS NOT NULL
+            AND
+            st.id IN (
+                 SELECT DISTINCT u.id
+                FROM User u
+                WHERE
+                e.course.studentGroupName member of u.groups
+                AND e.course.teachingAssistantGroupName not member of u.groups
+                AND e.course.instructorGroupName not member of u.groups
+             )
+             AND
+            s.id = (
+                SELECT max(s2.id)
+                FROM Submission s2 JOIN s2.results r2
+                WHERE s2.participation.id = s.participation.id
+                AND r2.score IS NOT NULL
+                )
+            GROUP BY e.id
+            """)
+    List<Object[]> calculateExerciseStatisticsForTeamCourseExercises(@Param("exerciseIds") List<Long> exerciseIds);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);

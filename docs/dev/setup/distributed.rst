@@ -57,8 +57,8 @@ This is problematic if the instances change dynamically.
 Artemis uses a discovery service to solve the issue (named `JHipster Registry
 <https://www.jhipster.tech/jhipster-registry/>`_).
 
-Disovery service
-^^^^^^^^^^^^^^^^
+Discovery service
+^^^^^^^^^^^^^^^^^
 JHipster registry contains Eureka, the discovery service where all instances can register themselves and fetch the other registered instances.
 
 Eureka can be configured like this within Artemis:
@@ -83,6 +83,12 @@ Eureka can be configured like this within Artemis:
 
 ``{{ artemis_eureka_urls }}`` must be the URL where Eureka is reachable, ``{{ artemis_ip_address }}`` must be the IP under which this instance is reachable and ``{{ artemis_eureka_instance_id }}`` must be a unique identifier for this instance.
 You also have to setup the value ``jhipster.registry.password`` to the password of the registry (which you will set later).
+
+Note that Hazelcast (which requires Eureka) is by default binding to `127.0.0.1` to prevent other instances to form a cluster without manual intervention.
+If you set up the cluster on multiple machines (which you should do for a production setup), you have to set the value ``spring.hazelcast.interface`` to the ip-address of the machine.
+Hazelcast will then bind on this interface rather than `127.0.0.1`, which allows other instances to establish connections to the instance.
+This setting must be set for every instance, but you have to make sure to adjust the ip-address correspondingly.
+
 
 Setup
 -----
@@ -216,7 +222,7 @@ Download the latest version of the jhipster-registry from GitHub, e.g. by using
         client:
             service-url:
                 defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
-            
+
 **nginx config**
 
 You still have to make the registry available:
@@ -224,7 +230,7 @@ You still have to make the registry available:
 1. ``sudo vim /etc/nginx/sites-available/registry.conf``
 
   .. code::
-  
+
     server {
         listen 443 ssl http2;
         server_name REGISTRY_FQDN;
@@ -242,7 +248,7 @@ You still have to make the registry available:
             proxy_connect_timeout   300;
             proxy_http_version      1.1;
             proxy_redirect          http://         https://;
-            
+
             proxy_set_header    Host                $http_host;
             proxy_set_header    X-Real-IP           $remote_addr;
             proxy_set_header    X-Forwarded-For     $proxy_add_x_forwarded_for;
@@ -323,23 +329,23 @@ It relays message between instances:
                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                 xmlns:xi="http://www.w3.org/2001/XInclude"
                 xsi:schemaLocation="urn:activemq /schema/artemis-configuration.xsd">
-    
+
     <core xmlns="urn:activemq:core" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="urn:activemq:core ">
-    
+
         <name>0.0.0.0</name>
-    
+
         <journal-pool-files>10</journal-pool-files>
-    
+
         <acceptors>
             <!-- STOMP Acceptor. -->
             <acceptor name="stomp">tcp://0.0.0.0:61613?tcpSendBufferSize=1048576;tcpReceiveBufferSize=1048576;protocols=STOMP;useEpoll=true;heartBeatToConnectionTtlModifier=6</acceptor>
         </acceptors>
-    
+
         <connectors>
             <connector name="netty-connector">tcp://localhost:61616</connector>
         </connectors>
-    
+
         <security-settings>
             <security-setting match="#">
                 <permission type="createNonDurableQueue" roles="amq"/>
@@ -355,7 +361,7 @@ It relays message between instances:
                 <permission type="manage" roles="amq"/>
             </security-setting>
         </security-settings>
-    
+
         <address-settings>
             <!--default for catch all-->
             <address-setting match="#">
@@ -382,13 +388,13 @@ It relays message between instances:
     [Unit]
     Description=ActiveMQ-Broker
     After=network.target
-    
+
     [Service]
     User=artemis
     WorkingDirectory=/opt/broker/broker1
     ExecStart=/opt/broker/broker1/bin/artemis run
-    
-    
+
+
     [Install]
     WantedBy=multi-user.target
 
@@ -406,7 +412,7 @@ Add the following values to your Artemis config:
 
   .. code:: yaml
 
-    spring: 
+    spring:
         websocket:
             broker:
                 username: USERNAME

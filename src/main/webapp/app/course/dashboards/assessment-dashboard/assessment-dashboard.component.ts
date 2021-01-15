@@ -33,7 +33,8 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
     finishedExercises: Exercise[] = [];
     exercises: Exercise[] = [];
     numberOfSubmissions = new DueDateStat();
-    numberOfAssessments = new DueDateStat();
+    totalNumberOfAssessments = new DueDateStat();
+    numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()];
     numberOfTutorAssessments = 0;
     numberOfComplaints = 0;
     numberOfOpenComplaints = 0;
@@ -131,7 +132,8 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                 (res: HttpResponse<StatsForDashboard>) => {
                     this.stats = StatsForDashboard.from(res.body!);
                     this.numberOfSubmissions = this.stats.numberOfSubmissions;
-                    this.numberOfAssessments = this.stats.numberOfAssessments;
+                    this.totalNumberOfAssessments = this.stats.totalNumberOfAssessments;
+                    this.numberOfAssessmentsOfCorrectionRounds = this.stats.numberOfAssessmentsOfCorrectionRounds;
                     this.numberOfComplaints = this.stats.numberOfComplaints;
                     this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
                     this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
@@ -149,7 +151,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                     }
 
                     if (this.numberOfSubmissions.total > 0) {
-                        this.totalAssessmentPercentage = Math.floor((this.numberOfAssessments.total / this.numberOfSubmissions.total) * 100);
+                        this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / this.numberOfSubmissions.total) * 100);
                     }
                 },
                 (response: string) => this.onError(response),
@@ -157,12 +159,22 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
         }
     }
 
+    /**
+     * devides exercises into finished and unfinished exercises.
+     *
+     * @param exercises - the exercises that should get filtered
+     * @private
+     */
     private extractExercises(exercises?: Exercise[]) {
         if (exercises && exercises.length > 0) {
             const [finishedExercises, unfinishedExercises] = partition(
                 exercises,
                 (exercise) =>
-                    exercise.numberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime &&
+                    // finds if all assessments for all correctionRounds are finished
+                    exercise.numberOfAssessmentsOfCorrectionRounds
+                        ?.map((round) => round.inTime === exercise.numberOfSubmissions?.inTime)
+                        .reduce((acc, current) => acc && current) &&
+                    exercise.totalNumberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime &&
                     exercise.numberOfOpenComplaints === 0 &&
                     exercise.numberOfOpenMoreFeedbackRequests === 0,
             );

@@ -88,6 +88,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     // Additional options for import
     public recreateBuildPlans = false;
     public updateTemplate = false;
+    public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
     public projectTypes: ProjectType[] = [];
 
@@ -249,6 +250,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     private createProgrammingExerciseForImport(params: Params) {
         this.isImport = true;
+        this.originalStaticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
         if (params['courseId'] && params['examId'] && params['groupId']) {
             this.exerciseGroupService.find(params['courseId'], params['examId'], params['groupId']).subscribe((res) => {
@@ -400,6 +402,22 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     onStaticCodeAnalysisChanged() {
+        // On import: If SCA mode changed, activate recreation of build plans and update of the template
+        if (this.isImport && this.programmingExercise.staticCodeAnalysisEnabled !== this.originalStaticCodeAnalysisEnabled) {
+            this.recreateBuildPlans = true;
+            this.updateTemplate = true;
+        }
+
+        if (!this.programmingExercise.staticCodeAnalysisEnabled) {
+            this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
+        }
+    }
+
+    onRecreateBuildPlanOrUpdateTemplateChange() {
+        if (!this.recreateBuildPlans || !this.updateTemplate) {
+            this.programmingExercise.staticCodeAnalysisEnabled = this.originalStaticCodeAnalysisEnabled;
+        }
+
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
@@ -435,5 +453,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 this.problemStatementLoaded = true;
             },
         );
+    }
+
+    /**
+     * checking if at least one of Online Editor or Offline Ide is selected
+     */
+    validIdeSelection() {
+        return this.programmingExercise.allowOnlineEditor || this.programmingExercise.allowOfflineIde;
     }
 }

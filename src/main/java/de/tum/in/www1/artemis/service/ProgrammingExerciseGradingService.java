@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -55,12 +56,14 @@ public class ProgrammingExerciseGradingService {
 
     private final ResultService resultService;
 
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
     private final AuditEventRepository auditEventRepository;
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
-            ResultService resultService, AuditEventRepository auditEventRepository) {
+            ResultService resultService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.participationService = participationService;
@@ -69,6 +72,7 @@ public class ProgrammingExerciseGradingService {
         this.messagingTemplate = messagingTemplate;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.programmingAssessmentService = programmingAssessmentService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.resultService = resultService;
         this.auditEventRepository = auditEventRepository;
     }
@@ -115,8 +119,67 @@ public class ProgrammingExerciseGradingService {
                 // This method will return without triggering the build if the submission is not of type TEST.
                 triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), result.getId());
             }
+
+            if (!isSolutionParticipation && !isTemplateParticipation) {
+
+                // check if a manual result exists, if so we want to clone and update this with the new updated test-case and sca feedback
+                Optional<ProgrammingExerciseStudentParticipation> studentParticipation = programmingExerciseParticipationService
+                        .findStudentParticipationWithLatestManualResultAndFeedbacksAndRelatedSubmissionAndAssessor(participation.getId());
+
+                Optional<Result> latestManualResult = studentParticipation.flatMap(p -> p.getResults().stream().findFirst());
+
+                if (latestManualResult.isPresent()) {
+                    Result newManualResult = getNewManualResultFromResults(result, latestManualResult.get(), programmingExercise);
+                    return Optional.of(newManualResult);
+                }
+
+            }
         }
         return Optional.ofNullable(result);
+    }
+
+    /**
+     * Combines a new automatic result and an existing manual result into a new manual result
+     * @param automaticResult The new automatic result
+     * @param manualResult The latest manual result for the same submission
+     * @param programmingExercise The programming exercise
+     * @return A new manual result
+     */
+    private Result getNewManualResultFromResults(Result automaticResult, Result manualResult, ProgrammingExercise programmingExercise) {
+
+        // create a new manual result for the same submission as the automatic result
+        Result newResult = programmingSubmissionService.saveNewEmptyResult(automaticResult.getSubmission());
+
+        newResult.setAssessor(manualResult.getAssessor());
+        newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        // this makes it the most recent result, but optionally keeps the draft state of an unfinished manual result
+        newResult.setCompletionDate(manualResult.getCompletionDate() != null ? automaticResult.getCompletionDate().plusSeconds(1) : null);
+        newResult.setHasFeedback(manualResult.getHasFeedback());
+        newResult.setRated(manualResult.isRated());
+
+        // copy all feedback from the automatic result
+        for (Feedback feedback : automaticResult.getFeedbacks()) {
+            Feedback newFeedback = feedback.copyFeedback();
+            newResult.addFeedback(newFeedback);
+        }
+
+        // copy only the non-automatic feedback from the manual result
+        for (Feedback feedback : manualResult.getFeedbacks()) {
+            if (feedback != null && feedback.getType() != FeedbackType.AUTOMATIC) {
+                Feedback newFeedback = feedback.copyFeedback();
+                newResult.addFeedback(newFeedback);
+            }
+        }
+
+        String resultString = updateManualResultString(automaticResult.getResultString(), newResult, programmingExercise);
+        newResult.setResultString(resultString);
+
+        // workaround to prevent that result.submission suddenly turns into a proxy and cannot be used any more later after returning this method
+        Submission tmpSubmission = newResult.getSubmission();
+        newResult = resultRepository.save(newResult);
+        newResult.setSubmission(tmpSubmission);
+
+        return newResult;
     }
 
     /**
@@ -490,13 +553,24 @@ public class ProgrammingExerciseGradingService {
             newResultString += issueTerm;
         }
         if (result.isManualResult()) {
-            // Calculate different scores for totalScore calculation and add points and maxScore to result string
-            double maxScore = getMaxScoreRespectingZeroPointExercises(exercise);
-            double points = programmingAssessmentService.calculateTotalScore(result);
-            result.setScore(points, maxScore);
-            newResultString += ", " + result.createResultString(points, maxScore);
+            newResultString = updateManualResultString(newResultString, result, exercise);
         }
         result.setResultString(newResultString);
+    }
+
+    /**
+     * Update the result string of a manual result with the achieved points.
+     * @param resultString The automatic part of the result string
+     * @param result The result to add the result string
+     * @param exercise The programming exercise
+     * @return The updated result string
+     */
+    private String updateManualResultString(String resultString, Result result, ProgrammingExercise exercise) {
+        // Calculate different scores for totalScore calculation and add points and maxScore to result string
+        double maxScore = getMaxScoreRespectingZeroPointExercises(exercise);
+        double points = programmingAssessmentService.calculateTotalScore(result);
+        result.setScore(points, maxScore);
+        return resultString + ", " + result.createResultString(points, maxScore);
     }
 
     /**

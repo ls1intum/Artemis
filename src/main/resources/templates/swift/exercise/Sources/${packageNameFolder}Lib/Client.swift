@@ -1,7 +1,6 @@
 ﻿import Foundation
 
 public class Client {
-
     // TODO: Implement BubbleSort
     // TODO: Implement MergeSort
 
@@ -12,16 +11,14 @@ public class Client {
     // TODO: Create and implement a Policy class as described in the problem statement
 
     /**
-     * Main method.
-     * Add code to demonstrate your implementation here.
-     */
+     Main method.
+     Add code to demonstrate your implementation here.
+    */
     public static func main() {
-
         // TODO: Init Context and Policy
 
-
         //  Run 10 times to simulate different sorting strategies
-        for _ in 0 ..< 10  {
+        for _ in 0 ..< 10 {
             let dates: [Date] = createRandomDatesList()
 
             // TODO: Configure context
@@ -36,14 +33,12 @@ public class Client {
         }
     }
 
-    /**
-     * Generates an Array of random Date objects with random Array size between 5 and 15.
-     */
+    /// Generates an Array of random Date objects with random Array size between 5 and 15.
     private static func createRandomDatesList() -> [Date] {
         let listLength: Int = randomIntegerWithin(5, 15)
         var list = [Date]()
 
-        let dateFormat: DateFormatter = DateFormatter()
+        let dateFormat = DateFormatter()
         dateFormat.dateFormat = "dd.MM.yyyy"
         let lowestDate: Date! = dateFormat.date(from: "08.11.2016")
         let highestDate: Date! = dateFormat.date(from: "15.04.2017")
@@ -55,31 +50,23 @@ public class Client {
         return list
     }
 
-    /**
-     *Creates a random Date within given Range
-     */
+    /// Creates a random Date within given Range
     private static func randomDateWithin(_ low: Date, _ high: Date) -> Date {
         let randomSeconds: Double = randomDoubleWithin(low.timeIntervalSince1970, high.timeIntervalSince1970)
         return Date(timeIntervalSince1970: randomSeconds)
     }
 
-    /**
-     * Creates a random Double within given Range
-     */
+    /// Creates a random Double within given Range
     private static func randomDoubleWithin(_ low: Double, _ high: Double) -> Double {
         return Double.random(in: low...high)
     }
 
-    /**
-     * Creates a random Integer within given Range
-     */
+    /// Creates a random Integer within given Range
     private static func randomIntegerWithin(_ low: Int, _ high: Int) -> Int {
         return Int.random(in: low...high)
     }
 
-    /**
-     * Prints out given Array of Date objects
-     */
+    /// Prints out given Array of Date objects
     private static func printDateList(_ list: [Date]) {
         print(list)
     }

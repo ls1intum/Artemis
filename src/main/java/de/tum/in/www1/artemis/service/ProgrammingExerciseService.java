@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -123,10 +122,10 @@ public class ProgrammingExerciseService {
      * @param programmingExercise The programmingExercise that should be setup
      * @return The newly setup exercise
      * @throws InterruptedException If something during the communication with the remote Git repository went wrong
-     * @throws GitAPIException      If something during the communication with the remote Git repositroy went wrong
+     * @throws GitAPIException      If something during the communication with the remote Git repository went wrong
      * @throws IOException          If the template files couldn't be read
      */
-    @Transactional
+    @Transactional // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final var user = userService.getUser();
@@ -174,9 +173,9 @@ public class ProgrammingExerciseService {
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
         // Get URLs for repos
-        URL exerciseRepoUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
-        URL testsRepoUrl = programmingExercise.getTestRepositoryUrlAsUrl();
-        URL solutionRepoUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
+        var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
+        var testsRepoUrl = programmingExercise.getVcsTestRepositoryUrl();
+        var solutionRepoUrl = programmingExercise.getVcsSolutionRepositoryUrl();
 
         continuousIntegrationService.get().createProjectForExercise(programmingExercise);
         // template build plan
@@ -196,12 +195,14 @@ public class ProgrammingExerciseService {
      * @param programmingExercise the new programming exercise
      */
     public void connectBaseParticipationsToExerciseAndSave(ProgrammingExercise programmingExercise) {
-        final var templateParticipation = programmingExercise.getTemplateParticipation();
-        final var solutionParticipation = programmingExercise.getSolutionParticipation();
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        var solutionParticipation = programmingExercise.getSolutionParticipation();
         templateParticipation.setProgrammingExercise(programmingExercise);
         solutionParticipation.setProgrammingExercise(programmingExercise);
-        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+        templateParticipation = templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        solutionParticipation = solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+        programmingExercise.setTemplateParticipation(templateParticipation);
+        programmingExercise.setSolutionParticipation(solutionParticipation);
     }
 
     private void setURLsAndBuildPlanIDsForNewExercise(ProgrammingExercise programmingExercise) {
@@ -227,12 +228,12 @@ public class ProgrammingExerciseService {
      * @param programmingExercise the programming exercise that should be set up
      * @param user                the User that performed the action (used as Git commit author)
      */
-    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user) throws IOException, GitAPIException, InterruptedException {
+    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user) throws GitAPIException, InterruptedException {
 
         // Get URLs for repos
-        URL exerciseRepoUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
-        URL testsRepoUrl = programmingExercise.getTestRepositoryUrlAsUrl();
-        URL solutionRepoUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
+        var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
+        var testsRepoUrl = programmingExercise.getVcsTestRepositoryUrl();
+        var solutionRepoUrl = programmingExercise.getVcsSolutionRepositoryUrl();
 
         // Checkout repositories
         Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl, true);
@@ -285,7 +286,7 @@ public class ProgrammingExerciseService {
         try {
             setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, projectTypeExerciseResources, projectTypeExercisePrefix, "Exercise", programmingExercise, user);
             // The template repo can be re-written so we can unprotect the master branch.
-            versionControlService.get().unprotectBranch(programmingExercise.getTemplateRepositoryUrlAsUrl(), "master");
+            versionControlService.get().unprotectBranch(programmingExercise.getVcsTemplateRepositoryUrl(), "master");
 
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix, "Solution", programmingExercise, user);
             setupTestTemplateAndPush(testRepo, testResources, testPrefix, projectTypeTestResources, projectTypeTestPrefix, "Test", programmingExercise, user);
@@ -450,13 +451,23 @@ public class ProgrammingExerciseService {
 
                     try {
                         Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
-                        fileService.copyResources(projectTypeTestFileResources, projectTypePrefix, packagePath, false);
+                        // filter non existing resources to avoid exceptions
+                        List<Resource> existingProjectTypeTestFileResources = new ArrayList<>();
+                        for (Resource resource : projectTypeTestFileResources) {
+                            if (resource.exists()) {
+                                existingProjectTypeTestFileResources.add(resource);
+                            }
+                        }
+                        if (!existingProjectTypeTestFileResources.isEmpty()) {
+                            fileService.copyResources(existingProjectTypeTestFileResources.toArray(new Resource[] {}), projectTypePrefix, packagePath, false);
+                        }
                     }
                     catch (FileNotFoundException ignored) {
                     }
                 }
 
                 // Copy static code analysis config files
+                // TODO: rene: SWIFT - if we keep the parent folder, we need to enable showing the hidden .swiftlint.yml file otherwise the OE shows an empty folder
                 if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
                     String staticCodeAnalysisConfigPath = templatePath + "/staticCodeAnalysisConfig/**/*.*";
                     Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
@@ -605,7 +616,8 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     public ProgrammingExercise findWithTemplateParticipationAndSolutionParticipationById(Long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
         if (programmingExercise.isPresent()) {
             return programmingExercise.get();
         }
@@ -622,7 +634,7 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     public ProgrammingExercise findWithTemplateAndSolutionParticipationWithResultsById(Long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExerciseId);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationLatestResultById(programmingExerciseId);
         if (programmingExercise.isPresent()) {
             return programmingExercise.get();
         }
@@ -678,7 +690,7 @@ public class ProgrammingExerciseService {
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException      If the checkout fails
      */
-    public void combineAllCommitsOfRepositoryIntoOne(URL repoUrl) throws InterruptedException, GitAPIException {
+    public void combineAllCommitsOfRepositoryIntoOne(VcsRepositoryUrl repoUrl) throws InterruptedException, GitAPIException {
         Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl, true);
         gitService.combineAllCommitsIntoInitialCommit(exerciseRepository);
     }
@@ -695,7 +707,8 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement, @Nullable String notificationText)
             throws EntityNotFoundException, IllegalAccessException {
-        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
         if (programmingExerciseOpt.isEmpty()) {
             throw new EntityNotFoundException("Programming exercise not found with id: " + programmingExerciseId);
         }
@@ -728,7 +741,7 @@ public class ProgrammingExerciseService {
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException      If the checkout fails
      */
-    public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath, User user)
+    public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL, VcsRepositoryUrl testRepoURL, String testsPath, User user)
             throws IOException, GitAPIException, InterruptedException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL, true);
@@ -799,10 +812,11 @@ public class ProgrammingExerciseService {
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
         // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId).get();
-        final var templateRepositoryUrlAsUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
-        final var solutionRepositoryUrlAsUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
-        final var testRepositoryUrlAsUrl = programmingExercise.getTestRepositoryUrlAsUrl();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
+                .get();
+        final var templateRepositoryUrlAsUrl = programmingExercise.getVcsTemplateRepositoryUrl();
+        final var solutionRepositoryUrlAsUrl = programmingExercise.getVcsSolutionRepositoryUrl();
+        final var testRepositoryUrlAsUrl = programmingExercise.getVcsTestRepositoryUrl();
 
         if (deleteBaseReposBuildPlans) {
             final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();

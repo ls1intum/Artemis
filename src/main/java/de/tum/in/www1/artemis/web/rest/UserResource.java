@@ -220,9 +220,10 @@ public class UserResource {
 
     @PutMapping("/users/notification-date")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<UserDTO> updateUserNotificationDate() {
+    public ResponseEntity<Void> updateUserNotificationDate() {
         log.debug("REST request to update notification date for logged in user");
-        Optional<UserDTO> updatedUser = Optional.of(userService.updateUserNotificationReadDate()).map(UserDTO::new);
-        return ResponseUtil.wrapOrNotFound(updatedUser);
+        User user = userService.getUser();
+        userService.updateUserNotificationReadDate(user.getId());
+        return ResponseEntity.ok().build();
     }
 }

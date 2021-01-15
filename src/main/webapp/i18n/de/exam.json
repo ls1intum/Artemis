@@ -57,6 +57,9 @@
                 "numberOfExercisesInExamNotSet": "Die Anzahl an Aufgaben in der Klausur ist nicht gesetzt.",
                 "tooFewExerciseGroups": "Die Anzahl der Aufgabengruppen ist zu klein.",
                 "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß."
+            },
+            "error": {
+                "cannotRegisterInstructor": "Du kannst keine Dozenten oder Administratoren zu Klausuren anmelden."
             }
         },
         "examScores": {
@@ -200,6 +203,7 @@
             "examStudentReviewEnd": "Ende der Klausureinsicht",
             "maxPoints": "Anzahl an erreichbaren Punkten",
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
+            "numberOfCorrectionRoundsInExam": "Anzahl der Korrektur Runden der Klausur",
             "randomizeQuestionOrder": "Zufällige Reihenfolge der Aufgabengruppen",
             "startText": "Klausurbeginn Text",
             "endText": "Klausurende Text",
@@ -245,9 +249,10 @@
                     "buttonLabel": "Studenten importieren",
                     "dialogTitle": "Studenten importieren nach:",
                     "introText": "Mit diesem Dialog können Studenten in diese Klausur importiert werden.",
+                    "dialogText": "Jeder Eintrag in der Datei muss einen Wert für die Matrikel Nummer oder den Login beinhalten.<br>Werte für Vor- und Nachnamen sind optional.",
                     "csvFile": {
                         "label": ".csv Datei auswählen",
-                        "tooltip": "Bitte wählen Sie die .csv Datei mit den Studenten zum Import aus."
+                        "tooltip": "Bitte wähle die .csv Datei mit den Studierenden zum Import aus. Pro Eintrag muss entweder die 'LOGIN' oder 'REGISTRATION_NUMBER' Spalte ausgefüllt sein."
                     },
                     "studentsForImport": {
                         "label": "Studenten zum Importieren",

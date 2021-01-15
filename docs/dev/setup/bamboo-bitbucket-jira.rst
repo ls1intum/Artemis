@@ -35,11 +35,28 @@ Docker-Compose
 Before you start the docker-compose, check if the bamboo version in the
 ``build.gradle`` (search for ``com.atlassian.bamboo:bamboo-specs``) is
 equal to the bamboo version number in the Dockerfile of bamboo stored in
-``src/main/docker/bamboo/Dockerfile``. If the version number is not
-equal adjust the version number in the Dockerfile.
+``src/main/docker/bamboo/Dockerfile`` or ``src/main/docker/bamboo/swift/Dockerfile``.
+If the version number is not equal adjust the version number in the Dockerfile.
 
-Execute the docker-compose file ``atlassian.yml`` stored in
-``src/main/docker`` e.g. with
+In case you want to enable Swift programming exercises, you need to change
+the specified Dockerfile in the docker-compose file ``atlassian.yml`` stored in ``src/main/docker``.
+To use the Swift Dockerfile, change the following:
+
+    ::
+
+       bamboo:
+               container_name: artemis_bamboo
+               build: bamboo
+
+to:
+
+    ::
+
+       bamboo:
+               container_name: artemis_bamboo
+               build: bamboo/swift
+
+Execute the docker-compose file e.g. with
 ``docker-compose -f src/main/docker/atlassian.yml up -d``
 
 Error Handling: It can happen that there is an overload with other
@@ -176,7 +193,7 @@ under ``localhost:7990``.
    be removed in the future.
 
    9.1 Personal access token for Bamboo.
-   
+
       - Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens -> Create token
 
           .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
@@ -195,7 +212,7 @@ under ``localhost:7990``.
    9.2 Personal access token for Bitbucket.
 
       - Log in as the admin user and go to Bitbucket -> View Profile (top right corner) -> Manage account -> Personal access tokens -> Create token
-      
+
           .. figure:: bamboo-bitbucket-jira/bitbucket-create-token.png
              :align: center
 
@@ -219,6 +236,29 @@ under ``localhost:7990``.
 
         .. figure:: bamboo-bitbucket-jira/bamboo_xsrf_disable.png
            :align: center
+
+11. Add a SSH key for the admin user
+
+    Artemis can clone/push the repositories during setup and for the online code editor using SSH.
+    If the SSH key is not present, the username + token will be used as fallback (and all git operations will use HTTP(S) instead of SSH).
+    If the token is also not present, the username + password will be used as fallback (again, using HTTP(S)).
+
+    You first have to create a SSH key (locally), e.g. using ``ssh-keygen`` (more information on how to create a SSH key can be found e.g. at `ssh.com <https://www.ssh.com/ssh/keygen/>`__ or at `atlassian.com <https://confluence.atlassian.com/bitbucketserver076/creating-ssh-keys-1026534841.html>`__).
+
+    The list of supported ciphers can be found at `Apache Mina <https://github.com/apache/mina-sshd>`__.
+
+    It is recommended to use a password to secure the private key, but it is not mandatory.
+
+    Please note that the private key file **must** be named ``ìd_rsa``, ``id_dsa``, ``id_ecdsa`` or ``id_ed25519``, depending on the ciphers used.
+
+    You now have to extract the public key and add it to Bitbucket.
+    Open the public key file (usually called ``id_rsa.pub`` (when using RSA)) and copy it's content (you can also use ``cat id_rsa.pub`` to show the public key).
+
+    Navigate to ``BITBUCKET-URL/plugins/servlet/ssh/account/keys`` and add the SSH key by pasting the content of the public key.
+
+    ``<ssh-key-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename). It will be used in the configuration of Artemis to specify where Artemis should look for the key and store the ``known_hosts`` file.
+
+    ``<ssh-private-key-password>`` is the password used to secure the private key. It is also needed for the configuration of Artemis, but can be omitted if no password was set (e.g. for development environments).
 
 Configure Artemis
 -----------------
@@ -245,6 +285,8 @@ Configure Artemis
                user:  <bitbucket-admin-user>
                password: <bitbuckt-admin-password>
                token: <bitbucket-admin-token>
+               ssh-private-key-folder-path: <ssh-private-key-folder-path>
+               ssh-private-key-password: <ssh-private-key-password>
            continuous-integration:
                url: http://localhost:8085
                user:  <bamboo-admin-user>
@@ -270,7 +312,7 @@ e.g.:
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling
 
 Please read :doc:`../setup` for more details.
 

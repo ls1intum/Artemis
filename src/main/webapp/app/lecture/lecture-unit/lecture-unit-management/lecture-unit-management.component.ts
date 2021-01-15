@@ -46,13 +46,14 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.unsubscribe();
         this.navigationEndSubscription.unsubscribe();
     }
+
     ngOnInit(): void {
         this.navigationEndSubscription = this.router.events.pipe(filter((value) => value instanceof NavigationEnd)).subscribe(() => {
             this.loadData();
         });
 
         this.updateOrderSubject = new Subject();
-        this.activatedRoute.params.subscribe((params) => {
+        this.activatedRoute.parent!.params.subscribe((params) => {
             this.lectureId = +params['lectureId'];
             if (this.lectureId) {
                 this.loadData();

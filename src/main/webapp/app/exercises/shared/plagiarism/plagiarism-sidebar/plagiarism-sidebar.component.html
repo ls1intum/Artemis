@@ -1,6 +1,16 @@
 <aside class="plagiarism-sidebar">
-    <ul class="plagiarism-list" *ngIf="comparisons">
-        <li class="plagiarism-list-item" [class.selected]="idx === activeIndex" (click)="selectIndex.emit(idx)" *ngFor="let comparison of comparisons; let idx = index">
+    <div class="plagiarism-info-tab" [class.selected]="showRunDetails" (click)="displayRunDetails()">
+        <span>Run details</span>
+        <fa-icon icon="chevron-right"></fa-icon>
+    </div>
+
+    <ul class="plagiarism-list" *ngIf="comparisons && comparisons.length">
+        <li
+            *ngFor="let comparison of pagedComparisons; let idx = index"
+            class="plagiarism-list-item"
+            [class.selected]="!showRunDetails && getPagedIndex(idx) === activeIndex"
+            (click)="selectIndex.emit(getPagedIndex(idx))"
+        >
             <div class="plagiarism-list-item-content">
                 <span
                     class="plagiarism-status-indicator"
@@ -11,7 +21,7 @@
                 ></span>
 
                 <div class="plagiarism-list-item-info">
-                    <span class="plagiarism-name"> #{{ idx + 1 }} </span>
+                    <span class="plagiarism-name"> #{{ getPagedIndex(idx) + 1 }} </span>
 
                     <span class="plagiarism-list-item-students">
                         <span>{{ comparison.submissionA.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}, </span>
@@ -23,4 +33,18 @@
             <span class="plagiarism-percentage">({{ comparison.similarity || 0 | number: '1.2-2' }} %)</span>
         </li>
     </ul>
+
+    <div class="plagiarism-empty" *ngIf="!comparisons || !comparisons.length">
+        {{ 'artemisApp.plagiarism.not-found' | translate }}
+    </div>
+
+    <div class="plagiarism-paging">
+        <div class="plagiarism-paging-left" [class.disabled]="currentPage === 0" (click)="handlePageLeft()">
+            <fa-icon icon="arrow-left"></fa-icon>
+        </div>
+        <div class="plagiarism-paging-center">{{ currentPage + 1 }}/{{ numberOfPages + 1 }}</div>
+        <div class="plagiarism-paging-right" [class.disabled]="currentPage === numberOfPages" (click)="handlePageRight()">
+            <fa-icon icon="arrow-right"></fa-icon>
+        </div>
+    </div>
 </aside>

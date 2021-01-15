@@ -8,6 +8,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
+import { now } from 'moment';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { filter } from 'rxjs/operators';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
@@ -23,7 +24,6 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { now } from 'moment';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
@@ -125,7 +125,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private loadOptimalSubmission(exerciseId: number): void {
-        this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(exerciseId, true).subscribe(
+        this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
 
@@ -361,9 +361,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
             },
-            () => {
+            (httpErrorResponse: HttpErrorResponse) => {
                 this.jhiAlertService.clear();
-                this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+                const error = httpErrorResponse.error;
+                if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                    this.jhiAlertService.error(error.message, error.params);
+                } else {
+                    this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+                }
             },
         );
     }

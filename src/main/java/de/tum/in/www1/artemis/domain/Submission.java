@@ -63,6 +63,8 @@ public abstract class Submission extends DomainObject {
 
     /**
      * A submission can have multiple results, therefore, results are persisted and removed with a submission.
+     * CacheStrategy.NONSTRICT_READ_WRITE leads to problems with the deletion of a submission, because first the results
+     * are deleted in a @Transactional method.
      */
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
@@ -88,10 +90,10 @@ public abstract class Submission extends DomainObject {
             return null;
         }
 
-        ZonedDateTime initilizationDate = this.participation.getInitializationDate();
+        ZonedDateTime initializationDate = this.participation.getInitializationDate();
         ZonedDateTime submissionDate = this.getSubmissionDate();
 
-        return Duration.between(initilizationDate, submissionDate).toMinutes();
+        return Duration.between(initializationDate, submissionDate).toMinutes();
     }
 
     /**

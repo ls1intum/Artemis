@@ -4,7 +4,7 @@ import { Observable, of } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-
+import * as moment from 'moment';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -17,6 +17,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ExamInformationDTO } from 'app/entities/exam-information.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -54,6 +55,11 @@ describe('Exam Management Component', () => {
         courseManagementService = TestBed.inject(CourseManagementService);
     });
 
+    afterEach(function () {
+        // completely restore all fakes created through the sandbox
+        sinon.restore();
+    });
+
     it('Should call findAllExamsForCourse on init', () => {
         // GIVEN
         const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
@@ -83,5 +89,54 @@ describe('Exam Management Component', () => {
 
         // THEN
         expect(service.delete).to.have.been.calledOnce;
+    });
+
+    it('Should return true for examHasFinished when component has no exam information ', () => {
+        // GIVEN
+        comp.examIdToExamInformation = new Map<number, ExamInformationDTO>();
+
+        // WHEN
+        const examHasFinished = comp.examHasFinished(exam.id!);
+
+        // THEN
+        expect(examHasFinished).to.be.true;
+    });
+
+    it('Should return true for examHasFinished when component has information of other exams', () => {
+        // GIVEN
+        comp.examIdToExamInformation = new Map<number, ExamInformationDTO>();
+        comp.examIdToExamInformation.set(1, new ExamInformationDTO());
+
+        // WHEN
+        const examHasFinished = comp.examHasFinished(exam.id!);
+
+        // THEN
+        expect(examHasFinished).to.be.true;
+    });
+
+    it('Should return true for examHasFinished when exam is in the past ', () => {
+        // GIVEN
+        comp.examIdToExamInformation = new Map<number, ExamInformationDTO>();
+        const examInformation: ExamInformationDTO = { latestIndividualEndDate: moment().subtract(1, 'days') };
+        comp.examIdToExamInformation.set(exam.id!, examInformation);
+
+        // WHEN
+        const examHasFinished = comp.examHasFinished(exam.id!);
+
+        // THEN
+        expect(examHasFinished).to.be.true;
+    });
+
+    it('Should return false for examHasFinished when exam is in the future ', () => {
+        // GIVEN
+        comp.examIdToExamInformation = new Map<number, ExamInformationDTO>();
+        const examInformation: ExamInformationDTO = { latestIndividualEndDate: moment().add(1, 'minute') };
+        comp.examIdToExamInformation.set(exam.id!, examInformation);
+
+        // WHEN
+        const examHasFinished = comp.examHasFinished(exam.id!);
+
+        // THEN
+        expect(examHasFinished).to.be.false;
     });
 });

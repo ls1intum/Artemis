@@ -6,8 +6,6 @@ import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -22,8 +20,6 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
  */
 @Service
 public class AuthorizationCheckService {
-
-    private final Logger log = LoggerFactory.getLogger(AuthorizationCheckService.class);
 
     private final UserService userService;
 

@@ -58,17 +58,13 @@
                     <td>{{ i + 1 }}</td>
                     <td>{{ submission.participation.participantName }}</td>
                     <td>
-                        <span *ngIf="getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.assessor"
-                            >{{ getLatestSubmissionResult(submission)!.assessor!.name }} (lock)</span
-                        >
+                        <span *ngIf="submission.latestResult && submission.latestResult!.assessor">{{ submission.latestResult!.assessor!.name }} (lock)</span>
                     </td>
                     <td>
                         <button
                             *ngIf="
-                                (submission.optimal && !(getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.assessor)) ||
-                                (getLatestSubmissionResult(submission) &&
-                                    getLatestSubmissionResult(submission)!.assessor &&
-                                    getLatestSubmissionResult(submission)!.assessor!.id === userId) ||
+                                (submission.optimal && !(submission.latestResult && submission.latestResult!.assessor)) ||
+                                (submission.latestResult && submission.latestResult!.assessor && submission.latestResult!.assessor!.id === userId) ||
                                 canOverrideAssessments
                             "
                             [routerLink]="[
@@ -161,24 +157,20 @@
                     </td>
                     <td>{{ submission.participation.submissions.length }}</td>
                     <td>
-                        <span *ngIf="getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.score != null"
-                            >{{ getLatestSubmissionResult(submission)!.score }} %</span
-                        >
+                        <span *ngIf="submission.latestResult && submission.latestResult!.score != null">{{ submission.latestResult!.score }} %</span>
                     </td>
                     <td>
                         {{ submission.durationInMinutes }}
                         minutes
                     </td>
-                    <td>{{ getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.assessmentType }}</td>
+                    <td>{{ submission.latestResult && submission.latestResult!.assessmentType }}</td>
                     <td>
-                        <span *ngIf="getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.assessor">{{
-                            getLatestSubmissionResult(submission)!.assessor!.name
-                        }}</span>
+                        <span *ngIf="submission.latestResult && submission.latestResult!.assessor">{{ submission.latestResult!.assessor!.name }}</span>
                     </td>
                     <td>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                             <button
-                                *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && !getLatestSubmissionResult(submission) && modelingExercise.course"
+                                *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && !submission.latestResult && modelingExercise.course"
                                 [routerLink]="[
                                     '/course-management',
                                     modelingExercise.course?.id,
@@ -195,7 +187,7 @@
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
                             </button>
                             <button
-                                *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && !getLatestSubmissionResult(submission) && modelingExercise.exerciseGroup"
+                                *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && !submission.latestResult && modelingExercise.exerciseGroup"
                                 [routerLink]="[
                                     '/course-management',
                                     modelingExercise.exerciseGroup?.exam.course.id,
@@ -213,7 +205,7 @@
                             </button>
                         </span>
                         <button
-                            *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && getLatestSubmissionResult(submission) && modelingExercise.course"
+                            *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && submission.latestResult && modelingExercise.course"
                             [routerLink]="[
                                 '/course-management',
                                 modelingExercise.course?.id,
@@ -230,7 +222,7 @@
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
                         </button>
                         <button
-                            *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && getLatestSubmissionResult(submission) && modelingExercise.exerciseGroup"
+                            *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && submission.latestResult && modelingExercise.exerciseGroup"
                             [routerLink]="[
                                 '/course-management',
                                 modelingExercise.exerciseGroup?.exam.course.id,
@@ -248,7 +240,7 @@
                         </button>
                         <span *ngIf="modelingExercise.isAtLeastInstructor">
                             <button
-                                *ngIf="submission && getLatestSubmissionResult(submission) && !getLatestSubmissionResult(submission)!.completionDate"
+                                *ngIf="submission && submission.latestResult && !submission.latestResult!.completionDate"
                                 (click)="cancelAssessment(submission)"
                                 [disabled]="busy"
                                 class="btn btn-outline-secondary btn-sm mb-1"

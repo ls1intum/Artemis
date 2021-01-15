@@ -10,7 +10,7 @@ import java.util.StringJoiner;
 public enum StaticCodeAnalysisTool {
 
     SPOTBUGS(ProgrammingLanguage.JAVA, "spotbugs:spotbugs", "spotbugsXml.xml"), CHECKSTYLE(ProgrammingLanguage.JAVA, "checkstyle:checkstyle", "checkstyle-result.xml"),
-    PMD(ProgrammingLanguage.JAVA, "pmd:pmd", "pmd.xml"), PMD_CPD(ProgrammingLanguage.JAVA, "pmd:cpd", "cpd.xml");
+    PMD(ProgrammingLanguage.JAVA, "pmd:pmd", "pmd.xml"), PMD_CPD(ProgrammingLanguage.JAVA, "pmd:cpd", "cpd.xml"), SWIFTLINT(ProgrammingLanguage.SWIFT, "", "swiftlint-result.xml");
 
     private final ProgrammingLanguage language;
 

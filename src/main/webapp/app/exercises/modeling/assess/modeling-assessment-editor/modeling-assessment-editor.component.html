@@ -10,6 +10,8 @@
     [result]="result"
     [assessmentsAreValid]="assessmentsAreValid"
     [complaint]="complaint"
+    [exercise]="modelingExercise"
+    [submission]="submission"
     [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed"
     (save)="onSaveAssessment()"
     (submit)="onSubmitAssessment()"
@@ -33,6 +35,7 @@
             [feedbacks]="result?.feedbacks"
             [highlightedElements]="highlightedElements"
             (feedbackChanged)="onFeedbackChanged($event)"
+            [explanation]="submission.explanationText"
         ></jhi-modeling-assessment>
         <jhi-collapsable-assessment-instructions
             *ngIf="modelingExercise"

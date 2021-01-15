@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.File;
+import java.nio.file.Paths;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,42 +13,42 @@ public class FilePathService {
     // We can not use a normal service here, as some classes (in the domain package) require this service (or depend on another service that depend on this service), were we cannot
     // use auto-injection
     // TODO: Rework this behaviour be removing the dependencies to services (like FileService) from the domain package
-    private static String FILE_UPLOAD_PATH;
+    private static String fileUploadPath;
 
     @Value("${artemis.file-upload-path}")
     public void setFileUploadPathStatic(String fileUploadPath) {
-        FilePathService.FILE_UPLOAD_PATH = fileUploadPath;
+        FilePathService.fileUploadPath = fileUploadPath;
     }
 
-    public static String getTempFilepath() {
-        return FILE_UPLOAD_PATH + File.separator + "images" + File.separator + "temp" + File.separator;
+    public static String getTempFilePath() {
+        return Paths.get(fileUploadPath, "images", "temp").toString();
     }
 
-    public static String getDragAndDropBackgroundFilepath() {
-        return FILE_UPLOAD_PATH + File.separator + "images" + File.separator + "drag-and-drop" + File.separator + "backgrounds" + File.separator;
+    public static String getDragAndDropBackgroundFilePath() {
+        return Paths.get(fileUploadPath, "images", "drag-and-drop", "backgrounds").toString();
     }
 
-    public static String getDragItemFilepath() {
-        return FILE_UPLOAD_PATH + File.separator + "images" + File.separator + "drag-and-drop" + File.separator + "drag-items" + File.separator;
+    public static String getDragItemFilePath() {
+        return Paths.get(fileUploadPath, "images", "drag-and-drop", "drag-items").toString();
     }
 
-    public static String getCourseIconFilepath() {
-        return FILE_UPLOAD_PATH + File.separator + "images" + File.separator + "course" + File.separator + "icons" + File.separator;
+    public static String getCourseIconFilePath() {
+        return Paths.get(fileUploadPath, "images", "course", "icons").toString();
     }
 
-    public static String getLectureAttachmentFilepath() {
-        return FILE_UPLOAD_PATH + File.separator + "attachments" + File.separator + "lecture" + File.separator;
+    public static String getLectureAttachmentFilePath() {
+        return Paths.get(fileUploadPath, "attachments", "lecture").toString();
     }
 
     public static String getAttachmentUnitFilePath() {
-        return FILE_UPLOAD_PATH + File.separator + "attachments" + File.separator + "attachment-unit" + File.separator;
+        return Paths.get(fileUploadPath, "attachments", "attachment-unit").toString();
     }
 
-    public static String getFileUploadExercisesFilepath() {
-        return FILE_UPLOAD_PATH + File.separator + "file-upload-exercises" + File.separator;
+    public static String getFileUploadExercisesFilePath() {
+        return Paths.get(fileUploadPath, "file-upload-exercises").toString();
     }
 
-    public static String getMarkdownFilepath() {
-        return FILE_UPLOAD_PATH + File.separator + "markdown" + File.separator;
+    public static String getMarkdownFilePath() {
+        return Paths.get(fileUploadPath, "markdown").toString();
     }
 }

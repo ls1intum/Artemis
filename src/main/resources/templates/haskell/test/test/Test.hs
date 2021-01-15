@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 module Test where
 
 import qualified Interface as Sub
@@ -68,10 +69,12 @@ main = do
   testRunner $ localOption timeoutOption tests
   where
     resultsPath = "test-reports/results.xml"
-    -- you can change the test runner to terminal output for local testing
-    -- run tests with xml output
+#ifdef PROD 
+    -- on the server (production mode), run tests with xml output
     testRunner = defaultMainWithIngredients [antXMLRunner]
-    -- run tests with terminal output
-    -- testRunner = defaultMain
+#else
+    -- locally, run tests with terminal output
+    testRunner = defaultMain
+#endif    
     -- by default, run for 1 second
     timeoutOption = mkTimeout (1 * 10^6)

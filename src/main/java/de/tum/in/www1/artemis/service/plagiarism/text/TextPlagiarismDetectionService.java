@@ -39,21 +39,6 @@ public class TextPlagiarismDetectionService {
     }
 
     /**
-     * Convenience method to extract all latest submissions from a TextExercise and compute pair-wise distances.
-     *
-     * @param exerciseWithParticipationsAndSubmissions Text Exercise with fetched participations and submissions
-     * @param comparisonStrategy the chosen comparison strategy
-     * @param comparisonStrategyName the name of the strategy for logging purpose
-     * @param minimumSimilarity the minimum similarity (between 0 and 1) that should be reported in the response
-     * @return Map of text submission pairs and similarity score
-     */
-    public Map<Set<TextSubmission>, Double> compareSubmissionsForExerciseWithStrategy(TextExercise exerciseWithParticipationsAndSubmissions,
-            TextComparisonStrategy comparisonStrategy, String comparisonStrategyName, double minimumSimilarity) {
-        final List<TextSubmission> textSubmissions = textSubmissionsForComparison(exerciseWithParticipationsAndSubmissions);
-        return compareSubmissionsForExerciseWithStrategy(textSubmissions, comparisonStrategy, comparisonStrategyName, minimumSimilarity);
-    }
-
-    /**
      * Pairwise comparison of text submissions using a TextComparisonStrategy
      *
      * @param textSubmissions List of text submissions
@@ -89,13 +74,20 @@ public class TextPlagiarismDetectionService {
      * Reduce a TextExercise Object to a list of latest text submissions. Filters the empty ones because they do not need to be compared
      *
      * @param exerciseWithParticipationsAndSubmissions TextExercise with fetched participations and ssubmissions
+     * @param minimumScore consider only submissions whose score is greater or equal to this value
+     * @param minimumSize consider only submissions whose size is greater or equal to this value
      * @return List containing the latest text submission for every participation
      */
-    public List<TextSubmission> textSubmissionsForComparison(TextExercise exerciseWithParticipationsAndSubmissions) {
+    public List<TextSubmission> textSubmissionsForComparison(TextExercise exerciseWithParticipationsAndSubmissions, int minimumScore, int minimumSize) {
         var textSubmissions = exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().map(Participation::findLatestSubmission)
                 .filter(Optional::isPresent).map(Optional::get).filter(submission -> submission instanceof TextSubmission).map(submission -> (TextSubmission) submission)
+                .filter(submission -> minimumSize == 0 || submission.getText() != null && submission.getText().length() >= minimumSize)
+                .filter(submission -> minimumScore == 0
+                        || submission.getLatestResult() != null && submission.getLatestResult().getScore() != null && submission.getLatestResult().getScore() >= minimumScore)
                 .collect(toList());
+
         log.info("Found " + textSubmissions.size() + " text submissions in exercise " + exerciseWithParticipationsAndSubmissions.getId());
+
         return textSubmissions.parallelStream().filter(textSubmission -> !textSubmission.isEmpty()).collect(toUnmodifiableList());
     }
 
@@ -103,23 +95,28 @@ public class TextPlagiarismDetectionService {
      * Download all submissions of the exercise, run JPlag, and return the result
      *
      * @param textExercise to detect plagiarism for
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
+     * @param minimumScore consider only submissions whose score is greater or equal to this value
+     * @param minimumSize consider only submissions whose size is greater or equal to this value
      * @return a zip file that can be returned to the client
      * @throws ExitException is thrown if JPlag exits unexpectedly
      */
-    public TextPlagiarismResult checkPlagiarism(TextExercise textExercise) throws ExitException {
+    public TextPlagiarismResult checkPlagiarism(TextExercise textExercise, float similarityThreshold, int minimumScore, int minimumSize) throws ExitException {
         long start = System.nanoTime();
-        // TODO: offer the following options in the client
-        // 1) filter empty submissions, i.e. repositories with no student commits
-        // 2) filter submissions with a result score of 0%
 
         // TODO: why do we have such a strange folder name?
         final var submissionsFolderName = "./tmp/submissions";
         final var submissionFolderFile = new File(submissionsFolderName);
         submissionFolderFile.mkdirs();
 
-        final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise);
+        final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise, minimumScore, minimumSize);
         final var submissionsSize = textSubmissions.size();
         log.info("Save text submissions for JPlag text comparison with " + submissionsSize + " submissions");
+
+        if (textSubmissions.size() < 2) {
+            log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
+            return new TextPlagiarismResult();
+        }
 
         textSubmissions.forEach(submission -> {
             submission.setResults(new ArrayList<>());
@@ -144,7 +141,7 @@ public class TextPlagiarismDetectionService {
 
         // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
         // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
-        options.setSimilarityThreshold(50f);
+        options.setSimilarityThreshold(similarityThreshold);
 
         log.info("Start JPlag Text comparison");
         JPlag jplag = new JPlag(options);

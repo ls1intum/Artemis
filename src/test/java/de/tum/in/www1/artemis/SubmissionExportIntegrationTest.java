@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.zip.ZipFile;
@@ -117,7 +117,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
         String[] parts = submission.getFilePath().split("/");
         String fileName = parts[parts.length - 1];
-        File file = Path.of(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), fileName).toFile();
+        File file = Paths.get(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), fileName).toFile();
 
         File parent = file.getParentFile();
         if (!parent.exists() && !parent.mkdirs()) {

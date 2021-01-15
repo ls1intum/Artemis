@@ -49,7 +49,7 @@
             </div>
             <div class="col-4 text-center">
                 <p class="font-weight-bold">{{ 'artemisApp.assessmentDashboard.totalAssessments' | translate }}:</p>
-                <p class="h3">{{ numberOfAssessments.total }} / {{ numberOfSubmissions.total }} ({{ totalAssessmentPercentage }}%)</p>
+                <p class="h3">{{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total }} ({{ totalAssessmentPercentage }}%)</p>
             </div>
         </div>
 
@@ -142,11 +142,12 @@
                             [class.guided-tour]="exercise === exerciseForGuidedTour"
                             [tutorParticipation]="exercise.tutorParticipations[0]"
                             [numberOfSubmissions]="exercise.numberOfSubmissions"
-                            [numberOfAssessments]="exercise.numberOfAssessments"
+                            [totalNumberOfAssessments]="exercise.totalNumberOfAssessments"
                             [numberOfComplaints]="exercise.numberOfComplaints"
                             [numberOfOpenComplaints]="exercise.numberOfOpenComplaints"
                             [numberOfMoreFeedbackRequests]="exercise.numberOfMoreFeedbackRequests"
                             [numberOfOpenMoreFeedbackRequests]="exercise.numberOfOpenMoreFeedbackRequests"
+                            [numberOfAssessmentsOfCorrectionRounds]="exercise.numberOfAssessmentsOfCorrectionRounds"
                         >
                         </jhi-tutor-participation-graph>
                     </td>

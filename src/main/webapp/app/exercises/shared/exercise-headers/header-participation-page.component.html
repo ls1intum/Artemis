@@ -18,7 +18,7 @@
         </div>
         <div class="col-12 col-sm-auto flex-sm-shrink-0 col-lg-4 mt-4 mt-lg-0 d-flex flex-column justify-content-center align-items-start">
             <table class="exercise-details-table">
-                <tr *ngIf="exercise.maxScore">
+                <tr *ngIf="exercise.maxScore != undefined">
                     <td>
                         <h6>{{ 'artemisApp.courseOverview.exerciseDetails.points' | translate }}</h6>
                     </td>

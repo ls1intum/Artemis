@@ -52,7 +52,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Mock
     TextClusterRepository textClusterRepository;
 
-    private final static String SUBMIT_API_ENDPOINT = "http://localhost/submit";
+    private static final String SUBMIT_API_ENDPOINT = "http://localhost/submit";
 
     AtheneService atheneService;
 

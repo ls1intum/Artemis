@@ -10,6 +10,10 @@ export class ComplaintResponse implements BaseEntity {
     public submittedTime?: Moment;
     public complaint?: Complaint;
     public reviewer?: User;
+    // transient property that will be calculated on the server
+    public isCurrentlyLocked?: boolean;
+    // transient property that will be calculated on the server
+    public lockEndDate?: Moment;
 
     constructor() {}
 }

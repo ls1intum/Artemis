@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -17,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -26,6 +24,8 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -51,6 +51,8 @@ public class ExerciseService {
 
     private final QuizScheduleService quizScheduleService;
 
+    private final ResultService resultService;
+
     private final ExamRepository examRepository;
 
     private final StudentExamRepository studentExamRepository;
@@ -69,10 +71,11 @@ public class ExerciseService {
 
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
-            QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
-            AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService,
-            StudentExamRepository studentExamRepository, ExamRepository exampRepository) {
+            QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ResultService resultService,
+            ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository,
+            ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamRepository studentExamRepository, ExamRepository exampRepository) {
         this.exerciseRepository = exerciseRepository;
+        this.resultService = resultService;
         this.examRepository = exampRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
@@ -382,17 +385,39 @@ public class ExerciseService {
         }
         else {
             numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
-            numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
-                    ComplaintType.COMPLAINT);
+            numberOfComplaintResponses = complaintResponseRepository
+                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT);
             numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
-            numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
-                    ComplaintType.MORE_FEEDBACK);
+            numberOfMoreFeedbackComplaintResponses = complaintResponseRepository
+                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.MORE_FEEDBACK);
         }
 
         exercise.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
         exercise.setNumberOfComplaints(numberOfComplaints);
         exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
         exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+    }
+
+    /**
+     * Calculates the number of assessments done for each correction round.
+     *
+     * @param exercise the exercise for which we want to calculate the # of assessments for each correction round
+     * @param examMode states whether or not the the function is called in the exam mode
+     * @param totalNumberOfAssessments so total number of assessments sum up over all correction rounds
+     * @return the number of assessments for each correction rounds
+     */
+    public DueDateStat[] calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(Exercise exercise, boolean examMode, DueDateStat totalNumberOfAssessments) {
+        DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
+        if (examMode) {
+            // set number of corrections specific to each correction round
+            int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+            numberOfAssessmentsOfCorrectionRounds = resultService.countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(exercise, (long) numberOfCorrectionRounds);
+        }
+        else {
+            // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
+            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+        }
+        return numberOfAssessmentsOfCorrectionRounds;
     }
 
     /**
@@ -513,4 +538,110 @@ public class ExerciseService {
             exercise.setStudentAssignedTeamIdComputed(true);
         }
     }
+
+    /**
+     * Gets the {@link CourseExerciseStatisticsDTO} for each exercise proved in <code>exerciseIds</code>.
+     *
+     * calculates the average score and the participation rate of students for each given course exercise (team or individual)
+     * by using the last result (rated or not)
+     *
+     * @param exerciseIds - list of exercise ids (must be belong to the same course)
+     * @return the list of {@link CourseExerciseStatisticsDTO}
+     * @throws IllegalArgumentException if exercise is not found in database, exercise is not a course exercise or not all exercises are from the same course
+     */
+    public List<CourseExerciseStatisticsDTO> calculateExerciseStatistics(List<Long> exerciseIds) throws IllegalArgumentException {
+        List<Exercise> exercisesFromDb = new ArrayList<>();
+        for (Long exerciseId : exerciseIds) {
+            Optional<Exercise> exerciseFromDbOptional = this.exerciseRepository.findById(exerciseId);
+            if (exerciseFromDbOptional.isEmpty()) {
+                throw new IllegalArgumentException("Exercise not found in database");
+            }
+            Exercise exerciseFromDb = exerciseFromDbOptional.get();
+
+            if (!exerciseFromDb.hasCourse()) {
+                throw new IllegalArgumentException("Exercise is not a course exercise");
+            }
+
+            exercisesFromDb.add(exerciseFromDb);
+        }
+
+        List<Long> uniqueCourseIds = exercisesFromDb.stream().map(exercise -> exercise.getCourseViaExerciseGroupOrCourseMember().getId()).distinct().collect(Collectors.toList());
+        if (uniqueCourseIds.size() > 1) {
+            throw new IllegalArgumentException("Not all exercises are from the same course");
+        }
+
+        List<CourseExerciseStatisticsDTO> courseExerciseStatisticsDTOs = new ArrayList<>();
+
+        Map<Long, Object[]> exerciseIdToRawStatisticQueryData = getRawStatisticQueryData(exercisesFromDb);
+
+        exercisesFromDb.forEach((exercise) -> {
+            CourseExerciseStatisticsDTO courseExerciseStatisticsDTO = convertRawStatisticQueryDataToDTO(exerciseIdToRawStatisticQueryData, exercise);
+            courseExerciseStatisticsDTOs.add(courseExerciseStatisticsDTO);
+
+        });
+
+        return courseExerciseStatisticsDTOs;
+    }
+
+    /**
+     * Converts the row data from the exercise statistic query into the corresponding DTO
+     * @param exerciseIdToRawStatisticQueryData map from exerciseId to query data
+     * @param exercise exercise
+     * @return converted DTO
+     */
+    private CourseExerciseStatisticsDTO convertRawStatisticQueryDataToDTO(Map<Long, Object[]> exerciseIdToRawStatisticQueryData, Exercise exercise) {
+        CourseExerciseStatisticsDTO courseExerciseStatisticsDTO = new CourseExerciseStatisticsDTO();
+        courseExerciseStatisticsDTO.setExerciseId(exercise.getId());
+        courseExerciseStatisticsDTO.setExerciseTitle(exercise.getTitle());
+        courseExerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxScore());
+        courseExerciseStatisticsDTO.setExerciseMode(exercise.getMode().toString());
+
+        if (exerciseIdToRawStatisticQueryData.containsKey(exercise.getId())) {
+            Object[] exerciseStatistics = exerciseIdToRawStatisticQueryData.get(exercise.getId());
+            courseExerciseStatisticsDTO.setAverageScoreInPercent(exerciseStatistics[1] != null ? ((Number) exerciseStatistics[1]).doubleValue() : 0.0);
+            courseExerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(exerciseStatistics[2] != null ? ((Number) exerciseStatistics[2]).intValue() : 0);
+            int numberOfPossibleParticipants = exerciseStatistics[3] != null ? ((Number) exerciseStatistics[3]).intValue() : 0;
+
+            if (numberOfPossibleParticipants != 0) {
+                Double participationRate = ((courseExerciseStatisticsDTO.getNoOfParticipatingStudentsOrTeams() * 1.0) / (numberOfPossibleParticipants * 1.0)) * 100.0;
+                courseExerciseStatisticsDTO.setParticipationRateInPercent(Math.round(participationRate * 100.0) / 100.0);
+            }
+            else {
+                courseExerciseStatisticsDTO.setParticipationRateInPercent(0.0);
+            }
+
+        }
+        else {
+            courseExerciseStatisticsDTO.setAverageScoreInPercent(0.0);
+            courseExerciseStatisticsDTO.setParticipationRateInPercent(0.0);
+            courseExerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(0);
+        }
+        return courseExerciseStatisticsDTO;
+    }
+
+    /**
+     * calculates the average score and the participation rate of students for each given course exercise (team or individual)
+     * by using the last result (rated or not)
+     * @param exercisesFromDb exercises to calculate the statistics for
+     * @return Map which maps from exercise id to statistic query row data
+     */
+    private Map<Long, Object[]> getRawStatisticQueryData(List<Exercise> exercisesFromDb) {
+        List<Exercise> individualExercises = exercisesFromDb.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.INDIVIDUAL)).collect(Collectors.toList());
+        List<Exercise> teamExercises = exercisesFromDb.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.TEAM)).collect(Collectors.toList());
+        List<Object[]> statisticForIndividualExercises = this.exerciseRepository
+                .calculateExerciseStatisticsForIndividualCourseExercises(individualExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
+        List<Object[]> statisticTeamExercises = this.exerciseRepository
+                .calculateExerciseStatisticsForTeamCourseExercises(teamExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
+
+        List<Object[]> combinedStatistics = new ArrayList<>();
+        combinedStatistics.addAll(statisticForIndividualExercises);
+        combinedStatistics.addAll(statisticTeamExercises);
+
+        Map<Long, Object[]> exerciseIdToStatistic = new HashMap<>();
+        for (Object[] exerciseStatistic : combinedStatistics) {
+            exerciseIdToStatistic.put(((Number) exerciseStatistic[0]).longValue(), exerciseStatistic);
+        }
+        return exerciseIdToStatistic;
+    }
+
 }

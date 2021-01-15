@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
-import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,16 +30,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
 import de.tum.in.www1.artemis.web.rest.ResultResource;
 
@@ -83,6 +82,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @Autowired
     ResultRepository resultRepository;
 
+    @Autowired
+    BuildLogEntryRepository buildLogEntryRepository;
+
     private Long exerciseId;
 
     private Long templateParticipationId;
@@ -123,7 +125,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     *
+     * <p>
      * However the participation id provided by the VCS on the request is invalid.
      */
     @Test
@@ -172,9 +174,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     *
+     * <p>
      * Here the participation provided does exist so Artemis can create the submission.
-     *
+     * <p>
      * After that the CI builds the code submission and notifies Artemis so it can create the result.
      */
     @Test
@@ -206,9 +208,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     *
+     * <p>
      * Here the participation provided does exist so Artemis can create the submission.
-     *
+     * <p>
      * After that the CI builds the code submission and notifies Artemis so it can create the result.
      *
      * @param additionalCommit Whether an additional commit in the Assignment repo should be added to the payload
@@ -243,9 +245,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     *
+     * <p>
      * After that the CI builds the code submission and notifies Artemis so it can create the result - however for an unknown reason this request is sent twice!
-     *
+     * <p>
      * Only the last result should be linked to the created submission.
      */
     @ParameterizedTest
@@ -278,7 +280,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission - however for an unknown reason this request is sent twice!
-     *
+     * <p>
      * This should not create two identical submissions.
      */
     @ParameterizedTest
@@ -342,7 +344,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         Long participationId = getParticipationIdByType(participationType, 0);
         final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).get();
         bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
-        URL repositoryUrl = (programmingParticipation).getRepositoryUrlAsUrl();
+        var repositoryUrl = (programmingParticipation).getVcsRepositoryUrl();
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(repositoryUrl);
         triggerBuild(participationType, 0);
 
@@ -381,7 +383,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         Long participationId = getParticipationIdByType(participationType, 0);
         final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).get();
         bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
-        URL repositoryUrl = programmingParticipation.getRepositoryUrlAsUrl();
+        var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
         ObjectId objectId = COMMIT_HASH_OBJECT_ID;
         doReturn(objectId).when(gitService).getLastCommitHash(repositoryUrl);
         triggerInstructorBuild(participationType, 0);
@@ -458,6 +460,77 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         }
     }
 
+    private static Stream<Arguments> shouldSavebuildLogsOnStudentParticipationArguments() {
+        return Arrays.stream(ProgrammingLanguage.values())
+                .flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true), Arguments.of(programmingLanguage, false)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    void shouldSaveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
+        // Precondition: Database has participation and a programming submission but no result.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        var submission = database.createProgrammingSubmission(participation, false);
+
+        // Call programming-exercises/new-result which include build log entries
+        var buildLog = new BambooBuildLogDTO();
+        buildLog.setLog("[ERROR] COMPILATION ERROR missing something");
+        buildLog.setDate(ZonedDateTime.now().minusMinutes(1));
+        buildLog.setUnstyledLog("[ERROR] COMPILATION ERROR missing something");
+        postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
+
+        var result = assertBuildError(participation.getId(), userLogin);
+        assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
+    }
+
+    @ParameterizedTest
+    @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
+        // Precondition: Database has participation without result and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+
+        // Call programming-exercises/new-result which includes build log entries
+        postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
+
+        assertBuildError(participation.getId(), userLogin);
+    }
+
+    private Result assertBuildError(Long participationId, String userLogin) throws Exception {
+        // Assert that result linked to the participation
+        var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
+        assertThat(results.size()).isEqualTo(1);
+        var result = results.get(0);
+        assertThat(result.getHasFeedback()).isFalse();
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getScore()).isEqualTo(0);
+        assertThat(result.getResultString()).isEqualTo("No tests found");
+
+        // Assert that the submission linked to the participation
+        var submission = (ProgrammingSubmission) result.getSubmission();
+        assertThat(submission).isNotNull();
+        assertThat(submission.isBuildFailed()).isTrue();
+        var submissionWithLogsOptional = submissionRepository.findWithEagerBuildLogEntriesById(submission.getId());
+
+        // Assert that build logs have been saved in the build log repository.
+        assertThat(submissionWithLogsOptional).isPresent();
+        var submissionWithLogs = submissionWithLogsOptional.get();
+        assertThat(submissionWithLogs.getBuildLogEntries()).hasSize(4);
+
+        // Assert that the build logs can be retrieved from the REST API
+        database.changeUser(userLogin);
+        var receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
+        assertThat(receivedLogs).isNotNull();
+        assertThat(receivedLogs.size()).isEqualTo(submissionWithLogs.getBuildLogEntries().size());
+
+        return result;
+    }
+
     /**
      * This is the simulated request from the VCS to Artemis on a new commit.
      */
@@ -523,15 +596,18 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         postResult(exercise.getProjectKey().toUpperCase() + "-" + buildPlanStudentId, expectedStatus, additionalCommit);
     }
 
+    private void postResultWithBuildLogs(String participationId, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
+        var notification = ModelFactory.generateBambooBuildResultWithLogs(ASSIGNMENT_REPO_NAME, List.of(), List.of());
+        postResult(participationId, notification, expectedStatus, additionalCommit);
+    }
+
     private void postResult(String participationId, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
-        JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(BAMBOO_REQUEST);
+        final var requestBodyMap = createBambooBuildResultNotificationDTO();
+        postResult(participationId, requestBodyMap, expectedStatus, additionalCommit);
+    }
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        final var requestBodyMap = mapper.convertValue(obj, BambooBuildResultNotificationDTO.class);
+    private void postResult(String participationId, BambooBuildResultNotificationDTO requestBodyMap, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
         requestBodyMap.getPlan().setKey(participationId.toUpperCase());
-
         if (additionalCommit) {
             var newCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO();
             newCommit.setComment("Some commit that occurred before");
@@ -539,10 +615,22 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
             requestBodyMap.getBuild().getVcs().get(0).getCommits().add(newCommit);
         }
 
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
         final var alteredObj = mapper.convertValue(requestBodyMap, Object.class);
+
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
         request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, expectedStatus, httpHeaders);
+    }
+
+    private BambooBuildResultNotificationDTO createBambooBuildResultNotificationDTO() throws Exception {
+        JSONParser jsonParser = new JSONParser();
+        Object obj = jsonParser.parse(BAMBOO_REQUEST);
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        return mapper.convertValue(obj, BambooBuildResultNotificationDTO.class);
     }
 
     private String getStudentLoginFromParticipation(int participationNumber) {
@@ -559,7 +647,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     }
 
     private void setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime buildAndTestAfterDueDate) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId).get();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId).get();
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestAfterDueDate);
         programmingExerciseRepository.save(programmingExercise);
     }

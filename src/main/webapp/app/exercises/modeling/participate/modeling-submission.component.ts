@@ -1,34 +1,35 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Selection, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
-import { cloneDeep, omit } from 'lodash';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ResultService } from 'app/exercises/shared/result/result.service';
+import { ComplaintType } from 'app/entities/complaint.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
-import { ComplaintType } from 'app/entities/complaint.model';
-import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
-import { ButtonType } from 'app/shared/components/button.component';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
-import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { Subject } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
+import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
+import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
+import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { ResultService } from 'app/exercises/shared/result/result.service';
+import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ButtonType } from 'app/shared/components/button.component';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { stringifyIgnoringFields } from 'app/shared/util/utils';
+import { cloneDeep, omit } from 'lodash';
+import * as moment from 'moment';
+import { JhiAlertService } from 'ng-jhipster';
+import { Subject } from 'rxjs';
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -65,6 +66,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     autoSaveInterval: number;
     autoSaveTimer: number;
 
+    explanation: string; // current explanation on text editor
+
     automaticSubmissionWebsocketChannel: string;
 
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
@@ -91,6 +94,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private router: Router,
         private participationWebsocketService: ParticipationWebsocketService,
         private guidedTourService: GuidedTourService,
+        private textService: TextEditorService,
     ) {
         this.isSaving = false;
         this.autoSaveTimer = 0;
@@ -120,6 +124,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         window.scroll(0, 0);
     }
 
+    // Updates component with the given modeling submission
     private updateModelingSubmission(modelingSubmission: ModelingSubmission) {
         if (!modelingSubmission) {
             this.jhiAlertService.error('artemisApp.apollonDiagram.submission.noSubmission');
@@ -153,6 +158,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.umlModel = JSON.parse(this.submission.model);
             this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
         }
+        this.explanation = this.submission.explanationText ?? '';
         this.subscribeToWebsockets();
         if (getLatestSubmissionResult(this.submission) && this.isAfterAssessmentDueDate) {
             this.result = getLatestSubmissionResult(this.submission);
@@ -250,7 +256,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.teamSyncInterval = window.setInterval(() => {
             if (!this.canDeactivate()) {
                 // make sure this.submission includes the newest content of the apollon editor
-                this.updateSubmissionModel();
+                this.updateSubmissionWithCurrentValues();
                 // notify the team sync component to send this.submission to the server (and all online team members)
                 this.submissionChange.next(this.submission);
             }
@@ -262,7 +268,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             // don't execute the function if it is already currently executing
             return;
         }
-        this.updateSubmissionModel();
+        this.updateSubmissionWithCurrentValues();
         this.isSaving = true;
         this.autoSaveTimer = 0;
 
@@ -298,7 +304,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             // don't execute the function if it is already currently executing
             return;
         }
-        this.updateSubmissionModel();
+        this.updateSubmissionWithCurrentValues();
         if (this.isModelEmpty(this.submission.model)) {
             this.jhiAlertService.warning('artemisApp.modelingEditor.empty');
             return;
@@ -394,11 +400,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     /**
      * Updates the model of the submission with the current Apollon model state
+     * and the explanation text of submission with current explanation if explanation is defined
      */
-    updateSubmissionModel(): void {
+    updateSubmissionWithCurrentValues(): void {
         if (!this.submission) {
             this.submission = new ModelingSubmission();
         }
+        this.submission.explanationText = this.explanation;
         if (!this.modelingEditor || !this.modelingEditor.getCurrentModel()) {
             return;
         }
@@ -492,7 +500,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return true;
         }
         const model: UMLModel = this.modelingEditor.getCurrentModel();
-        return !this.modelHasUnsavedChanges(model);
+        const explanationIsUpToDate = this.explanation === this.submission.explanationText;
+        return !this.modelHasUnsavedChanges(model) && explanationIsUpToDate;
     }
 
     /**

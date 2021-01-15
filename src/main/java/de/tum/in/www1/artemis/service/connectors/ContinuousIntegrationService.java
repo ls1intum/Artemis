@@ -1,17 +1,16 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.net.URL;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_DIRECTORY;
+
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.apache.http.HttpException;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
@@ -20,6 +19,9 @@ import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
  * Abstract service for managing entities related to continuous integration.
  */
 public interface ContinuousIntegrationService {
+
+    // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/
+    Pattern ASSIGNMENT_PATH = Pattern.compile("(/[^\0]+)*" + ASSIGNMENT_DIRECTORY);
 
     enum BuildStatus {
         INACTIVE, QUEUED, BUILDING
@@ -34,7 +36,8 @@ public interface ContinuousIntegrationService {
      * @param testRepositoryURL     the URL of the test repository
      * @param solutionRepositoryURL the URL of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise ignored.
      */
-    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL, URL solutionRepositoryURL);
+    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
+            VcsRepositoryUrl solutionRepositoryURL);
 
     /**
      * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.
@@ -52,6 +55,8 @@ public interface ContinuousIntegrationService {
     /**
      * Configure the build plan with the given participation on the CI system. Common configurations: - update the repository in the build plan - set appropriate user permissions -
      * initialize/enable the build plan so that it works
+     *
+     * **Important**: make sure that participation.programmingExercise.templateParticipation is initialized, otherwise an org.hibernate.LazyInitializationException can occur
      *
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
      */
@@ -89,7 +94,8 @@ public interface ContinuousIntegrationService {
 
     /**
      * Get the plan key of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
-     * bamboo-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin
+     * (bamboo|jenkins)-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin or here:
+     * https://github.com/ls1intum/jenkins-server-notification-plugin
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key of the build
@@ -99,7 +105,8 @@ public interface ContinuousIntegrationService {
 
     /**
      * Get the result of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
-     * bamboo-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin
+     * (bamboo|jenkins)-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin or here:
+     * https://github.com/ls1intum/jenkins-server-notification-plugin
      *
      * @param participation The participation for which the build finished
      * @param requestBody   The request Body received from the CI-Server.
@@ -168,18 +175,18 @@ public interface ContinuousIntegrationService {
     void enablePlan(String projectKey, String planKey);
 
     /**
-     * Updates the configured repository for a given plan to the given Bamboo Server repository.
+     * Updates the configured exercise repository for a given build plan to the given repository, this is a key method in the Artemis system structure.
      *
-     * @param bambooProject         The key of the project, e.g. 'EIST16W1'.
-     * @param bambooPlan            The key of the plan, which is usually the name combined with the project, e.g. 'PROJECT-GA56HUR'.
-     * @param bambooRepositoryName  The name of the configured repository in the CI plan.
-     * @param repoProjectName       The key of the project that contains the repository.
-     * @param repoUrl               The url of the newly to be referenced repository.
-     * @param templateRepositoryUrl The url of the template repository (that should be replaced).
-     * @param triggeredBy           Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten
+     * @param buildProjectKey                   The key of the build project, e.g. 'EIST16W1', which is normally the programming exercise project key.
+     * @param buildPlanKey                      The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
+     * @param ciRepoName                        The name of the configured repository in the CI plan, normally 'assignment' (or 'test').
+     * @param repoProjectKey                    The key of the project that contains the repository, e.g. 'EIST16W1', which is normally the programming exercise project key.
+     * @param newRepoUrl                        The url of the newly to be referenced repository.
+     * @param existingRepoUrl                   The url of the existing repository (which should be replaced).
+     * @param optionalTriggeredByRepositories   Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten.
      */
-    void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoUrl, String templateRepositoryUrl,
-            Optional<List<String>> triggeredBy);
+    void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
+            Optional<List<String>> optionalTriggeredByRepositories);
 
     /**
      * Gives overall roles permissions for the defined project. A role can e.g. be all logged in users
@@ -292,7 +299,7 @@ public interface ContinuousIntegrationService {
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";
             case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
             case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";
-            case SWIFT -> "swift:latest";
+            case SWIFT -> "norionomura/swiftlint:0.41.0_swift-5.3.1";
         };
     }
 }

@@ -14,17 +14,19 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
-import de.tum.in.www1.artemis.util.Verifiable;
 
 public interface MockDelegate {
 
     void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws Exception;
 
-    List<Verifiable> mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans) throws Exception;
+    void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans) throws Exception;
 
-    List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception;
+    void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists, HttpStatus status) throws Exception;
+
+    void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception;
 
     void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException;
 
@@ -42,11 +44,29 @@ public interface MockDelegate {
     void mockGetBuildLogs(ProgrammingExerciseStudentParticipation participation, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> logs)
             throws URISyntaxException, JsonProcessingException;
 
+    void mockGetRepositorySlugFromRepositoryUrl(String repositorySlug, VcsRepositoryUrl repositoryUrl);
+
     void mockGetRepositorySlugFromUrl(String repositorySlug, URL url);
+
+    void mockGetProjectKeyFromRepositoryUrl(String projectKey, VcsRepositoryUrl repositoryUrl);
 
     void mockGetProjectKeyFromUrl(String projectKey, URL url);
 
     void mockGetProjectKeyFromAnyUrl(String projectKey);
+
+    void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) throws URISyntaxException, JsonProcessingException;
+
+    void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception;
+
+    void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception;
+
+    void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception;
+
+    void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception;
+
+    void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) throws Exception;
+
+    void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) throws Exception;
 
     void resetMockProvider();
 }

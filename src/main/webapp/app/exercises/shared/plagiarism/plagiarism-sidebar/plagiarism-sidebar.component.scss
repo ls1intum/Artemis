@@ -2,14 +2,65 @@
 
 .plagiarism-sidebar {
     border-right: 1px solid $body-bg;
+    display: flex;
+    flex-direction: column;
     position: absolute;
     bottom: 0;
     left: 0;
     top: 0;
     width: 240px;
-    overflow-y: auto;
+
+    .plagiarism-paging {
+        border-top: 1px solid $body-bg;
+        display: flex;
+        flex-shrink: 0;
+
+        &-left,
+        &-right {
+            flex-shrink: 0;
+            padding: 0.75rem;
+            opacity: 0.5;
+
+            &.disabled {
+                opacity: 0.2;
+            }
+
+            &:hover:not(.disabled) {
+                cursor: pointer;
+                opacity: 0.8;
+            }
+        }
+
+        &-center {
+            align-items: center;
+            display: flex;
+            flex-grow: 1;
+            font-weight: bold;
+            justify-content: center;
+        }
+    }
+
+    .plagiarism-info-tab {
+        border-bottom: 1px solid $body-bg;
+        flex-shrink: 0;
+        cursor: pointer;
+        padding: 0.75rem;
+        display: flex;
+        justify-content: space-between;
+
+        &.selected {
+            background-color: transparentize(lightskyblue, 0.5);
+            font-weight: bold;
+        }
+
+        &:hover {
+            background-color: lightskyblue;
+        }
+    }
 
     .plagiarism-list {
+        flex-grow: 1;
+        overflow-y: auto;
         list-style: none;
         margin: 0;
         padding: 0;
@@ -48,6 +99,14 @@
                 background-color: lightskyblue;
             }
         }
+    }
+
+    .plagiarism-empty {
+        align-items: center;
+        display: flex;
+        flex-grow: 1;
+        justify-content: center;
+        opacity: 0.5;
     }
 
     .plagiarism-status-indicator {

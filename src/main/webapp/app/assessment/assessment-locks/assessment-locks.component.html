@@ -37,7 +37,7 @@
                     <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
                     <td>{{ submission.participation.submissions?.length }}</td>
                     <td>
-                        <span *ngIf="getLatestSubmissionResult(submission)!.score != null">{{ getLatestSubmissionResult(submission)!.score }}%</span>
+                        <span *ngIf="submission.latestResult?.score != undefined">{{ submission.latestResult!.score }}%</span>
                     </td>
                     <td>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
@@ -57,11 +57,7 @@
                             </button>
                         </span>
                         <span>
-                            <button
-                                *ngIf="!getLatestSubmissionResult(submission)!.completionDate"
-                                (click)="cancelAssessment(submission)"
-                                class="btn btn-outline-secondary btn-sm mb-1"
-                            >
+                            <button *ngIf="!submission.latestResult!.completionDate" (click)="cancelAssessment(submission)" class="btn btn-outline-secondary btn-sm mb-1">
                                 <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | translate }}
                             </button>
                         </span>

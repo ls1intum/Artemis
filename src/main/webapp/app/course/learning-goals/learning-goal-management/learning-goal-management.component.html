@@ -25,7 +25,7 @@
             class="mx-auto"
             *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
             [learningGoal]="learningGoal"
-            [learningGoalProgress]="getLearningGoalProgress(learningGoal)"
+            [learningGoalProgress]="getLearningGoalCourseProgress(learningGoal)"
         >
             <button
                 *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"

@@ -73,8 +73,9 @@ describe('TextFeedbackConflictsComponent', () => {
             textSubmission,
         } as unknown) as Result,
     ];
+    textSubmission.latestResult = getLatestSubmissionResult(textSubmission);
 
-    getLatestSubmissionResult(textSubmission)!.feedbacks = [
+    textSubmission.latestResult!.feedbacks = [
         {
             id: 1,
             detailText: 'First Feedback',
@@ -98,7 +99,7 @@ describe('TextFeedbackConflictsComponent', () => {
             textSubmission,
         } as unknown) as TextBlock,
     ];
-    getLatestSubmissionResult(textSubmission)!.feedbacks![0].conflictingTextAssessments = [
+    textSubmission.latestResult!.feedbacks![0].conflictingTextAssessments = [
         {
             id: 1,
             conflict: true,
@@ -129,7 +130,8 @@ describe('TextFeedbackConflictsComponent', () => {
             conflictingSubmission,
         } as unknown) as Result,
     ];
-    getLatestSubmissionResult(conflictingSubmission)!.feedbacks = [
+    conflictingSubmission.latestResult = getLatestSubmissionResult(conflictingSubmission);
+    conflictingSubmission.latestResult!.feedbacks = [
         {
             id: 5,
             detailText: 'Conflicting feedback',
@@ -208,8 +210,8 @@ describe('TextFeedbackConflictsComponent', () => {
         fixture.detectChanges();
         expect(component.rightSubmission).toBe(conflictingSubmission);
         expect(component.rightTotalScore).toBe(1.5);
-        expect(component.feedbackConflicts).toBe(getLatestSubmissionResult(textSubmission)!.feedbacks![0].conflictingTextAssessments!);
-        expect(component.rightTextBlockRefs[0].feedback).toBe(getLatestSubmissionResult(conflictingSubmission)!.feedbacks![0]);
+        expect(component.feedbackConflicts).toBe(textSubmission.latestResult!.feedbacks![0].conflictingTextAssessments!);
+        expect(component.rightTextBlockRefs[0].feedback).toBe(conflictingSubmission.latestResult!.feedbacks![0]);
     });
 
     it('should use jhi-text-assessment-area', () => {
@@ -239,14 +241,14 @@ describe('TextFeedbackConflictsComponent', () => {
         spyOn(textAssessmentsService, 'submit').and.returnValue(
             of(
                 new HttpResponse({
-                    body: getLatestSubmissionResult(component.leftSubmission!),
+                    body: component.leftSubmission!.latestResult,
                 }),
             ),
         );
         component.overrideLeftSubmission();
         expect(textAssessmentsService.submit).toHaveBeenCalledWith(
             exercise.id!,
-            getLatestSubmissionResult(textSubmission)!.id!,
+            textSubmission.latestResult!.id!,
             [component.leftTextBlockRefs[0].feedback!],
             [component.leftTextBlockRefs[0].block!],
         );
@@ -265,7 +267,7 @@ describe('TextFeedbackConflictsComponent', () => {
         });
 
         expect(component.selectedRightFeedbackId).toBeTruthy();
-        expect(component.selectedRightFeedbackId).toBe(getLatestSubmissionResult(conflictingSubmission)!.feedbacks![0].id);
+        expect(component.selectedRightFeedbackId).toBe(conflictingSubmission.latestResult!.feedbacks![0].id);
     });
 
     it('should be able to un-select conflicting feedback', () => {
@@ -309,9 +311,9 @@ describe('TextFeedbackConflictsComponent', () => {
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
 
-        component.didSelectConflictingFeedback(getLatestSubmissionResult(conflictingSubmission)!.feedbacks![0].id!);
+        component.didSelectConflictingFeedback(conflictingSubmission.latestResult!.feedbacks![0].id!);
 
-        const feedbackConflict = getLatestSubmissionResult(textSubmission)!.feedbacks![0].conflictingTextAssessments![0];
+        const feedbackConflict = textSubmission.latestResult!.feedbacks![0].conflictingTextAssessments![0];
         feedbackConflict.conflict = false;
         feedbackConflict.discard = true;
         spyOn(textAssessmentsService, 'solveFeedbackConflict').and.returnValue(
@@ -328,8 +330,8 @@ describe('TextFeedbackConflictsComponent', () => {
     it('should switch submissions when it changed in the header', () => {
         const secondConflictingSubmission = Object.assign({}, conflictingSubmission);
         secondConflictingSubmission.id! += 1;
-        getLatestSubmissionResult(secondConflictingSubmission)!.feedbacks![0].id! += 1;
-        getLatestSubmissionResult(secondConflictingSubmission)!.id! += 1;
+        secondConflictingSubmission.latestResult!.feedbacks![0].id! += 1;
+        secondConflictingSubmission.latestResult!.id! += 1;
 
         component['setPropertiesFromServerResponse']([conflictingSubmission, secondConflictingSubmission]);
         fixture.detectChanges();

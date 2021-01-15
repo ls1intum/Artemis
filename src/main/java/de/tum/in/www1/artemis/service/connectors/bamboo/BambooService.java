@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
@@ -53,6 +52,7 @@ import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
@@ -63,9 +63,6 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
 public class BambooService implements ContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
-
-    // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/
-    private final static Pattern ASSIGNMENT_PATH = Pattern.compile("(/[^\0]+)*" + ASSIGNMENT_DIRECTORY);
 
     @Value("${artemis.continuous-integration.url}")
     private URL bambooServerUrl;
@@ -89,13 +86,18 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final RestTemplate restTemplate;
 
+    private final RestTemplate shortTimeoutRestTemplate;
+
     private final ObjectMapper mapper;
 
     private final UrlService urlService;
 
+    private final BuildLogEntryService buildLogService;
+
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackService feedbackService,
-            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, ObjectMapper mapper, UrlService urlService, ResultRepository resultRepository) {
+            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
+            UrlService urlService, ResultRepository resultRepository, BuildLogEntryService buildLogService) {
         this.gitService = gitService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
@@ -103,26 +105,29 @@ public class BambooService implements ContinuousIntegrationService {
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.feedbackService = feedbackService;
         this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.mapper = mapper;
         this.urlService = urlService;
         this.resultRepository = resultRepository;
+        this.buildLogService = buildLogService;
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, URL sourceCodeRepositoryURL, URL testRepositoryURL, URL solutionRepositoryURL) {
-        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromUrl(sourceCodeRepositoryURL),
-                urlService.getRepositorySlugFromUrl(testRepositoryURL), urlService.getRepositorySlugFromUrl(solutionRepositoryURL));
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
+            VcsRepositoryUrl solutionRepositoryURL) {
+        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromRepositoryUrl(sourceCodeRepositoryURL),
+                urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL));
     }
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
-        String buildPlanId = participation.getBuildPlanId();
-        URL repositoryUrl = participation.getRepositoryUrlAsUrl();
-        String planProject = getProjectKeyFromBuildPlanId(buildPlanId);
-        String planKey = participation.getBuildPlanId();
-        updatePlanRepository(planProject, planKey, ASSIGNMENT_REPO_NAME, urlService.getProjectKeyFromUrl(repositoryUrl), repositoryUrl.toString(),
-                participation.getProgrammingExercise().getTemplateRepositoryUrl(), Optional.empty());
-        enablePlan(planProject, planKey);
+        final var buildPlanId = participation.getBuildPlanId();
+        final var repositoryUrl = participation.getVcsRepositoryUrl();
+        final var projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
+        final var planKey = participation.getBuildPlanId();
+        final var repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+        updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, Optional.empty());
+        enablePlan(projectKey, planKey);
     }
 
     @Override
@@ -132,7 +137,7 @@ public class BambooService implements ContinuousIntegrationService {
         if (isEmptyCommitNecessary) {
             try {
                 ProgrammingExercise exercise = participation.getProgrammingExercise();
-                URL repositoryUrl = participation.getRepositoryUrlAsUrl();
+                var repositoryUrl = participation.getVcsRepositoryUrl();
                 Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, true);
                 // we set user to null to make sure the Artemis user is used to create the setup commit, this is important to filter this commit later in
                 // notifyPush in ProgrammingSubmissionService
@@ -197,19 +202,13 @@ public class BambooService implements ContinuousIntegrationService {
         // NOTE: we cannot use official the REST API, e.g. restTemplate.delete(bambooServerUrl + "/rest/api/latest/plan/" + buildPlanId) here,
         // because then the build plan is not deleted directly and subsequent calls to create build plans with the same id might fail
 
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("selectedBuilds", buildPlanId);
-        parameters.add("confirm", "true");
-        parameters.add("bamboo.successReturnMode", "json");
-
-        String requestUrl = bambooServerUrl + "/admin/deleteBuilds.action";
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
-        // TODO: in order to do error handling, we have to read the return value of this REST call
-        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
+        executeDelete("selectedBuilds", buildPlanId);
+        log.info("Delete bamboo build plan " + buildPlanId + " was successful.");
     }
 
     /**
      * NOTE: the REST call in this method fails silently with a 404 in case all build plans have already been deleted before
+     *
      * @param projectKey the project which build plans should be retrieved
      * @return a list of build plans
      */
@@ -253,7 +252,7 @@ public class BambooService implements ContinuousIntegrationService {
         // because then the build plans are not deleted directly and subsequent calls to create build plans with the same id might fail
 
         // in normal cases this list should be empty, because all build plans have been deleted before
-        List<BambooBuildPlanDTO> buildPlans = getBuildPlans(projectKey);
+        final var buildPlans = getBuildPlans(projectKey);
         for (var buildPlan : buildPlans) {
             try {
                 deleteBuildPlan(projectKey, buildPlan.getKey());
@@ -263,8 +262,13 @@ public class BambooService implements ContinuousIntegrationService {
             }
         }
 
+        executeDelete("selectedProjects", projectKey);
+        log.info("Delete bamboo project " + projectKey + " was successful.");
+    }
+
+    private void executeDelete(String elementKey, String elementValue) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("selectedProjects", projectKey);
+        parameters.add(elementKey, elementValue);
         parameters.add("confirm", "true");
         parameters.add("bamboo.successReturnMode", "json");
 
@@ -272,8 +276,6 @@ public class BambooService implements ContinuousIntegrationService {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
         // TODO: in order to do error handling, we have to read the return value of this REST call
         var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
-
-        log.info("Delete bamboo project " + projectKey + " was successful.");
     }
 
     /**
@@ -284,6 +286,11 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
+        if (participation.getBuildPlanId() == null) {
+            log.warn("Cannot get the build status, because the build plan for the participation " + participation + " was cleaned up already!");
+            // The build plan does not exist, the build status cannot be retrieved
+            return null;
+        }
         final var buildPlan = getBuildPlan(participation.getBuildPlanId(), false, true);
 
         if (buildPlan == null) {
@@ -302,27 +309,15 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
-        // Load the logs from the database
-        List<BuildLogEntry> buildLogsFromDatabase = retrieveLatestBuildLogsFromDatabase(programmingSubmission);
-
-        // If there are logs present in the database, return them (they were already filtered when inserted)
-        if (!buildLogsFromDatabase.isEmpty()) {
-            return buildLogsFromDatabase;
-        }
-
-        // Otherwise return the logs from Bamboo (and filter them now)
+        // Return the logs from Bamboo (and filter them now)
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
+        ProgrammingLanguage programmingLanguage = programmingExerciseParticipation.getProgrammingExercise().getProgrammingLanguage();
 
-        var buildLogEntries = filterBuildLogs(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()));
-
-        // Truncate the logs so that they fit into the database
-        buildLogEntries.forEach(BuildLogEntry::truncateLogToMaxLength);
-
-        // Add reference to ProgrammingSubmission
-        buildLogEntries.forEach(buildLogEntry -> buildLogEntry.setProgrammingSubmission(programmingSubmission));
+        var buildLogEntries = filterBuildLogs(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()), programmingLanguage);
+        var savedBuildLogs = buildLogService.saveBuildLogs(buildLogEntries, programmingSubmission);
 
         // Set the received logs in order to avoid duplicate entries (this removes existing logs) & save them into the database
-        programmingSubmission.setBuildLogEntries(buildLogEntries);
+        programmingSubmission.setBuildLogEntries(savedBuildLogs);
         programmingSubmissionRepository.save(programmingSubmission);
 
         return buildLogEntries;
@@ -330,11 +325,15 @@ public class BambooService implements ContinuousIntegrationService {
 
     /**
      * get the build plan for the given planKey
+     *
      * @param planKey the unique Bamboo build plan identifier
-     * @param expand whether the expaned version of the build plan is needed
+     * @param expand  whether the expanded version of the build plan is needed
      * @return the build plan
      */
     private BambooBuildPlanDTO getBuildPlan(String planKey, boolean expand, boolean logNotFound) {
+        if (planKey == null) {
+            return null;
+        }
         try {
             String requestUrl = bambooServerUrl + "/rest/api/latest/plan/" + planKey;
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
@@ -486,12 +485,11 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String bambooProject, String buildPlanKey, String bambooRepositoryName, String repoProjectName, String repoUrl, String templateRepositoryUrl,
+    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
         try {
-            final var repositoryName = versionControlService.get().getRepositoryName(new URL(repoUrl));
-            continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, buildPlanKey, bambooRepositoryName, repoProjectName, repositoryName,
-                    optionalTriggeredByRepositories);
+            final var vcsRepoName = versionControlService.get().getRepositoryName(new VcsRepositoryUrl(newRepoUrl));
+            continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, optionalTriggeredByRepositories);
         }
         catch (MalformedURLException e) {
             throw new BambooException(e.getMessage(), e);
@@ -573,12 +571,15 @@ public class BambooService implements ContinuousIntegrationService {
             // save result to create entry in DB before establishing relation with submission for ordering
             result = resultRepository.save(result);
 
-            var buildLogs = extractAndPrepareBuildLogs(buildResult, programmingSubmission);
+            var buildLogs = extractAndFilterBuildLogs(buildResult, programmingExercise.getProgrammingLanguage());
+            var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, programmingSubmission);
+
             programmingSubmission = programmingSubmissionRepository.findWithEagerResultsAndBuildLogEntriesById(programmingSubmission.getId()).get();
             result.setSubmission(programmingSubmission);
             programmingSubmission.addResult(result);
             // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-            programmingSubmission.setBuildLogEntries(buildLogs);
+            programmingSubmission.setBuildLogEntries(savedBuildLogs);
+
             programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
             result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
             // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
@@ -591,14 +592,14 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
-    private List<BuildLogEntry> extractAndPrepareBuildLogs(BambooBuildResultNotificationDTO buildResult, ProgrammingSubmission submission) {
+    private List<BuildLogEntry> extractAndFilterBuildLogs(BambooBuildResultNotificationDTO buildResult, ProgrammingLanguage programmingLanguage) {
         List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
         // Store logs into database. Append logs of multiple jobs.
         for (var job : buildResult.getBuild().getJobs()) {
             for (var bambooLog : job.getLogs()) {
                 // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
-                buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog()), submission));
+                buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog())));
             }
         }
 
@@ -607,9 +608,7 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         // Filter unwanted logs
-        var filteredLogs = filterBuildLogs(buildLogEntries);
-        // Truncate the logs so that they fit into the database
-        filteredLogs.forEach(BuildLogEntry::truncateLogToMaxLength);
+        var filteredLogs = filterBuildLogs(buildLogEntries, programmingLanguage);
 
         return filteredLogs;
     }
@@ -618,7 +617,7 @@ public class BambooService implements ContinuousIntegrationService {
     public ConnectorHealth health() {
         ConnectorHealth health;
         try {
-            final var status = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/server", HttpMethod.GET, null, JsonNode.class);
+            final var status = shortTimeoutRestTemplate.exchange(bambooServerUrl + "/rest/api/latest/server", HttpMethod.GET, null, JsonNode.class);
             health = status.getBody().get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
         }
         catch (Exception emAll) {
@@ -650,7 +649,7 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Generate an Artemis result object from the CI build result. Will use the test case feedback as result feedback.
      *
-     * @param buildResult Build result data provided by build notification.
+     * @param buildResult   Build result data provided by build notification.
      * @param participation to attach result to.
      * @return the created result (is not persisted in this method, only constructed!)
      */
@@ -679,7 +678,7 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Get the commit hash from the build map, the commit hash will be different for submission types or null.
      *
-     * @param buildResult Build result data provided by build notification.
+     * @param buildResult    Build result data provided by build notification.
      * @param submissionType describes why the build was started.
      * @return if the commit hash for the given submission type was found, otherwise null.
      */
@@ -703,8 +702,8 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Converts build result details into feedback and stores it in the result object
      *
-     * @param result the result for which the feedback should be added
-     * @param jobs   the jobs list of the requestBody
+     * @param result                      the result for which the feedback should be added
+     * @param jobs                        the jobs list of the requestBody
      * @param isStaticCodeAnalysisEnabled flag determining whether static code analysis was enabled
      */
     private void addFeedbackToResult(Result result, List<BambooBuildResultNotificationDTO.BambooJobDTO> jobs, Boolean isStaticCodeAnalysisEnabled) {
@@ -728,20 +727,16 @@ public class BambooService implements ContinuousIntegrationService {
                 }
 
                 // 3) process static code analysis feedback
-                boolean hasStaticCodeAnalysisFeedback = false;
                 if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled)) {
                     var reports = job.getStaticCodeAnalysisReports();
                     if (reports != null) {
                         var feedbackList = feedbackService.createFeedbackFromStaticCodeAnalysisReports(reports);
                         result.addFeedbacks(feedbackList);
-                        hasStaticCodeAnalysisFeedback = feedbackList.size() > 0;
                     }
                 }
 
-                // Relevant feedback exists if tests failed or static code analysis found issues
-                if (!job.getFailedTests().isEmpty() || hasStaticCodeAnalysisFeedback) {
-                    result.setHasFeedback(true);
-                }
+                // Relevant feedback is negative
+                result.setHasFeedback(result.getFeedbacks().stream().anyMatch(fb -> !fb.isPositive()));
             }
 
         }
@@ -813,15 +808,6 @@ public class BambooService implements ContinuousIntegrationService {
         return null;
     }
 
-    private List<BuildLogEntry> retrieveLatestBuildLogsFromDatabase(ProgrammingSubmission programmingSubmission) {
-        Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId());
-        if (optionalProgrammingSubmission.isPresent()) {
-            return optionalProgrammingSubmission.get().getBuildLogEntries();
-        }
-
-        return List.of();
-    }
-
     /**
      * Load the build log from the database.
      * Performs a request to the Bamboo REST API to retrieve the build log of the latest build, if the log is not available in the database.
@@ -859,10 +845,11 @@ public class BambooService implements ContinuousIntegrationService {
 
     /**
      * Filter the given list of unfiltered build log entries and return A NEW list only including the filtered build logs.
+     *
      * @param unfilteredBuildLogs the original, unfiltered list
      * @return the filtered list
      */
-    private List<BuildLogEntry> filterBuildLogs(List<BuildLogEntry> unfilteredBuildLogs) {
+    private List<BuildLogEntry> filterBuildLogs(List<BuildLogEntry> unfilteredBuildLogs, ProgrammingLanguage programmingLanguage) {
         List<BuildLogEntry> filteredBuildLogs = new ArrayList<>();
         for (BuildLogEntry unfilteredBuildLog : unfilteredBuildLogs) {
             boolean compilationErrorFound = false;
@@ -877,20 +864,18 @@ public class BambooService implements ContinuousIntegrationService {
                 break;
             }
 
-            // filter unnecessary logs
-            if ((logString.startsWith("[INFO]") && !logString.contains("error")) || logString.startsWith("[WARNING]") || logString.startsWith("[ERROR] [Help 1]")
-                    || logString.startsWith("[ERROR] For more information about the errors and possible solutions") || logString.startsWith("[ERROR] Re-run Maven using")
-                    || logString.startsWith("[ERROR] To see the full stack trace of the errors") || logString.startsWith("[ERROR] -> [Help 1]")
-                    || logString.startsWith("Unable to publish artifact") || logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS")
-                    || logString.startsWith("[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin") || logString.startsWith("[INFO] Downloading")
-                    || logString.startsWith("[INFO] Downloaded")) {
+            // filter unnecessary logs and illegal reflection logs
+            if (buildLogService.isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage) || buildLogService.isIllegalReflectionLog(logString)) {
                 continue;
             }
 
             // Replace some unnecessary information and hide complex details to make it easier to read the important information
-            logString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
+            final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
 
-            filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), logString, unfilteredBuildLog.getProgrammingSubmission()));
+            // Avoid duplicate log entries
+            if (buildLogService.checkIfBuildLogIsNotADuplicate(filteredBuildLogs, shortenedLogString)) {
+                filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), shortenedLogString, unfilteredBuildLog.getProgrammingSubmission()));
+            }
         }
 
         return filteredBuildLogs;

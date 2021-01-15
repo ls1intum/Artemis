@@ -1,5 +1,15 @@
 {
     "artemisApp": {
+        "locks": {
+            "acquired": "You now have the lock on this complaint for 24 hours!",
+            "removeButton": "Remove lock",
+            "lockRemoved": "Removed lock from complaint",
+            "lockInformation": "Locked by {{user}} until {{endDate}}",
+            "lockInformationYou": "Locked by YOU until {{endDate}}",
+            "notUnlocked": "Not Locked",
+            "lockStatus": "Lock Status",
+            "notAllowedToRespond": "You are not allowed to respond to the complaint or more feedback request!\nFor team exercises, the team tutor is the assessor and handles both complaints and feedback requests himself.\nFor individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor himself.\nFor exam test runs, the original assessor is allowed to respond to complaints."
+        },
         "complaintResponse": {
             "title": "Complaint's response",
             "created": "Response to complaint has been submitted",

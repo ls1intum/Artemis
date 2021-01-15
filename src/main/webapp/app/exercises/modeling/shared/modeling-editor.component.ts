@@ -5,6 +5,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import interact from 'interactjs';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
+import { isFullScreen } from 'app/shared/util/fullscreen.util';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -26,9 +27,16 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     resizeOptions: { initialWidth: string; maxWidth?: number };
     @Input()
     showHelpButton = true;
+    @Input()
+    withExplanation = false;
+    @Input()
+    explanation: string;
 
     @Output()
     private onModelChanged: EventEmitter<UMLModel> = new EventEmitter<UMLModel>();
+
+    @Output()
+    explanationChange = new EventEmitter();
 
     private apollonEditor?: ApollonEditor;
     private modelSubscription: number;
@@ -228,16 +236,12 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
      * checks if this component is the current fullscreen component
      */
     get isFullScreen() {
-        const docElement = document as any;
-        // check if this component is the current fullscreen component for different browser types
-        if (docElement.fullscreenElement !== undefined) {
-            return docElement.fullscreenElement;
-        } else if (docElement.webkitFullscreenElement !== undefined) {
-            return docElement.webkitFullscreenElement;
-        } else if (docElement.mozFullScreenElement !== undefined) {
-            return docElement.mozFullScreenElement;
-        } else if (docElement.msFullscreenElement !== undefined) {
-            return docElement.msFullscreenElement;
-        }
+        return isFullScreen();
+    }
+
+    // Emit explanation change when textarea input changes
+    onExplanationInput(newValue: string) {
+        this.explanationChange.emit(newValue);
+        this.explanation = newValue;
     }
 }

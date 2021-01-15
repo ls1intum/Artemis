@@ -29,8 +29,15 @@ export abstract class Submission implements BaseEntity {
     public submissionExerciseType?: SubmissionExerciseType;
     public durationInMinutes?: number;
 
+    // results is initialized by the value the server returns
     public results?: Result[];
+
     public participation?: Participation;
+
+    // Helper Attributes
+
+    // latestResult is undefined until setLatestSubmissionResult() is called
+    public latestResult?: undefined | Result;
 
     // only used for exam to check if it is saved to server
     public isSynced?: boolean;
@@ -47,7 +54,6 @@ export abstract class Submission implements BaseEntity {
  * @param submission
  */
 export function getLatestSubmissionResult(submission: Submission | undefined): Result | undefined {
-    checkForResultsLength(submission);
     if (submission?.results) {
         const length = submission.results.length;
         if (length > 0) {
@@ -57,41 +63,30 @@ export function getLatestSubmissionResult(submission: Submission | undefined): R
 }
 
 /**
- * Used to set the latest submissions result
+ * Used to set / override the latest result in the results list, and set / override the
+ * var latestResult
  *
  * @param submission
  * @param result
- *
- * @return the index of the latestSubmissionResult or undefined if any of the params was undefined
  */
-export function setLatestSubmissionResult(submission: Submission | undefined, result: Result | undefined): number | undefined {
-    checkForResultsLength(submission);
-
+export function setLatestSubmissionResult(submission: Submission | undefined, result: Result | undefined) {
     if (!submission || !result) {
-        return undefined;
+        return;
     }
 
-    if (submission!.results && submission!.results.length > 0) {
+    if (submission.results && submission.results.length > 0) {
         submission.results[submission.results.length - 1] = result;
     } else {
         submission.results = [result];
     }
-    return submission.results.length - 1;
+    submission.latestResult = result;
 }
 
 export function getFirstResult(submission: Submission | undefined): Result | undefined {
-    checkForResultsLength(submission);
     if (submission?.results) {
         const length = submission.results.length;
         if (length > 0) {
             return submission.results[0];
         }
-    }
-}
-
-// todo NR/SE: remove after PR can be merged into develop
-function checkForResultsLength(submission: Submission | undefined) {
-    if (submission?.results && submission.results?.length > 1) {
-        console.error('Multiple results for submission ' + 'are currently not supported! Submission.results: ', submission?.results);
     }
 }

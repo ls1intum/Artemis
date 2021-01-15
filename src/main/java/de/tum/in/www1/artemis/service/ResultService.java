@@ -253,8 +253,31 @@ public class ResultService {
         if (examMode) {
             return new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(exerciseId), 0L);
         }
-        return new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId),
-                resultRepository.countNumberOfFinishedLateAssessmentsForExercise(exerciseId));
+        return new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId), 0L);
+    }
+
+    /**
+     * Given an exerciseId and a correctionRound, return the number of assessments for that exerciseId and correctionRound that have been finished
+     *
+     * @param exercise  - the exercise we are interested in
+     * @param correctionRounds - the correction round we want finished assessments for
+     * @return an array of the number of assessments for the exercise for a given correction round
+     */
+    public DueDateStat[] countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(Exercise exercise, Long correctionRounds) {
+        DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds.intValue()];
+
+        for (int i = 1; i <= correctionRounds.intValue(); i++) {
+            correctionRoundsDataStats[i - 1] = new DueDateStat(
+                    resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), (long) i), 0L);
+
+        }
+
+        // TODO NR, SE: Will be removed in followup PR
+        if (correctionRounds > 1) {
+            correctionRoundsDataStats[(int) (correctionRounds - 1)] = new DueDateStat(0L, 0L);
+        }
+
+        return correctionRoundsDataStats;
     }
 
     /**

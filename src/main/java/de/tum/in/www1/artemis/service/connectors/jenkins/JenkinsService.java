@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -40,18 +39,17 @@ import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.FolderJob;
 import com.offbytwo.jenkins.model.JobWithDetails;
 
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -70,7 +68,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     private static final String PIPELINE_SCRIPT_DETECTION_COMMENT = "// ARTEMIS: JenkinsPipeline";
 
     @Value("${artemis.continuous-integration.url}")
-    private URL JENKINS_SERVER_URL;
+    private URL jenkinsServerUrl;
 
     @Value("${jenkins.use-crumb:#{true}}")
     private boolean useCrumb;
@@ -79,7 +77,11 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final RestTemplate restTemplate;
 
+    private final RestTemplate shortTimeoutRestTemplate;
+
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ResultRepository resultRepository;
 
@@ -87,21 +89,28 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final FeedbackService feedbackService;
 
+    private final BuildLogEntryService buildLogService;
+
     // Pattern of the DateTime that is included in the logs received from Jenkins
     private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
     public JenkinsService(JenkinsBuildPlanCreator jenkinsBuildPlanCreator, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackService feedbackService, ResultRepository resultRepository) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, FeedbackService feedbackService,
+            ResultRepository resultRepository, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService) {
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.feedbackService = feedbackService;
         this.resultRepository = resultRepository;
+        this.buildLogService = buildLogService;
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL, URL solutionRepositoryURL) {
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
+            VcsRepositoryUrl solutionRepositoryURL) {
         try {
             // TODO support sequential test runs
             final var configBuilder = builderFor(exercise.getProgrammingLanguage());
@@ -127,10 +136,9 @@ public class JenkinsService implements ContinuousIntegrationService {
      */
     private JenkinsXmlConfigBuilder builderFor(ProgrammingLanguage programmingLanguage) {
         return switch (programmingLanguage) {
-            case JAVA, KOTLIN, PYTHON, C, HASKELL -> jenkinsBuildPlanCreator;
+            case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT -> jenkinsBuildPlanCreator;
             case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
             case ASSEMBLER -> throw new UnsupportedOperationException("Assembler templates are not available for Jenkins.");
-            case SWIFT -> throw new UnsupportedOperationException("Swift templates are not available for Jenkins.");
         };
     }
 
@@ -158,37 +166,39 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
-        final var projectKey = participation.getProgrammingExercise().getProjectKey();
+        // Refetch the programming exercise with the template participation and assign it to programmingExerciseParticipation to make sure it is initialized (and not a proxy)
+        final var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(participation.getProgrammingExercise().getId()).get();
+        participation.setProgrammingExercise(programmingExercise);
+        final var projectKey = programmingExercise.getProjectKey();
         final var planKey = participation.getBuildPlanId();
-        updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, null /* not important */, participation.getRepositoryUrl(),
-                participation.getProgrammingExercise().getTemplateRepositoryUrl(), Optional.empty());
+        final var templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
+        updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, null /* not needed */, participation.getRepositoryUrl(), templateRepoUrl, Optional.empty());
         enablePlan(projectKey, planKey);
     }
 
-    // TODO this was a bad design choice. We should only have one configureBuildPlan method i.m.o
     @Override
-    public void updatePlanRepository(String projectKey, String planName, String repoNameInCI, String vcsProject, String vcsRepositoryUrl, String templateRepositoryUrl,
-            Optional<List<String>> triggeredBy) {
+    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
+            Optional<List<String>> optionalTriggeredByRepositories) {
 
         // remove potential username from repo URL. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URL
-        final var repoUrl = vcsRepositoryUrl.replaceAll("(https?://)(.*@)(.*)", "$1$3");
-        final var jobXmlDocument = getJobXmlForBuildPlanWith(projectKey, planName);
+        final var repoUrl = newRepoUrl.replaceAll("(https?://)(.*@)(.*)", "$1$3");
+        final var jobXmlDocument = getJobXmlForBuildPlanWith(buildProjectKey, buildPlanKey);
 
         try {
-            replaceScriptParameters(jobXmlDocument, repoUrl, templateRepositoryUrl);
+            replaceScriptParameters(jobXmlDocument, ciRepoName, repoUrl, existingRepoUrl);
         }
         catch (IllegalArgumentException e) {
-            log.info("Falling back to old Jenkins setup replacement");
-            replaceRemoteURLs(jobXmlDocument, repoUrl, repoNameInCI);
+            log.info("Falling back to old Jenkins setup replacement for build xml");
+            replaceRemoteURLs(jobXmlDocument, repoUrl, ciRepoName);
         }
 
         final var headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_XML);
         final var entity = new HttpEntity(writeXmlToString(jobXmlDocument), headers);
 
-        URI uri = Endpoint.PLAN_CONFIG.buildEndpoint(JENKINS_SERVER_URL.toString(), projectKey, planName).build(true).toUri();
+        URI uri = Endpoint.PLAN_CONFIG.buildEndpoint(jenkinsServerUrl.toString(), buildProjectKey, buildPlanKey).build(true).toUri();
 
-        final var errorMessage = "Error trying to configure build plan in Jenkins " + planName;
+        final var errorMessage = "Error trying to configure build plan in Jenkins " + buildPlanKey;
         try {
             final var response = restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
             if (response.getStatusCode() != HttpStatus.OK) {
@@ -201,7 +211,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
     }
 
-    private void replaceScriptParameters(Document jobXmlDocument, String repoUrl, String baseRepoUrl) throws IllegalArgumentException {
+    private void replaceScriptParameters(Document jobXmlDocument, String ciRepoName, String repoUrl, String baseRepoUrl) throws IllegalArgumentException {
         final var scriptNode = findScriptNode(jobXmlDocument);
         if (scriptNode == null || scriptNode.getFirstChild() == null) {
             log.debug("Pipeline Script not found");
@@ -210,12 +220,13 @@ public class JenkinsService implements ContinuousIntegrationService {
 
         String pipeLineScript = scriptNode.getFirstChild().getTextContent().trim();
         // If the script does not start with "pipeline" or the special comment,
-        // it is not actually a pipeline script, but a deprecated programming exercise with an old configuration
+        // it is not actually a pipeline script, but a deprecated programming exercise with an old build xml configuration
         if (!pipeLineScript.startsWith("pipeline") && !pipeLineScript.startsWith(PIPELINE_SCRIPT_DETECTION_COMMENT)) {
             log.debug("Pipeline Script not found");
             throw new IllegalArgumentException("Pipeline Script not found");
         }
         // Replace repo URL
+        // TODO: properly replace the baseRepoUrl with repoUrl by looking up the ciRepoName in the pipelineScript
         pipeLineScript = pipeLineScript.replace(baseRepoUrl, repoUrl);
 
         scriptNode.getFirstChild().setTextContent(pipeLineScript);
@@ -252,10 +263,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
         var secondUserRemoteConfig = userRemoteConfigs.item(1).getChildNodes();
         urlElement = findUrlElement(secondUserRemoteConfig, repoNameInCI);
-        if (urlElement != null) {
-            return urlElement;
-        }
-        return null;
+        return urlElement;
     }
 
     private org.w3c.dom.Node findUrlElement(NodeList nodeList, String repoNameInCI) {
@@ -372,7 +380,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
-        return Optional.of(JENKINS_SERVER_URL + "/project/" + projectKey + "/" + buildPlanId);
+        return Optional.of(jenkinsServerUrl + "/project/" + projectKey + "/" + buildPlanId);
     }
 
     @NotNull
@@ -435,16 +443,19 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
+        if (participation.getBuildPlanId() == null) {
+            // The build plan does not exist, the build status cannot be retrieved
+            return null;
+        }
         final var isQueued = getJob(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId()).isInQueue();
         if (isQueued) {
             return BuildStatus.QUEUED;
         }
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
-        final var url = Endpoint.LAST_BUILD.buildEndpoint(JENKINS_SERVER_URL.toString(), projectKey, planKey).build(true).toString();
+        final var url = Endpoint.LAST_BUILD.buildEndpoint(jenkinsServerUrl.toString(), projectKey, planKey).build(true).toString();
         try {
             final var jobStatus = restTemplate.getForObject(url, JsonNode.class);
-
             return jobStatus.get("building").asBoolean() ? BuildStatus.BUILDING : BuildStatus.INACTIVE;
         }
         catch (HttpClientErrorException e) {
@@ -496,7 +507,8 @@ public class JenkinsService implements ContinuousIntegrationService {
             result.addFeedbacks(scaFeedback);
         }
 
-        result.setHasFeedback(!result.getFeedbacks().isEmpty());
+        // Relevant feedback is negative
+        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(fb -> !fb.isPositive()));
     }
 
     @Override
@@ -504,6 +516,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
         String projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
         String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
+        ProgrammingLanguage programmingLanguage = programmingExerciseParticipation.getProgrammingExercise().getProgrammingLanguage();
 
         try {
             final var build = getJob(projectKey, buildPlanId).getLastBuild();
@@ -518,34 +531,39 @@ public class JenkinsService implements ContinuousIntegrationService {
             }
 
             // Jenkins logs all steps of the build pipeline. We remove those as they are irrelevant to the students
-            LinkedList<BuildLogEntry> prunedBuildLog = new LinkedList<>();
-            final Iterator<BuildLogEntry> buildlogIterator = buildLog.iterator();
-            while (buildlogIterator.hasNext()) {
-                BuildLogEntry entry = buildlogIterator.next();
-
-                if (entry.getLog().contains("Compilation failure")) {
+            List<BuildLogEntry> prunedBuildLogs = new ArrayList<>();
+            for (BuildLogEntry entry : buildLog) {
+                String logString = entry.getLog();
+                if (logString.contains("Compilation failure")) {
                     break;
                 }
-                // filter unnecessary logs
-                if (!((entry.getLog().startsWith("[INFO]") && !entry.getLog().contains("error")) || !entry.getLog().startsWith("[ERROR]") || entry.getLog().startsWith("[WARNING]")
-                        || entry.getLog().startsWith("[ERROR] [Help 1]") || entry.getLog().startsWith("[ERROR] For more information about the errors and possible solutions")
-                        || entry.getLog().startsWith("[ERROR] Re-run Maven using") || entry.getLog().startsWith("[ERROR] To see the full stack trace of the errors")
-                        || entry.getLog().startsWith("[ERROR] -> [Help 1]") || entry.getLog().equals("[ERROR] "))) {
 
-                    // Remove the path from the log entries
-                    // When using local agents, this is the path where the workspace should be located
-                    String path = "/var/jenkins_home/workspace/" + projectKey + "/" + buildPlanId + "/";
-                    entry.setLog(entry.getLog().replace(path, ""));
+                // filter unnecessary logs and illegal reflection logs
+                if (buildLogService.isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage) || buildLogService.isIllegalReflectionLog(logString)) {
+                    continue;
+                }
 
-                    // When using remote agents, this is the path where the workspace should be located
-                    path = "/home/jenkins/remote_agent/workspace/" + projectKey + "/" + buildPlanId + "/";
-                    entry.setLog(entry.getLog().replace(path, ""));
+                // Jenkins outputs each executed shell command with '+ <shell command>'
+                if (logString.startsWith("+ ")) {
+                    continue;
+                }
 
-                    prunedBuildLog.add(entry);
+                // Remove the path from the log entries
+                final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
+
+                // Avoid duplicate log entries
+                if (buildLogService.checkIfBuildLogIsNotADuplicate(prunedBuildLogs, shortenedLogString)) {
+                    entry.setLog(shortenedLogString);
+                    prunedBuildLogs.add(entry);
                 }
             }
 
-            return prunedBuildLog;
+            // Save build logs
+            var savedBuildLogs = buildLogService.saveBuildLogs(prunedBuildLogs, programmingSubmission);
+            programmingSubmission.setBuildLogEntries(savedBuildLogs);
+            programmingSubmissionRepository.save(programmingSubmission);
+
+            return prunedBuildLogs;
         }
         catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -567,7 +585,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
                     while (nodeIterator.hasNext()) {
                         Node node = nodeIterator.next();
-                        final String log;
+                        String log;
                         if (node.attributes().get("class").contains("timestamp")) {
                             final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
                             final var time = ZonedDateTime.parse(timeAsString, logDateTimeFormatter);
@@ -578,6 +596,13 @@ public class JenkinsService implements ContinuousIntegrationService {
                                 contentCandidate = nodeIterator.next();
                             }
                             log = reduceToText(contentCandidate);
+
+                            // There are color codes in the logs that need to be filtered out.
+                            // This is needed for old programming exercises
+                            // For example:[[1;34mINFO[m] is changed to [INFO]
+                            log = log.replace("\u001B[1;34m", "");
+                            log = log.replace("\u001B[m", "");
+                            log = log.replace("\u001B[1;31m", "");
                             buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log).trim()));
                         }
                         else {
@@ -620,7 +645,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private String stripLogEndOfLine(String log) {
-        return log.replaceAll("\\r|\\n", "");
+        return log.replaceAll("[\\r\\n]", "");
     }
 
     private String reduceToText(Node node) {
@@ -682,14 +707,12 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public ConnectorHealth health() {
         try {
-            final var isRunning = jenkinsServer.isRunning();
-            if (!isRunning) {
-                return new ConnectorHealth(new JenkinsException("Jenkins Server is down!"));
-            }
-            return new ConnectorHealth(true, Map.of("url", JENKINS_SERVER_URL));
+            // Note: we simply check if the login page is reachable
+            shortTimeoutRestTemplate.getForObject(jenkinsServerUrl + "/login", String.class);
+            return new ConnectorHealth(true, Map.of("url", jenkinsServerUrl));
         }
         catch (Exception emAll) {
-            return new ConnectorHealth(emAll);
+            return new ConnectorHealth(new JenkinsException("Jenkins Server is down!"));
         }
     }
 
@@ -723,6 +746,10 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private JobWithDetails getJob(String projectKey, String jobName) {
+        if (projectKey == null || jobName == null) {
+            log.warn("Cannot get the job, because projectKey " + projectKey + " or jobName " + jobName + " is null");
+            return null;
+        }
         final var folder = getFolderJob(projectKey);
         try {
             return jenkinsServer.getJob(folder, jobName);
@@ -756,7 +783,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private <T> T post(Endpoint endpoint, HttpStatus allowedStatus, String messageInCaseOfError, Class<T> responseType, Object... args) {
-        final var builder = endpoint.buildEndpoint(JENKINS_SERVER_URL.toString(), args);
+        final var builder = endpoint.buildEndpoint(jenkinsServerUrl.toString(), args);
         try {
             final var response = restTemplate.postForEntity(builder.build(true).toString(), null, responseType);
             if (response.getStatusCode() != allowedStatus) {

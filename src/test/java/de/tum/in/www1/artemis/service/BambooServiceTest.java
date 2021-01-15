@@ -73,8 +73,10 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         assertThat(programmingExercise).as("Exercise was correctly set").isEqualTo(participation.getProgrammingExercise());
 
         // mock return of git path
-        doReturn(gitService.getRepositoryByLocalPath(localRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(participation.getRepositoryUrlAsUrl(), true);
-        doReturn(gitService.getRepositoryByLocalPath(localRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(participation.getRepositoryUrlAsUrl(), false);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(participation.getVcsRepositoryUrl(), true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(participation.getVcsRepositoryUrl(), false);
 
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
@@ -99,10 +101,10 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         participation.setProgrammingExercise(null);
         continuousIntegrationService.performEmptySetupCommit(participation);
 
-        Repository repo = gitService.getRepositoryByLocalPath(localRepo.localRepoFile.toPath());
+        Repository repo = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null);
         assertThat(repo).as("local repository has been deleted").isNull();
 
-        Repository originRepo = gitService.getRepositoryByLocalPath(localRepo.originRepoFile.toPath());
+        Repository originRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.originRepoFile.toPath(), null);
         assertThat(originRepo).as("origin repository has not been deleted").isNotNull();
     }
 

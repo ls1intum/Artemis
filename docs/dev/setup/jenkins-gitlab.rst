@@ -51,6 +51,8 @@ will be explained below in the corresponding sections.
            password: <gitlab-admin-password>
            token: <token>
            ci-token: <ci-token>
+           ssh-private-key-folder-path: <ssh-private-key-folder-path>
+           ssh-private-key-password: <ssh-private-key-password>
        continuous-integration:
            user: <jenkins-admin-user>
            password: <jenkins-admin-password>
@@ -66,7 +68,7 @@ In addition, you have to start Artemis with the profiles ``gitlab`` and
 
 ::
 
-   --spring.profiles.active=dev,jenkins,gitlab,artemis
+   --spring.profiles.active=dev,jenkins,gitlab,artemis,scheduling
 
 Please read :doc:`../setup` for more details.
 
@@ -288,6 +290,27 @@ Gitlab Access Token
 
     The issue with more details can be found `here <https://gitlab.com/gitlab-org/omnibus-gitlab/-/issues/4166>`__.
 
+15. Add a SSH key for the admin user.
+
+    Artemis can clone/push the repositories during setup and for the online code editor using SSH.
+    If the SSH key is not present, the username + token will be used as fallback (and all git operations will use HTTP(S) instead of SSH).
+
+    You first have to create a SSH key (locally), e.g. using ``ssh-keygen`` (more information on how to create a SSH key can be found e.g. at `ssh.com <https://www.ssh.com/ssh/keygen/>`__ or at `gitlab.com <https://docs.gitlab.com/ee/ssh/#rsa-ssh-keys>`__).
+
+    The list of supported ciphers can be found at `Apache Mina <https://github.com/apache/mina-sshd>`__.
+
+    It is recommended to use a password to secure the private key, but it is not mandatory.
+
+    Please note that the private key file **must** be named ``ìd_rsa``, ``id_dsa``, ``id_ecdsa`` or ``id_ed25519``, depending on the ciphers used.
+
+    You now have to extract the public key and add it to Gitlab.
+    Open the public key file (usually called ``id_rsa.pub`` (when using RSA)) and copy it's content (you can also use ``cat id_rsa.pub`` to show the public key).
+
+    Navigate to ``GITLAB-URL/-/profile/keys`` and add the SSH key by pasting the content of the public key.
+
+    ``<ssh-key-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename). It will be used in the configuration of Artemis to specify where Artemis should look for the key and store the ``known_hosts`` file.
+
+    ``<ssh-private-key-password>`` is the password used to secure the private key. It is also needed for the configuration of Artemis, but can be omitted if no password was set (e.g. for development environments).
 
 Reconfigure Gitlab
 
@@ -335,11 +358,15 @@ Jenkins Server Setup
    In order to install and use Maven with Java in the Jenkins container,
    you have to first install maven, then download Java and finally
    configure Maven to use Java instead of the default version.
+   You also need to install Swift and SwiftLint if you want to be able to
+   create Swift programming exercises.
 
    To perform all these steps automatically, you can prepare a Docker
    image:
 
-   Create a dockerfile with the content found `here <src/main/docker/jenkins/Dockerfile>`.
+   Create a dockerfile with the content found `here <src/main/docker/jenkins/Dockerfile>`
+   or `here <src/main/docker/jenkins/swift/Dockerfile>` in case you want to additionally
+   install Swift/SwiftLint.
    Copy it in a file named ``Dockerfile``, e.g. in
    the folder ``/opt/jenkins/`` using ``vim Dockerfile``.
 
@@ -691,7 +718,7 @@ the following steps:
 
     .. code:: yaml
 
-       jenkins::
+       jenkins:
            use-crumb: false
 
 Build agents
@@ -710,6 +737,107 @@ Configure your master node like this  (adjust the number of executors, if needed
 
       Jenkins local node
 
+Alternative local build agents setup using docker
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+An alternative way of adding a build agent that will use docker (similar to the remote agents below) but running
+locally, can be done using the jenkins/ssh-agent docker image `docker image <https://hub.docker.com/r/jenkins/ssh-agent>`__.
+
+Prerequisites:
+
+1. Make sure to have Docker `installed <https://docs.docker.com/engine/install/>`__
+
+Agent setup:
+
+1. Create a new SSH key using ``ssh-keygen`` (if a passphrase is added, store it for later)
+
+2. Copy the public key content (e.g. in ~/.ssh/id_rsa.pub)
+
+3. Run::
+
+    docker run -d --name jenkins_agent -v /var/run/docker.sock:/var/run/docker.sock \
+    jenkins/ssh-agent:latest "<copied_public_key>"
+
+4. Get the GID of the 'docker' group with ``cat /etc/groups`` and remember it for later
+
+5. Enter the agent's container with ``docker exec -it jenkins_agent bash``
+
+6. Install Docker with ``apt update && apt install docker.io``
+
+7. Check if group 'docker' already exists with ``cat /etc/groups``. If yes, remove it with ``groupdel docker``
+
+8. Add a new 'docker' group with the same GID as seen in point 2 with ``groupadd -g <GID> docker``
+
+9. Add 'jenkins' user to the group with ``usermod -aG docker jenkins``
+
+10. Activate changes with ``newgrp docker``
+
+11. Now check if 'jenkins' has the needed permissions to run docker commands
+
+    1. Log in as 'jenkins' with ``su jenkins``
+
+    2. Try if ``docker inspect <agent_container_name>`` works or if a permission error occurs
+
+    3. If an permission error occurs, try to restart the docker container
+
+12. Now you can exit the container executing ``exit`` twice (the first will exit the jenkins user and the second the container)
+
+Add agent in Jenkins:
+
+1. Open Jenkins in your browser (e.g. localhost:8082)
+
+2. Go to Manage Jenkins -> Manage Credentials -> (global) -> Add Credentials
+
+    - Kind: SSH Username with private key
+
+    - ID: leave blank
+
+    - Description: Up to you
+
+    - Username: jenkins
+
+    - Private Key: <content of the previous generated private key> (e.g /root/.ssh/id_rsa)
+
+    - Passphrase: <the previous entered passphrase> (you can leave it blank if none has been specified)
+
+   .. figure:: jenkins-gitlab/alternative_jenkins_node_credentials.png
+      :align: center
+
+3. Go to Manage Jenkins -> Manage Nodes and Clouds -> New Node
+
+    - Node name: Up to you (e.g. Docker)
+
+    - Check 'Permanent Agent'
+
+   .. figure:: jenkins-gitlab/alternative_jenkins_node_setup.png
+      :align: center
+
+4. Node settings:
+
+    - # of executors: Up to you (e.g. 4)
+
+    - Remote root directory: /home/jenkins/agent
+
+    - Labels: docker
+
+    - Usage: Only build jobs with label expressions matching this node
+
+    - Launch method: Launch agents via SSH
+
+    - Host: output of command ``docker inspect --format '{{ .Config.Hostname }}' jenkins_agent``
+
+    - Credentials: <the previously created SSH credential>
+
+    - Host Key Verification Strategy: Non verifying Verification Strategy
+
+    - Availability: Keep this agent online as much as possible
+
+   .. figure:: jenkins-gitlab/alternative_jenkins_node.png
+      :align: center
+
+5. Save the new node
+
+6. Node should now be up and running
 
 Installing remote build agents
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

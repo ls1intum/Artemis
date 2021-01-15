@@ -3,6 +3,12 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { take } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import * as sinonChai from 'sinon-chai';
+import * as chai from 'chai';
+
+chai.use(sinonChai);
+
+const expect = chai.expect;
 
 describe('TextSubmission Service', () => {
     let injector: TestBed;
@@ -10,6 +16,7 @@ describe('TextSubmission Service', () => {
     let httpMock: HttpTestingController;
     let elemDefault: TextSubmission;
     let mockResponse: any;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -57,7 +64,7 @@ describe('TextSubmission Service', () => {
         service
             .create(new TextSubmission(), 1)
             .pipe(take(1))
-            .subscribe((resp: any) => expect(resp).toMatchObject({ body: expected }));
+            .subscribe((resp: any) => expect(resp).to.deep.equal({ body: expected }));
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(JSON.stringify(returnedFromService));
     });
@@ -74,14 +81,14 @@ describe('TextSubmission Service', () => {
         service
             .update(expected, 1)
             .pipe(take(1))
-            .subscribe((resp: any) => expect(resp).toMatchObject({ body: expected }));
+            .subscribe((resp: any) => expect(resp).to.deep.equal({ body: expected }));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(JSON.stringify(returnedFromService));
     });
 
     it('should not parse jwt from header', async () => {
-        service.getTextSubmissionForExerciseWithoutAssessment(1).subscribe((textSubmission) => {
-            expect(textSubmission.atheneTextAssessmentTrackingToken).toBeNull();
+        service.getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(1).subscribe((textSubmission) => {
+            expect(textSubmission.atheneTextAssessmentTrackingToken).to.be.null;
         });
 
         const mockRequest = httpMock.expectOne({ method: 'GET' });
@@ -89,12 +96,40 @@ describe('TextSubmission Service', () => {
     });
 
     it('should parse jwt from header', async () => {
-        service.getTextSubmissionForExerciseWithoutAssessment(1).subscribe((textSubmission) => {
-            expect(textSubmission.atheneTextAssessmentTrackingToken).toEqual('12345');
+        service.getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(1).subscribe((textSubmission) => {
+            expect(textSubmission.atheneTextAssessmentTrackingToken).to.equal('12345');
         });
 
         const mockRequest = httpMock.expectOne({ method: 'GET' });
         mockRequest.flush(mockResponse, { headers: { 'x-athene-tracking-authorization': '12345' } });
+    });
+    it('should get textSubmission for exercise', async () => {
+        const exerciseId = 1;
+        elemDefault = new TextSubmission();
+        elemDefault.latestResult = undefined;
+        const returnedFromService = [elemDefault];
+        const expected = returnedFromService;
+        service
+            .getTextSubmissionsForExerciseByCorrectionRound(exerciseId, {})
+            .pipe(take(1))
+            .subscribe((resp) => (mockResponse = resp));
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+        expect(mockResponse.body).to.deep.equal(expected);
+    });
+
+    it('should get textSubmission', async () => {
+        const exerciseId = 1;
+        elemDefault = new TextSubmission();
+        const returnedFromService = { body: elemDefault };
+        const expected = returnedFromService.body;
+        service
+            .getTextSubmission(exerciseId)
+            .pipe(take(1))
+            .subscribe((resp) => (mockResponse = resp));
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+        expect(mockResponse.body).to.deep.equal(expected);
     });
 
     afterEach(() => {

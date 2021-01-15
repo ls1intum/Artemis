@@ -27,7 +27,7 @@ public class TutorParticipationService {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    private final static String ENTITY_NAME = "TutorParticipation";
+    private static final String ENTITY_NAME = "TutorParticipation";
 
     private final TutorParticipationRepository tutorParticipationRepository;
 

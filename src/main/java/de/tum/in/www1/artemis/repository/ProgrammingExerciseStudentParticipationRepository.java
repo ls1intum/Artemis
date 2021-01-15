@@ -27,8 +27,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
 
-    @Query("select p from ProgrammingExerciseStudentParticipation p left join fetch p.results pr left join fetch pr.feedbacks left join fetch pr.submission left join fetch pr.assessor where p.id = :participationId and (pr.assessmentType = 'MANUAL' or pr.assessmentType = 'SEMI_AUTOMATIC')")
-    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestManualResultAndFeedbacksAndRelatedSubmissionsAndAssessor(@Param("participationId") Long participationId);
+    @Query("select p from ProgrammingExerciseStudentParticipation p left join fetch p.results pr left join fetch pr.feedbacks left join fetch pr.submission left join fetch pr.assessor"
+            + " where p.id = :participationId and pr.id = (select max(prr.id) from p.results prr where prr.assessmentType = 'MANUAL' or prr.assessmentType = 'SEMI_AUTOMATIC')")
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestManualResultAndFeedbacksAndRelatedSubmissionAndAssessor(@Param("participationId") Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "exercise" })
     List<ProgrammingExerciseStudentParticipation> findByBuildPlanId(String buildPlanId);

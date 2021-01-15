@@ -290,8 +290,8 @@ public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void updateUserNotificationDate_asStudent_isSuccessful() throws Exception {
-        UserDTO userDTO = request.putWithResponseBody("/api/users/notification-date", null, UserDTO.class, HttpStatus.OK);
-        User userInDB = userRepository.findById(userDTO.getId()).get();
-        assertThat(userInDB.getLastNotificationRead()).isAfterOrEqualTo(ZonedDateTime.now().minusMinutes(1));
+        request.put("/api/users/notification-date", null, HttpStatus.OK);
+        User userInDB = userRepository.findOneByLogin("student1").get();
+        assertThat(userInDB.getLastNotificationRead()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(1));
     }
 }

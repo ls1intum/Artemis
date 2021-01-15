@@ -161,7 +161,10 @@ public abstract class Exercise extends DomainObject {
     private DueDateStat numberOfSubmissionsTransient;
 
     @Transient
-    private DueDateStat numberOfAssessmentsTransient;
+    private DueDateStat totalNumberOfAssessmentsTransient;
+
+    @Transient
+    private DueDateStat[] numberOfAssessmentsOfCorrectionRoundsTransient;
 
     @Transient
     private Long numberOfComplaintsTransient;
@@ -699,12 +702,20 @@ public abstract class Exercise extends DomainObject {
         this.numberOfSubmissionsTransient = numberOfSubmissions;
     }
 
-    public DueDateStat getNumberOfAssessments() {
-        return numberOfAssessmentsTransient;
+    public DueDateStat getTotalNumberOfAssessments() {
+        return totalNumberOfAssessmentsTransient;
     }
 
-    public void setNumberOfAssessments(DueDateStat numberOfAssessments) {
-        this.numberOfAssessmentsTransient = numberOfAssessments;
+    public void setTotalNumberOfAssessments(DueDateStat totalNumberOfAssessments) {
+        this.totalNumberOfAssessmentsTransient = totalNumberOfAssessments;
+    }
+
+    public DueDateStat[] getNumberOfAssessmentsOfCorrectionRounds() {
+        return numberOfAssessmentsOfCorrectionRoundsTransient;
+    }
+
+    public void setNumberOfAssessmentsOfCorrectionRounds(DueDateStat[] numberOfAssessmentsOfCorrectionRoundsTransient) {
+        this.numberOfAssessmentsOfCorrectionRoundsTransient = numberOfAssessmentsOfCorrectionRoundsTransient;
     }
 
     public Long getNumberOfComplaints() {
@@ -809,7 +820,7 @@ public abstract class Exercise extends DomainObject {
      */
     public enum ExerciseSearchColumn {
 
-        ID("id"), TITLE("title"), COURSE_TITLE("course.title");
+        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
 
         private String mappedColumnName;
 

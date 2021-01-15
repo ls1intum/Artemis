@@ -5,6 +5,31 @@
 #include <signal.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+
+// TODO Overloading malloc seems to cause problems with asan:
+// ==25708==AddressSanitizer CHECK failed: ../../../../src/libsanitizer/asan/asan_posix.cc:50 "((tsd_key_inited)) != (0)" (0x0, 0x0)
+//     <empty stack>
+#if !defined(__SANITIZE_ADDRESS__)
+// Replace the regular malloc call and fill
+// the returning pointer with random garbage data
+extern void* __libc_malloc(size_t size);
+
+void* malloc(size_t size) {
+    void* ptr = __libc_malloc(size);
+    if (ptr != NULL) {
+        int urandom = open("/dev/urandom", O_RDONLY);
+        if (urandom != -1) {
+            read(urandom, ptr, size);
+            close(urandom);
+        }
+    }
+    return ptr;
+}
+#endif
 
 void printWarning() {
     printf("Access denied! This will be reported.\n");

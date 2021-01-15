@@ -38,6 +38,9 @@ export class ExamUpdateComponent implements OnInit {
             if (!this.exam.gracePeriod) {
                 this.exam.gracePeriod = 180;
             }
+            if (!this.exam.numberOfCorrectionRoundsInExam) {
+                this.exam.numberOfCorrectionRoundsInExam = 1;
+            }
         });
     }
 
@@ -78,11 +81,16 @@ export class ExamUpdateComponent implements OnInit {
     get isValidConfiguration(): boolean {
         const examConductionDatesValid = this.isValidVisibleDate && this.isValidStartDate && this.isValidEndDate;
         const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
-        return examConductionDatesValid && examReviewDatesValid;
+        const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
+        return examConductionDatesValid && examReviewDatesValid && examNumberOfCorrectionsValid;
     }
 
     get isValidVisibleDate(): boolean {
         return this.exam.visibleDate !== undefined;
+    }
+
+    get isValidNumberOfCorrectionRounds(): boolean {
+        return this.exam?.numberOfCorrectionRoundsInExam! < 2 && this.exam?.numberOfCorrectionRoundsInExam! > 0;
     }
 
     get isValidStartDate(): boolean {

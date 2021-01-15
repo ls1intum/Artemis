@@ -5,7 +5,7 @@
             "exerciseTitle": "Aktuelle aktive Übung von \"{{ course }}\"",
             "exerciseTitleWithoutDueDate": "Aktuelle Übung von \"{{ course }}\":",
             "examTitle": "Aktuelle Prüfung von \"{{ course }}\":",
-            "cardTitle": "Deine aktuelle Punktzahl:",
+            "cardTitle": "Deine insgesamte Punktzahl:",
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
             "register": {
@@ -98,8 +98,10 @@
                 "exerciseParticipatedAfterDueDate": "Du hast an {{ exercise }} teilgenommen, jedoch nach der Einreichungsfrist.",
                 "noPointsForExercise": "Du kannst keine Punkte für diese Übung erhalten.",
                 "description": "Hier werden dir alle Ergebnisse von Übungen angezeigt, welche zu deinem Ergebnis zum Kurs dazuzählen und bei denen das Bewertungsfälligkeitsdatum bereits vorbei ist.",
-                "reachableHelp": "Die erreichbare Punktzahl ist die Summe der maximalen Punktzahlen aller Aufgaben, die bewertet wurden oder an denen nicht oder zu spät teilgenommen wurde.",
-                "totalHelp": "Die maximale Punktzahl ist Summe der maximalen Punktzahlen aller Aufgaben von diesem Aufgabentyp."
+                "reachableHelpExerciseGroup": "Die erreichbare Punktzahl ist die Summe der maximalen Punktzahlen aller Aufgaben dieses Aufgabentyps, die bewertet wurden, unabhängig von deiner Teilnahme.",
+                "totalHelpExerciseGroup": "Die maximale Punktzahl ist Summe der maximalen Punktzahlen aller Aufgaben von diesem Aufgabentyp.",
+                "reachableHelp": "Die erreichbare Punktzahl ist die Summe der maximalen Punktzahlen aller Aufgaben, die bewertet wurden, unabhängig von deiner Teilnahme.",
+                "totalHelp": "Die maximale Punktzahl ist Summe der maximalen Punktzahlen aller Aufgaben."
             },
             "lectureList": {
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",

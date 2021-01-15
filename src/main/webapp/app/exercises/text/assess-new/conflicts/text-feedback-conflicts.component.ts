@@ -15,10 +15,10 @@ import { Result } from 'app/entities/result.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { AccountService } from 'app/core/auth/account.service';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 import interact from 'interactjs';
 import * as moment from 'moment';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-text-feedback-conflicts',
@@ -42,9 +42,6 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
     isOverrideDisabled = true;
     isMarkingDisabled = true;
     selectedRightFeedbackId?: number;
-
-    // todo NR SE remove after refactoring hmtl function calls
-    getLatestSubmissionResult = getLatestSubmissionResult;
 
     private get textBlocksWithFeedbackForLeftSubmission(): TextBlock[] {
         return [...this.leftTextBlockRefs, ...this.leftUnusedTextBlockRefs]
@@ -109,6 +106,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
             const submissionId = Number(this.activatedRoute.snapshot.paramMap.get('submissionId'));
             const participation = await this.assessmentsService.getFeedbackDataForExerciseSubmission(submissionId).toPromise();
             this.leftSubmission = participation.submissions![0];
+            setLatestSubmissionResult(this.leftSubmission, getLatestSubmissionResult(this.leftSubmission));
             this.exercise = participation.exercise as TextExercise;
         }
         this.activatedRoute.data.subscribe(({ conflictingTextSubmissions }) => this.setPropertiesFromServerResponse(conflictingTextSubmissions));
@@ -120,8 +118,9 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         }
 
         this.conflictingSubmissions = conflictingTextSubmissions;
+        conflictingTextSubmissions.forEach((submission) => setLatestSubmissionResult(submission, getLatestSubmissionResult(submission)));
         this.prepareTextBlocksAndFeedbackFor(this.leftSubmission!, this.leftTextBlockRefs, this.leftUnusedTextBlockRefs);
-        this.leftTotalScore = this.computeTotalScore(getLatestSubmissionResult(this.leftSubmission)!.feedbacks!);
+        this.leftTotalScore = this.computeTotalScore(this.leftSubmission!.latestResult?.feedbacks!);
         this.setConflictingSubmission(0);
     }
 
@@ -185,18 +184,13 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
      * submits the left submission
      */
     overrideLeftSubmission() {
-        if (!this.leftSubmission || !getLatestSubmissionResult(this.leftSubmission) || !getLatestSubmissionResult(this.leftSubmission)!.id || this.overrideBusy) {
+        if (!this.leftSubmission || !this.leftSubmission!.latestResult || !this.leftSubmission!.latestResult!.id || this.overrideBusy) {
             return;
         }
 
         this.overrideBusy = true;
         this.assessmentsService
-            .submit(
-                this.exercise!.id!,
-                getLatestSubmissionResult(this.leftSubmission)!.id!,
-                getLatestSubmissionResult(this.leftSubmission)!.feedbacks!,
-                this.textBlocksWithFeedbackForLeftSubmission,
-            )
+            .submit(this.exercise!.id!, this.leftSubmission!.latestResult!.id!, this.leftSubmission!.latestResult!.feedbacks!, this.textBlocksWithFeedbackForLeftSubmission)
             .subscribe(
                 (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
                 (error: HttpErrorResponse) => this.handleError(error),
@@ -208,7 +202,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
      * override button is enabled.
      */
     leftTextBlockRefsChange(): void {
-        this.leftTotalScore = this.computeTotalScore(getLatestSubmissionResult(this.leftSubmission)!.feedbacks!);
+        this.leftTotalScore = this.computeTotalScore(this.leftSubmission!.latestResult?.feedbacks!);
         this.isOverrideDisabled = false;
     }
 
@@ -243,7 +237,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
     }
 
     private prepareTextBlocksAndFeedbackFor(submission: TextSubmission, textBlockRefs: TextBlockRef[], unusedTextBlockRefs: TextBlockRef[]): void {
-        const feedbackList = getLatestSubmissionResult(submission)?.feedbacks || [];
+        const feedbackList = submission.latestResult?.feedbacks || [];
         const matchBlocksWithFeedbacks = TextAssessmentsService.matchBlocksWithFeedbacks(submission?.blocks || [], feedbackList);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, textBlockRefs, unusedTextBlockRefs, submission);
     }

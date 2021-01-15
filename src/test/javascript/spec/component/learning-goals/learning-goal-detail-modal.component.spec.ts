@@ -13,7 +13,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
-import { LearningGoalProgress, LectureUnitProgress } from 'app/course/learning-goals/learning-goal-progress-dtos.model';
+import { IndividualLearningGoalProgress, IndividualLectureUnitProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 
 chai.use(sinonChai);
@@ -67,15 +67,14 @@ describe('LearningGoalDetailModalComponent', () => {
     it('should call sort service', fakeAsync(() => {
         const learningGoal = new LearningGoal();
         learningGoal.lectureUnits = [new TextUnit(), new VideoUnit()];
-        const learningGoalProgress = new LearningGoalProgress();
-        learningGoalProgress.progressInLectureUnits = [new LectureUnitProgress(), new LectureUnitProgress()];
+        const learningGoalProgress = new IndividualLearningGoalProgress();
+        learningGoalProgress.progressInLectureUnits = [new IndividualLectureUnitProgress(), new IndividualLectureUnitProgress()];
         learningGoalDetailModalComponent.learningGoal = learningGoal;
         learningGoalDetailModalComponent.learningGoalProgress = learningGoalProgress;
         learningGoalDetailModalComponentFixture.detectChanges();
         const sortService = TestBed.inject(SortService);
         const sortByPropertySpy = sinon.spy(sortService, 'sortByProperty');
         learningGoalDetailModalComponent.sortConnectedLectureUnits();
-        learningGoalDetailModalComponent.sortConnectedLectureUnitsForCalculation();
-        expect(sortByPropertySpy).to.have.been.calledTwice;
+        expect(sortByPropertySpy).to.have.been.calledOnce;
     }));
 });

@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -30,36 +31,45 @@ public class SubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(SubmissionService.class);
 
-    protected SubmissionRepository submissionRepository;
+    private ExamService examService;
 
-    protected ResultRepository resultRepository;
+    private CourseService courseService;
 
-    protected AuthorizationCheckService authCheckService;
+    protected final SubmissionRepository submissionRepository;
 
-    protected StudentParticipationRepository studentParticipationRepository;
+    protected final ResultRepository resultRepository;
 
-    protected ParticipationService participationService;
+    protected final AuthorizationCheckService authCheckService;
 
-    private final ExamService examService;
+    protected final StudentParticipationRepository studentParticipationRepository;
+
+    protected final ParticipationService participationService;
 
     protected final UserService userService;
 
-    private final CourseService courseService;
-
     protected final FeedbackRepository feedbackRepository;
 
-    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService,
-            ResultRepository resultRepository, ExamService examService, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
-            FeedbackRepository feedbackRepository) {
+    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
+            StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, FeedbackRepository feedbackRepository) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
-        this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
-        this.examService = examService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.feedbackRepository = feedbackRepository;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setExamService(ExamService examService) {
+        this.examService = examService;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setCourseService(CourseService courseService) {
+        this.courseService = courseService;
     }
 
     /**
@@ -142,16 +152,18 @@ public class SubmissionService {
      * Given an exercise id and a tutor id, it returns all the submissions where the tutor has a result associated.
      *
      * @param exerciseId - the id of the exercise we are looking for
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param tutor - the tutor we are interested in
      * @param examMode - flag should be set to ignore the test run submissions
      * @param <T> the submission type
      * @return a list of Submissions
      */
-    public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor, boolean examMode) {
+    public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(Long exerciseId, User tutor, boolean examMode, Long correctionRound) {
         List<T> submissions;
         if (examMode) {
-            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
+            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
             submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
+                    .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound.intValue()) != null)
                     .collect(toList());
         }
         else {
@@ -168,15 +180,16 @@ public class SubmissionService {
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param exercise the exercise for which we want to retrieve a submission without manual result
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise exercise, boolean examMode) {
+    public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise exercise, boolean examMode, long correctionRound) {
         Random random = new Random();
         List<StudentParticipation> participations;
 
         if (examMode) {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(exercise.getId());
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(exercise.getId(), correctionRound);
         }
         else {
             participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId());
@@ -203,7 +216,7 @@ public class SubmissionService {
      * @return the submission with the given id
      */
     public Submission findOneWithEagerResults(long submissionId) {
-        return submissionRepository.findWithEagerResultsById(submissionId)
+        return submissionRepository.findWithEagerResultsAndAssessorById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
 
@@ -432,7 +445,7 @@ public class SubmissionService {
         final boolean isExamMode = exercise.hasExerciseGroup();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (isExamMode) {
-            ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndiviudalExamEndDate(exercise.getExerciseGroup().getExam());
+            ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                 return false;
             }

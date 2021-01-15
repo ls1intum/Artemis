@@ -45,7 +45,6 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @AfterEach
     public void resetDatabase() {
-        // TODO: something is broken with resetting the repositories. We might find a better solution for this.
         exam1.removeExerciseGroup(exerciseGroup1);
         examService.save(exam1);
         database.resetDatabase();

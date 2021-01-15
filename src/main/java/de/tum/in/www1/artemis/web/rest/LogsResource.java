@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
  */
 @RestController
 @RequestMapping("/management")
+// is automatically secured and can only be invoked by Admins
 public class LogsResource {
 
     @GetMapping("/logs")

@@ -61,7 +61,7 @@ export class CategoryIssuesChartComponent implements OnChanges {
                         : numIssues > maxGradedIssues
                         ? '#dc3545'
                         : '#ffc107',
-                tooltip: `${numStudents} student${numStudents !== 1 ? 's' : ''} have ${numIssues} issue${numIssues !== 1 ? 's' : ''}.`,
+                tooltip: `${numStudents} student${numStudents !== 1 ? 's' : ''} ${numStudents !== 1 ? 'have' : 'has'} ${numIssues} issue${numIssues !== 1 ? 's' : ''}.`,
             };
         });
 
