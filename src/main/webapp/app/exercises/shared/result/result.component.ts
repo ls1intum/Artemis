@@ -97,7 +97,9 @@ export class ResultComponent implements OnInit, OnChanges {
                     });
                 }
                 // Make sure result and participation are connected
-                this.result = this.participation.results[this.correctionRound];
+                if (!this.result) {
+                    this.result = this.participation.results[0];
+                }
                 this.result.participation = this.participation;
             }
         }

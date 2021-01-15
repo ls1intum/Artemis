@@ -320,7 +320,7 @@ public class SubmissionService {
      * @param oldResult old result to copy feedback from
      * @return the list of newly created feedbacks
      */
-    public List<Feedback> copyFeedbacktoNewResult(Result newResult, Result oldResult) {
+    public List<Feedback> copyFeedbackToNewResult(Result newResult, Result oldResult) {
         List<Feedback> oldFeedback = oldResult.getFeedbacks();
         oldFeedback.forEach(feedback -> {
             Feedback newFeedback = feedback.copyFeedback();
@@ -345,7 +345,7 @@ public class SubmissionService {
         }
         Result newResult = new Result();
         newResult.setParticipation(submission.getParticipation());
-        copyFeedbacktoNewResult(newResult, oldResult);
+        copyFeedbackToNewResult(newResult, oldResult);
 
         newResult.setResultString(oldResult.getResultString());
         newResult.setScore(oldResult.getScore());
