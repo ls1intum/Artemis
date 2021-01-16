@@ -1,5 +1,19 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static java.util.stream.Collectors.toList;
+
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -11,19 +25,6 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static java.util.stream.Collectors.toList;
 
 @Service
 public class SubmissionService {
@@ -198,11 +199,12 @@ public class SubmissionService {
         List<Submission> submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toList());
 
-        if(correctionRound > 0){
-            //remove if user already assessed first correction round
-            //if disabled, please switch tutorAssessUnique within the tests
+        if (correctionRound > 0) {
+            // remove if user already assessed first correction round
+            // if disabled, please switch tutorAssessUnique within the tests
             submissionsWithoutResult = submissionsWithoutResult.stream()
-                .filter(submission -> !submission.getResultByCorrectionRoundIgnoreAutomatic(correctionRound-1).getAssessor().equals(userService.getUser())).collect(Collectors.toList());
+                    .filter(submission -> !submission.getResultByCorrectionRoundIgnoreAutomaticAndNull(correctionRound - 1).getAssessor().equals(userService.getUser()))
+                    .collect(Collectors.toList());
         }
 
         if (submissionsWithoutResult.isEmpty()) {

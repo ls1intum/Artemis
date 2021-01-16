@@ -113,7 +113,10 @@ public abstract class Submission extends DomainObject {
     }
 
     /**
-     * Used to get result by correction round
+     * Used to get result by correction round.
+     * Pay attention, that this method only works for Text, Modeling and FileUpload Exercises!
+     * Programming Submissions can have an arbitrary amount automatic results as well!
+     *
      * @param correctionRound to get result by
      * @return the result based on the given correction-round
      */
@@ -127,19 +130,50 @@ public abstract class Submission extends DomainObject {
     }
 
     /**
-     * Used to get result by correction round ignoring all automatic results
-     * @param correctionRound to get result by
+     * Used to get result by correction round ignoring all automatic results, and all null values.
+     * This is called in a context where the submission's result list does not have any null values, as the submission was fetched
+     * by the count of its manual results.
+     *
+     * @param correctionRound to get the result by
      * @return the result based on the given correction-round
      */
     @Nullable
     @JsonIgnore
-    public Result getResultByCorrectionRoundIgnoreAutomatic(Long correctionRound) {
-        List<Result> withoutAutomaticResults = results.stream().filter(result -> result != null && !result.getAssessmentType().equals(AssessmentType.AUTOMATIC))
-                .collect(Collectors.toList());
-        if (withoutAutomaticResults != null && withoutAutomaticResults.size() > correctionRound) {
+    public Result getResultByCorrectionRoundIgnoreAutomaticAndNull(Long correctionRound) {
+        List<Result> withoutAutomaticResults = results.stream().filter(result -> !result.getAssessmentType().equals(AssessmentType.AUTOMATIC)).collect(Collectors.toList());
+        if (withoutAutomaticResults.size() > correctionRound) {
             return withoutAutomaticResults.get(correctionRound.intValue());
         }
         return null;
+    }
+
+    /**
+     * Used to get result by correction round when ignoring all automatic results.
+     * The result list can contain null values when it is called here. So accessing the result list by correctionRound either
+     * yields null or a result.
+     *
+     * @param correctionRound for which it is checked if the tutor has a result
+     * @return true if the tutor has a result in the correctionRound, false otherwise
+     */
+    @Nullable
+    @JsonIgnore
+    public boolean hasResultForCorrectionRoundIgnoreAutomatic(Long correctionRound) {
+        List<Result> withoutAutomaticResults = results.stream().filter(result -> result == null || !result.getAssessmentType().equals(AssessmentType.AUTOMATIC))
+                .collect(Collectors.toList());
+        if (withoutAutomaticResults.size() > correctionRound) {
+            return withoutAutomaticResults.get(correctionRound.intValue()) != null;
+        }
+        return false;
+    }
+
+    /**
+     * strips away all automatic results from a submissions resultlist
+     * (do not save it like this in the database, as it could remove the automatic results!)
+     */
+    @Nullable
+    @JsonIgnore
+    public void stripAutomaticResults() {
+        this.results = this.results.stream().filter(result -> !result.getAssessmentType().equals(AssessmentType.AUTOMATIC)).collect(Collectors.toList());
     }
 
     @Nullable

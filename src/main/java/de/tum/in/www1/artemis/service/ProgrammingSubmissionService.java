@@ -575,7 +575,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Given an exercise id and a tutor id, it returns all the programming submissions where the tutor has a result associated
+     * Given an exercise id and a tutor id, it returns all the programming submissions where the tutor has assessed a result
+     *
+     * The query that returns the participations returns the contained submissions in a particular way:
+     * Due to hibernate, the result list has null values at all places where a result was assessed by another tutor.
+     * At the beginning of the list remain all the automatic results without assessor.
+     * Then filtering out all submissions which have no result at the place of the correctionround leaves us with the submissions we are interested in.
+     * Before returning the submissions we strip away all automatic results, to be able to correctly display them in the client.
      *
      * @param exerciseId - the id of the exercise we are looking for
      * @param correctionRound - the correctionRound for which the submissions should be fetched for
@@ -588,14 +594,15 @@ public class ProgrammingSubmissionService extends SubmissionService {
         List<Submission> submissions;
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
-            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> {
-                submission.setResults(submission.getManualAndNullResults());
-                return submission;
-            }).filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound.intValue()) != null).collect(toList());
+            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                    // filter out the submissions that don't have a result (but a null value) for the correctionRound
+                    .filter(submission -> submission.hasResultForCorrectionRoundIgnoreAutomatic(correctionRound)).collect(toList());
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
         }
+        // strip away all automatic results from the submissions list
+        submissions.forEach(submission -> submission.stripAutomaticResults());
         submissions.forEach(submission -> submission.getLatestResult().setSubmission(null));
         return submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
     }
@@ -705,7 +712,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             existingResult = submission.getLatestResult();
         }
         else {
-            existingResult = submission.getResultByCorrectionRoundIgnoreAutomatic(correctionRound - 1);
+            existingResult = submission.getResultByCorrectionRoundIgnoreAutomaticAndNull(correctionRound - 1);
         }
 
         List<Feedback> automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
