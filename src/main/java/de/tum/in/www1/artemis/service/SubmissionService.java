@@ -198,11 +198,12 @@ public class SubmissionService {
         List<Submission> submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toList());
 
-        if(correctionRound > 0){
-            //remove if user already assessed first correction round
-            //if disabled, please switch tutorAssessUnique within the tests
+        if (correctionRound > 0) {
+            // remove submission if user already assessed first correction round
+            // if disabled, please switch tutorAssessUnique within the tests
             submissionsWithoutResult = submissionsWithoutResult.stream()
-                .filter(submission -> !submission.getResultByCorrectionRoundIgnoreAutomatic(correctionRound-1).getAssessor().equals(userService.getUser())).collect(Collectors.toList());
+                    .filter(submission -> !submission.getResultByCorrectionRoundIgnoreAutomatic(correctionRound - 1).getAssessor().equals(userService.getUser()))
+                    .collect(Collectors.toList());
         }
 
         if (submissionsWithoutResult.isEmpty()) {

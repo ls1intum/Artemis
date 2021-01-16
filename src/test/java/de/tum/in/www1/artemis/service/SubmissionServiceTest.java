@@ -108,7 +108,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @AfterEach
     public void tearDown() {
-        //database.resetDatabase();
+        // database.resetDatabase();
 
         if (submissionListTutor1CorrectionRound0 != null) {
             submissionListTutor1CorrectionRound0.clear();
@@ -156,7 +156,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     }
 
-    private void getTutorSpecificCallsTutor1(Exercise exercise){
+    private void getTutorSpecificCallsTutor1(Exercise exercise) {
         database.changeUser("tutor1");
         unassessedSubmissionCorrectionRound0Tutor1 = submissionService.getRandomSubmissionEligibleForNewAssessment(exercise, true, 0L);
         unassessedSubmissionCorrectionRound1Tutor1 = submissionService.getRandomSubmissionEligibleForNewAssessment(exercise, true, 1L);
@@ -164,14 +164,13 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         submissionListTutor1CorrectionRound1 = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exercise.getId(), tutor1, true, 1L);
     }
 
-    private void getTutorSpecificCallsTutor2(Exercise exercise){
+    private void getTutorSpecificCallsTutor2(Exercise exercise) {
         database.changeUser("tutor2");
         unassessedSubmissionCorrectionRound0Tutor2 = submissionService.getRandomSubmissionEligibleForNewAssessment(exercise, true, 0L);
         unassessedSubmissionCorrectionRound1Tutor2 = submissionService.getRandomSubmissionEligibleForNewAssessment(exercise, true, 1L);
         submissionListTutor2CorrectionRound0 = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exercise.getId(), tutor2, true, 0L);
         submissionListTutor2CorrectionRound1 = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exercise.getId(), tutor2, true, 1L);
     }
-
 
     private void getQueryResults(Exercise exercise) {
         getTutorSpecificCallsTutor1(exercise);
@@ -244,10 +243,10 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(unassessedSubmissionCorrectionRound0Tutor2.isPresent()).isTrue();
         assertThat(unassessedSubmissionCorrectionRound0Tutor2.get()).isEqualTo(submission2);
 
-        if(tutorAssessUnique){
+        if (tutorAssessUnique) {
             assertThat(unassessedSubmissionCorrectionRound1Tutor1.isEmpty()).isTrue();
         }
-        else{
+        else {
             assertThat(unassessedSubmissionCorrectionRound1Tutor1.isPresent()).isTrue();
             assertThat(unassessedSubmissionCorrectionRound1Tutor1.get()).isEqualTo(submission1);
         }
@@ -402,11 +401,10 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(unassessedSubmissionCorrectionRound0Tutor1.isPresent()).isTrue();
         assertThat(unassessedSubmissionCorrectionRound0Tutor1.get()).isEqualTo(submission2);
 
-
-        if(tutorAssessUnique){
+        if (tutorAssessUnique) {
             assertThat(unassessedSubmissionCorrectionRound1Tutor1.isEmpty()).isTrue();
         }
-        else{
+        else {
             assertThat(unassessedSubmissionCorrectionRound1Tutor1.isPresent()).isTrue();
             assertThat(unassessedSubmissionCorrectionRound1Tutor1.get()).isEqualTo(submission1);
         }

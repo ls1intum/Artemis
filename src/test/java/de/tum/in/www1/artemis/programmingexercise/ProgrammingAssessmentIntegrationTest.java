@@ -592,13 +592,13 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         Result firstSubmittedManualResult = request.putWithResponseBodyAndParams("/api/participations/" + studentParticipation.getId() + "/manual-results",
                 manualResultLockedFirstRound, Result.class, HttpStatus.OK, params);
 
-        //change the user here, so that for the next query the result will show up again.
-        if(this.tutorAssessUnique){
+        // change the user here, so that for the next query the result will show up again.
+        if (this.tutorAssessUnique) {
             firstSubmittedManualResult.setAssessor(database.getUserByLogin("instructor1"));
             resultRepository.save(firstSubmittedManualResult);
             assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo("instructor1");
         }
-        else{
+        else {
             assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo("tutor1");
         }
 
