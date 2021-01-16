@@ -200,6 +200,7 @@ public class SubmissionService {
 
         if(correctionRound > 0){
             //remove if user already assessed first correction round
+            //if disabled, please switch tutorAssessUnique within the tests
             submissionsWithoutResult = submissionsWithoutResult.stream()
                 .filter(submission -> !submission.getResultByCorrectionRoundIgnoreAutomatic(correctionRound-1).getAssessor().equals(userService.getUser())).collect(Collectors.toList());
         }

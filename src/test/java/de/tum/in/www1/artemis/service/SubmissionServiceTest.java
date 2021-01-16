@@ -79,6 +79,9 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     private List<Submission> submissionListTutor2CorrectionRound1;
 
+    // set to true, if a tutor is only able to assess a submission if he has not assessed it any prior correction rounds
+    private final boolean tutorAssessUnique = true;
+
     @BeforeEach
     void init() {
         List<User> users = database.addUsers(2, 2, 1);
@@ -105,7 +108,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @AfterEach
     public void tearDown() {
-        database.resetDatabase();
+        //database.resetDatabase();
 
         if (submissionListTutor1CorrectionRound0 != null) {
             submissionListTutor1CorrectionRound0.clear();
@@ -119,6 +122,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         if (submissionListTutor2CorrectionRound1 != null) {
             submissionListTutor2CorrectionRound1.clear();
         }
+        database.resetDatabase();
     }
 
     @Test
@@ -240,7 +244,13 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(unassessedSubmissionCorrectionRound0Tutor2.isPresent()).isTrue();
         assertThat(unassessedSubmissionCorrectionRound0Tutor2.get()).isEqualTo(submission2);
 
-        assertThat(unassessedSubmissionCorrectionRound1Tutor1.isEmpty()).isTrue();
+        if(tutorAssessUnique){
+            assertThat(unassessedSubmissionCorrectionRound1Tutor1.isEmpty()).isTrue();
+        }
+        else{
+            assertThat(unassessedSubmissionCorrectionRound1Tutor1.isPresent()).isTrue();
+            assertThat(unassessedSubmissionCorrectionRound1Tutor1.get()).isEqualTo(submission1);
+        }
         assertThat(unassessedSubmissionCorrectionRound1Tutor2.isPresent()).isTrue();
         assertThat(unassessedSubmissionCorrectionRound1Tutor2.get()).isEqualTo(submission1);
 
@@ -392,7 +402,15 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(unassessedSubmissionCorrectionRound0Tutor1.isPresent()).isTrue();
         assertThat(unassessedSubmissionCorrectionRound0Tutor1.get()).isEqualTo(submission2);
 
-        assertThat(unassessedSubmissionCorrectionRound1Tutor1.isEmpty()).isTrue();
+
+        if(tutorAssessUnique){
+            assertThat(unassessedSubmissionCorrectionRound1Tutor1.isEmpty()).isTrue();
+        }
+        else{
+            assertThat(unassessedSubmissionCorrectionRound1Tutor1.isPresent()).isTrue();
+            assertThat(unassessedSubmissionCorrectionRound1Tutor1.get()).isEqualTo(submission1);
+        }
+
         assertThat(unassessedSubmissionCorrectionRound1Tutor2.isPresent()).isTrue();
         assertThat(unassessedSubmissionCorrectionRound1Tutor2.get()).isEqualTo(submission1);
 

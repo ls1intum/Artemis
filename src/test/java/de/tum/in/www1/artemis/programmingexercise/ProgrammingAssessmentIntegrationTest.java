@@ -63,6 +63,9 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     private Result manualResult;
 
+    // set to true, if a tutor is only able to assess a submission if he has not assessed it any prior correction rounds
+    private final boolean tutorAssessUnique = true;
+
     @BeforeEach
     void initTestCase() {
         database.addUsers(3, 2, 2);
@@ -590,13 +593,17 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
                 manualResultLockedFirstRound, Result.class, HttpStatus.OK, params);
 
         //change the user here, so that for the next query the result will show up again.
-        //firstSubmittedManualResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(manualResultLockedFirstRound.getId()).get();
-        firstSubmittedManualResult.setAssessor(database.getUserByLogin("instructor1"));
-        resultRepository.save(firstSubmittedManualResult);
+        if(this.tutorAssessUnique){
+            firstSubmittedManualResult.setAssessor(database.getUserByLogin("instructor1"));
+            resultRepository.save(firstSubmittedManualResult);
+            assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo("instructor1");
+        }
+        else{
+            assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo("tutor1");
+        }
 
         // verify that the result contains the relationship
         assertThat(firstSubmittedManualResult).isNotNull();
-        assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo("instructor1");
         assertThat(firstSubmittedManualResult.getSubmission()).isEqualTo(submissionWithoutFirstAssessment);
         assertThat(firstSubmittedManualResult.getParticipation()).isEqualTo(studentParticipation);
 
