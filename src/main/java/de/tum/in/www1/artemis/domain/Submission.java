@@ -188,12 +188,6 @@ public abstract class Submission extends DomainObject {
         return results.stream().filter(result -> result != null && !result.getAssessmentType().equals(AssessmentType.AUTOMATIC)).collect(Collectors.toList());
     }
 
-    @Nullable
-    @JsonIgnore
-    public List<Result> getManualAndNullResults() {
-        return results.stream().filter(result -> result == null || !result.getAssessmentType().equals(AssessmentType.AUTOMATIC)).collect(Collectors.toList());
-    }
-
     /**
      * Get the first result of the submission
      *
