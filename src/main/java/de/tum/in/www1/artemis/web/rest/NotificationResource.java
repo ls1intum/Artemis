@@ -19,9 +19,12 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.NotificationService;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.PaginationUtil;
@@ -48,10 +51,14 @@ public class NotificationResource {
 
     private final UserService userService;
 
-    public NotificationResource(NotificationRepository notificationRepository, NotificationService notificationService, UserService userService) {
+    private final AuthorizationCheckService authorizationCheckService;
+
+    public NotificationResource(NotificationRepository notificationRepository, NotificationService notificationService, UserService userService,
+            AuthorizationCheckService authorizationCheckService) {
         this.notificationRepository = notificationRepository;
         this.notificationService = notificationService;
         this.userService = userService;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -68,6 +75,7 @@ public class NotificationResource {
         if (notification.getId() != null) {
             throw new BadRequestAlertException("A new notification cannot already have an ID", ENTITY_NAME, "idexists");
         }
+        restrictSystemNotificationsToAdmin(null, notification);
         Notification result = notificationRepository.save(notification);
         return ResponseEntity.created(new URI("/api/notifications/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -103,6 +111,7 @@ public class NotificationResource {
         if (notification.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
+        restrictSystemNotificationsToAdmin(null, notification);
         Notification result = notificationRepository.save(notification);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, notification.getId().toString())).body(result);
     }
@@ -131,7 +140,16 @@ public class NotificationResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
         log.debug("REST request to delete Notification : {}", id);
+        restrictSystemNotificationsToAdmin(id, null);
         notificationRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+    }
+
+    private void restrictSystemNotificationsToAdmin(Long notificationId, Notification notification) {
+        Long id = notificationId != null ? notificationId : notification.getId();
+        Notification subjectOfChange = id == null ? notification : notificationRepository.findById(id).orElse(null);
+        if (subjectOfChange instanceof SystemNotification && !authorizationCheckService.isAdmin()) {
+            throw new AccessForbiddenException("System notifications can only be managed by admins");
+        }
     }
 }

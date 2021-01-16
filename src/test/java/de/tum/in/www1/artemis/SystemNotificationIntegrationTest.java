@@ -8,6 +8,8 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
@@ -15,9 +17,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @Autowired
+    DatabaseUtilService database;
 
     @Autowired
     SystemNotificationRepository systemNotificationRepo;
@@ -78,7 +84,7 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "admin1", roles = "ADMIN")
     public void testCreateSystemNotification() throws Exception {
         SystemNotification response = request.postWithResponseBody("/api/system-notifications", systemNotification, SystemNotification.class);
 
@@ -87,21 +93,28 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "admin1", roles = "ADMIN")
     public void testCreateSystemNotification_BadRequest() throws Exception {
         systemNotification.setId(1L);
         request.post("/api/system-notifications", systemNotification, HttpStatus.BAD_REQUEST);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "/api/system-notifications/", "/api/notifications/" })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateSystemNotification_asInstructor_Forbidden(String endpoint) throws Exception {
+        request.post(endpoint, systemNotification, HttpStatus.FORBIDDEN);
+    }
+
     @Test
     @WithMockUser(roles = "USER")
-    public void testCreateSystemNotification_Forbidden() throws Exception {
+    public void testCreateSystemNotification_asUser_Forbidden() throws Exception {
         systemNotification.setId(1L);
         request.post("/api/system-notifications", systemNotification, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "admin1", roles = "ADMIN")
     public void testUpdateSystemNotification() throws Exception {
         systemNotificationRepo.save(systemNotification);
         String updatedText = "updated text";
@@ -111,15 +124,24 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
         assertThat(systemNotificationRepo.findById(systemNotification.getId()).get()).as("repository contains updated notification").isEqualTo(response);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = { "/api/system-notifications/", "/api/notifications/" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateSystemNotification_asInstructor_Forbidden(String endpoint) throws Exception {
+        systemNotificationRepo.save(systemNotification);
+        systemNotification.setText("updated text");
+        request.put(endpoint, systemNotification, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "admin1", roles = "ADMIN")
     public void testUpdateSystemNotification_BadRequest() throws Exception {
         SystemNotification systemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().minusDays(3), ZonedDateTime.now().plusDays(3));
         request.put("/api/system-notifications", systemNotification, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "admin1", roles = "ADMIN")
     public void testGetAllSystemNotifications() throws Exception {
         List<SystemNotification> response = request.get("/api/system-notifications", HttpStatus.OK, List.class);
         assertThat(response.isEmpty()).as("system notification are present").isFalse();
@@ -140,5 +162,14 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
         SystemNotification response = request.postWithResponseBody("/api/system-notifications", systemNotification, SystemNotification.class);
         assertThat(systemNotificationRepo.findById(response.getId()).get()).as("system notification is not null").isNotNull();
         request.delete("/api/system-notifications/" + response.getId(), HttpStatus.OK);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "/api/system-notifications/", "/api/notifications/" })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteSystemNotification_asInstructor_Forbidden(String endpoint) throws Exception {
+        SystemNotification notification = systemNotificationRepo.save(systemNotification);
+        assertThat(systemNotificationRepo.findById(notification.getId()).get()).as("system notification is not null").isNotNull();
+        request.delete(endpoint + notification.getId(), HttpStatus.FORBIDDEN);
     }
 }

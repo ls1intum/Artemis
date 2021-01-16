@@ -1011,4 +1011,22 @@ public class ProgrammingExerciseService {
             ((ProgrammingExercise) exercise).setIsLocalSimulation(true);
         }
     }
+
+    /**
+     * Unlock all repositories of the programming exercise
+     *
+     * @param exerciseId of the exercise
+     */
+    public void unlockAllRepositories(Long exerciseId) {
+        instanceMessageSendService.sendUnlockAllRepositories(exerciseId);
+    }
+
+    /**
+     * Lock all repositories of the programming exercise
+     *
+     * @param exerciseId of the exercise
+     */
+    public void lockAllRepositories(Long exerciseId) {
+        instanceMessageSendService.sendLockAllRepositories(exerciseId);
+    }
 }

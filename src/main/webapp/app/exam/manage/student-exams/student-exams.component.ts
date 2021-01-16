@@ -275,7 +275,7 @@ export class StudentExamsComponent implements OnInit {
     }
 
     /**
-     * Unlock all repositories immediately. Asks for confirmation.
+     * Lock all repositories immediately. Asks for confirmation.
      */
     handleLockAllRepositories() {
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
@@ -287,7 +287,7 @@ export class StudentExamsComponent implements OnInit {
     }
 
     /**
-     * Unlocks all programming exercises that belong to the exam
+     * Locks all programming exercises that belong to the exam
      */
     private lockAllRepositories() {
         this.isLoading = true;

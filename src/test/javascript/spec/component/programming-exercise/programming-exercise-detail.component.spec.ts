@@ -17,7 +17,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot()],
             declarations: [ProgrammingExerciseDetailComponent],
             providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }, MockProvider(TranslateService)],
         })
