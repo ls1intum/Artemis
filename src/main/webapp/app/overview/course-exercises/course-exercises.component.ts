@@ -233,21 +233,13 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
             const dateIndex = dateValue ? moment(dateValue).startOf('week').format('YYYY-MM-DD') : 'NoDate';
             if (!groupedExercises[dateIndex]) {
                 indexKeys.push(dateIndex);
-                if (dateValue) {
-                    groupedExercises[dateIndex] = {
-                        start: moment(dateValue).startOf('week'),
-                        end: moment(dateValue).endOf('week'),
-                        isCollapsed: dateValue.isBefore(moment(), 'week'),
-                        isCurrentWeek: dateValue.isSame(moment(), 'week'),
-                        exercises: [],
-                    };
-                } else {
-                    groupedExercises[dateIndex] = {
-                        isCollapsed: false,
-                        isCurrentWeek: false,
-                        exercises: [],
-                    };
-                }
+                groupedExercises[dateIndex] = {
+                    start: moment(dateValue).startOf('week'),
+                    end: moment(dateValue).endOf('week'),
+                    isCollapsed: dateValue.isBefore(moment(), 'week'),
+                    isCurrentWeek: dateValue.isSame(moment(), 'week'),
+                    exercises: [],
+                };
             }
             groupedExercises[dateIndex].exercises.push(exercise);
             if (exercise.dueDate && moment().isSameOrBefore(dateValue, 'day')) {
