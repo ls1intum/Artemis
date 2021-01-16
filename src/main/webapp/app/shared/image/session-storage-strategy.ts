@@ -5,6 +5,9 @@ import { GlobalCacheConfig, ICachePair, IStorageStrategy } from 'ts-cacheable';
  * instead of the localStorage: https://github.com/angelnikolov/ngx-cacheable/blob/master/common/DOMStorageStrategy.ts
  */
 export class SessionStorageStrategy extends IStorageStrategy {
+    addMany(entities: ICachePair<any>[], cacheKey: string): void {
+        throw new Error('Method not implemented.');
+    }
     private masterCacheKey: string = GlobalCacheConfig.globalCacheKey;
     constructor() {
         super();

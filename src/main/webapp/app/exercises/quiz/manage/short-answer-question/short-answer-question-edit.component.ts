@@ -713,5 +713,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         } else {
             this.question.similarityValue = 90;
         }
+        this.questionUpdated.emit();
     }
 }
