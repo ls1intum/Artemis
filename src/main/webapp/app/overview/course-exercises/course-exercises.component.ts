@@ -17,12 +17,12 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
-enum ExerciseFilter {
+export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
     NEEDS_WORK = 'NEEDS_WORK',
 }
 
-enum ExerciseSortingOrder {
+export enum ExerciseSortingOrder {
     ASC = 1,
     DESC = -1,
 }
@@ -33,7 +33,7 @@ enum SortFilterStorageKey {
     ATTRIBUTE = 'artemis.course.exercises.attribute',
 }
 
-enum SortingAttribute {
+export enum SortingAttribute {
     DUE_DATE = 0,
     RELEASE_DATE = 1,
 }

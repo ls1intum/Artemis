@@ -4,35 +4,36 @@
             <div class="exercise-controls" *ngIf="course?.exercises.length > 0">
                 <div class="d-flex align-items-center mr-2">
                     <label class="d-flex align-items-center mb-0 mr-2">
-                        <input (change)="toggleFilters([filterType.OVERDUE])"
-                               [checked]="activeFilters.has(filterType.OVERDUE)"
-                               type="checkbox"/>
-                        <span class="ml-2"
-                              jhiTranslate="artemisApp.courseOverview.exerciseList.overdue">Hide overdue</span>
+                        <input (change)="toggleFilters([filterType.OVERDUE])" [checked]="activeFilters.has(filterType.OVERDUE)" type="checkbox" />
+                        <span class="ml-2" jhiTranslate="artemisApp.courseOverview.exerciseList.overdue">Hide overdue</span>
                     </label>
                     <label class="d-flex align-items-center mb-0 mr-2">
-                        <input (change)="toggleFilters([filterType.NEEDS_WORK])"
-                               [checked]="activeFilters.has(filterType.NEEDS_WORK)"
-                               type="checkbox"/>
+                        <input (change)="toggleFilters([filterType.NEEDS_WORK])" [checked]="activeFilters.has(filterType.NEEDS_WORK)" type="checkbox" />
                         <span class="ml-2" jhiTranslate="artemisApp.courseOverview.exerciseList.fullScore">Hide full score</span>
                     </label>
                     <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
-                        <button (click)="flipOrder()" class="btn btn-primary">
+                        <button id="flip" (click)="flipOrder()" class="btn btn-primary">
                             <fa-icon [icon]="sortingOrder === ASC ? 'sort-numeric-up' : 'sort-numeric-down'"></fa-icon>
-                            <span
-                                class="d-none d-md-inline ml-1">{{ 'artemisApp.courseOverview.exerciseList.' + (sortingOrder === ASC ? 'oldFirst' : 'newFirst') | translate }}</span>
+                            <span class="d-none d-md-inline ml-1">{{
+                                'artemisApp.courseOverview.exerciseList.' + (sortingOrder === ASC ? 'oldFirst' : 'newFirst') | translate
+                            }}</span>
                         </button>
                         <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group">
-                            <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button">
-
-                            </button>
+                            <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button"></button>
                             <div class="dropdown-menu" ngbDropdownMenu>
-                                <a (click)="setSortingAttribute(DUE_DATE)"
-                                   class="dropdown-item {{sortingAttribute === DUE_DATE?'active':''}}"
-                                   jhiTranslate="artemisApp.courseOverview.exerciseList.dueDate">Due date</a>
-                                <a (click)="setSortingAttribute(RELEASE_DATE)"
-                                   class="dropdown-item {{sortingAttribute === RELEASE_DATE?'active':''}}"
-                                   jhiTranslate="artemisApp.courseOverview.exerciseList.releaseDate">Release date</a>
+                                <a
+                                    id="dueDateSorting"
+                                    (click)="setSortingAttribute(DUE_DATE)"
+                                    class="dropdown-item {{ sortingAttribute === DUE_DATE ? 'active' : '' }}"
+                                    jhiTranslate="artemisApp.courseOverview.exerciseList.dueDate"
+                                    >Due date</a
+                                >
+                                <a
+                                    (click)="setSortingAttribute(RELEASE_DATE)"
+                                    class="dropdown-item {{ sortingAttribute === RELEASE_DATE ? 'active' : '' }}"
+                                    jhiTranslate="artemisApp.courseOverview.exerciseList.releaseDate"
+                                    >Release date</a
+                                >
                             </div>
                         </div>
                     </div>
