@@ -222,4 +222,20 @@ export class ProgrammingExerciseService {
             : undefined;
         return res;
     }
+
+    /**
+     * Unlock all the student repositories of the given exercise so that student can perform commits
+     * @param exerciseId of the particular programming exercise
+     */
+    unlockAllRepositories(exerciseId: number): Observable<HttpResponse<{}>> {
+        return this.http.put<any>(`${this.resourceUrl}/${exerciseId}/unlock-all-repositories`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Lock all the student repositories of the given exercise so that student can perform commits
+     * @param exerciseId of the particular programming exercise
+     */
+    lockAllRepositories(exerciseId: number): Observable<HttpResponse<{}>> {
+        return this.http.put<any>(`${this.resourceUrl}/${exerciseId}/lock-all-repositories`, {}, { observe: 'response' });
+    }
 }
