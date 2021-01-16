@@ -19,7 +19,7 @@ public abstract class AbstractBuildResultNotificationDTO {
     /**
      * Returns a string stating how much tests passed:
      * Example: "1 of 10 passed"
-     * @return
+     * @return string stating how much tests passes out of a total amount
      */
     public abstract String getTestsPassedString();
 }
