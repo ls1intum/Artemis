@@ -21,7 +21,7 @@
                     "yourPoints": "Your points",
                     "maxPoints": "Points",
                     "bonus": "Bonus points",
-                    "sum": "Sum"
+                    "youAchieved": "You achieved {{achievedPoints}} points out of possible {{normalPoints}} normal points and {{bonusPoints}} bonus points"
                 }
             },
             "title": "Exam",

@@ -25,6 +25,9 @@
                 &nbsp;<fa-icon [icon]="getIcon(exercise.type)"></fa-icon>&nbsp;
                 <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
             </h5>
+            <h5 *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
+                <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+            </h5>
             <div *ngIf="resultsPublished">
                 <jhi-result [participation]="exercise.studentParticipations![0]"></jhi-result>
             </div>

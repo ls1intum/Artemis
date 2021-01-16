@@ -21,7 +21,7 @@
                     "yourPoints": "Deine Punkte",
                     "maxPoints": "Punkte",
                     "bonus": "Bonus Punkte",
-                    "sum": "Summe"
+                    "youAchieved": "Du hast {{achievedPoints}} Punkte von möglichen {{normalPoints}} normalen Punkten und {{bonusPoints}} Bonuspunkten erreicht"
                 }
             },
             "title": "Klausur",
