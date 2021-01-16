@@ -1,23 +1,5 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
-
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.eclipse.jgit.lib.ObjectId;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
-
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -29,6 +11,23 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ProgrammingAssessmentService;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import org.eclipse.jgit.lib.ObjectId;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
 
 public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -576,7 +575,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
 
         // assess submission and submit
-        final var manualResultLockedFirstRound = submissionWithoutFirstAssessment.getLatestResult();
+        var manualResultLockedFirstRound = submissionWithoutFirstAssessment.getLatestResult();
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
         manualResultLockedFirstRound.setFeedbacks(feedbacks);
         manualResultLockedFirstRound.setRated(true);
@@ -589,8 +588,15 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         Result firstSubmittedManualResult = request.putWithResponseBodyAndParams("/api/participations/" + studentParticipation.getId() + "/manual-results",
                 manualResultLockedFirstRound, Result.class, HttpStatus.OK, params);
+
+        //change the user here, so that for the next query the result will show up again.
+        //firstSubmittedManualResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(manualResultLockedFirstRound.getId()).get();
+        firstSubmittedManualResult.setAssessor(database.getUserByLogin("instructor1"));
+        resultRepository.save(firstSubmittedManualResult);
+
         // verify that the result contains the relationship
         assertThat(firstSubmittedManualResult).isNotNull();
+        assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo("instructor1");
         assertThat(firstSubmittedManualResult.getSubmission()).isEqualTo(submissionWithoutFirstAssessment);
         assertThat(firstSubmittedManualResult.getParticipation()).isEqualTo(studentParticipation);
 

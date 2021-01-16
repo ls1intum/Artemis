@@ -201,7 +201,7 @@ public class SubmissionService {
         if(correctionRound > 0){
             //remove if user already assessed first correction round
             submissionsWithoutResult = submissionsWithoutResult.stream()
-                .filter(submission -> !submission.getResultByCorrectionRound(correctionRound-1).getAssessor().equals(userService.getUser())).collect(Collectors.toList());
+                .filter(submission -> !submission.getResultByCorrectionRoundIgnoreAutomatic(correctionRound-1).getAssessor().equals(userService.getUser())).collect(Collectors.toList());
         }
 
         if (submissionsWithoutResult.isEmpty()) {
