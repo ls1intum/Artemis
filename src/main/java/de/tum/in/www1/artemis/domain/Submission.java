@@ -139,7 +139,7 @@ public abstract class Submission extends DomainObject {
      */
     @Nullable
     @JsonIgnore
-    public Result getResultByCorrectionRoundIgnoreAutomaticAndNull(Long correctionRound) {
+    public Result getResultByCorrectionRoundIgnoreAutomatic(Long correctionRound) {
         List<Result> withoutAutomaticResults = results.stream().filter(result -> !result.getAssessmentType().equals(AssessmentType.AUTOMATIC)).collect(Collectors.toList());
         if (withoutAutomaticResults.size() > correctionRound) {
             return withoutAutomaticResults.get(correctionRound.intValue());
