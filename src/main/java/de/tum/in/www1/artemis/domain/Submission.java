@@ -123,7 +123,7 @@ public abstract class Submission extends DomainObject {
     @Nullable
     @JsonIgnore
     public Result getResultByCorrectionRound(Long correctionRound) {
-        if (results != null && results.size() > correctionRound) {
+        if (results.size() > correctionRound) {
             return results.get(correctionRound.intValue());
         }
         return null;
