@@ -1,4 +1,5 @@
 @import '../../../../../content/scss/_artemis-mixins.scss';
+@import '../../../../../content/scss/_artemis-variables.scss';
 
 .edit-sa-question {
     .short-answer-question-display {
@@ -26,6 +27,36 @@
                 padding: 2px 3px;
                 width: 170px;
                 height: 40px;
+            }
+        }
+    }
+
+    .match-percentage-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 45%;
+
+        .slider-container {
+            display: flex;
+            justify-content: center;
+            width: 65%;
+
+            .slider-with-label {
+                width: 70%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+
+                input[type='range'] {
+                    cursor: pointer;
+                    margin: auto;
+                    width: 70%;
+                }
+
+                p {
+                    margin: auto;
+                }
             }
         }
     }

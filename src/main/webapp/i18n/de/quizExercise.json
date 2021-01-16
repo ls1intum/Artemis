@@ -220,7 +220,17 @@
                 "title": "Kurzer Quiz Titel",
                 "questionTitle": "Fragen Titel",
                 "shortQuestionTitle": "Kurzer Fragen Titel"
-            }
+            },
+            "matchLetterCase": {
+                "title": "Groß- und Kleinschreibung beachten",
+                "explanation": "Auswählen, falls Groß- und Kleinschreibung beachtet werden muss (Beispiel: Antwort /= antwort)"
+            },
+            "matchPercentage": {
+                "title": "Antworte genau vergleichen",
+                "explanationTitle": "Ähnlichkeit %",
+                "explanation": "Gibt die Ähnlichkeit in Prozent an, für die die Antworte als korrekt gelten (Default 100%)"
+            },
+            "matchingInfoModalTitle": "Antwort Matching Optionen"
         },
         "quizLiveModal": {
             "title": "Go-Live einer neuen Quiz-Übung",

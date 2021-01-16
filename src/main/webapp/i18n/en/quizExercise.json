@@ -226,7 +226,17 @@
                 "title": "Short Quiz Title",
                 "questionTitle": "Question Title",
                 "shortQuestionTitle": "Short Question Title"
-            }
+            },
+            "matchLetterCase": {
+                "title": "Match Letter Case",
+                "explanation": "Select if the letter case of the answers provided matters in the evaluation (Example: Answer /= answer)"
+            },
+            "matchPercentage": {
+                "title": "Match Answers Exactly",
+                "explanationTitle": "Similarity %",
+                "explanation": "Determines the similarity percentage value, for which the answers are treated as correct (Default 100%)"
+            },
+            "matchingInfoModalTitle": "Answer Matching Options"
         }
     }
 }
