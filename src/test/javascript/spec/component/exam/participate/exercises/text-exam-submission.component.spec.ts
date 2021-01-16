@@ -62,7 +62,9 @@ describe('TextExamSubmissionComponent', () => {
         textSubmission.text = 'Hello World';
         component.studentSubmission = textSubmission;
 
+        component.onActivate();
         fixture.detectChanges();
+        component.onDeactivate();
 
         expect(component.answer).to.equal('Hello World');
         expect(component.wordCount).to.equal(2);
