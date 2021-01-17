@@ -7,6 +7,9 @@ export class ShortAnswerQuestion extends QuizQuestion {
     public spots?: ShortAnswerSpot[];
     public solutions?: ShortAnswerSolution[];
     public correctMappings?: ShortAnswerMapping[];
+    public matchLetterCase: Boolean;
+    public similarityValue: Number = 100;
+    public matchExactly: Boolean = true;
 
     constructor() {
         super(QuizQuestionType.SHORT_ANSWER);

@@ -26,6 +26,7 @@ import { QuizExerciseExportComponent } from 'app/exercises/quiz/manage/quiz-exer
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { ArtemisQuizParticipationModule } from 'app/exercises/quiz/participate/quiz-participation.module';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
+import { MatchPercentageInfoModalComponent } from 'app/exercises/quiz/manage/match-percentage-info-modal/match-percentage-info-modal.component';
 
 const ENTITY_STATES = [...quizManagementRoute];
 
@@ -59,6 +60,7 @@ const ENTITY_STATES = [...quizManagementRoute];
         ReEvaluateShortAnswerQuestionComponent,
         QuizReEvaluateWarningComponent,
         QuizExerciseExportComponent,
+        MatchPercentageInfoModalComponent,
     ],
     // only add popups
     entryComponents: [QuizReEvaluateWarningComponent],
