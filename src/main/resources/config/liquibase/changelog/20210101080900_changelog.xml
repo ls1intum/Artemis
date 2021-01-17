@@ -10,7 +10,7 @@
 
 
     <changeSet id="20210101080900-2" author="swaldhauser">
-        <addNotNullConstraint tableName="exercise" columnName="included_in_overall_score" columnDataType="VARCHAR(255)"/>
+        <addNotNullConstraint tableName="exercise" columnName="included_in_overall_score" columnDataType="VARCHAR(255)" defaultNullValue="INCLUDED_COMPLETELY"/>
     </changeSet>
 
     <changeSet author="swaldhauser" id="20210101080900-3">
