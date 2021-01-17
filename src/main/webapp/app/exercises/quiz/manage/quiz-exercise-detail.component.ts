@@ -661,17 +661,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             }
         }, this);
 
-        const maxPointsReachableInQuiz = this.quizExercise.quizQuestions
-            ?.map((quizQuestion) => {
-                if (quizQuestion.score === undefined || quizQuestion.score === null) {
-                    return 0;
-                } else {
-                    return quizQuestion.score;
-                }
-            })
-            .reduce(function (a, b) {
-                return a + b;
-            }, 0);
+        const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.score ?? 0).reduce((a, b) => a + b, 0);
 
         return (
             isGenerallyValid &&
@@ -813,19 +803,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 translateValues: {},
             });
         }
-        const maxPointsReachableInQuiz = this.quizExercise.quizQuestions
-            ?.map((quizQuestion) => {
-                if (quizQuestion.score === undefined || quizQuestion.score === null) {
-                    return 0;
-                } else {
-                    return quizQuestion.score;
-                }
-            })
-            .reduce(function (a, b) {
-                return a + b;
-            }, 0);
+        const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.score ?? 0).reduce((a, b) => a + b, 0);
 
-        if (maxPointsReachableInQuiz === undefined || maxPointsReachableInQuiz === 0) {
+        if (!maxPointsReachableInQuiz) {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.invalidReasons.quizZeroPoints',
                 translateValues: {},

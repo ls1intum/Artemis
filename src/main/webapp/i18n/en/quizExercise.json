@@ -158,7 +158,7 @@
                 "noQuestion": "Quiz: The quiz has no question.",
                 "invalidStartTime": "Quiz: The Start Time is not valid.",
                 "startTimeInPast": "Quiz: The Start Time lies in the past.",
-                "quizZeroPoints": "Quiz: The total number of points is 0 ",
+                "quizZeroPoints": "Quiz: The total number of points is 0.",
                 "questionTitle": "Question {{index}}: The title is missing.",
                 "questionScore": "Question {{index}}: The score is invalid.",
                 "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
