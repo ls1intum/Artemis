@@ -574,9 +574,9 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         textSubmission.addResult(r2);
         textSubmission = submissionRepository.save(textSubmission);
 
-        long assessments = resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(textExercise.getId(), (long) 0);
+        long assessments = resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(textExercise.getId(), 0);
         assertThat(assessments).isEqualTo(1);
-        assessments = resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(textExercise.getId(), (long) 1);
+        assessments = resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(textExercise.getId(), 1);
         assertThat(assessments).isEqualTo(1);
     }
 
@@ -621,11 +621,9 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         programmingSubmission.addResult(r2);
         programmingSubmission = submissionRepository.save(programmingSubmission);
 
-        Long assessments = programmingExerciseRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(programmingExercise.getId(), (long) 0);
+        Long assessments = programmingExerciseRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(programmingExercise.getId(), 0);
         assertThat(assessments).isEqualTo(1);
-        assessments = programmingExerciseRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(programmingExercise.getId(), (long) 1);
+        assessments = programmingExerciseRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(programmingExercise.getId(), 1);
         assertThat(assessments).isEqualTo(1);
-
     }
-
 }

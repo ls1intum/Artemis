@@ -154,7 +154,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             AND submission.id = (SELECT max(id) FROM participation.submissions)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation(@Param("exerciseId") Long exerciseId,
-            @Param("correctionRound") Long correctionRound);
+            @Param("correctionRound") int correctionRound);
 
     /**
      * Find all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
@@ -214,7 +214,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)
             """)
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(@Param("correctionRound") long exerciseId,
-            @Param("correctionRound") Long correctionRound);
+            @Param("correctionRound") int correctionRound);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch r.assessor a
@@ -260,7 +260,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)
                 """)
     List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessorAndCorrectionRoundIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
-            @Param("assessorId") Long assessorId, @Param("correctionRound") Long correctionRound);
+            @Param("assessorId") Long assessorId, @Param("correctionRound") int correctionRound);
 
     /**
      * Count the number of submissions for each participation in a given exercise.

@@ -158,13 +158,12 @@ public class SubmissionService {
      * @param <T> the submission type
      * @return a list of Submissions
      */
-    public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(Long exerciseId, User tutor, boolean examMode, Long correctionRound) {
+    public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(Long exerciseId, User tutor, boolean examMode, int correctionRound) {
         List<T> submissions;
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
             submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
-                    .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound.intValue()) != null)
-                    .collect(toList());
+                    .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound) != null).collect(toList());
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
@@ -185,7 +184,7 @@ public class SubmissionService {
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise exercise, boolean examMode, long correctionRound) {
+    public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise exercise, boolean examMode, int correctionRound) {
         Random random = new Random();
         List<StudentParticipation> participations;
 
@@ -203,8 +202,7 @@ public class SubmissionService {
             // remove submission if user already assessed first correction round
             // if disabled, please switch tutorAssessUnique within the tests
             submissionsWithoutResult = submissionsWithoutResult.stream()
-                    .filter(submission -> !submission.getResultByCorrectionRoundIgnoreAutomatic(correctionRound - 1).getAssessor().equals(userService.getUser()))
-                    .collect(Collectors.toList());
+                    .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1).getAssessor().equals(userService.getUser())).collect(Collectors.toList());
         }
 
         if (submissionsWithoutResult.isEmpty()) {
@@ -431,11 +429,11 @@ public class SubmissionService {
      *
      * @param submission the submission to lock
      */
-    protected Result lockSubmission(Submission submission, Long correctionRound) {
-        Result result = submission.getResultByCorrectionRound(correctionRound);
+    protected Result lockSubmission(Submission submission, int correctionRound) {
+        Result result = submission.getResultForCorrectionRound(correctionRound);
         if (result == null && correctionRound > 0L) {
             // copy the result of the previous correction round
-            result = copyResultFromPreviousRoundAndSave(submission, submission.getResultByCorrectionRound(correctionRound - 1));
+            result = copyResultFromPreviousRoundAndSave(submission, submission.getResultForCorrectionRound(correctionRound - 1));
         }
         else if (result == null) {
             result = saveNewEmptyResult(submission);

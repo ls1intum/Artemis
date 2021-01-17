@@ -590,19 +590,19 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return a list of programming submissions
      */
     public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(long exerciseId, User tutor, boolean examMode,
-            Long correctionRound) {
+            int correctionRound) {
         List<Submission> submissions;
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
             submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
                     // filter out the submissions that don't have a result (but a null value) for the correctionRound
-                    .filter(submission -> submission.hasResultForCorrectionRoundIgnoreAutomatic(correctionRound)).collect(toList());
+                    .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).collect(toList());
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
         }
         // strip away all automatic results from the submissions list
-        submissions.forEach(submission -> submission.stripAutomaticResults());
+        submissions.forEach(submission -> submission.removeAutomaticResults());
         submissions.forEach(submission -> submission.getLatestResult().setSubmission(null));
         return submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
     }
@@ -617,7 +617,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param examMode - set flag to ignore test run submissions for exam exercises
      * @return a list of programming submissions for the given exercise id
      */
-    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode, Long correctionRound) {
+    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode, int correctionRound) {
         List<StudentParticipation> participations;
         if (examMode) {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(exerciseId,
@@ -644,7 +644,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionEligibleForNewAssessment(ProgrammingExercise programmingExercise, boolean examMode, long correctionRound) {
+    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionEligibleForNewAssessment(ProgrammingExercise programmingExercise, boolean examMode, int correctionRound) {
         var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(programmingExercise, examMode, correctionRound);
         if (submissionWithoutResult.isPresent()) {
             ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) submissionWithoutResult.get();
@@ -674,7 +674,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId) {
         ProgrammingSubmission programmingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
-        var manualResult = lockSubmission(programmingSubmission, 0L);
+        var manualResult = lockSubmission(programmingSubmission, 0);
         programmingSubmission = (ProgrammingSubmission) manualResult.getSubmission();
 
         return programmingSubmission;
@@ -687,7 +687,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param correctionRound - the correction round we want our submission to have results for
      * @return a locked programming submission that needs an assessment
      */
-    public ProgrammingSubmission lockAndGetProgrammingSubmissionWithoutResult(ProgrammingExercise exercise, long correctionRound) {
+    public ProgrammingSubmission lockAndGetProgrammingSubmissionWithoutResult(ProgrammingExercise exercise, int correctionRound) {
         ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.isExamExercise(), correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission for exercise " + exercise.getId() + " could not be found"));
         Result newManualResult = lockSubmission(programmingSubmission, correctionRound);
@@ -701,18 +701,18 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * create a new manual result. In the second correction round add a second manual result to the submission
      *
      * @param submission the submission to lock
-     * @param correctionRound
+     * @param correctionRound the correction round for the assessment
      * @return
      */
     @Override
-    protected Result lockSubmission(Submission submission, Long correctionRound) {
+    protected Result lockSubmission(Submission submission, int correctionRound) {
 
         Result existingResult;
         if (correctionRound == 0 && submission.getLatestResult().getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
             existingResult = submission.getLatestResult();
         }
         else {
-            existingResult = submission.getResultByCorrectionRoundIgnoreAutomatic(correctionRound - 1);
+            existingResult = submission.getResultForCorrectionRound(correctionRound - 1);
         }
 
         List<Feedback> automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());

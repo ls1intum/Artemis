@@ -14,10 +14,10 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
+import org.jetbrains.annotations.NotNull;
 
 import com.fasterxml.jackson.annotation.*;
 
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -113,67 +113,51 @@ public abstract class Submission extends DomainObject {
     }
 
     /**
-     * Used to get result by correction round.
-     * Pay attention, that this method only works for Text, Modeling and FileUpload Exercises!
-     * Programming Submissions can have an arbitrary amount automatic results as well!
+     * Used to get result by correction round (which ignores automatic results).
+     * Works for all exercise types
      *
      * @param correctionRound to get result by
-     * @return the result based on the given correction-round
+     * @return the result based on the given correction round
      */
     @Nullable
     @JsonIgnore
-    public Result getResultByCorrectionRound(Long correctionRound) {
-        if (results.size() > correctionRound) {
-            return results.get(correctionRound.intValue());
+    public Result getResultForCorrectionRound(int correctionRound) {
+        List<Result> withoutAutomaticResults = filterNonAutomaticResults();
+        if (withoutAutomaticResults.size() > correctionRound) {
+            return withoutAutomaticResults.get(correctionRound);
         }
         return null;
     }
 
-    /**
-     * Used to get result by correction round ignoring all automatic results, and all null values.
-     * This is called in a context where the submission's result list does not have any null values, as the submission was fetched
-     * by the count of its manual results.
-     *
-     * @param correctionRound to get the result by
-     * @return the result based on the given correction-round
-     */
-    @Nullable
-    @JsonIgnore
-    public Result getResultByCorrectionRoundIgnoreAutomatic(Long correctionRound) {
-        List<Result> withoutAutomaticResults = results.stream().filter(result -> !result.getAssessmentType().equals(AssessmentType.AUTOMATIC)).collect(Collectors.toList());
-        if (withoutAutomaticResults.size() > correctionRound) {
-            return withoutAutomaticResults.get(correctionRound.intValue());
-        }
-        return null;
+    @NotNull
+    private List<Result> filterNonAutomaticResults() {
+        return results.stream().filter(result -> result == null || !result.isAutomatic()).collect(Collectors.toList());
     }
 
     /**
      * Used to get result by correction round when ignoring all automatic results.
-     * The result list can contain null values when it is called here. So accessing the result list by correctionRound either
-     * yields null or a result.
+     * The result list can contain null values when it is called here.
+     * So accessing the result list by correctionRound either yields null or a result.
      *
      * @param correctionRound for which it is checked if the tutor has a result
      * @return true if the tutor has a result in the correctionRound, false otherwise
      */
-    @Nullable
     @JsonIgnore
-    public boolean hasResultForCorrectionRoundIgnoreAutomatic(Long correctionRound) {
-        List<Result> withoutAutomaticResults = results.stream().filter(result -> result == null || !result.getAssessmentType().equals(AssessmentType.AUTOMATIC))
-                .collect(Collectors.toList());
+    public boolean hasResultForCorrectionRound(int correctionRound) {
+        List<Result> withoutAutomaticResults = filterNonAutomaticResults();
         if (withoutAutomaticResults.size() > correctionRound) {
-            return withoutAutomaticResults.get(correctionRound.intValue()) != null;
+            return withoutAutomaticResults.get(correctionRound) != null;
         }
         return false;
     }
 
     /**
-     * strips away all automatic results from a submissions resultlist
+     * removes all automatic results from a submissions result list
      * (do not save it like this in the database, as it could remove the automatic results!)
      */
-    @Nullable
     @JsonIgnore
-    public void stripAutomaticResults() {
-        this.results = this.results.stream().filter(result -> !result.getAssessmentType().equals(AssessmentType.AUTOMATIC)).collect(Collectors.toList());
+    public void removeAutomaticResults() {
+        this.results = this.results.stream().filter(result -> !result.isAutomatic()).collect(Collectors.toList());
     }
 
     @Nullable
@@ -185,7 +169,7 @@ public abstract class Submission extends DomainObject {
     @Nullable
     @JsonIgnore
     public List<Result> getManualResults() {
-        return results.stream().filter(result -> result != null && !result.getAssessmentType().equals(AssessmentType.AUTOMATIC)).collect(Collectors.toList());
+        return results.stream().filter(result -> result != null && !result.isAutomatic()).collect(Collectors.toList());
     }
 
     /**

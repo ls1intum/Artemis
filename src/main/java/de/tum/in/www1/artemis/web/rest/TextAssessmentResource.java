@@ -218,7 +218,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @GetMapping("/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId,
-            @RequestParam(value = "correction-round", defaultValue = "0") Long correctionRound) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
 
         final Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findByIdWithEagerParticipationExerciseResultAssessor(submissionId);
@@ -231,7 +231,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final TextSubmission textSubmission = optionalTextSubmission.get();
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
-        Result result = textSubmission.getResultByCorrectionRound(correctionRound);
+        Result result = textSubmission.getResultForCorrectionRound(correctionRound);
 
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(exercise, user);
@@ -256,7 +256,7 @@ public class TextAssessmentResource extends AssessmentResource {
         textSubmission.getResults().forEach(r -> r.setSubmission(null));
 
         // set result again as it was changed
-        result = textSubmission.getResultByCorrectionRound(correctionRound);
+        result = textSubmission.getResultForCorrectionRound(correctionRound);
 
         // sets results for participation as legacy requires it, will change in follow up NR SE
         participation.setResults(Set.copyOf(textSubmission.getResults()));

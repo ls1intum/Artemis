@@ -338,7 +338,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
         Participation response = request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.OK, Participation.class);
         var participation = programmingExerciseStudentParticipationRepository.findByIdWithLatestManualResultAndFeedbacksAndRelatedSubmissionAndAssessor(response.getId());
-        var newManualResult = participation.get().getResults().stream().filter(Result::isManualResult).collect(Collectors.toList()).get(0);
+        var newManualResult = participation.get().getResults().stream().filter(Result::isManual).collect(Collectors.toList()).get(0);
         assertThat(newManualResult.getAssessor().getLogin()).isEqualTo("tutor1");
     }
 

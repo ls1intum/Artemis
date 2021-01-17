@@ -263,12 +263,11 @@ public class ResultService {
      * @param correctionRounds - the correction round we want finished assessments for
      * @return an array of the number of assessments for the exercise for a given correction round
      */
-    public DueDateStat[] countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(Exercise exercise, Long correctionRounds) {
-        DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds.intValue()];
+    public DueDateStat[] countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(Exercise exercise, int correctionRounds) {
+        DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds];
 
-        for (int i = 0; i < correctionRounds.intValue(); i++) {
-            correctionRoundsDataStats[i] = new DueDateStat(
-                    resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), (long) i), 0L);
+        for (int i = 0; i < correctionRounds; i++) {
+            correctionRoundsDataStats[i] = new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), i), 0L);
 
         }
 

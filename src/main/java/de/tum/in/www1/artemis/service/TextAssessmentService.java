@@ -48,10 +48,10 @@ public class TextAssessmentService extends AssessmentService {
      * @param textSubmission Text Submission to be assessed
      * @param correctionRound correction round for which we prepare the submission
      */
-    public void prepareSubmissionForAssessment(TextSubmission textSubmission, Long correctionRound) {
+    public void prepareSubmissionForAssessment(TextSubmission textSubmission, int correctionRound) {
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
-        Result result = textSubmission.getResultByCorrectionRound(correctionRound);
+        Result result = textSubmission.getResultForCorrectionRound(correctionRound);
 
         final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
 

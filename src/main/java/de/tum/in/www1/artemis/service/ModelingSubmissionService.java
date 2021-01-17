@@ -55,7 +55,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param correctionRound the correction round for which we want the lock
      * @return the locked modeling submission
      */
-    public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise, long correctionRound) {
+    public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise, int correctionRound) {
         ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
         if (modelingSubmission.getLatestResult() == null || modelingSubmission.getLatestResult().getAssessor() == null) {
@@ -81,7 +81,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a modeling submission without any result
      */
-    private Optional<ModelingSubmission> getRandomModelingSubmissionEligibleForNewAssessment(ModelingExercise modelingExercise, boolean examMode, long correctionRound) {
+    private Optional<ModelingSubmission> getRandomModelingSubmissionEligibleForNewAssessment(ModelingExercise modelingExercise, boolean examMode, int correctionRound) {
         // if the diagram type is supported by Compass, ask Compass for optimal (i.e. most knowledge gain for automatic assessments) submissions to assess next
         // NOTE: compass only makes sense for the first correction round (i.e. correctionRound == 0)
         if (compassService.isSupported(modelingExercise) && correctionRound == 0) {
@@ -188,7 +188,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param isExamMode whether the exercise belongs to an exam
      * @return a random modeling submission (potentially based on compass)
      */
-    public ModelingSubmission findRandomSubmissionWithoutExistingAssessment(boolean lockSubmission, long correctionRound, ModelingExercise modelingExercise, boolean isExamMode) {
+    public ModelingSubmission findRandomSubmissionWithoutExistingAssessment(boolean lockSubmission, int correctionRound, ModelingExercise modelingExercise, boolean isExamMode) {
         var modelingSubmission = getRandomModelingSubmissionEligibleForNewAssessment(modelingExercise, isExamMode, correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
         if (lockSubmission) {
@@ -208,7 +208,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param modelingSubmission the submission to lock
      * @param modelingExercise   the exercise to which the submission belongs to (needed for Compass)
      */
-    private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, Long correctionRound) {
+    private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, int correctionRound) {
         var result = super.lockSubmission(modelingSubmission, correctionRound);
         if (result.getAssessor() == null && compassService.isSupported(modelingExercise)) {
             compassService.removeModelWaitingForAssessment(modelingExercise.getId(), modelingSubmission.getId());

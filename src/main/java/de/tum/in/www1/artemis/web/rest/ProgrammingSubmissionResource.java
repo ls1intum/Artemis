@@ -339,7 +339,7 @@ public class ProgrammingSubmissionResource {
     @GetMapping("/exercises/{exerciseId}/programming-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
-            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
+            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all programming submissions");
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
@@ -371,7 +371,7 @@ public class ProgrammingSubmissionResource {
     @GetMapping("/programming-submissions/{participationId}/lock")
     @PreAuthorize("hasAnyRole('TA','INSTRUCTOR','ADMIN')")
     public ResponseEntity<Participation> lockAndGetProgrammingSubmissionParticipation(@PathVariable Long participationId,
-            @RequestParam(value = "correction-round", defaultValue = "0") Long correctionRound) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get ProgrammingSubmission of Participation with id: {}", participationId);
         final var participation = participationService.findOneWithEagerResultsAndCourseAndSubmissionAndResults(participationId);
         final var exercise = participation.getExercise();
@@ -381,7 +381,7 @@ public class ProgrammingSubmissionResource {
             return forbidden();
         }
 
-        Optional<Result> manualResult = participation.getResults().stream().filter(Result::isManualResult).findFirst();
+        Optional<Result> manualResult = participation.getResults().stream().filter(Result::isManual).findFirst();
         if (manualResult.isPresent()) {
             return ResponseEntity.ok(participation);
         }
@@ -408,7 +408,7 @@ public class ProgrammingSubmissionResource {
     @GetMapping(value = "/exercises/{exerciseId}/programming-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
-            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a programming submission without assessment");
         final ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
