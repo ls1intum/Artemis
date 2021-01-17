@@ -221,7 +221,7 @@ public class ProgrammingExerciseResource {
 
     /**
      * Validate the general course settings.
-     * 1. Validate the titel
+     * 1. Validate the title
      * 2. Validate the course and programming exercise short name.
      *
      * @param programmingExercise Programming exercise to be validated
