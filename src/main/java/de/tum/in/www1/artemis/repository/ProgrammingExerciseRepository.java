@@ -192,7 +192,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                                 AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)
                             ) >= (:correctionRound + 1L)
             """)
-    long countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("correctionRound") Integer correctionRound);
+    long countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("correctionRound") long correctionRound);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
