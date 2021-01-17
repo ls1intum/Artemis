@@ -18,10 +18,11 @@ export const options = {
 
 const adminUsername = __ENV.ADMIN_USERNAME;
 const adminPassword = __ENV.ADMIN_PASSWORD;
-let baseUsername = __ENV.BASE_USERNAME;
-let basePassword = __ENV.BASE_PASSWORD;
-let userOffset = parseInt(__ENV.USER_OFFSET);
-let programmingLanguage = __ENV.PROGRAMMING_LANGUAGE;
+const baseUsername = __ENV.BASE_USERNAME;
+const basePassword = __ENV.BASE_PASSWORD;
+const userOffset = parseInt(__ENV.USER_OFFSET);
+const programmingLanguage = __ENV.PROGRAMMING_LANGUAGE;
+const enableSCA = __ENV.ENABLE_SCA;
 
 export function setup() {
     console.log('__ENV.CREATE_USERS: ' + __ENV.CREATE_USERS);
@@ -29,7 +30,7 @@ export function setup() {
     console.log('__ENV.TIMEOUT_EXERCISE: ' + __ENV.TIMEOUT_EXERCISE);
     console.log('__ENV.ITERATIONS: ' + __ENV.ITERATIONS);
 
-    let artemis, exerciseId, course, userId;
+    let artemis, exerciseId, course;
 
     if (parseInt(__ENV.COURSE_ID) === 0 || parseInt(__ENV.EXERCISE_ID) === 0) {
         console.log('Creating new course and exercise as no parameters are given');
@@ -55,7 +56,7 @@ export function setup() {
         }
 
         // Create new exercise
-        exerciseId = createProgrammingExercise(artemis, course.id, programmingLanguage);
+        exerciseId = createProgrammingExercise(artemis, course.id, programmingLanguage, enableSCA);
 
         // Wait some time for builds to finish and test results to come in
         sleep(20);

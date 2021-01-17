@@ -58,7 +58,7 @@ export const TestResult = {
     BUILD_ERROR: 'error',
 };
 
-export function createProgrammingExercise(artemis, courseId, programmingLanguage, exerciseGroup = null) {
+export function createProgrammingExercise(artemis, courseId, programmingLanguage, exerciseGroup = null, enableSCA = false) {
     let res;
 
     let programmingExerciseProblemStatement;
@@ -90,6 +90,7 @@ export function createProgrammingExercise(artemis, courseId, programmingLanguage
         sequentialTestRuns: false,
         mode: 'INDIVIDUAL',
         projectType: programmingLanguage === 'JAVA' ? 'ECLIPSE' : undefined,
+        enableStaticCodeAnalysis: enableSCA,
     };
 
     if (courseId) {
@@ -153,7 +154,12 @@ export function createNewFile(artemis, participationId, filename) {
     }
 }
 
-export function updateFileContent(artemis, participationId, content) {
+function subscribe(socket, exerciseId) {
+    socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/newResults\n\n\u0000');
+    socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/exercise/' + exerciseId + '/participation\n\n\u0000');
+}
+
+function updateFileContent(artemis, participationId, content) {
     const res = artemis.put(FILES(participationId), content);
 
     if (res[0].status !== 200) {
@@ -166,27 +172,7 @@ export function simulateSubmission(artemis, participationSimulation, expectedRes
     participationSimulation.newFiles.forEach((file) => createNewFile(artemis, participationSimulation.participationId, file));
 
     artemis.websocket(function (socket) {
-        // Send changes via websocket - DEPRECATED AS OF 2020-07-13, now REST is used (see commit e6038467a8cc5ea29cb0b50b0bb2d2c51c94d348)
-        function submitChange(content) {
-            const contentString = JSON.stringify(content);
-            const changeMessage =
-                'SEND\ndestination:/topic/repository/' +
-                participationSimulation.participationId +
-                '/files\ncontent-length:' +
-                contentString.length +
-                '\n\n' +
-                contentString +
-                '\u0000';
-            socket.send(changeMessage);
-            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/repository/' + participationSimulation.participationId + '/files\n\n\u0000');
-        }
-
         // Subscribe to new results and participations
-        function subscribe(exerciseId, participationId) {
-            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/newResults\n\n\u0000');
-            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/exercise/' + exerciseId + '/participation\n\n\u0000');
-        }
-
         socket.setTimeout(function () {
             subscribe(participationSimulation.exerciseId, participationSimulation.participationId);
         }, 5 * 1000);
