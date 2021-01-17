@@ -21,7 +21,8 @@
                     "yourPoints": "Your points",
                     "maxPoints": "Points",
                     "bonus": "Bonus points",
-                    "youAchieved": "You achieved {{achievedPoints}} points out of possible {{normalPoints}} normal points and {{bonusPoints}} bonus points"
+                    "youAchieved": "You achieved {{achievedPoints}} points out of possible {{normalPoints}} normal points and {{bonusPoints}} bonus points",
+                    "maxPointsNotSet": "The exam max points is not set."
                 }
             },
             "title": "Exam",

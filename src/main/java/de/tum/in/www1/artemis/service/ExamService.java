@@ -491,6 +491,11 @@ public class ExamService {
             }
         }
 
+        // Check that the exam max points is set
+        if (exam.getMaxPoints() == null) {
+            throw new BadRequestAlertException("The exam max points is not set.", "Exam", "artemisApp.exam.validation.maxPointsNotSet");
+        }
+
         // Ensure that all exercises in an exercise group have the same amount of max points and max bonus points
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             Set<Double> maxPointsEarnable = exerciseGroup.getExercises().stream().map(Exercise::getMaxScore).collect(Collectors.toSet());
@@ -986,7 +991,7 @@ public class ExamService {
 
     /**
      * Registers student to the exam. In order to do this,  we add the user the the course group, because the user only has access to the exam of a course if the student also has access to the course of the exam.
-     * We only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course). 
+     * We only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course).
      *
      * @param course the course containing the exam
      * @param exam the exam for which we want to register a student

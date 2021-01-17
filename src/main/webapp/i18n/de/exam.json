@@ -60,7 +60,8 @@
                 "numberOfExercisesMustBeSet": "Die Anzahl der Aufgaben für die Klasur muss gesetzt sein.",
                 "numberOfExercisesInExamNotSet": "Die Anzahl an Aufgaben in der Klausur ist nicht gesetzt.",
                 "tooFewExerciseGroups": "Die Anzahl der Aufgabengruppen ist zu klein.",
-                "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß."
+                "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß.",
+                "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."
             },
             "error": {
                 "cannotRegisterInstructor": "Du kannst keine Dozenten oder Administratoren zu Klausuren anmelden."
