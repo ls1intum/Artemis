@@ -90,17 +90,17 @@ public final class Constants {
 
     public static final String BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE = "All builds triggered for programming exercise";
 
-    public static final String PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION = "The due date of this programming exercise has passed. When removing the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
+    public static final String PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION = "When removing the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
 
-    public static final String PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION = "The due date of this programming exercise has passed. When stashing the changes for the student repositories, not all operations were successful. Number of failed operations: ";
+    public static final String PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION = "When stashing the changes for the student repositories, not all operations were successful. Number of failed operations: ";
 
-    public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were locked successfully when the due date passed.";
+    public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were locked successfully.";
 
-    public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION = "The unsubmitted changes in the student repositories for this programming exercise were stashed successfully when the due date passed.";
+    public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION = "The unsubmitted changes in the student repositories for this programming exercise were stashed successfully.";
 
-    public static final String PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION = "The visible date of the exam of the programming exercise has passed. When adding the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
+    public static final String PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION = "When adding the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
 
-    public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were unlocked successfully when the visible date of the exam passed.";
+    public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were unlocked successfully.";
 
     public static final int FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS = 5000;
 
