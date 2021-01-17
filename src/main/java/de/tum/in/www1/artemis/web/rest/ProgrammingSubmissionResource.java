@@ -76,7 +76,6 @@ public class ProgrammingSubmissionResource {
         this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.participationService = participationService;
-        // use later? this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.resultRepository = resultRepository;
     }
 
