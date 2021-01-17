@@ -1,4 +1,5 @@
 import { Component, Input, OnInit, OnChanges } from '@angular/core';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-score-display',
@@ -27,9 +28,11 @@ export class ScoreDisplayComponent implements OnInit, OnChanges {
         if (this.maxPoints != undefined && this.maxBonusPoints > 0) {
             if (this.score > this.maxPoints) {
                 this.bonusPoints = this.score - this.maxPoints;
+            } else {
+                this.bonusPoints = undefined;
             }
             this.maxPointsWithBonus = this.maxPoints + this.maxBonusPoints;
-            this.maxPercentage = (this.maxPointsWithBonus / this.maxPoints) * 100;
+            this.maxPercentage = round((this.maxPointsWithBonus / this.maxPoints) * 100, 2);
         } else {
             this.bonusPoints = undefined;
             this.maxPointsWithBonus = undefined;

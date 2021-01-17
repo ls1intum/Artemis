@@ -1,8 +1,8 @@
 <div class="display-container">
     <span>{{ score || 0 }}&nbsp;</span>
     <span *ngIf="maxPoints">/&nbsp;{{ maxPoints }}&nbsp;</span>
-    <span jhiTranslate="modelingAssessment.points">Points</span>
-    <span *ngIf="bonusPoints">&nbsp;(Bonus:&nbsp;{{ bonusPoints }})&nbsp;</span>
+    <span jhiTranslate="modelingAssessment.points">Points&nbsp;</span>
+    <span *ngIf="bonusPoints">(Bonus:&nbsp;{{ bonusPoints }})&nbsp;</span>
     <fa-icon
         *ngIf="maxBonusPoints"
         [icon]="'question-circle'"
