@@ -36,8 +36,8 @@ export class ProgrammingExerciseService {
      * @param programmingExercise which should be setup
      */
     automaticSetup(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
-        const copy = this.convertDataFromClient(programmingExercise);
-        this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        let copy = this.convertDataFromClient(programmingExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
@@ -92,7 +92,7 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Imports a programming exercise by cloning the entity itself plus all bas build plans and repositories
+     * Imports a programming exercise by cloning the entity itself plus all basic build plans and repositories
      * (template, solution, test).
      *
      * @param adaptedSourceProgrammingExercise The exercise that should be imported, including adapted values for the
@@ -120,8 +120,8 @@ export class ProgrammingExerciseService {
      */
     update(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        const copy = this.convertDataFromClient(programmingExercise);
-        this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        let copy = this.convertDataFromClient(programmingExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
             .put<ProgrammingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
@@ -215,7 +215,7 @@ export class ProgrammingExerciseService {
             copy.solutionParticipation = _omit(copy.solutionParticipation, ['exercise', 'results']) as SolutionProgrammingExerciseParticipation;
         }
 
-        return copy;
+        return copy as ProgrammingExercise;
     }
 
     /**

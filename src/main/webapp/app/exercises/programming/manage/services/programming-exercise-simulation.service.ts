@@ -30,8 +30,8 @@ export class ProgrammingExerciseSimulationService {
      * @param programmingExercise
      */
     automaticSetupWithoutConnectionToVCSandCI(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
-        const copy = this.programmingExerciseService.convertDataFromClient(programmingExercise);
-        this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(programmingExercise);
+        let copy = this.programmingExerciseService.convertDataFromClient(programmingExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/no-vcs-and-ci-available', copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.programmingExerciseService.convertDateFromServer(res)));
