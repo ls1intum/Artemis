@@ -94,8 +94,7 @@
                         id="{{ 'cbMatchAnswersExactly' + questionIndex }}"
                         class="form-check-input custom-control-input"
                         [checked]="question.similarityValue === 100"
-                        [(ngModel)]="question.matchExactly"
-                        (ngModelChange)="toggleExactMatchCheckbox(inputElement.checked)"
+                        (change)="toggleExactMatchCheckbox(inputElement.checked)"
                     />
                     <label class="form-check-label custom-control-label" for="{{ 'cbMatchAnswersExactly' + questionIndex }}">{{
                         'artemisApp.quizExercise.matchPercentage.title' | translate
@@ -110,7 +109,7 @@
                             step="1"
                             value="85"
                             id="{{ 'matchPercentageSlider' + questionIndex }}"
-                            [disabled]="question.matchExactly"
+                            [disabled]="question.similarityValue === 100"
                             [(ngModel)]="question.similarityValue"
                             (ngModelChange)="questionUpdated.emit()"
                         />

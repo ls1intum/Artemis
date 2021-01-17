@@ -10,7 +10,6 @@ export class ShortAnswerQuestion extends QuizQuestion {
     // default client values
     public matchLetterCase: Boolean = false;
     public similarityValue: Number = 85;
-    public matchExactly: Boolean = true;
 
     constructor() {
         super(QuizQuestionType.SHORT_ANSWER);
