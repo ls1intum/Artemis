@@ -64,7 +64,7 @@
             },
             "enableStaticCodeAnalysis": {
                 "title": "Aktiviere Statische Code Analyse",
-                "description": "Durch Aktivierung dieser Option werden Abgaben einer Statischen Code Analyse unterzogen. Sequentielle Testläufe werden nicht unterstützt. Zusätzliche Optionen stehen in der Bewertungssicht zur Verfügung. Diese Option kann nach der Erstellung der Aufgabe nicht mehr geändert werden."
+                "description": "Durch Aktivierung dieser Option werden Abgaben einer Statischen Code Analyse unterzogen. Sequentielle Testläufe werden nicht unterstützt. Zusätzliche Optionen stehen in der Bewertungssicht zur Verfügung. Diese Option kann bei erneutem Import der Aufgabe geändert werden, wenn die Build Pläne neu erstellt werden und das Template aktualisiert wird."
             },
             "maxStaticCodeAnalysisPenalty": {
                 "title": "Max Statische Code Analyse Strafe",
@@ -152,12 +152,28 @@
                 },
                 "charts": {
                     "title": "Diagramme",
-                    "preview": "Vorschau"
+                    "preview": "Vorschau",
+                    "testCaseWeights": {
+                        "title": "Gewichtungs-Verteilung",
+                        "description": "Die Verteilung der Gewichtungen der Testfälle auf die Aufgabe. Dies zeigt den Einfluss eines Testfalls auf das Ergebnis eines Studenten. Der erste Balken betrachtet nur die Gewichtung eines Testfalls, während der zweite Balken auch die jeweiligen Bonuspunkte einbezieht.<br/>Bewege die Maus über einen farbigen Abschnitt um mehr Details zu sehen."
+                    },
+                    "testCasePoints": {
+                        "title": "Punkte-Verteilung",
+                        "description": "Der prozentuale Anteil von verteilten Punkten für ein bestimmten Testfall. 100% in dem Diagramm steht für volle Punktzahl (100%) bei <b>allen</b> Studenten. Das Diagramm zeigt nur die positiven Punkte erziehlt durch erfüllte Testfälle, ungeachtet möglicher Punktabzüge durch statische Code-Analyse.<br/>Bewege die Maus über einen farbigen Abschnitt um mehr Details zu sehen."
+                    },
+                    "categoryDistribution": {
+                        "title": "Kategorie-Verteilung",
+                        "description": "Die Verteilung der Kategorien in Bezug auf 'Penalty', 'Issues' und 'Punkte'.<br/>Der <b>Penalty</b> Balken zeigt die Verteilung von Penalties in den Kategorien.<br/>Der <b>Issues</b> Balken zeigt wie viele Issues in der entsprechenden Kategorie erkannt wurden.<br/>Der <b>Punkte</b> Balken gibt an wie viele Punkte tatsächlich von den Ergebnissen abgezogen wurden durch eine Kategorie, was sich auch den vorherigen Balken ergibt.<br/>Bewege die Maus über einen farbigen Abschnitt um mehr Details zu sehen."
+                    }
                 },
                 "help": {
                     "state": "Gibt an ob Issues in dieser Kategorie den Studenten angezeigt und bewertet werden sollen.",
                     "penalty": "Punktabzüge werden auf jedes erkannte Issue in dieser Kategorie angewendet.",
-                    "maxPenalty": "Der maximale Punktabzug über alle Issues eines Studenten in dieser Kategorie."
+                    "maxPenalty": "Der maximale Punktabzug über alle Issues eines Studenten in dieser Kategorie.",
+                    "detectedIssues": "Zeigt die Anzahl an Studenten je Höhe der erkannten Issues in einer Kategorie, beginnend bei einem Issue. Die Balken werden rot, sobald der durch maxPenalty definierte Grenzwert der Kategorie überschritten wird.",
+                    "weight": "Die Gewichtung eines Testfalls bestimmt die Punkte, die ein Student für das Bestehen des Testfalls erhält. Die verteilten Punkte eines Testfalls sind proportional zu dessen Gewichtung und werden als ein Anteil der vollen Punktzahl der Aufgabe berechnet.",
+                    "bonusMultiplier": "Dies multipliziert die Punkte für das Bestehen eines Testfalls, ohne dabei die Anteile der anderen Testfälle zu beeinflussen. Multiplikatoren größer als 1 können zu Ergebnissen von mehr als 100% führen.",
+                    "bonusPoints": "Bonuspunkte, die zu den regulären Punkten für das Bestehen eines Testfalls hinzuaddiert werden. Das Setzen von Bonuspunkten kann zu Ergebnissen von mehr als 100% führen."
                 },
                 "updatedGradingConfigShort": "Veränderte Bewertung",
                 "updatedGradingConfig": "Achtung: Du hast die Bewertung der Aufgabe verändert, aber nicht alle Einreichungen der Studenten mit den aktualisierten Testfall Einstellungen erneut ausgeführt. Neu erstellte Ergebnisse werden mit den aktualisierten Bewertungseinstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studenten zu inkonsistenten Ergebnissen kommen. Du kannst die erneute Ausführung der Einreichungen auch zu einem späteren Zeitpunkt veranlassen. Willst du wirklich den Bereich verlassen?",
@@ -240,7 +256,13 @@
                 "currentlyEdited": "Sie bearbeiten die folgenden Übungen:",
                 "errorReadButton": "Ok",
                 "errorOccurred": "Die folgende Aufgaben konnten nicht bearbeitet werden:"
-            }
+            },
+            "unlockAllRepositories": "Alle Repositories entsperren",
+            "lockAllRepositories": "Alle Repositories sperren",
+            "unlockAllRepositoriesModalText": "Alle Repositories werden sofort entsperrt! Studenten können sofort wieder pushen, auch wenn die Aufgabe schon vorbei ist!\n\nDiese Operation wird automatisch ausgeführt, sobald Studierende mit der Bearbeitung beginnen. Nutze diese Option daher nur, falls das automatische Entsperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich gesperrt wurden!",
+            "lockAllRepositoriesModalText": "Alle Repositories werden sofort gesperrt! Studenten werden nicht mehr pushen können, auch wenn die Aufgabe noch läuft!\n\nDie Operation wird automatisch am Ende der Aufgabe ausgeführt, sofern 'Testlauf nach der Einreichungsfrist' oder 'Manuelle Review' aktiviert ist. Nutze diese Option daher nur, falls das automatische Sperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich entsperrt wurden!",
+            "unlockAllRepositoriesSuccess": "Die Repositories werden nun entsperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
+            "lockAllRepositoriesSuccess": "Die Repositories werden nun gesperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war."
         },
         "error": {
             "noparticipations": "Kein existierender User wurde angegeben oder es existieren keine Abgaben."

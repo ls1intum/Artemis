@@ -2,7 +2,7 @@ import { login } from './requests/requests.js';
 import { group, sleep } from 'k6';
 import { deleteCourse, newCourse } from './requests/course.js';
 import { startExercise, createExercise, deleteExercise, ParticipationSimulation, simulateSubmission, TestResult } from './requests/programmingExercise.js';
-import { buildErrorContent } from './resource/constants.js';
+import { buildErrorContentJava } from './resource/constants_java.js';
 
 // Version: 1.1
 // Creator: Firefox
@@ -21,18 +21,18 @@ let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
 
 export function setup() {
-    // Create course
-    let artemis = login(adminUsername, adminPassword);
-    const courseId = newCourse(artemis).id;
+    // Create course as admin
+    const artemisAdmin = login(adminUsername, adminPassword);
+    const courseId = newCourse(artemisAdmin).id;
 
     const instructorUsername = baseUsername.replace('USERID', '1');
     const instructorPassword = basePassword.replace('USERID', '1');
 
     // Login to Artemis
-    artemis = login(instructorUsername, instructorPassword);
+    const artemisInstructor = login(instructorUsername, instructorPassword);
 
     // Create new exercise
-    const exerciseId = createExercise(artemis, courseId);
+    const exerciseId = createExercise(artemisInstructor, courseId);
 
     return { exerciseId: exerciseId, courseId: courseId };
 }
@@ -57,7 +57,7 @@ export default function (data) {
         // Initiate websocket connection if connection time is set to value greater than 0
         if (websocketConnectionTime > 0) {
             if (participationId) {
-                const simulation = new ParticipationSimulation(websocketConnectionTime, data.exerciseId, participationId, buildErrorContent);
+                const simulation = new ParticipationSimulation(websocketConnectionTime, data.exerciseId, participationId, buildErrorContentJava);
                 simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
             }
             sleep(websocketConnectionTime - delay);

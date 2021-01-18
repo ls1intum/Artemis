@@ -18,14 +18,11 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.service.FeedbackService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
-import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 
 /**
@@ -47,6 +44,9 @@ public class ProgrammingExerciseResultTestService {
 
     @Autowired
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    @Autowired
+    private BuildLogEntryRepository buildLogEntryRepository;
 
     @Autowired
     private ProgrammingExerciseGradingService gradingService;
@@ -75,9 +75,13 @@ public class ProgrammingExerciseResultTestService {
 
     public void setup() {
         database.addUsers(10, 2, 2);
-        Course course = database.addCourseWithOneProgrammingExercise();
+        setupForProgrammingLanguage(ProgrammingLanguage.JAVA);
+    }
+
+    public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
+        Course course = database.addCourseWithOneProgrammingExercise(false, programmingLanguage);
         programmingExercise = programmingExerciseRepository.findAll().get(0);
-        programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true);
+        programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
@@ -110,7 +114,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification) {
+    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification, ProgrammingLanguage programmingLanguage) {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
         final var savedResult = resultService.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
 
@@ -129,7 +133,7 @@ public class ProgrammingExerciseResultTestService {
         var result = optionalResult.get();
         assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(savedResult.getFeedbacks());
         assertThat(result.getFeedbacks().stream().filter(Feedback::isStaticCodeAnalysisFeedback).count())
-                .isEqualTo(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA).size());
+                .isEqualTo(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage).size());
     }
 
     // Test
@@ -141,6 +145,19 @@ public class ProgrammingExerciseResultTestService {
         var expectedNoOfLogs = getNumberOfBuildLogs(resultNotification);
         assertThat(((ProgrammingSubmission) optionalResult.get().getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);
         assertThat(submissionWithLogs.get().getBuildLogEntries()).hasSize(expectedNoOfLogs);
+    }
+
+    public void shouldSaveBuildLogsInBuildLogRepository(Object resultNotification) {
+        buildLogEntryRepository.deleteAll();
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+
+        var savedBuildLogs = buildLogEntryRepository.findAll();
+        var expectedBuildLogs = getNumberOfBuildLogs(resultNotification);
+
+        assertThat(savedBuildLogs.size()).isEqualTo(expectedBuildLogs);
+        savedBuildLogs.forEach(buildLogEntry -> {
+            assertThat(buildLogEntry.getProgrammingSubmission().getParticipation().getId()).isEqualTo(programmingExerciseStudentParticipation.getId());
+        });
     }
 
     // Test

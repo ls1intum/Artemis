@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLCommunicationLink extends UMLElement {
 
-    public final static String UML_COMMUNICATION_LINK_TYPE = "CommunicationLink";
+    public static final String UML_COMMUNICATION_LINK_TYPE = "CommunicationLink";
 
     private UMLObject source;
 

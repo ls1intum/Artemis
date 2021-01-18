@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain.participation;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -44,27 +41,9 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         this.buildPlanId = buildPlanId;
     }
 
-    /**
-     * @return the repository URL as an URL Object
-     */
-    @JsonIgnore
-    public URL getRepositoryUrlAsUrl() {
-        if (repositoryUrl == null) {
-            return null;
-        }
-
-        try {
-            return new URL(repositoryUrl);
-        }
-        catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
     @Override
     @JsonIgnore
-    // TODO: this is a helper method to avoid casts in other classes that want to access the underlying exercise
+    // NOTE: this is a helper method to avoid casts in other classes that want to access the underlying exercise
     public ProgrammingExercise getProgrammingExercise() {
         Exercise exercise = getExercise();
         if (exercise instanceof ProgrammingExercise) { // this should always be the case except exercise is null

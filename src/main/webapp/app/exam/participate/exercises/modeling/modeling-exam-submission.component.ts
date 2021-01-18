@@ -26,7 +26,9 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     @Input()
     exercise: ModelingExercise;
-    umlModel: UMLModel; // input model for Apollon
+    umlModel: UMLModel; // input model for Apollon+
+
+    explanationText: string; // current explanation text
 
     constructor(changeDetectorReference: ChangeDetectorRef) {
         super(changeDetectorReference);
@@ -46,14 +48,19 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     }
 
     updateViewFromSubmission(): void {
-        if (this.studentSubmission.model) {
-            // Updates the Apollon editor model state (view) with the latest modeling submission
-            this.umlModel = JSON.parse(this.studentSubmission.model);
+        if (this.studentSubmission) {
+            if (this.studentSubmission.model) {
+                // Updates the Apollon editor model state (view) with the latest modeling submission
+                this.umlModel = JSON.parse(this.studentSubmission.model);
+            }
+            // Updates explanation text with the latest submission
+            this.explanationText = this.studentSubmission.explanationText ?? '';
         }
     }
 
     /**
      * Updates the model of the submission with the current Apollon editor model state (view)
+     * Updates the explanation text of the submission with the current explanation
      */
     public updateSubmissionFromView(): void {
         if (!this.modelingEditor || !this.modelingEditor.getCurrentModel()) {
@@ -61,8 +68,12 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         }
         const currentApollonModel = this.modelingEditor.getCurrentModel();
         const diagramJson = JSON.stringify(currentApollonModel);
-        if (this.studentSubmission && diagramJson) {
-            this.studentSubmission.model = diagramJson;
+
+        if (this.studentSubmission) {
+            if (diagramJson) {
+                this.studentSubmission.model = diagramJson;
+            }
+            this.studentSubmission.explanationText = this.explanationText;
         }
     }
 
@@ -83,5 +94,11 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     modelChanged(model: UMLModel) {
         this.studentSubmission.isSynced = false;
+    }
+
+    // Changes isSynced to false and updates explanation text
+    explanationChanged(explanation: string) {
+        this.studentSubmission.isSynced = false;
+        this.explanationText = explanation;
     }
 }

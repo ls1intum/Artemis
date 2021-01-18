@@ -137,7 +137,7 @@ public class ModelingExerciseResource {
             // fetch course from database to make sure client didn't change groups
             Course course = courseService.findOne(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
             if (authCheckService.isAtLeastInstructorInCourse(course, null)) {
-                if (modelingExercise.hasCourse() && modelingExercise.hasExerciseGroup()) {
+                if (modelingExercise.isCourseExercise() && modelingExercise.isExamExercise()) {
                     return badRequest();
                 }
                 return null;
@@ -343,7 +343,7 @@ public class ModelingExerciseResource {
             return responseFailure;
         }
 
-        if (importedExercise.hasExerciseGroup()) {
+        if (importedExercise.isExamExercise()) {
             log.debug("REST request to import text exercise {} into exercise group {}", sourceExerciseId, importedExercise.getExerciseGroup().getId());
         }
         else {
@@ -419,12 +419,16 @@ public class ModelingExerciseResource {
      * submissions which might be a sign for plagiarism.
      *
      * @param exerciseId for which all submission should be checked
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
+     * @param minimumScore consider only submissions whose score is greater or equal to this value
+     * @param minimumSize consider only submissions whose size is greater or equal to this value
      * @return the ResponseEntity with status 200 (OK) and the list of pair-wise submission
      * similarities above a threshold of 80%.
      */
     @GetMapping("/modeling-exercises/{exerciseId}/check-plagiarism")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId) {
+    public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
+            @RequestParam int minimumSize) {
         Optional<ModelingExercise> optionalModelingExercise = modelingExerciseService.findOneWithParticipationsSubmissionsResults(exerciseId);
 
         if (optionalModelingExercise.isEmpty()) {
@@ -437,12 +441,7 @@ public class ModelingExerciseResource {
             return forbidden();
         }
 
-        // TODO: let the user specify the minimum similarity in the client
-        var minimumSimilarity = 0.8;
-        var minimumModelSize = 5;
-        var minimumScore = 0;
-
-        ModelingPlagiarismResult result = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, minimumSimilarity, minimumModelSize, minimumScore);
+        ModelingPlagiarismResult result = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
 
         return ResponseEntity.ok(result);
     }

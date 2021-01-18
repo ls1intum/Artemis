@@ -387,9 +387,7 @@ export class ShortAnswerQuestionUtil {
         return questionText.split(/\n/g).map((line) => {
             const spots = line.match(spotRegExpo) || [];
             const texts = line.split(spotRegExpo);
-            return interleave(texts, spots)
-                .map((x) => x.trim())
-                .filter((x) => x.length > 0);
+            return interleave(texts, spots).filter((x) => x.length > 0);
         });
     }
 
@@ -431,6 +429,79 @@ export class ShortAnswerQuestionUtil {
      * @returns {string[][]}
      */
     transformTextPartsIntoHTML(textParts: string[][], artemisMarkdown: ArtemisMarkdownService): string[][] {
-        return textParts.map((textPart) => textPart.map((element) => artemisMarkdown.htmlForMarkdown(element)));
+        const formattedTextParts = textParts.map((textPart) => textPart.map((element) => artemisMarkdown.htmlForMarkdown(element.trim())));
+        return this.addIndentationToTextParts(textParts, formattedTextParts);
+    }
+
+    /**
+     * @function addIndentationToTextParts
+     * @desc Formats the first word of each line with the indentation it originally had.
+     * @param originalTextParts {string[][]} the text parts without html formatting
+     * @param formattedTextParts {string[][]} the text parts with html formatting
+     */
+    addIndentationToTextParts(originalTextParts: string[][], formattedTextParts: string[][]): string[][] {
+        for (let i = 0; i < formattedTextParts.length; i++) {
+            const element = formattedTextParts[i][0];
+            let firstWord = '';
+            // check if first word is a spot (first array element will be an empty string)
+            if (originalTextParts[i].length > 1) {
+                firstWord =
+                    formattedTextParts[i][0] === '' && originalTextParts[i][1].startsWith('[-spot')
+                        ? this.getFirstWord(originalTextParts[i][1])
+                        : this.getFirstWord(originalTextParts[i][0]);
+            } else {
+                firstWord = this.getFirstWord(originalTextParts[i][0]);
+            }
+            if (firstWord === '') {
+                continue;
+            }
+            const firstWordIndex = element.indexOf(firstWord);
+            const whitespace = '&nbsp;'.repeat(this.getIndentation(originalTextParts[i][0]).length);
+            formattedTextParts[i][0] = [element.substring(0, firstWordIndex), whitespace, element.substring(firstWordIndex).trim()].join('');
+        }
+        return formattedTextParts;
+    }
+
+    /**
+     * @function getIndentation
+     * @desc Returns the whitespace in front of the text.
+     * @param text {string} the text for which we get the indentation
+     */
+    getIndentation(text: string): string {
+        if (!text) {
+            return '';
+        }
+        if (text.startsWith('`')) {
+            text = text.substring(1);
+        }
+        let index = 0;
+        let indentation = '';
+        while (text[index] === ' ') {
+            indentation = indentation.concat(' ');
+            index++;
+        }
+        return indentation;
+    }
+
+    /**
+     * @function getFirstWord
+     * @desc Returns the first word in a text.
+     * @param text {string} for which the first word is returned
+     */
+    getFirstWord(text: string): string {
+        if (!text) {
+            return '';
+        }
+        const words = text
+            .trim()
+            .split(' ')
+            .filter((word) => word !== '');
+        if (words.length === 0) {
+            return '';
+        } else if (words[0] === '`') {
+            return words[1];
+        } else {
+            return words[0].startsWith('`') ? words[0].substring(1) : words[0];
+        }
     }
 }

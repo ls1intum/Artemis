@@ -18,17 +18,17 @@ export function ParticipationSimulation(timeout, exerciseId, participationId, co
         switch (expectedResult) {
             case TestResult.SUCCESS:
                 {
-                    if (!result.successful) fail(`ERROR: The result for participation ${participationId} was not successful!`);
+                    if (!result.successful) fail('FAILTEST: The result for participation ' + participationId + ' was not successful!');
                 }
                 break;
             case TestResult.FAIL:
                 {
                     if (result.successful || !result.hasFeedback || result.resultString !== resultString)
-                        fail(`ERROR: The result for participation ${participationId} did not fail with ${resultString}! Was ${result.resultString}`);
+                        fail('FAILTEST: The result for participation ' + participationId + ' did not fail with ' + resultString + '! Was ' + result.resultString);
                 }
                 break;
             default: {
-                if (result.successful || result.hasFeedback) fail(`ERROR: The result for participation ${participationId} contained no build errors!`);
+                if (result.successful || result.hasFeedback) fail('FAILTEST: The result for participation ' + participationId + ' contained no build errors!');
             }
         }
     };
@@ -43,7 +43,7 @@ export function ParticipationSimulation(timeout, exerciseId, participationId, co
 export function getLatestResult(artemis, participationId) {
     const res = artemis.get(PARTICIPATION_WITH_RESULT(participationId));
     if (res[0].status !== 200) {
-        fail('ERROR: Could not get participation information (' + res[0].status + ')! response was + ' + res[0].body);
+        fail('FAILTEST: Could not get participation information (' + res[0].status + ')! response was + ' + res[0].body);
     }
 
     const results = JSON.parse(res[0].body).results;
@@ -107,7 +107,7 @@ export function createProgrammingExercise(artemis, courseId, programmingLanguage
         for (let [key, value] of Object.entries(res[0].headers)) {
             console.log(`${key}: ${value}`);
         }
-        fail('ERROR: Could not create exercise (status: ' + res[0].status + ')! response: ' + res[0].body);
+        fail('FAILTEST: Could not create exercise (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
     const exerciseId = JSON.parse(res[0].body).id;
     console.log('CREATED new programming exercise, ID=' + exerciseId);
@@ -121,7 +121,7 @@ export function deleteProgrammingExercise(artemis, exerciseId) {
         deleteBaseReposBuildPlans: true,
     });
     if (res[0].status !== 200) {
-        fail('Could not delete exercise (' + res[0].status + ')! Response was + ' + res[0].body);
+        fail('FAILTEST: Could not delete exercise (' + res[0].status + ')! Response was + ' + res[0].body);
     }
     console.log('DELETED programming exercise, ID=' + exerciseId);
 }
@@ -137,7 +137,7 @@ export function startExercise(artemis, courseId, exerciseId) {
     }
 
     if (res[0].status !== 201) {
-        fail('ERROR trying to start exercise for test user ' + __VU + ':\n #####ERROR (' + res[0].status + ')##### ' + res[0].body);
+        fail('FAILTEST: error trying to start exercise for test user ' + __VU + ':\n #####ERROR (' + res[0].status + ')##### ' + res[0].body);
     } else {
         console.log('SUCCESSFULLY started exercise for test user ' + __VU);
     }
@@ -149,7 +149,7 @@ export function createNewFile(artemis, participationId, filename) {
     const res = artemis.post(NEW_FILE(participationId), null, { file: filename });
 
     if (res[0].status !== 200) {
-        fail('ERROR: Unable to create new file ' + filename);
+        fail('FAILTEST: Unable to create new file ' + filename);
     }
 }
 
@@ -157,7 +157,7 @@ export function updateFileContent(artemis, participationId, content) {
     const res = artemis.put(FILES(participationId), content);
 
     if (res[0].status !== 200) {
-        fail('ERROR: Unable to update file content for participation' + participationId);
+        fail('FAILTEST: Unable to update file content for participation' + participationId);
     }
 }
 
@@ -186,11 +186,6 @@ export function simulateSubmission(artemis, participationSimulation, expectedRes
             socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/newResults\n\n\u0000');
             socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/exercise/' + exerciseId + '/participation\n\n\u0000');
         }
-
-        // Ping every 10 secs
-        socket.setInterval(function timeout() {
-            socket.ping();
-        }, 10000);
 
         socket.setTimeout(function () {
             subscribe(participationSimulation.exerciseId, participationSimulation.participationId);
@@ -227,7 +222,7 @@ export function simulateSubmission(artemis, participationSimulation, expectedRes
             if (result !== undefined) {
                 participationSimulation.returnsExpectedResult(result, expectedResult, resultString);
             } else {
-                fail('ERROR: Did not receive result for test user ' + __VU);
+                fail('FAILTEST: Did not receive result for test user ' + __VU);
             }
         }, participationSimulation.timeout * 1000);
     });

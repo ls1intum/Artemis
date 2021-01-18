@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.plagiarism.text;
 
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 import jplag.JPlagResult;
@@ -16,6 +17,7 @@ public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement
      */
     public TextPlagiarismResult() {
         // Intentionally left empty.
+        this.comparisons = new ArrayList<>();
     }
 
     public TextPlagiarismResult(JPlagResult result) {

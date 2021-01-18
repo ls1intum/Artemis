@@ -15,20 +15,26 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
 
     private Path localPath;
 
+    private VcsRepositoryUrl remoteRepositoryUrl;
+
     private Map<File, FileType> filesAndFolders;
 
     private Collection<File> files;
 
-    public Repository(File gitDir) throws IOException {
+    public Repository(File gitDir, VcsRepositoryUrl remoteRepositoryUrl) throws IOException {
         super(gitDir);
+        this.remoteRepositoryUrl = remoteRepositoryUrl;
     }
 
-    public Repository(String gitDir) throws IOException {
+    public Repository(String gitDir, VcsRepositoryUrl remoteRepositoryUrl) throws IOException {
         super(gitDir);
+        this.remoteRepositoryUrl = remoteRepositoryUrl;
     }
 
-    public Repository(BaseRepositoryBuilder options) throws IOException {
+    public Repository(BaseRepositoryBuilder options, Path localPath, VcsRepositoryUrl remoteRepositoryUrl) throws IOException {
         super(options);
+        this.localPath = localPath;
+        this.remoteRepositoryUrl = remoteRepositoryUrl;
     }
 
     /**
@@ -61,10 +67,6 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         return localPath;
     }
 
-    public void setLocalPath(Path localPath) {
-        this.localPath = localPath;
-    }
-
     public Map<File, FileType> getContent() {
         return filesAndFolders;
     }
@@ -84,5 +86,9 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
     public void closeBeforeDelete() {
         super.close();
         super.doClose();
+    }
+
+    public VcsRepositoryUrl getRemoteRepositoryUrl() {
+        return remoteRepositoryUrl;
     }
 }

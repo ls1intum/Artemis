@@ -27,9 +27,9 @@
                     <div class="row mb-1">
                         <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions' | translate }}</div>
                         <div class="col-4">
-                            {{ stats.numberOfAssessments.inTime - stats.numberOfAutomaticAssistedAssessments.inTime }} ({{ totalManualAssessmentPercentage.inTime }}%)
+                            {{ stats.totalNumberOfAssessments.inTime - stats.numberOfAutomaticAssistedAssessments.inTime }} ({{ totalManualAssessmentPercentage.inTime }}%)
                             <span *ngIf="stats.numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
-                                >| {{ stats.numberOfAssessments.late - stats.numberOfAutomaticAssistedAssessments.late }} ({{ totalManualAssessmentPercentage.late }}%)</span
+                                >| {{ stats.totalNumberOfAssessments.late - stats.numberOfAutomaticAssistedAssessments.late }} ({{ totalManualAssessmentPercentage.late }}%)</span
                             >
                         </div>
                     </div>
@@ -45,11 +45,11 @@
                     <div class="row mb-1">
                         <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions' | translate }}</div>
                         <div class="col-4">
-                            {{ stats.numberOfSubmissions.inTime - stats.numberOfAssessments.inTime }} ({{
+                            {{ stats.numberOfSubmissions.inTime - stats.totalNumberOfAssessments.inTime }} ({{
                                 100 - totalAutomaticAssessmentPercentage.inTime - totalManualAssessmentPercentage.inTime
                             }}%)
                             <span *ngIf="stats.numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
-                                >| {{ stats.numberOfSubmissions.late - stats.numberOfAssessments.late }} ({{
+                                >| {{ stats.numberOfSubmissions.late - stats.totalNumberOfAssessments.late }} ({{
                                     100 - totalAutomaticAssessmentPercentage.late - totalManualAssessmentPercentage.late
                                 }}%)</span
                             >

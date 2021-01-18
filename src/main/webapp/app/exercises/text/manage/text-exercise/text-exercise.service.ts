@@ -7,15 +7,11 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
+import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
-export type SubmissionComparisonDTO = {
-    submissions: Array<TextSubmission>;
-    distanceMetrics: Map<string, number>;
-};
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseService {
@@ -90,25 +86,17 @@ export class TextExerciseService {
     }
 
     /**
-     * Check for plagiarism
-     *
-     * @param exerciseId of the text exercise
-     */
-    checkPlagiarism(exerciseId: number): Observable<HttpResponse<Array<SubmissionComparisonDTO>>> {
-        return this.http.get<Array<SubmissionComparisonDTO>>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response' });
-    }
-
-    /**
      * Check plagiarism with JPlag
      *
      * @param exerciseId
+     * @param options
      */
-    checkPlagiarismJPlag(exerciseId: number): Observable<TextPlagiarismResult> {
+    checkPlagiarism(exerciseId: number, options?: PlagiarismOptions): Observable<TextPlagiarismResult> {
         return this.http
             .get<TextPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
                 observe: 'response',
                 params: {
-                    strategy: 'JPlag',
+                    ...options?.toParams(),
                 },
             })
             .pipe(map((response: HttpResponse<TextPlagiarismResult>) => response.body!));

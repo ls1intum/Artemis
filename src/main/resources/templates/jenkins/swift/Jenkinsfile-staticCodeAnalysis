@@ -1,0 +1,65 @@
+// ARTEMIS: JenkinsPipeline
+
+pipeline {
+        options {
+            timeout(time: #jenkinsTimeout, unit: 'MINUTES')
+        }
+        agent {
+            docker {
+                image '#dockerImage'
+                label 'docker'
+            }
+        }
+        stages {
+            stage('Checkout') {
+                steps {
+                    checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'tests', url: '#testRepository']]])
+                    dir('#assignmentCheckoutPath') {
+                        checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'assignment', url: '#assignmentRepository']]])
+                    }
+                }
+            }
+            stage('Build') {
+                steps {
+                    timestamps {
+                        sh  '''
+                            rm -rf Sources
+                            mv assignment/Sources .
+                            rm -rf assignment
+                            mkdir assignment
+                            cp -R Sources assignment
+                            cp -R Tests assignment
+                            cp Package.swift assignment
+
+                            echo "---------- swift build ----------"
+                            cd assignment
+                            swift build
+
+                            echo "---------- swift test ----------"
+                            swift test || true
+                            '''
+                    }
+                }
+            }
+        }
+        post {
+            always {
+                sh '''
+                    #staticCodeAnalysisScript
+                    '''
+            }
+            cleanup {
+                sh  '''
+                    rm -rf results
+                    mkdir results
+                    if [ -e assignment/tests.xml ]
+                    then
+                        sed -i 's/<testsuites>//g ; s/<\/testsuites>//g' assignment/tests.xml
+                        cp assignment/tests.xml $WORKSPACE/results/ || true
+                    fi
+                    '''
+                sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
+                cleanWs()
+            }
+        }
+}

@@ -6,6 +6,8 @@ import { SERVER_API_URL } from 'app/app.constants';
 import * as moment from 'moment';
 
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
+import { Exercise } from 'app/entities/exercise.model';
 
 export type EntityResponseType = HttpResponse<Complaint>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
@@ -21,7 +23,47 @@ export class ComplaintService implements IComplaintService {
     private apiUrl = SERVER_API_URL + 'api';
     private resourceUrl = this.apiUrl + '/complaints';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService) {}
+
+    /**
+     * Checks if a complaint is locked for the currently logged in user
+     *
+     * A complaint is locked if the associated complaint response is locked
+     *
+     * @param complaint complaint to check the lock status for
+     * @param exercise exercise used to find out if currently logged in user is instructor
+     */
+    isComplaintLockedForLoggedInUser(complaint: Complaint, exercise: Exercise) {
+        if (complaint.complaintResponse && complaint.accepted === undefined) {
+            return this.complaintResponseService.isComplaintResponseLockedForLoggedInUser(complaint.complaintResponse, exercise);
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Checks if the lock on a complaint is active and if the currently logged in user is the creator of the lock
+     * @param complaint complaint to check the lock status for
+     */
+    isComplaintLockedByLoggedInUser(complaint: Complaint) {
+        if (complaint.complaintResponse && complaint.accepted === undefined) {
+            return this.complaintResponseService.isComplaintResponseLockedByLoggedInUser(complaint.complaintResponse);
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Checks if a complaint is locked
+     * @param complaint complaint to check lock status for
+     */
+    isComplaintLocked(complaint: Complaint) {
+        if (complaint.complaintResponse && complaint.accepted === undefined) {
+            return complaint.complaintResponse.isCurrentlyLocked;
+        } else {
+            return false;
+        }
+    }
 
     /**
      * Create a new complaint.
@@ -146,6 +188,9 @@ export class ComplaintService implements IComplaintService {
     private convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.submittedTime = res.body.submittedTime ? moment(res.body.submittedTime) : undefined;
+            if (res.body?.complaintResponse) {
+                this.complaintResponseService.convertDatesToMoment(res.body.complaintResponse);
+            }
         }
         return res;
     }
@@ -154,6 +199,9 @@ export class ComplaintService implements IComplaintService {
         if (res.body) {
             res.body.forEach((complaint) => {
                 complaint.submittedTime = complaint.submittedTime ? moment(complaint.submittedTime) : undefined;
+                if (complaint.complaintResponse) {
+                    this.complaintResponseService.convertDatesToMoment(complaint.complaintResponse);
+                }
             });
         }
 

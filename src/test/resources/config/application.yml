@@ -1,3 +1,15 @@
+# ===================================================================
+# Spring Boot configuration.
+#
+# This configuration is used for unit/integration tests.
+# ===================================================================
+
+# ===================================================================
+# Standard Spring Boot properties.
+# Full reference is available at:
+# http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
+# ===================================================================
+
 logging:
     level:
         ROOT: INFO
@@ -93,6 +105,8 @@ spring:
             username: guest
             password: guest
             addresses: ""
+    hazelcast:
+        interface: "127.0.0.1"
 
 server:
     port: 8080
@@ -140,7 +154,7 @@ jhipster:
         name: 'artemisApp'
     # CORS is only enabled by default with the "dev" profile, so BrowserSync can access the API
     cors:
-        allowed-origins: "*"
+        allowed-origin-patterns: "*"
         allowed-methods: "*"
         allowed-headers: "*"
         exposed-headers: "Authorization,Link,X-Total-Count"

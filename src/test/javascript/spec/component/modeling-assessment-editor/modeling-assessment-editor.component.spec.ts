@@ -1,6 +1,7 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
+import { SinonStub, stub } from 'sinon';
 
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -29,9 +30,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
-import moment = require('moment');
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { SinonStub, stub } from 'sinon';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -42,6 +40,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { User } from 'app/core/user/user.model';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import * as moment from 'moment';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -55,6 +54,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     let complaintService: ComplaintService;
     let modelingSubmissionStub: SinonStub;
     let complaintStub: SinonStub;
+    let router: any;
 
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
@@ -66,7 +66,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useClass: MockRouter },
             ],
         })
             .compileComponents()
@@ -76,7 +75,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 service = TestBed.inject(ModelingAssessmentService);
                 modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
                 complaintService = TestBed.inject(ComplaintService);
-
+                router = TestBed.inject(Router);
                 mockAuth = (fixture.debugElement.injector.get(AccountService) as any) as MockAccountService;
                 mockAuth.hasAnyAuthorityDirect([]);
                 mockAuth.identity();
@@ -150,7 +149,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             tick(500);
             expect(modelingSubmissionStub).to.have.been.calledOnce;
             expect(component.isLoading).to.be.false;
-            expect(component.complaint).to.be.deep.equal(complaint);
+            expect(component.complaint).to.deep.equal(complaint);
             modelingSubmissionStub.restore();
         }));
 
@@ -408,33 +407,46 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(component.totalScore).to.be.equal(3);
     }));
 
-    describe('test assessNextOptimal', () => {
+    describe('test assessNext', () => {
         it('no submissions left', fakeAsync(() => {
             const course = new Course();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.id = 1;
-
-            const numbers: number[] = [];
-            const fake = sinon.fake.returns(of(numbers));
-            sinon.replace(service, 'getOptimalSubmissions', fake);
+            // spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
+            const routerSpy = stub(router, 'navigateByUrl').returns(Promise.resolve(true));
+            const modelingSubmission: ModelingSubmission = { id: 1 };
+            const fake = sinon.fake.returns(of(modelingSubmission));
+            sinon.replace(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment', fake);
             component.ngOnInit();
+            const correctionRound = 1;
+            const courseId = 1;
+            const exerciseId = 1;
+            component.correctionRound = correctionRound;
+            component.courseId = courseId;
+            component.modelingExercise = { id: exerciseId } as Exercise;
+            let url = `/course-management/${courseId}/modeling-exercises/${exerciseId}/submissions/${modelingSubmission.id}/assessment`;
+            url += `?correction-round=${correctionRound}`;
             tick(500);
-            component.assessNextOptimal();
+            component.assessNext();
+            tick(500);
             expect(fake).to.have.been.calledOnce;
+            sinon.assert.calledWith(routerSpy.getCall(0), '/', { skipLocationChange: true });
+            expect(routerSpy).to.have.been.calledTwice;
+            sinon.assert.calledWith(routerSpy.getCall(1), url);
         }));
 
-        it('throw error while assessNextOptimal', fakeAsync(() => {
+        it('throw error while assessNext', fakeAsync(() => {
             const course = new Course();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.id = 1;
 
             const response = new HttpErrorResponse({ status: 403 });
             const fake = sinon.fake.returns(throwError(response));
-            sinon.replace(service, 'getOptimalSubmissions', fake);
+            sinon.replace(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment', fake);
 
             component.ngOnInit();
             tick(500);
-            component.assessNextOptimal();
+            component.assessNext();
             expect(fake).to.have.been.calledOnce;
         }));
     });

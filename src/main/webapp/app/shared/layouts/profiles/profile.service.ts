@@ -37,6 +37,7 @@ export class ProfileService {
                                 profileInfo.ribbonEnv = ribbonProfiles[0];
                             }
                             profileInfo.inProduction = profileInfo.activeProfiles.includes('prod');
+                            profileInfo.openApiEnabled = profileInfo.activeProfiles.includes('openapi');
                         }
                         profileInfo.sentry = data.sentry;
                         profileInfo.features = data.features;

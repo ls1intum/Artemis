@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLSystemBoundary extends UMLContainerElement {
 
-    public final static String UML_SYSTEM_BOUNDARY_TYPE = "UseCaseSystem";
+    public static final String UML_SYSTEM_BOUNDARY_TYPE = "UseCaseSystem";
 
     private final String name;
 

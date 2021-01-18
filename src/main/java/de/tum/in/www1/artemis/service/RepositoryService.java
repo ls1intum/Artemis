@@ -4,7 +4,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -27,27 +26,23 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 
 /**
- * Service that provides utilites for managing files in a git repository.
+ * Service that provides utilities for managing files in a git repository.
  */
 @Service
 public class RepositoryService {
 
-    private GitService gitService;
+    private final GitService gitService;
 
-    private AuthorizationCheckService authCheckService;
+    private final AuthorizationCheckService authCheckService;
 
-    private UserService userService;
-
-    private ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+    private final UserService userService;
 
     private final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService, AuthorizationCheckService authCheckService, UserService userService, ParticipationService participationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+    public RepositoryService(GitService gitService, AuthorizationCheckService authCheckService, UserService userService) {
         this.gitService = gitService;
         this.authCheckService = authCheckService;
         this.userService = userService;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
     /**
@@ -62,7 +57,7 @@ public class RepositoryService {
         Map<String, FileType> fileList = new HashMap<>();
 
         while (iterator.hasNext()) {
-            Map.Entry<File, FileType> pair = (Map.Entry<File, FileType>) iterator.next();
+            Map.Entry<File, FileType> pair = iterator.next();
             fileList.put(pair.getKey().toString(), pair.getValue());
         }
 
@@ -74,7 +69,6 @@ public class RepositoryService {
      *
      * @param repository in which the requested files are located
      * @return Files with code or an exception is thrown
-     * @throws IOException if a file cannot be found, is corrupt, etc.
      */
     public Map<String, String> getFilesWithContent(Repository repository) {
         var files = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey)
@@ -126,7 +120,7 @@ public class RepositoryService {
                 .collect(Collectors.toList());
 
         Map<String, File> templateRepoFiles = gitService.listFilesAndFolders(templateRepository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE)
-                .collect(Collectors.toMap(entry -> entry.getKey().toString(), entry -> entry.getKey()));
+                .collect(Collectors.toMap(entry -> entry.getKey().toString(), Map.Entry::getKey));
 
         repoFiles.forEach(file -> {
             String fileName = file.toString();
@@ -161,18 +155,22 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the file can't be stored, the repository is unavailable, etc.
      */
     public void createFile(Repository repository, String filename, InputStream inputStream) throws IOException {
+        File file = checkIfFileExistsInRepository(repository, filename);
+        Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        repository.setContent(null); // invalidate cache
+        inputStream.close();
+    }
+
+    private File checkIfFileExistsInRepository(Repository repository, String filename) throws FileAlreadyExistsException {
         if (gitService.getFileByName(repository, filename).isPresent()) {
             throw new FileAlreadyExistsException("file already exists");
         }
 
-        File file = new File(new java.io.File(repository.getLocalPath() + File.separator + filename), repository);
+        File file = new File(Paths.get(repository.getLocalPath().toString(), filename).toFile(), repository);
         if (!repository.isValidFile(file)) {
             throw new IllegalArgumentException();
         }
-
-        Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        repository.setContent(null); // invalidate cache
-        inputStream.close();
+        return file;
     }
 
     /**
@@ -184,16 +182,10 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the folder can't be stored, the repository is unavailable, etc.
      */
     public void createFolder(Repository repository, String folderName, InputStream inputStream) throws IOException {
-        if (gitService.getFileByName(repository, folderName).isPresent()) {
-            throw new FileAlreadyExistsException("file already exists");
-        }
-        File file = new File(new java.io.File(repository.getLocalPath() + File.separator + folderName), repository);
-        if (!repository.isValidFile(file)) {
-            throw new IllegalArgumentException();
-        }
-        Files.createDirectory(Paths.get(repository.getLocalPath() + File.separator + folderName));
+        checkIfFileExistsInRepository(repository, folderName);
+        Files.createDirectory(repository.getLocalPath().resolve(folderName));
         // We need to add an empty keep file so that the folder can be added to the git repository
-        File keep = new File(new java.io.File(repository.getLocalPath() + File.separator + folderName + File.separator + ".keep"), repository);
+        File keep = new File(repository.getLocalPath().resolve(folderName).resolve(".keep"), repository);
         Files.copy(inputStream, keep.toPath(), StandardCopyOption.REPLACE_EXISTING);
         repository.setContent(null); // invalidate cache
         inputStream.close();
@@ -209,18 +201,18 @@ public class RepositoryService {
      * @throws IllegalArgumentException if the new filename is not allowed (e.g. contains .. or /../)
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
-        Optional<File> file = gitService.getFileByName(repository, fileMove.getCurrentFilePath());
-        if (file.isEmpty()) {
+        Optional<File> existingFile = gitService.getFileByName(repository, fileMove.getCurrentFilePath());
+        if (existingFile.isEmpty()) {
             throw new FileNotFoundException();
         }
-        if (!repository.isValidFile(file.get())) {
+        if (!repository.isValidFile(existingFile.get())) {
             throw new IllegalArgumentException();
         }
-        File newFile = new File(new java.io.File(file.get().toPath().getParent().toString() + File.separator + fileMove.getNewFilename()), repository);
+        File newFile = new File(existingFile.get().toPath().getParent().resolve(fileMove.getNewFilename()), repository);
         if (gitService.getFileByName(repository, newFile.getName()).isPresent()) {
             throw new FileAlreadyExistsException("file already exists");
         }
-        boolean isRenamed = file.get().renameTo(newFile);
+        boolean isRenamed = existingFile.get().renameTo(newFile);
         if (!isRenamed) {
             throw new FileNotFoundException();
         }
@@ -283,10 +275,9 @@ public class RepositoryService {
      * @param repositoryUrl of the repository to check the status for.
      * @return a dto to determine the status of the repository.
      * @throws InterruptedException if the repository can't be checked out on the server.
-     * @throws IOException if the repository status can't be retrieved.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
-    public boolean isClean(URL repositoryUrl) throws GitAPIException, InterruptedException {
+    public boolean isClean(VcsRepositoryUrl repositoryUrl) throws GitAPIException, InterruptedException {
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
         return gitService.isClean(repository);
     }
@@ -298,12 +289,12 @@ public class RepositoryService {
      * @param repoUrl of the repository on the server.
      * @param pullOnCheckout if true pulls after checking out the git repository.
      * @return the repository if available.
-     * @throws IOException if the repository can't be checked out.
      * @throws GitAPIException if the repository can't be checked out.
      * @throws IllegalAccessException if the user does not have access to the repository.
      * @throws InterruptedException if the repository can't be checked out.
      */
-    public Repository checkoutRepositoryByName(Exercise exercise, URL repoUrl, boolean pullOnCheckout) throws IllegalAccessException, InterruptedException, GitAPIException {
+    public Repository checkoutRepositoryByName(Exercise exercise, VcsRepositoryUrl repoUrl, boolean pullOnCheckout)
+            throws IllegalAccessException, InterruptedException, GitAPIException {
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
@@ -324,7 +315,8 @@ public class RepositoryService {
      * @throws IllegalAccessException if the user does not have access to the repository.
      * @throws InterruptedException if the repository can't be checked out.
      */
-    public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, URL repoUrl) throws IllegalAccessException, InterruptedException, GitAPIException {
+    public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, VcsRepositoryUrl repoUrl)
+            throws IllegalAccessException, InterruptedException, GitAPIException {
         User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         boolean hasPermissions = authCheckService.isAtLeastInstructorInCourse(course, user);

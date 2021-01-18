@@ -20,8 +20,6 @@ logging:
         io.github.jhipster: DEBUG
 
 spring:
-    profiles:
-        active: dev
     devtools:
         restart:
             enabled: true
@@ -73,7 +71,7 @@ server:
 jhipster:
     # CORS is only enabled by default with the "dev" profile, so BrowserSync can access the API
     cors:
-        allowed-origins: "*"
+        allowed-origin-patterns: "*"
         allowed-methods: "*"
         allowed-headers: "*"
         exposed-headers: "Authorization,Link,X-Total-Count"

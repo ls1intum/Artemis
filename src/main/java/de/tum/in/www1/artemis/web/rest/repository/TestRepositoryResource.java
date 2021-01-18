@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
-import java.net.URL;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -50,15 +50,14 @@ public class TestRepositoryResource extends RepositoryResource {
     @Override
     Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws IllegalAccessException, InterruptedException, GitAPIException {
         final var exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
-        final var repoUrl = exercise.getTestRepositoryUrlAsUrl();
-
+        final var repoUrl = exercise.getVcsTestRepositoryUrl();
         return repositoryService.checkoutRepositoryByName(exercise, repoUrl, pullOnGet);
     }
 
     @Override
-    URL getRepositoryUrl(Long exerciseId) {
+    VcsRepositoryUrl getRepositoryUrl(Long exerciseId) {
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
-        return exercise.getTestRepositoryUrlAsUrl();
+        return exercise.getVcsTestRepositoryUrl();
     }
 
     @Override
@@ -153,7 +152,7 @@ public class TestRepositoryResource extends RepositoryResource {
 
         Repository repository;
         try {
-            repository = repositoryService.checkoutRepositoryByName(principal, exercise, exercise.getTestRepositoryUrlAsUrl());
+            repository = repositoryService.checkoutRepositoryByName(principal, exercise, exercise.getVcsTestRepositoryUrl());
         }
         catch (IllegalAccessException e) {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");

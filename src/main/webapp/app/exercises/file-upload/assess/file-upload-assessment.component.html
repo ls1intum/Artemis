@@ -9,11 +9,13 @@
     [result]="result"
     [assessmentsAreValid]="assessmentsAreValid"
     [complaint]="complaint"
+    [exercise]="exercise"
+    [submission]="submission"
     [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed"
     (save)="onSaveAssessment()"
     (submit)="onSubmitAssessment()"
     (cancel)="onCancelAssessment()"
-    (nextSubmission)="assessNextOptimal()"
+    (nextSubmission)="assessNext()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
 >
     <div class="row mt-4 resizable-horizontal instructions-area" *ngIf="!busy && exercise">

@@ -75,7 +75,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         assertThat(newlyImported.getTemplateBuildPlanId()).isNotEqualTo(programmingExercise.getTemplateBuildPlanId());
         assertThat(newlyImported.hasSequentialTestRuns()).isEqualTo(programmingExercise.hasSequentialTestRuns());
         assertThat(newlyImported.isAllowOnlineEditor()).isEqualTo(programmingExercise.isAllowOnlineEditor());
-        assertThat(newlyImported.getNumberOfAssessments()).isNull();
+        assertThat(newlyImported.getTotalNumberOfAssessments()).isNull();
         assertThat(newlyImported.getNumberOfComplaints()).isNull();
         assertThat(newlyImported.getNumberOfMoreFeedbackRequests()).isNull();
         assertThat(newlyImported.getNumberOfSubmissions()).isNull();

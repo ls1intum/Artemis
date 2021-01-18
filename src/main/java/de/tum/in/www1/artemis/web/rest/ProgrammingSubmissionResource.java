@@ -21,6 +21,8 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -51,16 +53,20 @@ public class ProgrammingSubmissionResource {
 
     private final ParticipationService participationService;
 
+    private final ResultRepository resultRepository;
+
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final UserService userService;
 
-    public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
-            ProgrammingExerciseService programmingExerciseService, AuthorizationCheckService authCheckService,
+    private StudentParticipationRepository studentParticipationRepository;
+
+    public ProgrammingSubmissionResource(StudentParticipationRepository studentParticipationRepository, ProgrammingSubmissionService programmingSubmissionService,
+            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService, UserService userService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, ResultRepository resultRepository) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
@@ -70,6 +76,7 @@ public class ProgrammingSubmissionResource {
         this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.participationService = participationService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -158,7 +165,7 @@ public class ProgrammingSubmissionResource {
      * @param lastGraded if true, will not use the most recent submission, but the most recent GRADED submission. This submission could e.g. be created before the deadline or after the deadline by the INSTRUCTOR.
      * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered, a result already exists or the build is running.
      */
-    // TODO: we should definitly change this URL, it does not make sense to use /programming-submissions/{participationId}
+    // TODO: we should definitely change this URL, it does not make sense to use /programming-submissions/{participationId}
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-failed-build")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
@@ -176,13 +183,16 @@ public class ProgrammingSubmissionResource {
             return badRequest();
         }
 
-        // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.
-        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(programmingExerciseParticipation);
-        if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
-            // We inform the user through the websocket that the submission is still in progress (build is running/queued, result should arrive soon).
-            // This resets the pending submission timer in the client.
-            programmingSubmissionService.notifyUserAboutSubmission(submission.get());
-            return ResponseEntity.ok().build();
+        // if the build plan was not cleaned yet, we can try to access the current build state, as the build might still be running (because it was slow or queued)
+        if (programmingExerciseParticipation.getBuildPlanId() != null) {
+            // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.
+            ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(programmingExerciseParticipation);
+            if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
+                // We inform the user through the websocket that the submission is still in progress (build is running/queued, result should arrive soon).
+                // This resets the pending submission timer in the client.
+                programmingSubmissionService.notifyUserAboutSubmission(submission.get());
+                return ResponseEntity.ok().build();
+            }
         }
         if (lastGraded && submission.get().getType() != SubmissionType.INSTRUCTOR && submission.get().getType() != SubmissionType.TEST
                 && submission.get().getParticipation().getExercise().getDueDate() != null
@@ -321,6 +331,7 @@ public class ProgrammingSubmissionResource {
      * In case of exam exercise, it filters out all test run submissions.
      *
      * @param exerciseId the id of the exercise.
+     * @param correctionRound the correctionRound for which all submissions should be fetched
      * @param submittedOnly if only submitted submissions should be returned.
      * @param assessedByTutor if the submission was assessed by calling tutor.
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body.
@@ -328,7 +339,7 @@ public class ProgrammingSubmissionResource {
     @GetMapping("/exercises/{exerciseId}/programming-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
-            @RequestParam(defaultValue = "false") boolean assessedByTutor) {
+            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all programming submissions");
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
@@ -336,16 +347,16 @@ public class ProgrammingSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        final boolean examMode = exercise.hasExerciseGroup();
+        final boolean examMode = exercise.isExamExercise();
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
             User user = userService.getUserWithGroupsAndAuthorities();
-            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForExercise(exerciseId, user.getId(), examMode);
+            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user, examMode,
+                    correctionRound);
         }
         else {
-            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly, examMode);
+            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly, examMode, correctionRound);
         }
-
         return ResponseEntity.ok().body(programmingSubmissions);
     }
 
@@ -354,13 +365,15 @@ public class ProgrammingSubmissionResource {
      * GET /programming-submissions/:participationId/lock : get the programmingSubmissions participation by it's id and locks the corresponding submission for assessment
      *
      * @param participationId the id of the participation to retrieve
+     * @param correctionRound correction round for which we prepare the submission
      * @return the ResponseEntity with status 200 (OK) and with body the programmingSubmissions participation
      */
     @GetMapping("/programming-submissions/{participationId}/lock")
     @PreAuthorize("hasAnyRole('TA','INSTRUCTOR','ADMIN')")
-    public ResponseEntity<Participation> lockAndGetProgrammingSubmissionParticipation(@PathVariable Long participationId) {
+    public ResponseEntity<Participation> lockAndGetProgrammingSubmissionParticipation(@PathVariable Long participationId,
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get ProgrammingSubmission of Participation with id: {}", participationId);
-        final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
+        final var participation = participationService.findOneWithEagerResultsAndCourseAndSubmissionAndResults(participationId);
         final var exercise = participation.getExercise();
         final User user = userService.getUserWithGroupsAndAuthorities();
 
@@ -368,8 +381,7 @@ public class ProgrammingSubmissionResource {
             return forbidden();
         }
 
-        Optional<Result> manualResult = participation.getResults().stream().filter(Result::isManualResult).findFirst();
-
+        Optional<Result> manualResult = participation.getResults().stream().filter(Result::isManual).findFirst();
         if (manualResult.isPresent()) {
             return ResponseEntity.ok(participation);
         }
@@ -390,12 +402,13 @@ public class ProgrammingSubmissionResource {
      *
      * @param exerciseId the id of the exercise
      * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
+     * @param correctionRound the correctionround for which we want to find the submission
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/programming-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
-            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a programming submission without assessment");
         final ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
@@ -414,11 +427,11 @@ public class ProgrammingSubmissionResource {
 
         final ProgrammingSubmission programmingSubmission;
         if (lockSubmission) {
-            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmissionWithoutResult(programmingExercise);
+            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmissionWithoutResult(programmingExercise, correctionRound);
         }
         else {
             Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionService.getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise,
-                    programmingExercise.hasExerciseGroup());
+                    programmingExercise.isExamExercise(), correctionRound);
             if (optionalProgrammingSubmission.isEmpty()) {
                 return notFound();
             }
@@ -430,6 +443,8 @@ public class ProgrammingSubmissionResource {
         StudentParticipation studentParticipation = (StudentParticipation) programmingSubmission.getParticipation();
         studentParticipation.setExercise(programmingExercise);
         programmingSubmissionService.hideDetails(programmingSubmission, user);
+        // remove automatic results before sending to client
+        programmingSubmission.setResults(programmingSubmission.getManualResults());
         return ResponseEntity.ok(programmingSubmission);
     }
 }

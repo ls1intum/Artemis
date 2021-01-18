@@ -100,9 +100,25 @@
                 </div>
             </div>
 
-            <div class="mb-3">
-                <label class="form-check-label" for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod">Grace period (seconds)</label>
-                <input id="gracePeriod" name="gracePeriod" class="form-control" type="number" min="0" [(ngModel)]="exam.gracePeriod" />
+            <div class="form-row mb-3">
+                <div class="col-sm-6">
+                    <label class="form-check-label" for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod">Grace period (seconds)</label>
+                    <input id="gracePeriod" name="gracePeriod" class="form-control" type="number" min="0" [(ngModel)]="exam.gracePeriod" />
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-check-label" for="numberOfCorrectionRoundsInExam" jhiTranslate="artemisApp.examManagement.numberOfCorrectionRoundsInExam">
+                        Number of correction rounds in Exam</label
+                    >
+                    <input
+                        id="numberOfCorrectionRoundsInExam"
+                        name="numberOfCorrectionRoundsInExam"
+                        class="form-control"
+                        type="number"
+                        min="1"
+                        max="2"
+                        [(ngModel)]="exam.numberOfCorrectionRoundsInExam"
+                    />
+                </div>
             </div>
 
             <div class="form-row mb-3">
@@ -117,6 +133,7 @@
                     <input id="numberOfExercisesInExam" name="numberOfExercisesInExam" class="form-control" type="number" min="0" [(ngModel)]="exam.numberOfExercisesInExam" />
                 </div>
             </div>
+
             <div class="form-check mb-3">
                 <input class="form-check-input" type="checkbox" id="randomizeExerciseOrder" name="randomizeExerciseOrder" [(ngModel)]="exam.randomizeExerciseOrder" />
                 <label class="form-check-label" for="randomizeExerciseOrder" jhiTranslate="artemisApp.examManagement.randomizeQuestionOrder"> Randomize Question Order </label>

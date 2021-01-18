@@ -451,11 +451,8 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertThat(courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
         assertThat(courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal).isEqualTo(3.0);
-        CourseLearningGoalProgress.CourseLectureUnitProgress progressInTeamExercise = courseLearningGoalProgress.progressInLectureUnits.stream()
-                .filter(courseLectureUnitProgress -> courseLectureUnitProgress.lectureUnitId.equals(idOfExerciseUnitTeamTextOfLectureOne)).findFirst().get();
-        assertThat(progressInTeamExercise.participationRate).isEqualTo(80.0);
-        assertThat(progressInTeamExercise.noOfParticipants).isEqualTo(4);
-        assertThat(progressInTeamExercise.averageScoreAchievedByStudentInLectureUnit).isEqualTo(30.0);
+
+        assertThatSpecificCourseLectureUnitProgressExists(courseLearningGoalProgress, 80.0, 4, 30);
     }
 
     @Test
@@ -484,11 +481,22 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertThat(courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
         assertThat(courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal).isEqualTo(3.0);
-        CourseLearningGoalProgress.CourseLectureUnitProgress progressInIndividualExercise = courseLearningGoalProgress.progressInLectureUnits.stream()
-                .filter(courseLectureUnitProgress -> courseLectureUnitProgress.lectureUnitId.equals(idOfExerciseUnitTextOfLectureOne)).findFirst().get();
-        assertThat(progressInIndividualExercise.participationRate).isEqualTo(20.0);
-        assertThat(progressInIndividualExercise.noOfParticipants).isEqualTo(4);
-        assertThat(progressInIndividualExercise.averageScoreAchievedByStudentInLectureUnit).isEqualTo(30.0);
+
+        assertThatSpecificCourseLectureUnitProgressExists(courseLearningGoalProgress, 20.0, 4, 30.0);
+    }
+
+    public void assertThatSpecificCourseLectureUnitProgressExists(CourseLearningGoalProgress courseLearningGoalProgress, double expectedParticipationRate,
+            int expectedNoOfParticipants, double expectedAverageScore) {
+        boolean foundProgressWithCorrectNumbers = false;
+        for (CourseLearningGoalProgress.CourseLectureUnitProgress courseLectureUnitProgress : courseLearningGoalProgress.progressInLectureUnits) {
+            if (courseLectureUnitProgress.participationRate.equals(expectedParticipationRate) && courseLectureUnitProgress.noOfParticipants.equals(expectedNoOfParticipants)
+                    && courseLectureUnitProgress.averageScoreAchievedByStudentInLectureUnit.equals(expectedAverageScore)) {
+                foundProgressWithCorrectNumbers = true;
+                break;
+            }
+        }
+
+        assertThat(foundProgressWithCorrectNumbers).isTrue();
     }
 
     private void cleanUpInitialParticipations() {

@@ -54,7 +54,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     public setStatistics() {
         if (this.stats.numberOfSubmissions.inTime > 0) {
             this.totalManualAssessmentPercentage.inTime = Math.floor(
-                ((this.stats.numberOfAssessments.inTime - this.stats.numberOfAutomaticAssistedAssessments.inTime) / this.stats.numberOfSubmissions.inTime) * 100,
+                ((this.stats.totalNumberOfAssessments.inTime - this.stats.numberOfAutomaticAssistedAssessments.inTime) / this.stats.numberOfSubmissions.inTime) * 100,
             );
             this.totalAutomaticAssessmentPercentage.inTime = Math.floor((this.stats.numberOfAutomaticAssistedAssessments.inTime / this.stats.numberOfSubmissions.inTime) * 100);
         } else {
@@ -62,7 +62,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
         }
         if (this.stats.numberOfSubmissions.late > 0) {
             this.totalManualAssessmentPercentage.late = Math.floor(
-                ((this.stats.numberOfAssessments.late - this.stats.numberOfAutomaticAssistedAssessments.late) / this.stats.numberOfSubmissions.late) * 100,
+                ((this.stats.totalNumberOfAssessments.late - this.stats.numberOfAutomaticAssistedAssessments.late) / this.stats.numberOfSubmissions.late) * 100,
             );
             this.totalAutomaticAssessmentPercentage.late = Math.floor((this.stats.numberOfAutomaticAssistedAssessments.late / this.stats.numberOfSubmissions.late) * 100);
         } else {
@@ -70,8 +70,8 @@ export class InstructorExerciseDashboardComponent implements OnInit {
         }
 
         this.dataForAssessmentPieChart = [
-            this.stats.numberOfSubmissions.total - this.stats.numberOfAssessments.total,
-            this.stats.numberOfAssessments.total - this.stats.numberOfAutomaticAssistedAssessments.total,
+            this.stats.numberOfSubmissions.total - this.stats.totalNumberOfAssessments.total,
+            this.stats.totalNumberOfAssessments.total - this.stats.numberOfAutomaticAssistedAssessments.total,
             this.stats.numberOfAutomaticAssistedAssessments.total,
         ];
     }

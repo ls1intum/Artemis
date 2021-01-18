@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.util.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -40,8 +41,10 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.StudentExamService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ProgrammingExerciseTestService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -73,6 +76,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
+    StudentExamService studentExamService;
+
+    @Autowired
     SubmissionVersionRepository submissionVersionRepository;
 
     @Autowired
@@ -97,7 +103,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         users = programmingExerciseTestService.setupTestUsers(10, 1, 2);
         users.remove(database.getUserByLogin("admin")); // the admin is not registered for the course and therefore cannot access the student exam so we need to remove it
         course1 = database.addEmptyCourse();
-        exam1 = database.addActiveExamWithRegisteredUser(course1, users.get(0));
+        exam1 = database.addActiveExamWithRegisteredUser(course1, users.get(1));
+        exam1.addRegisteredUser(users.get(0));
+        exam1 = examRepository.save(exam1);
         Exam exam2 = database.addExam(course1);
         studentExam1 = database.addStudentExam(exam1);
         studentExam1.setWorkingTime(7200);
@@ -117,6 +125,40 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         for (var repo : studentRepos) {
             repo.resetLocalRepo();
         }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testFindOne() {
+        assertThrows(EntityNotFoundException.class, () -> {
+            studentExamService.findOne(Long.MAX_VALUE);
+        });
+        assertThat(studentExamService.findOne(studentExam1.getId())).isEqualTo(studentExam1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testFindOneWithExercisesByUserIdAndExamId() {
+        assertThrows(EntityNotFoundException.class, () -> {
+            studentExamService.findOneWithExercisesByUserIdAndExamId(Long.MAX_VALUE, exam1.getId());
+        });
+        assertThat(studentExamService.findOneWithExercisesByUserIdAndExamId(users.get(0).getId(), exam1.getId())).isEqualTo(studentExam1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testFindAllDistinctWorkingTimesByExamId() {
+        assertThat(studentExamService.findAllDistinctWorkingTimesByExamId(Long.MAX_VALUE)).isEqualTo(Set.of());
+        assertThat(studentExamService.findAllDistinctWorkingTimesByExamId(exam1.getId())).isEqualTo(Set.of(studentExam1.getWorkingTime()));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testFindMaxWorkingTimeById() {
+        assertThrows(EntityNotFoundException.class, () -> {
+            studentExamService.findMaxWorkingTimeByExamId(Long.MAX_VALUE);
+        });
+        assertThat(studentExamService.findMaxWorkingTimeByExamId(exam1.getId())).isEqualTo(studentExam1.getWorkingTime());
     }
 
     private void deleteExam1WithInstructor() throws Exception {
@@ -304,13 +346,13 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
         var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true);
         final var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        assertThat(testRun.getTestRun()).isTrue();
+        assertThat(testRun.isTestRun()).isTrue();
 
         var response = request.get("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class);
         assertThat(response).isEqualTo(testRun);
         assertThat(response.isStarted()).isTrue();
-        assertThat(response.getTestRun()).isTrue();
+        assertThat(response.isTestRun()).isTrue();
         assertThat(response.getExercises().size()).isEqualTo(exam.getNumberOfExercisesInExam());
         // Ensure that student exam was marked as started
         assertThat(studentExamRepository.findById(testRun.getId()).get().isStarted()).isTrue();
@@ -1375,7 +1417,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var testRuns = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
         assertThat(testRuns.size()).isEqualTo(1);
         var testRun = testRuns.get(0);
-        assertThat(testRun.getTestRun()).isEqualTo(true);
+        assertThat(testRun.isTestRun()).isEqualTo(true);
         assertThat(testRun.getWorkingTime()).isEqualTo(6000);
         assertThat(testRun.getUser()).isEqualTo(instructor);
         testRun.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream())

@@ -8,6 +8,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
+import { now } from 'moment';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { filter } from 'rxjs/operators';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
@@ -23,9 +24,8 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { now } from 'moment';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -57,6 +57,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     isTestRun = false;
     hasAutomaticFeedback = false;
     hasAssessmentDueDatePassed: boolean;
+    correctionRound = 0;
 
     private cancelConfirmationText: string;
 
@@ -93,19 +94,20 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
 
+        this.route.queryParamMap.subscribe((queryParams) => {
+            this.hideBackButton = queryParams.get('hideBackButton') === 'true';
+            this.isTestRun = queryParams.get('testRun') === 'true';
+            this.correctionRound = Number(queryParams.get('correction-round'));
+        });
         this.route.paramMap.subscribe((params) => {
             this.courseId = Number(params.get('courseId'));
             const exerciseId = Number(params.get('exerciseId'));
             const submissionId = params.get('submissionId');
             if (submissionId === 'new') {
-                this.loadOptimalSubmission(exerciseId);
+                this.loadRandomSubmission(exerciseId);
             } else {
                 this.loadSubmission(Number(submissionId));
             }
-        });
-        this.route.queryParamMap.subscribe((queryParams) => {
-            this.hideBackButton = queryParams.get('hideBackButton') === 'true';
-            this.isTestRun = queryParams.get('testRun') === 'true';
         });
     }
 
@@ -124,8 +126,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         );
     }
 
-    private loadOptimalSubmission(exerciseId: number): void {
-        this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(exerciseId, true).subscribe(
+    private loadRandomSubmission(exerciseId: number): void {
+        this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
 
@@ -151,7 +153,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.submission = submission;
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
-        this.result = getLatestSubmissionResult(this.submission);
+        this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
         this.hasAssessmentDueDatePassed = !!this.modelingExercise!.assessmentDueDate && moment(this.modelingExercise!.assessmentDueDate).isBefore(now());
         if (this.result?.hasComplaint) {
             this.getComplaint(this.result.id);
@@ -361,9 +363,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
             },
-            () => {
+            (httpErrorResponse: HttpErrorResponse) => {
                 this.jhiAlertService.clear();
-                this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+                const error = httpErrorResponse.error;
+                if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                    this.jhiAlertService.error(error.message, error.params);
+                } else {
+                    this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+                }
             },
         );
     }
@@ -385,34 +392,26 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.validateFeedback();
     }
 
-    assessNextOptimal() {
+    assessNext() {
         this.nextSubmissionBusy = true;
-        this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise!.id!).subscribe(
-            (optimal: number[]) => {
+        this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.modelingExercise!.id!, true, this.correctionRound).subscribe(
+            (unassessedSubmission: ModelingSubmission) => {
                 this.nextSubmissionBusy = false;
-                if (optimal.length === 0) {
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
-                } else {
-                    this.jhiAlertService.clear();
-                    this.router.onSameUrlNavigation = 'reload';
-                    // navigate to root and then to new assessment page to trigger re-initialization of the components
-                    this.router
-                        .navigateByUrl('/', { skipLocationChange: true })
-                        .then(() =>
-                            this.router.navigateByUrl(
-                                `/course-management/${this.courseId}/modeling-exercises/${this.modelingExercise!.id}/submissions/${optimal.pop()}/assessment`,
-                            ),
-                        );
-                }
+                this.router.onSameUrlNavigation = 'reload';
+                // navigate to root and then to new assessment page to trigger re-initialization of the components
+                let url = `/course-management/${this.courseId}/modeling-exercises/${this.modelingExercise!.id}/submissions/${unassessedSubmission.id}/assessment`;
+                url += `?correction-round=${this.correctionRound}`;
+                this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => this.router.navigateByUrl(url));
             },
             (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy = false;
-                if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                if (error.status === 404) {
+                    // there is no submission waiting for assessment at the moment
+                    this.jhiAlertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
+                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.navigateBack();
                 } else {
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+                    this.onError();
                 }
             },
         );

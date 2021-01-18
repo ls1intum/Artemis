@@ -19,7 +19,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
         contentBase: './build/resources/main/static/',
         proxy: [{
             context: [
-                '/'
+                '/',
             ],
             target: `http${options.tls ? 's' : ''}://${options.docker ? 'artemis-server' : 'localhost'}:8080`,
             secure: false,

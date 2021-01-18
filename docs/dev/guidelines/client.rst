@@ -318,6 +318,146 @@ or
    jest --detectLeaks
 
 
+11. Defining Routes and Breadcrumbs
+===================================
+
+Ideally routes are defined as nested children instead of absolute paths. To illustrate:
+
+.. code-block:: ts
+
+   {
+       // this is an absolute path which won't work with breadcrumbs
+       path: 'absolute/path/to/component',
+       component: someComponent,
+       data: { ... },
+   },
+   {
+       // those are relative paths using children
+       path: 'relative',
+       component: someParentComponent,
+       data: { ... },
+       children: [
+          {
+              path: 'childA',
+              component: componentA,
+              data: { ... },
+          },
+          {
+              path: 'childB',
+              component: componentB,
+              data: { ... },
+          },
+       ],
+   }
+
+The labels used to display the breadcrumbs are taken from the `data` of a route. By default, the `pageTitle` is used as breadcrumb label. When dealing with a 'custom object' (e.g. a course which has a title but is only present as id in the path) the `breadcrumbLabelVariable` override has to be used.
+
+.. code-block:: ts
+
+   {
+       path: 'new',
+       component: CourseUpdateComponent,
+       data: {
+           // The pageTitle will be translated and used as breadcrumb
+           pageTitle: 'global.generic.create'
+       },
+   },
+   {
+       path: ':courseId',
+       resolver: {
+           // The name of the resolver is 'course' in this case
+           course: CourseResolve,
+       }
+       component: CourseDetailComponent,
+       data: {
+           // Index the resolver (named 'course') to get the title property
+           breadcrumbLabelVariable: 'course.title',
+       },
+   }
+
+Sometimes you will want to access route params or data. This can be done as usual for parent routes too:
+
+.. code-block:: ts
+
+   ngOnInit() {
+        // When you nested routes, the parent is guaranteed to exist
+        // Access it's params or data (resolvers) as you would usually, but on 'parent!' instead of the route itself
+        this.route.parent!.params.subscribe(({ parentParams }) => {
+            // Example: Get the courseId when we are a child of the ':courseId' path
+            this.courseId = Number(parentParams['courseId']);
+        });
+   }
+
+There are a few caveats to this:
+
+a. Be careful when querying parent resolver data (a cached value), since it might be outdated when accessing from the child
+
+b. If a parent route defines a component, it will be rendered first before the child component ('overriding' the child)
+
+
+The easiest way to avoid those problems is defining one route for the component, and one route the children will use:
+
+.. code-block:: ts
+
+   {
+      // This path is listed first and has a component
+      // Thus it will be used when navigating directly to this route
+      path: ':courseId',
+      resolver: {
+         course: CourseResolve,
+      }
+      component: CourseDetailComponent,
+      data: {
+         breadcrumbLabelVariable: 'course.title',
+      },
+   },
+   {
+      // This is basically a duplicate, but without the 'component' property and route access rights
+      // This route will be loaded when accessing one of the children
+      // Which means the resolver will be loaded again, too
+      path: ':courseId',
+      resolver: {
+          course: CourseResolve,
+      }
+      data: {
+          breadcrumbLabelVariable: 'course.title',
+      },
+      children: [
+         {
+             path: 'edit',
+             component: CourseUpdateComponent,
+             data: {
+                 pageTitle: 'artemisApp.course.home.editLabel',
+                 // (Unfortunately) Children inherit data from the parent, so manually un-set the label override
+                 breadcrumbLabelVariable: '',
+             },
+         },
+      ],
+   }
+
+If you can't avoid using an absolute path, use the `breadcrumbLabels` override in the route data to still display breadcrumbs:
+
+.. code-block:: ts
+
+   {
+      path: 'courses/:courseId/absolute-path',
+      resolver: {
+         course: CourseResolve,
+      }
+      component: CourseAbsoluteComponent,
+      data: {
+         breadcrumbs: [
+            // 'label' specifies a string to translate, while path is the literal part of the path
+            { label: 'artemisApp.course.home.title', path: 'courses' },
+            // 'variable' specifies the resolver to use (similar to 'breadcrumbLabelVariable')
+            // 'path' in this case is an id which has to be taken from the resolver as well
+            { variable: 'course.title', path: 'course.id' },
+            // Same as the first manually defined crumb: string to translate and literal path
+            { label: 'artemisApp.course.absolute.title', path: 'absolute-path' },
+         ],
+      },
+   },
+
 
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/master/Coding-guidelines.md

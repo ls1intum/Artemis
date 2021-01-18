@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { StatisticsService } from 'app/admin/statistics/statistics.service';
 import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
@@ -11,13 +11,13 @@ import { Graphs, SpanType } from 'app/entities/statistics.model';
     selector: 'jhi-statistics-graph',
     templateUrl: './statistics-graph.component.html',
 })
-export class StatisticsGraphComponent implements OnInit, OnChanges {
+export class StatisticsGraphComponent implements OnChanges {
     @Input()
     graphType: Graphs;
     @Input()
     currentSpan: SpanType;
 
-    // html properties
+    // Html properties
     LEFT = false;
     RIGHT = true;
     SpanType = SpanType;
@@ -36,7 +36,7 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
     chartData: ChartDataSets[] = [];
     dataForSpanType: number[];
 
-    // left arrow -> decrease, right arrow -> increase
+    // Left arrow -> decrease, right arrow -> increase
     private currentPeriod = 0;
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
@@ -51,10 +51,6 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
         this.currentSpan = changes.currentSpan?.currentValue;
         this.barChartLabels = [];
         this.currentPeriod = 0;
-        this.initializeChart();
-    }
-
-    ngOnInit() {
         this.amountOfStudents = this.translateService.instant('statistics.amountOfStudents');
         this.chartName = this.translateService.instant(`statistics.${this.graphType.toString().toLowerCase()}`);
         this.initializeChart();
@@ -108,21 +104,32 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
                 endDate = moment().subtract(-this.currentPeriod, 'months');
                 const daysInMonth = endDate.diff(startDate, 'days');
                 this.barChartLabels = this.getLabelsForMonth(daysInMonth);
-                this.chartTime = now.add(this.currentPeriod, 'months').format('MMMM YYYY');
+                this.chartTime = now
+                    .add(this.currentPeriod, 'months')
+                    .subtract(Math.floor(this.barChartLabels.length / 2.0) - 1, 'days')
+                    .format('MMMM YYYY');
+                break;
+            case SpanType.QUARTER:
+                const prefix = this.translateService.instant('calendar_week');
+                startDate = moment().subtract(11 + 12 * -this.currentPeriod, 'weeks');
+                endDate = this.currentPeriod !== 0 ? moment().subtract(12 * -this.currentPeriod, 'weeks') : moment();
+                let currentWeek;
+                for (let i = 0; i < 12; i++) {
+                    currentWeek = moment()
+                        .subtract(11 + 12 * -this.currentPeriod - i, 'weeks')
+                        .isoWeekday(1)
+                        .isoWeek();
+                    this.barChartLabels[i] = prefix + ' ' + currentWeek;
+                }
+                this.chartTime = startDate.isoWeekday(1).format('DD.MM.YYYY') + ' - ' + endDate.isoWeekday(7).format('DD.MM.YYYY');
                 break;
             case SpanType.YEAR:
                 this.barChartLabels = this.getMonths();
-                this.chartTime = now.add(this.currentPeriod, 'years').format('YYYY');
+                this.chartTime = now.add(this.currentPeriod, 'years').subtract(5, 'months').format('YYYY');
                 break;
         }
     }
 
-    onTabChanged(span: SpanType): void {
-        this.currentSpan = span;
-        this.barChartLabels = [];
-        this.currentPeriod = 0;
-        this.initializeChart();
-    }
     private getMonths(): string[] {
         const currentMonth = moment().month();
         const year = [

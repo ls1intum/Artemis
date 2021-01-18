@@ -11,6 +11,8 @@ import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/shared/service/sort.service';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     // TODO this selector is used twice which is not good!!!
@@ -43,6 +45,8 @@ export class ListOfComplaintsComponent implements OnInit {
         private location: Location,
         private modalService: NgbModal,
         private sortService: SortService,
+        private translateService: TranslateService,
+        private artemisDatePipe: ArtemisDatePipe,
     ) {}
 
     ngOnInit(): void {
@@ -145,5 +149,26 @@ export class ListOfComplaintsComponent implements OnInit {
         }
 
         return false;
+    }
+
+    calculateComplaintLockStatus(complaint: Complaint) {
+        if (complaint.complaintResponse && this.complaintService.isComplaintLocked(complaint)) {
+            if (this.complaintService.isComplaintLockedByLoggedInUser(complaint)) {
+                const endDate = this.artemisDatePipe.transform(complaint.complaintResponse?.lockEndDate);
+                return this.translateService.instant('artemisApp.locks.lockInformationYou', {
+                    endDate,
+                });
+            } else {
+                const endDate = this.artemisDatePipe.transform(complaint.complaintResponse?.lockEndDate);
+                const user = complaint.complaintResponse?.reviewer?.login;
+
+                return this.translateService.instant('artemisApp.locks.lockInformation', {
+                    endDate,
+                    user,
+                });
+            }
+        } else {
+            return this.translateService.instant('artemisApp.locks.notUnlocked');
+        }
     }
 }

@@ -29,7 +29,7 @@
             {{ exam.courseName }}
         </span>
     </div>
-    <div *ngIf="exam && (exam.numberOfExercisesInExam || exam.maxPoints)">
+    <div *ngIf="exam && (exam.numberOfExercisesInExam || exam.maxPoints || exam.numberOfCorrectionRoundsInExam)">
         <span class="mx-2" *ngIf="exam.numberOfExercisesInExam">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.exercises' | translate }}:</strong>
             {{ exam.numberOfExercisesInExam }}

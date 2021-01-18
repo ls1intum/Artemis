@@ -11,6 +11,7 @@ import { HealthComponent } from 'app/admin/health/health.component';
 import { LogsComponent } from 'app/admin/logs/logs.component';
 import { JhiMetricsMonitoringComponent } from 'app/admin/metrics/metrics.component';
 import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
+import { DocsComponent } from 'app/admin/docs/docs.component';
 
 export const adminState: Routes = [
     {
@@ -29,7 +30,7 @@ export const adminState: Routes = [
                 },
             },
             {
-                path: 'jhi-configuration',
+                path: 'configuration',
                 component: JhiConfigurationComponent,
                 data: {
                     pageTitle: 'configuration.title',
@@ -43,7 +44,7 @@ export const adminState: Routes = [
                 },
             },
             {
-                path: 'jhi-health',
+                path: 'health',
                 component: HealthComponent,
                 data: {
                     pageTitle: 'health.title',
@@ -57,7 +58,14 @@ export const adminState: Routes = [
                 },
             },
             {
-                path: 'jhi-metrics',
+                path: 'docs',
+                component: DocsComponent,
+                data: {
+                    pageTitle: 'global.menu.admin.apidocs',
+                },
+            },
+            {
+                path: 'metrics',
                 component: JhiMetricsMonitoringComponent,
                 data: {
                     pageTitle: 'metrics.title',
@@ -70,8 +78,8 @@ export const adminState: Routes = [
                     pageTitle: 'statistics.title',
                 },
             },
-            userMgmtRoute,
-            systemNotificationManagementRoute,
+            ...userMgmtRoute,
+            ...systemNotificationManagementRoute,
             upcomingExamsAndExercisesRoute,
         ],
     },

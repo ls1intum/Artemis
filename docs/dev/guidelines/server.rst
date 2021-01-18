@@ -81,7 +81,7 @@ Only write comments for complicated algorithms, to help other developers better 
 9. Utility
 ===========
 
-Utility methods can and should be placed in a class named for specific functionality, not “miscellaneous stuff related to project”. Most of the time, our static methods belong in a related class.
+Utility methods can and should be placed in a class named for specific functionality, not "miscellaneous stuff related to project". Most of the time, our static methods belong in a related class.
 
 10. Auto configuration
 =======================
@@ -140,7 +140,14 @@ Additional notes on the controller methods:
 * Commit messages should describe both what the commit changes and how it does it.
 * ARCHITECTURE FIRST: writing code without thinking of the system's architecture is useless, in the same way as dreaming about your desires without a plan of achieving them.
 
-14. General best practices
+14. File handling
+==================
+
+* Never use operating system (OS) specific file paths such as "test/test". Always use OS independent paths.
+* Do not deal with File.separator manually. Instead use the Paths.get(firstPart, secondPart, ...) method which deals with separators automatically.
+* Existing paths can easily be appended with a new folder using ``existingPath.resolve(subfolder)``
+
+15. General best practices
 ===========================
 
 * Always use the least possible access level, prefer using private over public access modifier (package-private or protected can be used as well).

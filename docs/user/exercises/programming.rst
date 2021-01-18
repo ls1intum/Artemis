@@ -67,6 +67,14 @@ particularly helpful for programming beginners.
 
    Online Editor
 
+
+Display of hidden files
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The online editor displays only visible files, to avoid showing for example ``.git`` and ``.gitignore`` config files.
+This also means that other config files, like SwiftLint's ``.swiftlint.yml`` file, are not shown. Those files currently
+can only be accessed via your own IDE.
+
 Testing with Artemis Java Test Sandbox
 --------------------------------------
 
