@@ -83,6 +83,7 @@ describe('Create Test Run Modal Component', () => {
             comp.exam = exam;
             comp.exam.exerciseGroups = [exerciseGroup1, exerciseGroup2];
             fixture.detectChanges();
+            expect(comp.exam.exerciseGroups!.length).to.equal(1);
         });
     });
 
