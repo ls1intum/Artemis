@@ -15,10 +15,13 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -50,6 +53,8 @@ public class ExamService {
 
     private CourseService courseService;
 
+    private StudentExamService studentExamService;
+
     private final UserService userService;
 
     private final ExamRepository examRepository;
@@ -68,9 +73,11 @@ public class ExamService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final AuditEventRepository auditEventRepository;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ExamQuizService examQuizService, ExerciseService exerciseService,
-            InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService) {
+            InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService, AuditEventRepository auditEventRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
@@ -80,12 +87,19 @@ public class ExamService {
         this.instanceMessageSendService = instanceMessageSendService;
         this.exerciseService = exerciseService;
         this.quizExerciseService = quizExerciseService;
+        this.auditEventRepository = auditEventRepository;
     }
 
     @Autowired
     // break the dependency cycle
     public void setCourseService(CourseService courseService) {
         this.courseService = courseService;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setStudentExamService(StudentExamService studentExamService) {
+        this.studentExamService = studentExamService;
     }
 
     /**
@@ -209,18 +223,25 @@ public class ExamService {
     }
 
     /**
-     * Deletes all elements associated with the exam including:
+     * Fetches the exam using {@link #findOneWithExercisesGroupsAndStudentExamsByExamId} which eagerly loads all required elements and deletes all elements associated with the
+     * exam including:
      * <ul>
      *     <li>The Exam</li>
      *     <li>All ExerciseGroups</li>
      *     <li>All Exercises including:
-     *     Submissions, Participations, Results, Repositories and Buildplans, see {@link ExerciseService#delete}</li>
+     *     Submissions, Participations, Results, Repositories and build plans, see {@link ExerciseService#delete}</li>
      *     <li>All StudentExams</li>
      * </ul>
      * Note: StudentExams and ExerciseGroups are not explicitly deleted as the delete operation of the exam is cascaded by the database.
-     * @param exam the exam to be deleted
+     * @param examId the ID of the exam to be deleted
      */
-    public void delete(@NotNull Exam exam) {
+    public void delete(@NotNull long examId) {
+        User user = userService.getUser();
+        Exam exam = findOneWithExercisesGroupsAndStudentExamsByExamId(examId);
+        log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
+        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
+        auditEventRepository.add(auditEvent);
+
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             if (exerciseGroup != null) {
                 for (Exercise exercise : exerciseGroup.getExercises()) {
@@ -229,16 +250,6 @@ public class ExamService {
             }
         }
         examRepository.deleteById(exam.getId());
-    }
-
-    /**
-     * Fetches the exam using {@link #findOneWithExercisesGroupsAndStudentExamsByExamId} which eagerly loads all required elements and calls {@link #delete}
-     *
-     * @param examId the ID of the exam to be deleted
-     */
-    public void deleteById(Long examId) {
-        Exam exam = this.findOneWithExercisesGroupsAndStudentExamsByExamId(examId);
-        this.delete(exam);
     }
 
     /**
@@ -539,19 +550,23 @@ public class ExamService {
         List<StudentDTO> notFoundStudentsDtos = new ArrayList<>();
         for (var studentDto : studentDtos) {
             var registrationNumber = studentDto.getRegistrationNumber();
+            var login = studentDto.getLogin();
             try {
                 // 1) we use the registration number and try to find the student in the Artemis user database
-                Optional<User> optionalStudent = userService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+                var optionalStudent = userService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
                 if (optionalStudent.isPresent()) {
                     var student = optionalStudent.get();
-                    // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course)
+                    // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the
+                    // course)
                     if (!student.getGroups().contains(course.getStudentGroupName())) {
                         userService.addUserToGroup(student, course.getStudentGroupName());
                     }
                     exam.addRegisteredUser(student);
                     continue;
                 }
-                // 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential
+
+                // 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a
+                // potential
                 // external user management system
                 optionalStudent = userService.createUserFromLdap(registrationNumber);
                 if (optionalStudent.isPresent()) {
@@ -561,8 +576,18 @@ public class ExamService {
                     exam.addRegisteredUser(student);
                     continue;
                 }
-                // 3) if we cannot find the user in the (TUM) LDAP, we report this to the client
-                log.warn("User with registration number " + registrationNumber + " not found in Artemis user database and not found in (TUM) LDAP");
+
+                // 3) if we cannot find the user in the (TUM) LDAP or the registration number was not set properly, try again using the login
+                optionalStudent = userService.findUserWithGroupsAndAuthoritiesByLogin(login);
+                if (optionalStudent.isPresent()) {
+                    var student = optionalStudent.get();
+                    // the newly created student needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
+                    userService.addUserToGroup(student, course.getStudentGroupName());
+                    exam.addRegisteredUser(student);
+                    continue;
+                }
+
+                log.warn("User with registration number '" + registrationNumber + "' and login '" + login + "' not found in Artemis user database nor found in (TUM) LDAP");
             }
             catch (Exception ex) {
                 log.warn("Error while processing user with registration number " + registrationNumber + ": " + ex.getMessage(), ex);
@@ -571,6 +596,22 @@ public class ExamService {
             notFoundStudentsDtos.add(studentDto);
         }
         examRepository.save(exam);
+
+        try {
+            User currentUser = userService.getUserWithGroupsAndAuthorities();
+            Map<String, Object> userData = new HashMap<>();
+            userData.put("exam", exam.getTitle());
+            for (var studentDto : studentDtos) {
+                userData.put("student", studentDto.getFirstName() + " " + studentDto.getLastName() + ", " + studentDto.getRegistrationNumber());
+            }
+            AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, userData);
+            auditEventRepository.add(auditEvent);
+            log.info("User " + currentUser.getLogin() + " has added multiple users " + studentDtos + " to the exam " + exam.getTitle() + " with id " + exam.getId());
+        }
+        catch (Exception ex) {
+            log.warn("Could not add audit event to audit log", ex);
+        }
+
         return notFoundStudentsDtos;
     }
 
@@ -594,7 +635,7 @@ public class ExamService {
     public Exam findWithStudentExams(long examId) {
         Exam exam = examRepository.findWithStudentExamsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id " + examId + " does not exist"));
         // drop all test runs and set the remaining student exams to the exam
-        exam.setStudentExams(exam.getStudentExams().stream().dropWhile(StudentExam::getTestRun).collect(Collectors.toSet()));
+        exam.setStudentExams(exam.getStudentExams().stream().dropWhile(StudentExam::isTestRun).collect(Collectors.toSet()));
         return exam;
     }
 
@@ -888,4 +929,64 @@ public class ExamService {
         return examRepository.isUserRegisteredForExam(examId, userId);
     }
 
+    /**
+     * Registers student to the exam. In order to do this,  we add the user the the course group, because the user only has access to the exam of a course if the student also has access to the course of the exam.
+     * We only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course). 
+     *
+     * @param course the course containing the exam
+     * @param exam the exam for which we want to register a student
+     * @param student the student to be registered to the exam
+     */
+    public void registerStudentToExam(Course course, Exam exam, User student) {
+        exam.addRegisteredUser(student);
+
+        if (!student.getGroups().contains(course.getStudentGroupName())) {
+            userService.addUserToGroup(student, course.getStudentGroupName());
+        }
+        examRepository.save(exam);
+
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "user=" + student.getLogin());
+        auditEventRepository.add(auditEvent);
+        log.info("User " + currentUser.getLogin() + " has added user " + student.getLogin() + " to the exam " + exam.getTitle() + " with id " + exam.getId());
+    }
+
+    /**
+     *
+     * @param examId
+     * @param withParticipationsAndSubmission
+     * @param student
+     */
+    public void unregisterStudentFromExam(Long examId, boolean withParticipationsAndSubmission, User student) {
+        var exam = findOneWithRegisteredUsers(examId);
+        exam.removeRegisteredUser(student);
+
+        // Note: we intentionally do not remove the user from the course, because the student might just have "deregistered" from the exam, but should
+        // still have access to the course.
+        examRepository.save(exam);
+
+        // The student exam might already be generated, then we need to delete it
+        Optional<StudentExam> optionalStudentExam = studentExamService.findOneWithExercisesByUserIdAndExamIdOptional(student.getId(), exam.getId());
+        if (optionalStudentExam.isPresent()) {
+            StudentExam studentExam = optionalStudentExam.get();
+
+            // Optionally delete participations and submissions
+            if (withParticipationsAndSubmission) {
+                List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student.getId(),
+                        studentExam.getExercises());
+                for (var participation : participations) {
+                    participationService.delete(participation.getId(), true, true);
+                }
+            }
+
+            // Delete the student exam
+            studentExamService.deleteStudentExam(studentExam.getId());
+        }
+
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_USER_FROM_EXAM, "exam=" + exam.getTitle(), "user=" + student.getLogin());
+        auditEventRepository.add(auditEvent);
+        log.info("User " + currentUser.getLogin() + " has removed user " + student.getLogin() + " from the exam " + exam.getTitle() + " with id " + exam.getId()
+                + ". This also deleted a potentially existing student exam with all its participations and submissions.");
+    }
 }

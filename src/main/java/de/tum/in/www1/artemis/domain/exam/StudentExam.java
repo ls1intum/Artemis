@@ -66,7 +66,7 @@ public class StudentExam extends AbstractAuditingEntity {
         return submitted;
     }
 
-    public Boolean getTestRun() {
+    public Boolean isTestRun() {
         return testRun;
     }
 

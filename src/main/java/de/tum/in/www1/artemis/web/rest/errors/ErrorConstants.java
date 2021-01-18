@@ -34,6 +34,8 @@ public final class ErrorConstants {
 
     public static final URI STUDENTS_APPEAR_MULTIPLE_TIMES_TYPE = URI.create(PROBLEM_BASE_URL + "/students-appear-multiple-times");
 
+    public static final URI COMPLAINT_LOCKED = URI.create(PROBLEM_BASE_URL + "/complaint");
+
     private ErrorConstants() {
     }
 }

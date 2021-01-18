@@ -1,6 +1,5 @@
 import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { FileUploadExerciseComponent } from './file-upload-exercise.component';
 import { FileUploadExerciseDetailComponent } from './file-upload-exercise-detail.component';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Observable } from 'rxjs';
@@ -94,13 +93,7 @@ const routes: Routes = [
     },
     {
         path: ':courseId/file-upload-exercises',
-        component: FileUploadExerciseComponent,
-        data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
-            pageTitle: 'artemisApp.fileUploadExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
+        redirectTo: ':courseId/exercises',
     },
 ];
 

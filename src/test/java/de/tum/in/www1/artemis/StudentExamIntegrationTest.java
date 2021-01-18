@@ -346,13 +346,13 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
         var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true);
         final var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        assertThat(testRun.getTestRun()).isTrue();
+        assertThat(testRun.isTestRun()).isTrue();
 
         var response = request.get("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class);
         assertThat(response).isEqualTo(testRun);
         assertThat(response.isStarted()).isTrue();
-        assertThat(response.getTestRun()).isTrue();
+        assertThat(response.isTestRun()).isTrue();
         assertThat(response.getExercises().size()).isEqualTo(exam.getNumberOfExercisesInExam());
         // Ensure that student exam was marked as started
         assertThat(studentExamRepository.findById(testRun.getId()).get().isStarted()).isTrue();
@@ -1417,7 +1417,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var testRuns = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
         assertThat(testRuns.size()).isEqualTo(1);
         var testRun = testRuns.get(0);
-        assertThat(testRun.getTestRun()).isEqualTo(true);
+        assertThat(testRun.isTestRun()).isEqualTo(true);
         assertThat(testRun.getWorkingTime()).isEqualTo(6000);
         assertThat(testRun.getUser()).isEqualTo(instructor);
         testRun.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream())

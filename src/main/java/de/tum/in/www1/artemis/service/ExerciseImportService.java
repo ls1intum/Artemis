@@ -1,11 +1,8 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -14,12 +11,9 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
-@Repository
 public abstract class ExerciseImportService {
 
-    protected final JpaRepository exerciseRepository;
-
-    final ExampleSubmissionRepository exampleSubmissionRepository;
+    protected final ExampleSubmissionRepository exampleSubmissionRepository;
 
     protected final SubmissionRepository submissionRepository;
 
@@ -27,9 +21,8 @@ public abstract class ExerciseImportService {
 
     protected final TextBlockRepository textBlockRepository;
 
-    public ExerciseImportService(JpaRepository exerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
-            ResultRepository resultRepository, TextBlockRepository textBlockRepository) {
-        this.exerciseRepository = exerciseRepository;
+    public ExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
+            TextBlockRepository textBlockRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;

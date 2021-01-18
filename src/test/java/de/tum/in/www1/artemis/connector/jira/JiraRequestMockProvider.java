@@ -61,7 +61,6 @@ public class JiraRequestMockProvider {
     public void mockIsGroupAvailableForMultiple(Set<String> groups) throws URISyntaxException {
         final var regexGroups = String.join("|", groups);
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/member\\?groupname=(" + regexGroups + ")");
-
         mockServer.expect(ExpectedCount.times(groups.size()), requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK));
     }
@@ -69,7 +68,6 @@ public class JiraRequestMockProvider {
     public void mockAddUserToGroup(String group) throws URISyntaxException {
         mockIsGroupAvailable(group);
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/user\\?groupname=" + group);
-
         mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
@@ -77,7 +75,6 @@ public class JiraRequestMockProvider {
         mockIsGroupAvailableForMultiple(groups);
         final var regexGroups = String.join("|", groups);
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/user\\?groupname=(" + regexGroups + ")");
-
         mockServer.expect(ExpectedCount.times(groups.size()), requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));
     }
@@ -85,14 +82,12 @@ public class JiraRequestMockProvider {
     public void mockRemoveUserFromGroup(Set<String> groups, String username) {
         final var regexGroups = String.join("|", groups);
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/user\\?groupname=(" + regexGroups + ")&username=" + username);
-
         mockServer.expect(ExpectedCount.twice(), requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockGetUsernameForEmail(String email, String usernameToBeReturned) throws IOException, URISyntaxException {
         final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/user/search").queryParam("username", email).build().toUri();
         final var response = List.of(new JiraUserDTO(usernameToBeReturned));
-
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }

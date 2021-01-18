@@ -174,8 +174,8 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockStudents: StudentDTO[] = [
-            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1' },
-            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2' },
+            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1' },
+            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2' },
         ];
 
         // WHEN
