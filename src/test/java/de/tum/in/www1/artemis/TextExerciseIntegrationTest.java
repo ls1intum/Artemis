@@ -146,7 +146,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertThat(newTextExercise.getTitle()).as("text exercise title was correctly set").isEqualTo(title);
         assertThat(newTextExercise.getDifficulty()).as("text exercise difficulty was correctly set").isEqualTo(difficulty);
-        assertThat(!newTextExercise.hasCourse()).as("course was not set for exam exercise");
+        assertThat(!newTextExercise.isCourseExercise()).as("course was not set for exam exercise");
         assertThat(newTextExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(newTextExercise.getExerciseGroup().getId()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
     }
@@ -217,7 +217,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(updateTitle);
         assertThat(updatedTextExercise.getDifficulty()).as("text exercise difficulty was correctly updated").isEqualTo(updateDifficulty);
-        assertThat(!updatedTextExercise.hasCourse()).as("course was not set for exam exercise");
+        assertThat(!updatedTextExercise.isCourseExercise()).as("course was not set for exam exercise");
         assertThat(updatedTextExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(updatedTextExercise.getExerciseGroup().getId()).as("exerciseGroupId was not updated").isEqualTo(exerciseGroup.getId());
     }

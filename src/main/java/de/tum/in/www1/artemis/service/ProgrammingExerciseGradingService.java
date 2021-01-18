@@ -536,7 +536,7 @@ public class ProgrammingExerciseGradingService {
             String issueTerm = scaFeedback.size() == 1 ? ", 1 issue" : ", " + scaFeedback.size() + " issues";
             newResultString += issueTerm;
         }
-        if (result.isManualResult()) {
+        if (result.isManual()) {
             newResultString = updateManualResultString(newResultString, result, exercise);
         }
         result.setResultString(newResultString);

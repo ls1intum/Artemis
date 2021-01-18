@@ -385,7 +385,7 @@ public abstract class Exercise extends DomainObject {
     }
 
     @JsonIgnore
-    public boolean hasCourse() {
+    public boolean isCourseExercise() {
         return this.course != null;
     }
 
@@ -398,7 +398,7 @@ public abstract class Exercise extends DomainObject {
     }
 
     @JsonIgnore
-    public boolean hasExerciseGroup() {
+    public boolean isExamExercise() {
         return this.exerciseGroup != null;
     }
 
@@ -410,7 +410,7 @@ public abstract class Exercise extends DomainObject {
      */
     @JsonIgnore
     public Course getCourseViaExerciseGroupOrCourseMember() {
-        if (hasExerciseGroup()) {
+        if (isExamExercise()) {
             return this.getExerciseGroup().getExam().getCourse();
         }
         else {
@@ -571,7 +571,7 @@ public abstract class Exercise extends DomainObject {
             // Check that submission was submitted in time (rated). For non programming exercises we check if the assessment due date has passed (if set)
             if (Boolean.TRUE.equals(result.isRated()) && (!isProgrammingExercise && isAssessmentOver
                     // For programming exercises we check that the assessment due date has passed (if set) for manual results otherwise we always show the automatic result
-                    || isProgrammingExercise && ((result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)))) {
+                    || isProgrammingExercise && ((result.isManual() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)))) {
                 // take the first found result that fulfills the above requirements
                 if (latestSubmission == null) {
                     latestSubmission = submission;
@@ -758,7 +758,7 @@ public abstract class Exercise extends DomainObject {
     public boolean isReleased() {
         // Exam
         ZonedDateTime releaseDate;
-        if (this.hasExerciseGroup()) {
+        if (this.isExamExercise()) {
             releaseDate = this.getExerciseGroup().getExam().getStartDate();
         }
         else {
