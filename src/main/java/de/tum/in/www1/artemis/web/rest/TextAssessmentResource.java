@@ -135,6 +135,41 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
+     * DELETE text-submissions/:exampleSubmissionId/example-assessment : delete result & text blocks for example submission.
+     * This is used when updating the text of the example assessment.
+     *
+     * @param exampleSubmissionId id of the submission
+     * @return 204 No Content
+     */
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @DeleteMapping("/text-submissions/{exampleSubmissionId}/example-assessment/feedback")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> deleteTextExampleAssessment(@PathVariable long exampleSubmissionId) {
+        log.debug("REST request to delete text example assessment : {}", exampleSubmissionId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(exampleSubmissionId);
+        Submission submission = exampleSubmission.getSubmission();
+        Exercise exercise = exampleSubmission.getExercise();
+        checkAuthorization(exercise, user);
+
+        if (!(submission instanceof TextSubmission)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // 1. Delete Textblocks
+        textBlockService.deleteForSubmission((TextSubmission)submission);
+
+        // 2. Delete Feedbacks
+        final var latestResult = submission.getLatestResult();
+        if (latestResult != null) {
+            latestResult.getFeedbacks().clear();
+            resultRepository.save(latestResult);
+        }
+
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * Submits manual textAssessments for a given result and notify the user if it's before the Assessment Due Date
      *
      * @param exerciseId the exerciseId of the exercise which will be saved
@@ -303,8 +338,7 @@ public class TextAssessmentResource extends AssessmentResource {
         if (textSubmission.getBlocks() == null || textSubmission.getBlocks().isEmpty()) {
             textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         }
-
-        return ResponseEntity.ok(textSubmission.getLatestResult());
+        return ResponseEntity.ok().body(textSubmission.getLatestResult());
     }
 
     /**

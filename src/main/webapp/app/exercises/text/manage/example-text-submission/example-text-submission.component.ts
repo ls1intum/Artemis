@@ -1,4 +1,3 @@
-import * as $ from 'jquery';
 import { AfterViewInit, Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
@@ -8,8 +7,6 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { Interactable } from '@interactjs/core/Interactable';
-import interact from 'interactjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
@@ -25,6 +22,7 @@ import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entiti
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { notUndefined } from 'app/shared/util/global.utils';
+import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
 
 @Component({
     selector: 'jhi-example-text-submission',
@@ -33,7 +31,7 @@ import { notUndefined } from 'app/shared/util/global.utils';
     styleUrls: ['./example-text-submission.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, AfterViewInit {
+export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, AfterViewInit, Context {
     isNewSubmission: boolean;
     areNewAssessments = true;
     exerciseId: number;
@@ -44,13 +42,10 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     invalidError?: string;
     readOnly: boolean;
     toComplete: boolean;
-
-    resizableMinWidth = 100;
-    resizableMaxWidth = 1200;
-    resizableMinHeight = 200;
-    interactResizableSubmission: Interactable;
-    interactResizableAssessment: Interactable;
-    interactResizableTop: Interactable;
+    state = State.initialWithContext(this);
+    SubmissionButtonStates = SubmissionButtonStates;
+    AssessButtonStates = AssessButtonStates;
+    UIStates = UIStates;
 
     private exampleSubmissionId: number;
     private unreferencedFeedback: Feedback[] = [];
@@ -85,7 +80,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     /**
-     * Reads route params and loads the example submission on init.
+     * Reads route params and loads the example submission on initialWithContext.
      */
     async ngOnInit(): Promise<void> {
         await super.ngOnInit();
@@ -108,89 +103,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * Sets the size of resizable elements after initialization.
      */
     ngAfterViewInit(): void {
-        this.resizableMinWidth = window.screen.width / 6;
-        this.resizableMinHeight = window.screen.height / 7;
-
-        this.interactResizableSubmission = interact('.resizable-submission')
-            .resizable({
-                // Enable resize from left edge; triggered by class .resizing-bar
-                edges: { left: '.resizing-bar', right: false, bottom: false, top: false },
-                // Set min and max width
-                modifiers: [
-                    // Set maximum width
-                    interact.modifiers!.restrictSize({
-                        min: { width: this.resizableMinWidth, height: 0 },
-                        max: { width: this.resizableMaxWidth, height: 2000 },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function (event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', function (event: any) {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', function (event: any) {
-                const target = event.target;
-                // Update element width
-                target.style.width = event.rect.width + 'px';
-                target.style.minWidth = event.rect.width + 'px';
-            });
-
-        this.interactResizableAssessment = interact('.resizable-assessment')
-            .resizable({
-                // Enable resize from left edge; triggered by class .resizing-bar-assessment
-                edges: { left: '.resizing-bar-assessment', right: false, bottom: false, top: false },
-                // Set min and max width
-                modifiers: [
-                    // Set maximum width
-                    interact.modifiers!.restrictSize({
-                        min: { width: this.resizableMinWidth, height: 0 },
-                        max: { width: this.resizableMaxWidth, height: 2000 },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function (event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', function (event: any) {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', function (event: any) {
-                const target = event.target;
-                // Update element width
-                target.style.width = event.rect.width + 'px';
-                target.style.minWidth = event.rect.width + 'px';
-            });
-
-        this.interactResizableTop = interact('.resizable-horizontal')
-            .resizable({
-                // Enable resize from bottom edge; triggered by class .resizing-bar-bottom
-                edges: { left: false, right: false, top: false, bottom: '.resizing-bar-bottom' },
-                // Set min height
-                modifiers: [
-                    // Set maximum width
-                    interact.modifiers!.restrictSize({
-                        min: { width: 0, height: this.resizableMinHeight },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function (event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', function (event: any) {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', function (event: any) {
-                const target = event.target;
-                // Update element height
-                target.style.minHeight = event.rect.height + 'px';
-                $('#submission-area').css('min-height', event.rect.height - 100 + 'px');
-            });
-
         this.guidedTourService.componentPageLoaded();
     }
 
@@ -198,7 +110,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * Loads the exercise.
      * Also loads the example submission if the new parameter is not set.
      */
-    loadAll() {
+    loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.exercise);
@@ -208,6 +120,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         if (this.isNewSubmission) {
             return; // We don't need to load anything else
         }
+        this.state.edit();
 
         this.exampleSubmissionService.get(this.exampleSubmissionId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body!;
@@ -218,59 +131,33 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             if (this.toComplete) {
                 return;
             }
-            this.fetchExampleResult();
+            this.fetchExampleResult(() => {
+                if (this.result?.id) {
+                    this.state = State.forExistingAssessmentWithContext(this);
+                }
+            });
         });
     }
 
-    private fetchExampleResult() {
-        this.assessmentsService.getExampleResult(this.exerciseId, this.submission?.id!).subscribe((result) => {
-            this.result = result;
-            this.submission = result.submission;
-            this.prepareTextBlocksAndFeedbacks();
-            this.areNewAssessments = this.assessments.length <= 0;
-            this.validateFeedback();
-        });
-    }
-
-    /**
-     * Collapse/open instructions.
-     * @param $event used to evaluate the target element
-     * @param resizable determines if the resizable element is an assessment or submission of type {string}
-     */
-    toggleCollapse($event: any, resizable: string) {
-        const target = $event.toElement || $event.relatedTarget || $event.target;
-        target.blur();
-        let $card: any;
-
-        if (resizable === 'submission') {
-            $card = $(target).closest('#instructions');
-        } else if (resizable === 'assessment') {
-            $card = $(target).closest('#assessment-instructions');
-        }
-
-        if ($card.hasClass('collapsed')) {
-            $card.removeClass('collapsed');
-            if (resizable === 'submission') {
-                this.interactResizableSubmission.resizable({ enabled: true });
-            } else if (resizable === 'assessment') {
-                this.interactResizableAssessment.resizable({ enabled: true });
-            }
-            $card.css({ width: this.resizableMinWidth + 'px', minWidth: this.resizableMinWidth + 'px' });
-        } else {
-            $card.addClass('collapsed');
-            if (resizable === 'submission') {
-                this.interactResizableSubmission.resizable({ enabled: false });
-            } else if (resizable === 'assessment') {
-                this.interactResizableAssessment.resizable({ enabled: false });
-            }
-            $card.css({ width: '55px', minWidth: '55px' });
-        }
+    // TODO: Try to only call when needded (== when in assess mode or first time)
+    private fetchExampleResult(completion: () => void = () => {}): void {
+        this.assessmentsService
+            .getExampleResult(this.exerciseId, this.submission?.id!)
+            .filter(notUndefined)
+            .subscribe((result) => {
+                this.result = result;
+                this.exampleSubmission.submission = this.submission = result.submission;
+                this.prepareTextBlocksAndFeedbacks();
+                this.areNewAssessments = this.assessments.length <= 0;
+                this.validateFeedback();
+                completion();
+            });
     }
 
     /**
      * Creates the example submission.
      */
-    createNewExampleTextSubmission() {
+    createNewExampleTextSubmission(): void {
         const newExampleSubmission = new ExampleSubmission();
         newExampleSubmission.submission = this.submission!;
         newExampleSubmission.exercise = this.exercise;
@@ -288,8 +175,8 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
 
             this.resultService.createNewExampleResult(this.submission.id!).subscribe((response: HttpResponse<Result>) => {
                 this.result = response.body!;
+                this.state.edit();
                 this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
-                this.fetchExampleResult();
             }, this.onError);
         }, this.onError);
     }
@@ -297,12 +184,16 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     /**
      * Updates the example submission.
      */
-    updateExampleTextSubmission() {
+    updateExampleTextSubmission(): void {
         this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body!;
-
+            this.state.edit();
             this.jhiAlertService.success('artemisApp.exampleSubmission.saveSuccessful');
         }, this.onError);
+    }
+
+    public startAssessment(): void {
+        this.fetchExampleResult(() => this.state.assess());
     }
 
     /**
@@ -318,6 +209,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             this.result = response.body!;
             this.areNewAssessments = false;
             this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
+            this.state.assess();
         });
     }
 
@@ -325,7 +217,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * Redirects back to the assessment dashboard if route param readOnly or toComplete is set.
      * Otherwise redirects back to the exercise's edit view either for exam exercises or normal exercises.
      */
-    async back() {
+    async back(): Promise<void> {
         const courseId = this.course?.id;
         // check if exam exercise
         if (!!this.exercise?.exerciseGroup) {
@@ -350,7 +242,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * Checks the assessment of the tutor to the example submission tutorial.
      * The tutor is informed if the given points of the assessment are fine, too low or too high.
      */
-    checkAssessment() {
+    checkAssessment(): void {
         this.validateFeedback();
         if (!this.assessmentsAreValid) {
             this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
@@ -363,10 +255,10 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             setLatestSubmissionResult(exampleSubmission.submission, result);
             result!.feedbacks = this.assessments;
         }
+        // TODO: Verify ues of text blocks here!
+        // TODO: Also check how text blocks are loaded for tutors.
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
-            () => {
-                this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success');
-            },
+            () => this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success'),
             (error: HttpErrorResponse) => {
                 const errorType = error.headers.get('x-artemisapp-error');
 
@@ -397,7 +289,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * After the tutor declared that he read and understood the example submission a corresponding submission will be added to the
      * tutor participation of the exercise. Then a success alert is invoked and the user gets redirected back.
      */
-    readAndUnderstood() {
+    readAndUnderstood(): void {
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
             this.jhiAlertService.success('artemisApp.exampleSubmission.readSuccessfully');
             this.back();
@@ -412,5 +304,14 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         console.log(this.submission?.blocks, this.result?.feedbacks);
         const matchBlocksWithFeedbacks = TextAssessmentsService.matchBlocksWithFeedbacks(this.submission?.blocks || [], this.result?.feedbacks || []);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
+    }
+
+    editSubmission(): void {
+        this.assessmentsService.deleteExampleFeedback(this.exampleSubmission?.id!).subscribe();
+        delete this.submission?.blocks;
+        delete this.result?.feedbacks;
+        this.textBlockRefs = [];
+        this.unusedTextBlockRefs = [];
+        this.state.edit();
     }
 }

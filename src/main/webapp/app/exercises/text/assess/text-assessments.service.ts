@@ -131,6 +131,10 @@ export class TextAssessmentsService {
         return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/example-result`);
     }
 
+    public deleteExampleFeedback(exampleSubmissionId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/text-submissions/${exampleSubmissionId}/example-assessment/feedback`);
+    }
+
     /**
      * Gets an array of text submissions that contains conflicting feedback with the given feedback id.
      *
