@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { Exam } from 'app/entities/exam.model';
@@ -9,18 +6,10 @@ import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-te
 import * as moment from 'moment';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { By } from '@angular/platform-browser';
-import { ReactiveFormsModule } from '@angular/forms';
-import { MockModule } from 'ng-mocks';
-import { NgbModule, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('Create Test Run Modal Component', () => {
     let comp: CreateTestRunModalComponent;
     let fixture: ComponentFixture<CreateTestRunModalComponent>;
-    let activeModal: NgbActiveModal;
 
     const course = { id: 1 } as Course;
     const exercise = { id: 1 } as Exercise;
@@ -30,66 +19,52 @@ describe('Create Test Run Modal Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbModule), MockModule(ReactiveFormsModule)],
+            imports: [ArtemisTestModule],
             declarations: [CreateTestRunModalComponent],
             providers: [],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CreateTestRunModalComponent);
-                comp = fixture.componentInstance;
-                activeModal = TestBed.inject(NgbActiveModal);
-                comp.exam = exam;
-            });
-    });
+            .overrideTemplate(CreateTestRunModalComponent, '')
+            .compileComponents();
 
-    afterEach(() => {
-        sinon.restore();
+        fixture = TestBed.createComponent(CreateTestRunModalComponent);
+        comp = fixture.componentInstance;
     });
 
     describe('OnInit', () => {
         it('should initialise the working time form ', fakeAsync(() => {
-            fixture.detectChanges();
-            expect(comp).to.be.ok;
-            expect(!!comp.workingTimeForm).to.be.true;
+            comp.exam = exam;
+            // WHEN
+            comp.ngOnInit();
+            // THEN
+            expect(!!comp.workingTimeForm).toBeTruthy();
         }));
     });
 
     describe('Ignore Exercise groups', () => {
         it('should ignore exercise groups with no exercises', function () {
+            comp.exam = exam;
             comp.exam.exerciseGroups = [exerciseGroup1, exerciseGroup2];
             fixture.detectChanges();
-            expect(comp.exam.exerciseGroups!.length).to.equal(1);
+            expect(comp.exam.exerciseGroups!.length).toBe(1);
         });
     });
 
     describe('Exercise Selection', () => {
         it('should highlight the exercise when pressed', fakeAsync(() => {
-            fixture.detectChanges();
+            comp.exam = exam;
+            // WHEN
             // @ts-ignore
             comp.onSelectExercise(exercise, exam.exerciseGroups[0]!);
-            expect(Object.values(comp.testRunConfiguration).length).to.be.equal(1);
+            // THEN
+            expect(Object.values(comp.testRunConfiguration).length).toBeGreaterThanOrEqual(1);
         }));
         it('should allow submit when an exercise has been selected for every exercise group', fakeAsync(() => {
+            comp.exam = exam;
+            // WHEN
             // @ts-ignore
             comp.onSelectExercise(exercise, exam.exerciseGroups[0]!);
-            expect(comp.testRunConfigured).to.be.true;
+            // THEN
+            expect(comp.testRunConfigured).toBeTruthy();
         }));
-    });
-
-    describe('Test Run creation', () => {
-        it('should create the test run if the configuration is valid', () => {
-            fixture.detectChanges();
-            const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
-            expect(createTestRunButton).to.exist;
-            expect(createTestRunButton.nativeElement.disabled).to.be.true;
-            // @ts-ignore
-            comp.onSelectExercise(exercise, exam.exerciseGroups[0]!);
-            fixture.detectChanges();
-            expect(comp.testRunConfigured).to.be.true;
-            expect(createTestRunButton.nativeElement.disabled).to.be.false;
-            createTestRunButton.nativeElement.click();
-            expect(activeModal.close).to.have.been.calledOnce;
-        });
     });
 });
