@@ -38,7 +38,6 @@ import * as chai from 'chai';
 import * as moment from 'moment';
 import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { start } from 'repl';
 import { of, throwError } from 'rxjs';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
@@ -259,8 +258,6 @@ describe('ExamParticipationComponent', () => {
         expect(comp.individualStudentEndDate).to.deep.equal(startDate.add(workingTime, 'seconds'));
     });
 
-    it;
-
     it('should create participation for given exercise', () => {
         comp.exam = new Exam();
         comp.exam.course = new Course();
@@ -431,6 +428,12 @@ describe('ExamParticipationComponent', () => {
         });
     });
 
+    const setComponentWithoutTestRun = () => {
+        TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        comp.ngOnInit();
+        comp.exam = new Exam();
+    };
+
     describe('isVisible', () => {
         afterEach(() => {
             sinon.restore();
@@ -438,15 +441,12 @@ describe('ExamParticipationComponent', () => {
 
         it('should be visible if test run', () => {
             expect(comp.isVisible()).to.equal(true);
-            TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
-            comp.ngOnInit();
+            setComponentWithoutTestRun();
             expect(comp.isVisible()).to.equal(false);
         });
 
         it('should be visible if visible date is before server date', () => {
-            TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
-            comp.ngOnInit();
-            comp.exam = new Exam();
+            setComponentWithoutTestRun();
             const visibleDate = moment().subtract(1, 'days');
             const date = moment();
             comp.exam.visibleDate = visibleDate;
@@ -456,9 +456,7 @@ describe('ExamParticipationComponent', () => {
         });
 
         it('should not be visible if visible date is before server date', () => {
-            TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
-            comp.ngOnInit();
-            comp.exam = new Exam();
+            setComponentWithoutTestRun();
             const visibleDate = moment().add(1, 'days');
             const date = moment();
             comp.exam.visibleDate = visibleDate;
@@ -473,17 +471,14 @@ describe('ExamParticipationComponent', () => {
             sinon.restore();
         });
 
-        it('should be visible if test run', () => {
+        it('should be active if test run', () => {
             expect(comp.isActive()).to.equal(true);
-            TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
-            comp.ngOnInit();
+            setComponentWithoutTestRun();
             expect(comp.isActive()).to.equal(false);
         });
 
-        it('should be visible if visible date is before server date', () => {
-            TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
-            comp.ngOnInit();
-            comp.exam = new Exam();
+        it('should be active if start date is before server date', () => {
+            setComponentWithoutTestRun();
             const startDate = moment().subtract(1, 'days');
             const date = moment();
             comp.exam.startDate = startDate;
@@ -492,10 +487,8 @@ describe('ExamParticipationComponent', () => {
             expect(serverNowStub).to.have.been.called;
         });
 
-        it('should not be visible if visible date is before server date', () => {
-            TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
-            comp.ngOnInit();
-            comp.exam = new Exam();
+        it('should not be active if start date is before server date', () => {
+            setComponentWithoutTestRun();
             const startDate = moment().add(1, 'days');
             const date = moment();
             comp.exam.startDate = startDate;
