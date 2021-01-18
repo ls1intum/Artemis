@@ -180,7 +180,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<Submission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
-            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
+            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all file upload submissions");
         return super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor, correctionRound);
     }
@@ -196,7 +196,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     @GetMapping(value = "/exercises/{exerciseId}/file-upload-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId,
-            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a file upload submission without assessment");
         final Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
@@ -221,11 +221,11 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         final FileUploadSubmission fileUploadSubmission;
         if (lockSubmission) {
             fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise,
-                    fileUploadExercise.hasExerciseGroup(), correctionRound);
+                    fileUploadExercise.isExamExercise(), correctionRound);
         }
         else {
             Optional<FileUploadSubmission> optionalFileUploadSubmission = fileUploadSubmissionService
-                    .getRandomFileUploadSubmissionEligibleForNewAssessment((FileUploadExercise) fileUploadExercise, fileUploadExercise.hasExerciseGroup(), correctionRound);
+                    .getRandomFileUploadSubmissionEligibleForNewAssessment((FileUploadExercise) fileUploadExercise, fileUploadExercise.isExamExercise(), correctionRound);
 
             if (optionalFileUploadSubmission.isEmpty()) {
                 return notFound();

@@ -378,7 +378,7 @@ public class AuthorizationCheckService {
      */
     public boolean isAllowedToGetExamResult(Exercise exercise, User user) {
         return this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)
-                || (exercise.hasCourse() || (exercise.hasExerciseGroup() && exercise.getExerciseGroup().getExam().getEndDate().isAfter(ZonedDateTime.now()))
+                || (exercise.isCourseExercise() || (exercise.isExamExercise() && exercise.getExerciseGroup().getExam().getEndDate().isAfter(ZonedDateTime.now()))
                         || exercise.getExerciseGroup().getExam().resultsPublished());
     }
 }
