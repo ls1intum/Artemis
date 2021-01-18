@@ -94,7 +94,7 @@ public class SubmissionResource {
     public ResponseEntity<List<Submission>> getAllTestRunSubmissions(@PathVariable Long exerciseId) {
         log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
-        if (!exercise.hasExerciseGroup()) {
+        if (!exercise.isExamExercise()) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {

@@ -208,7 +208,7 @@ public class QuizExerciseService {
             }
         }
 
-        if (quizExercise.hasCourse()) {
+        if (quizExercise.isCourseExercise()) {
             // only schedule quizzes for course exercises, not for exam exercises
             quizScheduleService.scheduleQuizStart(quizExercise.getId());
         }
@@ -356,7 +356,7 @@ public class QuizExerciseService {
             Class<?> view = viewForStudentsInQuizExercise(quizExercise);
             byte[] payload = objectMapper.writerWithView(view).writeValueAsBytes(quizExercise);
             // For each change we send the same message. The client needs to decide how to handle the date based on the quiz status
-            if (quizExercise.isVisibleToStudents() && quizExercise.hasCourse()) {
+            if (quizExercise.isVisibleToStudents() && quizExercise.isCourseExercise()) {
                 // Create a group notification if actions is 'start-now'.
                 if ("start-now".equals(quizChange)) {
                     groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);

@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.connector.bitbucket;
 
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -32,6 +34,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
@@ -169,7 +172,7 @@ public class BitbucketRequestMockProvider {
         final var projectKey = exercise.getProjectKey();
         final var repoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
         for (User user : users) {
-            if (exercise.hasCourse()) {
+            if (exercise.isCourseExercise()) {
                 // add mock for userExists() check, if the username contains edx_ or u4i_
                 String loginName = user.getLogin();
                 if (userPrefixEdx.isPresent() && loginName.startsWith(userPrefixEdx.get()) || userPrefixU4I.isPresent() && loginName.startsWith(userPrefixU4I.get())) {
@@ -360,5 +363,9 @@ public class BitbucketRequestMockProvider {
         String body = mapper.writeValueAsString(mockResponse);
         URI uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").path(projectKey).path("/repos/").path(repositorySlug).build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(body).contentType(MediaType.APPLICATION_JSON));
+    }
+
+    public static String repositorySlugOf(ProgrammingExerciseStudentParticipation participation) {
+        return (participation.getProgrammingExercise().getProjectKey() + "-" + participation.getParticipantIdentifier()).toLowerCase();
     }
 }

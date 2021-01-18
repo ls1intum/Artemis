@@ -9,7 +9,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -94,9 +93,10 @@ public abstract class AssessmentResource {
      * @param submission the submission containing the assessment
      * @param feedbackList list of feedbacks
      * @param submit if true the assessment is submitted, else only saved
+     * @param resultId resultId of the result we save the feedbackList to, null of no results exists yet
      * @return result after saving/submitting modeling assessment
      */
-    ResponseEntity<Result> saveAssessment(Submission submission, boolean submit, List<Feedback> feedbackList) {
+    ResponseEntity<Result> saveAssessment(Submission submission, boolean submit, List<Feedback> feedbackList, Long resultId) {
         User user = userService.getUserWithGroupsAndAuthorities();
         StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
@@ -109,7 +109,7 @@ public abstract class AssessmentResource {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
-        Result result = assessmentService.saveManualAssessment(submission, feedbackList);
+        Result result = assessmentService.saveManualAssessment(submission, feedbackList, resultId);
         if (submit) {
             result = assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
@@ -135,7 +135,14 @@ public abstract class AssessmentResource {
         Submission submission = exampleSubmission.getSubmission();
         Exercise exercise = exampleSubmission.getExercise();
         checkAuthorization(exercise, user);
-        Result result = assessmentService.saveManualAssessment(submission, feedbacks);
+        // as parameter resultId is not set, we use the latest Result, if no latest Result exists, we use null
+        Result result;
+        if (submission.getLatestResult() == null) {
+            result = assessmentService.saveManualAssessment(submission, feedbacks, null);
+        }
+        else {
+            result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId());
+        }
         return ResponseEntity.ok(result);
     }
 
@@ -183,7 +190,7 @@ public abstract class AssessmentResource {
         }
     }
 
-    protected ResponseEntity<Void> cancelAssessment(long submissionId) {
+    protected ResponseEntity<Void> cancelAssessment(long submissionId) { // TODO: Add correction round !
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
         Submission submission = submissionService.findOneWithEagerResults(submissionId);
         if (submission.getLatestResult() == null) {
