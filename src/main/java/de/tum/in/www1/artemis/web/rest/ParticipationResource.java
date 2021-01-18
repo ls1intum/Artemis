@@ -271,7 +271,7 @@ public class ParticipationResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        boolean examMode = exercise.hasExerciseGroup();
+        boolean examMode = exercise.isExamExercise();
         List<StudentParticipation> participations;
         if (withLatestResult) {
             participations = participationService.findByExerciseIdWithLatestResult(exerciseId, examMode);

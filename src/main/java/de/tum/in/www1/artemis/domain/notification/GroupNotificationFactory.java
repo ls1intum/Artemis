@@ -87,7 +87,7 @@ public class GroupNotificationFactory {
         GroupNotification notification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), title, text, author, groupNotificationType);
 
         // Exercises for exams
-        if (exercise.hasExerciseGroup()) {
+        if (exercise.isExamExercise()) {
             if (exercise instanceof ProgrammingExercise) {
                 notification.setTarget(notification.getExamProgrammingExerciseTarget((ProgrammingExercise) exercise, "exerciseUpdated"));
             }

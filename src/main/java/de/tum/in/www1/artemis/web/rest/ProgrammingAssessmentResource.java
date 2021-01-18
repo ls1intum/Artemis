@@ -104,6 +104,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      *
      * @param participationId the id of the participation that should be sent to the client
      * @param submit       defines if assessment is submitted or saved
+     * @param correctionRound correction round for which we prepare the submission
      * @param newManualResult    result with list of feedbacks to be saved to the database
      * @return the result saved to the database
      */
@@ -111,15 +112,16 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     @PutMapping("/participations/{participationId}/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
-            @RequestBody Result newManualResult) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestBody Result newManualResult) {
         log.debug("REST request to save a new result : {}", newManualResult);
-        final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
+        final var participation = participationService.findOneWithEagerResultsAndCourseAndSubmissionAndResults(participationId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
         // based on the locking mechanism we take the most recent manual result
-        Result existingManualResult = participation.getResults().stream().filter(Result::isManualResult).max(Comparator.comparing(Result::getId))
+        Result existingManualResult = participation.getResults().stream().filter(Result::isManual).max(Comparator.comparing(Result::getId))
                 .orElseThrow(() -> new EntityNotFoundException("Manual result for participation with id " + participationId + " does not exist"));
+
         // prevent that tutors create multiple manual results
         newManualResult.setId(existingManualResult.getId());
         // load assessor
@@ -171,13 +173,16 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         // make sure that the submission cannot be manipulated on the client side
         var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
         newManualResult.setSubmission(submission);
-
         newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult);
 
-        newManualResult = submissionService.saveNewResult(submission, newManualResult);
+        if (submission.getParticipation() == null) {
+            newManualResult.setParticipation(submission.getParticipation());
+        }
+        var savedResult = resultRepository.save(newManualResult);
+        savedResult.setSubmission(submission);
 
         if (submit) {
-            newManualResult = programmingAssessmentService.submitManualAssessment(newManualResult.getId());
+            newManualResult = programmingAssessmentService.submitManualAssessment(existingManualResult.getId());
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {

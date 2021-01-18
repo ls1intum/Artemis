@@ -7,33 +7,33 @@ package de.tum.in.www1.artemis.web.rest.dto;
 public class DueDateStat {
 
     // The statistic component before the due-date
-    private Long inTime;
+    private long inTime;
 
     // The statistic component after the due-date
-    private Long late;
+    private long late;
 
     public DueDateStat() {
         // default constructor for our beloved Jackson serializer :-*
     }
 
-    public DueDateStat(Long inTime, Long late) {
+    public DueDateStat(long inTime, long late) {
         this.inTime = inTime;
         this.late = late;
     }
 
-    public Long getInTime() {
+    public long getInTime() {
         return inTime;
     }
 
-    public void setInTime(Long inTime) {
+    public void setInTime(long inTime) {
         this.inTime = inTime;
     }
 
-    public Long getLate() {
+    public long getLate() {
         return late;
     }
 
-    public void setLate(Long late) {
+    public void setLate(long late) {
         this.late = late;
     }
 }
