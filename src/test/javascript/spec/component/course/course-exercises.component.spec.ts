@@ -25,9 +25,9 @@ import { ActivatedRoute } from '@angular/router';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import * as sinon from 'sinon';
 import { stub } from 'sinon';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import * as sinon from 'sinon';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
 import { MockTranslateValuesDirective } from './course-scores/course-scores.component.spec';
@@ -105,7 +105,6 @@ describe('CourseExercisesComponent', () => {
     });
 
     afterEach(() => {
-        component.ngOnDestroy();
         sinon.restore();
     });
 
@@ -130,11 +129,37 @@ describe('CourseExercisesComponent', () => {
     });
 
     it('should reorder all exercises', () => {
+        const oldExercise = {
+            diagramType: UMLDiagramType.ClassDiagram,
+            course,
+            exerciseGroup: undefined,
+            releaseDate: moment('2021-01-13T16:11:00+01:00'),
+            dueDate: moment('2021-01-13T16:12:00+01:00'),
+        } as ModelingExercise;
+        const evenOlderExercise = {
+            diagramType: UMLDiagramType.ClassDiagram,
+            course,
+            exerciseGroup: undefined,
+            releaseDate: moment('2021-01-07T16:11:00+01:00'),
+            dueDate: moment('2021-01-07T16:12:00+01:00'),
+        } as ModelingExercise;
+        component.course!.exercises = [oldExercise, evenOlderExercise];
         component.sortingOrder = ExerciseSortingOrder.DESC;
+        component.activeFilters.clear();
+        component.activeFilters.add(ExerciseFilter.NEEDS_WORK);
+
         const sortingButton = fixture.debugElement.query(By.css('#flip'));
         expect(sortingButton).to.exist;
+
         sortingButton.nativeElement.click();
+
         expect(component.sortingOrder).to.equal(ExerciseSortingOrder.ASC);
+        expect(component.weeklyIndexKeys).to.deep.equal(['2021-01-03', '2021-01-10']);
+
+        sortingButton.nativeElement.click();
+
+        expect(component.sortingOrder).to.equal(ExerciseSortingOrder.DESC);
+        expect(component.weeklyIndexKeys).to.deep.equal(['2021-01-10', '2021-01-03']);
     });
 
     it('should filter all exercises in different situations', () => {
