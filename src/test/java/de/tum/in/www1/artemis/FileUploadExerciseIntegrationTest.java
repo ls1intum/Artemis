@@ -128,7 +128,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         assertThat(createdFileUploadExercise).isNotNull();
         assertThat(createdFileUploadExercise.getId()).isNotNull();
         assertThat(createdFileUploadExercise.getFilePattern()).isEqualTo(creationFilePattern.toLowerCase().replaceAll("\\s+", ""));
-        assertThat(!createdFileUploadExercise.hasCourse()).as("course was not set for exam exercise");
+        assertThat(!createdFileUploadExercise.isCourseExercise()).as("course was not set for exam exercise");
         assertThat(createdFileUploadExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(createdFileUploadExercise.getExerciseGroup().getId()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
 
@@ -250,7 +250,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
                 FileUploadExercise.class, HttpStatus.OK);
 
         assertThat(updatedFileUploadExercise.getTitle().equals(newTitle));
-        assertThat(!updatedFileUploadExercise.hasCourse()).as("course was not set for exam exercise");
+        assertThat(!updatedFileUploadExercise.isCourseExercise()).as("course was not set for exam exercise");
         assertThat(updatedFileUploadExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(updatedFileUploadExercise.getExerciseGroup().getId()).as("exerciseGroupId was not updated").isEqualTo(fileUploadExercise.getExerciseGroup().getId());
     }

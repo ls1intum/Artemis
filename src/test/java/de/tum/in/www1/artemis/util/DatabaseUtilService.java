@@ -758,7 +758,7 @@ public class DatabaseUtilService {
             else {
                 submission = markProgrammingParticipationForTestRun((ProgrammingExercise) exercise, instructor.getLogin());
             }
-            assertThat(exercise.hasExerciseGroup()).isTrue();
+            assertThat(exercise.isExamExercise()).isTrue();
             assertThat(submission.getLatestResult().getAssessor().getLogin()).isEqualTo(instructor.getLogin());
             assertThat(((StudentParticipation) submission.getParticipation()).getStudent().get().getLogin()).isEqualTo(instructor.getLogin());
         }
@@ -2116,7 +2116,7 @@ public class DatabaseUtilService {
 
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login, boolean submit) throws Exception {
         List<Feedback> feedbackList = loadAssessmentFomResources(path);
-        Result result = assessmentService.saveManualAssessment(submission, feedbackList);
+        Result result = assessmentService.saveManualAssessment(submission, feedbackList, null);
         result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(getUserByLogin(login));
         resultRepo.save(result);

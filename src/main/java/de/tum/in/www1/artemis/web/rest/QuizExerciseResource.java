@@ -118,7 +118,7 @@ public class QuizExerciseResource {
         quizExercise = quizExerciseService.save(quizExercise);
 
         // Only notify students and tutors if the exercise is created for a course
-        if (quizExercise.hasCourse()) {
+        if (quizExercise.isCourseExercise()) {
             // notify websocket channel of changes to the quiz exercise
             quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
             groupNotificationService.notifyTutorGroupAboutExerciseCreated(quizExercise);
@@ -191,7 +191,7 @@ public class QuizExerciseResource {
 
         // TODO: it does not really make sense to notify students here because the quiz is not visible yet when it is edited!
         // Only notify students about changes if a regular exercise in a course was updated
-        if (notificationText != null && quizExercise.hasCourse()) {
+        if (notificationText != null && quizExercise.isCourseExercise()) {
             // notify websocket channel of changes to the quiz exercise
             quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(quizExercise, notificationText);
@@ -233,7 +233,7 @@ public class QuizExerciseResource {
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
 
-        if (quizExercise.hasExerciseGroup()) {
+        if (quizExercise.isExamExercise()) {
             // Get the course over the exercise group
             Course course = quizExercise.getExerciseGroup().getExam().getCourse();
 
@@ -422,7 +422,7 @@ public class QuizExerciseResource {
                     "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();
         }
 
-        if (originalQuizExercise.hasExerciseGroup()) {
+        if (originalQuizExercise.isExamExercise()) {
             // Re-evaluation of an exam quiz is only possible if all students finished their exam
             ZonedDateTime latestIndividualExamEndDate = examService.getLatestIndividualExamEndDate(originalQuizExercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {

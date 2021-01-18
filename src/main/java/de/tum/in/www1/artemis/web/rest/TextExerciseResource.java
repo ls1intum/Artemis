@@ -167,7 +167,7 @@ public class TextExerciseResource {
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
 
         // Only notify tutors when the exercise is created for a course
-        if (textExercise.hasCourse()) {
+        if (textExercise.isCourseExercise()) {
             groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);
         }
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
@@ -228,7 +228,7 @@ public class TextExerciseResource {
         }
 
         // Only notify students about changes if a regular exercise was updated
-        if (notificationText != null && textExercise.hasCourse()) {
+        if (notificationText != null && textExercise.isCourseExercise()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(result);
@@ -281,7 +281,7 @@ public class TextExerciseResource {
         TextExercise textExercise = optionalTextExercise.get();
 
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it
-        if (textExercise.hasExerciseGroup()) {
+        if (textExercise.isExamExercise()) {
             // Get the course over the exercise group
             ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(textExercise.getExerciseGroup().getId());
             Course course = exerciseGroup.getExam().getCourse();
@@ -322,7 +322,7 @@ public class TextExerciseResource {
 
         // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
         Course course;
-        if (textExercise.hasExerciseGroup()) {
+        if (textExercise.isExamExercise()) {
             course = exerciseGroupService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
         }
         else {

@@ -144,7 +144,7 @@ public class ModelingExerciseResource {
             // fetch course from database to make sure client didn't change groups
             Course course = courseService.findOne(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
             if (authCheckService.isAtLeastInstructorInCourse(course, null)) {
-                if (modelingExercise.hasCourse() && modelingExercise.hasExerciseGroup()) {
+                if (modelingExercise.isCourseExercise() && modelingExercise.isExamExercise()) {
                     return badRequest();
                 }
                 return null;
@@ -362,7 +362,7 @@ public class ModelingExerciseResource {
             return optionalScoreSettingsError.get();
         }
 
-        if (importedExercise.hasExerciseGroup()) {
+        if (importedExercise.isExamExercise()) {
             log.debug("REST request to import text exercise {} into exercise group {}", sourceExerciseId, importedExercise.getExerciseGroup().getId());
         }
         else {

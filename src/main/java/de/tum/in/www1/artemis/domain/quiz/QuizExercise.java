@@ -223,7 +223,7 @@ public class QuizExercise extends Exercise {
         }
 
         // check duration (only for course exercises)
-        if (hasCourse()) {
+        if (isCourseExercise()) {
             if (getDuration() == null || getDuration() < 0) {
                 return false;
             }
@@ -399,7 +399,7 @@ public class QuizExercise extends Exercise {
     public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
         // The shouldFilterForStudents() method uses the exercise release/due dates, not the ones of the exam, therefor we can only use them if this exercise is not part of an exam
         // In exams, all results should be seen as relevant as they will only be created once the exam is over
-        if (shouldFilterForStudents() && !hasExerciseGroup()) {
+        if (shouldFilterForStudents() && !isExamExercise()) {
             // results are never relevant before quiz has ended => return null
             return null;
         }
