@@ -28,6 +28,7 @@ import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-subm
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { Exam } from 'app/entities/exam.model';
+import * as moment from 'moment';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,7 +38,7 @@ const wrongAnswerOption = { id: 1, isCorrect: false, question: multipleChoiceQue
 const correctAnswerOption = { id: 2, isCorrect: true, question: multipleChoiceQuestion } as AnswerOption;
 multipleChoiceQuestion.answerOptions = [wrongAnswerOption, correctAnswerOption];
 
-let dragAndDropQuestion = { id: 1, type: QuizQuestionType.DRAG_AND_DROP } as DragAndDropQuestion;
+let dragAndDropQuestion = { id: 2, type: QuizQuestionType.DRAG_AND_DROP } as DragAndDropQuestion;
 const dragItem = { id: 1, question: dragAndDropQuestion, text: 'dragItem' } as DragItem;
 const dropLocation = { id: 1, question: dragAndDropQuestion, posX: 1, posY: 1, width: 1, height: 1 } as DropLocation;
 const correctDragAndDropMapping = { id: 1, dragItemIndex: 1, dropLocationIndex: 1, dragItem, dropLocation, question: dragAndDropQuestion } as DragAndDropMapping;
@@ -45,7 +46,7 @@ dragAndDropQuestion.correctMappings = [correctDragAndDropMapping];
 dragAndDropQuestion.dragItems = [dragItem];
 dragAndDropQuestion.dropLocations = [dropLocation];
 
-let shortAnswerQuestion = { id: 1, type: QuizQuestionType.SHORT_ANSWER } as ShortAnswerQuestion;
+let shortAnswerQuestion = { id: 3, type: QuizQuestionType.SHORT_ANSWER } as ShortAnswerQuestion;
 const shortAnswerSpot = { id: 1, width: 1, spotNr: 1, question: shortAnswerQuestion, posX: 1, posY: 1, tempID: 1 } as ShortAnswerSpot;
 const shortAnswerSolution = { id: 1, text: 'solution', question: shortAnswerQuestion, posX: 1, posY: 1, tempID: 1 } as ShortAnswerSolution;
 const correctShortAnswerMapping = {
@@ -62,13 +63,17 @@ shortAnswerQuestion.spots = [shortAnswerSpot];
 
 const studentParticipation = { id: 1 } as StudentParticipation;
 
-const multipleChoiceSubmittedAnswer = { id: 1, selectedOptions: [correctAnswerOption], quizQuestion: multipleChoiceQuestion } as MultipleChoiceSubmittedAnswer;
-const dragAndDropSubmittedAnswer = { id: 1, mappings: [correctDragAndDropMapping], quizQuestion: dragAndDropQuestion } as DragAndDropSubmittedAnswer;
-let shortAnswerSubmittedAnswer = { id: 1, mappings: [correctDragAndDropMapping], quizQuestion: shortAnswerQuestion } as ShortAnswerSubmittedAnswer;
+const multipleChoiceSubmittedAnswer = { id: 1, selectedOptions: [correctAnswerOption], quizQuestion: multipleChoiceQuestion, scoreInPoints: 1 } as MultipleChoiceSubmittedAnswer;
+const dragAndDropSubmittedAnswer = { id: 1, mappings: [correctDragAndDropMapping], quizQuestion: dragAndDropQuestion, scoreInPoints: 1 } as DragAndDropSubmittedAnswer;
+let shortAnswerSubmittedAnswer = { id: 1, mappings: [correctDragAndDropMapping], quizQuestion: shortAnswerQuestion, scoreInPoints: 1 } as ShortAnswerSubmittedAnswer;
 const shortAnswerSubmittedText = { id: 1, spot: shortAnswerSpot, text: 'solution', submittedAnswer: shortAnswerSubmittedAnswer } as ShortAnswerSubmittedText;
 shortAnswerSubmittedAnswer.submittedTexts = [shortAnswerSubmittedText];
 
-const submission = { id: 1, submittedAnswers: [multipleChoiceSubmittedAnswer, dragAndDropSubmittedAnswer, shortAnswerSubmittedAnswer], submitted: true } as QuizSubmission;
+const submissionWithAnswers = {
+    id: 1,
+    submittedAnswers: [multipleChoiceSubmittedAnswer, dragAndDropSubmittedAnswer, shortAnswerSubmittedAnswer],
+    submitted: true,
+} as QuizSubmission;
 const exercise = { id: 1, studentParticipations: [studentParticipation], quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion] } as QuizExercise;
 
 describe('QuizExamSummaryComponent', () => {
@@ -86,14 +91,28 @@ describe('QuizExamSummaryComponent', () => {
                 fixture = TestBed.createComponent(QuizExamSummaryComponent);
                 component = fixture.componentInstance;
                 component.exercise = exercise;
-                component.submission = submission;
+                component.submission = { id: 2, submittedAnswers: [] };
                 component.resultsPublished = true;
                 component.exam = { id: 1 } as Exam;
             });
     });
 
     it('should initialize', () => {
+        component.exam = { id: 1, publishResultsDate: moment().subtract(1, 'hours') } as Exam;
         fixture.detectChanges();
         expect(component).to.be.ok;
+        expect(component.exam).to.exist;
+        expect(component.showMissingResultsNotice).to.be.true;
+    });
+
+    it('should initialize the solution dictionaries correctly', () => {
+        component.submission = submissionWithAnswers;
+        fixture.detectChanges();
+        expect(component.selectedAnswerOptions.get(1)![0]).to.equal(correctAnswerOption);
+        expect(component.getScoreForQuizQuestion(1)).to.equal(1);
+        expect(component.dragAndDropMappings.get(2)![0]).to.equal(correctDragAndDropMapping);
+        expect(component.getScoreForQuizQuestion(2)).to.equal(1);
+        expect(component.shortAnswerSubmittedTexts.get(3)![0]).to.equal(shortAnswerSubmittedText);
+        expect(component.getScoreForQuizQuestion(3)).to.equal(1);
     });
 });
