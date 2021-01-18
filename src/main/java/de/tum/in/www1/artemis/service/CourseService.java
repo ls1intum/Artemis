@@ -366,6 +366,7 @@ public class CourseService {
      *
      * @param courseId the id of the course
      * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
+     * @return An Integer array containing active students for each index
      */
     public Integer[] getCourseStatistics(Long courseId, Integer periodIndex) {
         ZonedDateTime now = ZonedDateTime.now();
