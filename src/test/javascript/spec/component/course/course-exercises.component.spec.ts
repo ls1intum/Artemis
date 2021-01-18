@@ -146,6 +146,7 @@ describe('CourseExercisesComponent', () => {
 
         expect(localStorageSpy).to.have.been.calledOnce;
         expect(component.activeFilters).to.deep.equal(new Set());
+
         for (let i = 0; i < 7; i++) {
             const newExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
             newExercise.dueDate = moment('2021-01-13T16:11:00+01:00').add(1 + i, 'days');
@@ -155,11 +156,15 @@ describe('CourseExercisesComponent', () => {
         const anotherNewExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
         component.course?.exercises?.push(anotherNewExercise);
 
+        component.activeFilters.clear();
+        component.activeFilters.add(ExerciseFilter.OVERDUE);
+
         component.toggleFilters(filters);
-        expect(component.activeFilters).to.deep.equal(new Set(filters));
+
+        expect(component.activeFilters).to.deep.equal(new Set().add(ExerciseFilter.NEEDS_WORK));
         expect(Object.keys(component.weeklyExercisesGrouped)).to.deep.equal(['2021-01-17', '2021-01-10', 'noDate']);
         expect(component.weeklyIndexKeys).to.deep.equal(['2021-01-17', '2021-01-10', 'noDate']);
-        expect(component.exerciseCountMap.get('modeling')).to.equal(6);
+        expect(component.exerciseCountMap.get('modeling')).to.equal(9);
 
         // trigger updateUpcomingExercises dynamically with moment()
         component.course!.exercises = [];
@@ -171,6 +176,7 @@ describe('CourseExercisesComponent', () => {
         }
 
         component.toggleFilters(filters);
+
         expect(component.upcomingExercises.length).to.equal(5);
     });
 });
