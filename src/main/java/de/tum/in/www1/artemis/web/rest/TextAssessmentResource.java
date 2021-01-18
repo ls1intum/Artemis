@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toSet;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -103,7 +105,7 @@ public class TextAssessmentResource extends AssessmentResource {
                     "feedbackReferenceTooLong");
         }
         final TextSubmission textSubmission = textSubmissionService.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(resultId);
-        ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, textAssessment.getFeedbacks());
+        ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, textAssessment.getFeedbacks(), resultId);
 
         if (response.getStatusCode().is2xxSuccessful()) {
             saveTextBlocks(textAssessment.getTextBlocks(), textSubmission);
@@ -147,7 +149,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
         final TextExercise exercise = textExerciseService.findOne(exerciseId);
         final TextSubmission textSubmission = textSubmissionService.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(resultId);
-        ResponseEntity<Result> response = super.saveAssessment(textSubmission, true, textAssessment.getFeedbacks());
+        ResponseEntity<Result> response = super.saveAssessment(textSubmission, true, textAssessment.getFeedbacks(), resultId);
 
         if (response.getStatusCode().is2xxSuccessful()) {
             saveTextBlocks(textAssessment.getTextBlocks(), textSubmission);
@@ -210,11 +212,13 @@ public class TextAssessmentResource extends AssessmentResource {
      * returns an error
      *
      * @param submissionId the id of the submission we want
+     * @param correctionRound correction round for which we want the submission
      * @return a Participation of the tutor in the submission
      */
     @GetMapping("/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId) {
+    public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId,
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
 
         final Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findByIdWithEagerParticipationExerciseResultAssessor(submissionId);
@@ -227,7 +231,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final TextSubmission textSubmission = optionalTextSubmission.get();
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
-        Result result = textSubmission.getLatestResult();
+        Result result = textSubmission.getResultForCorrectionRound(correctionRound);
 
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(exercise, user);
@@ -239,23 +243,23 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
         }
 
-        textAssessmentService.prepareSubmissionForAssessment(textSubmission);
+        // TODO SE, NR: add correctionRound parameter
+        textAssessmentService.prepareSubmissionForAssessment(textSubmission, correctionRound);
 
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
         exercise.setGradingCriteria(gradingCriteria);
         // Remove sensitive information of submission depending on user
         textSubmissionService.hideDetails(textSubmission, user);
-        result = textSubmission.getLatestResult();
 
         // Prepare for Response: Set Submissions and Results of Participation to include requested only.
         participation.setSubmissions(Set.of(textSubmission));
-        participation.setResults(Set.of(result));
+        textSubmission.getResults().forEach(r -> r.setSubmission(null));
 
-        // Remove Result from Submission, as it is send in participation.results[0]
-        textSubmission.setResults(new ArrayList<Result>());
+        // set result again as it was changed
+        result = textSubmission.getResultForCorrectionRound(correctionRound);
 
-        // Remove Submission from Result
-        result.setSubmission(null);
+        // sets results for participation as legacy requires it, will change in follow up NR SE
+        participation.setResults(Set.copyOf(textSubmission.getResults()));
 
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
         final Result finalResult = result;

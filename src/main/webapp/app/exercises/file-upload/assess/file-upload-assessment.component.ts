@@ -281,7 +281,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
      * It calls the api to load the new unassessed submission in the same page.
      * For the new submission to appear on the same page, the url has to be reloaded.
      */
-    assessNextOptimal() {
+    assessNext() {
         this.generalFeedback = new Feedback();
         this.referencedFeedback = [];
         this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!).subscribe(
