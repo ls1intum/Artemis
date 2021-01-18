@@ -33,12 +33,12 @@ import * as moment from 'moment';
 chai.use(sinonChai);
 const expect = chai.expect;
 
-let multipleChoiceQuestion = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as MultipleChoiceQuestion;
+const multipleChoiceQuestion = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as MultipleChoiceQuestion;
 const wrongAnswerOption = { id: 1, isCorrect: false, question: multipleChoiceQuestion } as AnswerOption;
 const correctAnswerOption = { id: 2, isCorrect: true, question: multipleChoiceQuestion } as AnswerOption;
 multipleChoiceQuestion.answerOptions = [wrongAnswerOption, correctAnswerOption];
 
-let dragAndDropQuestion = { id: 2, type: QuizQuestionType.DRAG_AND_DROP } as DragAndDropQuestion;
+const dragAndDropQuestion = { id: 2, type: QuizQuestionType.DRAG_AND_DROP } as DragAndDropQuestion;
 const dragItem = { id: 1, question: dragAndDropQuestion, text: 'dragItem' } as DragItem;
 const dropLocation = { id: 1, question: dragAndDropQuestion, posX: 1, posY: 1, width: 1, height: 1 } as DropLocation;
 const correctDragAndDropMapping = { id: 1, dragItemIndex: 1, dropLocationIndex: 1, dragItem, dropLocation, question: dragAndDropQuestion } as DragAndDropMapping;
@@ -46,7 +46,7 @@ dragAndDropQuestion.correctMappings = [correctDragAndDropMapping];
 dragAndDropQuestion.dragItems = [dragItem];
 dragAndDropQuestion.dropLocations = [dropLocation];
 
-let shortAnswerQuestion = { id: 3, type: QuizQuestionType.SHORT_ANSWER } as ShortAnswerQuestion;
+const shortAnswerQuestion = { id: 3, type: QuizQuestionType.SHORT_ANSWER } as ShortAnswerQuestion;
 const shortAnswerSpot = { id: 1, width: 1, spotNr: 1, question: shortAnswerQuestion, posX: 1, posY: 1, tempID: 1 } as ShortAnswerSpot;
 const shortAnswerSolution = { id: 1, text: 'solution', question: shortAnswerQuestion, posX: 1, posY: 1, tempID: 1 } as ShortAnswerSolution;
 const correctShortAnswerMapping = {
@@ -65,7 +65,7 @@ const studentParticipation = { id: 1 } as StudentParticipation;
 
 const multipleChoiceSubmittedAnswer = { id: 1, selectedOptions: [correctAnswerOption], quizQuestion: multipleChoiceQuestion, scoreInPoints: 1 } as MultipleChoiceSubmittedAnswer;
 const dragAndDropSubmittedAnswer = { id: 1, mappings: [correctDragAndDropMapping], quizQuestion: dragAndDropQuestion, scoreInPoints: 1 } as DragAndDropSubmittedAnswer;
-let shortAnswerSubmittedAnswer = { id: 1, mappings: [correctDragAndDropMapping], quizQuestion: shortAnswerQuestion, scoreInPoints: 1 } as ShortAnswerSubmittedAnswer;
+const shortAnswerSubmittedAnswer = { id: 1, mappings: [correctDragAndDropMapping], quizQuestion: shortAnswerQuestion, scoreInPoints: 1 } as ShortAnswerSubmittedAnswer;
 const shortAnswerSubmittedText = { id: 1, spot: shortAnswerSpot, text: 'solution', submittedAnswer: shortAnswerSubmittedAnswer } as ShortAnswerSubmittedText;
 shortAnswerSubmittedAnswer.submittedTexts = [shortAnswerSubmittedText];
 
