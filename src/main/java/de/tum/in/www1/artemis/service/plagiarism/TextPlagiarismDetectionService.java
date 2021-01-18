@@ -41,7 +41,7 @@ public class TextPlagiarismDetectionService {
     /**
      * Reduce a TextExercise Object to a list of latest text submissions. Filters the empty ones because they do not need to be compared
      *
-     * @param exerciseWithParticipationsAndSubmissions TextExercise with fetched participations and ssubmissions
+     * @param exerciseWithParticipationsAndSubmissions TextExercise with fetched participations and submissions
      * @param minimumScore consider only submissions whose score is greater or equal to this value
      * @param minimumSize consider only submissions whose size is greater or equal to this value
      * @return List containing the latest text submission for every participation
@@ -128,5 +128,4 @@ public class TextPlagiarismDetectionService {
 
         return textPlagiarismResult;
     }
-
 }
