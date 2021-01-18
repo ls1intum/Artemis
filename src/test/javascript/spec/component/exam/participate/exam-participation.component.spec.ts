@@ -1,3 +1,4 @@
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -6,12 +7,16 @@ import { CourseExerciseService } from 'app/course/manage/course-management.servi
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { Submission } from 'app/entities/submission.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationCoverComponent } from 'app/exam/participate/exam-cover/exam-participation-cover.component';
 import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
@@ -39,12 +44,6 @@ import { stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { Submission } from 'app/entities/submission.model';
-import { EntityResponseType } from 'app/complaints/complaint.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 chai.use(sinonChai);
 const expect = chai.expect;
