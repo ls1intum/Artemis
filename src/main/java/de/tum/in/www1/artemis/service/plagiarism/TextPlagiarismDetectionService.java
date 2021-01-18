@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.plagiarism.text;
+package de.tum.in.www1.artemis.service.plagiarism;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableList;
@@ -36,38 +36,6 @@ public class TextPlagiarismDetectionService {
 
     public TextPlagiarismDetectionService(TextSubmissionExportService textSubmissionExportService) {
         this.textSubmissionExportService = textSubmissionExportService;
-    }
-
-    /**
-     * Pairwise comparison of text submissions using a TextComparisonStrategy
-     *
-     * @param textSubmissions List of text submissions
-     * @param comparisonStrategy the chosen comparison strategy
-     * @param comparisonStrategyName the name of the strategy for logging purpose
-     * @param minimumSimilarity the minimum similarity (between 0 and 1) that should be reported in the response
-     * @return Map of text submission pairs and similarity score
-     */
-    public Map<Set<TextSubmission>, Double> compareSubmissionsForExerciseWithStrategy(List<TextSubmission> textSubmissions, TextComparisonStrategy comparisonStrategy,
-            String comparisonStrategyName, double minimumSimilarity) {
-        final Map<Set<TextSubmission>, Double> map = new HashMap<>();
-
-        // it is intended to use the classic for loop here, because we only want to check similarity between two different submissions once
-        for (int i = 0; i < textSubmissions.size(); i++) {
-            for (int j = i + 1; j < textSubmissions.size(); j++) {
-                final TextSubmission textSubmission1 = textSubmissions.get(i);
-                final TextSubmission textSubmission2 = textSubmissions.get(j);
-                final double similarity = 1 - comparisonStrategy.compare(textSubmission1, textSubmission2);
-                log.debug("Compare result " + i + " with " + j + ": " + similarity);
-                if (similarity >= minimumSimilarity) {
-                    log.info("Found similar text " + i + " with " + j + ": " + similarity + " (using strategy " + comparisonStrategyName + ")");
-                    map.put(Set.of(textSubmission1, textSubmission2), similarity);
-                }
-            }
-        }
-
-        log.info("Found " + map.size() + " similar text submission combinations ( > " + minimumSimilarity + ") using strategy " + comparisonStrategyName);
-
-        return map;
     }
 
     /**
