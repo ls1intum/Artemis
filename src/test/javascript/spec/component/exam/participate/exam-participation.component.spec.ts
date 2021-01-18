@@ -38,6 +38,7 @@ import * as chai from 'chai';
 import * as moment from 'moment';
 import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { start } from 'repl';
 import { of, throwError } from 'rxjs';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
@@ -185,10 +186,7 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentExam).to.not.deep.equal(studentExam);
     });
 
-    it('should initialize exercises when exam starts', () => {
-        const studentExam = new StudentExam();
-        studentExam.workingTime = 100;
-        comp.testRunStartTime = moment().subtract(1000, 'seconds');
+    const testExamStarted = (studentExam: StudentExam) => {
         const exerciseWithParticipation = (type: 'programming' | 'modeling', withSubmission: boolean) => {
             let exercise = new ProgrammingExercise(new Course(), undefined);
             if (type === 'modeling') {
@@ -238,7 +236,30 @@ describe('ExamParticipationComponent', () => {
         // Initialize exercise
         expect(comp.activeExercise).to.deep.equal(firstExercise);
         expect(createParticipationForExerciseStub).to.have.been.calledWith(firstExercise);
+    };
+
+    it('should initialize exercises when exam starts', () => {
+        const studentExam = new StudentExam();
+        studentExam.workingTime = 100;
+        comp.testRunStartTime = moment().subtract(1000, 'seconds');
+        testExamStarted(studentExam);
     });
+
+    it('should initialize exercise without test run', () => {
+        // Should calculate time from exam start date when no test run, rest does not get effected
+        TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        comp.ngOnInit();
+        const startDate = moment();
+        comp.exam = new Exam();
+        comp.exam.startDate = moment(startDate);
+        const workingTime = 1000;
+        const studentExam = new StudentExam();
+        studentExam.workingTime = workingTime;
+        testExamStarted(studentExam);
+        expect(comp.individualStudentEndDate).to.deep.equal(startDate.add(workingTime, 'seconds'));
+    });
+
+    it;
 
     it('should create participation for given exercise', () => {
         comp.exam = new Exam();
@@ -494,7 +515,7 @@ describe('ExamParticipationComponent', () => {
     it('should trigger save and initialize exercise when exercise changed', () => {
         const exercise = new ProgrammingExercise(new Course(), undefined);
         const triggerStub = stub(comp, 'triggerSave');
-        const exerciseChange = { exercise: exercise, force: true };
+        const exerciseChange = { exercise, force: true };
         const createParticipationForExerciseStub = stub(comp, 'createParticipationForExercise').returns(of(new StudentParticipation()));
         comp.onExerciseChange(exerciseChange);
         expect(triggerStub).to.have.been.calledWith(true);
