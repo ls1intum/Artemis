@@ -502,10 +502,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private createResultString(totalScore: number, maxScore: number | undefined): string {
-        // When no maxScore is set, then show only the achieved points (legacy)
-        if (!maxScore) {
-            return `${totalScore} points`;
-        }
         return `${totalScore} of ${maxScore} points`;
     }
 
