@@ -12,6 +12,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { LectureService } from 'app/lecture/lecture.service';
+import { CourseManagementOverviewCourseDto } from 'app/course/manage/course-management-overview-course-dto.model';
 
 @Component({
     selector: 'jhi-course',
@@ -25,6 +26,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     showOnlyActive = true;
 
     courses: Course[];
+    statistics = new Map<number, CourseManagementOverviewCourseDto>();
     courseSemesters: string[];
     semesterCollapsed: { [key: string]: boolean };
     coursesBySemester: { [key: string]: Course[] };
@@ -95,6 +97,19 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                     this.semesterCollapsed['test'] = false;
                     this.coursesBySemester['test'] = this.courses.filter((c) => c.testCourse);
                 }
+
+                // once the important part is loaded we can fetch the statistics
+                this.courseManagementService
+                    .getStatsForManagementOverview(
+                        this.courses.map((c) => c.id!),
+                        0,
+                    )
+                    .subscribe(
+                        (result: HttpResponse<CourseManagementOverviewCourseDto[]>) => {
+                            result.body!.forEach((dto) => (this.statistics[dto.courseId] = dto));
+                        },
+                        (result: HttpErrorResponse) => onError(this.jhiAlertService, result),
+                    );
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );

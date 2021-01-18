@@ -38,7 +38,12 @@
                 </span>
             </div>
             <div *ngIf="!semesterCollapsed[semester]">
-                <jhi-course-management-card *ngFor="let course of coursesBySemester[semester]" class="col-md-8" [course]="course"></jhi-course-management-card>
+                <jhi-course-management-card
+                    *ngFor="let course of coursesBySemester[semester]"
+                    class="col-md-8"
+                    [course]="course"
+                    [courseStatistic]="statistics[course.id]"
+                ></jhi-course-management-card>
             </div>
             <div class="collapsed"></div>
         </div>

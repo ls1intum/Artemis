@@ -21,7 +21,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
-import { CourseExerciseStatisticsDTO } from 'app/exercises/shared/exercise/exercise-statistics-dto.model';
+import { CourseManagementOverviewCourseDto } from './course-management-overview-course-dto.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -234,10 +234,16 @@ export class CourseManagementService {
 
     /**
      * returns the stats of the course with the provided unique identifier for the courses management dashboard
-     * @param courseId - the id of the course
+     * @param courseIds - the id of the course
+     * @param periodIndex - index of the period to get the active user stats for
      */
-    getStatsForManagementOverview(courseId: number): Observable<HttpResponse<CourseExerciseStatisticsDTO[]>> {
-        return this.http.get<CourseExerciseStatisticsDTO[]>(`${this.resourceUrl}/${courseId}/stats-for-management-overview`, { observe: 'response' });
+    getStatsForManagementOverview(courseIds: number[], periodIndex: number): Observable<HttpResponse<CourseManagementOverviewCourseDto[]>> {
+        let httpParams = new HttpParams();
+        httpParams = httpParams.append('periodIndex', periodIndex.toString());
+        courseIds.forEach((id) => {
+            httpParams = httpParams.append('courseIds[]', id.toString());
+        });
+        return this.http.get<CourseManagementOverviewCourseDto[]>(`${this.resourceUrl}/stats-for-management-overview`, { params: httpParams, observe: 'response' });
     }
 
     /**

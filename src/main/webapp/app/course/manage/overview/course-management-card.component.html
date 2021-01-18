@@ -38,7 +38,7 @@
                 <div class="col section-header" [routerLink]="['/course-management', course.id, 'exercises']">
                     <h5 class="text-white text-center">{{ 'entity.action.exercise' | translate }}</h5>
                 </div>
-                <div class="section-content">
+                <div class="section-content" *ngIf="!!courseStatistic">
                     <div *ngIf="futureExercises?.length > 0">
                         <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
                             <fa-icon class="control-icon" [icon]="showFutureExercises ? 'angle-down' : 'angle-up'"></fa-icon>
@@ -96,8 +96,8 @@
                 <div class="col section-header" [routerLink]="['/course-management', course.id]">
                     <h5 class="text-white text-center">{{ 'artemisApp.course.statistics' | translate }}</h5>
                 </div>
-                <div class="section-content">
-                    <jhi-course-management-statistics [courseId]="course.id"></jhi-course-management-statistics>
+                <div class="section-content" *ngIf="courseStatistic">
+                    <jhi-course-management-statistics [courseId]="course.id" [initialStats]="courseStatistic.activeStudents"></jhi-course-management-statistics>
                 </div>
             </div>
         </div>

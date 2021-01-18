@@ -1,23 +1,23 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { ActivatedRoute, Router } from '@angular/router';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 import { CourseExerciseStatisticsDTO } from 'app/exercises/shared/exercise/exercise-statistics-dto.model';
 import { ExerciseRowType } from './course-management-exercise-row.component';
+import { CourseManagementOverviewCourseDto } from 'app/course/manage/course-management-overview-course-dto.model';
 
 @Component({
     selector: 'jhi-course-management-card',
     templateUrl: './course-management-card.component.html',
     styleUrls: ['course-management-card.scss'],
 })
-export class CourseManagementCardComponent implements OnInit {
+export class CourseManagementCardComponent implements OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+
     @Input() course: Course;
+    @Input() courseStatistic: CourseManagementOverviewCourseDto;
+
     futureExercises: Exercise[];
     currentExercises: Exercise[];
     pastExercises: Exercise[];
@@ -31,22 +31,18 @@ export class CourseManagementCardComponent implements OnInit {
 
     private statistics = new Map<number, CourseExerciseStatisticsDTO>();
 
-    constructor(private router: Router, private route: ActivatedRoute, private courseManagementService: CourseManagementService, private jhiAlertService: JhiAlertService) {}
+    ngOnChanges() {
+        // Only display once loaded
+        if (!this.courseStatistic) {
+            return;
+        }
 
-    ngOnInit() {
-        this.courseManagementService.findWithExercises(this.course.id!).subscribe(
-            (result: HttpResponse<Course>) => {
-                const exercises = result.body!.exercises!;
-                this.futureExercises = exercises.filter((e) => e.releaseDate && e.releaseDate > moment());
-                this.currentExercises = exercises.filter((e) => (!e.releaseDate || e.releaseDate <= moment()) && (!e.dueDate || e.dueDate > moment()));
-                this.pastExercises = exercises.filter((e) => e.dueDate && e.dueDate <= moment());
-            },
-            (result: HttpErrorResponse) => this.jhiAlertService.error(result.message),
-        );
-        this.courseManagementService.getStatsForManagementOverview(this.course.id!).subscribe(
-            (result: HttpResponse<CourseExerciseStatisticsDTO[]>) => result.body!.forEach((e) => (this.statistics[e.exerciseId!] = e)),
-            (result: HttpErrorResponse) => this.jhiAlertService.error(result.message),
-        );
+        const exercises = this.courseStatistic.exercises;
+        this.futureExercises = exercises.filter((e) => e.releaseDate && moment(e.releaseDate) > moment());
+        this.currentExercises = exercises.filter((e) => (!e.releaseDate || moment(e.releaseDate) <= moment()) && (!e.dueDate || moment(e.dueDate) > moment()));
+        this.pastExercises = exercises.filter((e) => e.dueDate && moment(e.dueDate) <= moment());
+
+        this.courseStatistic.exerciseDTOS.forEach((e) => (this.statistics[e.exerciseId!] = e));
     }
 
     getStatisticForExercise(exercise: Exercise) {

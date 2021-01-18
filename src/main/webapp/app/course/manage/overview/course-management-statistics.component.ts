@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Graphs, SpanType } from 'app/entities/statistics.model';
 import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
@@ -11,9 +11,13 @@ import * as moment from 'moment';
     selector: 'jhi-course-management-statistics',
     templateUrl: './course-management-statistics.component.html',
 })
-export class CourseManagementStatisticsComponent implements OnInit {
+export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
     @Input()
     courseId: number;
+
+    @Input()
+    initialStats: number[];
+    initialStatsReceived = false;
 
     currentSpan: SpanType;
     graphType: Graphs = Graphs.ACTIVE_STUDENTS;
@@ -46,10 +50,30 @@ export class CourseManagementStatisticsComponent implements OnInit {
     ngOnInit(): void {
         this.amountOfStudents = this.translateService.instant('courseStatistics.amountOfStudents');
         this.chartName = this.translateService.instant(`courseStatistics.${this.graphType.toString().toLowerCase()}`);
-        this.initializeChart();
     }
 
-    private initializeChart() {
+    ngOnChanges() {
+        // Only use the pre-loaded stats once
+        if (this.initialStatsReceived || !this.initialStats) {
+            return;
+        }
+
+        this.initialStatsReceived = true;
+        this.createLabels();
+        this.dataForSpanType = this.initialStats;
+        this.chartData = [
+            {
+                label: this.amountOfStudents,
+                data: this.dataForSpanType,
+                backgroundColor: 'rgba(53,61,71,1)',
+                borderColor: 'rgba(53,61,71,1)',
+                hoverBackgroundColor: 'rgba(53,61,71,1)',
+            },
+        ];
+        this.createChart();
+    }
+
+    private reloadChart() {
         this.createLabels();
         this.service.getStatisticsData(this.courseId, this.currentPeriod).subscribe((res: number[]) => {
             this.dataForSpanType = res;
@@ -84,7 +108,7 @@ export class CourseManagementStatisticsComponent implements OnInit {
     switchTimeSpan(index: boolean): void {
         // eslint-disable-next-line chai-friendly/no-unused-expressions
         index ? (this.currentPeriod += 1) : (this.currentPeriod -= 1);
-        this.initializeChart();
+        this.reloadChart();
     }
 
     private createChart() {

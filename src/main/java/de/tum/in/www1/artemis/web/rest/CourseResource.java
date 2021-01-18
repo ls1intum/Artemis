@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
-import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
@@ -785,24 +785,33 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:courseId/stats-for-management-overview :
+     * GET /courses/stats-for-management-overview :
      *
      * @param courseId course to get the stats for
      * @return ResponseEntity with status
      */
-    @GetMapping(value = "/courses/{courseId}/stats-for-management-overview")
+    @GetMapping(value = "/courses/stats-for-management-overview")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<CourseExerciseStatisticsDTO>> getExerciseStatsForCourseOverview(@PathVariable Long courseId) {
-        log.debug("REST request to get exercise stats for Course : {}", courseId);
-
-        final Course course = courseService.findOneWithExercises(courseId);
+    public ResponseEntity<List<CourseManagementOverviewCourseDTO>> getExerciseStatsForCourseOverview(@RequestParam(value = "courseIds[]") Long[] courseIds,
+            @RequestParam Integer periodIndex) {
         final User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
+        final List<CourseManagementOverviewCourseDTO> courseDTOS = new ArrayList<>();
+        for (final var courseId : courseIds) {
+            final Course course = courseService.findOneWithExercises(courseId);
+            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+                throw new AccessForbiddenException("You are not allowed to access this resource");
+            }
+
+            final var courseDTO = new CourseManagementOverviewCourseDTO();
+            courseDTO.setCourseId(courseId);
+            courseDTO.setExercises(course.getExercises());
+            final List<Long> exerciseIds = course.getExercises().stream().map(Exercise::getId).distinct().collect(Collectors.toList());
+            courseDTO.setExerciseDTOS(exerciseService.calculateExerciseStatistics(exerciseIds));
+            courseDTO.setActiveStudents(courseService.getCourseStatistics(courseId, periodIndex));
+            courseDTOS.add(courseDTO);
         }
 
-        final List<Long> exerciseIds = course.getExercises().stream().map(Exercise::getId).distinct().collect(Collectors.toList());
-        return ResponseEntity.ok(exerciseService.calculateExerciseStatistics(exerciseIds));
+        return ResponseEntity.ok(courseDTOS);
     }
 
     /**
