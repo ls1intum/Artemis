@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
 public interface ContinuousIntegrationService {
 
     // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/
-    Pattern ASSIGNMENT_PATH = Pattern.compile("(/[^\0]+)*" + ASSIGNMENT_DIRECTORY);
+    Pattern ASSIGNMENT_PATH = Pattern.compile("(/?[^\0]+)*" + ASSIGNMENT_DIRECTORY);
 
     enum BuildStatus {
         INACTIVE, QUEUED, BUILDING

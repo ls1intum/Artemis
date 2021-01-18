@@ -24,13 +24,14 @@ pipeline {
             stage('Build') {
                 steps {
                     timestamps {
-                        sh '''
+                        sh  '''
                             cd $WORKSPACE
                             echo "--------------------setup-------------------"
                             echo "User:"
                             whoami
                             echo "Updating assignment and test-reports ownership..."
                             sudo chown artemis_user:artemis_user assignment/ -R
+                            sudo rm -rf test-reports
                             sudo mkdir test-reports
                             sudo chown artemis_user:artemis_user test-reports/ -R
                             echo "--------------------setup-------------------"
@@ -52,12 +53,12 @@ pipeline {
                             REQ_FILE=requirements.txt
                             if [ -f "$REQ_FILE" ]; then
                                 pip3 install --user -r requirements.txt
-                            else 
+                            else
                                 echo "$REQ_FILE does not exist"
                             fi
                             exit 0
-                           '''
-                        sh '''
+                            '''
+                        sh  '''
                             #!/usr/bin/env bash
 
                             shadowFilePath="../tests/testUtils/c/shadow_exec.c"
@@ -75,31 +76,39 @@ pipeline {
 
                             cp -f tests/Makefile assignment/Makefile || exit 2
                             sed -i "s~\bINCLUDEDIRS\s*=.*~${foundIncludeDirs}~; s~\bSOURCE\s*=.*~${foundSource}~" assignment/Makefile
-                           '''
-                        sh '''
+                            '''
+                        sh  '''
                             #!/bin/bash
 
-                            # Actual build process:
-                            cd tests
-
-                            python3 Tests.py s
-                            rm Tests.py
-                            rm -rf ./tests
-
-                            exit 0
-                           '''
+                            gcc -c -Wall assignment/*.c || error=true
+                            if [ ! $error ]
+                            then
+                                # Actual build process:
+                                cd tests
+                                python3 Tests.py s
+                                rm Tests.py
+                                rm -rf ./tests
+                                exit 0
+                            else
+                                # Compilaton error
+                                exit 1
+                            fi
+                            '''
                     }
                 }
             }
         }
         post {
             cleanup {
-                sh '''
-                   sed -i &apos;s/&#x1b;//g&apos; test-reports/tests-results.xml&#xd;
-                   sed -i &apos;s/&lt;skipped/&lt;error/g&apos; test-reports/tests-results.xml&#xd;
-                   sed -i &apos;s/&lt;\/skipped&gt;/&lt;\/error&gt;/g&apos; test-reports/tests-results.xml&#xd;
-                   mv test-reports results
-                   '''
+                sh  '''
+                    if [ -e test-reports/tests-results.xml ]
+                    then
+                        sed -i 's/&#x1b;//g' test-reports/tests-results.xml
+                        sed -i 's/<skipped/<error/g' test-reports/tests-results.xml
+                        sed -i 's/<\/skipped>/<\/error>/g' test-reports/tests-results.xml
+                    fi
+                    mv test-reports results
+                    '''
                 sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
                 cleanWs()
             }
