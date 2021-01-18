@@ -147,14 +147,13 @@ describe('CourseExercisesComponent', () => {
         expect(localStorageSpy).to.have.been.calledOnce;
         expect(component.activeFilters).to.deep.equal(new Set());
 
-        for (let i = 0; i < 7; i++) {
+        for (let i = 1; i < 8; i++) {
             const newExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
-            newExercise.dueDate = moment('2021-01-13T16:11:00+01:00').add(1 + i, 'days');
-            newExercise.releaseDate = moment('2021-01-13T16:11:00+01:00').subtract(1 + i, 'days');
-            component.course?.exercises?.push(newExercise);
+            newExercise.dueDate = moment('2021-01-13T16:11:00+01:00').add(i, 'days');
+            newExercise.releaseDate = moment('2021-01-13T16:11:00+01:00').subtract(i, 'days');
+            component.course!.exercises![i] = newExercise;
         }
-        const anotherNewExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
-        component.course?.exercises?.push(anotherNewExercise);
+        component.course!.exercises![component.course!.exercises!.length] = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
 
         component.activeFilters.clear();
         component.activeFilters.add(ExerciseFilter.OVERDUE);
@@ -172,7 +171,7 @@ describe('CourseExercisesComponent', () => {
             const newExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
             newExercise.dueDate = moment().add(1 + i, 'days');
             newExercise.releaseDate = moment().subtract(1 + i, 'days');
-            component.course?.exercises?.push(newExercise);
+            component.course!.exercises[i] = newExercise;
         }
 
         component.toggleFilters(filters);
