@@ -56,7 +56,7 @@ public class SystemNotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/system-notifications")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Notification> createSystemNotification(@RequestBody SystemNotification systemNotification) throws URISyntaxException {
         log.debug("REST request to save SystemNotification : {}", systemNotification);
         if (systemNotification.getId() != null) {
@@ -77,7 +77,7 @@ public class SystemNotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/system-notifications")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<SystemNotification> updateSystemNotification(@RequestBody SystemNotification systemNotification) throws URISyntaxException {
         log.debug("REST request to update SystemNotification : {}", systemNotification);
         if (systemNotification.getId() == null) {
@@ -124,7 +124,7 @@ public class SystemNotificationResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/system-notifications/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> deleteSystemNotification(@PathVariable Long id) {
         log.debug("REST request to delete SystemNotification : {}", id);
         systemNotificationRepository.deleteById(id);

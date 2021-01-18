@@ -266,7 +266,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
                 // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
                 Exercise exercise = exerciseService.findOne(exerciseId);
-                if (exercise.hasExerciseGroup()) {
+                if (exercise.isExamExercise()) {
                     return isUserInstructorOrHigherForExercise(principal, exercise);
                 }
                 else {

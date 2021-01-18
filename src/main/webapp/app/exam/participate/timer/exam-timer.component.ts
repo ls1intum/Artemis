@@ -64,7 +64,7 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
     updateDisplayTime(timeDiff: moment.Duration) {
         // update isCriticalTime
         this.setIsCriticalTime(timeDiff);
-        if (timeDiff.milliseconds() < 0) {
+        if (timeDiff.asMilliseconds() < 0) {
             return '00 : 00';
         } else {
             return timeDiff.asMinutes() > 10
@@ -75,7 +75,7 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
 
     setIsCriticalTime(timeDiff: moment.Duration) {
         const clonedTimeDiff = cloneDeep(timeDiff);
-        if (this.criticalTime && clonedTimeDiff.subtract(this.criticalTime).milliseconds() < 0) {
+        if (this.criticalTime && clonedTimeDiff.subtract(this.criticalTime).asMilliseconds() < 0) {
             this.isCriticalTime = true;
         }
     }

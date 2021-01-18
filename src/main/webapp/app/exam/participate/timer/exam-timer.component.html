@@ -1,4 +1,4 @@
 <div class="col-auto h3 mb-0 timer px-1">{{ 'artemisApp.examParticipation.' + (isEndView ? 'timerEndView' : 'timer') | translate }}</div>
-<div class="col-auto h3 text-overflow remaining-time m-0 px-0" [class.critical]="isCriticalTime">
+<div class="col-auto h3 text-overflow remaining-time m-0 px-0" [class.critical]="isCriticalTime" id="displayTime">
     {{ displayTime$ | async }}
 </div>

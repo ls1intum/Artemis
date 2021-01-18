@@ -570,16 +570,20 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         if (lock) {
             params = params.set('lock', 'true');
         }
-
         return this.http.get<ProgrammingSubmission>(url, { params });
     }
 
     /**
      * Locks the submission of the participation for the user
      * @param participationId
+     * @param correctionRound
      */
-    lockAndGetProgrammingSubmissionParticipation(participationId: number): Observable<Participation> {
-        return this.http.get<Participation>(`api/programming-submissions/${participationId}/lock`);
+    lockAndGetProgrammingSubmissionParticipation(participationId: number, correctionRound = 0): Observable<Participation> {
+        let params = new HttpParams();
+        if (correctionRound > 0) {
+            params = params.set('correction-round', correctionRound.toString());
+        }
+        return this.http.get<Participation>(`api/programming-submissions/${participationId}/lock`, { params });
     }
 
     private static convertArrayResponse(res: HttpResponse<ProgrammingSubmission[]>): HttpResponse<ProgrammingSubmission[]> {
