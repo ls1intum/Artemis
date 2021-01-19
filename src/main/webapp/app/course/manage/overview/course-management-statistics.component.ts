@@ -93,12 +93,12 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
 
     private createLabels() {
         const prefix = this.translateService.instant('calendar_week');
-        const startDate = moment().subtract(11 + 12 * -this.currentPeriod, 'weeks');
-        const endDate = this.currentPeriod !== 0 ? moment().subtract(12 * -this.currentPeriod, 'weeks') : moment();
+        const startDate = moment().subtract(3 + 4 * -this.currentPeriod, 'weeks');
+        const endDate = this.currentPeriod !== 0 ? moment().subtract(4 * -this.currentPeriod, 'weeks') : moment();
         let currentWeek;
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 4; i++) {
             currentWeek = moment()
-                .subtract(11 + 12 * -this.currentPeriod - i, 'weeks')
+                .subtract(3 + 4 * -this.currentPeriod - i, 'weeks')
                 .isoWeekday(1)
                 .isoWeek();
             this.barChartLabels[i] = prefix + ' ' + currentWeek;

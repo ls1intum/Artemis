@@ -374,8 +374,8 @@ public class CourseService {
         LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
         LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
         ZoneId zone = now.getZone();
-        ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks(11 + (12 * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
-        ZonedDateTime endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(12 * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
+        ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks(3 + (4 * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        ZonedDateTime endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(4 * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
                 : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
         List<Map<String, Object>> outcome = courseRepository.getCourseStatistics(courseId, startDate, endDate);
         List<Map<String, Object>> distinctOutcome = removeDuplicatesFromMapList(outcome, startDate);
@@ -430,7 +430,7 @@ public class CourseService {
      * @return an array, containing the values for each bar in the graph
      */
     private Integer[] createResultArray(List<Map<String, Object>> outcome, ZonedDateTime endDate) {
-        Integer[] result = new Integer[12];
+        Integer[] result = new Integer[4];
         Arrays.fill(result, 0);
         int week;
         for (Map<String, Object> map : outcome) {
