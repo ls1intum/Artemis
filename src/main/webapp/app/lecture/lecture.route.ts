@@ -92,6 +92,7 @@ export const lectureRoute: Routes = [
                 },
                 data: {
                     breadcrumbLabelVariable: 'lecture.title',
+                    breadcrumbs: [],
                 },
                 children: [
                     {

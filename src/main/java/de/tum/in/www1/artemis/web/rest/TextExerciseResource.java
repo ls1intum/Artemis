@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisonStrategy.*;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-import static java.util.stream.Collectors.toMap;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,7 +8,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.stream.Stream;
 
 import jplag.ExitException;
 
@@ -36,11 +33,9 @@ import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.plagiarism.text.TextPlagiarismDetectionService;
-import de.tum.in.www1.artemis.service.util.Tuple;
+import de.tum.in.www1.artemis.service.plagiarism.TextPlagiarismDetectionService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SubmissionComparisonDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -568,51 +563,6 @@ public class TextExerciseResource {
     }
 
     /**
-     * GET /check-plagiarism : Run comparison metrics pair-wise against all submissions of a given
-     * exercises. This can be used with human intelligence to identify suspicious similar
-     * submissions which might be a sign for plagiarism.
-     *
-     * @param exerciseId for which all submission should be checked
-     * @return the ResponseEntity with status 200 (OK) and the list of pair-wise metrics.
-     */
-    @GetMapping("/text-exercises/{exerciseId}/check-plagiarism")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Stream<SubmissionComparisonDTO>> checkPlagiarism(@PathVariable long exerciseId) {
-        Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissionsAndResults(exerciseId);
-
-        if (optionalTextExercise.isEmpty()) {
-            return notFound();
-        }
-
-        TextExercise textExercise = optionalTextExercise.get();
-
-        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
-            return forbidden();
-        }
-
-        final List<TextSubmission> textSubmissions = textPlagiarismDetectionService.textSubmissionsForComparison(textExercise, 0, 0);
-        textSubmissions.forEach(submission -> {
-            submission.getParticipation().setExercise(null);
-            submission.setResults(new ArrayList<Result>());
-            submission.getParticipation().setSubmissions(null);
-        });
-
-        log.info("Found " + textSubmissions.size() + " non empty text submissions to compare");
-
-        Stream<SubmissionComparisonDTO> submissionComparisonDTOStream = Stream
-                .of(new Tuple<>(normalizedLevenshtein(), "normalizedLevenshtein"), new Tuple<>(metricLongestCommonSubsequence(), "metricLongestCommonSubsequence"),
-                        new Tuple<>(nGram(), "nGram"), new Tuple<>(cosine(), "cosine"))
-                .parallel()
-                .flatMap(comparisonStrategy -> textPlagiarismDetectionService
-                        .compareSubmissionsForExerciseWithStrategy(textSubmissions, comparisonStrategy.getX(), comparisonStrategy.getY(), 0.8).entrySet().stream()
-                        .map(entry -> new SubmissionComparisonDTO().addAllSubmissions(entry.getKey()).putMetric(comparisonStrategy.getY(), entry.getValue())))
-                .collect(toMap(dto -> dto.submissions, dto -> dto, SubmissionComparisonDTO::merge)).values().stream().sorted();
-
-        // TODO: Let the user specify the minimum similarity in the client
-        return ResponseEntity.ok(submissionComparisonDTOStream);
-    }
-
-    /**
      * GET /check-plagiarism : Use JPlag to detect plagiarism in text exercises
      *
      * @param exerciseId ID of the exercise for which to detect plagiarism
@@ -621,9 +571,9 @@ public class TextExerciseResource {
      * @param minimumSize consider only submissions whose size is greater or equal to this value
      * @return the result of the JPlag plagiarism detection
      */
-    @GetMapping(value = "/text-exercises/{exerciseId}/check-plagiarism", params = { "strategy=JPlag" })
+    @GetMapping("/text-exercises/{exerciseId}/check-plagiarism")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<TextPlagiarismResult> checkPlagiarismJPlag(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
+    public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) throws ExitException {
         Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissionsAndResults(exerciseId);
 
