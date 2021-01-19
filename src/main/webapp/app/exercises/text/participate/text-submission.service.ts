@@ -54,7 +54,6 @@ export class TextSubmissionService {
         const returvalue = this.http
             .get<TextSubmission[]>(url, { observe: 'response', params })
             .pipe(map((res: HttpResponse<TextSubmission[]>) => TextSubmissionService.convertArrayResponse(res)));
-        console.log(returvalue);
         return returvalue;
     }
 

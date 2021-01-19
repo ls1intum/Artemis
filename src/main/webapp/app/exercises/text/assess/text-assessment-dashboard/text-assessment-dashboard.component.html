@@ -90,6 +90,7 @@
                                     submission.id,
                                     'assessment'
                                 ]"
+                                [queryParams]="{ 'correction-round': submission.results?.length }"
                                 [disabled]="busy"
                                 class="btn btn-outline-secondary btn-sm mb-1"
                             >
@@ -116,6 +117,7 @@
                                     submission.id,
                                     'assessment'
                                 ]"
+                                [queryParams]="{ 'correction-round': submission.results!.length - 1 }"
                                 [disabled]="busy"
                                 class="btn btn-outline-secondary btn-sm mb-1"
                             >
