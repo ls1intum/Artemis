@@ -278,7 +278,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * Validate the feedback of the assessment
      */
     validateFeedback(): void {
-        this.assessmentsAreValid = this.referencedFeedback.filter(Feedback.isValid).length > 0;
+        this.assessmentsAreValid = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
         this.totalScore = this.computeTotalScore(this.assessments);
 
         if (this.guidedTourService.currentTour && this.toComplete) {
@@ -302,7 +302,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     private prepareTextBlocksAndFeedbacks() {
-        console.log(this.submission?.blocks, this.result?.feedbacks);
         const matchBlocksWithFeedbacks = TextAssessmentsService.matchBlocksWithFeedbacks(this.submission?.blocks || [], this.result?.feedbacks || []);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
     }

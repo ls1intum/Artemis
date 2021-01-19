@@ -308,8 +308,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Validate the feedback of the assessment
      */
     validateFeedback(): void {
-        const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isValid).length > 0;
-        const hasUnreferencedFeedback = this.unreferencedFeedback.filter(Feedback.isValid).length > 0;
+        const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
+        const hasUnreferencedFeedback = this.unreferencedFeedback.filter(Feedback.isPresent).length > 0;
         const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
 
         this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback || hasUnreferencedFeedback;
