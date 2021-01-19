@@ -21,6 +21,8 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -51,16 +53,20 @@ public class ProgrammingSubmissionResource {
 
     private final ParticipationService participationService;
 
+    private final ResultRepository resultRepository;
+
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final UserService userService;
 
-    public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
-            ProgrammingExerciseService programmingExerciseService, AuthorizationCheckService authCheckService,
+    private StudentParticipationRepository studentParticipationRepository;
+
+    public ProgrammingSubmissionResource(StudentParticipationRepository studentParticipationRepository, ProgrammingSubmissionService programmingSubmissionService,
+            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService, UserService userService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, ResultRepository resultRepository) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
@@ -70,6 +76,7 @@ public class ProgrammingSubmissionResource {
         this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.participationService = participationService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -332,7 +339,7 @@ public class ProgrammingSubmissionResource {
     @GetMapping("/exercises/{exerciseId}/programming-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
-            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
+            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all programming submissions");
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
@@ -340,17 +347,16 @@ public class ProgrammingSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        final boolean examMode = exercise.hasExerciseGroup();
+        final boolean examMode = exercise.isExamExercise();
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
             User user = userService.getUserWithGroupsAndAuthorities();
-            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user.getId(), examMode,
+            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user, examMode,
                     correctionRound);
         }
         else {
             programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly, examMode, correctionRound);
         }
-
         return ResponseEntity.ok().body(programmingSubmissions);
     }
 
@@ -359,13 +365,15 @@ public class ProgrammingSubmissionResource {
      * GET /programming-submissions/:participationId/lock : get the programmingSubmissions participation by it's id and locks the corresponding submission for assessment
      *
      * @param participationId the id of the participation to retrieve
+     * @param correctionRound correction round for which we prepare the submission
      * @return the ResponseEntity with status 200 (OK) and with body the programmingSubmissions participation
      */
     @GetMapping("/programming-submissions/{participationId}/lock")
     @PreAuthorize("hasAnyRole('TA','INSTRUCTOR','ADMIN')")
-    public ResponseEntity<Participation> lockAndGetProgrammingSubmissionParticipation(@PathVariable Long participationId) {
+    public ResponseEntity<Participation> lockAndGetProgrammingSubmissionParticipation(@PathVariable Long participationId,
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get ProgrammingSubmission of Participation with id: {}", participationId);
-        final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
+        final var participation = participationService.findOneWithEagerResultsAndCourseAndSubmissionAndResults(participationId);
         final var exercise = participation.getExercise();
         final User user = userService.getUserWithGroupsAndAuthorities();
 
@@ -373,8 +381,7 @@ public class ProgrammingSubmissionResource {
             return forbidden();
         }
 
-        Optional<Result> manualResult = participation.getResults().stream().filter(Result::isManualResult).findFirst();
-
+        Optional<Result> manualResult = participation.getResults().stream().filter(Result::isManual).findFirst();
         if (manualResult.isPresent()) {
             return ResponseEntity.ok(participation);
         }
@@ -401,7 +408,7 @@ public class ProgrammingSubmissionResource {
     @GetMapping(value = "/exercises/{exerciseId}/programming-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
-            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a programming submission without assessment");
         final ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
@@ -424,7 +431,7 @@ public class ProgrammingSubmissionResource {
         }
         else {
             Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionService.getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise,
-                    programmingExercise.hasExerciseGroup(), correctionRound);
+                    programmingExercise.isExamExercise(), correctionRound);
             if (optionalProgrammingSubmission.isEmpty()) {
                 return notFound();
             }
@@ -436,6 +443,8 @@ public class ProgrammingSubmissionResource {
         StudentParticipation studentParticipation = (StudentParticipation) programmingSubmission.getParticipation();
         studentParticipation.setExercise(programmingExercise);
         programmingSubmissionService.hideDetails(programmingSubmission, user);
+        // remove automatic results before sending to client
+        programmingSubmission.setResults(programmingSubmission.getManualResults());
         return ResponseEntity.ok(programmingSubmission);
     }
 }
