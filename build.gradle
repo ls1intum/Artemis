@@ -242,7 +242,8 @@ dependencies {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
-    implementation "mysql:mysql-connector-java:8.0.23"
+    // at the moment, we cannot upgrade to 8.0.23 because of an error message in Liquibase java.lang.ClassCastException: class java.time.LocalDateTime cannot be cast to class java.lang.String
+    implementation "mysql:mysql-connector-java:8.0.22"
 
     implementation "org.zalando:problem-spring-web:0.26.2"
     implementation "com.ibm.icu:icu4j:68.2"
