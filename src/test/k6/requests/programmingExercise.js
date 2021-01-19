@@ -1,5 +1,5 @@
 import { nextAlphanumeric, nextWSSubscriptionId, extractDestination } from '../util/utils.js';
-import { COMMIT, NEW_FILE, PARTICIPATION_WITH_RESULT, PARTICIPATIONS, PROGRAMMING_EXERCISE, PROGRAMMING_EXERCISES_SETUP, FILES } from './endpoints.js';
+import { COMMIT, NEW_FILE, PARTICIPATION_WITH_RESULT, PARTICIPATIONS, PROGRAMMING_EXERCISE, SCA_CATEGORIES, PROGRAMMING_EXERCISES_SETUP, FILES } from './endpoints.js';
 import { fail, sleep } from 'k6';
 import { programmingExerciseProblemStatementJava } from '../resource/constants_java.js';
 import { programmingExerciseProblemStatementPython } from '../resource/constants_python.js';
@@ -114,6 +114,41 @@ export function createProgrammingExercise(artemis, courseId, programmingLanguage
     console.log('CREATED new programming exercise, ID=' + exerciseId);
 
     return exerciseId;
+}
+
+export function getScaCategories(artemis, exerciseId) {
+    const res = artemis.get(SCA_CATEGORIES(exerciseId));
+    if (res[0].status !== 200) {
+        fail('FAILTEST: Could not get SCA categories (' + res[0].status + ')! Response was + ' + res[0].body);
+    }
+    console.log('GET SCA categories for programming exercise with id=' + exerciseId);
+    return JSON.parse(res[0].body);
+}
+
+export function configureScaCategories(artemis, exerciseId, scaCategories, programmingLanguage) {
+    // Find and prepare categories for the configuration update
+    let patchedCategories;
+    switch (programmingLanguage) {
+        case 'JAVA':
+            let badPracticeCategory = scaCategories.find((category) => (category.name = 'Bad Practice'));
+            if (!badPracticeCategory) {
+                fail(`FAILTEST: Could not find SCA category "Bad Practice" for exercise: ${exerciseId}`);
+            }
+            patchedCategories = [
+                {
+                    id: badPracticeCategory.id,
+                    penalty: 1,
+                    maxPenalty: 3,
+                    state: 'GRADED',
+                },
+            ];
+    }
+
+    const res = artemis.patch(SCA_CATEGORIES(exerciseId), patchedCategories);
+    if (res[0].status !== 200) {
+        fail('FAILTEST: Could not patch SCA categories (' + res[0].status + ')! Response was + ' + res[0].body);
+    }
+    console.log('PATCHED SCA categories for programming exercise with id=' + exerciseId);
 }
 
 export function deleteProgrammingExercise(artemis, exerciseId) {

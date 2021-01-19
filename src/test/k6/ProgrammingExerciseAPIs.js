@@ -1,6 +1,15 @@
 import { group, sleep } from 'k6';
 import { login } from './requests/requests.js';
-import { createProgrammingExercise, startExercise, simulateSubmission, ParticipationSimulation, TestResult, deleteProgrammingExercise } from './requests/programmingExercise.js';
+import {
+    createProgrammingExercise,
+    configureScaCategories,
+    getScaCategories,
+    startExercise,
+    simulateSubmission,
+    ParticipationSimulation,
+    TestResult,
+    deleteProgrammingExercise,
+} from './requests/programmingExercise.js';
 import { deleteCourse, newCourse } from './requests/course.js';
 import { createUsersIfNeeded } from './requests/user.js';
 import { allSuccessfulContentJava, buildErrorContentJava, someSuccessfulErrorContentJava } from './resource/constants_java.js';
@@ -60,6 +69,15 @@ export function setup() {
 
         // Wait some time for builds to finish and test results to come in
         sleep(20);
+
+        if (enableSCA) {
+            // Get SCA categories
+            const scaCategories = getScaCategories(artemis, exerciseId, programmingLanguage);
+
+            // Configure SCA categories
+            configureScaCategories(artemis, exerciseId, scaCategories, programmingLanguage);
+            sleep(2);
+        }
 
         return { exerciseId: exerciseId, courseId: course.id };
     } else {
