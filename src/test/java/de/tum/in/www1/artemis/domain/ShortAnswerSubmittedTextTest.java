@@ -15,6 +15,10 @@ public class ShortAnswerSubmittedTextTest {
 
     private ShortAnswerQuestion shortAnswerQuestion;
 
+    /**
+     * @func init
+     * @desc initialize attributes for test cases
+     */
     @BeforeEach
     public void init() {
         shortAnswerQuestion = new ShortAnswerQuestion();
@@ -24,6 +28,10 @@ public class ShortAnswerSubmittedTextTest {
         shortAnswerSubmittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer);
     }
 
+    /**
+     * @func testSubmissionWithMatchingLetterCaseAndExactMatching
+     * @desc tests {@link ShortAnswerSubmittedText#isSubmittedTextCorrect(String, String)} with similarity value 100 and letter case matching
+     */
     @Test
     public void testSubmissionWithMatchingLetterCaseAndExactMatching() {
         shortAnswerQuestion.setMatchLetterCase(true);
@@ -48,6 +56,10 @@ public class ShortAnswerSubmittedTextTest {
         assertFalse(observed);
     }
 
+    /**
+     * @func testSubmissionWithoutMatchingLetterCaseAndExactMatching
+     * @desc tests {@link ShortAnswerSubmittedText#isSubmittedTextCorrect(String, String)} with similarity value 100 and without letter case matching
+     */
     @Test
     public void testSubmissionWithoutMatchingLetterCaseAndExactMatching() {
         shortAnswerQuestion.setMatchLetterCase(false);
@@ -72,6 +84,10 @@ public class ShortAnswerSubmittedTextTest {
         assertTrue(observed);
     }
 
+    /**
+     * @func testSubmissionWithNonExactMatching
+     * @desc tests {@link ShortAnswerSubmittedText#isSubmittedTextCorrect(String, String)} with similarity value 70 and without letter case matching
+     */
     @Test
     public void testSubmissionWithNonExactMatching() {
         shortAnswerQuestion.setMatchLetterCase(false);

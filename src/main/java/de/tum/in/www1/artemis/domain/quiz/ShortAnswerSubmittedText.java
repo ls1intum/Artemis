@@ -81,7 +81,7 @@ public class ShortAnswerSubmittedText extends DomainObject {
      */
     public boolean isSubmittedTextCorrect(String submittedText, String solution) {
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) submittedAnswer.getQuizQuestion();
-        boolean matchLetterCase = saQuestion.matchLetterCase() != null ? saQuestion.matchLetterCase() : false;
+        boolean matchLetterCase = saQuestion.matchLetterCase() != null && saQuestion.matchLetterCase();
         int similarityValue = saQuestion.getSimilarityValue() != null ? saQuestion.getSimilarityValue() : 85;
         if (matchLetterCase) {
             return FuzzySearch.ratio(submittedText.trim(), solution.trim()) >= similarityValue;
