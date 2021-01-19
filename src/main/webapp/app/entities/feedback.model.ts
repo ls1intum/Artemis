@@ -68,12 +68,12 @@ export class Feedback implements BaseEntity {
         return !Feedback.isEmpty(that);
     }
 
-    public static isValid(that: Feedback): boolean {
-        return !(that.credits == undefined || !Feedback.hasDetailText(that));
+    public static hasCreditsAndComment(that: Feedback): boolean {
+        return that.credits != undefined && Feedback.hasDetailText(that);
     }
 
-    public static areValid(that: Feedback[]): boolean {
-        return that.filter(Feedback.isValid).length > 0 && that.filter(Feedback.isValid).length === that.length;
+    public static haveCreditsAndComments(that: Feedback[]): boolean {
+        return that.filter(Feedback.hasCreditsAndComment).length > 0 && that.filter(Feedback.hasCreditsAndComment).length === that.length;
     }
 
     public static forModeling(credits: number, text?: string, referenceId?: string, referenceType?: string): Feedback {
