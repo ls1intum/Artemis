@@ -116,11 +116,11 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should fetch the plagiarism detection results for text exercises', () => {
         comp.exercise = textExercise;
-        spyOn(textExerciseService, 'checkPlagiarismJPlag').and.returnValue(of(plagiarismResult));
+        spyOn(textExerciseService, 'checkPlagiarism').and.returnValue(of(plagiarismResult));
 
         comp.checkPlagiarism();
 
-        expect(textExerciseService.checkPlagiarismJPlag).toHaveBeenCalled();
+        expect(textExerciseService.checkPlagiarism).toHaveBeenCalled();
     });
 
     it('should comparisons by similarity', () => {

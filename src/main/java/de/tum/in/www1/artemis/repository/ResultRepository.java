@@ -68,7 +68,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return an optional containing the result with submission, feedback list and assessor, or an empty optional if no result could be found for the given id
      */
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results", "feedbacks", "assessor" })
     Optional<Result> findWithEagerSubmissionAndFeedbackAndAssessorById(Long resultId);
 
     Long countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(long courseId, boolean rated);
@@ -109,9 +109,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                                 AND r.completionDate IS NOT NULL
                                 AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
                                 AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)
-                            ) = :correctionRound
+                            ) >= (:correctionRound + 1L)
             """)
-    long countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("correctionRound") Long correctionRound);
+    long countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("correctionRound") long correctionRound);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
     List<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(Long exerciseId);

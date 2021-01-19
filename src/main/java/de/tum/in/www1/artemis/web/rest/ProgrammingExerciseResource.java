@@ -751,7 +751,7 @@ public class ProgrammingExerciseResource {
         programmingExercise.setGradingCriteria(gradingCriteria);
 
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
-        if (programmingExercise.hasExerciseGroup()) {
+        if (programmingExercise.isExamExercise()) {
             // Get the course over the exercise group
             ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(programmingExercise.getExerciseGroup().getId());
             Course course = exerciseGroup.getExam().getCourse();
@@ -822,7 +822,7 @@ public class ProgrammingExerciseResource {
 
         // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
         Course course;
-        if (programmingExercise.hasExerciseGroup()) {
+        if (programmingExercise.isExamExercise()) {
             course = exerciseGroupService.retrieveCourseOverExerciseGroup(programmingExercise.getExerciseGroup().getId());
         }
         else {

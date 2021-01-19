@@ -20,11 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -49,38 +45,27 @@ public class ModelingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Get the modeling submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it. Additionally, check if the
-     * submission lock limit has been reached.
+     * Get the modeling submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it.
+     * Additionally, check if the submission lock limit has been reached.
+     *
+     * In case Compass is supported (and activated), this method also assigns a result with feedback suggestions to the submission
      *
      * @param submissionId     the id of the modeling submission
      * @param modelingExercise the corresponding exercise
+     * @param correctionRound the correction round for which we want the lock
      * @return the locked modeling submission
      */
-    public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
+    public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise, int correctionRound) {
         ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
         if (modelingSubmission.getLatestResult() == null || modelingSubmission.getLatestResult().getAssessor() == null) {
             checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-            modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
+            if (compassService.isSupported(modelingExercise) && correctionRound == 0L) {
+                modelingSubmission = assignResultWithFeedbackSuggestionsToSubmission(modelingSubmission);
+            }
         }
 
-        lockSubmission(modelingSubmission, modelingExercise);
-        return modelingSubmission;
-    }
-
-    /**
-     * Get a modeling submission of the given exercise that still needs to be assessed, assign the automatic result of Compass to it and lock the submission to prevent other tutors from receiving and assessing it.
-     *
-     * @param modelingExercise the exercise the submission should belong to
-     * @param correctionRound - the correction round we want our submission to have results for
-     * @param ignoreTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
-     * @return a locked modeling submission that needs an assessment
-     */
-    public ModelingSubmission lockModelingSubmissionWithoutResult(ModelingExercise modelingExercise, boolean ignoreTestRunParticipations, long correctionRound) {
-        ModelingSubmission modelingSubmission = getRandomModelingSubmissionEligibleForNewAssessment(modelingExercise, ignoreTestRunParticipations, correctionRound)
-                .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
-        modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
-        lockSubmission(modelingSubmission, modelingExercise);
+        lockSubmission(modelingSubmission, modelingExercise, correctionRound);
         return modelingSubmission;
     }
 
@@ -93,12 +78,13 @@ public class ModelingSubmissionService extends SubmissionService {
      *
      * @param modelingExercise the modeling exercise for which we want to get a modeling submission without result
      * @param correctionRound - the correction round we want our submission to have results for
-     * @param examMode flag to determine if test runs should be ignored. This should be set to true for exam exercises
+     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a modeling submission without any result
      */
-    public Optional<ModelingSubmission> getRandomModelingSubmissionEligibleForNewAssessment(ModelingExercise modelingExercise, boolean examMode, long correctionRound) {
+    private Optional<ModelingSubmission> getRandomModelingSubmissionEligibleForNewAssessment(ModelingExercise modelingExercise, boolean examMode, int correctionRound) {
         // if the diagram type is supported by Compass, ask Compass for optimal (i.e. most knowledge gain for automatic assessments) submissions to assess next
-        if (compassService.isSupported(modelingExercise)) {
+        // NOTE: compass only makes sense for the first correction round (i.e. correctionRound == 0)
+        if (compassService.isSupported(modelingExercise) && correctionRound == 0) {
             List<Long> modelsWaitingForAssessment = compassService.getModelsWaitingForAssessment(modelingExercise.getId());
 
             // shuffle the model list to prevent that the user gets the same submission again after canceling an assessment
@@ -192,6 +178,29 @@ public class ModelingSubmissionService extends SubmissionService {
     }
 
     /**
+     * retrieves a modeling submission without assessment for the specified correction round and potentially locks the submission
+     *
+     * In case Compass is supported (and activated), this method also assigns a result with feedback suggestions to the submission
+     *
+     * @param lockSubmission whether the submission should be locked
+     * @param correctionRound the correction round (0 = first correction, 1 = second correction
+     * @param modelingExercise the modeling exercise for which a
+     * @param isExamMode whether the exercise belongs to an exam
+     * @return a random modeling submission (potentially based on compass)
+     */
+    public ModelingSubmission findRandomSubmissionWithoutExistingAssessment(boolean lockSubmission, int correctionRound, ModelingExercise modelingExercise, boolean isExamMode) {
+        var modelingSubmission = getRandomModelingSubmissionEligibleForNewAssessment(modelingExercise, isExamMode, correctionRound)
+                .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
+        if (lockSubmission) {
+            if (compassService.isSupported(modelingExercise) && correctionRound == 0L) {
+                modelingSubmission = assignResultWithFeedbackSuggestionsToSubmission(modelingSubmission);
+            }
+            lockSubmission(modelingSubmission, modelingExercise, correctionRound);
+        }
+        return modelingSubmission;
+    }
+
+    /**
      * Soft lock the submission to prevent other tutors from receiving and assessing it. We remove the model from the models waiting for assessment in Compass to prevent other
      * tutors from retrieving it in the first place. Additionally, we set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
      * tutors to assess a model when an assessor is already assigned. If no result exists for this submission we create one first.
@@ -199,8 +208,8 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param modelingSubmission the submission to lock
      * @param modelingExercise   the exercise to which the submission belongs to (needed for Compass)
      */
-    private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
-        var result = lockSubmission(modelingSubmission);
+    private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, int correctionRound) {
+        var result = super.lockSubmission(modelingSubmission, correctionRound);
         if (result.getAssessor() == null && compassService.isSupported(modelingExercise)) {
             compassService.removeModelWaitingForAssessment(modelingExercise.getId(), modelingSubmission.getId());
         }
@@ -213,14 +222,14 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param modelingSubmission the modeling submission that should be updated with an automatic result generated by Compass
      * @return the updated modeling submission
      */
-    private ModelingSubmission assignAutomaticResultToSubmission(ModelingSubmission modelingSubmission) {
-        Result existingResult = modelingSubmission.getLatestResult();
+    private ModelingSubmission assignResultWithFeedbackSuggestionsToSubmission(ModelingSubmission modelingSubmission) {
+        var existingResult = modelingSubmission.getLatestResult();
         if (existingResult != null && existingResult.getAssessmentType() != null && existingResult.getAssessmentType().equals(AssessmentType.MANUAL)) {
             return modelingSubmission;
         }
-        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
-        Result automaticResult = compassService.getAutomaticResultForSubmission(modelingSubmission.getId(), exerciseId);
+        Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(modelingSubmission.getId(), exerciseId);
         if (automaticResult != null) {
             automaticResult.setSubmission(null);
             automaticResult.setParticipation(modelingSubmission.getParticipation());

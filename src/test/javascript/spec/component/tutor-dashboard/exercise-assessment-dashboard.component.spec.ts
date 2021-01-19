@@ -96,6 +96,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     const result2 = { id: 12 } as Result;
     const exam = { id: 13, numberOfCorrectionRoundsInExam: 2 } as Exam;
     const exerciseGroup = { id: 14, exam } as ExerciseGroup;
+
     const exercise = {
         id: 15,
         exerciseGroup,
@@ -466,7 +467,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             const submission = { id: 8 };
             comp.openAssessmentEditor(submission);
 
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submission.id}/assessment`]);
+            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submission.id}/assessment`], {
+                queryParams: { 'correction-round': 0 },
+            });
         });
 
         it('should openExampleSubmission with programmingExercise', () => {
