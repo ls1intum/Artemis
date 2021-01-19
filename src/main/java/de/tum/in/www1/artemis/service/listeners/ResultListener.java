@@ -19,6 +19,11 @@ public class ResultListener {
 
     private StudentScoreService studentScoreService;
 
+    /**
+     * Repositories require the {@link javax.persistence.EntityManager}. While EntityManager is being initialized it instantiates {@link javax.persistence.EntityListeners} including
+     * {@link ResultListener}. Now {@link ResultListener} requires the {@link StudentScoreService} which requires {@link de.tum.in.www1.artemis.repository.StudentScoreRepository}
+     * which requires {@link javax.persistence.EntityManager}. To break this circular dependency we use lazy injection of the service here.
+     */
     public ResultListener(@Lazy StudentScoreService studentScoreService) {
         this.studentScoreService = studentScoreService;
     }
