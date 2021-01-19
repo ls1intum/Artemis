@@ -533,7 +533,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             // Fetch submission or create a fallback
             var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult)
                     .orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
-            latestSubmission.setBuildFailed(newResult.getResultString().equals("No tests found"));
+            latestSubmission.setBuildFailed(newResult.isSuccessful());
 
             // Add artifacts to submission
             final var hasArtifact = buildResult.getBuild().isArtifact();

@@ -43,7 +43,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
         }
 
         var submission = optionalSubmission.get();
-        var commitHash = getCommitHash(buildResult, optionalSubmission.get().getType());
+        var commitHash = getCommitHash(buildResult, submission.getType());
         if (commitHash.isPresent() && submission.getCommitHash().equals(commitHash.get())) {
             return Optional.of(submission);
         }
@@ -59,8 +59,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      */
     @NotNull
     protected ProgrammingSubmission createFallbackSubmission(ProgrammingExerciseParticipation participation, ZonedDateTime submissionDate, String commitHash) {
-        ProgrammingSubmission submission;
-        submission = new ProgrammingSubmission();
+        ProgrammingSubmission submission = new ProgrammingSubmission();
         submission.setParticipation((Participation) participation);
         submission.setSubmitted(true);
         // We set this to manual because all programming submissions should correspond to a student commit in the git history.

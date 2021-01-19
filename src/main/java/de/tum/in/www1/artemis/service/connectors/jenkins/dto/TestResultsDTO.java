@@ -109,8 +109,7 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     @Override
     public Long getBuildScore() {
         final var testSum = getSkipped() + getFailures() + getErrors() + getSuccessful();
-        var score = ((1.0 * getSuccessful()) / testSum) * 100;
-        return (long) score;
+        return (long) (((1.0 * getSuccessful()) / testSum) * 100);
     }
 
     @Override
