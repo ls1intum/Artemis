@@ -539,11 +539,12 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         // add three user submissions with automatic results to student participation
         final var studentParticipation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
-        final var firstSubmission = database.createProgrammingSubmission(studentParticipation, true);
+        final var firstSubmission = database.createProgrammingSubmission(studentParticipation, true, "1");
         database.addResultToSubmission(firstSubmission, AssessmentType.AUTOMATIC, null);
-        final var secondSubmission = database.createProgrammingSubmission(studentParticipation, false);
+        final var secondSubmission = database.createProgrammingSubmission(studentParticipation, false, "2");
         database.addResultToSubmission(secondSubmission, AssessmentType.AUTOMATIC, null);
-        final var thirdSubmission = database.createProgrammingSubmission(studentParticipation, false);
+        // The commit hash must be the same as the one used for initializing the tests because this test calls gitService.getLastCommitHash
+        final var thirdSubmission = database.createProgrammingSubmission(studentParticipation, false, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
         database.addResultToSubmission(thirdSubmission, AssessmentType.AUTOMATIC, null);
 
         // verify setup

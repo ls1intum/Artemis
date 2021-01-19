@@ -1319,13 +1319,17 @@ public class DatabaseUtilService {
         return programmingExercise;
     }
 
-    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed) {
+    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed, String commitHash) {
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
         programmingSubmission.setBuildFailed(buildFailed);
         programmingSubmission.type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now());
-        programmingSubmission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
+        programmingSubmission.setCommitHash(commitHash);
         programmingSubmission.setParticipation(participation);
         return submissionRepository.save(programmingSubmission);
+    }
+
+    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed) {
+        return createProgrammingSubmission(participation, buildFailed, TestConstants.COMMIT_HASH_STRING);
     }
 
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
