@@ -157,7 +157,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         // 1. Delete Textblocks
-        textBlockService.deleteForSubmission((TextSubmission)submission);
+        textBlockService.deleteForSubmission((TextSubmission) submission);
 
         // 2. Delete Feedbacks
         final var latestResult = submission.getLatestResult();

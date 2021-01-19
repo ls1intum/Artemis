@@ -185,6 +185,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * Updates the example submission.
      */
     updateExampleTextSubmission(): void {
+        setLatestSubmissionResult(this.exampleSubmission.submission, this.result);
         this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body!;
             this.state.edit();

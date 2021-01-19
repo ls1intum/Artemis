@@ -6,11 +6,11 @@ import java.text.BreakIterator;
 import java.util.*;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TextBlockService {
