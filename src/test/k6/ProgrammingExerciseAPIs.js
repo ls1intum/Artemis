@@ -86,10 +86,10 @@ export default function (data) {
     let someSuccessfulErrorContent, allSuccessfulContent, buildErrorContent, somePassedString;
     switch (programmingLanguage) {
         case 'JAVA':
-            someSuccessfulErrorContent = someSuccessfulErrorContentJava;
+            someSuccessfulErrorContent = someSuccessfulErrorContentJava(enableSCA);
             allSuccessfulContent = allSuccessfulContentJava;
             buildErrorContent = buildErrorContentJava;
-            somePassedString = '2 of 13 passed';
+            somePassedString = enableSCA ? '2 of 13 passed' : '1 of 13 passed, 1 issue';
             break;
         case 'PYTHON':
             someSuccessfulErrorContent = someSuccessfulErrorContentPython;
