@@ -58,7 +58,7 @@ export const TestResult = {
     BUILD_ERROR: 'error',
 };
 
-export function createProgrammingExercise(artemis, courseId, programmingLanguage, exerciseGroup = null, enableSCA = false) {
+export function createProgrammingExercise(artemis, courseId, programmingLanguage, exerciseGroup = undefined, enableSCA = false) {
     let res;
 
     let programmingExerciseProblemStatement;
@@ -91,16 +91,11 @@ export function createProgrammingExercise(artemis, courseId, programmingLanguage
         mode: 'INDIVIDUAL',
         projectType: programmingLanguage === 'JAVA' ? 'ECLIPSE' : undefined,
         enableStaticCodeAnalysis: enableSCA,
-    };
-
-    if (courseId) {
-        exercise.course = {
+        course: {
             id: courseId,
-        };
-    }
-    if (exerciseGroup) {
-        exercise.exerciseGroup = exerciseGroup;
-    }
+        },
+        exerciseGroup: exerciseGroup,
+    };
 
     res = artemis.post(PROGRAMMING_EXERCISES_SETUP, exercise);
     if (res[0].status !== 201) {
@@ -164,7 +159,7 @@ export function deleteProgrammingExercise(artemis, exerciseId) {
 
 export function startExercise(artemis, courseId, exerciseId) {
     console.log('Try to start exercise for test user ' + __VU);
-    const res = artemis.post(PARTICIPATIONS(courseId, exerciseId), null, null);
+    const res = artemis.post(PARTICIPATIONS(courseId, exerciseId), undefined, undefined);
     // console.log('RESPONSE of starting exercise: ' + res[0].body);
 
     if (res[0].status === 400) {
@@ -182,7 +177,7 @@ export function startExercise(artemis, courseId, exerciseId) {
 }
 
 export function createNewFile(artemis, participationId, filename) {
-    const res = artemis.post(NEW_FILE(participationId), null, { file: filename });
+    const res = artemis.post(NEW_FILE(participationId), undefined, { file: filename });
 
     if (res[0].status !== 200) {
         fail('FAILTEST: Unable to create new file ' + filename);
