@@ -52,11 +52,7 @@
                         </button>
                     </div>
                 </div>
-                <jhi-assessment-general-feedback
-                    [(feedback)]="generalFeedback"
-                    (feedbackChange)="validateAssessment()"
-                    [readOnly]="readOnly"
-                ></jhi-assessment-general-feedback>
+                <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateAssessment()" [readOnly]="readOnly"></jhi-assessment-general-feedback>
             </ng-container>
         </div>
         <!--endregion-->

@@ -18,37 +18,31 @@
 
             <div class="row">
                 <ng-container [ngSwitch]="state.submissionEditButton">
-                    <button *ngSwitchCase="SubmissionButtonStates.NEW"
-                            (click)="createNewExampleTextSubmission()" class="btn btn-primary col-auto">
+                    <button *ngSwitchCase="SubmissionButtonStates.NEW" (click)="createNewExampleTextSubmission()" class="btn btn-primary col-auto">
                         <fa-icon [icon]="'save'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.createNewSubmission' | translate }}
                     </button>
-                    <button *ngSwitchCase="SubmissionButtonStates.UPDATE"
-                            (click)="updateExampleTextSubmission()" class="btn btn-primary col-auto">
+                    <button *ngSwitchCase="SubmissionButtonStates.UPDATE" (click)="updateExampleTextSubmission()" class="btn btn-primary col-auto">
                         <fa-icon [icon]="'save'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.updateSampleSolution' | translate }}
                     </button>
-                    <button *ngSwitchCase="SubmissionButtonStates.EDIT"
-                            (click)="editSubmission()" class="btn btn-danger col-auto">
+                    <button *ngSwitchCase="SubmissionButtonStates.EDIT" (click)="editSubmission()" class="btn btn-danger col-auto">
                         <fa-icon [icon]="'edit'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.editSampleSolution' | translate }}
                     </button>
                 </ng-container>
 
                 <ng-container [ngSwitch]="state.assessButton">
-<!--TODO: Disable Button if unsaved changes in submission -->
-                    <button *ngSwitchCase="AssessButtonStates.ASSESS"
-                            (click)="startAssessment()" class="btn btn-primary col-auto ml-auto mr-3">
+                    <!--TODO: Disable Button if unsaved changes in submission -->
+                    <button *ngSwitchCase="AssessButtonStates.ASSESS" (click)="startAssessment()" class="btn btn-primary col-auto ml-auto mr-3">
                         <fa-icon [icon]="'save'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.createNewAssessment' | translate }}
                     </button>
-                    <button *ngSwitchCase="AssessButtonStates.CREATE"
-                            (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ml-auto mr-3">
+                    <button *ngSwitchCase="AssessButtonStates.CREATE" (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ml-auto mr-3">
                         <fa-icon [icon]="'save'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.saveNewAssessment' | translate }}
                     </button>
-                    <button *ngSwitchCase="AssessButtonStates.UPDATE"
-                            (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ml-auto mr-3">
+                    <button *ngSwitchCase="AssessButtonStates.UPDATE" (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ml-auto mr-3">
                         <fa-icon [icon]="'save'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.updateAssessment' | translate }}
                     </button>
@@ -80,8 +74,20 @@
     <!--region Right Panel-->
     <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
     <span right-header jhiTranslate="artemisApp.textAssessment.instructions">Instructions</span>
-    <div right-body class="alert alert-info text-center mb-4" role="alert" jhiTranslate="artemisApp.textAssessment.exampleSubmissisonInstruction" *ngIf="state.ui === UIStates.SUBMISSION"></div>
-    <div right-body class="alert alert-info text-center mb-4" role="alert" jhiTranslate="artemisApp.textAssessment.assessmentInstruction" *ngIf="state.ui === UIStates.ASSESSMENT"></div>
+    <div
+        right-body
+        class="alert alert-info text-center mb-4"
+        role="alert"
+        jhiTranslate="artemisApp.textAssessment.exampleSubmissisonInstruction"
+        *ngIf="state.ui === UIStates.SUBMISSION"
+    ></div>
+    <div
+        right-body
+        class="alert alert-info text-center mb-4"
+        role="alert"
+        jhiTranslate="artemisApp.textAssessment.assessmentInstruction"
+        *ngIf="state.ui === UIStates.ASSESSMENT"
+    ></div>
     <jhi-assessment-instructions right-body *ngIf="exercise" [exercise]="exercise" class="markdown-preview"></jhi-assessment-instructions>
     <!--endregion-->
 </jhi-resizeable-container>
