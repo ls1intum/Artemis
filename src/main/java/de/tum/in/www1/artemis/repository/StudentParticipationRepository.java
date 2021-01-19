@@ -214,7 +214,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)
             """)
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(@Param("exerciseId") long exerciseId,
-            @Param("correctionRound") Long correctionRound);
+            @Param("correctionRound") long correctionRound);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch r.assessor a
