@@ -5,7 +5,7 @@
 # Build and run all tests if the compilation succeeds
 # ------------------------------
 
-gcc -c -Wall assignment/*.c || error=true
+sudo gcc -c -Wall assignment/*.c || error=true
 if [ ! $error ]
 then
     cd tests
