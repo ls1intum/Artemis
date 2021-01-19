@@ -261,13 +261,18 @@
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ submission.submissionDate | artemisDate }}</td>
                                 <td>
-                                    <jhi-result [participation]="submission.participation"></jhi-result>
+                                    <jhi-result
+                                        [result]="getSubmissionResultByCorrectionRound(submission, correctionRound)"
+                                        [participation]="submission.participation"
+                                    ></jhi-result>
                                 </td>
                                 <td>
-                                    {{ calculateSubmissionStatus(submission) }}
+                                    {{ calculateSubmissionStatus(submission, correctionRound) }}
                                 </td>
                                 <td>
-                                    <span *ngIf="submission.latestResult != undefined && submission.latestResult!.score != undefined">{{ submission.latestResult!.score }} %</span>
+                                    <span *ngIf="submission.results[correctionRound] != undefined && submission.results[correctionRound]!.score != undefined"
+                                        >{{ submission.results[correctionRound]!.score }} %</span
+                                    >
                                 </td>
                                 <td *ngIf="exercise.type === ExerciseType.TEXT">
                                     {{ 'artemisApp.exerciseAssessmentDashboard.languages.' + (submission.language ? submission.language : 'UNKNOWN') | translate }}
@@ -276,8 +281,8 @@
                                     <ng-container *ngIf="(isTestRun && complaints.length === 0) || !isTestRun">
                                         <ng-container>
                                             <button
-                                                *ngIf="submission && calculateSubmissionStatus(submission) === 'DRAFT'; else continueButton"
-                                                (click)="openAssessmentEditor(submission)"
+                                                *ngIf="submission && calculateSubmissionStatus(submission, correctionRound) === 'DRAFT'; else continueButton"
+                                                (click)="openAssessmentEditor(submission, correctionRound)"
                                                 class="btn btn-warning btn-sm"
                                             >
                                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{
@@ -286,8 +291,8 @@
                                             </button>
                                             <ng-template #continueButton>
                                                 <button
-                                                    *ngIf="submission?.latestResult && correctionRound === 0"
-                                                    (click)="openAssessmentEditor(submission)"
+                                                    *ngIf="submission?.results[correctionRound]"
+                                                    (click)="openAssessmentEditor(submission, correctionRound)"
                                                     class="btn btn-primary btn-sm"
                                                 >
                                                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
@@ -315,7 +320,7 @@
                                 <td>
                                     <button
                                         class="btn btn-success btn-sm"
-                                        (click)="openAssessmentEditor('new')"
+                                        (click)="openAssessmentEditor('new', correctionRound)"
                                         [disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"
                                         [class.guided-tour]="exercise === exerciseForGuidedTour"
                                         [ngStyle]="exercise === exerciseForGuidedTour && { cursor: 'not-allowed' }"
