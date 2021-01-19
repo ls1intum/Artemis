@@ -25,7 +25,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -201,7 +204,7 @@ public class ResultResource {
         }
 
         List<Result> results = new ArrayList<>();
-        var examMode = exercise.hasExerciseGroup();
+        var examMode = exercise.isExamExercise();
 
         List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId, examMode);
         for (StudentParticipation participation : participations) {
@@ -389,7 +392,7 @@ public class ResultResource {
 
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
-        if (!exercise.hasExerciseGroup()) {
+        if (!exercise.isExamExercise()) {
             if (exercise.getDueDate() == null || ZonedDateTime.now().isBefore(exercise.getDueDate())) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
                         "External submissions are not supported before the exercise due date.")).build();

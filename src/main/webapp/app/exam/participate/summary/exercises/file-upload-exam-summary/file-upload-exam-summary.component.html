@@ -1,5 +1,5 @@
 <div *ngIf="submission">
-    <a (click)="downloadFile(submission.filePath!)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
+    <a id="downloadFileButton" (click)="downloadFile(submission.filePath!)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
     <span class="ml-2 badge badge-info">
         {{ attachmentExtension(submission.filePath!) | uppercase }}
     </span>
