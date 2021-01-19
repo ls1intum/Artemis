@@ -48,11 +48,12 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
     constructor(private service: CourseManagementService, private translateService: TranslateService) {}
 
     ngOnInit(): void {
-        this.amountOfStudents = this.translateService.instant('courseStatistics.amountOfStudents');
         this.chartName = this.translateService.instant(`courseStatistics.${this.graphType.toString().toLowerCase()}`);
     }
 
     ngOnChanges() {
+        this.amountOfStudents = this.translateService.instant('courseStatistics.amountOfStudents');
+
         // Only use the pre-loaded stats once
         if (this.initialStatsReceived || !this.initialStats) {
             return;
