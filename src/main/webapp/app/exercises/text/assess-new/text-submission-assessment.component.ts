@@ -24,7 +24,7 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submissi
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess-new/text-assessment-base.component';
-import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, setSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -58,6 +58,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     assessmentsAreValid: boolean;
     noNewSubmissions: boolean;
     hasAssessmentDueDatePassed: boolean;
+    correctionRound: number;
 
     /*
      * Non-resetted properties:
@@ -99,6 +100,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     ) {
         super(jhiAlertService, accountService, assessmentsService, translateService, structuredGradingCriterionService);
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
+        this.correctionRound = 0;
         this.resetComponent();
     }
 
@@ -136,6 +138,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         await super.ngOnInit();
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
+            this.correctionRound = Number(queryParams.get('correction-round'));
         });
 
         this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
@@ -154,7 +157,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.participation = studentParticipation;
         this.submission = this.participation!.submissions![0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
-        this.result = getLatestSubmissionResult(this.submission);
+        setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
+        this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
 
         this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
 
@@ -239,7 +243,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             newFeedback.conflictingTextAssessments = this.result?.feedbacks?.find((feedback) => feedback.id === newFeedback.id)?.conflictingTextAssessments;
         });
         this.result = response.body!;
-        setLatestSubmissionResult(this.submission, this.result);
+        setSubmissionResultByCorrectionRound(this.submission!, this.result, this.correctionRound);
         this.saveBusy = this.submitBusy = false;
     }
 
@@ -259,7 +263,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     async nextSubmission(): Promise<void> {
         this.nextSubmissionBusy = true;
-        await this.router.navigate(['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
+        await this.router.navigate(['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment'], {
+            queryParams: { 'correction-round': this.correctionRound },
+        });
     }
 
     /**

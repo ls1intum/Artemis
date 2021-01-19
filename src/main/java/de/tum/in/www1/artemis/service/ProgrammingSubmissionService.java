@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
+import static java.util.stream.Collectors.toList;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -573,26 +575,36 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Given an exercise id and a tutor id, it returns all the programming submissions where the tutor has a result associated
+     * Given an exercise id and a tutor id, it returns all the programming submissions where the tutor has assessed a result
+     *
+     * The query that returns the participations returns the contained submissions in a particular way:
+     * Due to hibernate, the result list has null values at all places where a result was assessed by another tutor.
+     * At the beginning of the list remain all the automatic results without assessor.
+     * Then filtering out all submissions which have no result at the place of the correctionround leaves us with the submissions we are interested in.
+     * Before returning the submissions we strip away all automatic results, to be able to correctly display them in the client.
      *
      * @param exerciseId - the id of the exercise we are looking for
      * @param correctionRound - the correctionRound for which the submissions should be fetched for
-     * @param tutorId    - the id of the tutor we are interested in
+     * @param tutor    - the the tutor we are interested in
      * @param examMode - flag should be set to ignore the test run submissions
      * @return a list of programming submissions
      */
-    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(long exerciseId, long tutorId, boolean examMode,
-            Long correctionRound) {
-        List<StudentParticipation> participations;
+    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(long exerciseId, User tutor, boolean examMode,
+            int correctionRound) {
+        List<Submission> submissions;
         if (examMode) {
-            participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutorId,
-                    correctionRound);
+            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
+            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                    // filter out the submissions that don't have a result (but a null value) for the correctionRound
+                    .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).collect(toList());
         }
         else {
-            participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
+            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
         }
-        return participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(submission -> (ProgrammingSubmission) submission.get())
-                .collect(Collectors.toList());
+        // strip away all automatic results from the submissions list
+        submissions.forEach(submission -> submission.removeAutomaticResults());
+        submissions.forEach(submission -> submission.getLatestResult().setSubmission(null));
+        return submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
     }
 
     /**
@@ -605,7 +617,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param examMode - set flag to ignore test run submissions for exam exercises
      * @return a list of programming submissions for the given exercise id
      */
-    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode, Long correctionRound) {
+    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode, int correctionRound) {
         List<StudentParticipation> participations;
         if (examMode) {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(exerciseId,
@@ -632,7 +644,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionEligibleForNewAssessment(ProgrammingExercise programmingExercise, boolean examMode, long correctionRound) {
+    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionEligibleForNewAssessment(ProgrammingExercise programmingExercise, boolean examMode, int correctionRound) {
         var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(programmingExercise, examMode, correctionRound);
         if (submissionWithoutResult.isPresent()) {
             ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) submissionWithoutResult.get();
@@ -662,7 +674,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId) {
         ProgrammingSubmission programmingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
-        var manualResult = lockSubmission(programmingSubmission);
+        var manualResult = lockSubmission(programmingSubmission, 0);
         programmingSubmission = (ProgrammingSubmission) manualResult.getSubmission();
 
         return programmingSubmission;
@@ -675,22 +687,37 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param correctionRound - the correction round we want our submission to have results for
      * @return a locked programming submission that needs an assessment
      */
-    public ProgrammingSubmission lockAndGetProgrammingSubmissionWithoutResult(ProgrammingExercise exercise, long correctionRound) {
-        ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.hasExerciseGroup(), correctionRound)
+    public ProgrammingSubmission lockAndGetProgrammingSubmissionWithoutResult(ProgrammingExercise exercise, int correctionRound) {
+        ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.isExamExercise(), correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission for exercise " + exercise.getId() + " could not be found"));
-        Result newManualResult = lockSubmission(programmingSubmission);
+        Result newManualResult = lockSubmission(programmingSubmission, correctionRound);
         return (ProgrammingSubmission) newManualResult.getSubmission();
     }
 
-    @Override
-    protected Result lockSubmission(Submission submission) {
-        Result automaticResult = submission.getLatestResult();
-        List<Feedback> automaticFeedbacks = automaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
-        // Create a new result (manual result) and a new submission for it and set assessor and type to manual
-        ProgrammingSubmission newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
-                SubmissionType.MANUAL);
+    // TODO SE: explain in what context this method is even called
 
-        Result newResult = saveNewEmptyResult(newSubmission);
+    /**
+     * Locks the programmingSubmission submission. If the submission only has automatic results, and no manual,
+     * create a new manual result. In the second correction round add a second manual result to the submission
+     *
+     * @param submission the submission to lock
+     * @param correctionRound the correction round for the assessment
+     * @return
+     */
+    @Override
+    protected Result lockSubmission(Submission submission, int correctionRound) {
+
+        Result existingResult;
+        if (correctionRound == 0 && submission.getLatestResult().getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
+            existingResult = submission.getLatestResult();
+        }
+        else {
+            existingResult = submission.getResultForCorrectionRound(correctionRound - 1);
+        }
+
+        List<Feedback> automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+
+        Result newResult = saveNewEmptyResult(submission);
         newResult.setAssessor(userService.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         // Copy automatic feedbacks into the manual result
@@ -699,12 +726,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
             feedback.setResult(newResult);
         }
         newResult.setFeedbacks(automaticFeedbacks);
-        newResult.setResultString(automaticResult.getResultString());
+        newResult.setResultString(existingResult.getResultString());
         // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
         newResult = resultRepository.save(newResult);
         log.debug("Assessment locked with result id: " + newResult.getId() + " for assessor: " + newResult.getAssessor().getName());
         // Make sure that submission is set back after saving
-        newResult.setSubmission(newSubmission);
+        newResult.setSubmission(submission);
         return newResult;
     }
 

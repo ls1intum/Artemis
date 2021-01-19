@@ -70,6 +70,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     showEditorInstructions = true;
     hasAssessmentDueDatePassed: boolean;
     adjustedRepositoryURL: string;
+    correctionRound: number;
 
     private get course(): Course | undefined {
         return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
@@ -116,6 +117,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         });
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
+            this.correctionRound = Number(queryParams.get('correction-round'));
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.paramSub = this.route.params.subscribe((params) => {
@@ -262,7 +264,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     save(): void {
         this.saveBusy = true;
         this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!).subscribe(
+        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, undefined, this.correctionRound).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         );
@@ -274,7 +276,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     submit(): void {
         this.submitBusy = true;
         this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, true).subscribe(
+        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, true, this.correctionRound).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         );
@@ -296,15 +298,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Go to next submission
      */
     nextSubmission() {
-        this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true).subscribe(
+        this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe(
             (response: ProgrammingSubmission) => {
                 const unassessedSubmission = response;
                 this.router.onSameUrlNavigation = 'reload';
                 // navigate to the new assessment page to trigger re-initialization of the components
-                this.router.navigateByUrl(
-                    `/course-management/${this.course!.id}/programming-exercises/${this.exercise.id}/code-editor/${unassessedSubmission.participation?.id}/assessment`,
-                    {},
-                );
+                let url = `/course-management/${this.course!.id}/programming-exercises/${this.exercise.id}/code-editor/${unassessedSubmission.participation?.id}/assessment`;
+                url += `?correction-round=${this.correctionRound}`;
+                this.router.navigateByUrl(url, {});
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {

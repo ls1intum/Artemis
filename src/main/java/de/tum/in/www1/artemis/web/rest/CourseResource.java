@@ -787,7 +787,8 @@ public class CourseResource {
     /**
      * GET /courses/stats-for-management-overview :
      *
-     * @param courseId course to get the stats for
+     * @param courseIds course Ids to get the stats for
+     * @param periodIndex period index for the user activity stats
      * @return ResponseEntity with status
      */
     @GetMapping(value = "/courses/stats-for-management-overview")
