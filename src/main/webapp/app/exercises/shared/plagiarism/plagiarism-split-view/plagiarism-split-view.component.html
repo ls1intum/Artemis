@@ -2,16 +2,22 @@
     <div class="plagiarism-split-pane" jhiPane>
         <jhi-modeling-submission-viewer *ngIf="isModelingExercise" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()"></jhi-modeling-submission-viewer>
 
-        <jhi-text-submission-viewer *ngIf="isTextExercise" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionA()"></jhi-text-submission-viewer>
-
-        <jhi-programming-submission-viewer *ngIf="isProgrammingExercise" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionA()"></jhi-programming-submission-viewer>
+        <jhi-text-submission-viewer
+            *ngIf="isProgrammingOrTextExercise"
+            [exercise]="exercise"
+            [matches]="matchesA"
+            [plagiarismSubmission]="getTextSubmissionA()"
+        ></jhi-text-submission-viewer>
     </div>
 
     <div class="plagiarism-split-pane" jhiPane>
         <jhi-modeling-submission-viewer *ngIf="isModelingExercise" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionB()"></jhi-modeling-submission-viewer>
 
-        <jhi-text-submission-viewer *ngIf="isTextExercise" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionB()"></jhi-text-submission-viewer>
-
-        <jhi-programming-submission-viewer *ngIf="isProgrammingExercise" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionB()"></jhi-programming-submission-viewer>
+        <jhi-text-submission-viewer
+            *ngIf="isProgrammingOrTextExercise"
+            [exercise]="exercise"
+            [matches]="matchesB"
+            [plagiarismSubmission]="getTextSubmissionB()"
+        ></jhi-text-submission-viewer>
     </div>
 </div>

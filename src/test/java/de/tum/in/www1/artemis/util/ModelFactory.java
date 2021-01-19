@@ -93,27 +93,45 @@ public class ModelFactory {
     }
 
     public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
+        return generateProgrammingExercise(releaseDate, dueDate, course, ProgrammingLanguage.JAVA);
+    }
+
+    public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course, ProgrammingLanguage programmingLanguage) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise = (ProgrammingExercise) populateExercise(programmingExercise, releaseDate, dueDate, null, course);
-        populateProgrammingExercise(programmingExercise);
+        populateProgrammingExercise(programmingExercise, programmingLanguage);
         return programmingExercise;
     }
 
     public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup) {
+        return generateProgrammingExerciseForExam(exerciseGroup, ProgrammingLanguage.JAVA);
+    }
+
+    public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup, ProgrammingLanguage programmingLanguage) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise = (ProgrammingExercise) populateExerciseForExam(programmingExercise, exerciseGroup);
-        populateProgrammingExercise(programmingExercise);
+        populateProgrammingExercise(programmingExercise, programmingLanguage);
         return programmingExercise;
     }
 
-    private static void populateProgrammingExercise(ProgrammingExercise programmingExercise) {
+    private static void populateProgrammingExercise(ProgrammingExercise programmingExercise, ProgrammingLanguage programmingLanguage) {
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        programmingExercise.setProjectType(ProjectType.ECLIPSE);
-        programmingExercise.setPackageName("de.test");
+        programmingExercise.setProgrammingLanguage(programmingLanguage);
+        if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            programmingExercise.setProjectType(ProjectType.ECLIPSE);
+        }
+        else {
+            programmingExercise.setProjectType(null);
+        }
+        if (programmingLanguage == ProgrammingLanguage.SWIFT) {
+            programmingExercise.setPackageName("swiftTest");
+        }
+        else {
+            programmingExercise.setPackageName("de.test");
+        }
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
         String testRepoUrl = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUrl(testRepoUrl);
@@ -639,7 +657,7 @@ public class ModelFactory {
         toBeImported.setId(template.getId());
         toBeImported.setTestCases(null);
         toBeImported.setStaticCodeAnalysisCategories(null);
-        toBeImported.setNumberOfAssessments(template.getNumberOfAssessments());
+        toBeImported.setTotalNumberOfAssessments(template.getTotalNumberOfAssessments());
         toBeImported.setNumberOfComplaints(template.getNumberOfComplaints());
         toBeImported.setNumberOfMoreFeedbackRequests(template.getNumberOfMoreFeedbackRequests());
         toBeImported.setExerciseHints(null);
@@ -751,9 +769,12 @@ public class ModelFactory {
      * @param repoName name of the repository
      * @param successfulTestNames names of successful tests
      * @param failedTestNames names of failed tests
+     * @param programmingLanguage programming language to use
+     * @param enableStaticAnalysisReports should the notification include static analysis reports
      * @return TestResultDTO with dummy data
      */
-    public static TestResultsDTO generateTestResultDTO(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
+    public static TestResultsDTO generateTestResultDTO(String repoName, List<String> successfulTestNames, List<String> failedTestNames, ProgrammingLanguage programmingLanguage,
+            boolean enableStaticAnalysisReports) {
         var notification = new TestResultsDTO();
 
         var testSuite = new TestsuiteDTO();
@@ -783,11 +804,13 @@ public class ModelFactory {
         commitDTO.setHash(TestConstants.COMMIT_HASH_STRING);
         commitDTO.setRepositorySlug(repoName);
 
-        var reports = generateStaticCodeAnalysisReports(ProgrammingLanguage.JAVA);
+        if (enableStaticAnalysisReports) {
+            var reports = generateStaticCodeAnalysisReports(programmingLanguage);
+            notification.setStaticCodeAnalysisReports(reports);
+        }
 
         notification.setCommits(List.of(commitDTO));
         notification.setResults(List.of(testSuite));
-        notification.setStaticCodeAnalysisReports(reports);
         notification.setSuccessful(successfulTestNames.size());
         notification.setFailures(failedTestNames.size());
         notification.setRunDate(ZonedDateTime.now());
@@ -851,6 +874,7 @@ public class ModelFactory {
      */
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
         var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
+        notification.getBuild().getTestSummary().setDescription("No tests found");
 
         String logWith254Chars = "a".repeat(254);
 
@@ -881,9 +905,9 @@ public class ModelFactory {
     }
 
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
-            List<String> failedTestNames) {
+            List<String> failedTestNames, ProgrammingLanguage programmingLanguage) {
         var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
-        var reports = generateStaticCodeAnalysisReports(ProgrammingLanguage.JAVA);
+        var reports = generateStaticCodeAnalysisReports(programmingLanguage);
         notification.getBuild().getJobs().get(0).setStaticCodeAnalysisReports(reports);
         return notification;
     }
@@ -906,6 +930,7 @@ public class ModelFactory {
             case PMD -> "Best Practices";
             case CHECKSTYLE -> "coding";
             case PMD_CPD -> "Copy/Paste Detection";
+            case SWIFTLINT -> "swiftLint"; // TODO: rene: set better value after categories are better defined
         };
 
         var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();

@@ -1,7 +1,6 @@
 import { Injectable, NgModule } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { ModelingExerciseComponent } from './modeling-exercise.component';
 import { ModelingExerciseDetailComponent } from './modeling-exercise-detail.component';
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -108,13 +107,7 @@ export const routes: Routes = [
     },
     {
         path: ':courseId/modeling-exercises',
-        component: ModelingExerciseComponent,
-        data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
-            pageTitle: 'artemisApp.modelingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
+        redirectTo: ':courseId/exercises',
     },
 ];
 

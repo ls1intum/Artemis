@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 
 import javax.persistence.*;
@@ -27,7 +28,7 @@ import de.tum.in.www1.artemis.service.FileService;
 public class Attachment extends DomainObject implements Serializable {
 
     @Transient
-    private transient FileService fileService = new FileService();
+    private final transient FileService fileService = new FileService();
 
     @Transient
     private String prevLink;
@@ -60,7 +61,7 @@ public class Attachment extends DomainObject implements Serializable {
     private Lecture lecture;
 
     @OneToOne
-    @JoinColumn(name = "attachmentUnit_id")
+    @JoinColumn(name = "attachment_unit_id")
     private AttachmentUnit attachmentUnit;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
@@ -75,7 +76,7 @@ public class Attachment extends DomainObject implements Serializable {
      */
 
     /**
-     *Initialisation of the Attachment on Server start
+     * Initialisation of the Attachment on Server start
      */
     @PostLoad
     public void onLoad() {
@@ -96,16 +97,7 @@ public class Attachment extends DomainObject implements Serializable {
      */
     @PrePersist
     public void beforeCreate() {
-        if (attachmentType == AttachmentType.FILE && getLecture() != null) {
-            // move file if necessary (id at this point will be null, so placeholder will be inserted)
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + File.separator,
-                    getLecture().getId(), true);
-        }
-        else if (attachmentType == AttachmentType.FILE && getAttachmentUnit() != null) {
-            // move file if necessary (id at this point will be null, so placeholder will be inserted)
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getAttachmentUnitFilePath() + getAttachmentUnit().getId() + File.separator,
-                    getAttachmentUnit().getId(), true);
-        }
+        handleFileChange();
     }
 
     /**
@@ -129,15 +121,19 @@ public class Attachment extends DomainObject implements Serializable {
      */
     @PreUpdate
     public void onUpdate() {
+        handleFileChange();
+    }
+
+    private void handleFileChange() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // move file and delete old file if necessary
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + File.separator,
-                    getLecture().getId(), true);
+            var targetFolder = Paths.get(FilePathService.getLectureAttachmentFilePath(), getLecture().getId().toString()).toString();
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, targetFolder, getLecture().getId(), true);
         }
         else if (attachmentType == AttachmentType.FILE && getAttachmentUnit() != null) {
             // move file and delete old file if necessary
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getAttachmentUnitFilePath() + getAttachmentUnit().getId() + File.separator,
-                    getAttachmentUnit().getId(), true);
+            var targetFolder = Paths.get(FilePathService.getAttachmentUnitFilePath(), getAttachmentUnit().getId().toString()).toString();
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, targetFolder, getAttachmentUnit().getId(), true);
         }
     }
 
@@ -149,13 +145,13 @@ public class Attachment extends DomainObject implements Serializable {
     public void onDelete() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // delete old file if necessary
-            fileService.manageFilesForUpdatedFilePath(prevLink, null, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + File.separator, getLecture().getId(),
-                    true);
+            var targetFolder = Paths.get(FilePathService.getLectureAttachmentFilePath(), getLecture().getId().toString()).toString();
+            fileService.manageFilesForUpdatedFilePath(prevLink, null, targetFolder, getLecture().getId(), true);
         }
         else if (attachmentType == AttachmentType.FILE && getAttachmentUnit() != null) {
             // delete old file if necessary
-            fileService.manageFilesForUpdatedFilePath(prevLink, null, FilePathService.getAttachmentUnitFilePath() + getAttachmentUnit().getId() + File.separator,
-                    getAttachmentUnit().getId(), true);
+            var targetFolder = Paths.get(FilePathService.getAttachmentUnitFilePath(), getAttachmentUnit().getId().toString()).toString();
+            fileService.manageFilesForUpdatedFilePath(prevLink, null, targetFolder, getAttachmentUnit().getId(), true);
         }
     }
 

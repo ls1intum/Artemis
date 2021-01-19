@@ -17,7 +17,7 @@ export function submitRandomTextAnswerExam(artemis, exercise, submissionId) {
         for (let [key, value] of Object.entries(res[0].headers)) {
             console.log(`${key}: ${value}`);
         }
-        fail('ERROR: Could not submit text (Exam) via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
+        fail('FAILTEST: Could not submit text (Exam) via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
     return answer;
 }

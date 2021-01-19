@@ -9,61 +9,61 @@ public class CompassConfiguration {
      * Similarity related parameters
      */
     // Amount that is subtracted from the similarity of two UML elements/diagrams for every missing element
-    public final static double MISSING_ELEMENT_PENALTY = 0.05;
+    public static final double MISSING_ELEMENT_PENALTY = 0.05;
 
     // Weight of the relationship type when calculating the similarity of two UML relationships
-    public final static double RELATION_TYPE_WEIGHT = 0.3;
+    public static final double RELATION_TYPE_WEIGHT = 0.3;
 
     // Weight of the source and destination elements when calculating the similarity of two UML relationships (e.g. in class diagrams)
-    public final static double RELATION_ELEMENT_WEIGHT = 0.25;
+    public static final double RELATION_ELEMENT_WEIGHT = 0.25;
 
     // Weight of the source and destination elements when calculating the similarity of two UML component relationships
-    public final static double COMPONENT_RELATION_ELEMENT_WEIGHT = 0.35;
+    public static final double COMPONENT_RELATION_ELEMENT_WEIGHT = 0.35;
 
     // Weight of the source and destination elements when calculating the similarity of two UML use case associations
-    public final static double USE_CASE_ASSOCIATION_ELEMENT_WEIGHT = 0.3;
+    public static final double USE_CASE_ASSOCIATION_ELEMENT_WEIGHT = 0.3;
 
     // Weight of the multiplicity when calculating the similarity of two UML relationships
-    public final static double RELATION_MULTIPLICITY_WEIGHT = 0.05;
+    public static final double RELATION_MULTIPLICITY_WEIGHT = 0.05;
 
     // Weight of the roles when calculating the similarity of two UML relationships
-    public final static double RELATION_ROLE_WEIGHT = 0.05;
+    public static final double RELATION_ROLE_WEIGHT = 0.05;
 
     // Weight of the class type when calculating the similarity of two UML classes
-    public final static double CLASS_TYPE_WEIGHT = 0.3;
+    public static final double CLASS_TYPE_WEIGHT = 0.3;
 
     // Weight of the class name when calculating the similarity of two UML classes
-    public final static double CLASS_NAME_WEIGHT = 0.7;
+    public static final double CLASS_NAME_WEIGHT = 0.7;
 
-    public final static double USE_CASE_ASSOCIATION_NAME_WEIGHT = 0.1;
+    public static final double USE_CASE_ASSOCIATION_NAME_WEIGHT = 0.1;
 
-    public final static double NODE_NAME_WEIGHT = 0.5;
+    public static final double NODE_NAME_WEIGHT = 0.5;
 
-    public final static double NODE_STEREOTYPE_WEIGHT = 0.2;
+    public static final double NODE_STEREOTYPE_WEIGHT = 0.2;
 
-    public final static double NODE_PARENT_WEIGHT = 0.3;
+    public static final double NODE_PARENT_WEIGHT = 0.3;
 
-    public final static double COMPONENT_NAME_WEIGHT = 0.6;
+    public static final double COMPONENT_NAME_WEIGHT = 0.6;
 
-    public final static double COMPONENT_PARENT_WEIGHT = 0.4;
+    public static final double COMPONENT_PARENT_WEIGHT = 0.4;
 
     // Weight of the name similarity of their attributes when calculating the similarity of two UML classes
-    public final static double ATTRIBUTE_NAME_WEIGHT = 0.7;
+    public static final double ATTRIBUTE_NAME_WEIGHT = 0.7;
 
     // Weight of the type similarity of their attributes when calculating the similarity of two UML classes
-    public final static double ATTRIBUTE_TYPE_WEIGHT = 0.3;
+    public static final double ATTRIBUTE_TYPE_WEIGHT = 0.3;
 
     // Threshold for the similarity of child elements (attributes/methods in UML classes, classes and relationships in UML diagrams) when calculation the similarity of two UML
     // classes/diagrams. If the similarity for specific child elements is smaller than the threshold, the elements will not be considered similar at all.
-    public final static double NO_MATCH_THRESHOLD = 0.1;
+    public static final double NO_MATCH_THRESHOLD = 0.1;
 
     // Threshold used for building similarity sets. If the similarity for two UML elements is smaller than this threshold, they will not be put into the same similarity set.
     // TODO CZ: decrease equality threshold again in the future
-    public final static double EQUALITY_THRESHOLD = 0.95;
+    public static final double EQUALITY_THRESHOLD = 0.95;
 
     // Threshold used for re-assessing poorly assessed models. If the confidence for a model is smaller than this threshold the model is send to the client for re-assessment.
     /* CURRENTLY DISABLED */
-    public final static double POORLY_ASSESSED_MODEL_THRESHOLD = 0.8;
+    public static final double POORLY_ASSESSED_MODEL_THRESHOLD = 0.8;
 
     /*
      * Confidence and coverage parameters

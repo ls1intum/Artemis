@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -50,6 +51,8 @@ public class ExerciseService {
 
     private final QuizScheduleService quizScheduleService;
 
+    private final ResultService resultService;
+
     private final ExamRepository examRepository;
 
     private final StudentExamRepository studentExamRepository;
@@ -72,8 +75,9 @@ public class ExerciseService {
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
             AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService,
-            StudentExamRepository studentExamRepository, ExamRepository examRepository, StudentScoreService studentScoreService) {
+            StudentExamRepository studentExamRepository, ExamRepository examRepository, StudentScoreService studentScoreService, ResultService resultService) {
         this.exerciseRepository = exerciseRepository;
+        this.resultService = resultService;
         this.examRepository = examRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
@@ -309,7 +313,7 @@ public class ExerciseService {
         // make sure tutor participations are deleted before the exercise is deleted
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
 
-        if (exercise.hasExerciseGroup()) {
+        if (exercise.isExamExercise()) {
             Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(exercise.getExerciseGroup().getExam().getId());
             for (StudentExam studentExam : exam.getStudentExams()) {
                 if (studentExam.getExercises().contains(exercise)) {
@@ -386,17 +390,39 @@ public class ExerciseService {
         }
         else {
             numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
-            numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
-                    ComplaintType.COMPLAINT);
+            numberOfComplaintResponses = complaintResponseRepository
+                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT);
             numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
-            numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
-                    ComplaintType.MORE_FEEDBACK);
+            numberOfMoreFeedbackComplaintResponses = complaintResponseRepository
+                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.MORE_FEEDBACK);
         }
 
         exercise.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
         exercise.setNumberOfComplaints(numberOfComplaints);
         exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
         exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+    }
+
+    /**
+     * Calculates the number of assessments done for each correction round.
+     *
+     * @param exercise the exercise for which we want to calculate the # of assessments for each correction round
+     * @param examMode states whether or not the the function is called in the exam mode
+     * @param totalNumberOfAssessments so total number of assessments sum up over all correction rounds
+     * @return the number of assessments for each correction rounds
+     */
+    public DueDateStat[] calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(Exercise exercise, boolean examMode, DueDateStat totalNumberOfAssessments) {
+        DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
+        if (examMode) {
+            // set number of corrections specific to each correction round
+            int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+            numberOfAssessmentsOfCorrectionRounds = resultService.countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(exercise, numberOfCorrectionRounds);
+        }
+        else {
+            // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
+            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+        }
+        return numberOfAssessmentsOfCorrectionRounds;
     }
 
     /**
@@ -407,7 +433,7 @@ public class ExerciseService {
      * @throws BadRequestAlertException if course and exerciseGroup are set or course and exerciseGroup are not set
      */
     public void checkCourseAndExerciseGroupExclusivity(Exercise exercise, String entityName) throws BadRequestAlertException {
-        if (exercise.hasCourse() == exercise.hasExerciseGroup()) {
+        if (exercise.isCourseExercise() == exercise.isExamExercise()) {
             throw new BadRequestAlertException("An exercise must have either a course or an exerciseGroup", entityName, "eitherCourseOrExerciseGroupSet");
         }
     }
@@ -421,7 +447,7 @@ public class ExerciseService {
      * @throws BadRequestAlertException if updated exercise was converted
      */
     public void checkForConversionBetweenExamAndCourseExercise(Exercise updatedExercise, Exercise oldExercise, String entityName) throws BadRequestAlertException {
-        if (updatedExercise.hasExerciseGroup() != oldExercise.hasExerciseGroup() || updatedExercise.hasCourse() != oldExercise.hasCourse()) {
+        if (updatedExercise.isExamExercise() != oldExercise.isExamExercise() || updatedExercise.isCourseExercise() != oldExercise.isCourseExercise()) {
             throw new BadRequestAlertException("Course exercise cannot be converted to exam exercise and vice versa", entityName, "conversionBetweenExamAndCourseExercise");
         }
     }
@@ -537,7 +563,7 @@ public class ExerciseService {
             }
             Exercise exerciseFromDb = exerciseFromDbOptional.get();
 
-            if (!exerciseFromDb.hasCourse()) {
+            if (!exerciseFromDb.isCourseExercise()) {
                 throw new IllegalArgumentException("Exercise is not a course exercise");
             }
 

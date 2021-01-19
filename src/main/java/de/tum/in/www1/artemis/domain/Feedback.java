@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -32,7 +34,7 @@ public class Feedback extends DomainObject {
     @Column(name = "text")
     private String text;
 
-    @Size(max = 5000)   // this ensures that the detail_text can be stored, even for long feedback
+    @Size(max = FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS)   // this ensures that the detail_text can be stored, even for long feedback
     @Column(name = "detail_text")
     private String detailText;
 

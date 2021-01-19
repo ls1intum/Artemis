@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -385,16 +384,17 @@ public class ProgrammingExercise extends Exercise {
      * @return a URL object of the  templateRepositoryUrl or null if there is no templateRepositoryUrl
      */
     @JsonIgnore
-    public URL getTemplateRepositoryUrlAsUrl() {
-        String templateRepositoryUrl = getTemplateRepositoryUrl();
+    public VcsRepositoryUrl getVcsTemplateRepositoryUrl() {
+        var templateRepositoryUrl = getTemplateRepositoryUrl();
         if (templateRepositoryUrl == null || templateRepositoryUrl.isEmpty()) {
             return null;
         }
+
         try {
-            return new URL(templateRepositoryUrl);
+            return new VcsRepositoryUrl(templateRepositoryUrl);
         }
         catch (MalformedURLException e) {
-            log.warn("Cannot create URL for templateRepositoryUrl: " + templateRepositoryUrl + " due to the following error: " + e.getMessage());
+            e.printStackTrace();
         }
         return null;
     }
@@ -405,16 +405,17 @@ public class ProgrammingExercise extends Exercise {
      * @return a URL object of the solutionRepositoryUrl or null if there is no solutionRepositoryUrl
      */
     @JsonIgnore
-    public URL getSolutionRepositoryUrlAsUrl() {
-        String solutionRepositoryUrl = getSolutionRepositoryUrl();
+    public VcsRepositoryUrl getVcsSolutionRepositoryUrl() {
+        var solutionRepositoryUrl = getSolutionRepositoryUrl();
         if (solutionRepositoryUrl == null || solutionRepositoryUrl.isEmpty()) {
             return null;
         }
+
         try {
-            return new URL(solutionRepositoryUrl);
+            return new VcsRepositoryUrl(solutionRepositoryUrl);
         }
         catch (MalformedURLException e) {
-            log.warn("Cannot create URL for solutionRepositoryUrl: " + solutionRepositoryUrl + " due to the following error: " + e.getMessage());
+            e.printStackTrace();
         }
         return null;
     }
@@ -425,12 +426,13 @@ public class ProgrammingExercise extends Exercise {
      * @return a URL object of the testRepositoryURl or null if there is no testRepositoryUrl
      */
     @JsonIgnore
-    public URL getTestRepositoryUrlAsUrl() {
+    public VcsRepositoryUrl getVcsTestRepositoryUrl() {
         if (testRepositoryUrl == null || testRepositoryUrl.isEmpty()) {
             return null;
         }
+
         try {
-            return new URL(testRepositoryUrl);
+            return new VcsRepositoryUrl(testRepositoryUrl);
         }
         catch (MalformedURLException e) {
             log.warn("Cannot create URL for testRepositoryUrl: " + testRepositoryUrl + " due to the following error: " + e.getMessage());
@@ -445,11 +447,11 @@ public class ProgrammingExercise extends Exercise {
      * @return The repository url
      */
     @JsonIgnore
-    public URL getRepositoryURL(RepositoryType repositoryType) {
+    public VcsRepositoryUrl getRepositoryURL(RepositoryType repositoryType) {
         return switch (repositoryType) {
-            case TEMPLATE -> this.getTemplateRepositoryUrlAsUrl();
-            case SOLUTION -> this.getSolutionRepositoryUrlAsUrl();
-            case TESTS -> this.getTestRepositoryUrlAsUrl();
+            case TEMPLATE -> this.getVcsTemplateRepositoryUrl();
+            case SOLUTION -> this.getVcsSolutionRepositoryUrl();
+            case TESTS -> this.getVcsTestRepositoryUrl();
         };
     }
 
@@ -573,7 +575,7 @@ public class ProgrammingExercise extends Exercise {
     private boolean checkForRatedAndAssessedResult(Result result) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
         return Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null
-                && ((result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC));
+                && ((result.isManual() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC));
     }
 
     @Override

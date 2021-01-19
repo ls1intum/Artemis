@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -74,6 +76,9 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
+    StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
     UserRepository userRepo;
@@ -142,7 +147,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         // 1. Test that paths not containing the Constant.STUDENT_WORKING_DIRECTORY are not shortened
         String pathWithoutWorkingDir = "Path/Without/StudentWorkingDirectory/Constant";
 
-        var resultNotification1 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
+        var resultNotification1 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
+                ProgrammingLanguage.JAVA);
         for (var reports : resultNotification1.getBuild().getJobs().iterator().next().getStaticCodeAnalysisReports()) {
             for (var issue : reports.getIssues()) {
                 issue.setFilePath(pathWithoutWorkingDir);
@@ -157,7 +163,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         }
 
         // 2. Test that null or empty paths default to FeedbackService.DEFAULT_FILEPATH
-        var resultNotification2 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
+        var resultNotification2 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
+                ProgrammingLanguage.JAVA);
         var reports2 = resultNotification2.getBuild().getJobs().iterator().next().getStaticCodeAnalysisReports();
         for (int i = 0; i < reports2.size(); i++) {
             var report = reports2.get(i);
@@ -528,5 +535,95 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         var result = database.addResultToParticipation(null, null, participation);
         request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
                 HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAssessmentCountByCorrectionRound() throws Exception {
+        // exercise
+        TextExercise textExercise = new TextExercise();
+        textExerciseRepository.save(textExercise);
+
+        // participation
+        StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setExercise(textExercise);
+        studentParticipationRepository.save(studentParticipation);
+
+        // submission
+        TextSubmission textSubmission = new TextSubmission();
+        textSubmission.setParticipation(studentParticipation);
+        textSubmission.setSubmitted(true);
+        textSubmission.setText("abc");
+        textSubmission = submissionRepository.save(textSubmission);
+
+        // result 1
+        Result r1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, "text result string 1", "instructor1", new ArrayList<>());
+        r1.setRated(true);
+        r1 = database.addFeedbackToResults(r1);
+        r1.setSubmission(textSubmission);
+
+        // result 2
+        Result r2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, "text result string 2", "tutor1", new ArrayList<>());
+        r2.setRated(true);
+        r2 = database.addFeedbackToResults(r2);
+        r2.setSubmission(textSubmission);
+
+        textSubmission.addResult(r1);
+        textSubmission = submissionRepository.save(textSubmission);
+
+        textSubmission.addResult(r2);
+        textSubmission = submissionRepository.save(textSubmission);
+
+        long assessments = resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(textExercise.getId(), 0);
+        assertThat(assessments).isEqualTo(1);
+        assessments = resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(textExercise.getId(), 1);
+        assertThat(assessments).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAssessmentCountByCorrectionRoundForProgrammingExercise() throws Exception {
+        // exercise
+        Course course = database.createCourse();
+        ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
+        programmingExercise.setDueDate(null);
+        programmingExerciseRepository.save(programmingExercise);
+
+        // participation
+        ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
+        programmingExerciseStudentParticipation.setExercise(programmingExercise);
+        programmingExerciseStudentParticipationRepository.save(programmingExerciseStudentParticipation);
+
+        // submission
+        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
+        programmingSubmission.setParticipation(programmingExerciseStudentParticipation);
+        programmingSubmission.setSubmitted(true);
+        programmingSubmission.setBuildArtifact(true);
+        programmingSubmission = submissionRepository.save(programmingSubmission);
+
+        // result 1
+        Result r1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, "text result string 1", "instructor1",
+                new ArrayList<>());
+        r1.setRated(true);
+        r1 = database.addFeedbackToResults(r1);
+        r1.setSubmission(programmingSubmission);
+
+        // result 2
+        Result r2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, "text result string 2", "tutor1",
+                new ArrayList<>());
+        r2.setRated(true);
+        r2 = database.addFeedbackToResults(r2);
+        r2.setSubmission(programmingSubmission);
+
+        programmingSubmission.addResult(r1);
+        programmingSubmission = submissionRepository.save(programmingSubmission);
+
+        programmingSubmission.addResult(r2);
+        programmingSubmission = submissionRepository.save(programmingSubmission);
+
+        Long assessments = programmingExerciseRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(programmingExercise.getId(), 0);
+        assertThat(assessments).isEqualTo(1);
+        assessments = programmingExerciseRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(programmingExercise.getId(), 1);
+        assertThat(assessments).isEqualTo(1);
     }
 }

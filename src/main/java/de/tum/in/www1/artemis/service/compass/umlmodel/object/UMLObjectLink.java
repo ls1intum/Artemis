@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLObjectLink extends UMLElement {
 
-    public final static String UML_OBJECT_LINK_TYPE = "ObjectLink";
+    public static final String UML_OBJECT_LINK_TYPE = "ObjectLink";
 
     private final UMLObject source;
 

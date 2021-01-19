@@ -26,7 +26,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return optional submission
      */
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor" })
-    Optional<Submission> findWithEagerResultsById(Long submissionId);
+    Optional<Submission> findWithEagerResultsAndAssessorById(Long submissionId);
 
     @Query("select distinct submission from Submission submission left join fetch submission.results r left join fetch r.feedbacks where submission.exampleSubmission = true and submission.id = :#{#submissionId}")
     Optional<Submission> findExampleSubmissionByIdWithEagerResult(long submissionId);

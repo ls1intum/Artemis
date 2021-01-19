@@ -113,7 +113,7 @@ public class ExerciseResource {
         Exercise exercise = exerciseService.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
 
         // Exam exercise
-        if (exercise.hasExerciseGroup()) {
+        if (exercise.isExamExercise()) {
             Exam exam = exercise.getExerciseGroup().getExam();
             if (authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
                 // instructors and admins should always be able to see exam exercises
@@ -121,7 +121,7 @@ public class ExerciseResource {
             }
             else if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                 // tutors should only be able to see exam exercises when the exercise has finished
-                ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndiviudalExamEndDate(exam);
+                ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndividualExamEndDate(exam);
                 if (latestIndiviudalExamEndDate == null || latestIndiviudalExamEndDate.isAfter(ZonedDateTime.now())) {
                     // When there is no due date or the due date is in the future, we return forbidden here
                     return forbidden();
@@ -219,13 +219,13 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise, exercise.hasExerciseGroup());
+        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise, exercise.isExamExercise());
 
         return ResponseEntity.ok(stats);
     }
 
     /**
-     * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, numberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
+     * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, totalNumberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
      * stats for assessment dashboard and for instructor dashboard
      *
      * @param exercise - the exercise we are interested in
@@ -237,19 +237,23 @@ public class ExerciseResource {
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
         DueDateStat numberOfSubmissions;
-        DueDateStat numberOfAssessments;
+        DueDateStat totalNumberOfAssessments;
 
         if (exercise instanceof ProgrammingExercise) {
             numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId, examMode), 0L);
-            numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exerciseId, examMode), 0L);
+            totalNumberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exerciseId, examMode), 0L);
         }
         else {
             numberOfSubmissions = submissionService.countSubmissionsForExercise(exerciseId, examMode);
-            numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId, examMode);
+            totalNumberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId, examMode);
         }
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
-        stats.setNumberOfAssessments(numberOfAssessments);
+        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
+
+        final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = exerciseService.calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
+                totalNumberOfAssessments);
+        stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
         final DueDateStat numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);
@@ -266,13 +270,13 @@ public class ExerciseResource {
         }
         stats.setNumberOfComplaints(numberOfComplaints);
 
-        long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exerciseId,
-                ComplaintType.COMPLAINT);
+        long numberOfComplaintResponses = complaintResponseRepository
+                .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exerciseId, ComplaintType.COMPLAINT);
 
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
-        long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exerciseId,
-                ComplaintType.MORE_FEEDBACK);
+        long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository
+                .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exerciseId, ComplaintType.MORE_FEEDBACK);
 
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
 
@@ -298,7 +302,7 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise, exercise.hasExerciseGroup());
+        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise, exercise.isExamExercise());
         long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfOpenComplaints);
 
@@ -364,7 +368,7 @@ public class ExerciseResource {
 
         // TODO: Create alternative route so that instructors and admins can access the exercise details
         // The users are not allowed to access the exercise details over this route if the exercise belongs to an exam
-        if (exercise.hasExerciseGroup()) {
+        if (exercise.isExamExercise()) {
             return forbidden();
         }
 

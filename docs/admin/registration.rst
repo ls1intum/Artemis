@@ -1,8 +1,7 @@
 User Registration
 =================
 
-Artemis supports user registration based on the Jhipster template.
-User registration has to be enabled in one ``application-*.yml`` file and can be customized.
+Artemis supports user registration. It has to be enabled in one ``application-*.yml`` file and can be customized.
 
 Example:
 
@@ -29,13 +28,16 @@ Example:
                     enable: true
                 ssl:
                     trust: <host>
-
     jhipster:
         mail:
             base-url: https://artemis.ase.in.tum.de
             from: artemis.in@tum.de
+    management:
+        health:
+            mail:
+                enabled: true
 
-Users can register a new account on the start page based on ``allowed-email-pattern``.
+Users can register a new account on the start page based on the regex defined in ``allowed-email-pattern``.
 If no email pattern is defined, any email address can be used.
 Upon registration, users receive an email to activate their account.
 

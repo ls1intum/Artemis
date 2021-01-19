@@ -40,6 +40,24 @@
         }
     }
 
+    .plagiarism-info-tab {
+        border-bottom: 1px solid $body-bg;
+        flex-shrink: 0;
+        cursor: pointer;
+        padding: 0.75rem;
+        display: flex;
+        justify-content: space-between;
+
+        &.selected {
+            background-color: transparentize(lightskyblue, 0.5);
+            font-weight: bold;
+        }
+
+        &:hover {
+            background-color: lightskyblue;
+        }
+    }
+
     .plagiarism-list {
         flex-grow: 1;
         overflow-y: auto;
@@ -81,6 +99,14 @@
                 background-color: lightskyblue;
             }
         }
+    }
+
+    .plagiarism-empty {
+        align-items: center;
+        display: flex;
+        flex-grow: 1;
+        justify-content: center;
+        opacity: 0.5;
     }
 
     .plagiarism-status-indicator {

@@ -1,10 +1,15 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
-import { ComplaintService } from 'app/complaints/complaint.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { finalize } from 'rxjs/operators';
+import { Exercise } from 'app/entities/exercise.model';
+import { ActivatedRoute, Router } from '@angular/router';
+import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
+import { Location } from '@angular/common';
+import { Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
@@ -12,9 +17,12 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
     providers: [],
 })
 export class ComplaintsForTutorComponent implements OnInit {
-    @Input() zeroIndent = true;
     @Input() complaint: Complaint;
-    @Input() isAllowedToRespond: boolean; // indicates if the tutor is allowed to respond
+    @Input() isTestRun = false;
+    @Input() isAssessor = false;
+    @Input() zeroIndent = true;
+    @Input() exercise: Exercise | undefined;
+    @Input() submission: Submission | undefined;
     // Indicates that the assessment should be updated after a complaint. Includes the corresponding complaint
     // that should be sent to the server along with the assessment update.
     @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
@@ -22,19 +30,110 @@ export class ComplaintsForTutorComponent implements OnInit {
     handled: boolean;
     complaintResponse: ComplaintResponse = new ComplaintResponse();
     ComplaintType = ComplaintType;
+    isLoading = false;
+    showLockDuration = false;
+    showRemoveLockButton = false;
+    isLockedForLoggedInUser = false;
 
-    constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
+    constructor(
+        private jhiAlertService: JhiAlertService,
+        private complaintResponseService: ComplaintResponseService,
+        private activatedRoute: ActivatedRoute,
+        private router: Router,
+        private location: Location,
+    ) {}
 
     ngOnInit(): void {
-        this.complaintText = this.complaint.complaintText;
-        this.handled = this.complaint.accepted !== undefined;
-        if (this.handled) {
-            this.complaintResponseService.findByComplaintId(this.complaint.id!).subscribe((complaintResponse) => {
-                if (complaintResponse.body) {
-                    this.complaintResponse = complaintResponse.body;
+        if (this.complaint) {
+            this.complaintText = this.complaint.complaintText;
+            this.handled = this.complaint.accepted !== undefined;
+
+            if (this.handled) {
+                this.complaintResponse = this.complaint.complaintResponse!;
+                this.showRemoveLockButton = false;
+                this.showLockDuration = false;
+            } else {
+                if (this.isAllowedToRespond) {
+                    if (this.complaint.complaintResponse) {
+                        this.refreshLock();
+                    } else {
+                        this.createLock();
+                    }
+                } else {
+                    this.jhiAlertService.error('artemisApp.locks.notAllowedToRespond');
                 }
-            });
+            }
         }
+    }
+
+    private createLock() {
+        this.isLoading = true;
+        this.complaintResponseService
+            .createLock(this.complaint.id!)
+            .pipe(
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe(
+                (response) => {
+                    this.complaintResponse = response.body!;
+                    this.complaint = this.complaintResponse.complaint!;
+                    this.showRemoveLockButton = true;
+                    this.showLockDuration = true;
+                    this.jhiAlertService.success('artemisApp.locks.acquired');
+                },
+                (err: HttpErrorResponse) => {
+                    this.onError(err);
+                },
+            );
+    }
+
+    private refreshLock() {
+        this.complaintResponse = this.complaint.complaintResponse!;
+        this.showLockDuration = true;
+        // a lock exists we have to check if it affects the currently logged in user
+        this.isLockedForLoggedInUser = this.complaintResponseService.isComplaintResponseLockedForLoggedInUser(this.complaintResponse, this.exercise!);
+        if (!this.isLockedForLoggedInUser) {
+            // update the lock
+            this.isLoading = true;
+            this.complaintResponseService
+                .refreshLock(this.complaint.id!)
+                .pipe(
+                    finalize(() => {
+                        this.isLoading = false;
+                    }),
+                )
+                .subscribe(
+                    (response) => {
+                        this.complaintResponse = response.body!;
+                        this.complaint = this.complaintResponse.complaint!;
+                        this.showRemoveLockButton = true;
+                        this.jhiAlertService.success('artemisApp.locks.acquired');
+                    },
+                    (err: HttpErrorResponse) => {
+                        this.onError(err);
+                    },
+                );
+        } else {
+            this.showRemoveLockButton = false;
+        }
+    }
+
+    navigateBack() {
+        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission, this.isTestRun);
+    }
+
+    removeLock() {
+        this.complaintResponseService.removeLock(this.complaint.id!).subscribe(
+            () => {
+                this.jhiAlertService.success('artemisApp.locks.lockRemoved');
+                this.navigateBack();
+            },
+            (err: HttpErrorResponse) => {
+                this.onError(err);
+            },
+        );
     }
 
     respondToComplaint(acceptComplaint: boolean): void {
@@ -45,16 +144,34 @@ export class ComplaintsForTutorComponent implements OnInit {
         if (!this.isAllowedToRespond) {
             return;
         }
-        this.complaint.accepted = acceptComplaint;
+
         this.complaintResponse.complaint = this.complaint;
+        this.complaintResponse.complaint.complaintResponse = undefined; // breaking circular structure
+        this.complaintResponse.complaint!.accepted = acceptComplaint;
+
         if (acceptComplaint && this.complaint.complaintType === ComplaintType.COMPLAINT) {
             // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
             // The complaint is sent along with the assessment update by the parent to avoid additional requests.
             this.updateAssessmentAfterComplaint.emit(this.complaintResponse);
             this.handled = true;
+            this.showLockDuration = false;
+            this.showRemoveLockButton = false;
         } else {
-            // If the complaint was rejected or it was a more feedback request, just the complaint response is created.
-            this.complaintResponseService.create(this.complaintResponse).subscribe(
+            // If the complaint was rejected or it was a more feedback request, just the complaint response is updated.
+            this.resolveComplaint();
+        }
+    }
+
+    private resolveComplaint() {
+        this.isLoading = true;
+        this.complaintResponseService
+            .resolveComplaint(this.complaintResponse)
+            .pipe(
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe(
                 (response) => {
                     this.handled = true;
                     // eslint-disable-next-line chai-friendly/no-unused-expressions
@@ -62,15 +179,41 @@ export class ComplaintsForTutorComponent implements OnInit {
                         ? this.jhiAlertService.success('artemisApp.moreFeedbackResponse.created')
                         : this.jhiAlertService.success('artemisApp.complaintResponse.created');
                     this.complaintResponse = response.body!;
+                    this.complaint = this.complaintResponse.complaint!;
+                    this.isLockedForLoggedInUser = false;
+                    this.showLockDuration = false;
+                    this.showRemoveLockButton = false;
                 },
                 (err: HttpErrorResponse) => {
-                    this.onError(err.message);
+                    this.onError(err);
                 },
             );
+    }
+
+    onError(httpErrorResponse: HttpErrorResponse) {
+        const error = httpErrorResponse.error;
+        if (error && error.errorKey && error.errorKey === 'complaintLock') {
+            this.jhiAlertService.error(error.message, error.params);
+        } else {
+            this.jhiAlertService.error('error.unexpectedError', {
+                error: httpErrorResponse.message,
+            });
         }
     }
 
-    private onError(error: string): void {
-        this.jhiAlertService.error(error);
+    /**
+     * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests himself
+     * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor himself
+     * For exam test runs, the original assessor is allowed to respond to complaints.
+     */
+    get isAllowedToRespond(): boolean {
+        if (this.complaint!.team) {
+            return this.isAssessor;
+        } else {
+            if (this.isTestRun) {
+                return this.isAssessor;
+            }
+            return this.complaint!.complaintType === ComplaintType.COMPLAINT ? !this.isAssessor : this.isAssessor;
+        }
     }
 }

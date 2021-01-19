@@ -5,6 +5,7 @@
             "day": "Day",
             "week": "Week",
             "month": "Month",
+            "quarter": "Quarter",
             "year": "Year"
         },
         "title": "User statistics",
@@ -20,6 +21,7 @@
         "created_results": "Created results",
         "created_feedbacks": "Created feedback"
     },
+    "calendar_week": "CW",
     "weekdays": {
         "monday": "Monday",
         "tuesday": "Tuesday",

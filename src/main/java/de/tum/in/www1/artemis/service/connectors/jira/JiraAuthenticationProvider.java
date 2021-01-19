@@ -66,10 +66,14 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     private final RestTemplate restTemplate;
 
+    private final RestTemplate shortTimeoutRestTemplate;
+
     private final Optional<LdapUserService> ldapUserService;
 
-    public JiraAuthenticationProvider(UserRepository userRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate, Optional<LdapUserService> ldapUserService) {
+    public JiraAuthenticationProvider(UserRepository userRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate,
+            @Qualifier("shortTimeoutJiraRestTemplate") RestTemplate shortTimeoutRestTemplate, Optional<LdapUserService> ldapUserService) {
         super(userRepository);
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.restTemplate = restTemplate;
         this.ldapUserService = ldapUserService;
     }
@@ -80,7 +84,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     public ConnectorHealth health() {
         ConnectorHealth health;
         try {
-            final var status = restTemplate.getForObject(jiraUrl + "/status", JsonNode.class);
+            final var status = shortTimeoutRestTemplate.getForObject(jiraUrl + "/status", JsonNode.class);
             health = status.get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
         }
         catch (Exception emAll) {

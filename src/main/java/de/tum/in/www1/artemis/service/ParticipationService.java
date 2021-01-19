@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
-import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -296,7 +295,7 @@ public class ParticipationService {
             }
             submission.setSubmissionDate(ZonedDateTime.now());
             // We add a result for test runs with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
-            submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
+            submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).get();
             if (submission.getLatestResult() == null) {
                 Result result = new Result();
                 result.setParticipation(submission.getParticipation());
@@ -355,7 +354,7 @@ public class ParticipationService {
             if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
                 // restrict access for the student
                 try {
-                    versionControlService.get().setRepositoryPermissionsToReadOnly(programmingParticipation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(),
+                    versionControlService.get().setRepositoryPermissionsToReadOnly(programmingParticipation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(),
                             programmingParticipation.getStudents());
                 }
                 catch (VersionControlException e) {
@@ -518,12 +517,12 @@ public class ParticipationService {
 
     private ProgrammingExerciseStudentParticipation forkRepository(ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository url is missing for some reason
-        if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getRepositoryUrlAsUrl() == null) {
+        if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUrl() == null) {
             final var programmingExercise = participation.getProgrammingExercise();
             final var projectKey = programmingExercise.getProjectKey();
             final var participantIdentifier = participation.getParticipantIdentifier();
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
-            final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
+            final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
             var newRepoUrl = versionControlService.get().forkRepository(projectKey, templateRepoName, projectKey, participantIdentifier);
             // add the userInfo part to the repoURL only if the participation belongs to a single student (and not a team of students)
@@ -544,7 +543,7 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             // do not allow the student to access the repository if this is an exam exercise that has not started yet
             boolean allowAccess = !isExamExercise(exercise) || ZonedDateTime.now().isAfter(getIndividualReleaseDate(exercise));
-            versionControlService.get().configureRepository(exercise, participation.getRepositoryUrlAsUrl(), participation.getStudents(), allowAccess);
+            versionControlService.get().configureRepository(exercise, participation.getVcsRepositoryUrl(), participation.getStudents(), allowAccess);
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);
         }
@@ -602,7 +601,7 @@ public class ParticipationService {
     }
 
     private boolean isExamExercise(Exercise exercise) {
-        return !exercise.hasCourse();
+        return !exercise.isCourseExercise();
     }
 
     /**
@@ -1005,10 +1004,11 @@ public class ParticipationService {
      * No manual result means that no user has started an assessment for the corresponding submission yet.
      *
      * @param exerciseId the id of the exercise the participations should belong to
+     * @param correctionRound - the correction round we want our submission to have results for
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
-    public List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation(exerciseId);
+    public List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(Long exerciseId, int correctionRound) {
+        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation(exerciseId, correctionRound);
     }
 
     /**
@@ -1143,7 +1143,7 @@ public class ParticipationService {
     public void cleanupRepository(ProgrammingExerciseStudentParticipation participation) {
         // ignore participations without repository URL
         if (participation.getRepositoryUrl() != null) {
-            versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
+            versionControlService.get().deleteRepository(participation.getVcsRepositoryUrl());
             participation.setRepositoryUrl(null);
             participation.setInitializationState(InitializationState.FINISHED);
             save(participation);
@@ -1164,7 +1164,7 @@ public class ParticipationService {
 
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
             ProgrammingExerciseStudentParticipation programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) participation;
-            URL repositoryUrl = programmingExerciseParticipation.getRepositoryUrlAsUrl();
+            var repositoryUrl = programmingExerciseParticipation.getVcsRepositoryUrl();
             String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
 
             if (deleteBuildPlan && buildPlanId != null) {
@@ -1181,16 +1181,7 @@ public class ParticipationService {
             }
 
             // delete local repository cache
-            try {
-                if (repositoryUrl != null && gitService.repositoryAlreadyExists(repositoryUrl)) {
-                    // We need to close the possibly still open repository otherwise an IOException will be thrown on Windows
-                    Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, false);
-                    gitService.deleteLocalRepository(repo);
-                }
-            }
-            catch (Exception ex) {
-                log.error("Error while deleting local repository", ex);
-            }
+            gitService.deleteLocalRepository(repositoryUrl);
         }
 
         complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);
@@ -1291,6 +1282,16 @@ public class ParticipationService {
      */
     public StudentParticipation findOneWithEagerResultsAndCourse(Long participationId) {
         return studentParticipationRepository.findOneByIdWithEagerResultsAndExerciseAndEagerCourse(participationId);
+    }
+
+    /**
+     * Get one participation with eager course, eager submissions and eager results.
+     *
+     * @param paricipationId
+     * @return participation with eager course and submission
+     */
+    public StudentParticipation findOneWithEagerResultsAndCourseAndSubmissionAndResults(Long paricipationId) {
+        return studentParticipationRepository.findOneByIdWithEagerResultsAndExerciseAndEagerCourseAndEagerSubmissionAndResults(paricipationId);
     }
 
     /**

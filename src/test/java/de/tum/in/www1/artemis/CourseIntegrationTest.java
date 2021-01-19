@@ -565,8 +565,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
             for (Exercise exercise : course.getExercises()) {
-                assertThat(exercise.getNumberOfAssessments().getInTime()).as("Number of in-time assessments is correct").isZero();
-                assertThat(exercise.getNumberOfAssessments().getLate()).as("Number of late assessments is correct").isZero();
+                assertThat(exercise.getTotalNumberOfAssessments().getInTime()).as("Number of in-time assessments is correct").isZero();
+                assertThat(exercise.getTotalNumberOfAssessments().getLate()).as("Number of late assessments is correct").isZero();
                 assertThat(exercise.getTutorParticipations().size()).as("Tutor participation was created").isEqualTo(1);
                 // Mock data contains exactly two submissions for the modeling exercise
                 if (exercise instanceof ModelingExercise) {
@@ -595,8 +595,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             long numberOfInTimeSubmissions = course.getId().equals(testCourses.get(0).getId()) ? 3 : 0; // course 1 has 3 submissions, course 2 has 0 submissions
             assertThat(stats.getNumberOfSubmissions().getInTime()).as("Number of in-time submissions is correct").isEqualTo(numberOfInTimeSubmissions);
             assertThat(stats.getNumberOfSubmissions().getLate()).as("Number of latte submissions is correct").isEqualTo(0);
-            assertThat(stats.getNumberOfAssessments().getInTime()).as("Number of in-time assessments is correct").isEqualTo(0);
-            assertThat(stats.getNumberOfAssessments().getLate()).as("Number of late assessments is correct").isEqualTo(0);
+            assertThat(stats.getTotalNumberOfAssessments().getInTime()).as("Number of in-time assessments is correct").isEqualTo(0);
+            assertThat(stats.getTotalNumberOfAssessments().getLate()).as("Number of late assessments is correct").isEqualTo(0);
             assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
 
             StatsForInstructorDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard",
@@ -608,7 +608,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             else {
                 assertThat(stats2).as("Stats are available for instructor").isNotNull();
                 assertThat(stats2.getNumberOfSubmissions()).as("Submission stats for instructor are correct.").usingRecursiveComparison().isEqualTo(stats.getNumberOfSubmissions());
-                assertThat(stats2.getNumberOfAssessments()).as("Assessment stats for instructor are correct.").usingRecursiveComparison().isEqualTo(stats.getNumberOfAssessments());
+                assertThat(stats2.getTotalNumberOfAssessments()).as("Assessment stats for instructor are correct.").usingRecursiveComparison()
+                        .isEqualTo(stats.getTotalNumberOfAssessments());
             }
         }
     }

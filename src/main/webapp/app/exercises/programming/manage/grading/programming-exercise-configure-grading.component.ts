@@ -493,6 +493,71 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         return this.gradingStatistics?.categoryIssuesMap ? this.gradingStatistics.categoryIssuesMap[categoryName] : undefined;
     }
 
+    tableSorts = { testCases: [{ prop: 'testName', dir: 'asc' }], codeAnalysis: [{ prop: 'name', dir: 'asc' }] };
+    onSort(table: 'testCases' | 'codeAnalysis', config: any) {
+        this.tableSorts[table] = config.sorts;
+    }
+
+    /**
+     * Returns the correct sort-icon for the specified property
+     * @param table The table of the property
+     * @param prop The sorted property
+     */
+    iconForSortPropField(table: 'testCases' | 'codeAnalysis', prop: string) {
+        const propSort = this.tableSorts[table].find((e) => e.prop === prop);
+        if (!propSort) {
+            return 'sort';
+        }
+        return propSort.dir === 'asc' ? 'sort-up' : 'sort-down';
+    }
+
+    /**
+     * Comparator function for the passed percentage of test-cases.
+     */
+    comparePassedPercent = (_: any, __: any, rowA: ProgrammingExerciseTestCase, rowB: ProgrammingExerciseTestCase) => {
+        const statsA = this.getTestCaseStats(rowA.testName!);
+        const statsB = this.getTestCaseStats(rowB.testName!);
+        const valA = (statsA?.numPassed ?? 0) - (statsA?.numFailed ?? 0);
+        const valB = (statsB?.numPassed ?? 0) - (statsB?.numFailed ?? 0);
+        return valA - valB;
+    };
+
+    valForState = (s: StaticCodeAnalysisCategoryState) => (s === StaticCodeAnalysisCategoryState.Inactive ? 0 : s === StaticCodeAnalysisCategoryState.Feedback ? 1 : 2);
+
+    /**
+     * Comparator function for the state of a sca category.
+     */
+    compareCategoryState = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
+        return this.valForState(rowA.state) - this.valForState(rowB.state);
+    };
+
+    /**
+     * Comparator function for the penalty of a sca category.
+     */
+    comparePenalty = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
+        const valForPenalty = (c: StaticCodeAnalysisCategory) => this.valForState(c.state) + (c.state === StaticCodeAnalysisCategoryState.Graded ? c.penalty : 0);
+        return valForPenalty(rowA) - valForPenalty(rowB);
+    };
+
+    /**
+     * Comparator function for the max-penalty of a sca category.
+     */
+    compareMaxPenalty = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
+        const valForMaxPenalty = (c: StaticCodeAnalysisCategory) => this.valForState(c.state) + (c.state === StaticCodeAnalysisCategoryState.Graded ? c.maxPenalty : 0);
+        return valForMaxPenalty(rowA) - valForMaxPenalty(rowB);
+    };
+
+    /**
+     * Comparator function for the detected issues of a sca category.
+     */
+    compareDetectedIssues = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
+        const issuesA = this.getIssuesMap(rowA.name);
+        const issuesB = this.getIssuesMap(rowB.name);
+        const totalIssuesA = Object.values(issuesA ?? {}).reduce((sum, n) => sum + n, 0);
+        const totalIssuesB = Object.values(issuesB ?? {}).reduce((sum, n) => sum + n, 0);
+        return totalIssuesA !== totalIssuesB ? totalIssuesA - totalIssuesB : this.compareCategoryState(_, __, rowA, rowB);
+    };
+
     /**
      * Load the static code analysis categories
      * @private

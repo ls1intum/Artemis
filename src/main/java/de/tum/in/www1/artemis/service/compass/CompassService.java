@@ -73,7 +73,8 @@ public class CompassService {
     public boolean isSupported(ModelingExercise modelingExercise) {
 
         // only use compass for course exercises, in exam exercises the additional delay is too much so it is currently deactivated
-        if (modelingExercise.hasExerciseGroup()) {
+        // TODO: we should support compass also for the exam mode
+        if (modelingExercise.isExamExercise()) {
             return false;
         }
 
@@ -234,7 +235,7 @@ public class CompassService {
      * @param exerciseId the exercise the given submission belongs to
      * @return the automatic result for the submission with the given id
      */
-    public Result getAutomaticResultForSubmission(long submissionId, long exerciseId) {
+    public Result getResultWithFeedbackSuggestionsForSubmission(long submissionId, long exerciseId) {
         if (!automaticResultMaps.containsKey(exerciseId)) {
             return null;
         }

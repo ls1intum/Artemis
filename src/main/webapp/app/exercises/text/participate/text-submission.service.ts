@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
@@ -40,29 +40,47 @@ export class TextSubmissionService {
             .pipe(map((res: HttpResponse<TextSubmission>) => res.body!));
     }
 
-    getTextSubmissionsForExercise(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }): Observable<HttpResponse<TextSubmission[]>> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<TextSubmission[]>(`api/exercises/${exerciseId}/text-submissions`, {
-                params: options,
-                observe: 'response',
-            })
+    getTextSubmissionsForExerciseByCorrectionRound(
+        exerciseId: number,
+        req: { submittedOnly?: boolean; assessedByTutor?: boolean },
+        correctionRound = 0,
+    ): Observable<HttpResponse<TextSubmission[]>> {
+        const url = `api/exercises/${exerciseId}/text-submissions`;
+        let params = createRequestOption(req);
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
+        }
+
+        const returvalue = this.http
+            .get<TextSubmission[]>(url, { observe: 'response', params })
             .pipe(map((res: HttpResponse<TextSubmission[]>) => TextSubmissionService.convertArrayResponse(res)));
+        return returvalue;
     }
 
-    // option = 'head': Do not optimize assessment order. Only used to check if assessments available.
-    getTextSubmissionForExerciseWithoutAssessment(exerciseId: number, option?: 'lock' | 'head'): Observable<TextSubmission> {
-        let url = `api/exercises/${exerciseId}/text-submission-without-assessment`;
-        if (option) {
-            url += `?${option}=true`;
+    /**
+     *
+     * @param exerciseId id of the exerciser
+     * @param option 'head': Do not optimize assessment order. Only used to check if assessments available.
+     * @param correctionRound: The correction round for which we want to get a new assessment
+     */
+    getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, option?: 'lock' | 'head', correctionRound = 0): Observable<TextSubmission> {
+        const url = `api/exercises/${exerciseId}/text-submission-without-assessment`;
+        let params = new HttpParams();
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
         }
+        if (option) {
+            params = params.set(option, 'true');
+        }
+
         return this.http
-            .get<TextSubmission>(url, { observe: 'response' })
+            .get<TextSubmission>(url, { observe: 'response', params })
             .pipe(
                 map((response) => {
                     const submission = response.body!;
+                    setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     submission.participation!.submissions = [submission];
-                    submission.participation!.results = [getLatestSubmissionResult(submission)!];
+                    submission.participation!.results = [submission.latestResult!];
                     submission.atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
                     return submission;
                 }),

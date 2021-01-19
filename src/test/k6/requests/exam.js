@@ -40,7 +40,7 @@ export function newExam(artemis, course) {
         for (let [key, value] of Object.entries(res[0].headers)) {
             console.log(`${key}: ${value}`);
         }
-        fail('ERROR: Could not create exam (status: ' + res[0].status + ')! response: ' + res[0].body);
+        fail('FAILTEST: Could not create exam (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
     console.log('SUCCESS: Generated new exam');
 
@@ -60,7 +60,7 @@ export function newExerciseGroup(artemis, exam, mandatory = true) {
         for (let [key, value] of Object.entries(res[0].headers)) {
             console.log(`${key}: ${value}`);
         }
-        fail('ERROR: Could not create exercise group (status: ' + res[0].status + ')! response: ' + res[0].body);
+        fail('FAILTEST: Could not create exercise group (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
     console.log('SUCCESS: Generated new exercise group');
 
@@ -82,7 +82,7 @@ export function newTextExercise(artemis, exerciseGroup) {
         for (let [key, value] of Object.entries(res[0].headers)) {
             console.log(`${key}: ${value}`);
         }
-        fail('ERROR: Could not create text exercise (status: ' + res[0].status + ')! response: ' + res[0].body);
+        fail('FAILTEST: Could not create text exercise (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
     console.log('SUCCESS: Generated new text exercise');
 

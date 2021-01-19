@@ -69,7 +69,7 @@ public class ExerciseHintResource {
         Exercise exercise = exerciseService.findOne(exerciseHint.getExercise().getId());
 
         // Hints for exam exercises are not supported at the moment
-        if (exercise.hasExerciseGroup()) {
+        if (exercise.isExamExercise()) {
             return forbidden();
         }
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -105,7 +105,7 @@ public class ExerciseHintResource {
         Exercise exercise = exerciseService.findOne(exerciseHint.getExercise().getId());
 
         // Hints for exam exercises are not supported at the moment
-        if (exercise.hasExerciseGroup()) {
+        if (exercise.isExamExercise()) {
             return forbidden();
         }
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise) || !authCheckService.isAtLeastTeachingAssistantForExercise(hintBeforeSaving.get().getExercise())) {

@@ -1,14 +1,23 @@
 package de.tum.in.www1.artemis.domain;
 
-/**
- * Created by Josias Montag on 14.10.16.
- */
+import java.nio.file.Path;
+
 public class File extends java.io.File {
 
     private Repository repository;
 
     public File(java.io.File file, Repository repository) {
         super(file.getPath());
+        this.repository = repository;
+    }
+
+    public File(Path path, Repository repository) {
+        super(path.toString());
+        this.repository = repository;
+    }
+
+    public File(String path, Repository repository) {
+        super(path);
         this.repository = repository;
     }
 

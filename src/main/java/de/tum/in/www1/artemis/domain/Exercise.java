@@ -161,7 +161,10 @@ public abstract class Exercise extends DomainObject {
     private DueDateStat numberOfSubmissionsTransient;
 
     @Transient
-    private DueDateStat numberOfAssessmentsTransient;
+    private DueDateStat totalNumberOfAssessmentsTransient;
+
+    @Transient
+    private DueDateStat[] numberOfAssessmentsOfCorrectionRoundsTransient;
 
     @Transient
     private Long numberOfComplaintsTransient;
@@ -382,7 +385,7 @@ public abstract class Exercise extends DomainObject {
     }
 
     @JsonIgnore
-    public boolean hasCourse() {
+    public boolean isCourseExercise() {
         return this.course != null;
     }
 
@@ -395,7 +398,7 @@ public abstract class Exercise extends DomainObject {
     }
 
     @JsonIgnore
-    public boolean hasExerciseGroup() {
+    public boolean isExamExercise() {
         return this.exerciseGroup != null;
     }
 
@@ -407,7 +410,7 @@ public abstract class Exercise extends DomainObject {
      */
     @JsonIgnore
     public Course getCourseViaExerciseGroupOrCourseMember() {
-        if (hasExerciseGroup()) {
+        if (isExamExercise()) {
             return this.getExerciseGroup().getExam().getCourse();
         }
         else {
@@ -568,7 +571,7 @@ public abstract class Exercise extends DomainObject {
             // Check that submission was submitted in time (rated). For non programming exercises we check if the assessment due date has passed (if set)
             if (Boolean.TRUE.equals(result.isRated()) && (!isProgrammingExercise && isAssessmentOver
                     // For programming exercises we check that the assessment due date has passed (if set) for manual results otherwise we always show the automatic result
-                    || isProgrammingExercise && ((result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)))) {
+                    || isProgrammingExercise && ((result.isManual() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)))) {
                 // take the first found result that fulfills the above requirements
                 if (latestSubmission == null) {
                     latestSubmission = submission;
@@ -699,12 +702,20 @@ public abstract class Exercise extends DomainObject {
         this.numberOfSubmissionsTransient = numberOfSubmissions;
     }
 
-    public DueDateStat getNumberOfAssessments() {
-        return numberOfAssessmentsTransient;
+    public DueDateStat getTotalNumberOfAssessments() {
+        return totalNumberOfAssessmentsTransient;
     }
 
-    public void setNumberOfAssessments(DueDateStat numberOfAssessments) {
-        this.numberOfAssessmentsTransient = numberOfAssessments;
+    public void setTotalNumberOfAssessments(DueDateStat totalNumberOfAssessments) {
+        this.totalNumberOfAssessmentsTransient = totalNumberOfAssessments;
+    }
+
+    public DueDateStat[] getNumberOfAssessmentsOfCorrectionRounds() {
+        return numberOfAssessmentsOfCorrectionRoundsTransient;
+    }
+
+    public void setNumberOfAssessmentsOfCorrectionRounds(DueDateStat[] numberOfAssessmentsOfCorrectionRoundsTransient) {
+        this.numberOfAssessmentsOfCorrectionRoundsTransient = numberOfAssessmentsOfCorrectionRoundsTransient;
     }
 
     public Long getNumberOfComplaints() {
@@ -747,7 +758,7 @@ public abstract class Exercise extends DomainObject {
     public boolean isReleased() {
         // Exam
         ZonedDateTime releaseDate;
-        if (this.hasExerciseGroup()) {
+        if (this.isExamExercise()) {
             releaseDate = this.getExerciseGroup().getExam().getStartDate();
         }
         else {
@@ -809,7 +820,7 @@ public abstract class Exercise extends DomainObject {
      */
     public enum ExerciseSearchColumn {
 
-        ID("id"), TITLE("title"), COURSE_TITLE("course.title");
+        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
 
         private String mappedColumnName;
 

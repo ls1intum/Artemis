@@ -1,0 +1,24 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+$textareaHeight: 200px;
+
+:host {
+    margin-top: 15px;
+}
+
+.text-editor-textarea {
+    width: 100%;
+    height: $textareaHeight;
+    padding: 10px 12px;
+    border: 1px solid #d5d5d5;
+    border-radius: 2px;
+    background-color: #f9f9f9;
+    resize: none;
+
+    &:focus {
+        outline: none;
+        border: 1px solid $artemis-dark;
+        background-color: #fbfbfb;
+        box-shadow: 0 0 20px rgba(0, 0, 200, 0.04);
+    }
+}

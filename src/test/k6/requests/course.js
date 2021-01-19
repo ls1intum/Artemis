@@ -24,7 +24,7 @@ export function newCourse(artemis) {
         for (let [key, value] of Object.entries(res[0].headers)) {
             console.log(`${key}: ${value}`);
         }
-        fail('ERROR: Could not create course (status: ' + res[0].status + ')! response: ' + res[0].body);
+        fail('FAILTEST: Could not create course (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
     console.log('SUCCESS: Generated new course');
 
@@ -55,7 +55,7 @@ export function deleteCourse(artemis, courseId) {
     const res = artemis.delete(COURSE(courseId));
 
     if (res[0].status !== 200) {
-        fail('ERROR: Unable to delete course ' + courseId);
+        fail('FAILTEST: Unable to delete course ' + courseId);
     }
     console.log('SUCCESS: Deleted course ' + courseId);
 }

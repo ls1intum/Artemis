@@ -1,4 +1,5 @@
 import { getTestBed, TestBed } from '@angular/core/testing';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 import * as moment from 'moment';
@@ -100,6 +101,26 @@ describe('Participation Service', () => {
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
+    });
+
+    it.each<any>([
+        ['attachment; filename="FixArtifactDownload-Tests-1.0.jar"', 'FixArtifactDownload-Tests-1.0.jar'],
+        ['', 'artifact'],
+        ['filename="FixArtifactDownload-Tests-1.0.jar"', 'FixArtifactDownload-Tests-1.0.jar'],
+        ['f="abc"', 'artifact'],
+    ])('%# should download artifact and extract file name: %p', async (headerVal: string, expectedFileName: string, done: jest.DoneCallback) => {
+        const expectedBlob = new Blob(['abc', 'cfe'], { type: 'application/java-archive' });
+        const headers = new HttpHeaders({ 'content-disposition': headerVal, 'content-type': 'application/java-archive' });
+        const response = { body: expectedBlob, headers, status: 200 };
+
+        service.downloadArtifact(123).subscribe((resp) => {
+            expect(resp.fileName).toBe(expectedFileName);
+            expect(resp.fileContent).toBe(expectedBlob);
+            done();
+        });
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.event(new HttpResponse<Blob>(response));
     });
 
     afterEach(() => {

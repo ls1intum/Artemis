@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,6 +19,7 @@ import org.w3c.dom.Document;
 
 import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
@@ -87,16 +87,18 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         this.artemisNotificationUrl = ARTEMIS_SERVER_URL + "/api" + Constants.NEW_RESULT_RESOURCE_PATH;
     }
 
-    public String getPipelineScript(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
+    public String getPipelineScript(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
+            boolean isStaticCodeAnalysisEnabled) {
         var pipelinePath = getResourcePath(programmingLanguage, isStaticCodeAnalysisEnabled);
         var replacements = getReplacements(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled);
         return replacePipelineScriptParameters(pipelinePath, replacements);
     }
 
-    private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
+    private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
+            boolean isStaticCodeAnalysisEnabled) {
         Map<String, String> replacements = new HashMap<>();
-        replacements.put(REPLACE_TEST_REPO, testRepositoryURL.toString());
-        replacements.put(REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString());
+        replacements.put(REPLACE_TEST_REPO, testRepositoryURL.getURL().toString());
+        replacements.put(REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.getURL().toString());
         replacements.put(REPLACE_GIT_CREDENTIALS, gitCredentialsKey);
         replacements.put(REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH);
         replacements.put(REPLACE_TESTS_CHECKOUT_PATH, Constants.TESTS_CHECKOUT_PATH);
@@ -104,7 +106,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         replacements.put(REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
         replacements.put(REPLACE_DOCKER_IMAGE_NAME, jenkinsService.getDockerImageName(programmingLanguage));
         replacements.put(REPLACE_JENKINS_TIMEOUT, buildTimeout);
-        // at the moment, only Java is supported
+        // at the moment, only Java and Swift are supported
         if (isStaticCodeAnalysisEnabled) {
             String staticCodeAnalysisScript = createStaticCodeAnalysisScript(programmingLanguage);
             replacements.put(REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript);
@@ -118,8 +120,9 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     }
 
     @Override
-    public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
-        final var resourcePath = Path.of("templates", "jenkins", "config.xml");
+    public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
+            boolean isStaticCodeAnalysisEnabled) {
+        final var resourcePath = Paths.get("templates", "jenkins", "config.xml");
 
         String pipeLineScript = getPipelineScript(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled);
         pipeLineScript = pipeLineScript.replace("'", "&apos;");
@@ -152,18 +155,30 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         }
     }
 
-    // at the moment, only Java is supported
+    // at the moment, only Java and Swift are supported
     private String createStaticCodeAnalysisScript(ProgrammingLanguage programmingLanguage) {
         StringBuilder script = new StringBuilder();
         String lineEnding = "&#xd;";
-        script.append("mvn ");
-        // Execute all static code analysis tools for Java
-        script.append(StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(programmingLanguage)).append(lineEnding);
-        // Make directory for generated static code analysis reports
+        // Delete a possible old directory for generated static code analysis reports and create a new one
+        script.append("rm -rf ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
         script.append("mkdir ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
-        // Copy all static code analysis reports to new directory
-        for (var tool : StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage)) {
-            script.append("cp target/").append(tool.getFilePattern()).append(" ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
+        if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            script.append("mvn ");
+            // Execute all static code analysis tools for Java
+            script.append(StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(programmingLanguage)).append(lineEnding);
+            // Copy all static code analysis reports to new directory
+            for (var tool : StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage)) {
+                script.append("cp target/").append(tool.getFilePattern()).append(" ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
+            }
+        }
+        else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
+            StaticCodeAnalysisTool tool = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage).get(0);
+            script.append("echo \"---------- execute static code analysis ----------\"").append(lineEnding);
+            // Copy swiftlint configuration into student's repository
+            script.append("cp .swiftlint.yml assignment || true").append(lineEnding);
+            // Execute swiftlint within the student's repository and save the report into the sca directory
+            // sh command: swiftlint lint assignment > <scaDir>/<result>.xml
+            script.append("swiftlint lint assignment > ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append("/").append(tool.getFilePattern()).append(lineEnding);
         }
         return script.toString();
     }

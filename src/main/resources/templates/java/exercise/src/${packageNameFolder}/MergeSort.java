@@ -5,7 +5,7 @@ import java.util.*;
 public class MergeSort {
 
     /**
-     * Sortes dates with MergeSort.
+     * Sorts dates with MergeSort.
      *
      * @param input the List of Dates to be sorted
      */

@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class SyntaxTreeLink extends UMLElement {
 
-    public final static String SYNTAX_TREE_LINK_TYPE = "SyntaxTreeLink";
+    public static final String SYNTAX_TREE_LINK_TYPE = "SyntaxTreeLink";
 
     private final UMLElement source;
 

@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLUseCase extends UMLElement {
 
-    public final static String UML_USE_CASE_TYPE = "UseCase";
+    public static final String UML_USE_CASE_TYPE = "UseCase";
 
     private String name;
 

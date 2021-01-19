@@ -1,17 +1,16 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.net.URL;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_DIRECTORY;
+
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.apache.http.HttpException;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
@@ -20,6 +19,9 @@ import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
  * Abstract service for managing entities related to continuous integration.
  */
 public interface ContinuousIntegrationService {
+
+    // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/
+    Pattern ASSIGNMENT_PATH = Pattern.compile("(/[^\0]+)*" + ASSIGNMENT_DIRECTORY);
 
     enum BuildStatus {
         INACTIVE, QUEUED, BUILDING
@@ -34,7 +36,8 @@ public interface ContinuousIntegrationService {
      * @param testRepositoryURL     the URL of the test repository
      * @param solutionRepositoryURL the URL of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise ignored.
      */
-    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL, URL solutionRepositoryURL);
+    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
+            VcsRepositoryUrl solutionRepositoryURL);
 
     /**
      * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.
@@ -296,7 +299,7 @@ public interface ContinuousIntegrationService {
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";
             case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
             case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";
-            case SWIFT -> "swift:latest";
+            case SWIFT -> "norionomura/swiftlint:0.41.0_swift-5.3.1";
         };
     }
 }

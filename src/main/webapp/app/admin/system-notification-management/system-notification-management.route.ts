@@ -23,43 +23,63 @@ export class SystemNotificationManagementResolve implements Resolve<any> {
     }
 }
 
-export const systemNotificationManagementRoute: Route = {
-    path: 'system-notification-management',
-    component: SystemNotificationManagementComponent,
-    resolve: {
-        pagingParams: JhiResolvePagingParams,
-    },
-    data: {
-        pageTitle: 'artemisApp.systemNotification.systemNotifications',
-        defaultSort: 'id,asc',
-    },
-    children: [
-        {
-            path: 'new',
-            component: SystemNotificationManagementUpdateComponent,
-            data: {
-                pageTitle: 'global.generic.create',
-            },
+export const systemNotificationManagementRoute: Route[] = [
+    {
+        path: 'system-notification-management',
+        component: SystemNotificationManagementComponent,
+        resolve: {
+            pagingParams: JhiResolvePagingParams,
         },
-        {
-            path: ':id',
-            component: SystemNotificationManagementDetailComponent,
-            resolve: {
-                notification: SystemNotificationManagementResolve,
-            },
-            data: {
-                pageTitle: 'artemisApp.systemNotification.systemNotifications',
-                breadcrumbLabelVariable: 'notification.body.id',
-            },
-            children: [
-                {
-                    path: 'edit',
-                    component: SystemNotificationManagementUpdateComponent,
-                    data: {
-                        pageTitle: 'global.generic.edit',
-                    },
+        data: {
+            pageTitle: 'artemisApp.systemNotification.systemNotifications',
+            defaultSort: 'id,asc',
+        },
+    },
+    {
+        // Create a new path without a component defined to prevent resolver caching and the SystemNotificationManagementComponent from being always rendered
+        path: 'system-notification-management',
+        data: {
+            pageTitle: 'artemisApp.systemNotification.systemNotifications',
+        },
+        children: [
+            {
+                path: 'new',
+                component: SystemNotificationManagementUpdateComponent,
+                data: {
+                    pageTitle: 'global.generic.create',
                 },
-            ],
-        },
-    ],
-};
+            },
+            {
+                path: ':id',
+                component: SystemNotificationManagementDetailComponent,
+                resolve: {
+                    notification: SystemNotificationManagementResolve,
+                },
+                data: {
+                    pageTitle: 'artemisApp.systemNotification.systemNotifications',
+                    breadcrumbLabelVariable: 'notification.body.id',
+                },
+            },
+            {
+                // Create a new path without a component defined to prevent resolver caching and the SystemNotificationManagementDetailComponent from being always rendered
+                path: ':id',
+                resolve: {
+                    notification: SystemNotificationManagementResolve,
+                },
+                data: {
+                    breadcrumbLabelVariable: 'notification.body.id',
+                },
+                children: [
+                    {
+                        path: 'edit',
+                        component: SystemNotificationManagementUpdateComponent,
+                        data: {
+                            pageTitle: 'global.generic.edit',
+                            breadcrumbLabelVariable: '',
+                        },
+                    },
+                ],
+            },
+        ],
+    },
+];

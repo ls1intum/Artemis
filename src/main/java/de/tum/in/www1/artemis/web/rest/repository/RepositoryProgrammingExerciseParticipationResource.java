@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest.repository;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.net.URL;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,12 +44,16 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final ExamSubmissionService examSubmissionService;
 
+    private final BuildLogEntryService buildLogService;
+
     public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
-            ProgrammingExerciseParticipationService participationService, ProgrammingExerciseService programmingExerciseService, ExamSubmissionService examSubmissionService) {
+            ProgrammingExerciseParticipationService participationService, ProgrammingExerciseService programmingExerciseService, ExamSubmissionService examSubmissionService,
+            BuildLogEntryService buildLogService) {
         super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseService);
         this.participationService = participationService;
         this.examSubmissionService = examSubmissionService;
+        this.buildLogService = buildLogService;
     }
 
     @Override
@@ -79,17 +82,17 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
                 && !examSubmissionService.isAllowedToSubmit(programmingExercise, user)) {
             throw new IllegalAccessException();
         }
-        URL repositoryUrl = programmingParticipation.getRepositoryUrlAsUrl();
+        var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
         return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
     }
 
     @Override
-    URL getRepositoryUrl(Long participationId) throws IllegalArgumentException {
+    VcsRepositoryUrl getRepositoryUrl(Long participationId) throws IllegalArgumentException {
         Participation participation = participationService.findParticipation(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
         }
-        return ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
+        return ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl();
     }
 
     @Override
@@ -314,11 +317,20 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
         Result latestResult = latestSubmission.getLatestResult();
         // We don't try to fetch build logs for manual results (they were not created through the build but manually by an assessor)!
-        if (latestResult != null && latestResult.isManualResult()) {
+        if (latestResult != null && latestResult.isManual()) {
             // Don't throw an error here, just return an empty list.
             return ResponseEntity.ok(new ArrayList<>());
         }
 
+        // Load the logs from the database
+        List<BuildLogEntry> buildLogsFromDatabase = buildLogService.getLatestBuildLogs(latestSubmission);
+
+        // If there are logs present in the database, return them (they were already filtered when inserted)
+        if (!buildLogsFromDatabase.isEmpty()) {
+            return new ResponseEntity<>(buildLogsFromDatabase, HttpStatus.OK);
+        }
+
+        // Otherwise attempt to fetch the build logs from the CI
         List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(latestSubmission);
 
         return new ResponseEntity<>(logs, HttpStatus.OK);

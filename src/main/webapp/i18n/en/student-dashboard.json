@@ -5,7 +5,7 @@
             "exerciseTitle": "Current active exercise of \"{{ course }}\"",
             "exerciseTitleWithoutDueDate": "Current exercise of \"{{ course }}\":",
             "examTitle": "Current exam of \"{{ course }}\":",
-            "cardTitle": "Your current score:",
+            "cardTitle": "Your overall score:",
             "cardNoExerciseLabel": "No exercise planned",
             "cardExerciseLabel": "Next Exercise:",
             "register": {
@@ -31,6 +31,8 @@
                 "exams": "Exams"
             },
             "exerciseList": {
+                "releaseDate": "Release Date",
+                "dueDate": "Due Date",
                 "fullScore": "Hide full score",
                 "overdue": "Hide overdue",
                 "noExerciseDate": "No date associated",
@@ -82,13 +84,13 @@
                 }
             },
             "statistics": {
-                "totalScore": "Your total score",
+                "totalScore": "Your overall score",
                 "totalPresentationScore": "Your total presentation score: {{ number }}",
                 "presentationScoreBonus": "Required presentation score for the bonus: {{ number }}",
                 "exerciseCount": "{{ number }} {{type}}",
                 "yourPoints": "Your points: {{ number }}",
                 "reachablePoints": "Reachable points: {{ number }} ({{ relative }}%)",
-                "totalPoints": "Total points: {{ number }} ({{ relative }}%)",
+                "totalPoints": "Overall points: {{ number }} ({{ relative }}%)",
                 "presentationScore": "Presentation score: {{ number }}",
                 "noStatistics": "No statistics available for the course.",
                 "exerciseAchievedScore": "Achieved Score: {{ points }} points ({{ percentage }}%)",
@@ -98,8 +100,10 @@
                 "exerciseParticipatedAfterDueDate": "You have participated in {{ exercise }}, but after the due date.",
                 "noPointsForExercise": "You can't receive points for this exercise.",
                 "description": "Here you see all results that influence your score of the course, where the assessment due date is over.",
-                "reachableHelp": "Reachable points are the sum of the maximum points of all exercises that have been assessed, weren't participated in or were participated in too late.",
-                "totalHelp": "Total points are the sum of the maximum points of all exercises of this type."
+                "reachableHelpExerciseGroup": "Reachable points are the sum of the maximum points of all exercises of this type which have already been assessed, independent of your participation",
+                "totalHelpExerciseGroup": "Overall points are the sum of the maximum points of all exercises of this type.",
+                "reachableHelp": "Reachable points are the sum of the maximum points of all exercises which have already been assessed, independent of your participation",
+                "totalHelp": "Overall points are the sum of the maximum points of all exercises."
             },
             "lectureList": {
                 "lectureGroupHeader": "Lectures: {{ total }}",

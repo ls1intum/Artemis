@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -13,6 +14,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
+import org.jetbrains.annotations.NotNull;
 
 import com.fasterxml.jackson.annotation.*;
 
@@ -63,6 +65,8 @@ public abstract class Submission extends DomainObject {
 
     /**
      * A submission can have multiple results, therefore, results are persisted and removed with a submission.
+     * CacheStrategy.NONSTRICT_READ_WRITE leads to problems with the deletion of a submission, because first the results
+     * are deleted in a @Transactional method.
      */
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
@@ -88,10 +92,10 @@ public abstract class Submission extends DomainObject {
             return null;
         }
 
-        ZonedDateTime initilizationDate = this.participation.getInitializationDate();
+        ZonedDateTime initializationDate = this.participation.getInitializationDate();
         ZonedDateTime submissionDate = this.getSubmissionDate();
 
-        return Duration.between(initilizationDate, submissionDate).toMinutes();
+        return Duration.between(initializationDate, submissionDate).toMinutes();
     }
 
     /**
@@ -108,10 +112,64 @@ public abstract class Submission extends DomainObject {
         return null;
     }
 
+    /**
+     * Used to get result by correction round (which ignores automatic results).
+     * Works for all exercise types
+     *
+     * @param correctionRound to get result by
+     * @return the result based on the given correction round
+     */
+    @Nullable
+    @JsonIgnore
+    public Result getResultForCorrectionRound(int correctionRound) {
+        List<Result> withoutAutomaticResults = filterNonAutomaticResults();
+        if (withoutAutomaticResults.size() > correctionRound) {
+            return withoutAutomaticResults.get(correctionRound);
+        }
+        return null;
+    }
+
+    @NotNull
+    private List<Result> filterNonAutomaticResults() {
+        return results.stream().filter(result -> result == null || !result.isAutomatic()).collect(Collectors.toList());
+    }
+
+    /**
+     * Used to get result by correction round when ignoring all automatic results.
+     * The result list can contain null values when it is called here.
+     * So accessing the result list by correctionRound either yields null or a result.
+     *
+     * @param correctionRound for which it is checked if the tutor has a result
+     * @return true if the tutor has a result in the correctionRound, false otherwise
+     */
+    @JsonIgnore
+    public boolean hasResultForCorrectionRound(int correctionRound) {
+        List<Result> withoutAutomaticResults = filterNonAutomaticResults();
+        if (withoutAutomaticResults.size() > correctionRound) {
+            return withoutAutomaticResults.get(correctionRound) != null;
+        }
+        return false;
+    }
+
+    /**
+     * removes all automatic results from a submissions result list
+     * (do not save it like this in the database, as it could remove the automatic results!)
+     */
+    @JsonIgnore
+    public void removeAutomaticResults() {
+        this.results = this.results.stream().filter(result -> !result.isAutomatic()).collect(Collectors.toList());
+    }
+
     @Nullable
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
     public List<Result> getResults() {
         return results;
+    }
+
+    @Nullable
+    @JsonIgnore
+    public List<Result> getManualResults() {
+        return results.stream().filter(result -> result != null && !result.isAutomatic()).collect(Collectors.toList());
     }
 
     /**

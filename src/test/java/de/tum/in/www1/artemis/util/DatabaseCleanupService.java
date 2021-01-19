@@ -1,10 +1,14 @@
 package de.tum.in.www1.artemis.util;
 
+import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
+import javax.persistence.JoinTable;
 import javax.persistence.Table;
+import javax.persistence.metamodel.ManagedType;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -22,6 +26,8 @@ public class DatabaseCleanupService implements InitializingBean {
 
     private List<String> tableNames;
 
+    private List<String> joinTableNames;
+
     public DatabaseCleanupService(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
@@ -34,11 +40,19 @@ public class DatabaseCleanupService implements InitializingBean {
     public void afterPropertiesSet() {
         var metaModel = entityManager.getMetamodel();
         tableNames = metaModel.getManagedTypes().stream().filter(managedType -> {
-            var annotation = AnnotationUtils.findAnnotation(managedType.getJavaType(), Table.class);
-            return annotation != null;
+            var tableAnnotation = AnnotationUtils.findAnnotation(managedType.getJavaType(), Table.class);
+            return tableAnnotation != null && !tableAnnotation.name().startsWith("view_");
         }).map(managedType -> {
             var annotation = AnnotationUtils.findAnnotation(managedType.getJavaType(), Table.class);
             return annotation.name();
+        }).collect(Collectors.toList());
+
+        joinTableNames = metaModel.getEntities().stream().map(ManagedType::getAttributes).flatMap(Collection::stream).filter(attribute -> {
+            var joinTableAnnotation = AnnotationUtils.findAnnotation((Field) attribute.getJavaMember(), JoinTable.class);
+            return joinTableAnnotation != null && !joinTableAnnotation.name().startsWith("view_");
+        }).map(attribute -> {
+            var joinTableAnnotation = AnnotationUtils.findAnnotation((Field) attribute.getJavaMember(), JoinTable.class);
+            return joinTableAnnotation.name();
         }).collect(Collectors.toList());
     }
 
@@ -50,6 +64,8 @@ public class DatabaseCleanupService implements InitializingBean {
         entityManager.flush();
         entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY FALSE").executeUpdate();
         tableNames.forEach(tableName -> entityManager.createNativeQuery("TRUNCATE TABLE " + tableName).executeUpdate());
+        joinTableNames.forEach(joinTableName -> entityManager.createNativeQuery("TRUNCATE TABLE " + joinTableName).executeUpdate());
         entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY TRUE").executeUpdate();
+
     }
 }

@@ -7,7 +7,14 @@
         <jhi-fullscreen>
             <div class="row flex-grow-1">
                 <div *ngIf="studentSubmission && isActive" class="col-12 editor-large">
-                    <jhi-modeling-editor [umlModel]="umlModel" [diagramType]="exercise.diagramType" (onModelChanged)="modelChanged($event)"></jhi-modeling-editor>
+                    <jhi-modeling-editor
+                        [umlModel]="umlModel"
+                        [diagramType]="exercise.diagramType"
+                        (onModelChanged)="modelChanged($event)"
+                        [withExplanation]="true"
+                        [explanation]="explanationText"
+                        (explanationChange)="explanationChanged($event)"
+                    ></jhi-modeling-editor>
                 </div>
             </div>
         </jhi-fullscreen>

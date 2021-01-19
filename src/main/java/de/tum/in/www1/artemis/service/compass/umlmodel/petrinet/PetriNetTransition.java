@@ -6,7 +6,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class PetriNetTransition extends UMLElement {
 
-    public final static String PETRI_NET_TRANSITION_TYPE = "PetriNetTransition";
+    public static final String PETRI_NET_TRANSITION_TYPE = "PetriNetTransition";
 
     private final String name;
 
