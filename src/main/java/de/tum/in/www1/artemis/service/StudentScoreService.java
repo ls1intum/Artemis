@@ -6,6 +6,8 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -80,26 +82,27 @@ public class StudentScoreService {
      * @param deletedResult result to be deleted
      */
     public void removeResult(Result deletedResult) {
-        deletedResult.setStudentScore(null);
         studentScoreRepository.deleteByResult(deletedResult);
     }
 
     /**
      * Updates all StudentScores for result updatedResult.
      *
-     * @param updatedResult result to be updated
+     * @param result result to be updated
      */
-    public void updateResult(Result updatedResult) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void updateResult(Result result) {
+
         // ignore results without score or participation
-        if (updatedResult.getScore() == null || updatedResult.getParticipation() == null || !Boolean.TRUE.equals(updatedResult.isRated())) {
+        if (result.getScore() == null || result.getParticipation() == null || !Boolean.TRUE.equals(result.isRated())) {
             return;
         }
 
-        if (updatedResult.getParticipation().getClass() != StudentParticipation.class) {
+        if (result.getParticipation().getClass() != StudentParticipation.class) {
             return;
         }
 
-        var participation = (StudentParticipation) updatedResult.getParticipation();
+        var participation = (StudentParticipation) result.getParticipation();
         var student = participation.getStudent();
         var exercise = exerciseRepository.findById(participation.getExercise().getId());
 
@@ -107,20 +110,22 @@ public class StudentScoreService {
             return;
         }
 
-        if (updatedResult.getStudentScore() != null) {
+        Optional<StudentScore> studentScoreConnectedToResult = studentScoreRepository.findByResult(result);
 
-            StudentScore studentScore = updatedResult.getStudentScore();
-            studentScore.setResult(updatedResult);
-            studentScore.setScore(updatedResult.getScore());
+        if (studentScoreConnectedToResult.isPresent()) {
 
-            studentScore = studentScoreRepository.save(studentScore);
+            StudentScore studentScore = studentScoreConnectedToResult.get();
+            studentScore.setResult(result);
+            studentScore.setScore(result.getScore());
+
+            studentScore = studentScoreRepository.saveAndFlush(studentScore);
             log.info("Updated StudentScore: " + studentScore);
         }
         else {
-            StudentScore studentScore = new StudentScore(student.get(), exercise.get(), updatedResult);
-            studentScore.setScore(updatedResult.getScore());
+            StudentScore studentScore = new StudentScore(student.get(), exercise.get(), result);
+            studentScore.setScore(result.getScore());
 
-            studentScoreRepository.save(studentScore);
+            studentScoreRepository.saveAndFlush(studentScore);
             log.info("Created StudentScore: " + studentScore);
         }
     }
