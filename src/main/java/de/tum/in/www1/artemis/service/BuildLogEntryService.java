@@ -82,14 +82,14 @@ public class BuildLogEntryService {
      */
     public boolean isUnnecessaryBuildLogForProgrammingLanguage(String logString, ProgrammingLanguage programmingLanguage) {
         boolean isInfoWarningOrErrorLog = isInfoLog(logString) || isWarningLog(logString) || isErrorLog(logString);
-        if (programmingLanguage == ProgrammingLanguage.JAVA) {
+        if (ProgrammingLanguage.JAVA.equals(programmingLanguage)) {
             return isInfoWarningOrErrorLog || logString.startsWith("Unable to publish artifact") || logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS")
                     || logString.startsWith("Picked up JAVA_TOOL_OPTIONS") || logString.startsWith("[withMaven]") || logString.startsWith("$ docker");
         }
-        else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
-            return isInfoWarningOrErrorLog || logString.contains("Unable to find image") || logString.contains(": Pull") || logString.contains(": Waiting")
-                    || logString.contains(": Verifying") || logString.contains(": Download") || logString.startsWith("Digest:") || logString.startsWith("Status:")
-                    || logString.contains("github.com");
+        else if (ProgrammingLanguage.SWIFT.equals(programmingLanguage) || ProgrammingLanguage.C.equals(programmingLanguage)) {
+            return isInfoWarningOrErrorLog || logString.contains("Unable to find image") || logString.contains(": Already exists") || logString.contains(": Pull")
+                    || logString.contains(": Waiting") || logString.contains(": Verifying") || logString.contains(": Download") || logString.startsWith("Digest:")
+                    || logString.startsWith("Status:") || logString.contains("github.com");
         }
         return isInfoWarningOrErrorLog;
     }
@@ -112,13 +112,16 @@ public class BuildLogEntryService {
      * Determines if a given build log string shall be added to the build logs which are shown to the user.
      * It avoids duplicate entries and only allows not more than one empty log.
      *
-     * @param buildLogs accumulated build logs
-     * @param shortenedLogString current build log string
+     * @param programmingLanguage programming language of build log
+     * @param buildLogs           accumulated build logs
+     * @param shortenedLogString  current build log string
      * @return boolean indicating a build log should be added to the overall build logs
      */
-    public boolean checkIfBuildLogIsNotADuplicate(List<BuildLogEntry> buildLogs, String shortenedLogString) {
-        // E.g. Swift produces a lot of duplicate build logs when a build fails
-        if (!buildLogs.isEmpty()) {
+    public boolean checkIfBuildLogIsNotADuplicate(ProgrammingLanguage programmingLanguage, List<BuildLogEntry> buildLogs, String shortenedLogString) {
+        // C outputs duplicate but necessary output, so we need to skip it
+        boolean skipLanguage = ProgrammingLanguage.C.equals(programmingLanguage);
+        if (!skipLanguage && !buildLogs.isEmpty()) {
+            // E.g. Swift produces a lot of duplicate build logs when a build fails
             var existingLog = buildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
             String lastLog = buildLogs.get(buildLogs.size() - 1).getLog();
             // If the log does not exist already or if the log is a single blank log add it to the build logs (avoid more than one empty log in a row)
