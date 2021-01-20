@@ -116,14 +116,14 @@ public class StudentScoreService {
 
             StudentScore studentScore = studentScoreConnectedToResult.get();
             studentScore.setResult(result);
-            studentScore.setScore(result.getScore());
+            studentScore.setLastScore(result.getScore());
 
             studentScore = studentScoreRepository.saveAndFlush(studentScore);
             log.info("Updated StudentScore: " + studentScore);
         }
         else {
             StudentScore studentScore = new StudentScore(student.get(), exercise.get(), result);
-            studentScore.setScore(result.getScore());
+            studentScore.setLastScore(result.getScore());
 
             studentScoreRepository.saveAndFlush(studentScore);
             log.info("Created StudentScore: " + studentScore);

@@ -11,24 +11,34 @@ import de.tum.in.www1.artemis.domain.User;
 @Table(name = "student_score")
 public class StudentScore extends DomainObject {
 
-    @ManyToOne
-    private User student;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "exercise_id")
     private Exercise exercise;
 
-    @OneToOne
-    private Result result;
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn("last_result_id")
+    private Result lastResult;
 
-    @Column(name = "score")
-    private long score;
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn("last_rated_result_id")
+    private Result lastRatedResult;
 
-    public User getStudent() {
-        return student;
+    @Column(name = "last_score")
+    private long lastScore;
+
+    @Column(name = "last_rated_score")
+    private long lastRatedScore;
+
+    public User getUser() {
+        return user;
     }
 
-    public void setStudent(User student) {
-        this.student = student;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public Exercise getExercise() {
@@ -39,29 +49,35 @@ public class StudentScore extends DomainObject {
         this.exercise = exercise;
     }
 
-    public Result getResult() {
-        return result;
+    public Result getLastResult() {
+        return lastResult;
     }
 
-    public void setResult(Result result) {
-        this.result = result;
+    public void setLastResult(Result lastResult) {
+        this.lastResult = lastResult;
     }
 
-    public long getScore() {
-        return score;
+    public Result getLastRatedResult() {
+        return lastRatedResult;
     }
 
-    public void setScore(long score) {
-        this.score = score;
+    public void setLastRatedResult(Result lastRatedResult) {
+        this.lastRatedResult = lastRatedResult;
     }
 
-    public StudentScore() {
-        // Empty constructor because of @Entity
+    public long getLastScore() {
+        return lastScore;
     }
 
-    public StudentScore(User student, Exercise exercise, Result result) {
-        this.student = student;
-        this.exercise = exercise;
-        this.result = result;
+    public void setLastScore(long lastScore) {
+        this.lastScore = lastScore;
+    }
+
+    public long getLastRatedScore() {
+        return lastRatedScore;
+    }
+
+    public void setLastRatedScore(long lastRatedScore) {
+        this.lastRatedScore = lastRatedScore;
     }
 }

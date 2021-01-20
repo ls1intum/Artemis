@@ -1,17 +1,25 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
-    <changeSet author="sebastianjagla" id="20201130164500">
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="stefanwaldhauser" id="20201130164500">
         <createTable tableName="student_score">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="student_scorePK"/>
             </column>
-            <column name="student_id" type="BIGINT"/>
+            <column name="user_id" type="BIGINT"/>
             <column name="exercise_id" type="BIGINT"/>
-            <column name="result_id" type="BIGINT"/>
-            <column name="score" type="BIGINT"/>
+            <column name="last_result_id" type="BIGINT"/>
+            <column name="last_rated_result_id" type="BIGINT"/>
+            <column name="last_score" type="BIGINT"/>
+            <column name="last_rated_score" type="BIGINT"/>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="student_score" constraintName="FKbl1q55dqcr5m8qnxs9ta1hnf7" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise"/>
-        <addForeignKeyConstraint baseColumnNames="result_id" baseTableName="student_score" constraintName="FKlqi6ql8srgre78nccie75vims" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="result"/>
-        <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="student_score" constraintName="FKpehjk77snvdy4ietgoh0v8rwj" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="student_score" constraintName="fk_student_score_exercise_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise"/>
+        <addForeignKeyConstraint baseColumnNames="last_result_id" baseTableName="student_score" constraintName="fk_student_score_last_result_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="result"/>
+        <addForeignKeyConstraint baseColumnNames="last_rated_result_id" baseTableName="student_score" constraintName="fk_student_score_last_rated_result_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="result"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="student_score" constraintName="fk_student_score_user_id" deferrable="false" initiallyDeferred="false"
+                                 referencedColumnNames="id" referencedTableName="jhi_user"/>
     </changeSet>
 </databaseChangeLog>

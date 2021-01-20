@@ -12,11 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.repository.*;
@@ -299,13 +295,13 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         result = resultRepo.findAll().get(0);
 
         StudentScore response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
-        assertThat(response.getScore()).as("response score is old score").isEqualTo(result.getScore());
+        assertThat(response.getLastScore()).as("response score is old score").isEqualTo(result.getScore());
 
         result.setScore(100L);
         resultRepo.save(result);
 
         response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
-        assertThat(response.getScore()).as("response score is new score").isEqualTo(result.getScore());
+        assertThat(response.getLastScore()).as("response score is new score").isEqualTo(result.getScore());
     }
 
     @Test
