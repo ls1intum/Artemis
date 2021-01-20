@@ -90,11 +90,15 @@ export function createProgrammingExercise(artemis, courseId, exerciseGroup = und
         sequentialTestRuns: false,
         mode: 'INDIVIDUAL',
         projectType: programmingLanguage === 'JAVA' ? 'ECLIPSE' : undefined,
-        course: {
-            id: courseId,
-        },
-        exerciseGroup: exerciseGroup,
     };
+
+    if (courseId) {
+        exercise.course = { id: courseId };
+    }
+
+    if (exerciseGroup) {
+        exercise.exerciseGroup = exerciseGroup;
+    }
 
     res = artemis.post(PROGRAMMING_EXERCISES_SETUP, exercise);
     if (res[0].status !== 201) {
