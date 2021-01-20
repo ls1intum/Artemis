@@ -7,7 +7,6 @@ export class ShortAnswerQuestion extends QuizQuestion {
     public spots?: ShortAnswerSpot[];
     public solutions?: ShortAnswerSolution[];
     public correctMappings?: ShortAnswerMapping[];
-    // default client values
     public matchLetterCase: Boolean = false;
     public similarityValue: Number = 85;
 

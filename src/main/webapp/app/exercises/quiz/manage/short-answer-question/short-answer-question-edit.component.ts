@@ -704,15 +704,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     /**
      * @function toggleExactMatchCheckbox
-     * @desc Sets the similarity value to 100 if the checkbox was checked or to 90 if it was unchecked
+     * @desc Sets the similarity value to 100 if the checkbox was checked or to 85 if it was unchecked
      * @param checked
      */
     toggleExactMatchCheckbox(checked: boolean): void {
-        if (checked) {
-            this.question.similarityValue = 100;
-        } else {
-            this.question.similarityValue = 85;
-        }
+        this.question.similarityValue = checked ? 100 : 85;
         this.questionUpdated.emit();
     }
 }
