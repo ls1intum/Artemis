@@ -1,11 +1,14 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { Observable } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { TranslatePipe } from '@ngx-translate/core';
+import { MockComponent, MockPipe } from 'ng-mocks';
 
 import { ExampleTextSubmissionComponent } from 'app/exercises/text/manage/example-text-submission/example-text-submission.component';
-import { ArtemisTestModule } from '../../test.module';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
@@ -17,6 +20,12 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { State } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -34,16 +43,24 @@ describe('ExampleTextSubmissionComponent', () => {
     let submission: TextSubmission;
     let activatedRouteSnapshot: ActivatedRouteSnapshot;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         const route: ActivatedRoute = {
             snapshot: {
                 paramMap: convertToParamMap({}),
                 queryParamMap: convertToParamMap({}),
             },
         } as any;
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ExampleTextSubmissionComponent],
+        await TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, FormsModule],
+            declarations: [
+                ExampleTextSubmissionComponent,
+                MockComponent(ResizeableContainerComponent),
+                MockComponent(ScoreDisplayComponent),
+                MockComponent(TextAssessmentAreaComponent),
+                MockComponent(AssessmentInstructionsComponent),
+                MockPipe(TranslatePipe),
+                MockComponent(AlertComponent),
+            ],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -52,9 +69,7 @@ describe('ExampleTextSubmissionComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
-        })
-            .overrideTemplate(ExampleTextSubmissionComponent, '')
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(ExampleTextSubmissionComponent);
         comp = fixture.componentInstance;
@@ -73,7 +88,7 @@ describe('ExampleTextSubmissionComponent', () => {
         submission.id = SUBMISSION_ID;
     });
 
-    it('should fetch example submission with result for existing example submission and switch to edit state', async () => {
+    it('should fetch example submission with result for existing example submission and switch to edit state', fakeAsync(() => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
@@ -82,16 +97,17 @@ describe('ExampleTextSubmissionComponent', () => {
         spyOn(assessmentsService, 'getExampleResult').and.returnValue(httpResponse(result));
 
         // WHEN
-        await comp.ngOnInit();
+        fixture.detectChanges();
+        tick();
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
         expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
         expect(comp.state.constructor.name).toEqual('EditState');
-    });
+    }));
 
-    it('should fetch only fetch exercise for new example submission and stay in new state', async () => {
+    it('should fetch only fetch exercise for new example submission and stay in new state', fakeAsync(() => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: 'new' };
@@ -100,32 +116,38 @@ describe('ExampleTextSubmissionComponent', () => {
         spyOn(assessmentsService, 'getExampleResult').and.stub();
 
         // WHEN
-        await comp.ngOnInit();
+        fixture.detectChanges();
+        tick();
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
         expect(exampleSubmissionService.get).toHaveBeenCalledTimes(0);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledTimes(0);
         expect(comp.state.constructor.name).toEqual('NewState');
-    });
+    }));
 
-    it('should switch state when starting assessment', async () => {
+    it('should switch state when starting assessment', fakeAsync(() => {
         // GIVEN
+        comp.isAtLeastInstructor = true;
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
         comp.submission = submission;
-        spyOn(assessmentsService, 'getExampleResult').and.returnValue(httpResponse(result));
+        spyOn(assessmentsService, 'getExampleResult').and.returnValues(httpResponse(result));
 
         // WHEN
-        await comp.startAssessment();
+        fixture.detectChanges();
+        tick();
+        fixture.debugElement.query(By.css('#createNewAssessment')).nativeElement.click();
+        tick();
 
         // THEN
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
-        expect(comp.state.constructor.name).toEqual('AssessState');
-    });
+        expect(comp.state.constructor.name).toEqual('NewAssessmentState');
+    }));
 
-    it('should save assessment', () => {
+    it('should save assessment', fakeAsync(() => {
         // GIVEN
+        comp.isAtLeastInstructor = true;
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
         comp.submission = submission;
@@ -143,20 +165,25 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.result = result;
         const feedback = Feedback.forText(textBlock1, 0, 'Test');
         result.feedbacks = [feedback];
-        comp.state = State.forExistingAssessmentWithContext(comp);
+        comp.state.edit();
+        comp.state.assess();
         comp['prepareTextBlocksAndFeedbacks']();
         comp.validateFeedback();
         spyOn(assessmentsService, 'saveExampleAssessment').and.returnValue(httpResponse(result));
 
         // WHEN
-        comp.saveAssessments();
+        fixture.detectChanges();
+        tick();
+        fixture.debugElement.query(By.css('#saveNewAssessment')).nativeElement.click();
+        tick();
 
         // THEN
         expect(assessmentsService.saveExampleAssessment).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID, [feedback], [textBlock1]);
-    });
+    }));
 
-    it('editing submission from assessment state switches state', () => {
+    it('editing submission from assessment state switches state', fakeAsync(() => {
         // GIVEN
+        comp.isAtLeastInstructor = true;
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
         comp.submission = submission;
@@ -180,7 +207,10 @@ describe('ExampleTextSubmissionComponent', () => {
         spyOn(assessmentsService, 'deleteExampleFeedback').and.returnValue(httpResponse(null));
 
         // WHEN
-        comp.editSubmission();
+        fixture.detectChanges();
+        tick();
+        fixture.debugElement.query(By.css('#editSampleSolution')).nativeElement.click();
+        tick();
 
         // THEN
         expect(comp.state.constructor.name).toEqual('EditState');
@@ -189,7 +219,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.result?.feedbacks).toBeUndefined();
         expect(comp.textBlockRefs).toHaveLength(0);
         expect(comp.unusedTextBlockRefs).toHaveLength(0);
-    });
+    }));
 
     const httpResponse = (body: any) => Observable.of(new HttpResponse({ body }));
 });

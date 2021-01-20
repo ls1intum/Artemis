@@ -26,7 +26,7 @@
                         <fa-icon [icon]="'save'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.updateSampleSolution' | translate }}
                     </button>
-                    <button *ngSwitchCase="SubmissionButtonStates.EDIT" (click)="editSubmission()" class="btn btn-danger col-auto">
+                    <button *ngSwitchCase="SubmissionButtonStates.EDIT" (click)="editSubmission()" class="btn btn-danger col-auto" id="editSampleSolution">
                         <fa-icon [icon]="'edit'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.editSampleSolution' | translate }}
                     </button>
@@ -34,11 +34,17 @@
 
                 <ng-container [ngSwitch]="state.assessButton">
                     <!--TODO: Disable Button if unsaved changes in submission -->
-                    <button *ngSwitchCase="AssessButtonStates.ASSESS" (click)="startAssessment()" class="btn btn-primary col-auto ml-auto mr-3">
+                    <button *ngSwitchCase="AssessButtonStates.ASSESS" (click)="startAssessment()" class="btn btn-primary col-auto ml-auto mr-3" id="createNewAssessment">
                         <fa-icon [icon]="'save'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.createNewAssessment' | translate }}
                     </button>
-                    <button *ngSwitchCase="AssessButtonStates.CREATE" (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ml-auto mr-3">
+                    <button
+                        *ngSwitchCase="AssessButtonStates.CREATE"
+                        (click)="saveAssessments()"
+                        [disabled]="!assessmentsAreValid"
+                        class="btn btn-primary col-auto ml-auto mr-3"
+                        id="saveNewAssessment"
+                    >
                         <fa-icon [icon]="'save'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.saveNewAssessment' | translate }}
                     </button>
