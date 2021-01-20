@@ -114,18 +114,18 @@ public class ModelingAssessmentResource extends AssessmentResource {
     /**
      * PUT modeling-submissions/:submissionId/example-assessment : save manual example modeling assessment
      *
-     * @param submissionId id of the submission
+     * @param exampleSubmissionId id of the example submission
      * @param feedbacks list of feedbacks
      * @return result after saving example modeling assessment
      */
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
-    @PutMapping("/modeling-submissions/{submissionId}/example-assessment")
+    @PutMapping("/modeling-submissions/{exampleSubmissionId}/example-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> saveModelingExampleAssessment(@PathVariable long submissionId, @RequestBody List<Feedback> feedbacks) {
-        log.debug("REST request to save modeling example assessment : {}", submissionId);
-        return super.saveExampleAssessment(submissionId, feedbacks);
+    public ResponseEntity<Result> saveModelingExampleAssessment(@PathVariable long exampleSubmissionId, @RequestBody List<Feedback> feedbacks) {
+        log.debug("REST request to save modeling example assessment : {}", exampleSubmissionId);
+        return super.saveExampleAssessment(exampleSubmissionId, feedbacks);
     }
 
     /**

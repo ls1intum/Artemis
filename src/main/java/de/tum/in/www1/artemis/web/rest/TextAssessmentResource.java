@@ -116,19 +116,20 @@ public class TextAssessmentResource extends AssessmentResource {
     /**
      * PUT text-submissions/:submissionId/example-assessment : save manual example text assessment
      *
-     * @param submissionId id of the submission
+     * @param exampleSubmissionId id of the submission
      * @param textAssessment list of text assessmens (consists of feedbacks and text blocks)
      * @return result after saving example text assessment
      */
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
-    @PutMapping("/text-submissions/{submissionId}/example-assessment")
+    @PutMapping("/text-submissions/{exampleSubmissionId}/example-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> saveTextExampleAssessment(@PathVariable long submissionId, @RequestBody TextAssessmentDTO textAssessment) {
-        log.debug("REST request to save text example assessment : {}", submissionId);
-        final var response = super.saveExampleAssessment(submissionId, textAssessment.getFeedbacks());
+    public ResponseEntity<Result> saveTextExampleAssessment(@PathVariable long exampleSubmissionId, @RequestBody TextAssessmentDTO textAssessment) {
+        log.debug("REST request to save text example assessment : {}", exampleSubmissionId);
+        final var response = super.saveExampleAssessment(exampleSubmissionId, textAssessment.getFeedbacks());
         if (response.getStatusCode().is2xxSuccessful()) {
-            final var textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submissionId);
+            final Submission submission = response.getBody().getSubmission();
+            final var textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());
             saveTextBlocks(textAssessment.getTextBlocks(), textSubmission);
         }
         return response;
