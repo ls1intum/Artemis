@@ -544,7 +544,7 @@ public class JenkinsService implements ContinuousIntegrationService {
                 }
 
                 // Jenkins outputs each executed shell command with '+ <shell command>'
-                if (logString.startsWith("+ ")) {
+                if (logString.startsWith("+")) {
                     continue;
                 }
 
@@ -552,7 +552,7 @@ public class JenkinsService implements ContinuousIntegrationService {
                 final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
 
                 // Avoid duplicate log entries
-                if (buildLogService.checkIfBuildLogIsNotADuplicate(prunedBuildLogs, shortenedLogString)) {
+                if (buildLogService.checkIfBuildLogIsNotADuplicate(programmingLanguage, prunedBuildLogs, shortenedLogString)) {
                     entry.setLog(shortenedLogString);
                     prunedBuildLogs.add(entry);
                 }
