@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Graphs, SpanType } from 'app/entities/statistics.model';
-import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
+import { ChartDataSets, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
@@ -14,6 +14,9 @@ import * as moment from 'moment';
 export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
     @Input()
     courseId: number;
+
+    @Input()
+    amountOfStudentsInCourse: number;
 
     @Input()
     initialStats: number[];
@@ -33,10 +36,11 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
     chartTime: any;
 
     // Histogram related properties
-    barChartOptions: ChartOptions = {};
-    barChartType: ChartType = 'bar';
+    barChartOptions: any = {};
+    barChartType: ChartType = 'line';
     amountOfStudents: string;
     barChartLegend = false;
+
     // Data
     barChartLabels: Label[] = [];
     chartData: ChartDataSets[] = [];
@@ -68,7 +72,9 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
                 data: this.dataForSpanType,
                 backgroundColor: 'rgba(53,61,71,1)',
                 borderColor: 'rgba(53,61,71,1)',
-                hoverBackgroundColor: 'rgba(53,61,71,1)',
+                fill: false,
+                pointBackgroundColor: 'rgba(53,61,71,1)',
+                pointHoverBorderColor: 'rgba(53,61,71,1)',
             },
         ];
         this.createChart();
@@ -84,7 +90,9 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
                     data: this.dataForSpanType,
                     backgroundColor: 'rgba(53,61,71,1)',
                     borderColor: 'rgba(53,61,71,1)',
-                    hoverBackgroundColor: 'rgba(53,61,71,1)',
+                    fill: false,
+                    pointBackgroundColor: 'rgba(53,61,71,1)',
+                    pointHoverBorderColor: 'rgba(53,61,71,1)',
                 },
             ];
         });
@@ -146,6 +154,8 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
                         ticks: {
                             beginAtZero: true,
                             min: 0,
+                            max: this.amountOfStudentsInCourse ?? undefined,
+                            precision: 0,
                         },
                     },
                 ],

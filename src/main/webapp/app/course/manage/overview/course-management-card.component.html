@@ -97,7 +97,8 @@
                     <h5 class="text-white text-center">{{ 'artemisApp.course.statistics' | translate }}</h5>
                 </div>
                 <div class="section-content" *ngIf="courseStatistic">
-                    <jhi-course-management-statistics [courseId]="course.id" [initialStats]="courseStatistic.activeStudents"></jhi-course-management-statistics>
+                    <jhi-course-management-statistics [courseId]="course.id" [initialStats]="courseStatistic.activeStudents" [amountOfStudentsInCourse]="course.numberOfStudents">
+                    </jhi-course-management-statistics>
                 </div>
             </div>
         </div>
