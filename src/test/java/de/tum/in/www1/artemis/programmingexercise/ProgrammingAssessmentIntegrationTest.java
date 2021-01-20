@@ -1,5 +1,23 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
+
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.eclipse.jgit.lib.ObjectId;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -11,23 +29,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ProgrammingAssessmentService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import org.eclipse.jgit.lib.ObjectId;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
-
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
 
 public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -581,8 +582,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1Tutor1 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR1Tutor1.add("assessedByTutor", "true");
         paramsGetAssessedCR1Tutor1.add("correction-round", "0");
-        var assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions",
-            HttpStatus.OK, ProgrammingSubmission.class, paramsGetAssessedCR1Tutor1);
+        var assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+                paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList.size()).isEqualTo(1);
         assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
@@ -604,8 +605,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
                 manualResultLockedFirstRound, Result.class, HttpStatus.OK, params);
 
         // make sure that new result correctly appears after the assessment for first correction round
-        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions",
-            HttpStatus.OK, ProgrammingSubmission.class, paramsGetAssessedCR1Tutor1);
+        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+                paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList.size()).isEqualTo(1);
         assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
@@ -698,13 +699,12 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
                 manualResultLockedSecondRound, Result.class, HttpStatus.OK, paramsSecondCorrection);
         assertThat(secondSubmittedManualResult).isNotNull();
 
-
         // make sure that new result correctly appears after the assessment for second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR2.add("assessedByTutor", "true");
         paramsGetAssessedCR2.add("correction-round", "1");
-        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions",
-            HttpStatus.OK, ProgrammingSubmission.class, paramsGetAssessedCR2);
+        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+                paramsGetAssessedCR2);
 
         assertThat(assessedSubmissionList.size()).isEqualTo(1);
         assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
@@ -714,8 +714,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR1.add("assessedByTutor", "true");
         paramsGetAssessedCR1.add("correction-round", "0");
-        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions",
-            HttpStatus.OK, ProgrammingSubmission.class, paramsGetAssessedCR1);
+        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+                paramsGetAssessedCR1);
 
         assertThat(assessedSubmissionList.size()).isEqualTo(0);
     }
