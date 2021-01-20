@@ -337,23 +337,25 @@ public class GitService {
         return getOrCheckoutRepository(repoUrl, targetUrl, localPath, pullOnGet);
     }
 
-    /**
-     * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
-     *
-     * @param repoUrl   The remote repository.
-     * @param localPath The local path to clone the repository to.
-     * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
-     * @return the repository if it could be checked out.
-     * @throws InterruptedException if the repository could not be checked out.
-     * @throws GitAPIException      if the repository could not be checked out.
-     */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, Path localPath, boolean pullOnGet) throws InterruptedException, GitAPIException {
         return getOrCheckoutRepository(repoUrl, repoUrl, localPath, pullOnGet);
     }
 
+    /**
+     * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
+     *
+     * @param sourceRepoUrl The source remote repository.
+     * @param targetRepoUrl The target remote repository.
+     * @param localPath     The local path to clone the repository to.
+     * @param pullOnGet     Pull from the remote on the checked out repository, if it does not need to be cloned.
+     * @return the repository if it could be checked out.
+     * @throws InterruptedException if the repository could not be checked out.
+     * @throws GitAPIException      if the repository could not be checked out.
+     */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl sourceRepoUrl, VcsRepositoryUrl targetRepoUrl, Path localPath, boolean pullOnGet)
             throws InterruptedException, GitAPIException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
+        // If the sourceRepoUrl differs from the targetRepoUrl, we attempt to clone the source repo into the target directory
         Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUrl);
         // Note: in case the actual git repository in the file system is corrupt (e.g. by accident), we will get an exception here
         // the exception will then delete the folder, so that the next attempt would be successful.
