@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +22,11 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 public interface ContinuousIntegrationService {
 
     // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/
-    Pattern ASSIGNMENT_PATH = Pattern.compile("(/[^\0]+)*" + ASSIGNMENT_DIRECTORY);
+    String matchPathEndingWithAssignmentDirectory = "(/?[^\0]+)*" + ASSIGNMENT_DIRECTORY;
+
+    String orMatchStartingWithRepoName = "|^" + ASSIGNMENT_REPO_NAME + "/"; // Needed for C build logs
+
+    Pattern ASSIGNMENT_PATH = Pattern.compile(matchPathEndingWithAssignmentDirectory + orMatchStartingWithRepoName);
 
     enum BuildStatus {
         INACTIVE, QUEUED, BUILDING

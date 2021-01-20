@@ -784,7 +784,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
 
             // Avoid duplicate log entries
-            if (buildLogService.checkIfBuildLogIsNotADuplicate(filteredBuildLogs, shortenedLogString)) {
+            if (buildLogService.checkIfBuildLogIsNotADuplicate(programmingLanguage, filteredBuildLogs, shortenedLogString)) {
                 filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), shortenedLogString, unfilteredBuildLog.getProgrammingSubmission()));
             }
         }
