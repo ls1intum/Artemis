@@ -26,6 +26,7 @@ export class CourseManagementExerciseRowComponent implements OnInit {
     // Expose enums to the template
     exerciseType = ExerciseType;
     exerciseRowType = ExerciseRowType;
+    leftoverAssessments = false;
 
     getIcon(type: ExerciseType | undefined) {
         switch (type) {
