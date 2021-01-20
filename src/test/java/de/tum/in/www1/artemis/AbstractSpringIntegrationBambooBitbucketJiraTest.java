@@ -178,6 +178,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
         mockBambooBuildPlanCreation(exercise);
+
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
     private void mockBambooBuildPlanCreation(ProgrammingExercise exercise) throws IOException, URISyntaxException {

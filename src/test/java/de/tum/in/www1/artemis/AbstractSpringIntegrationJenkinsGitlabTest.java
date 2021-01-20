@@ -94,18 +94,13 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise);
         jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey);
         jenkinsRequestMockProvider.mockTriggerBuild();
+
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
     @Override
     public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans) throws Exception {
-
-        final var sourceProjectKey = sourceExercise.getProjectKey();
         final var targetProjectKey = exerciseToBeImported.getProjectKey();
-
-        final var sourceTemplateRepoName = sourceExercise.generateRepositoryName(RepositoryType.TEMPLATE);
-        final var sourceSolutionRepoName = sourceExercise.generateRepositoryName(RepositoryType.SOLUTION);
-        final var sourceTestsRepoName = sourceExercise.generateRepositoryName(RepositoryType.TESTS);
-
         final var targetTemplateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
         final var targetSolutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
         final var targetTestsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);

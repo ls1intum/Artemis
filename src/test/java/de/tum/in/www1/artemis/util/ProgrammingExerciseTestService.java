@@ -7,6 +7,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
@@ -204,6 +206,7 @@ public class ProgrammingExerciseTestService {
                 true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(solutionRepoTestUrl, true);
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
 
         // we need separate mocks with VcsRepositoryUrl here because MockFileRepositoryUrl and VcsRepositoryUrl do not seem to be compatible here
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(exerciseRepoName, exerciseRepoTestUrl);
@@ -226,6 +229,7 @@ public class ProgrammingExerciseTestService {
         doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, participantRepoName);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participantRepoTestUrl,
                 true);
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(participantRepoName, participantRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, participantRepoTestUrl);
     }
@@ -831,65 +835,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void copyRepository_testInternalServerError() throws Exception {
-        exercise.setMode(TEAM);
-        programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
-
-        // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
-        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
-        team = teamService.save(exercise, team);
-
-        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
-
-        // test for internal server error
-        mockDelegate.mockCopyRepositoryForParticipation(exercise, team.getParticipantIdentifier());
-
-        // Start participation
-        try {
-            participationService.startExercise(exercise, team, false);
-        }
-        catch (VersionControlException e) {
-            // We cannot compare exception messages because each vcs has their
-            // own. Maybe simply checking that the exception is not empty is
-            // enough?
-            assertThat(e.getMessage()).isNotEmpty();
-        }
-    }
-
-    // TEST
     public void copyRepository_testNotCreatedError() throws Exception {
-        exercise.setMode(TEAM);
-        programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
-
-        // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
-        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
-        team = teamService.save(exercise, team);
-
-        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
-
-        // test for internal server error
-        mockDelegate.mockCopyRepositoryForParticipation(exercise, team.getParticipantIdentifier());
-
-        // Start participation
-        try {
-            participationService.startExercise(exercise, team, false);
-        }
-        catch (VersionControlException e) {
-            // We cannot compare exception messages because each vcs has their
-            // own. Maybe simply checking that the exception is not empty is
-            // enough?
-            assertThat(e.getMessage()).isNotEmpty();
-        }
-    }
-
-    // TEST
-    public void copyRepository_testBadRequestError() throws Exception {
         exercise.setMode(TEAM);
         programmingExerciseRepository.save(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
