@@ -37,18 +37,15 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      * @return The submission or empty no submissions exist
      */
     protected Optional<ProgrammingSubmission> getSubmissionForBuildResult(Long participationId, AbstractBuildResultNotificationDTO buildResult) {
-        var optionalSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
-        if (optionalSubmission.isEmpty()) {
+        var submissions = programmingSubmissionRepository.findAllByParticipationId(participationId);
+        if (submissions.isEmpty()) {
             return Optional.empty();
         }
 
-        var submission = optionalSubmission.get();
-        var commitHash = getCommitHash(buildResult, submission.getType());
-        if (commitHash.isPresent() && submission.getCommitHash().equals(commitHash.get())) {
-            return Optional.of(submission);
-        }
-
-        return Optional.empty();
+        return submissions.stream().filter(theSubmission -> {
+            var commitHash = getCommitHash(buildResult, theSubmission.getType());
+            return commitHash.isPresent() && commitHash.get().equals(theSubmission.getCommitHash());
+        }).findFirst();
     }
 
     /**
@@ -79,8 +76,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
         // TODO: we should actually ask the git service to retrieve the actual commit date in the git repository here and only use result.getCompletionDate() as fallback
         var submission = createFallbackSubmission(participation, buildResult.getBuildRunDate(), commitHash.orElse(null));
         // Save to avoid TransientPropertyValueException.
-        programmingSubmissionRepository.save(submission);
-        return submission;
+        return programmingSubmissionRepository.save(submission);
     }
 
     /**
@@ -106,7 +102,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
     /**
      * Generate an Artemis result object from the CI build result. Will use the test case feedback as result feedback.
      *
-     * @param buildResult Build result data provided by build notification.
+     * @param buildResult   Build result data provided by build notification.
      * @param participation to attach result to.
      * @return the created result
      */
@@ -128,8 +124,8 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
     /**
      * Converts build result details into feedback and stores it in the result object
      *
-     * @param result                      the result for which the feedback should be added
-     * @param buildResult                 The build result
+     * @param result      the result for which the feedback should be added
+     * @param buildResult The build result
      */
     protected abstract void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult);
 

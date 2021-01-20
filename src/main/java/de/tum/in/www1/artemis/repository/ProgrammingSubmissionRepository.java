@@ -66,6 +66,9 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     @Query("select s from ProgrammingSubmission s left join fetch s.results r where r.id = :#{#resultId}")
     Optional<ProgrammingSubmission> findByResultId(@Param("resultId") Long resultId);
 
+    @Query("select s from ProgrammingSubmission s where s.participation.id = :#{#participationId}")
+    List<ProgrammingSubmission> findAllByParticipationId(@Param("participationId") Long participationId);
+
     @Query("select count(r) from ProgrammingSubmission s left join s.results r where s.id = :#{#submissionId} and r.assessmentType = 'AUTOMATIC'")
     Long countAutomaticResults(@Param("submissionId") Long submissionId);
 }
