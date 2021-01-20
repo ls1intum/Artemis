@@ -47,6 +47,7 @@
                                         *ngFor="let exercise of exerciseGroup.exercises"
                                         (click)="onSelectExercise(exercise, exerciseGroup)"
                                         [class.active]="exercise.id === testRunConfiguration[exerciseGroup.id]?.id"
+                                        [id]="'exercise-' + exercise.id"
                                     >
                                         <td>{{ exercise.id }}</td>
                                         <td>{{ exercise.title }}</td>
@@ -63,7 +64,9 @@
 
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
-            <button type="button" class="btn btn-primary" data-dismiss="modal" [disabled]="!testRunConfigured" (click)="createTestRun()">Create Test Run</button>
+            <button id="createTestRunButton" type="button" class="btn btn-primary" data-dismiss="modal" [disabled]="!testRunConfigured" (click)="createTestRun()">
+                Create Test Run
+            </button>
         </div>
     </div>
 </div>

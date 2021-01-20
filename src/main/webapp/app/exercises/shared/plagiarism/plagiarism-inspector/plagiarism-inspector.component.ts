@@ -143,7 +143,7 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.detectionInProgress = true;
 
         if (this.exercise.type === ExerciseType.TEXT) {
-            this.textExerciseService.checkPlagiarismJPlag(this.exercise.id!, options).subscribe(
+            this.textExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe(
                 (result) => this.handleTextPlagiarismResult(result),
                 () => (this.detectionInProgress = false),
             );
