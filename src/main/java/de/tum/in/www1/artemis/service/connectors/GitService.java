@@ -331,6 +331,12 @@ public class GitService {
         return getOrCheckoutRepository(repoUrl, localPath, pullOnGet);
     }
 
+    public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUrl repoUrl, VcsRepositoryUrl targetUrl, boolean pullOnGet)
+            throws InterruptedException, GitAPIException {
+        Path localPath = Paths.get(repoClonePath, folderNameForRepositoryUrl(targetUrl));
+        return getOrCheckoutRepository(repoUrl, targetUrl, localPath, pullOnGet);
+    }
+
     /**
      * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
      *
@@ -339,11 +345,16 @@ public class GitService {
      * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @return the repository if it could be checked out.
      * @throws InterruptedException if the repository could not be checked out.
-     * @throws GitAPIException if the repository could not be checked out.
+     * @throws GitAPIException      if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, Path localPath, boolean pullOnGet) throws InterruptedException, GitAPIException {
+        return getOrCheckoutRepository(repoUrl, repoUrl, localPath, pullOnGet);
+    }
+
+    public Repository getOrCheckoutRepository(VcsRepositoryUrl sourceRepoUrl, VcsRepositoryUrl targetRepoUrl, Path localPath, boolean pullOnGet)
+            throws InterruptedException, GitAPIException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
-        Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, repoUrl);
+        Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUrl);
         // Note: in case the actual git repository in the file system is corrupt (e.g. by accident), we will get an exception here
         // the exception will then delete the folder, so that the next attempt would be successful.
         if (repository != null) {
@@ -368,7 +379,7 @@ public class GitService {
             }
             // Clone repository.
             try {
-                var gitUriAsString = getGitUriAsString(repoUrl);
+                var gitUriAsString = getGitUriAsString(sourceRepoUrl);
                 log.debug("Cloning from " + gitUriAsString + " to " + localPath);
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
@@ -387,7 +398,7 @@ public class GitService {
                 // make sure that cloneInProgress is released
                 cloneInProgressOperations.remove(localPath);
             }
-            return getExistingCheckedOutRepositoryByLocalPath(localPath, repoUrl);
+            return getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUrl);
         }
     }
 
@@ -465,20 +476,22 @@ public class GitService {
     }
 
     /**
-     * The target's repo is added as a remote to the source's repo. The content to be copied then gets pushed to the new remote.
-     * Afterwards we delete the target remote.
+     * The remote uri of the target repo is still the uri of the source repo.
+     * We need to change it to the uri of the target repo.
+     * The content to be copied then gets pushed to the new repo.
      *
-     * @param sourceRepo    Local source repo
+     * @param targetRepo    Local target repo
      * @param targetRepoUrl URI of targets repo
      * @throws GitAPIException if the repo could not be pushed
      */
-    public void pushSourceToTargetRepo(Repository sourceRepo, VcsRepositoryUrl targetRepoUrl) throws GitAPIException {
-        Git git = new Git(sourceRepo);
+    public void pushSourceToTargetRepo(Repository targetRepo, VcsRepositoryUrl targetRepoUrl) throws GitAPIException {
+        Git git = new Git(targetRepo);
         try {
-            git.remoteAdd().setName("target").setUri(new URIish(getGitUriAsString(targetRepoUrl))).call();
+            // overwrite the old remote uri with the target uri
+            git.remoteSetUrl().setRemoteName("origin").setRemoteUri(new URIish(getGitUriAsString(targetRepoUrl))).call();
             log.debug("pushSourceToTargetRepo -> Push " + targetRepoUrl.getURL().toString());
-            git.push().setRemote("target").setTransportConfigCallback(sshCallback).call();
-            git.remoteRemove().setRemoteName("target").call();
+            // push the source content to the new remote
+            git.push().setTransportConfigCallback(sshCallback).call();
             git.close();
         }
         catch (URISyntaxException e) {
