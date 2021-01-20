@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.*;
@@ -30,15 +31,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPushNotificationDTO;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
 
@@ -78,14 +82,18 @@ public class GitLabService extends AbstractVersionControlService {
 
     private final ScheduledExecutorService scheduler;
 
+    private final GitService gitService;
+
     public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, UrlService urlService,
-            @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, GitLabUserManagementService gitLabUserManagementService) {
+            @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, GitLabUserManagementService gitLabUserManagementService,
+            GitService gitService) {
         this.userService = userService;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.gitlab = gitlab;
         this.gitLabUserManagementService = gitLabUserManagementService;
         this.urlService = urlService;
+        this.gitService = gitService;
         this.scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
     }
 
@@ -416,8 +424,26 @@ public class GitLabService extends AbstractVersionControlService {
     @Override
     public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName)
             throws VersionControlException {
-        // in this case we simply fork the repository as there are no limitations known in Gitlab for creating forks
-        return forkRepository(sourceProjectKey, sourceRepositoryName, targetProjectKey, targetRepositoryName);
+        sourceRepositoryName = sourceRepositoryName.toLowerCase();
+        targetRepositoryName = targetRepositoryName.toLowerCase();
+        final String targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
+        // get the remote url of the source repo
+        final var sourceRepoUrl = new GitLabRepositoryUrl(sourceProjectKey, sourceRepositoryName);
+        // get the remote url of the target repo
+        final var targetRepoUrl = new GitLabRepositoryUrl(targetProjectKey, targetRepoSlug);
+        try {
+            // create the new target repo
+            createRepository(targetProjectKey, targetRepoSlug, null);
+            // clone the source repo to the target directory
+            Repository targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(sourceRepoUrl, targetRepoUrl, true);
+            // copy by pushing the source's content to the target's repo
+            gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl);
+        }
+        catch (InterruptedException | GitAPIException e) {
+            throw new BitbucketException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, e);
+        }
+
+        return targetRepoUrl;
     }
 
     @Override
