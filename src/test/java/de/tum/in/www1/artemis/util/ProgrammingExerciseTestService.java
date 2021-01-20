@@ -845,7 +845,7 @@ public class ProgrammingExerciseTestService {
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
 
         // test for internal server error
-        mockDelegate.mockForkRepositoryForParticipation(exercise, team.getParticipantIdentifier(), HttpStatus.INTERNAL_SERVER_ERROR);
+        mockDelegate.mockCopyRepositoryForParticipation(exercise, team.getParticipantIdentifier());
 
         // Start participation
         try {
@@ -874,7 +874,7 @@ public class ProgrammingExerciseTestService {
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
 
         // test for internal server error
-        mockDelegate.mockForkRepositoryForParticipation(exercise, team.getParticipantIdentifier(), HttpStatus.OK);
+        mockDelegate.mockCopyRepositoryForParticipation(exercise, team.getParticipantIdentifier());
 
         // Start participation
         try {
@@ -903,7 +903,7 @@ public class ProgrammingExerciseTestService {
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
 
         // test for internal server error
-        mockDelegate.mockForkRepositoryForParticipation(exercise, team.getParticipantIdentifier(), HttpStatus.BAD_REQUEST);
+        mockDelegate.mockCopyRepositoryForParticipation(exercise, team.getParticipantIdentifier());
 
         // Start participation
         try {
@@ -954,8 +954,7 @@ public class ProgrammingExerciseTestService {
 
         // test for internal server error
         final var username = team.getParticipantIdentifier();
-        mockDelegate.mockForkRepositoryForParticipation(exercise, username, HttpStatus.CREATED);
-        final var projectKey = exercise.getProjectKey();
+        mockDelegate.mockCopyRepositoryForParticipation(exercise, username);
         mockDelegate.mockRepositoryWritePermissions(team, team.getStudents().stream().findFirst().get(), exercise, HttpStatus.BAD_REQUEST);
 
         // Start participation

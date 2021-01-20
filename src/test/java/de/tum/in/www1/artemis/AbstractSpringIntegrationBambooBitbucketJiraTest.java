@@ -88,15 +88,15 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockForkRepositoryForParticipation(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException {
-        bitbucketRequestMockProvider.mockForkRepositoryForParticipation(exercise, username, status);
+    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
+        bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
     }
 
     @Override
     public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists, HttpStatus status)
             throws IOException, URISyntaxException {
         // Step 1a)
-        bitbucketRequestMockProvider.mockForkRepositoryForParticipation(exercise, username, status);
+        bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
         // Step 1b)
         bitbucketRequestMockProvider.mockConfigureRepository(exercise, username, users, ltiUserExists);
         // Step 2a)
