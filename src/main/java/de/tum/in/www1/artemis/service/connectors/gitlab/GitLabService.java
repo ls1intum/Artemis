@@ -10,9 +10,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.*;
@@ -21,9 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -31,12 +27,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.UserService;
@@ -52,25 +46,13 @@ public class GitLabService extends AbstractVersionControlService {
 
     private final Logger log = LoggerFactory.getLogger(GitLabService.class);
 
-    private static final String GITLAB_API_BASE = "/api/v4";
-
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
-
-    @Value("${artemis.lti.user-prefix-edx:#{null}}")
-    private Optional<String> userPrefixEdx;
-
-    @Value("${artemis.lti.user-prefix-u4i:#{null}}")
-    private Optional<String> userPrefixU4I;
 
     @Value("${artemis.version-control.ci-token}")
     private String ciToken;
 
-    private String baseApi;
-
     private final UserService userService;
-
-    private final RestTemplate restTemplate;
 
     private final RestTemplate shortTimeoutRestTemplate;
 
@@ -78,28 +60,16 @@ public class GitLabService extends AbstractVersionControlService {
 
     private final GitLabApi gitlab;
 
-    private final UrlService urlService;
-
     private final ScheduledExecutorService scheduler;
 
-    private final GitService gitService;
-
-    public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, UrlService urlService,
-            @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, GitLabUserManagementService gitLabUserManagementService,
-            GitService gitService) {
+    public GitLabService(UserService userService, UrlService urlService, @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab,
+            GitLabUserManagementService gitLabUserManagementService, GitService gitService) {
+        super(urlService, gitService);
         this.userService = userService;
-        this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.gitlab = gitlab;
         this.gitLabUserManagementService = gitLabUserManagementService;
-        this.urlService = urlService;
-        this.gitService = gitService;
         this.scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
-    }
-
-    @PostConstruct
-    public void init() {
-        this.baseApi = gitlabServerUrl + GITLAB_API_BASE;
     }
 
     @Override
@@ -384,11 +354,6 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public String getRepositoryName(VcsRepositoryUrl repositoryUrl) {
-        return urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
-    }
-
-    @Override
     public boolean checkIfProjectExists(String projectKey, String projectName) {
         try {
             return !gitlab.getProjectApi().getProjects(projectKey).isEmpty();
@@ -396,54 +361,6 @@ public class GitLabService extends AbstractVersionControlService {
         catch (GitLabApiException e) {
             throw new GitLabException("Error trying to search for project " + projectName, e);
         }
-    }
-
-    @Override
-    public VcsRepositoryUrl forkRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName)
-            throws VersionControlException {
-        final var originalNamespace = sourceProjectKey + "%2F" + sourceRepositoryName.toLowerCase();
-        final var targetRepoSlug = (targetProjectKey + "-" + targetRepositoryName).toLowerCase();
-        final var builder = Endpoints.FORK.buildEndpoint(baseApi, originalNamespace);
-        final var body = Map.of("namespace", targetProjectKey, "path", targetRepoSlug, "name", targetRepoSlug);
-
-        final var errorMessage = "Couldn't fork repository " + originalNamespace + " into " + targetRepoSlug;
-        try {
-            log.info("Try to fork " + originalNamespace + " into " + targetRepoSlug);
-            final var response = restTemplate.postForEntity(builder.build(true).toUri(), body, String.class);
-            if (response.getStatusCode() != HttpStatus.CREATED) {
-                throw new GitLabException(errorMessage + "; response (" + response.getStatusCode() + ") was: " + response.getBody());
-            }
-        }
-        catch (RestClientException e) {
-            defaultExceptionHandling(errorMessage, e);
-        }
-
-        return new GitLabRepositoryUrl(targetProjectKey, targetRepoSlug);
-    }
-
-    @Override
-    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName)
-            throws VersionControlException {
-        sourceRepositoryName = sourceRepositoryName.toLowerCase();
-        targetRepositoryName = targetRepositoryName.toLowerCase();
-        final String targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
-        // get the remote url of the source repo
-        final var sourceRepoUrl = new GitLabRepositoryUrl(sourceProjectKey, sourceRepositoryName);
-        // get the remote url of the target repo
-        final var targetRepoUrl = new GitLabRepositoryUrl(targetProjectKey, targetRepoSlug);
-        try {
-            // create the new target repo
-            createRepository(targetProjectKey, targetRepoSlug, null);
-            // clone the source repo to the target directory
-            Repository targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(sourceRepoUrl, targetRepoUrl, true);
-            // copy by pushing the source's content to the target's repo
-            gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl);
-        }
-        catch (InterruptedException | GitAPIException e) {
-            throw new BitbucketException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, e);
-        }
-
-        return targetRepoUrl;
     }
 
     @Override
@@ -476,12 +393,6 @@ public class GitLabService extends AbstractVersionControlService {
         catch (Exception emAll) {
             return new ConnectorHealth(emAll);
         }
-    }
-
-    private void defaultExceptionHandling(String message, RestClientException exception) {
-        message = message + "; response was: " + exception.getMessage();
-        log.error(message);
-        throw new GitLabException(message, exception);
     }
 
     private boolean userExists(String username) {
