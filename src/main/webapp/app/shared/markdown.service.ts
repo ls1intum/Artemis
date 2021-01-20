@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import * as showdown from 'showdown';
 import * as showdownKatex from 'showdown-katex';
+import * as showdownHighlight from 'showdown-highlight';
 import * as DOMPurify from 'dompurify';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
@@ -27,7 +28,6 @@ const addCSSClass = Object.keys(classMap).map((key) => ({
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisMarkdownService {
-    readonly showdownHighlight = require('showdown-highlight');
     static hintOrExpRegex = new RegExp(escapeStringForUseInRegex(`${ExplanationCommand.identifier}`) + '|' + escapeStringForUseInRegex(`${HintCommand.identifier}`), 'g');
 
     constructor(private sanitizer: DomSanitizer) {}
@@ -138,7 +138,7 @@ export class ArtemisMarkdownService {
             tables: true,
             openLinksInNewWindow: true,
             backslashEscapesHTMLTags: true,
-            extensions: [...extensions, showdownKatex(), this.showdownHighlight, ...addCSSClass],
+            extensions: [...extensions, showdownKatex(), showdownHighlight(), ...addCSSClass],
         });
         const html = converter.makeHtml(markdownText);
         const purifyParameters = {};
