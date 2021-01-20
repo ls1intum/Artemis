@@ -38,12 +38,15 @@
         </sql>
     </changeSet>
 
-    <!-- Adding not null constraint for the max points of an exercise -->
+    <!-- Adding not null constraint for the max points of an exercise
+         defaultNullValue="0" converts current null values to 0
+     -->
     <changeSet id="20211901120000-5" author="swaldhauser">
         <addNotNullConstraint tableName="exercise" columnName="max_score" columnDataType="double" defaultNullValue="0"/>
     </changeSet>
 
-    <!-- The bonus points of an exercise should never be null thus null values will be set to 0 -->
+    <!-- The bonus points of an exercise should never be null thus null values will be set to 0
+    -->
     <changeSet author="swaldhauser" id="20211901120000-6">
         <sql>
             UPDATE exercise SET
@@ -52,7 +55,9 @@
         </sql>
     </changeSet>
 
-    <!-- Adding not null constraint for the bonus points of an exercise -->
+    <!-- Adding not null constraint for the bonus points of an exercise
+          defaultNullValue="0" converts current null values to 0 
+    -->
     <changeSet id="20211901120000-7" author="swaldhauser">
         <addNotNullConstraint tableName="exercise" columnName="bonus_points" columnDataType="double" defaultNullValue="0"/>
     </changeSet>
