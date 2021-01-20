@@ -183,10 +183,10 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         return result;
     }
 
-    private void assertNoNewSubmissions(ProgrammingSubmission submission) {
+    private void assertNoNewSubmissions(ProgrammingSubmission existingSubmission) {
         var updatedSubmissions = submissionRepository.findAll();
         assertThat(updatedSubmissions.size()).isEqualTo(1);
-        assertThat(updatedSubmissions.get(0).getId()).isEqualTo(submission.getId());
+        assertThat(updatedSubmissions.get(0).getId()).isEqualTo(existingSubmission.getId());
     }
 
     private void postResult(TestResultsDTO requestBodyMap, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {

@@ -13,7 +13,6 @@ public abstract class AbstractBuildResultNotificationDTO {
 
     public abstract boolean isBuildSuccessful();
 
-    // TODO: necessary?
     public abstract Long getBuildScore();
 
     /**

@@ -83,7 +83,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
     @Override
     public String getTestsPassedString() {
-        if (getBuild().getTestSummary().getDescription().equals("No tests found")) {
+        if ("No tests found".equals(getBuild().getTestSummary().getDescription())) {
             return "No tests found";
         }
 

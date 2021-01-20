@@ -64,6 +64,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     private Result manualResult;
 
+    private final String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+
     // set to true, if a tutor is only able to assess a submission if he has not assessed it any prior correction rounds
     private final boolean tutorAssessUnique = true;
 
@@ -100,7 +102,6 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         double points = programmingAssessmentService.calculateTotalScore(manualResult);
         manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxScore()));
 
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
     }
 
@@ -544,7 +545,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         final var secondSubmission = database.createProgrammingSubmission(studentParticipation, false, "2");
         database.addResultToSubmission(secondSubmission, AssessmentType.AUTOMATIC, null);
         // The commit hash must be the same as the one used for initializing the tests because this test calls gitService.getLastCommitHash
-        final var thirdSubmission = database.createProgrammingSubmission(studentParticipation, false, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        final var thirdSubmission = database.createProgrammingSubmission(studentParticipation, false, dummyHash);
         database.addResultToSubmission(thirdSubmission, AssessmentType.AUTOMATIC, null);
 
         // verify setup

@@ -586,6 +586,7 @@ public class ProgrammingExerciseTestService {
         var participant = participation.getParticipant();
 
         mockDelegate.mockTriggerParticipationBuild(participation);
+        // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
         mockDelegate.mockTriggerParticipationBuild(participation);
 
         // These will be updated when triggering a build
@@ -615,6 +616,7 @@ public class ProgrammingExerciseTestService {
         var participant = participation.getParticipant();
 
         mockDelegate.mockTriggerFailedBuild(participation);
+        // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
         mockDelegate.mockTriggerFailedBuild(participation);
 
         // These will be updated triggering a failed build
@@ -649,6 +651,7 @@ public class ProgrammingExerciseTestService {
         var participant = participation.getParticipant();
 
         mockDelegate.mockTriggerInstructorBuildAll(participation);
+        // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
         mockDelegate.mockTriggerInstructorBuildAll(participation);
 
         // These will be updated triggering a failed build

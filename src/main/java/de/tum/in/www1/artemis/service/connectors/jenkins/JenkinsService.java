@@ -354,7 +354,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
         // Fetch submission or create a fallback
         var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
-        latestSubmission.setBuildFailed(newResult.getResultString().equals("No tests found"));
+        latestSubmission.setBuildFailed("No tests found".equals(newResult.getResultString()));
 
         // save result to create entry in DB before establishing relation with submission for ordering
         newResult = resultRepository.save(newResult);
