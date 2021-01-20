@@ -86,11 +86,10 @@ export function createProgrammingExercise(artemis, courseId, programmingLanguage
         packageName: 'de.test',
         problemStatement: programmingExerciseProblemStatement,
         presentationScoreEnabled: false,
-        staticCodeAnalysisEnabled: false,
+        staticCodeAnalysisEnabled: enableSCA,
         sequentialTestRuns: false,
         mode: 'INDIVIDUAL',
         projectType: programmingLanguage === 'JAVA' ? 'ECLIPSE' : undefined,
-        enableStaticCodeAnalysis: enableSCA,
         course: {
             id: courseId,
         },
