@@ -58,7 +58,7 @@ export const TestResult = {
     BUILD_ERROR: 'error',
 };
 
-export function createProgrammingExercise(artemis, courseId, programmingLanguage, enableSCA = false, exerciseGroup = undefined) {
+export function createProgrammingExercise(artemis, courseId, exerciseGroup = undefined, programmingLanguage, enableSCA = false) {
     let res;
 
     let programmingExerciseProblemStatement;

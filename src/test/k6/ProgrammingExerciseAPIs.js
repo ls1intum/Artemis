@@ -65,7 +65,7 @@ export function setup() {
         }
 
         // Create new exercise
-        exerciseId = createProgrammingExercise(artemis, course.id, programmingLanguage, enableSCA, undefined);
+        exerciseId = createProgrammingExercise(artemis, course.id, undefined, programmingLanguage, enableSCA);
 
         // Wait some time for builds to finish and test results to come in
         sleep(20);
