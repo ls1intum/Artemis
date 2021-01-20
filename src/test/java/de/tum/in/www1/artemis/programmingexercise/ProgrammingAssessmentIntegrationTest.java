@@ -578,6 +578,17 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo("tutor1");
         assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
 
+        // make sure that new result correctly appears inside the continue box
+        LinkedMultiValueMap<String, String> paramsGetAssessedCR1Tutor1 = new LinkedMultiValueMap<>();
+        paramsGetAssessedCR1Tutor1.add("assessedByTutor", "true");
+        paramsGetAssessedCR1Tutor1.add("correction-round", "0");
+        var assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+                paramsGetAssessedCR1Tutor1);
+
+        assertThat(assessedSubmissionList.size()).isEqualTo(1);
+        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
+        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
+
         // assess submission and submit
         var manualResultLockedFirstRound = submissionWithoutFirstAssessment.getLatestResult();
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
@@ -592,6 +603,14 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         Result firstSubmittedManualResult = request.putWithResponseBodyAndParams("/api/participations/" + studentParticipation.getId() + "/manual-results",
                 manualResultLockedFirstRound, Result.class, HttpStatus.OK, params);
+
+        // make sure that new result correctly appears after the assessment for first correction round
+        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+                paramsGetAssessedCR1Tutor1);
+
+        assertThat(assessedSubmissionList.size()).isEqualTo(1);
+        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
+        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(firstSubmittedManualResult);
 
         // change the user here, so that for the next query the result will show up again.
         if (this.tutorAssessUnique) {
@@ -679,5 +698,25 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         var secondSubmittedManualResult = request.putWithResponseBodyAndParams("/api/participations/" + studentParticipation.getId() + "/manual-results",
                 manualResultLockedSecondRound, Result.class, HttpStatus.OK, paramsSecondCorrection);
         assertThat(secondSubmittedManualResult).isNotNull();
+
+        // make sure that new result correctly appears after the assessment for second correction round
+        LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
+        paramsGetAssessedCR2.add("assessedByTutor", "true");
+        paramsGetAssessedCR2.add("correction-round", "1");
+        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+                paramsGetAssessedCR2);
+
+        assertThat(assessedSubmissionList.size()).isEqualTo(1);
+        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
+        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(1)).isEqualTo(manualResultLockedSecondRound);
+
+        // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
+        LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
+        paramsGetAssessedCR1.add("assessedByTutor", "true");
+        paramsGetAssessedCR1.add("correction-round", "0");
+        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+                paramsGetAssessedCR1);
+
+        assertThat(assessedSubmissionList.size()).isEqualTo(0);
     }
 }
