@@ -31,7 +31,7 @@ const baseUsername = __ENV.BASE_USERNAME;
 const basePassword = __ENV.BASE_PASSWORD;
 const userOffset = parseInt(__ENV.USER_OFFSET);
 const programmingLanguage = __ENV.PROGRAMMING_LANGUAGE;
-const enableSCA = __ENV.ENABLE_SCA;
+const enableSCA = __ENV.ENABLE_SCA === 'true';
 
 export function setup() {
     console.log('__ENV.CREATE_USERS: ' + __ENV.CREATE_USERS);
