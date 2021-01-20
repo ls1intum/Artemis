@@ -23,9 +23,6 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { Course } from 'app/entities/course.model';
-import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
-import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
-import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -38,6 +35,14 @@ import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.mode
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
 import * as Sentry from '@sentry/browser';
 import { cloneDeep } from 'lodash';
+
+// False-positives:
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
 
 export interface Reason {
     translateKey: string;
