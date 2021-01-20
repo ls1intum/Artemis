@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.bitbucket;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -279,25 +278,27 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName, String targetPath) {
-        final var targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName.toLowerCase();
+    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) {
+        sourceRepositoryName = sourceRepositoryName.toLowerCase();
+        targetRepositoryName = targetRepositoryName.toLowerCase();
+        final String targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
+        // get the remote url of the source repo
+        final var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceRepositoryName);
+        // get the remote url of the target repo
+        final var targetRepoUrl = getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
         try {
-            var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceRepositoryName.toLowerCase());
-            // checkout the source repo to a different folder than the default one. This avoids a possible conflict state.
-            Repository sourceRepo = gitService.getOrCheckoutRepository(sourceRepoUrl, targetPath, true);
-            // create target repo
+            // create the new target repo
             createRepository(targetProjectKey, targetRepoSlug);
-            var targetRepoUrl = getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
+            // clone the source repo to the target directory
+            Repository targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(sourceRepoUrl, targetRepoUrl, true);
             // copy by pushing the source's content to the target's repo
-            gitService.pushSourceToTargetRepo(sourceRepo, targetRepoUrl);
-            // delete the source repo which is not needed anymore
-            gitService.deleteLocalRepository(sourceRepo);
+            gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl);
         }
-        catch (InterruptedException | GitAPIException | IOException e) {
-            throw new BitbucketException("Error while pushing the source repo to the target repo", e);
+        catch (InterruptedException | GitAPIException e) {
+            throw new BitbucketException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, e);
         }
 
-        return getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
+        return targetRepoUrl;
     }
 
     private BitbucketProjectDTO getBitbucketProject(String projectKey) {
