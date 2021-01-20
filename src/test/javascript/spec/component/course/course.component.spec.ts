@@ -56,7 +56,6 @@ const exams = [exam1, exam2];
 const course1 = { id: 1, exams, exercises: [exercise1] };
 const course2 = { id: 2, exercises: [exercise2] };
 const courses: Course[] = [course1, course2];
-const errorBody: any[] = [];
 
 describe('CoursesComponent', () => {
     let component: CoursesComponent;
@@ -69,8 +68,7 @@ describe('CoursesComponent', () => {
     let exerciseService: ExerciseService;
     const router = new MockRouter();
 
-    const course: Course = { id: 123 } as Course;
-    const route = ({ data: of({ courseId: course.id }), children: [] } as any) as ActivatedRoute;
+    const route = ({ data: of({ courseId: course1.id }), children: [] } as any) as ActivatedRoute;
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
@@ -174,13 +172,13 @@ describe('CoursesComponent', () => {
 
     it('Should load next relevant exam', () => {
         const navigateSpy = sinon.spy(router, 'navigate');
-        component.nextRelevantCourseForExam = course;
+        component.nextRelevantCourseForExam = course1;
         component.nextRelevantExams = exams;
         let findAllForDashboardStub = stub(courseService, 'findAllForDashboard');
         findAllForDashboardStub.returns(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
 
         component.openExam();
 
-        expect(navigateSpy).to.have.been.calledWith(['courses', 123, 'exams', 3]);
+        expect(navigateSpy).to.have.been.calledWith(['courses', 1, 'exams', 3]);
     });
 });
