@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
@@ -27,19 +27,18 @@ import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } 
 @Component({
     selector: 'jhi-example-text-submission',
     templateUrl: './example-text-submission.component.html',
-    providers: [],
     styleUrls: ['./example-text-submission.component.scss'],
-    encapsulation: ViewEncapsulation.None,
 })
 export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, AfterViewInit, Context {
     isNewSubmission: boolean;
     areNewAssessments = true;
-    exerciseId: number;
+    private exerciseId: number;
+    private exampleSubmissionId: number;
     exampleSubmission = new ExampleSubmission();
     assessmentsAreValid = false;
     result?: Result;
+    private unreferencedFeedback: Feedback[] = [];
     totalScore: number;
-    invalidError?: string;
     readOnly: boolean;
     toComplete: boolean;
     state = State.initialWithContext(this);
@@ -47,8 +46,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     AssessButtonStates = AssessButtonStates;
     UIStates = UIStates;
 
-    private exampleSubmissionId: number;
-    private unreferencedFeedback: Feedback[] = [];
     constructor(
         jhiAlertService: JhiAlertService,
         accountService: AccountService,
@@ -110,7 +107,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * Loads the exercise.
      * Also loads the example submission if the new parameter is not set.
      */
-    loadAll(): void {
+    private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.exercise);
@@ -122,36 +119,38 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         }
         this.state.edit();
 
-        this.exampleSubmissionService.get(this.exampleSubmissionId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+        this.exampleSubmissionService.get(this.exampleSubmissionId).subscribe(async (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body!;
             this.submission = this.exampleSubmission.submission as TextSubmission;
 
             // Do not load the results when we have to assess the submission. The API will not provide it anyway
             // if we are not instructors
             if (this.toComplete) {
-                return;
+                // TODO: Handle this case in a way that does not fetch the result
+                this.state = State.forExistingAssessmentWithContext(this);
+                // return;
             }
-            this.fetchExampleResult(() => {
-                if (this.result?.id) {
-                    this.state = State.forExistingAssessmentWithContext(this);
-                }
-            });
+            await this.fetchExampleResult();
+            if (this.result?.id) {
+                this.state = State.forExistingAssessmentWithContext(this);
+            }
         });
     }
 
-    // TODO: Try to only call when needded (== when in assess mode or first time)
-    private fetchExampleResult(completion: () => void = () => {}): void {
-        this.assessmentsService
-            .getExampleResult(this.exerciseId, this.submission?.id!)
-            .filter(notUndefined)
-            .subscribe((result) => {
-                this.result = result;
-                this.exampleSubmission.submission = this.submission = result.submission;
-                this.prepareTextBlocksAndFeedbacks();
-                this.areNewAssessments = this.assessments.length <= 0;
-                this.validateFeedback();
-                completion();
-            });
+    private fetchExampleResult(): Promise<void> {
+        return new Promise((resolve) => {
+            this.assessmentsService
+                .getExampleResult(this.exercise?.id!, this.submission?.id!)
+                .filter(notUndefined)
+                .subscribe((result) => {
+                    this.result = result;
+                    this.exampleSubmission.submission = this.submission = result.submission;
+                    this.prepareTextBlocksAndFeedbacks();
+                    this.areNewAssessments = this.assessments.length <= 0;
+                    this.validateFeedback();
+                    resolve();
+                });
+        });
     }
 
     /**
@@ -193,8 +192,9 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         }, this.onError);
     }
 
-    public startAssessment(): void {
-        this.fetchExampleResult(() => this.state.assess());
+    public async startAssessment(): Promise<void> {
+        await this.fetchExampleResult();
+        this.state.assess();
     }
 
     /**
