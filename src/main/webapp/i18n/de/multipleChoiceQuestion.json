@@ -42,7 +42,8 @@
                 "orderedList": "Geordnete List",
                 "imageUpload": "Anhang",
                 "style": "Überschriften",
-                "code": "code",
+                "codeBlock": "Code Block",
+                "code": "Code",
                 "color": "Farbe"
             }
         }

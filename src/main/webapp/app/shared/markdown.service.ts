@@ -27,6 +27,7 @@ const addCSSClass = Object.keys(classMap).map((key) => ({
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisMarkdownService {
+    readonly showdownHighlight = require('showdown-highlight');
     static hintOrExpRegex = new RegExp(escapeStringForUseInRegex(`${ExplanationCommand.identifier}`) + '|' + escapeStringForUseInRegex(`${HintCommand.identifier}`), 'g');
 
     constructor(private sanitizer: DomSanitizer) {}
@@ -137,7 +138,7 @@ export class ArtemisMarkdownService {
             tables: true,
             openLinksInNewWindow: true,
             backslashEscapesHTMLTags: true,
-            extensions: [...extensions, showdownKatex(), ...addCSSClass],
+            extensions: [...extensions, showdownKatex(), this.showdownHighlight, ...addCSSClass],
         });
         const html = converter.makeHtml(markdownText);
         const purifyParameters = {};
