@@ -16,7 +16,7 @@ public enum IncludedInOverallScore {
     INCLUDED_COMPLETELY,
     /**
      * - exercise can have max points > 0 and max bonus points must be 0
-     * - max_points of exercise do NOT increase the maximum reachable points in a course / exam (as they are includes as bonus)
+     * - max_points of exercise do NOT increase the maximum reachable points in a course / exam (as they are included as a bonus)
      * - points achieved by a student/team count as bonus points towards the student's/team's overall course / exam score
      */
     INCLUDED_AS_BONUS,

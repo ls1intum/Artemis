@@ -24,7 +24,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
@@ -119,7 +118,7 @@ public class ModelingExerciseResource {
         }
 
         // Validate score settings
-        Optional<ResponseEntity<ModelingExercise>> optionalScoreSettingsError = validateScoreSettings(modelingExercise);
+        Optional<ResponseEntity<ModelingExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(modelingExercise);
         if (optionalScoreSettingsError.isPresent()) {
             return optionalScoreSettingsError.get();
         }
@@ -192,7 +191,7 @@ public class ModelingExerciseResource {
         }
 
         // Validate score settings
-        Optional<ResponseEntity<ModelingExercise>> optionalScoreSettingsError = validateScoreSettings(modelingExercise);
+        Optional<ResponseEntity<ModelingExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(modelingExercise);
         if (optionalScoreSettingsError.isPresent()) {
             return optionalScoreSettingsError.get();
         }
@@ -357,7 +356,7 @@ public class ModelingExerciseResource {
         }
 
         // Validate score settings
-        Optional<ResponseEntity<ModelingExercise>> optionalScoreSettingsError = validateScoreSettings(importedExercise);
+        Optional<ResponseEntity<ModelingExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(importedExercise);
         if (optionalScoreSettingsError.isPresent()) {
             return optionalScoreSettingsError.get();
         }
@@ -464,33 +463,4 @@ public class ModelingExerciseResource {
 
         return ResponseEntity.ok(result);
     }
-
-    /**
-     * Validates score settings
-     * 1. The maxScore needs to be greater than 0
-     * 2. If the IncludedInOverallScore enum is either INCLUDED_AS_BONUS or NOT_INCLUDED, no bonus points are allowed
-     *
-     * @param modelingExercise exercise to validate
-     * @return Optional validation error response
-     */
-    private Optional<ResponseEntity<ModelingExercise>> validateScoreSettings(ModelingExercise modelingExercise) {
-        // Check if max score is set
-        if (modelingExercise.getMaxScore() == null || modelingExercise.getMaxScore() == 0) {
-            return Optional
-                    .of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score needs to be greater than 0", "maxscoreInvalid")).body(null));
-        }
-
-        // Check IncludedInOverallScore
-        if ((modelingExercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_AS_BONUS
-                || modelingExercise.getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED) && modelingExercise.getBonusPoints() > 0) {
-            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "Bonus points are not allowed", "bonusPointsInvalid")).body(null));
-        }
-
-        if (modelingExercise.getBonusPoints() == null) {
-            // make sure the default value is set properly
-            modelingExercise.setBonusPoints(0.0);
-        }
-        return Optional.empty();
-    }
-
 }

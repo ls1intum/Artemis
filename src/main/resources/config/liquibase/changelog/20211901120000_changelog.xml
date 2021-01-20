@@ -56,7 +56,7 @@
     </changeSet>
 
     <!-- Adding not null constraint for the bonus points of an exercise
-          defaultNullValue="0" converts current null values to 0 
+          defaultNullValue="0" converts current null values to 0
     -->
     <changeSet id="20211901120000-7" author="swaldhauser">
         <addNotNullConstraint tableName="exercise" columnName="bonus_points" columnDataType="double" defaultNullValue="0"/>
