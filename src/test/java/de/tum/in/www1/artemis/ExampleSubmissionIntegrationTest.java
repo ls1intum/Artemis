@@ -206,7 +206,8 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL).detailText("nice submission 2").reference(textBlockIterator.next().getId()));
         var dto = new TextAssessmentDTO();
         dto.setFeedbacks(feedbacks);
-        request.putWithResponseBody("/api/text-assessments/text-submissions/" + storedExampleSubmission.getId() + "/example-assessment", dto, Result.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/text-assessments/text-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment", dto, Result.class,
+                HttpStatus.OK);
         Result storedResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
