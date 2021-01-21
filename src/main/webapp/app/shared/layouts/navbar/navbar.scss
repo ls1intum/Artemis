@@ -72,8 +72,10 @@ Navbar
 
 @media not all and (min-resolution: 0.001dpcm) {
     @supports (-webkit-appearance: none) {
-        .breadcrumb-link {
-            display: block !important;
+        .breadcrumb-item:first-of-type {
+            .breadcrumb-link {
+                display: block !important;
+            }
         }
     }
 }
