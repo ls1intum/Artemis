@@ -3,7 +3,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { Observable } from 'rxjs';
+import { of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslatePipe } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -26,6 +26,7 @@ import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-asse
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ArtemisTestModule } from '../../test.module';
+import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -94,7 +95,7 @@ describe('ExampleTextSubmissionComponent', () => {
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
         spyOn(exerciseService, 'find').and.returnValue(httpResponse(exercise));
         spyOn(exampleSubmissionService, 'get').and.returnValue(httpResponse(exampleSubmission));
-        spyOn(assessmentsService, 'getExampleResult').and.returnValue(httpResponse(result));
+        spyOn(assessmentsService, 'getExampleResult').and.returnValue(of(result));
 
         // WHEN
         fixture.detectChanges();
@@ -128,11 +129,16 @@ describe('ExampleTextSubmissionComponent', () => {
 
     it('should switch state when starting assessment', fakeAsync(() => {
         // GIVEN
+        // @ts-ignore
+        activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
+        fixture.detectChanges();
+        tick();
         comp.isAtLeastInstructor = true;
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
         comp.submission = submission;
-        spyOn(assessmentsService, 'getExampleResult').and.returnValues(httpResponse(result));
+        spyOn(assessmentsService, 'getExampleResult').and.returnValue(of(result));
+        of();
 
         // WHEN
         fixture.detectChanges();
@@ -147,6 +153,10 @@ describe('ExampleTextSubmissionComponent', () => {
 
     it('should save assessment', fakeAsync(() => {
         // GIVEN
+        // @ts-ignore
+        activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
+        fixture.detectChanges();
+        tick();
         comp.isAtLeastInstructor = true;
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
@@ -221,5 +231,47 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.unusedTextBlockRefs).toHaveLength(0);
     }));
 
-    const httpResponse = (body: any) => Observable.of(new HttpResponse({ body }));
+    it('it should verify correct tutorial submission', fakeAsync(() => {
+        // GIVEN
+        // @ts-ignore
+        activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
+        // @ts-ignore
+        activatedRouteSnapshot.queryParamMap.params = { toComplete: true };
+        spyOn(exerciseService, 'find').and.returnValue(httpResponse(exercise));
+        spyOn(exampleSubmissionService, 'get').and.returnValue(httpResponse(exampleSubmission));
+        const textBlock1 = new TextBlock();
+        textBlock1.startIndex = 0;
+        textBlock1.endIndex = 4;
+        textBlock1.setTextFromSubmission(submission);
+        textBlock1.computeId();
+        const textBlock2 = new TextBlock();
+        textBlock2.startIndex = 5;
+        textBlock2.endIndex = 9;
+        textBlock2.setTextFromSubmission(submission);
+        textBlock2.computeId();
+        submission.blocks = [textBlock1, textBlock2];
+        spyOn(assessmentsService, 'getExampleResult').and.returnValue(of(result));
+        fixture.detectChanges();
+        tick();
+
+        comp.textBlockRefs[0].initFeedback();
+        comp.textBlockRefs[0].feedback!.credits = 2;
+        comp.validateFeedback();
+        const tutorParticipationService = fixture.debugElement.injector.get(TutorParticipationService);
+        spyOn(tutorParticipationService, 'assessExampleSubmission').and.returnValue(httpResponse(null));
+
+        // WHEN
+        fixture.detectChanges();
+        tick();
+        fixture.debugElement.query(By.css('#checkAssessment')).nativeElement.click();
+        tick();
+
+        // THEN
+        expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
+        expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
+        expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
+        expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalled();
+    }));
+
+    const httpResponse = (body: any) => of(new HttpResponse({ body }));
 });

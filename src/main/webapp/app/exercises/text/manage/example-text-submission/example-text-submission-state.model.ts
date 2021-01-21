@@ -3,12 +3,14 @@ export interface Context {
 }
 
 export enum SubmissionButtonStates {
+    NONE,
     NEW,
     UPDATE,
     EDIT,
 }
 
 export enum AssessButtonStates {
+    NONE,
     ASSESS,
     CREATE,
     UPDATE,
@@ -24,7 +26,7 @@ export abstract class State {
         protected context: Context,
         public readonly ui: UIStates,
         public readonly submissionEditButton: SubmissionButtonStates,
-        public readonly assessButton: AssessButtonStates | false,
+        public readonly assessButton: AssessButtonStates,
     ) {}
 
     edit(): void {
@@ -37,11 +39,12 @@ export abstract class State {
 
     static initialWithContext = (context: Context): State => new NewState(context);
     static forExistingAssessmentWithContext = (context: Context): State => new AssessState(context);
+    static forCompletion = (context: Context): State => new CompletionState(context);
 }
 
 class NewState extends State {
     constructor(context: Context) {
-        super(context, UIStates.SUBMISSION, SubmissionButtonStates.NEW, false);
+        super(context, UIStates.SUBMISSION, SubmissionButtonStates.NEW, AssessButtonStates.NONE);
     }
 }
 
@@ -66,5 +69,13 @@ class AssessState extends State {
     constructor(context: Context) {
         super(context, UIStates.ASSESSMENT, SubmissionButtonStates.EDIT, AssessButtonStates.UPDATE);
     }
+    assess() {}
+}
+
+class CompletionState extends State {
+    constructor(context: Context) {
+        super(context, UIStates.ASSESSMENT, SubmissionButtonStates.NONE, AssessButtonStates.NONE);
+    }
+    edit() {}
     assess() {}
 }

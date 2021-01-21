@@ -327,7 +327,8 @@ public class TextAssessmentResource extends AssessmentResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
             return forbidden();
         }
-        Submission submission = textAssessmentService.findExampleSubmissionWithResult(submissionId);
+        final ExampleSubmission exampleSubmission = exampleSubmissionService.findOneBySubmissionId(submissionId);
+        Submission submission = exampleSubmission.getSubmission();
 
         if (!(submission instanceof TextSubmission)) {
             return ResponseEntity.badRequest().body(null);
@@ -339,7 +340,19 @@ public class TextAssessmentResource extends AssessmentResource {
         if (textSubmission.getBlocks() == null || textSubmission.getBlocks().isEmpty()) {
             textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         }
-        return ResponseEntity.ok().body(textSubmission.getLatestResult());
+
+        Result result;
+        if (!Boolean.TRUE.equals(exampleSubmission.isUsedForTutorial()) || authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
+            result = textSubmission.getLatestResult();
+            final List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
+            result.setFeedbacks(assessments);
+        }
+        else {
+            result = new Result();
+            result.setSubmission(textSubmission);
+        }
+
+        return ResponseEntity.ok().body(result);
     }
 
     /**

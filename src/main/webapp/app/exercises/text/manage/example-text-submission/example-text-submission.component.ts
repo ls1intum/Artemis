@@ -18,7 +18,7 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
-import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { setLatestSubmissionResult } from 'app/entities/submission.model';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { notUndefined } from 'app/shared/util/global.utils';
@@ -32,6 +32,7 @@ import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } 
 export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, AfterViewInit, Context {
     isNewSubmission: boolean;
     areNewAssessments = true;
+    unsavedChanges = false;
     private exerciseId: number;
     private exampleSubmissionId: number;
     exampleSubmission = new ExampleSubmission();
@@ -122,16 +123,12 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         this.exampleSubmissionService.get(this.exampleSubmissionId).subscribe(async (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body!;
             this.submission = this.exampleSubmission.submission as TextSubmission;
-
-            // Do not load the results when we have to assess the submission. The API will not provide it anyway
-            // if we are not instructors
-            if (this.toComplete) {
-                // TODO: Handle this case in a way that does not fetch the result
-                this.state = State.forExistingAssessmentWithContext(this);
-                // return;
-            }
             await this.fetchExampleResult();
-            if (this.result?.id) {
+            if (this.toComplete) {
+                this.state = State.forCompletion(this);
+                this.textBlockRefs.forEach((ref) => delete ref.feedback);
+                this.validateFeedback();
+            } else if (this.result?.id) {
                 this.state = State.forExistingAssessmentWithContext(this);
             }
         });
@@ -140,7 +137,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     private fetchExampleResult(): Promise<void> {
         return new Promise((resolve) => {
             this.assessmentsService
-                .getExampleResult(this.exercise?.id!, this.submission?.id!)
+                .getExampleResult(this.exerciseId, this.submission?.id!)
                 .filter(notUndefined)
                 .subscribe((result) => {
                     this.result = result;
@@ -188,6 +185,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body!;
             this.state.edit();
+            this.unsavedChanges = false;
             this.jhiAlertService.success('artemisApp.exampleSubmission.saveSuccessful');
         }, this.onError);
     }
@@ -251,24 +249,26 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         }
 
         const exampleSubmission = Object.assign({}, this.exampleSubmission);
-        if (exampleSubmission.submission) {
-            const result = getLatestSubmissionResult(exampleSubmission.submission);
-            setLatestSubmissionResult(exampleSubmission.submission, result);
-            result!.feedbacks = this.assessments;
-        }
-        // TODO: Verify ues of text blocks here!
-        // TODO: Also check how text blocks are loaded for tutors.
+        exampleSubmission.submission = Object.assign({}, this.submission);
+        const result = Object.assign({}, this.result);
+        setLatestSubmissionResult(exampleSubmission.submission, result);
+        result.feedbacks = this.assessments;
+        delete result?.submission;
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
             () => this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success'),
             (error: HttpErrorResponse) => {
                 const errorType = error.headers.get('x-artemisapp-error');
 
-                if (errorType === 'error.tooLow') {
-                    this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooLow');
-                } else if (errorType === 'error.tooHigh') {
-                    this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
-                } else {
-                    this.onError(error.message);
+                switch (errorType) {
+                    case 'error.tooLow':
+                        this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooLow');
+                        break;
+                    case 'error.tooHigh':
+                        this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
+                        break;
+                    default:
+                        this.onError(error.message);
+                        break;
                 }
             },
         );

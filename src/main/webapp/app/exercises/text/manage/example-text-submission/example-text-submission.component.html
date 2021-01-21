@@ -34,7 +34,13 @@
 
                 <ng-container [ngSwitch]="state.assessButton">
                     <!--TODO: Disable Button if unsaved changes in submission -->
-                    <button *ngSwitchCase="AssessButtonStates.ASSESS" (click)="startAssessment()" class="btn btn-primary col-auto ml-auto mr-3" id="createNewAssessment">
+                    <button
+                        *ngSwitchCase="AssessButtonStates.ASSESS"
+                        (click)="startAssessment()"
+                        class="btn btn-primary col-auto ml-auto mr-3"
+                        id="createNewAssessment"
+                        [disabled]="unsavedChanges"
+                    >
                         <fa-icon [icon]="'save'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.createNewAssessment' | translate }}
                     </button>
@@ -63,7 +69,13 @@
 <jhi-resizeable-container class="col-12 mt-3">
     <!--region Left Panel-->
     <span left-header *ngIf="state.ui === UIStates.SUBMISSION" jhiTranslate="artemisApp.exampleSubmission.exampleSubmission">Example submission</span>
-    <textarea left-body *ngIf="state.ui === UIStates.SUBMISSION" [(ngModel)]="submission!.text" style="width: 100%; height: 50vh"></textarea>
+    <textarea
+        left-body
+        *ngIf="state.ui === UIStates.SUBMISSION"
+        [(ngModel)]="submission!.text"
+        (ngModelChange)="unsavedChanges = true"
+        style="width: 100%; height: 50vh"
+    ></textarea>
 
     <jhi-score-display left-header *ngIf="state.ui === UIStates.ASSESSMENT" [maxScore]="exercise?.maxScore" [score]="totalScore"></jhi-score-display>
     <jhi-text-assessment-area
@@ -99,7 +111,7 @@
 </jhi-resizeable-container>
 
 <div class="col-12 text-right" *ngIf="toComplete">
-    <button class="btn btn-primary col-3 guided-tour-check-assessment" (click)="checkAssessment()" [disabled]="!assessmentsAreValid">
+    <button class="btn btn-primary col-3 guided-tour-check-assessment" (click)="checkAssessment()" [disabled]="!assessmentsAreValid" id="checkAssessment">
         {{ 'artemisApp.exampleSubmission.submitAssessment' | translate }}
     </button>
 </div>
