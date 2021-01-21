@@ -7,7 +7,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import jplag.ExitException;
 
@@ -23,7 +26,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
@@ -137,7 +139,10 @@ public class TextExerciseResource {
         }
 
         // Validate score settings
-        validateScoreSettings(textExercise);
+        Optional<ResponseEntity<TextExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(textExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
+        }
 
         if (textExercise.getDueDate() == null && textExercise.getAssessmentDueDate() != null) {
             throw new BadRequestAlertException("If you set an assessmentDueDate, then you need to add also a dueDate", ENTITY_NAME, "dueDate");
@@ -190,7 +195,10 @@ public class TextExerciseResource {
         }
 
         // Validate score settings
-        validateScoreSettings(textExercise);
+        Optional<ResponseEntity<TextExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(textExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
+        }
 
         // Valid exercises have set either a course or an exerciseGroup
         exerciseService.checkCourseAndExerciseGroupExclusivity(textExercise, ENTITY_NAME);
@@ -590,31 +598,6 @@ public class TextExerciseResource {
         TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise, similarityThreshold, minimumScore, minimumSize);
 
         return ResponseEntity.ok(result);
-    }
-
-    /**
-     * Validates score settings
-     * 1. The maxScore needs to be greater than 0
-     * 2. If the IncludedInOverallScore enum is either INCLUDED_AS_BONUS or NOT_INCLUDED, no bonus points are allowed
-     *
-     * @param textExercise exercise to validate
-     */
-    private void validateScoreSettings(TextExercise textExercise) {
-        // Check if max score is set
-        if (textExercise.getMaxScore() == null || textExercise.getMaxScore() == 0) {
-            throw new BadRequestAlertException("A new textExercise needs a max score", ENTITY_NAME, "missingmaxscore");
-        }
-
-        // Check IncludedInOverallScore
-        if ((textExercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_AS_BONUS
-                || textExercise.getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED) && textExercise.getBonusPoints() > 0) {
-            throw new BadRequestAlertException("Bonus points are not allowed", ENTITY_NAME, "bonusPointsInvalid");
-        }
-
-        if (textExercise.getBonusPoints() == null) {
-            // make sure the default value is set properly
-            textExercise.setBonusPoints(0.0);
-        }
     }
 
 }
