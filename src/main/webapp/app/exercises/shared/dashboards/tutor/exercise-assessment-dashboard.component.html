@@ -7,7 +7,7 @@
 
 <div *ngIf="exercise !== undefined">
     <div class="row my-3 justify-content-around">
-        <div class="col-5 text-center" *ngIf="!isTestRun">
+        <div class="col-lg-5 col-md-6 col-sm-6 text-center" *ngIf="!isTestRun">
             <p class="h3">{{ 'artemisApp.exerciseAssessmentDashboard.yourStatus' | translate }}:</p>
             <jhi-tutor-participation-graph
                 [exercise]="exercise"
@@ -22,6 +22,14 @@
             >
             </jhi-tutor-participation-graph>
         </div>
+        <div class="col-lg-3 col-md-6 col-sm-6 align-self-center" *ngIf="isExamMode">
+            <ng-container>
+                <button (click)="enableSecondCorrection()" class="btn btn-warning btn-sm">
+                    <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrection' | translate }}
+                </button>
+            </ng-container>
+        </div>
+
         <div class="col-5">
             <jhi-side-panel *ngIf="!isExamMode" [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exerciseInformation' | translate">
                 <div class="row mb-1 small" *ngIf="numberOfSubmissions.late > 0">

@@ -86,6 +86,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     moreFeedbackRequests: Complaint[] = [];
     submissionLockLimitReached = false;
     openingAssessmentEditorForNewSubmission = false;
+    numberOfCorrectionRoundsEnabled = 0;
 
     formattedGradingInstructions?: SafeHtml;
     formattedProblemStatement?: SafeHtml;
@@ -379,8 +380,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     private getSubmissionWithoutAssessmentForAllCorrectionrounds(): void {
         if (this.isExamMode) {
+            console.log(this.numberOfCorrectionRoundsEnabled);
             for (let i = 0; i < this.exam!.numberOfCorrectionRoundsInExam!; i++) {
-                this.getSubmissionWithoutAssessmentForCorrectionround(i);
+                if (i <= this.numberOfCorrectionRoundsEnabled) {
+                    this.getSubmissionWithoutAssessmentForCorrectionround(i);
+                }
             }
         } else {
             this.getSubmissionWithoutAssessmentForCorrectionround(0);
@@ -583,6 +587,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         return exercise as ProgrammingExercise;
     }
 
+    enableSecondCorrection() {
+        console.log('enable second correction');
+        if (this.numberOfCorrectionRoundsEnabled < this.exam?.numberOfCorrectionRoundsInExam!) {
+            this.numberOfCorrectionRoundsEnabled += 1;
+        }
+
+        this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
+        // TODO RESTCALL
+    }
     /**
      * Navigates back to the tutor (exam) dashboard
      */
