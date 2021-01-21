@@ -71,11 +71,9 @@ Navbar
 }
 
 @media not all and (min-resolution: 0.001dpcm) {
-    @media {
-        .safari10 {
-            .breadcrumb-link {
-                display: block !important;
-            }
+    @supports (-webkit-appearance: none) {
+        .breadcrumb-link {
+            display: block !important;
         }
     }
 }
