@@ -35,7 +35,7 @@ export class ProgrammingExerciseInstructorRepoDownloadComponent {
     constructor(private programmingExerciseService: ProgrammingExerciseService, private alertService: JhiAlertService) {}
 
     exportRepository() {
-        if (this.exerciseId) {
+        if (this.exerciseId && this.repositoryType) {
             this.programmingExerciseService.exportInstructorRepository(this.exerciseId, this.repositoryType).subscribe((response) => {
                 downloadZipFileFromResponse(response);
                 this.alertService.success('artemisApp.programmingExercise.export.successMessage');
