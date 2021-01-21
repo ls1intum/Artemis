@@ -63,16 +63,20 @@ Navbar
     .breadcrumb-item::before {
         content: '>';
     }
+
     // Hide the first divider
     .breadcrumb-item:first-of-type::before {
         content: '';
     }
 }
 
-// Change the display to block only on Safari
-@media screen and (min-color-index: 0) and(-webkit-min-device-pixel-ratio:0) {
-    .breadcrumb-link {
-        display: block;
+@media not all and (min-resolution: 0.001dpcm) {
+    @media {
+        .safari10 {
+            .breadcrumb-link {
+                display: block !important;
+            }
+        }
     }
 }
 
