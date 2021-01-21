@@ -70,6 +70,7 @@
         "rxjs": "6.6.3",
         "rxjs-compat": "6.6.3",
         "showdown": "1.9.1",
+        "showdown-highlight": "2.1.5",
         "showdown-katex": "0.6.0",
         "simple-statistics": "7.4.0",
         "smoothscroll-polyfill": "0.4.4",
