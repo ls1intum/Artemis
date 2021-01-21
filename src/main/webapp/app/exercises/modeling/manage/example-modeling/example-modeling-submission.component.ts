@@ -328,7 +328,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             return;
         }
 
-        const maxPoints = this.exercise.maxScore! + (this.exercise.bonusPoints! ?? 0.0);
+        const maxPoints = this.exercise.maxScore! + this.exercise.bonusPoints!;
         const creditsTotalScore = credits.reduce((a, b) => a! + b!, 0)!;
         this.totalScore = getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints);
         this.assessmentsAreValid = true;
