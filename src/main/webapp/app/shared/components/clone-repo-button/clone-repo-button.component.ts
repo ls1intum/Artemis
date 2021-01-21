@@ -6,7 +6,6 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 @Component({
     selector: 'jhi-clone-repo-button',
@@ -22,6 +21,10 @@ export class CloneRepoButtonComponent implements OnInit {
 
     @Input()
     repositoryUrl: string;
+
+    // Needed because the repository url is different for teams
+    @Input()
+    isTeamParticipation: boolean;
 
     useSsh = false;
     sshKeysUrl: string;
@@ -74,7 +77,15 @@ export class CloneRepoButtonComponent implements OnInit {
     }
 
     getHtmlOrSshRepositoryUrl() {
-        return this.useSsh ? this.getSshCloneUrl(this.repositoryUrl) : this.repositoryUrl;
+        if (this.useSsh) {
+            return this.getSshCloneUrl(this.repositoryUrl);
+        }
+
+        if (this.isTeamParticipation) {
+            return this.repositoryUrlForTeam(this.repositoryUrl);
+        }
+
+        return this.repositoryUrl;
     }
 
     /**
@@ -82,9 +93,9 @@ export class CloneRepoButtonComponent implements OnInit {
      *
      * @return repository url with username of current user inserted
      */
-    private repositoryUrlForTeam(url?: ProgrammingExerciseStudentParticipation) {
+    private repositoryUrlForTeam(url: string) {
         // (https://)(bitbucket.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(bitbucket.ase.in.tum.de/...-team1.git)
-        return url?.repositoryUrl?.replace(/^(\w*:\/\/)(.*)$/, `$1${this.user.login}@$2`);
+        return url.replace(/^(\w*:\/\/)(.*)$/, `$1${this.user.login}@$2`);
     }
 
     /**

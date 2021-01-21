@@ -209,6 +209,7 @@
             [loading]="exercise.loading"
             [smallButtons]="smallButtons"
             [repositoryUrl]="repositoryUrl(exercise.studentParticipations![0])"
+            [isTeamParticipation]="!!exercise.studentParticipations![0].team"
             *ngIf="
                 isOfflineIdeAllowed() &&
                 exercise.studentParticipations &&
