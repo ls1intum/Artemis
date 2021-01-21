@@ -42,7 +42,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     }
 
     loadAndFilterCourses() {
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             this.courseService.findAllToRegister().subscribe(
                 (registerRes) => {
                     this.coursesToSelect = registerRes.body!.filter((course) => {
