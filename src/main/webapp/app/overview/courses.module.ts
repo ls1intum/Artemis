@@ -11,7 +11,6 @@ import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared
 import { ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview/exercise-details/programming-exercise-student-ide-actions.component';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
-import { ExerciseActionButtonComponent } from 'app/overview/exercise-details/exercise-action-button.component';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
@@ -74,7 +73,6 @@ import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-g
         CourseLecturesComponent,
         CourseLectureRowComponent,
         CourseLectureDetailsComponent,
-        ExerciseActionButtonComponent,
         ExerciseDetailsStudentActionsComponent,
         ProgrammingExerciseStudentIdeActionsComponent,
         CourseExamsComponent,
@@ -85,6 +83,6 @@ import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-g
         TextUnitComponent,
         CourseLearningGoalsComponent,
     ],
-    exports: [ExerciseActionButtonComponent, ExerciseDetailsStudentActionsComponent, ExerciseUnitComponent, AttachmentUnitComponent, VideoUnitComponent, TextUnitComponent],
+    exports: [ExerciseDetailsStudentActionsComponent, ExerciseUnitComponent, AttachmentUnitComponent, VideoUnitComponent, TextUnitComponent],
 })
 export class ArtemisCoursesModule {}

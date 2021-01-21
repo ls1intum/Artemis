@@ -1,0 +1,57 @@
+<ng-container>
+    <button
+        jhi-exercise-action-button
+        buttonIcon="download"
+        class="clone-repository"
+        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+        [buttonLabel]="'artemisApp.exerciseActions.cloneRepository' | translate"
+        [buttonLoading]="loading"
+        [smallButton]="smallButtons"
+        [hideLabelMobile]="false"
+        [ngbPopover]="popContent"
+        [autoClose]="'outside'"
+        placement="right"
+        container="body"
+    ></button>
+    <ng-template #popContent style="max-width: 660px">
+        <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | translate }}</p>
+        <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
+        <div class="row" style="margin: 0; max-width: 100%">
+            <pre
+                style="flex: 1"
+                [ngStyle]="sshEnabled ? { borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' } : {}"
+                ngxClipboard
+                [cbContent]="repositoryUrl"
+                (cbOnSuccess)="onCopySuccess()"
+                (cbOnError)="onCopyFailure()"
+                >{{ repositoryUrl }}</pre
+            >
+            <pre
+                *ngIf="sshEnabled"
+                class="btn btn-primary d-inline-flex align-items-center ml-0"
+                style="border-top-left-radius: 0; border-bottom-left-radius: 0"
+                (click)="useSsh = !useSsh"
+                >{{ useSsh ? 'USE HTTPS' : 'USE SSH' }}</pre
+            >
+        </div>
+        <p *ngIf="repositoryPassword">
+            {{ 'artemisApp.exerciseActions.repositoryPassword' | translate }} <code class="password">{{ repositoryPassword }}</code>
+            {{ 'artemisApp.exerciseActions.hoverToShow' | translate }}
+        </p>
+        <button
+            ngxClipboard
+            [cbContent]="repositoryUrl"
+            (cbOnSuccess)="onCopySuccess()"
+            (cbOnError)="onCopyFailure()"
+            [class.btn-success]="wasCopied"
+            class="btn btn-primary btn-sm mr-2"
+            type="button"
+            style="min-width: 90px"
+        >
+            {{ wasCopied ? ('artemisApp.exerciseActions.copiedUrl' | translate) : ('artemisApp.exerciseActions.copyUrl' | translate) }}
+        </button>
+        <a class="btn btn-primary btn-sm mr-2" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl">{{ 'artemisApp.exerciseActions.cloneSourceTree' | translate }} </a>
+        <iframe name="hidden-iframe" style="visibility: hidden; position: absolute"></iframe>
+        <span [innerHTML]="'artemisApp.exerciseActions.sourceTreeDescription' | translate"></span>
+    </ng-template>
+</ng-container>
