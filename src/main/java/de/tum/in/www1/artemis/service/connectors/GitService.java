@@ -327,13 +327,13 @@ public class GitService {
      * @throws GitAPIException if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, String targetPath, boolean pullOnGet) throws InterruptedException, GitAPIException {
-        Path localPath = Paths.get(targetPath, folderNameForRepositoryUrl(repoUrl));
+        Path localPath = getLocalPathOfRepo(targetPath, repoUrl);
         return getOrCheckoutRepository(repoUrl, localPath, pullOnGet);
     }
 
     public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUrl repoUrl, VcsRepositoryUrl targetUrl, boolean pullOnGet)
             throws InterruptedException, GitAPIException {
-        Path localPath = Paths.get(repoClonePath, folderNameForRepositoryUrl(targetUrl));
+        Path localPath = getDefaultLocalPathOfRepo(targetUrl);
         return getOrCheckoutRepository(repoUrl, targetUrl, localPath, pullOnGet);
     }
 
@@ -404,11 +404,26 @@ public class GitService {
         }
     }
 
+    public Path getDefaultLocalPathOfRepo(VcsRepositoryUrl targetUrl) {
+        return getLocalPathOfRepo(repoClonePath, targetUrl);
+    }
+
+    /**
+     * Creates a local path by specifying a target path and the target url
+     *
+     * @param targetPath target directory
+     * @param targetUrl  url of the repository
+     * @return path of the local file system
+     */
+    public Path getLocalPathOfRepo(String targetPath, VcsRepositoryUrl targetUrl) {
+        return Paths.get(targetPath, folderNameForRepositoryUrl(targetUrl));
+    }
+
     /**
      * Get an existing git repository that is checked out on the server. Returns immediately null if the localPath does not exist. Will first try to retrieve a cached repository
      * from cachedRepositories. Side effect: This method caches retrieved repositories in a HashMap, so continuous retrievals can be avoided (reduces load).
      *
-     * @param localPath to git repo on server.
+     * @param localPath           to git repo on server.
      * @param remoteRepositoryUrl the remote repository url for the git repository, will be added to the Repository object for later use, can be null
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
@@ -957,7 +972,7 @@ public class GitService {
      * @return True if repo exists on disk
      */
     public boolean repositoryAlreadyExists(VcsRepositoryUrl repoUrl) {
-        Path localPath = Paths.get(repoClonePath, folderNameForRepositoryUrl(repoUrl));
+        Path localPath = getDefaultLocalPathOfRepo(repoUrl);
         return Files.exists(localPath);
     }
 

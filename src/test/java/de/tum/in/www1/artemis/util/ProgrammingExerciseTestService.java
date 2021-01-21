@@ -8,11 +8,12 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -850,12 +851,21 @@ public class ProgrammingExerciseTestService {
 
         // test for internal server error
         mockDelegate.mockCopyRepositoryForParticipation(exercise, team.getParticipantIdentifier());
+        mockDelegate.mockRepositoryWritePermissions(team, team.getStudents().stream().findFirst().get(), exercise, HttpStatus.BAD_REQUEST);
+        var participantRepoTestUrl = getMockFileRepositoryUrl(studentTeamRepo);
+        final var teamLocalPath = studentTeamRepo.localRepoFile.toPath();
+        doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
+        doThrow(new InterruptedException()).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
 
+        // the local repo should exist before startExercise()
+        assertThat(Files.exists(teamLocalPath)).isTrue();
         // Start participation
         try {
             participationService.startExercise(exercise, team, false);
         }
         catch (VersionControlException e) {
+            // the directory of the repo should be deleted
+            assertThat(Files.exists(teamLocalPath)).isFalse();
             // We cannot compare exception messages because each vcs has their
             // own. Maybe simply checking that the exception is not empty is
             // enough?
