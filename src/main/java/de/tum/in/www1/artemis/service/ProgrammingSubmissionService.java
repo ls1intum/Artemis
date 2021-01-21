@@ -712,7 +712,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             existingResult = submission.getLatestResult();
         }
         else {
-            existingResult = submission.getResultForCorrectionRound(correctionRound - 1);
+            existingResult = submission.getResultForCorrectionRound(correctionRound - 1, true);
         }
 
         List<Feedback> automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());

@@ -202,7 +202,8 @@ public class SubmissionService {
             // remove submission if user already assessed first correction round
             // if disabled, please switch tutorAssessUnique within the tests
             submissionsWithoutResult = submissionsWithoutResult.stream()
-                    .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1).getAssessor().equals(userService.getUser())).collect(Collectors.toList());
+                    .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1, true).getAssessor().equals(userService.getUser()))
+                    .collect(Collectors.toList());
         }
 
         if (submissionsWithoutResult.isEmpty()) {
@@ -430,10 +431,10 @@ public class SubmissionService {
      * @param submission the submission to lock
      */
     protected Result lockSubmission(Submission submission, int correctionRound) {
-        Result result = submission.getResultForCorrectionRound(correctionRound);
+        Result result = submission.getResultForCorrectionRound(correctionRound, false);
         if (result == null && correctionRound > 0L) {
             // copy the result of the previous correction round
-            result = copyResultFromPreviousRoundAndSave(submission, submission.getResultForCorrectionRound(correctionRound - 1));
+            result = copyResultFromPreviousRoundAndSave(submission, submission.getResultForCorrectionRound(correctionRound - 1, true));
         }
         else if (result == null) {
             result = saveNewEmptyResult(submission);
