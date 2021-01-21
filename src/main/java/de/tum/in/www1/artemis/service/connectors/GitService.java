@@ -921,6 +921,16 @@ public class GitService {
         return zipFileService.createZipFileWithFolderContent(zipFilePath, repoPath);
     }
 
+    public Path zipInstructorRepository(Repository repo, ProgrammingExercise exercise, String targetPath) throws IOException {
+        String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName().replaceAll("\\s", "");
+        String zipRepoName = courseShortName + "-" + exercise.getShortName() + ".zip";
+
+        Path repoPath = repo.getLocalPath();
+        Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipRepoName);
+        Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
+        return zipFileService.createZipFileWithFolderContent(zipFilePath, repoPath);
+    }
+
     /**
      * Generates the unique local folder name for a given remote repository URL.
      *

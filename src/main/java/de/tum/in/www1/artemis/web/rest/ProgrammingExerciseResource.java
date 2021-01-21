@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -64,7 +65,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 
-/** REST controller for managing ProgrammingExercise. */
+/**
+ * REST controller for managing ProgrammingExercise.
+ */
 @RestController
 @RequestMapping(ProgrammingExerciseResource.Endpoints.ROOT)
 public class ProgrammingExerciseResource {
@@ -183,8 +186,9 @@ public class ProgrammingExerciseResource {
      * 2. Check presence and length of course short name
      * 3. Find forbidden patterns in exercise short name
      * 4. Check that the short name doesn't already exist withing course or exam exercises
+     *
      * @param programmingExercise Programming exercise to be validated
-     * @param course Course of the programming exercise
+     * @param course              Course of the programming exercise
      * @return Optional validation error response
      */
     private Optional<ResponseEntity<ProgrammingExercise>> validateCourseAndExerciseShortName(ProgrammingExercise programmingExercise, Course course) {
@@ -222,6 +226,7 @@ public class ProgrammingExerciseResource {
      * Validate the programming exercise title.
      * 1. Check presence and length of exercise title
      * 2. Find forbidden patterns in exercise title
+     *
      * @param programmingExercise Programming exercise to be validated
      * @return Optional validation error response
      */
@@ -436,7 +441,6 @@ public class ProgrammingExerciseResource {
      * This prevents errors then the actual projects will be generated later on.
      * An error response is returned in case the project does already exist. This will then e.g. stop the generation (or import) of the programming exercise.
      *
-     *
      * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
      * @return an error response in case the project already exists or an empty optional in case it does not exist yet (which means the setup can continue as usual)
      */
@@ -461,21 +465,21 @@ public class ProgrammingExerciseResource {
 
     /**
      * POST /programming-exercises/import: Imports an existing programming exercise into an existing course
-     *
+     * <p>
      * This will import the whole exercise, including all base build plans (template, solution) and repositories
      * (template, solution, test). Referenced entities, s.a. the test cases or the hints will get cloned and assigned
      * a new id. For a concrete list of what gets copied and what not have a look
      * at {@link ProgrammingExerciseImportService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)}
      *
+     * @param sourceExerciseId   The ID of the original exercise which should get imported
+     * @param newExercise        The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @param recreateBuildPlans Option determining whether the build plans should be copied or re-created from scratch
+     * @param updateTemplate     Option determining whether the template files should be updated with the most recent template version
+     * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
+     * (403) if the user is not at least an instructor in the target course.
      * @see ProgrammingExerciseImportService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)
      * @see ProgrammingExerciseImportService#importBuildPlans(ProgrammingExercise, ProgrammingExercise)
      * @see ProgrammingExerciseImportService#importRepositories(ProgrammingExercise, ProgrammingExercise)
-     * @param sourceExerciseId The ID of the original exercise which should get imported
-     * @param newExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
-     * @param recreateBuildPlans Option determining whether the build plans should be copied or re-created from scratch
-     * @param updateTemplate Option determining whether the template files should be updated with the most recent template version
-     * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
-     *         (403) if the user is not at least an instructor in the target course.
      */
     @PostMapping(Endpoints.IMPORT)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -607,7 +611,7 @@ public class ProgrammingExerciseResource {
      * PUT /programming-exercises : Updates an existing updatedProgrammingExercise.
      *
      * @param updatedProgrammingExercise the programmingExercise that has been updated on the client
-     * @param notificationText to notify the student group about the update on the programming exercise
+     * @param notificationText           to notify the student group about the update on the programming exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the updated ProgrammingExercise
      * is not valid, or with status 500 (Internal Server Error) if the updated ProgrammingExercise couldn't be saved to the database
      */
@@ -679,9 +683,9 @@ public class ProgrammingExerciseResource {
     /**
      * PATCH /programming-exercises-problem: Updates the problem statement of the exercise.
      *
-     * @param exerciseId The ID of the exercise for which to change the problem statement
+     * @param exerciseId              The ID of the exercise for which to change the problem statement
      * @param updatedProblemStatement The new problemStatement
-     * @param notificationText to notify the student group about the updated problemStatement on the programming exercise
+     * @param notificationText        to notify the student group about the updated problemStatement on the programming exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the user does not have permissions to access the programming exercise.
      */
     @PatchMapping(value = Endpoints.PROBLEM)
@@ -802,9 +806,9 @@ public class ProgrammingExerciseResource {
     /**
      * DELETE /programming-exercises/:id : delete the "id" programmingExercise.
      *
-     * @param exerciseId the id of the programmingExercise to delete
+     * @param exerciseId                   the id of the programmingExercise to delete
      * @param deleteStudentReposBuildPlans boolean which states whether the corresponding build plan should be deleted as well
-     * @param deleteBaseReposBuildPlans the ResponseEntity with status 200 (OK)
+     * @param deleteBaseReposBuildPlans    the ResponseEntity with status 200 (OK)
      * @return the ResponseEntity with status 200 (OK) when programming exercise has been successfully deleted or with status 404 (Not Found)
      */
     @DeleteMapping(Endpoints.PROGRAMMING_EXERCISE)
@@ -843,9 +847,9 @@ public class ProgrammingExerciseResource {
      *
      * @param exerciseId of the exercise
      * @return the ResponseEntity with status
-     *              200 (OK) if combine has been successfully executed
-     *              403 (Forbidden) if the user is not admin and course instructor or
-     *              500 (Internal Server Error)
+     * 200 (OK) if combine has been successfully executed
+     * 403 (Forbidden) if the user is not admin and course instructor or
+     * 500 (Internal Server Error)
      */
     @PutMapping(value = Endpoints.COMBINE_COMMITS, produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -877,10 +881,53 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * POST /programming-exercises/:exerciseId/export-instructor-respository/:repositoryTypeString : sends a test, solution or template repository as a zip file
+     * @param exerciseId The id of the programming exercise
+     * @param repositoryTypeString The type of repository to zip and send
+     * @return ResponseEntity with status
+     * @throws IOException if something during the zip process went wrong
+     */
+    @GetMapping(Endpoints.EXPORT_INSTRUCTOR_REPOSITORY)
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<Resource> exportTestRepositoryForProgrammingExercise(@PathVariable long exerciseId, @PathVariable String repositoryTypeString) throws IOException {
+        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
+            return forbidden();
+        }
+
+        RepositoryType repositoryType = null;
+        try {
+            repositoryType = RepositoryType.valueOf(repositoryTypeString.toUpperCase());
+        }
+        catch (Exception e) {
+            log.info("Failed to export instructor repository because the repository type is not supported.");
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "The repository type is not supprted. It must be either 'tests', 'solution' or 'template'")).body(null);
+        }
+
+        long start = System.nanoTime();
+        File zipFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise, repositoryType);
+        if (zipFile == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "There was an error on the server and the zip file could not be created.")).body(null);
+        }
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+
+        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryTypeString, programmingExercise.getId(),
+                programmingExercise.getTitle(), formatDurationFrom(start));
+
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+    }
+
+    /**
      * POST /programming-exercises/:exerciseId/export-repos-by-participant-identifiers/:participantIdentifiers : sends all submissions from participantIdentifiers as zip
      *
-     * @param exerciseId the id of the exercise to get the repos from
-     * @param participantIdentifiers the identifiers of the participants (student logins or team short names) for whom to zip the submissions, separated by commas
+     * @param exerciseId              the id of the exercise to get the repos from
+     * @param participantIdentifiers  the identifiers of the participants (student logins or team short names) for whom to zip the submissions, separated by commas
      * @param repositoryExportOptions the options that should be used for the export
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
@@ -929,8 +976,8 @@ public class ProgrammingExerciseResource {
     /**
      * POST /programming-exercises/:exerciseId/export-repos-by-participation-ids/:participationIds : sends all submissions from participation ids as zip
      *
-     * @param exerciseId the id of the exercise to get the repos from
-     * @param participationIds the participationIds seperated via semicolon to get their submissions (used for double blind assessment)
+     * @param exerciseId              the id of the exercise to get the repos from
+     * @param participationIds        the participationIds seperated via semicolon to get their submissions (used for double blind assessment)
      * @param repositoryExportOptions the options that should be used for the export. Export all students is not supported here!
      * @return ResponseEntity with status
      * @throws IOException if submissions can't be zippedRequestBody
@@ -1087,10 +1134,10 @@ public class ProgrammingExerciseResource {
      * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism
      * and returns the generated output as zip file
      *
-     * @param exerciseId The ID of the programming exercise for which the plagiarism check should be
-     *                   executed
+     * @param exerciseId          The ID of the programming exercise for which the plagiarism check should be
+     *                            executed
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
-     * @param minimumScore consider only submissions whose score is greater or equal to this value
+     * @param minimumScore        consider only submissions whose score is greater or equal to this value
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the
      * parameters are invalid
      * @throws ExitException is thrown if JPlag exits unexpectedly
@@ -1132,10 +1179,10 @@ public class ProgrammingExerciseResource {
      * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism
      * and returns the generated output as zip file
      *
-     * @param exerciseId The ID of the programming exercise for which the plagiarism check should be
-     *                   executed
+     * @param exerciseId          The ID of the programming exercise for which the plagiarism check should be
+     *                            executed
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
-     * @param minimumScore consider only submissions whose score is greater or equal to this value
+     * @param minimumScore        consider only submissions whose score is greater or equal to this value
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the
      * parameters are invalid
      * @throws ExitException is thrown if JPlag exits unexpectedly
@@ -1256,6 +1303,8 @@ public class ProgrammingExerciseResource {
         public static final String EXPORT_SUBMISSIONS_BY_PARTICIPANTS = PROGRAMMING_EXERCISE + "/export-repos-by-participant-identifiers/{participantIdentifiers}";
 
         public static final String EXPORT_SUBMISSIONS_BY_PARTICIPATIONS = PROGRAMMING_EXERCISE + "/export-repos-by-participation-ids/{participationIds}";
+
+        public static final String EXPORT_INSTRUCTOR_REPOSITORY = PROGRAMMING_EXERCISE + "/export-instructor-repository/{repositoryTypeString}";
 
         public static final String GENERATE_TESTS = PROGRAMMING_EXERCISE + "/generate-tests";
 
