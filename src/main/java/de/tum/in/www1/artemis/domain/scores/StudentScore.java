@@ -19,19 +19,25 @@ public class StudentScore extends DomainObject {
     @JoinColumn(name = "exercise_id")
     private Exercise exercise;
 
+    /**
+     * Last result of the student for the exercise no matter if the result is rated or not
+     */
     @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn("last_result_id")
+    @JoinColumn(name = "last_result_id")
     private Result lastResult;
 
+    /**
+     * Last rated result of the student for the exercise
+     */
     @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn("last_rated_result_id")
+    @JoinColumn(name = "last_rated_result_id")
     private Result lastRatedResult;
 
     @Column(name = "last_score")
-    private long lastScore;
+    private Long lastScore;
 
     @Column(name = "last_rated_score")
-    private long lastRatedScore;
+    private Long lastRatedScore;
 
     public User getUser() {
         return user;
@@ -65,19 +71,19 @@ public class StudentScore extends DomainObject {
         this.lastRatedResult = lastRatedResult;
     }
 
-    public long getLastScore() {
+    public Long getLastScore() {
         return lastScore;
     }
 
-    public void setLastScore(long lastScore) {
+    public void setLastScore(Long lastScore) {
         this.lastScore = lastScore;
     }
 
-    public long getLastRatedScore() {
+    public Long getLastRatedScore() {
         return lastRatedScore;
     }
 
-    public void setLastRatedScore(long lastRatedScore) {
+    public void setLastRatedScore(Long lastRatedScore) {
         this.lastRatedScore = lastRatedScore;
     }
 }

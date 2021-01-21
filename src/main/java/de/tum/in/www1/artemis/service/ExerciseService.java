@@ -301,7 +301,7 @@ public class ExerciseService {
         this.exerciseUnitRepository.removeAllByExerciseId(exerciseId);
 
         // make sure student scores are deleted before the exercise is deleted
-        studentScoreService.deleteStudentScoresForExercise(exercise);
+        studentScoreService.removeAssociatedStudentScores(exercise);
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
         // clean up the many to many relationship to avoid problems when deleting the entities but not the relationship table
