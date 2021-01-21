@@ -104,9 +104,9 @@ export class ProgrammingExerciseService {
      */
     importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise, recreateBuildPlans: boolean, updateTemplate: boolean): Observable<EntityResponseType> {
         const options = createRequestOption({ recreateBuildPlans, updateTemplate });
-        this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(adaptedSourceProgrammingExercise);
+        const exercise = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(adaptedSourceProgrammingExercise);
         return this.http
-            .post<ProgrammingExercise>(`${this.resourceUrl}/import/${adaptedSourceProgrammingExercise.id}`, adaptedSourceProgrammingExercise, {
+            .post<ProgrammingExercise>(`${this.resourceUrl}/import/${adaptedSourceProgrammingExercise.id}`, exercise, {
                 params: options,
                 observe: 'response',
             })
