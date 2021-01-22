@@ -95,6 +95,13 @@ public class ProgrammingExerciseExportService {
         this.urlService = urlService;
     }
 
+    /**
+     * Exports a repository available for an instructor/tutor for a given programming exercise. This can be a template,
+     * solution, or tests repository
+     * @param exercise The programming exercise that has the repository
+     * @param repositoryType the type of repository to export
+     * @return a zipped file
+     */
     public File exportInstructorRepositoryForExercise(ProgrammingExercise exercise, RepositoryType repositoryType) {
         var repositoryUrl = exercise.getRepositoryURL(repositoryType);
         if (repositoryUrl == null) {
@@ -114,7 +121,9 @@ public class ProgrammingExerciseExportService {
             repository = gitService.getOrCheckoutRepository(repositoryUrl, repoProjectPath, true);
 
             // Zip it
-            zippedRepoFile = gitService.zipInstructorRepository(repository, exercise, repoProjectPath);
+            String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
+            String zipRepoName = courseShortName + "-" + exercise.getShortName();
+            zippedRepoFile = gitService.zipInstructorRepository(repository, zipRepoName, repoProjectPath);
 
             // if repository is not closed, it causes weird IO issues when trying to delete the repository again
             // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...

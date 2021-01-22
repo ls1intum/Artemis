@@ -921,12 +921,25 @@ public class GitService {
         return zipFileService.createZipFileWithFolderContent(zipFilePath, repoPath);
     }
 
-    public Path zipInstructorRepository(Repository repo, ProgrammingExercise exercise, String targetPath) throws IOException {
-        String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName().replaceAll("\\s", "");
-        String zipRepoName = courseShortName + "-" + exercise.getShortName() + ".zip";
+    /**
+     * Zip the content of a git repository available for an instructor/tutor.
+     * @param repo Local Repository Object.
+     * @param zipName The name of the zipped file
+     * @param targetPath path where the repo is located on disk
+     * @return The path to the zipped file
+     * @throws IOException if the zipping process failed.
+     */
+    public Path zipInstructorRepository(Repository repo, String zipName, String targetPath) throws IOException {
+        // Strip slashes from name
+        var filenanme = zipName.replaceAll("\\s", "");
+
+        // Append .zip if it doesn't exist
+        if (!filenanme.endsWith(".zip")) {
+            filenanme += ".zip";
+        }
 
         Path repoPath = repo.getLocalPath();
-        Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipRepoName);
+        Path zipFilePath = Paths.get(targetPath, "zippedRepos", filenanme);
         Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
         return zipFileService.createZipFileWithFolderContent(zipFilePath, repoPath);
     }
