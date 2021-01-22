@@ -242,7 +242,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
         return this.exercise && this.exercise.id === exerciseId
             ? Observable.of(this.exercise)
-            : this.exerciseService.findWithTemplateAndSolutionParticipation(exerciseId).pipe(map(({ body }) => body!));
+            : this.exerciseService.findWithTemplateAndSolutionParticipationAndResults(exerciseId).pipe(map(({ body }) => body!));
     }
 
     /**
