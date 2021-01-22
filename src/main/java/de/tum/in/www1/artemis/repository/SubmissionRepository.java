@@ -29,7 +29,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     Optional<Submission> findWithEagerResultsAndAssessorById(Long submissionId);
 
     @Query("select distinct submission from Submission submission left join fetch submission.results r left join fetch r.feedbacks where submission.exampleSubmission = true and submission.id = :#{#submissionId}")
-    Optional<Submission> findExampleSubmissionByIdWithEagerResult(long submissionId);
+    Optional<Submission> findExampleSubmissionByIdWithEagerResult(@Param("submissionId") long submissionId);
 
     /**
      * Get all submissions of a participation

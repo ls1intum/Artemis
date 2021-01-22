@@ -52,16 +52,28 @@ export class Feedback implements BaseEntity {
         return that.detailText != undefined && that.detailText.length > 0;
     }
 
+    /**
+     * Feedback is empty if it has 0 creits and the comment is empty.
+     * @param that
+     */
     public static isEmpty(that: Feedback): boolean {
-        return that.credits == undefined || !Feedback.hasDetailText(that);
+        return (that.credits == undefined || that.credits === 0) && !Feedback.hasDetailText(that);
     }
 
-    public static isValid(that: Feedback): boolean {
+    /**
+     * Feedback is present if it has non 0 credits, a comment, or both.
+     * @param that
+     */
+    public static isPresent(that: Feedback): boolean {
         return !Feedback.isEmpty(that);
     }
 
-    public static areValid(that: Feedback[]): boolean {
-        return that.filter(Feedback.isValid).length > 0 && that.filter(Feedback.isValid).length === that.length;
+    public static hasCreditsAndComment(that: Feedback): boolean {
+        return that.credits != undefined && Feedback.hasDetailText(that);
+    }
+
+    public static haveCreditsAndComments(that: Feedback[]): boolean {
+        return that.filter(Feedback.hasCreditsAndComment).length > 0 && that.filter(Feedback.hasCreditsAndComment).length === that.length;
     }
 
     public static forModeling(credits: number, text?: string, referenceId?: string, referenceType?: string): Feedback {

@@ -367,10 +367,12 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
     }
 
-    private void getExampleResultForTutor(HttpStatus expectedStatus, boolean isExample) throws Exception {
+    private Result getExampleResultForTutor(HttpStatus expectedStatus, boolean isExample) throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(isExample);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "instructor1");
+        final var exampleSubmission = ModelFactory.generateExampleSubmission(textSubmission, textExercise, true);
+        database.addExampleSubmission(exampleSubmission);
 
         Result result = request.get("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/" + textSubmission.getId() + "/example-result", expectedStatus,
                 Result.class);
@@ -379,6 +381,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
             assertThat(result).as("result found").isNotNull();
             assertThat(result.getSubmission().getId()).as("result for correct submission").isEqualTo(textSubmission.getId());
         }
+
+        return result;
     }
 
     @Test
@@ -397,7 +401,10 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getExampleResultForNonExampleSubmissionAsTutor() throws Exception {
-        getExampleResultForTutor(HttpStatus.NOT_FOUND, false);
+        final var result = getExampleResultForTutor(HttpStatus.OK, false);
+        assertThat(result.getFeedbacks()).isEmpty();
+        assertThat(result.getScore()).isNull();
+        assertThat(result.getResultString()).isNull();
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
