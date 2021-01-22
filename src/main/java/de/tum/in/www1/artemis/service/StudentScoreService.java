@@ -30,12 +30,12 @@ public class StudentScoreService {
         this.studentParticipationRepository = studentParticipationRepository;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void removeAssociatedStudentScores(Exercise exercise) {
         studentScoreRepository.removeAssociatedWithExercise(exercise.getId());
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void removeAssociatedStudentScores(Result resultToBeDeleted) {
         Optional<StudentScore> associatedStudentScoreOptional = studentScoreRepository.findStudentScoreAssociatedWithResult(resultToBeDeleted.getId());
         if (associatedStudentScoreOptional.isEmpty()) {
@@ -67,7 +67,7 @@ public class StudentScoreService {
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void updateStudentScores(Result result) {
         // results without a score are uninteresting
         if (result.getScore() == null) {
