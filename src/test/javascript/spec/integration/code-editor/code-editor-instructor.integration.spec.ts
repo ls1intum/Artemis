@@ -145,7 +145,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 getBuildLogsStub = stub(buildLogService, 'getBuildLogs');
                 getHintsForExerciseStub = stub(exerciseHintService, 'findByExerciseId').returns(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
 
-                findWithParticipationsStub = stub(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
+                findWithParticipationsStub = stub(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndResults');
                 findWithParticipationsStub.returns(findWithParticipationsSubject);
 
                 subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);

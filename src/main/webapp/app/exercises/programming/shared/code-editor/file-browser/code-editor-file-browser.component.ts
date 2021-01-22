@@ -53,6 +53,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
     @Input()
     isTutorAssessment = false;
+    @Input()
+    highlightFileChanges = false;
     @Output()
     onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight?: number }>();
     @Output()
@@ -177,7 +179,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                     this.unsavedFiles = [];
                 }),
                 switchMap(() => {
-                    if (this.isTutorAssessment) {
+                    if (this.isTutorAssessment && this.highlightFileChanges) {
                         return this.loadFilesWithInformationAboutChange();
                     } else {
                         return Observable.of(undefined);
