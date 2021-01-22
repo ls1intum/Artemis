@@ -2,7 +2,11 @@ import { Component, Input } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
+
+// False-positives:
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 
 @Component({

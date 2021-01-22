@@ -157,7 +157,7 @@ public abstract class Submission extends DomainObject {
      */
     @JsonIgnore
     public void removeAutomaticResults() {
-        this.results = this.results.stream().filter(result -> !result.isAutomatic()).collect(Collectors.toList());
+        this.results = this.results.stream().filter(result -> result == null || !result.isAutomatic()).collect(Collectors.toList());
     }
 
     @Nullable
