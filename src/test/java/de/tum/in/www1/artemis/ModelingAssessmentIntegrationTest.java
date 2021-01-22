@@ -21,10 +21,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.AssessmentService;
-import de.tum.in.www1.artemis.service.ExampleSubmissionService;
-import de.tum.in.www1.artemis.service.ModelingSubmissionService;
-import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -165,7 +162,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.FORBIDDEN);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + 1 + "/assessment?submit=true", feedbacks, HttpStatus.FORBIDDEN);
 
         Optional<Result> storedResult = resultRepo.findDistinctBySubmissionId(submission.getId());
         assertThat(storedResult).as("result is not saved").isNotPresent();
@@ -178,7 +175,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + 1 + "/assessment", feedbacks, HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
@@ -195,7 +192,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment", feedbacks, HttpStatus.BAD_REQUEST);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + 1 + "/assessment", feedbacks, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -205,7 +202,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + 1 + "/assessment?submit=true", feedbacks, HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
@@ -221,7 +218,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = database.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/example-activity-diagram.json", "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/example-activity-assessment.json");
-        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + 1 + "/assessment?submit=true", feedbacks, HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
@@ -237,7 +234,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = database.addModelingSubmissionFromResources(objectExercise, "test-data/model-submission/object-model.json", "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/object-assessment.json");
-        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + 1 + "/assessment?submit=true", feedbacks, HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
@@ -252,7 +249,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/use-case-assessment.json");
-        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + 1 + "/assessment?submit=true", feedbacks, HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
@@ -268,7 +265,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + 1 + "/assessment", feedbacks, HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
@@ -276,7 +273,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         checkAssessmentNotFinished(storedResult, assessor);
 
         feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.v2.json");
-        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + 1 + "/assessment?submit=true", feedbacks, HttpStatus.OK);
 
         storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
@@ -295,7 +292,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         // Check that result is over 100% -> 105
         feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
-        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + 1 + "/assessment?submit=true", feedbacks, HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
@@ -304,7 +301,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         // Check that result is capped to maximum of maxScore + bonus points -> 110
         feedbacks.add(new Feedback().credits(20.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
-        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + 1 + "/assessment?submit=true", feedbacks, HttpStatus.OK);
 
         storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
@@ -459,7 +456,8 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission5 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student5");
         ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student6");
 
-        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/assessment?submit=true", Collections.singletonList(feedbackTwentyPoints.text("wrong text")), HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/result/" + 1 + "/assessment?submit=true", Collections.singletonList(feedbackTwentyPoints.text("wrong text")),
+                HttpStatus.OK);
 
         Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId(), classExercise.getId());
         assertThat(automaticResult).as("automatic result was created").isNotNull();
@@ -467,27 +465,29 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(automaticResult.getFeedbacks().get(0).getCredits()).as("credits of element are correct").isEqualTo(20);
         assertThat(automaticResult.getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("wrong text");
 
-        request.put(API_MODELING_SUBMISSIONS + submission2.getId() + "/assessment?submit=true", Collections.singletonList(feedbackOnePoint.text("long feedback text")),
+        request.put(API_MODELING_SUBMISSIONS + submission2.getId() + "/result/" + 1 + "/assessment?submit=true",
+                Collections.singletonList(feedbackOnePoint.text("long feedback text")), HttpStatus.OK);
+
+        automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId(), classExercise.getId());
+        assertThat(automaticResult).as("automatic result was created").isNotNull();
+        assertThat(automaticResult.getFeedbacks().size()).as("element is not assessed automatically").isEqualTo(0);
+
+        request.put(API_MODELING_SUBMISSIONS + submission3.getId() + "/result/" + 1 + "/assessment?submit=true", Collections.singletonList(feedbackOnePoint.text("short text")),
                 HttpStatus.OK);
 
         automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId(), classExercise.getId());
         assertThat(automaticResult).as("automatic result was created").isNotNull();
         assertThat(automaticResult.getFeedbacks().size()).as("element is not assessed automatically").isEqualTo(0);
 
-        request.put(API_MODELING_SUBMISSIONS + submission3.getId() + "/assessment?submit=true", Collections.singletonList(feedbackOnePoint.text("short text")), HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission4.getId() + "/result/" + 1 + "/assessment?submit=true",
+                Collections.singletonList(feedbackOnePoint.text("very long feedback text")), HttpStatus.OK);
 
         automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId(), classExercise.getId());
         assertThat(automaticResult).as("automatic result was created").isNotNull();
         assertThat(automaticResult.getFeedbacks().size()).as("element is not assessed automatically").isEqualTo(0);
 
-        request.put(API_MODELING_SUBMISSIONS + submission4.getId() + "/assessment?submit=true", Collections.singletonList(feedbackOnePoint.text("very long feedback text")),
+        request.put(API_MODELING_SUBMISSIONS + submission5.getId() + "/result/" + 1 + "/assessment?submit=true", Collections.singletonList(feedbackOnePoint.text("medium text")),
                 HttpStatus.OK);
-
-        automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId(), classExercise.getId());
-        assertThat(automaticResult).as("automatic result was created").isNotNull();
-        assertThat(automaticResult.getFeedbacks().size()).as("element is not assessed automatically").isEqualTo(0);
-
-        request.put(API_MODELING_SUBMISSIONS + submission5.getId() + "/assessment?submit=true", Collections.singletonList(feedbackOnePoint.text("medium text")), HttpStatus.OK);
 
         automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId(), classExercise.getId());
         assertThat(automaticResult).as("automatic result was created").isNotNull();
@@ -505,22 +505,24 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission3 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student3");
         ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student4");
 
-        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/assessment?submit=true", Collections.singletonList(feedbackOnePoint.text("feedback text")), HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/result/" + 1 + "/assessment?submit=true", Collections.singletonList(feedbackOnePoint.text("feedback text")),
+                HttpStatus.OK);
 
         Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId(), classExercise.getId());
         assertThat(automaticResult).as("automatic result was created").isNotNull();
         assertThat(automaticResult.getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
         assertThat(automaticResult.getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("feedback text");
 
-        request.put(API_MODELING_SUBMISSIONS + submission2.getId() + "/assessment?submit=true", Collections.singletonList(feedbackOnePoint.text("short")), HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission2.getId() + "/result/" + 1 + "/assessment?submit=true", Collections.singletonList(feedbackOnePoint.text("short")),
+                HttpStatus.OK);
 
         automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId(), classExercise.getId());
         assertThat(automaticResult).as("automatic result was created").isNotNull();
         assertThat(automaticResult.getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
         assertThat(automaticResult.getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("feedback text");
 
-        request.put(API_MODELING_SUBMISSIONS + submission3.getId() + "/assessment?submit=true", Collections.singletonList(feedbackOnePoint.text("very long feedback text")),
-                HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission3.getId() + "/result/" + 1 + "/assessment?submit=true",
+                Collections.singletonList(feedbackOnePoint.text("very long feedback text")), HttpStatus.OK);
 
         automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId(), classExercise.getId());
         assertThat(automaticResult).as("automatic result was created").isNotNull();
@@ -535,7 +537,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
 
-        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/result/" + 1 + "/assessment?submit=true", feedbacks, HttpStatus.OK);
 
         Result storedResultOfSubmission2 = compassService.getResultWithFeedbackSuggestionsForSubmission(submission2.getId(), classExercise.getId());
         assertThat(storedResultOfSubmission2).as("automatic result is created").isNotNull();
@@ -550,7 +552,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
 
-        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/result/" + 1 + "/assessment?submit=true", feedbacks, HttpStatus.OK);
 
         Optional<Result> automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submission2.getId());
         assertThat(automaticResult).as("automatic result not stored in database").isNotPresent();
@@ -563,7 +565,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
 
-        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/assessment", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/result/" + 1 + "/assessment", feedbacks, HttpStatus.OK);
 
         Result storedResultOfSubmission2 = compassService.getResultWithFeedbackSuggestionsForSubmission(submission2.getId(), classExercise.getId());
         assertThat(storedResultOfSubmission2).as("no automatic result has been created").isNull();
@@ -578,13 +580,13 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.different-context.json", "student2");
         ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.different-context.json", "student3");
 
-        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/assessment?submit=true", assessment1, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/result/" + 1 + "/assessment?submit=true", assessment1, HttpStatus.OK);
 
         Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId(), classExercise.getId());
         assertThat(automaticResult).as("automatic result was created").isNotNull();
         assertThat(automaticResult.getFeedbacks().size()).as("all elements got assessed automatically").isEqualTo(4);
 
-        request.put(API_MODELING_SUBMISSIONS + submission2.getId() + "/assessment?submit=true", assessment2, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission2.getId() + "/result/" + 1 + "/assessment?submit=true", assessment2, HttpStatus.OK);
 
         automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId(), classExercise.getId());
         assertThat(automaticResult).as("automatic result was created").isNotNull();
@@ -602,8 +604,8 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
-
-        List<Feedback> existingFeedback = compassService.getResultWithFeedbackSuggestionsForSubmission(storedSubmission.getId(), classExercise.getId()).getFeedbacks();
+        Result resultWithFeedback = compassService.getResultWithFeedbackSuggestionsForSubmission(storedSubmission.getId(), classExercise.getId());
+        List<Feedback> existingFeedback = resultWithFeedback.getFeedbacks();
         Feedback feedback = existingFeedback.get(0);
         existingFeedback.set(0, feedback.credits(feedback.getCredits() + 0.5));
         feedback = existingFeedback.get(2);
@@ -612,7 +614,8 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         List<Feedback> overrideFeedback = new ArrayList<>(existingFeedback);
         overrideFeedback.addAll(newFeedback);
 
-        Result storedResult = request.putWithResponseBody(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/assessment", overrideFeedback, Result.class, HttpStatus.OK);
+        Result storedResult = request.putWithResponseBody(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result/" + modelingAssessment.getId() + "/assessment",
+                overrideFeedback, Result.class, HttpStatus.OK);
 
         List<Feedback> manualFeedback = new ArrayList<>();
         List<Feedback> automaticFeedback = new ArrayList<>();
@@ -640,9 +643,9 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         Feedback changedFeedback = new Feedback().credits(2.0).text("another text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
         ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
-        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/assessment?submit=true", Collections.singletonList(originalFeedback), HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result/" + 1 + "/assessment?submit=true", Collections.singletonList(originalFeedback), HttpStatus.OK);
 
-        request.put(API_MODELING_SUBMISSIONS + modelingSubmission2.getId() + "/assessment?submit=true", Collections.singletonList(changedFeedback), HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission2.getId() + "/result/" + 1 + "/assessment?submit=true", Collections.singletonList(changedFeedback), HttpStatus.OK);
 
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission2.getId()).get();
         assertThat(modelingAssessment.getFeedbacks().size()).as("assessment is correctly stored").isEqualTo(1);
@@ -658,11 +661,12 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         Feedback originalFeedback = new Feedback().credits(1.0).text("some feedback text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
         ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
-        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/assessment?submit=true", Collections.singletonList(originalFeedback), HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result/" + 1 + "/assessment?submit=true", Collections.singletonList(originalFeedback), HttpStatus.OK);
 
         Result originalResult = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
         Feedback changedFeedback = originalResult.getFeedbacks().get(0).credits(2.0).text("another text");
-        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/assessment?submit=true", Collections.singletonList(changedFeedback), HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result/" + originalResult.getId() + "/assessment?submit=true",
+                Collections.singletonList(changedFeedback), HttpStatus.OK);
 
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
         assertThat(modelingAssessment.getFeedbacks().size()).as("overridden assessment has correct amount of feedback").isEqualTo(1);
@@ -681,15 +685,16 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
         ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
         ModelingSubmission modelingSubmission3 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student3");
-        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/assessment?submit=true", Arrays.asList(originalFeedback, originalFeedbackWithoutReference),
-                HttpStatus.OK);
-        request.put(API_MODELING_SUBMISSIONS + modelingSubmission2.getId() + "/assessment?submit=true", Arrays.asList(originalFeedback, originalFeedbackWithoutReference),
-                HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result/" + 1 + "/assessment?submit=true",
+                Arrays.asList(originalFeedback, originalFeedbackWithoutReference), HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission2.getId() + "/result/" + 2 + "/assessment?submit=true",
+                Arrays.asList(originalFeedback, originalFeedbackWithoutReference), HttpStatus.OK);
 
         Result originalResult = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
         Feedback changedFeedback = originalResult.getFeedbacks().get(0).credits(2.0).text("another text");
         Feedback feedbackWithoutReference = new Feedback().credits(1.0).text("another feedback text again").reference(null).type(FeedbackType.MANUAL_UNREFERENCED);
-        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/assessment?submit=true", Arrays.asList(changedFeedback, feedbackWithoutReference), HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result/" + originalResult.getId() + "/assessment?submit=true",
+                Arrays.asList(changedFeedback, feedbackWithoutReference), HttpStatus.OK);
 
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
         assertThat(modelingAssessment.getFeedbacks().size()).as("overridden assessment has correct amount of feedback").isEqualTo(2);
@@ -747,7 +752,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(storedResult.getAssessor()).as("assessor has not been set").isNull();
         assertThat(storedResult.getResultString()).as("result string has not been set").isNull();
         assertThat(storedResult.getCompletionDate()).as("completion date has not been set").isNull();
-        assertThat(storedResult.getAssessmentType()).as("result type is AUTOMATIC").isEqualTo(AssessmentType.AUTOMATIC);
+        assertThat(storedResult.getAssessmentType()).as("result type is SEMI AUTOMATIC").isEqualTo(AssessmentType.SEMI_AUTOMATIC);
     }
 
     private void saveModelingSubmission() throws Exception {
@@ -1066,6 +1071,29 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", submit);
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        request.putWithResponseBodyAndParams(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment", feedbacks, Result.class, httpStatus, params);
+        request.putWithResponseBodyAndParams(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + submission.getLatestResult().getId() + "/assessment", feedbacks,
+                Result.class, httpStatus, params);
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "ADMIN")
+    public void overrideAssessment_inFirstCorrectionRoundByInstructor() throws Exception {
+        String student = "student1";
+        String originalAssessor = "tutor1";
+        HttpStatus httpStatus = HttpStatus.OK;
+        String submit = "true";
+
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        submission = database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, student, originalAssessor);
+
+        Result newResult = database.addResultToSubmission(submission, AssessmentType.MANUAL, database.getUserByLogin("tutor2"), null, null, true, null).getLatestResult();
+
+        resultRepo.save(submission.getLatestResult());
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("submit", submit);
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        request.putWithResponseBodyAndParams(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + newResult.getId() + "/assessment", feedbacks, Result.class, httpStatus,
+                params);
+    }
+
 }
