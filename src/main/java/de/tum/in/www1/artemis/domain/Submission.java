@@ -160,6 +160,11 @@ public abstract class Submission extends DomainObject {
         this.results = this.results.stream().filter(result -> result == null || !result.isAutomatic()).collect(Collectors.toList());
     }
 
+    @JsonIgnore
+    public void removeNullResults() {
+        this.results = this.results.stream().filter(result -> result != null).collect(Collectors.toList());
+    }
+
     @Nullable
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
     public List<Result> getResults() {
