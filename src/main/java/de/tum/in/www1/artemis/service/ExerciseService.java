@@ -596,6 +596,10 @@ public class ExerciseService {
         courseExerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxScore());
         courseExerciseStatisticsDTO.setExerciseMode(exercise.getMode().toString());
 
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        courseExerciseStatisticsDTO.setNoOfStudentsInCourse(course.getNumberOfStudents().intValue());
+        courseExerciseStatisticsDTO.setNoOfTeamsInCourse(0); // TODO: Get number of teams in course
+
         if (exerciseIdToRawStatisticQueryData.containsKey(exercise.getId())) {
             Object[] exerciseStatistics = exerciseIdToRawStatisticQueryData.get(exercise.getId());
             courseExerciseStatisticsDTO.setAverageScoreInPercent(exerciseStatistics[1] != null ? ((Number) exerciseStatistics[1]).doubleValue() : 0.0);

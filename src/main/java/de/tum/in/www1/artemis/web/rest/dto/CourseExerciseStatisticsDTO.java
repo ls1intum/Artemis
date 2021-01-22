@@ -16,6 +16,10 @@ public class CourseExerciseStatisticsDTO {
 
     private Double participationRateInPercent;
 
+    private Integer noOfStudentsInCourse;
+
+    private Integer noOfTeamsInCourse;
+
     public Long getExerciseId() {
         return exerciseId;
     }
@@ -70,5 +74,21 @@ public class CourseExerciseStatisticsDTO {
 
     public void setParticipationRateInPercent(Double participationRateInPercent) {
         this.participationRateInPercent = participationRateInPercent;
+    }
+
+    public Integer getNoOfStudentsInCourse() {
+        return noOfStudentsInCourse;
+    }
+
+    public void setNoOfStudentsInCourse(Integer noOfStudentsInCourse) {
+        this.noOfStudentsInCourse = noOfStudentsInCourse;
+    }
+
+    public Integer getNoOfTeamsInCourse() {
+        return noOfTeamsInCourse;
+    }
+
+    public void setNoOfTeamsInCourse(Integer noOfTeamsInCourse) {
+        this.noOfTeamsInCourse = noOfTeamsInCourse;
     }
 }
