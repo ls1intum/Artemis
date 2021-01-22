@@ -71,10 +71,10 @@
                 </select>
                 <jhi-quiz-scoring-info-modal></jhi-quiz-scoring-info-modal>
             </div>
-            <div class="form-group">
+            <div class="form-group" *ngIf="!reEvaluationInProgress">
                 <div class="form-check custom-control custom-checkbox"></div>
             </div>
-            <div class="form-check custom-control custom-checkbox" *ngIf="!reEvaluationInProgress">
+            <div class="form-check custom-control custom-checkbox">
                 <input
                     type="checkbox"
                     id="{{ 'cbMatchLetterCase' + questionIndex }}"
@@ -87,7 +87,7 @@
                 }}</label>
             </div>
             <div class="match-percentage-container">
-                <div class="form-check custom-control custom-checkbox" *ngIf="!reEvaluationInProgress">
+                <div class="form-check custom-control custom-checkbox">
                     <input
                         #inputElement
                         type="checkbox"
@@ -101,7 +101,7 @@
                     }}</label>
                 </div>
                 <div class="slider-container">
-                    <div class="slider-with-label" *ngIf="!reEvaluationInProgress">
+                    <div class="slider-with-label">
                         <input
                             type="range"
                             min="50"
