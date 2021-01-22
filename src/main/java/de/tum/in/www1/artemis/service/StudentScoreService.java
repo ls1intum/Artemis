@@ -36,12 +36,40 @@ public class StudentScoreService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void removeAssociatedStudentScores(Result result) {
-        studentScoreRepository.removeStudentScoresAssociatedWithResult(result.getId());
+    public void removeAssociatedStudentScores(Result resultToBeDeleted) {
+        Optional<StudentScore> associatedStudentScoreOptional = studentScoreRepository.findStudentScoreAssociatedWithResult(resultToBeDeleted.getId());
+        if (associatedStudentScoreOptional.isEmpty()) {
+            return;
+        }
+        StudentScore associatedStudentScore = associatedStudentScoreOptional.get();
+
+        if (resultToBeDeleted.equals(associatedStudentScore.getLastRatedResult())) {
+            associatedStudentScore.setLastRatedResult(null);
+            associatedStudentScore.setLastRatedScore(null);
+        }
+
+        if (resultToBeDeleted.equals(associatedStudentScore.getLastResult())) {
+            if (associatedStudentScore.getLastRatedResult() != null) {
+                associatedStudentScore.setLastResult(associatedStudentScore.getLastRatedResult());
+                associatedStudentScore.setLastScore(associatedStudentScore.getLastRatedScore());
+            }
+            else {
+                associatedStudentScore.setLastResult(null);
+                associatedStudentScore.setLastScore(null);
+            }
+        }
+
+        if (associatedStudentScore.getLastResult() == null && associatedStudentScore.getLastRatedResult() == null) {
+            studentScoreRepository.deleteById(associatedStudentScore.getId());
+        }
+        else {
+            studentScoreRepository.saveAndFlush(associatedStudentScore);
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateStudentScores(Result result) {
+        // results without a score are uninteresting
         if (result.getScore() == null) {
             return;
         }
@@ -53,6 +81,7 @@ public class StudentScoreService {
         }
         StudentParticipation studentParticipation = participationOptional.get();
         Exercise exercise = studentParticipation.getExercise();
+        // results for exam exercises or team exercises are uninteresting
         if (exercise.isExamExercise()) {
             return;
         }
@@ -62,28 +91,28 @@ public class StudentScoreService {
         User user = studentParticipation.getStudent().get();
         Optional<StudentScore> studentScoreOptional = studentScoreRepository.findStudentScoreByStudentAndExercise(exercise.getId(), user.getId());
 
-        // there exists already a student score for this exercise and student
+        // there exists already a student score for this exercise and student -> might need to update it
         if (studentScoreOptional.isPresent()) {
             StudentScore existingStudentScore = studentScoreOptional.get();
-            if (existingStudentScore.getLastResult().getId().equals(result.getId())) {
+
+            // update the last result and last score if either it has not been set previously or new result is either the old one (=) or newer (>)
+            if (existingStudentScore.getLastResult() == null || result.getId() >= existingStudentScore.getLastResult().getId()) {
+                existingStudentScore.setLastResult(result);
                 existingStudentScore.setLastScore(result.getScore());
                 existingStudentScore = studentScoreRepository.saveAndFlush(existingStudentScore);
-
             }
-            if (existingStudentScore.getLastRatedResult().getId().equals(result.getId())) {
+            // update the last rated result and last rated score if either it has not been set previously or new rated result is either the old one (=) or newer (>)
+            if ((result.isRated() != null && result.isRated())
+                    && (existingStudentScore.getLastRatedResult() == null || result.getId() >= existingStudentScore.getLastRatedResult().getId())) {
+                existingStudentScore.setLastRatedResult(result);
                 existingStudentScore.setLastRatedScore(result.getScore());
                 existingStudentScore = studentScoreRepository.saveAndFlush(existingStudentScore);
             }
-            if (!(existingStudentScore.getLastResult().getId().equals(result.getId()) || existingStudentScore.getLastRatedResult().getId().equals(result.getId()))) {
-                if (existingStudentScore.getLastResult() != null && result.getId() > existingStudentScore.getLastResult().getId()) {
-                    existingStudentScore.setLastResult(result);
-                    existingStudentScore.setLastScore(result.getScore());
-                }
-                if (existingStudentScore.getLastRatedResult() != null && result.isRated() != null && result.isRated()
-                        && result.getId() > existingStudentScore.getLastRatedResult().getId()) {
-                    existingStudentScore.setLastRatedResult(result);
-                    existingStudentScore.setLastRatedScore(result.getScore());
-                }
+
+            // Edge Case: if the result is now unrated but is equal to the current last rated result we have to set these to null (result was switched from rated to unrated)
+            if ((result.isRated() == null || !result.isRated()) && result.equals(existingStudentScore.getLastRatedResult())) {
+                existingStudentScore.setLastRatedResult(null);
+                existingStudentScore.setLastRatedScore(null);
                 studentScoreRepository.saveAndFlush(existingStudentScore);
             }
 
@@ -101,41 +130,5 @@ public class StudentScoreService {
             studentScoreRepository.saveAndFlush(newStudentScore);
         }
     }
-
-    // /**
-    // * Updates all StudentScores for result updatedResult.
-    // *
-    // * @param result result to be updated
-    // */
-    // @Transactional(propagation = Propagation.REQUIRES_NEW)
-    // public void updateResult(Result result) {
-    //
-    // var participation = (StudentParticipation) result.getParticipation();
-    // var student = participation.getStudent();
-    // var exercise = exerciseRepository.findById(participation.getExercise().getId());
-    //
-    // if (student.isEmpty() || exercise.isEmpty()) {
-    // return;
-    // }
-    //
-    // Optional<StudentScore> studentScoreConnectedToResult = studentScoreRepository.findByResult(result);
-    //
-    // if (studentScoreConnectedToResult.isPresent()) {
-    //
-    // StudentScore studentScore = studentScoreConnectedToResult.get();
-    // studentScore.setResult(result);
-    // studentScore.setLastScore(result.getScore());
-    //
-    // studentScore = studentScoreRepository.saveAndFlush(studentScore);
-    // log.info("Updated StudentScore: " + studentScore);
-    // }
-    // else {
-    // StudentScore studentScore = new StudentScore(student.get(), exercise.get(), result);
-    // studentScore.setLastScore(result.getScore());
-    //
-    // studentScoreRepository.saveAndFlush(studentScore);
-    // log.info("Created StudentScore: " + studentScore);
-    // }
-    // }
 
 }

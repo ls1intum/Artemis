@@ -84,14 +84,13 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void resultListenerPostPersist_firstResultForStudentAndExercise_shouldPersistNewStudentScore() {
+    public void saveRatedResult_ShouldCreateStudentScore() {
         List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
         assertThat(savedStudentScores).isEmpty();
         User student1 = userRepository.findOneByLogin("student1").get();
         // saving the result should trigger the entity listener and create a new student score
         Result persistedResult = createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 10.0, 200, true);
         savedStudentScores = studentScoreRepository.findAll();
-        assertThat(savedStudentScores).isNotEmpty();
         assertThat(savedStudentScores).size().isEqualTo(1);
         StudentScore savedStudentScore = savedStudentScores.get(0);
         assertStudentScoreStructure(savedStudentScore, idOfTextExercise, student1.getId(), persistedResult.getId(), persistedResult.getScore(), persistedResult.getId(),
@@ -101,7 +100,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void resultListenerPostPersist_firstNOTRatedResultForStudentAndExercise_shouldPersistNewStudentScore() {
+    public void saveUnratedResult_ShouldCreateStudentScore() {
         List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
         assertThat(savedStudentScores).isEmpty();
         User student1 = userRepository.findOneByLogin("student1").get();
@@ -111,13 +110,14 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(savedStudentScores).isNotEmpty();
         assertThat(savedStudentScores).size().isEqualTo(1);
         StudentScore savedStudentScore = savedStudentScores.get(0);
+        // fields specific to rated results should be null in the student score
         assertStudentScoreStructure(savedStudentScore, idOfTextExercise, student1.getId(), persistedResult.getId(), persistedResult.getScore(), null, null);
         verify(this.studentScoreService, times(1)).updateStudentScores(any());
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void resultListenerPostPersist_secondResultForStudentAndExercise_shouldUpdateExistingStudentScore() {
+    public void saveRatedResult_then_saveAnotherRatedResult_ShouldUpdateOriginalStudentScore() {
         List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
         assertThat(savedStudentScores).isEmpty();
         User student1 = userRepository.findOneByLogin("student1").get();
@@ -142,7 +142,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void resultListenerPostPersist_secondResultForStudentAndExerciseButNOTRated_shouldUpdateExistingStudentScoreButOnlyNotRatedPart() {
+    public void saveRatedResult_then_saveAnotherUnratedResult_ShouldUpdateOriginalStudentScore() {
         List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
         assertThat(savedStudentScores).isEmpty();
         User student1 = userRepository.findOneByLogin("student1").get();
@@ -168,7 +168,159 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void resultListenerPreRemove_removeResult_shouldRemoveStudentScoreBeforeRemovingResult() {
+    public void saveUnratedResult_then_saveAnotherUnratedResult_ShouldUpdateOriginalStudentScore() {
+        List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isEmpty();
+        User student1 = userRepository.findOneByLogin("student1").get();
+        // saving the rated result should trigger the entity listener and create a new student score
+        Result originalResult = createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 10.0, 200, false);
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore savedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(savedStudentScore, idOfTextExercise, student1.getId(), originalResult.getId(), originalResult.getScore(), null, null);
+        // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
+        StudentParticipation studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentId(idOfTextExercise, student1.getId()).get(0);
+        Result newResult = createSubmissionAndResult(studentParticipation, 100, false);
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore updatedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(updatedStudentScore, idOfTextExercise, student1.getId(), newResult.getId(), newResult.getScore(), null, null);
+        verify(this.studentScoreService, times(2)).updateStudentScores(any(Result.class));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void saveUnratedResult_then_saveAnotherRatedResult_ShouldUpdateOriginalStudentScore() {
+        List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isEmpty();
+        User student1 = userRepository.findOneByLogin("student1").get();
+        // saving the rated result should trigger the entity listener and create a new student score
+        Result originalResult = createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 10.0, 200, false);
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore savedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(savedStudentScore, idOfTextExercise, student1.getId(), originalResult.getId(), originalResult.getScore(), null, null);
+        // creating a new rated result should trigger the entity listener and update the student score
+        StudentParticipation studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentId(idOfTextExercise, student1.getId()).get(0);
+        Result newResult = createSubmissionAndResult(studentParticipation, 100, true);
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore updatedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(updatedStudentScore, idOfTextExercise, student1.getId(), newResult.getId(), newResult.getScore(), newResult.getId(), newResult.getScore());
+        verify(this.studentScoreService, times(2)).updateStudentScores(any(Result.class));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void saveUnratedResult_then_changeScoreOfResult_ShouldUpdateOriginalStudentScore() {
+        List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isEmpty();
+        User student1 = userRepository.findOneByLogin("student1").get();
+        // saving the rated result should trigger the entity listener and create a new student score
+        Result originalResult = createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 10.0, 200, false);
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore savedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(savedStudentScore, idOfTextExercise, student1.getId(), originalResult.getId(), originalResult.getScore(), null, null);
+        // update the associated student score should trigger the entity listener and update the student score
+        originalResult.setScore(0L);
+        Result updatedResult = resultRepository.saveAndFlush(originalResult);
+
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore updatedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(updatedStudentScore, idOfTextExercise, student1.getId(), updatedResult.getId(), updatedResult.getScore(), null, null);
+        verify(this.studentScoreService, times(2)).updateStudentScores(any(Result.class));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void saveUnratedResult_then_makeResultRated_ShouldUpdateOriginalStudentScore() {
+        List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isEmpty();
+        User student1 = userRepository.findOneByLogin("student1").get();
+        // saving the rated result should trigger the entity listener and create a new student score
+        Result originalResult = createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 10.0, 200, false);
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore savedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(savedStudentScore, idOfTextExercise, student1.getId(), originalResult.getId(), originalResult.getScore(), null, null);
+        // update the associated student score should trigger the entity listener and update the student score
+        originalResult.setRated(true);
+        Result updatedResult = resultRepository.saveAndFlush(originalResult);
+
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore updatedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(updatedStudentScore, idOfTextExercise, student1.getId(), updatedResult.getId(), updatedResult.getScore(), updatedResult.getId(),
+                updatedResult.getScore());
+        verify(this.studentScoreService, times(2)).updateStudentScores(any(Result.class));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void saveRatedResult_then_changeScoreOfResult_ShouldUpdateOriginalStudentScore() {
+        List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isEmpty();
+        User student1 = userRepository.findOneByLogin("student1").get();
+        // saving the rated result should trigger the entity listener and create a new student score
+        Result originalResult = createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 10.0, 200, true);
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore savedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(savedStudentScore, idOfTextExercise, student1.getId(), originalResult.getId(), originalResult.getScore(), originalResult.getId(),
+                originalResult.getScore());
+        // update the associated student score should trigger the entity listener and update the student score
+        originalResult.setScore(0L);
+        Result updatedResult = resultRepository.saveAndFlush(originalResult);
+
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore updatedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(updatedStudentScore, idOfTextExercise, student1.getId(), updatedResult.getId(), updatedResult.getScore(), updatedResult.getId(),
+                updatedResult.getScore());
+        verify(this.studentScoreService, times(2)).updateStudentScores(any(Result.class));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void saveRatedResult_then_makeResultUnrated_ShouldUpdateOriginalStudentScore() {
+        List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isEmpty();
+        User student1 = userRepository.findOneByLogin("student1").get();
+        // saving the rated result should trigger the entity listener and create a new student score
+        Result originalResult = createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 10.0, 200, true);
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore savedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(savedStudentScore, idOfTextExercise, student1.getId(), originalResult.getId(), originalResult.getScore(), originalResult.getId(),
+                originalResult.getScore());
+        // update the associated student score should trigger the entity listener and update the student score
+        originalResult.setRated(null);
+        Result updatedResult = resultRepository.saveAndFlush(originalResult);
+
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore updatedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(updatedStudentScore, idOfTextExercise, student1.getId(), updatedResult.getId(), updatedResult.getScore(), null, null);
+        verify(this.studentScoreService, times(2)).updateStudentScores(any(Result.class));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void saveRatedResult_then_removeSavedResult_ShouldRemoveAssociatedStudentScore() {
         List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
         assertThat(savedStudentScores).isEmpty();
         User student1 = userRepository.findOneByLogin("student1").get();
@@ -188,12 +340,106 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         verify(this.studentScoreService, times(1)).removeAssociatedStudentScores(any(Result.class));
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void saveUnratedResult_then_removeSavedResult_ShouldRemoveAssociatedStudentScore() {
+        List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isEmpty();
+        User student1 = userRepository.findOneByLogin("student1").get();
+        Result persistedResult = createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 10.0, 200, false);
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore savedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(savedStudentScore, idOfTextExercise, student1.getId(), persistedResult.getId(), persistedResult.getScore(), null, null);
+        // removing the result should trigger the entity listener and remove the associated student score
+        resultRepository.deleteById(persistedResult.getId());
+        savedStudentScores = studentScoreRepository.findAll();
+        List<Result> savedResults = resultRepository.findAll();
+        assertThat(savedStudentScores).isEmpty();
+        assertThat(savedResults).isEmpty();
+        verify(this.studentScoreService, times(1)).removeAssociatedStudentScores(any(Result.class));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void saveRatedResult_then_saveAnotherUnratedResult_then_removeRatedResult_ShouldUpdateOriginalStudentScore() {
+        List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isEmpty();
+        User student1 = userRepository.findOneByLogin("student1").get();
+        // saving the rated result should trigger the entity listener and create a new student score
+        Result originalResult = createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 10.0, 200, true);
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore savedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(savedStudentScore, idOfTextExercise, student1.getId(), originalResult.getId(), originalResult.getScore(), originalResult.getId(),
+                originalResult.getScore());
+        // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
+        StudentParticipation studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentId(idOfTextExercise, student1.getId()).get(0);
+        Result newResult = createSubmissionAndResult(studentParticipation, 100, false);
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore updatedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(updatedStudentScore, idOfTextExercise, student1.getId(), newResult.getId(), newResult.getScore(), originalResult.getId(),
+                originalResult.getScore());
+        verify(this.studentScoreService, times(2)).updateStudentScores(any(Result.class));
+
+        resultRepository.deleteById(originalResult.getId());
+        savedStudentScores = studentScoreRepository.findAll();
+        List<Result> savedResults = resultRepository.findAll();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        assertThat(savedResults).size().isEqualTo(1);
+        verify(this.studentScoreService, times(1)).removeAssociatedStudentScores(any(Result.class));
+        updatedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(updatedStudentScore, idOfTextExercise, student1.getId(), newResult.getId(), newResult.getScore(), null, null);
+
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void saveRatedResult_then_saveAnotherUnratedResult_then_removeUnratedResult_ShouldUpdateOriginalStudentScore() {
+        List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isEmpty();
+        User student1 = userRepository.findOneByLogin("student1").get();
+        // saving the rated result should trigger the entity listener and create a new student score
+        Result originalResult = createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 10.0, 200, true);
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore savedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(savedStudentScore, idOfTextExercise, student1.getId(), originalResult.getId(), originalResult.getScore(), originalResult.getId(),
+                originalResult.getScore());
+        // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
+        StudentParticipation studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentId(idOfTextExercise, student1.getId()).get(0);
+        Result newResult = createSubmissionAndResult(studentParticipation, 100, false);
+        savedStudentScores = studentScoreRepository.findAll();
+        assertThat(savedStudentScores).isNotEmpty();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        StudentScore updatedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(updatedStudentScore, idOfTextExercise, student1.getId(), newResult.getId(), newResult.getScore(), originalResult.getId(),
+                originalResult.getScore());
+        verify(this.studentScoreService, times(2)).updateStudentScores(any(Result.class));
+
+        resultRepository.deleteById(newResult.getId());
+        savedStudentScores = studentScoreRepository.findAll();
+        List<Result> savedResults = resultRepository.findAll();
+        assertThat(savedStudentScores).size().isEqualTo(1);
+        assertThat(savedResults).size().isEqualTo(1);
+        verify(this.studentScoreService, times(1)).removeAssociatedStudentScores(any(Result.class));
+        updatedStudentScore = savedStudentScores.get(0);
+        assertStudentScoreStructure(updatedStudentScore, idOfTextExercise, student1.getId(), originalResult.getId(), originalResult.getScore(), originalResult.getId(),
+                originalResult.getScore());
+
+    }
+
     private void assertStudentScoreStructure(StudentScore studentScore, Long expectedExerciseId, Long expectedStudentId, Long expectedLastResultId, Long expectedLastScore,
             Long expectedLastRatedResultId, Long expectedLastRatedScore) {
         assertThat(studentScore.getExercise().getId()).isEqualTo(expectedExerciseId);
         assertThat(studentScore.getUser().getId()).isEqualTo(expectedStudentId);
         if (expectedLastResultId == null) {
-            assertThat(studentScore.getLastScore()).isNull();
+            assertThat(studentScore.getLastResult()).isNull();
         }
         else {
             assertThat(studentScore.getLastResult().getId()).isEqualTo(expectedLastResultId);
@@ -201,7 +447,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(studentScore.getLastScore()).isEqualTo(expectedLastScore);
 
         if (expectedLastRatedResultId == null) {
-            assertThat(studentScore.getLastRatedScore()).isNull();
+            assertThat(studentScore.getLastRatedResult()).isNull();
         }
         else {
             assertThat(studentScore.getLastRatedResult().getId()).isEqualTo(expectedLastRatedResultId);

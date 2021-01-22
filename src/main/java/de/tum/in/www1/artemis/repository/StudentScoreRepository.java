@@ -14,12 +14,11 @@ import de.tum.in.www1.artemis.domain.scores.StudentScore;
 public interface StudentScoreRepository extends JpaRepository<StudentScore, Long> {
 
     @Query("""
-            DELETE
+            SELECT ss
             FROM StudentScore ss
             WHERE ss.lastResult.id= :#{#resultId} OR ss.lastRatedResult.id = :#{#resultId}
             """)
-    @Modifying
-    void removeStudentScoresAssociatedWithResult(@Param("resultId") Long resultId);
+    Optional<StudentScore> findStudentScoreAssociatedWithResult(@Param("resultId") Long resultId);
 
     @Query("""
             DELETE
@@ -30,7 +29,7 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
     void removeAssociatedWithExercise(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-                    SELECT ss
+                SELECT ss
                     FROM StudentScore ss
                     WHERE ss.user.id = :#{#userId} AND ss.exercise.id = :#{#exerciseId}
             """)
