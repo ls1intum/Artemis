@@ -804,6 +804,32 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * GET /programming-exercises/:exerciseId/with-template-and-solution-participation
+     *
+     * @param exerciseId the id of the programmingExercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
+     */
+    @GetMapping(Endpoints.PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION)
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId) {
+        log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId);
+        if (programmingExerciseOpt.isPresent()) {
+            ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
+            Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+                return forbidden();
+            }
+            return ResponseEntity.ok(programmingExercise);
+        }
+        else {
+            return notFound();
+        }
+    }
+
+    /**
      * DELETE /programming-exercises/:id : delete the "id" programmingExercise.
      *
      * @param exerciseId                   the id of the programmingExercise to delete
@@ -1297,6 +1323,8 @@ public class ProgrammingExerciseResource {
         public static final String PROBLEM = PROGRAMMING_EXERCISE + "/problem-statement";
 
         public static final String PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS = PROGRAMMING_EXERCISE + "/with-participations";
+
+        public static final String PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION = PROGRAMMING_EXERCISE + "/with-template-and-solution-participation";
 
         public static final String COMBINE_COMMITS = PROGRAMMING_EXERCISE + "/combine-template-commits";
 
