@@ -223,7 +223,7 @@
             },
             "matchLetterCase": {
                 "title": "Groß- und Kleinschreibung beachten",
-                "explanation": "Wählen Sie aus, ob die Groß- und Kleinschreibung der gegebenen Antworten bei der Auswertung eine Rolle spielt (Beispiel: Sollen 'Antwort' und 'antwort' als gleich bewertet werden?)"
+                "explanation": "Wähle aus, ob die Groß- und Kleinschreibung der gegebenen Antworten bei der Auswertung eine Rolle spielt (Beispiel: Sollen 'Antwort' und 'antwort' als gleich bewertet werden?)"
             },
             "matchPercentage": {
                 "title": "Antworten genau abgleichen",
