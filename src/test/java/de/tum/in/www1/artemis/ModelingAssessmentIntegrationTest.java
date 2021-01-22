@@ -605,7 +605,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         List<Feedback> overrideFeedback = new ArrayList<>(existingFeedback);
         overrideFeedback.addAll(newFeedback);
 
-        Result storedResult = request.putWithResponseBody(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result/" + resultWithFeedback.getId() + "/assessment",
+        Result storedResult = request.putWithResponseBody(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result/" + modelingAssessment.getId() + "/assessment",
                 overrideFeedback, Result.class, HttpStatus.OK);
 
         List<Feedback> manualFeedback = new ArrayList<>();
