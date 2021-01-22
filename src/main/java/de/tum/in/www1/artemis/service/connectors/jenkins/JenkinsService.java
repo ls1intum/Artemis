@@ -356,15 +356,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
         latestSubmission.setBuildFailed("No tests found".equals(newResult.getResultString()));
 
-        // save result to create entry in DB before establishing relation with submission for ordering
-        newResult = resultRepository.save(newResult);
+        // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
         newResult.setSubmission(latestSubmission);
         newResult.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), latestSubmission);
-
-        latestSubmission.addResult(newResult);
-        programmingSubmissionRepository.save(latestSubmission);
-        // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
-        // This seems like a bug in Hibernate/JPA: https://stackoverflow.com/questions/6763329/ordercolumn-onetomany-null-index-column-for-collection.
         return newResult;
     }
 

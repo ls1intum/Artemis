@@ -37,7 +37,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      * @return The submission or empty no submissions exist
      */
     protected Optional<ProgrammingSubmission> getSubmissionForBuildResult(Long participationId, AbstractBuildResultNotificationDTO buildResult) {
-        var submissions = programmingSubmissionRepository.findAllByParticipationId(participationId);
+        var submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
         if (submissions.isEmpty()) {
             return Optional.empty();
         }

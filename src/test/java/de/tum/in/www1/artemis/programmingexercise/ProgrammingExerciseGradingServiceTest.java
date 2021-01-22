@@ -103,7 +103,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         testCaseRepository.deleteAll();
 
         Long scoreBeforeUpdate = result.getScore();
-        gradingService.updateResult(result, programmingExercise, true);
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
 
         assertThat(result.getScore()).isEqualTo(scoreBeforeUpdate);
     }
@@ -123,7 +123,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         result.assessmentType(AssessmentType.AUTOMATIC);
         Long scoreBeforeUpdate = result.getScore();
 
-        gradingService.updateResult(result, programmingExercise, true);
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
 
         Long expectedScore = 25L;
 
@@ -150,7 +150,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         result.assessmentType(AssessmentType.AUTOMATIC);
         Long scoreBeforeUpdate = result.getScore();
 
-        gradingService.updateResult(result, programmingExercise, true);
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
         assertThat(result.getScore()).isEqualTo(40L);
@@ -160,7 +160,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         result.addFeedback(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
         scoreBeforeUpdate = result.getScore();
 
-        gradingService.updateResult(result, programmingExercise, true);
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
         assertThat(result.getScore()).isEqualTo(60L);
@@ -200,14 +200,14 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         // Build failure
         var resultBF = new Result().feedbacks(List.of()).rated(true).score(0L).hasFeedback(false).resultString("Build Failed").completionDate(ZonedDateTime.now())
                 .assessmentType(AssessmentType.AUTOMATIC);
-        gradingService.updateResult(resultBF, programmingExercise, true);
+        gradingService.calculateScoreForResult(resultBF, programmingExercise, true);
 
         // Missing feedback
         var resultMF = new Result();
         var feedbackMF = new Feedback().result(result).text("test3").positive(true).type(FeedbackType.AUTOMATIC).result(resultMF);
         resultMF.feedbacks(new ArrayList<>(List.of(feedbackMF))) // List must be mutable
                 .rated(true).score(0L).hasFeedback(true).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
-        gradingService.updateResult(resultMF, programmingExercise, true);
+        gradingService.calculateScoreForResult(resultMF, programmingExercise, true);
 
         // Assertions result1 - calculated
         assertThat(result1.getScore()).isEqualTo(55L);
@@ -338,7 +338,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         result.assessmentType(AssessmentType.AUTOMATIC);
         Long scoreBeforeUpdate = result.getScore();
 
-        gradingService.updateResult(result, programmingExercise, true);
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
 
         // All available test cases are fulfilled, however there are more test cases that will be run after due date.
         Long expectedScore = 25L;
@@ -368,7 +368,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         result.assessmentType(AssessmentType.AUTOMATIC);
         Long scoreBeforeUpdate = result.getScore();
 
-        gradingService.updateResult(result, programmingExercise, false);
+        gradingService.calculateScoreForResult(result, programmingExercise, false);
 
         // All available test cases are fulfilled.
         Long expectedScore = 25L;
@@ -397,7 +397,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         result.assessmentType(AssessmentType.AUTOMATIC);
         Long scoreBeforeUpdate = result.getScore();
 
-        gradingService.updateResult(result, programmingExercise, true);
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
 
         // All available test cases are fulfilled.
         Long expectedScore = 25L;
@@ -454,7 +454,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         }
         testCaseRepository.saveAll(testCases);
 
-        gradingService.updateResult(result, programmingExercise, true);
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
 
         // No test case was executed.
         Long expectedScore = 0L;
@@ -591,7 +591,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
                 .successful(test1Passes && test2Passes && test3Passes) //
                 .completionDate(ZonedDateTime.now()) //
                 .assessmentType(AssessmentType.AUTOMATIC);
-        gradingService.updateResult(result, programmingExercise, true);
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
         return resultRepository.save(result);
     }
 
@@ -644,7 +644,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             result2b.addFeedback(new Feedback().result(result2b).detailText("Well done unreferenced!").credits(10.00).type(FeedbackType.MANUAL_UNREFERENCED));
             result2b.addFeedback(new Feedback().result(result2b).detailText("Well done general!").credits(0.00));
 
-            gradingService.updateResult(result2b, programmingExercise, true);
+            gradingService.calculateScoreForResult(result2b, programmingExercise, true);
             assertThat(result2b.getScore()).isEqualTo(61);
             result2b = resultRepository.save(result2b);
             participation2.setResults(Set.of(result2a, result2b));
@@ -678,7 +678,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
                     .successful(false) //
                     .completionDate(ZonedDateTime.now()) //
                     .assessmentType(AssessmentType.AUTOMATIC);
-            gradingService.updateResult(result5, programmingExercise, true);
+            gradingService.calculateScoreForResult(result5, programmingExercise, true);
             result5 = resultRepository.save(result5);
             participation5.setResults(Set.of(result5));
         }
@@ -708,7 +708,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
                 .detailText("{\"category\": \"doesNotExist\"}").type(FeedbackType.AUTOMATIC);
         result1.addFeedback(feedback3);
 
-        Result updatedResult = gradingService.updateResult(result1, programmingExerciseSCAEnabled, true);
+        Result updatedResult = gradingService.calculateScoreForResult(result1, programmingExerciseSCAEnabled, true);
 
         assertThat(updatedResult.getFeedbacks()).hasSize(1);
         assertThat(updatedResult.getFeedbacks()).doesNotContain(feedback1, feedback2, feedback3);
@@ -1045,7 +1045,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
                 .completionDate(ZonedDateTime.now()) //
                 .assessmentType(AssessmentType.AUTOMATIC);
 
-        gradingService.updateResult(result, programmingExerciseSCAEnabled, true);
+        gradingService.calculateScoreForResult(result, programmingExerciseSCAEnabled, true);
 
         return resultRepository.save(result);
     }

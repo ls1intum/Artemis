@@ -539,26 +539,17 @@ public class BambooService extends AbstractContinuousIntegrationService {
             final var hasArtifact = buildResult.getBuild().isArtifact();
             latestSubmission.setBuildArtifact(hasArtifact);
 
-            // Do not remove this save, otherwise Hibernate will throw an order column index null exception on saving the build logs
-            latestSubmission = programmingSubmissionRepository.save(latestSubmission);
-
-            // save result to create entry in DB before establishing relation with submission for ordering
-            newResult = resultRepository.save(newResult);
-
             var programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
             var buildLogs = extractAndFilterBuildLogs(buildResult, programmingLanguage);
             var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
 
-            latestSubmission = programmingSubmissionRepository.findWithEagerResultsAndBuildLogEntriesById(latestSubmission.getId()).get();
-            newResult.setSubmission(latestSubmission);
-            latestSubmission.addResult(newResult);
             // Set the received logs in order to avoid duplicate entries (this removes existing logs)
             latestSubmission.setBuildLogEntries(savedBuildLogs);
 
-            latestSubmission = programmingSubmissionRepository.save(latestSubmission);
+            // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
+            newResult.setSubmission(latestSubmission);
+
             newResult.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), latestSubmission);
-            // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
-            // This seems like a bug in Hibernate/JPA: https://stackoverflow.com/questions/6763329/ordercolumn-onetomany-null-index-column-for-collection.
             return newResult;
         }
         catch (Exception e) {
