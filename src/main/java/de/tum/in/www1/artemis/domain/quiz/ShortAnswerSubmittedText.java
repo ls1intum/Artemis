@@ -82,7 +82,7 @@ public class ShortAnswerSubmittedText extends DomainObject {
      * @return boolean true if submittedText fits the restrictions above, false when not
      */
     public boolean isSubmittedTextCorrect(String submittedText, String solution) {
-        ShortAnswerQuestion saQuestion = submittedAnswer != null ? (ShortAnswerQuestion) submittedAnswer.getQuizQuestion() : new ShortAnswerQuestion();
+        ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) submittedAnswer.getQuizQuestion();
         int similarityValue = Objects.requireNonNullElse(saQuestion.getSimilarityValue(), 85); // default value
         if (Boolean.TRUE.equals(saQuestion.matchLetterCase())) {
             // only trim whitespace left and right
