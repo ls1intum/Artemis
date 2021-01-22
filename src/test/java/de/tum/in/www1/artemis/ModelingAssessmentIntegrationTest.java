@@ -14,7 +14,10 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
@@ -59,6 +62,12 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     AssessmentService assessmentService;
+
+    @Autowired
+    ExamRepository examRepository;
+
+    @Autowired
+    StudentParticipationRepository studentParticipationRepository;
 
     private ModelingExercise classExercise;
 
@@ -884,6 +893,165 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assessmentDueDatePassed();
         // should be possible because the original result was not yet submitted
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", false);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void multipleCorrectionRoundsForExam() throws Exception {
+        // Setup exam with 2 correction rounds and a programming exercise
+        ExerciseGroup exerciseGroup1 = new ExerciseGroup();
+        Exam exam = database.addExam(classExercise.getCourseViaExerciseGroupOrCourseMember());
+        exam.setNumberOfCorrectionRoundsInExam(2);
+        exam.addExerciseGroup(exerciseGroup1);
+        exam.setVisibleDate(ZonedDateTime.now().minusHours(3));
+        exam.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        exam = examRepository.save(exam);
+
+        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
+        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+        ModelingExercise exercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
+        exercise = exerciseRepo.save(exercise);
+        exerciseGroup1.addExercise(exercise);
+
+        // add student submission
+        final var submission = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.partial.json", "student1");
+
+        // verify setup
+        assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
+        assertThat(exam.getEndDate()).isBefore(ZonedDateTime.now());
+        var optionalFetchedExercise = exerciseRepo.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId());
+        assertThat(optionalFetchedExercise.isPresent()).isTrue();
+        final var exerciseWithParticipation = optionalFetchedExercise.get();
+        final var studentParticipation = exerciseWithParticipation.getStudentParticipations().stream().iterator().next();
+
+        // request to manually assess latest submission (correction round: 0)
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+        params.add("correction-round", "0");
+        ModelingSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submission-without-assessment",
+                HttpStatus.OK, ModelingSubmission.class, params);
+        // verify that no new submission was created
+        assertThat(submissionWithoutFirstAssessment).isEqualTo(submission);
+        // verify that the lock has been set
+        assertThat(submissionWithoutFirstAssessment.getLatestResult()).isNotNull();
+        assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo("tutor1");
+        assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+
+        // make sure that new result correctly appears inside the continue box
+        LinkedMultiValueMap<String, String> paramsGetAssessedCR1Tutor1 = new LinkedMultiValueMap<>();
+        paramsGetAssessedCR1Tutor1.add("assessedByTutor", "true");
+        paramsGetAssessedCR1Tutor1.add("correction-round", "0");
+        var assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+                paramsGetAssessedCR1Tutor1);
+
+        assertThat(assessedSubmissionList.size()).isEqualTo(1);
+        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
+        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
+
+        // assess submission and submit
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        params = new LinkedMultiValueMap<>();
+        params.add("submit", "true");
+        final var firstSubmittedManualResult = request.putWithResponseBodyAndParams(API_MODELING_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/assessment", feedbacks,
+                Result.class, HttpStatus.OK, params);
+
+        // make sure that new result correctly appears after the assessment for first correction round
+        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+                paramsGetAssessedCR1Tutor1);
+
+        assertThat(assessedSubmissionList.size()).isEqualTo(1);
+        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
+        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isNotNull();
+        assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo("tutor1");
+
+        // verify that the result contains the relationship
+        assertThat(firstSubmittedManualResult).isNotNull();
+        assertThat(firstSubmittedManualResult.getParticipation()).isEqualTo(studentParticipation);
+
+        // verify that the relationship between student participation,
+        var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
+        assertThat(databaseRelationshipStateOfResultsOverParticipation.isPresent()).isTrue();
+        var fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
+
+        assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(1);
+        assertThat(fetchedParticipation.findLatestSubmission().isPresent()).isTrue();
+        assertThat(fetchedParticipation.findLatestSubmission().get()).isEqualTo(submissionWithoutFirstAssessment);
+        assertThat(fetchedParticipation.findLatestResult()).isEqualTo(firstSubmittedManualResult);
+
+        var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
+                .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
+        assertThat(databaseRelationshipStateOfResultsOverSubmission.size()).isEqualTo(1);
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
+        assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(1);
+        assertThat(fetchedParticipation.findLatestSubmission().isPresent()).isTrue();
+        // it should contain the lock for the manual result
+        assertThat(fetchedParticipation.findLatestSubmission().get().getResults().size()).isEqualTo(1);
+        assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(firstSubmittedManualResult);
+
+        // SECOND ROUND OF CORRECTION
+
+        database.changeUser("tutor2");
+        LinkedMultiValueMap<String, String> paramsSecondCorrection = new LinkedMultiValueMap<>();
+        paramsSecondCorrection.add("lock", "true");
+        paramsSecondCorrection.add("correction-round", "1");
+
+        final var submissionWithoutSecondAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
+                ModelingSubmission.class, paramsSecondCorrection);
+
+        // verify that the submission is not new
+        assertThat(submissionWithoutSecondAssessment).isEqualTo(submission);
+        // verify that the lock has been set
+        assertThat(submissionWithoutSecondAssessment.getLatestResult()).isNotNull();
+        assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo("tutor2");
+        assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+
+        // verify that the relationship between student participation,
+        databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
+        assertThat(databaseRelationshipStateOfResultsOverParticipation.isPresent()).isTrue();
+        fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
+
+        assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(1);
+        assertThat(fetchedParticipation.findLatestSubmission().isPresent()).isTrue();
+        assertThat(fetchedParticipation.findLatestSubmission().get()).isEqualTo(submissionWithoutSecondAssessment);
+        assertThat(fetchedParticipation.getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst().get())
+                .isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
+
+        databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
+        assertThat(databaseRelationshipStateOfResultsOverSubmission.size()).isEqualTo(1);
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
+        assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(1);
+        assertThat(fetchedParticipation.findLatestSubmission().isPresent()).isTrue();
+        assertThat(fetchedParticipation.findLatestSubmission().get().getResults().size()).isEqualTo(2);
+        assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
+
+        // assess submission and submit
+        feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        params = new LinkedMultiValueMap<>();
+        params.add("submit", "true");
+        final var secondSubmittedManualResult = request.putWithResponseBodyAndParams(API_MODELING_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/assessment", feedbacks,
+                Result.class, HttpStatus.OK, params);
+        assertThat(secondSubmittedManualResult).isNotNull();
+
+        // make sure that new result correctly appears after the assessment for second correction round
+        LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
+        paramsGetAssessedCR2.add("assessedByTutor", "true");
+        paramsGetAssessedCR2.add("correction-round", "1");
+        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+                paramsGetAssessedCR2);
+
+        assertThat(assessedSubmissionList.size()).isEqualTo(1);
+        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
+        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(1)).isEqualTo(secondSubmittedManualResult);
+
+        // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
+        LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
+        paramsGetAssessedCR1.add("assessedByTutor", "true");
+        paramsGetAssessedCR1.add("correction-round", "0");
+        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+                paramsGetAssessedCR1);
+
+        assertThat(assessedSubmissionList.size()).isEqualTo(0);
     }
 
     private void assessmentDueDatePassed() {
