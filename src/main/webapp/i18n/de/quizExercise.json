@@ -228,7 +228,7 @@
             "matchPercentage": {
                 "title": "Antworten genau abgleichen",
                 "explanationTitle": "Ähnlichkeit&nbsp;%",
-                "explanation": "Legt die erforderliche Ähnlichkeit zwischen vordefinierten Lösungen und Schülerlösungen in der Auswertung für jeden Punkt fest. Der Wert (zwischen 50 % und 100 %) gibt an, ob nur exakt richtige Antworten (100 %) als richtig behandelt werden oder ob Studenten Tippfehler in ihren Lösungen haben dürfen. Je niedriger der Wert ist, desto mehr Tippfehler sind in den Schülerlösungen erlaubt (basierend auf der Levenshtein-Distanz https://en.wikipedia.org/wiki/Levenshtein_distance). Beispiel: Ein Wert von 85 % würde 1 Tippfehler in einem Wort mit 5 Zeichen und 2 Tippfehler in einem Wort mit 10 Zeichen zulassen. Bitte verwenden Sie die Vorschaufunktion für das Quiz, wenn Sie verschiedene Werte ausprobieren möchten."
+                "explanation": "Legt die erforderliche Ähnlichkeit zwischen vordefinierten Lösungen und Studentenlösungen in der Auswertung für jeden Punkt fest. Der Wert (zwischen 50 % und 100 %) gibt an, ob nur exakt richtige Antworten (100 %) als richtig behandelt werden oder ob Studenten Tippfehler in ihren Lösungen haben dürfen. Je niedriger der Wert ist, desto mehr Tippfehler sind in den Studentenlösungen erlaubt (basierend auf der Levenshtein-Distanz https://en.wikipedia.org/wiki/Levenshtein_distance). Beispiel: Ein Wert von 85 % würde 1 Tippfehler in einem Wort mit 5 Zeichen und 2 Tippfehler in einem Wort mit 10 Zeichen zulassen. Bitte verwenden Sie die Vorschaufunktion für das Quiz, wenn Sie verschiedene Werte ausprobieren möchten."
             },
             "matchingInfoModalTitle": "Antwort Matching Optionen"
         },
