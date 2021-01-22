@@ -2113,13 +2113,14 @@ public class DatabaseUtilService {
     }
 
     public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission) {
+        Submission submission;
         if (exampleSubmission.getSubmission() instanceof ModelingSubmission) {
-            modelingSubmissionRepo.save((ModelingSubmission) exampleSubmission.getSubmission());
+            submission = modelingSubmissionRepo.save((ModelingSubmission) exampleSubmission.getSubmission());
         }
         else {
-            textSubmissionRepo.save((TextSubmission) exampleSubmission.getSubmission());
+            submission = textSubmissionRepo.save((TextSubmission) exampleSubmission.getSubmission());
         }
-
+        exampleSubmission.setSubmission(submission);
         return exampleSubmissionRepo.save(exampleSubmission);
     }
 

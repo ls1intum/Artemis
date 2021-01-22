@@ -2,10 +2,9 @@ import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
-import { TranslateService } from '@ngx-translate/core';
 import { Location } from '@angular/common';
 
-import { TextAssessmentBaseComponent } from 'app/exercises/text/assess-new/text-assessment-base.component';
+import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
@@ -56,10 +55,9 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         protected accountService: AccountService,
         protected assessmentsService: TextAssessmentsService,
         protected jhiAlertService: JhiAlertService,
-        translateService: TranslateService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
-        super(jhiAlertService, accountService, assessmentsService, translateService, structuredGradingCriterionService);
+        super(jhiAlertService, accountService, assessmentsService, structuredGradingCriterionService);
         const state = router.getCurrentNavigation()?.extras.state as { submission: TextSubmission };
         this.leftFeedbackId = Number(activatedRoute.snapshot.paramMap.get('feedbackId'));
         this.leftSubmission = state?.submission;
