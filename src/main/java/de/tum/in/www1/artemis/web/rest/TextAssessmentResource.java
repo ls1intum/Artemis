@@ -117,7 +117,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * PUT text-submissions/:submissionId/example-assessment : save manual example text assessment
      *
      * @param exampleSubmissionId id of the submission
-     * @param textAssessment list of text assessmens (consists of feedbacks and text blocks)
+     * @param textAssessment list of text assessments (consists of feedbacks and text blocks)
      * @return result after saving example text assessment
      */
     @ResponseStatus(HttpStatus.OK)

@@ -11,7 +11,13 @@
         <div class="col-4 text-right" *ngIf="isAtLeastInstructor && !readOnly && !toComplete && exercise">
             <div class="row">
                 <div class="form-check col-12 align-baseline">
-                    <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial" [(ngModel)]="exampleSubmission.usedForTutorial" />
+                    <input
+                        type="checkbox"
+                        name="usedForTutorial"
+                        id="field_usedForTutorial"
+                        [(ngModel)]="exampleSubmission.usedForTutorial"
+                        (ngModelChange)="unsavedChanges = true"
+                    />
                     <label class="form-check-label" for="field_usedForTutorial">{{ 'artemisApp.exampleSubmission.usedForTutorial' | translate }}</label>
                 </div>
             </div>

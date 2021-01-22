@@ -181,8 +181,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * Updates the example submission.
      */
     updateExampleTextSubmission(): void {
-        setLatestSubmissionResult(this.exampleSubmission.submission, this.result);
-        this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+        this.exampleSubmissionService.update(this.exampleSubmissionForNetwork(), this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body!;
             this.state.edit();
             this.unsavedChanges = false;
@@ -209,6 +208,14 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             this.areNewAssessments = false;
             this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
             this.state.assess();
+            if (this.unsavedChanges) {
+                this.exampleSubmissionService
+                    .update(this.exampleSubmissionForNetwork(), this.exerciseId)
+                    .subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+                        this.exampleSubmission = exampleSubmissionResponse.body!;
+                        this.unsavedChanges = false;
+                    }, this.onError);
+            }
         });
     }
 
@@ -247,14 +254,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
-
-        const exampleSubmission = Object.assign({}, this.exampleSubmission);
-        exampleSubmission.submission = Object.assign({}, this.submission);
-        const result = Object.assign({}, this.result);
-        setLatestSubmissionResult(exampleSubmission.submission, result);
-        result.feedbacks = this.assessments;
-        delete result?.submission;
-        this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
+        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmissionForNetwork(), this.exerciseId).subscribe(
             () => this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success'),
             (error: HttpErrorResponse) => {
                 const errorType = error.headers.get('x-artemisapp-error');
@@ -272,6 +272,16 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                 }
             },
         );
+    }
+
+    private exampleSubmissionForNetwork() {
+        const exampleSubmission = Object.assign({}, this.exampleSubmission);
+        exampleSubmission.submission = Object.assign({}, this.submission);
+        const result = Object.assign({}, this.result);
+        setLatestSubmissionResult(exampleSubmission.submission, result);
+        result.feedbacks = this.assessments;
+        delete result?.submission;
+        return exampleSubmission;
     }
 
     /**
