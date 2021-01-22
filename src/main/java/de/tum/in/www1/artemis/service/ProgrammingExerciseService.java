@@ -150,7 +150,7 @@ public class ProgrammingExerciseService {
         scheduleOperations(programmingExercise.getId());
 
         // Notify tutors only if this a course exercise
-        if (programmingExercise.hasCourse()) {
+        if (programmingExercise.isCourseExercise()) {
             groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
         }
 
@@ -329,7 +329,7 @@ public class ProgrammingExerciseService {
         scheduleOperations(programmingExercise.getId());
 
         // Only send notification for course exercises
-        if (notificationText != null && programmingExercise.hasCourse()) {
+        if (notificationText != null && programmingExercise.isCourseExercise()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(savedProgrammingExercise, notificationText);
         }
 
@@ -1010,5 +1010,23 @@ public class ProgrammingExerciseService {
         if (exercise instanceof ProgrammingExercise && (((ProgrammingExercise) exercise).getTestRepositoryUrl()).contains("artemislocalhost")) {
             ((ProgrammingExercise) exercise).setIsLocalSimulation(true);
         }
+    }
+
+    /**
+     * Unlock all repositories of the programming exercise
+     *
+     * @param exerciseId of the exercise
+     */
+    public void unlockAllRepositories(Long exerciseId) {
+        instanceMessageSendService.sendUnlockAllRepositories(exerciseId);
+    }
+
+    /**
+     * Lock all repositories of the programming exercise
+     *
+     * @param exerciseId of the exercise
+     */
+    public void lockAllRepositories(Long exerciseId) {
+        instanceMessageSendService.sendLockAllRepositories(exerciseId);
     }
 }

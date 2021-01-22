@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Routes, Resolve, ActivatedRouteSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
@@ -12,24 +12,6 @@ import { TextFeedbackConflictsComponent } from './conflicts/text-feedback-confli
 import { Authority } from 'app/shared/constants/authority.constants';
 
 @Injectable({ providedIn: 'root' })
-export class StudentParticipationResolver implements Resolve<StudentParticipation | undefined> {
-    constructor(private textAssessmentsService: TextAssessmentsService) {}
-
-    /**
-     * Resolves the needed StudentParticipations for the TextSubmissionAssessmentComponent using the TextAssessmentsService.
-     * @param route
-     */
-    resolve(route: ActivatedRouteSnapshot) {
-        const submissionId = Number(route.paramMap.get('submissionId'));
-
-        if (submissionId) {
-            return this.textAssessmentsService.getFeedbackDataForExerciseSubmission(submissionId).catch(() => Observable.of(undefined));
-        }
-        return Observable.of(undefined);
-    }
-}
-
-@Injectable({ providedIn: 'root' })
 export class NewStudentParticipationResolver implements Resolve<StudentParticipation | undefined> {
     constructor(private textSubmissionService: TextSubmissionService) {}
 
@@ -39,12 +21,30 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
      */
     resolve(route: ActivatedRouteSnapshot) {
         const exerciseId = Number(route.paramMap.get('exerciseId'));
-
+        const correctionRound = Number(route.queryParamMap.get('correction-round'));
         if (exerciseId) {
             return this.textSubmissionService
-                .getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, 'lock')
+                .getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, 'lock', correctionRound)
                 .map((submission) => <StudentParticipation>submission.participation)
                 .catch(() => Observable.of(undefined));
+        }
+        return Observable.of(undefined);
+    }
+}
+
+@Injectable({ providedIn: 'root' })
+export class StudentParticipationResolver implements Resolve<StudentParticipation | undefined> {
+    constructor(private textAssessmentsService: TextAssessmentsService) {}
+
+    /**
+     * Resolves the needed StudentParticipations for the TextSubmissionAssessmentComponent using the TextAssessmentsService.
+     * @param route
+     */
+    resolve(route: ActivatedRouteSnapshot) {
+        const submissionId = Number(route.paramMap.get('submissionId'));
+        const correctionRound = Number(route.paramMap.get('correction-round'));
+        if (submissionId) {
+            return this.textAssessmentsService.getFeedbackDataForExerciseSubmission(submissionId, correctionRound).catch(() => Observable.of(undefined));
         }
         return Observable.of(undefined);
     }

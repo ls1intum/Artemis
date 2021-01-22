@@ -387,7 +387,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private static boolean isExamExercise(ProgrammingExercise exercise) {
-        return exercise.hasExerciseGroup();
+        return exercise.isExamExercise();
     }
 
     private static ZonedDateTime getExamProgrammingExerciseReleaseDate(ProgrammingExercise exercise) {
@@ -455,7 +455,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     private List<ProgrammingExerciseStudentParticipation> invokeOperationOnAllParticipationsThatSatisfy(Long programmingExerciseId,
             BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> operation, Predicate<ProgrammingExerciseStudentParticipation> condition,
             String operationName) {
-        log.info("Invoking scheduled task '" + operationName + "' for programming exercise with id " + programmingExerciseId + ".");
+        log.info("Invoking (scheduled) task '" + operationName + "' for programming exercise with id " + programmingExerciseId + ".");
 
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExerciseId);
         if (programmingExercise.isEmpty()) {

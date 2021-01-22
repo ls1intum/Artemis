@@ -75,7 +75,7 @@ public class AssessmentService {
         double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
 
         // Exam results and manual results of programming exercises are always to rated
-        if (exercise.hasExerciseGroup() || exercise instanceof ProgrammingExercise) {
+        if (exercise.isExamExercise() || exercise instanceof ProgrammingExercise) {
             result.setRated(true);
         }
         else {
@@ -153,7 +153,7 @@ public class AssessmentService {
      */
     public boolean isAllowedToCreateOrOverrideResult(Result existingResult, Exercise exercise, StudentParticipation participation, User user, boolean isAtLeastInstructor) {
 
-        final boolean isExamMode = exercise.hasExerciseGroup();
+        final boolean isExamMode = exercise.isExamExercise();
         ZonedDateTime assessmentDueDate;
 
         // For exam exercises, tutors cannot override submissions when the publish result date is in the past (assessmentDueDate)
@@ -199,13 +199,15 @@ public class AssessmentService {
     public void cancelAssessmentOfSubmission(Submission submission) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerResults(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
+        // cancel is only possible for the latest result.
         Result result = submission.getLatestResult();
 
         /*
-         * For programming exercises we need to delete the submission of the manual result as well, as for each new manual result a new submission will be generated. The
-         * CascadeType.REMOVE of {@link Submission#result} will delete also the result and the corresponding feedbacks {@link Result#feedbacks}.
+         * For programming exercises we need to delete the submission of the manual result as well, as for the first new manual result a new submission will be generated. For the
+         * following manual results this submission will be reused. The CascadeType.REMOVE of {@link Submission#result} will delete also the result and the corresponding feedbacks
+         * {@link Result#feedbacks}.
          */
-        if (participation instanceof ProgrammingExerciseStudentParticipation) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation && submission.getResults().size() == 1) {
             participation.removeSubmissions(submission);
             participation.removeResult(result);
             submissionRepository.deleteById(submission.getId());
@@ -316,16 +318,18 @@ public class AssessmentService {
 
     /**
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
-     * database.
+     * database. If a result with the given id exists, it will be overridden. if not, a new result will be created.
      *
      * For programming exercises we use a different approach see {@link ProgrammingAssessmentService#saveManualAssessment(Result)}
      *
      * @param submission the file upload submission to which the feedback belongs to
      * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
+     * @param resultId resultId of the submission we what to save the @feedbackList to, null if no result exists
      * @return result that was saved in the database
      */
-    public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList) {
-        Result result = submission.getLatestResult();
+    public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId) {
+        Result result = submission.getResults().stream().filter(tmp -> tmp.getId().equals(resultId)).findAny().orElse(null);
+
         if (result == null) {
             result = submissionService.saveNewEmptyResult(submission);
         }

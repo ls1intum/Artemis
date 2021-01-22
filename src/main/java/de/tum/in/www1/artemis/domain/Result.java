@@ -496,8 +496,18 @@ public class Result extends DomainObject {
      * @return true if the result is a manual result
      */
     @JsonIgnore
-    public boolean isManualResult() {
-        return assessmentType == AssessmentType.MANUAL || assessmentType == AssessmentType.SEMI_AUTOMATIC;
+    public boolean isManual() {
+        return AssessmentType.MANUAL.equals(assessmentType) || AssessmentType.SEMI_AUTOMATIC.equals(assessmentType);
+    }
+
+    /**
+     * Checks whether the result is an automatic result: AUTOMATIC
+     *
+     * @return true if the result is an automatic result
+     */
+    @JsonIgnore
+    public boolean isAutomatic() {
+        return AssessmentType.AUTOMATIC.equals(assessmentType);
     }
 
     @Override

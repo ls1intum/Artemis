@@ -19,6 +19,7 @@ import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { By } from '@angular/platform-browser';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -61,7 +62,9 @@ describe('TextExamSubmissionComponent', () => {
         textSubmission.text = 'Hello World';
         component.studentSubmission = textSubmission;
 
+        component.onActivate();
         fixture.detectChanges();
+        component.onDeactivate();
 
         expect(component.answer).to.equal('Hello World');
         expect(component.wordCount).to.equal(2);
@@ -100,5 +103,27 @@ describe('TextExamSubmissionComponent', () => {
         component.updateSubmissionFromView();
 
         expect(component.studentSubmission.text).to.equal('Text');
+    });
+
+    it('should trigger text editor events', () => {
+        component.exercise = exercise;
+        textSubmission.text = 'Hello World';
+        component.studentSubmission = textSubmission;
+
+        fixture.detectChanges();
+        fixture.whenStable().then(() => {
+            expect(component.answer).to.equal('Hello World');
+            const textareaDebugElement = fixture.debugElement.query(By.css('#text-editor-tab'));
+            expect(textareaDebugElement).to.exist;
+            const textarea = textareaDebugElement.nativeElement;
+            textarea.value = 'Test';
+            textarea.dispatchEvent(new Event('input'));
+
+            textarea.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
+            textarea.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            expect(textarea.value).to.equal('Test\t');
+            expect(component.studentSubmission.isSynced).to.be.false;
+        });
     });
 });

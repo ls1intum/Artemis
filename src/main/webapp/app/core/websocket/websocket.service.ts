@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { Observable, Observer, Subscription } from 'rxjs/Rx';
 
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
-import { CSRFService } from 'app/core/auth/csrf.service';
 
 import { Client, ConnectionHeaders, over, Subscription as StompSubscription } from 'webstomp-client';
 import * as SockJS from 'sockjs-client';
@@ -88,7 +87,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     private socket: any = undefined;
     private subscriptionCounter = 0;
 
-    constructor(private router: Router, private authServerProvider: AuthServerProvider, private csrfService: CSRFService) {
+    constructor(private router: Router, private authServerProvider: AuthServerProvider) {
         this.connection = this.createConnection();
     }
 
@@ -160,7 +159,6 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         // Note: at the moment, debugging is deactivated to prevent console log statements
         this.stompClient.debug = function () {};
         const headers = <ConnectionHeaders>{};
-        headers['X-CSRF-TOKEN'] = this.csrfService.getCSRF();
 
         this.stompClient.connect(
             headers,

@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
+import { Moment } from 'moment';
 import { AccountService } from 'app/core/auth/account.service';
 import { flatten, maxBy, sum } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
@@ -16,19 +17,25 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
-enum ExerciseFilter {
+export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
     NEEDS_WORK = 'NEEDS_WORK',
 }
 
-enum ExerciseSortingOrder {
-    DUE_DATE_ASC = 1,
-    DUE_DATE_DESC = -1,
+export enum ExerciseSortingOrder {
+    ASC = 1,
+    DESC = -1,
 }
 
 enum SortFilterStorageKey {
     FILTER = 'artemis.course.exercises.filter',
     ORDER = 'artemis.course.exercises.order',
+    ATTRIBUTE = 'artemis.course.exercises.attribute',
+}
+
+export enum SortingAttribute {
+    DUE_DATE = 0,
+    RELEASE_DATE = 1,
 }
 
 @Component({
@@ -47,14 +54,17 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     public upcomingExercises: Exercise[] = [];
     public exerciseCountMap: Map<string, number>;
 
-    readonly ASC = ExerciseSortingOrder.DUE_DATE_ASC;
-    readonly DESC = ExerciseSortingOrder.DUE_DATE_DESC;
+    readonly ASC = ExerciseSortingOrder.ASC;
+    readonly DESC = ExerciseSortingOrder.DESC;
+    readonly DUE_DATE = SortingAttribute.DUE_DATE;
+    readonly RELEASE_DATE = SortingAttribute.RELEASE_DATE;
     readonly filterType = ExerciseFilter;
     sortingOrder: ExerciseSortingOrder;
     activeFilters: Set<ExerciseFilter>;
     numberOfExercises: number;
     exerciseForGuidedTour?: Exercise;
     nextRelevantExercise?: Exercise;
+    sortingAttribute: SortingAttribute;
 
     constructor(
         private courseService: CourseManagementService,
@@ -80,9 +90,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
                   .filter(Boolean)
             : [];
         this.activeFilters = new Set(filtersInStorage);
-        const orderInStorage = this.localStorage.retrieve(SortFilterStorageKey.ORDER);
-        const parsedOrderInStorage = Object.keys(ExerciseSortingOrder).find((exerciseOrder) => exerciseOrder === orderInStorage);
-        this.sortingOrder = parsedOrderInStorage ? (+parsedOrderInStorage as ExerciseSortingOrder) : ExerciseSortingOrder.DUE_DATE_ASC;
+        this.loadOrderAndAttributeForSorting();
         this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
@@ -102,6 +110,12 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
 
         this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
         this.nextRelevantExercise = this.exerciseService.getNextExerciseForHours(this.course?.exercises);
+    }
+
+    setSortingAttribute(attribute: SortingAttribute) {
+        this.sortingAttribute = attribute;
+        this.localStorage.store(SortFilterStorageKey.ATTRIBUTE, this.sortingAttribute.toString());
+        this.applyFiltersAndOrder();
     }
 
     ngOnChanges() {
@@ -166,6 +180,39 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
         this.groupExercises(filtered);
     }
 
+    private getSortingAttributeFromExercise(): (exercise: Exercise) => Moment | undefined {
+        return this.sortingAttribute === this.DUE_DATE ? (exercise) => exercise.dueDate : (exercise) => exercise.releaseDate;
+    }
+
+    private loadOrderAndAttributeForSorting() {
+        const orderInStorage = this.localStorage.retrieve(SortFilterStorageKey.ORDER);
+        const parsedOrderInStorage = Object.keys(ExerciseSortingOrder).find((exerciseOrder) => exerciseOrder === orderInStorage);
+        this.sortingOrder = parsedOrderInStorage ? (+parsedOrderInStorage as ExerciseSortingOrder) : ExerciseSortingOrder.ASC;
+
+        const attributeInStorage = this.localStorage.retrieve(SortFilterStorageKey.ATTRIBUTE);
+        const parsedAttributeInStorage = Object.keys(SortingAttribute).find((exerciseOrder) => exerciseOrder === attributeInStorage);
+        this.sortingAttribute = parsedAttributeInStorage ? (+parsedAttributeInStorage as SortingAttribute) : SortingAttribute.DUE_DATE;
+    }
+
+    private increaseExerciseCounter(exercise: Exercise) {
+        if (!this.exerciseCountMap.has(exercise.type!)) {
+            this.exerciseCountMap.set(exercise.type!, 1);
+        } else {
+            let exerciseCount = this.exerciseCountMap.get(exercise.type!)!;
+            this.exerciseCountMap.set(exercise.type!, ++exerciseCount);
+        }
+    }
+
+    private updateUpcomingExercises(upcomingExercises: Exercise[]) {
+        const sortedExercises = this.sortExercises((exercise) => exercise.dueDate, upcomingExercises) || [];
+        if (upcomingExercises.length <= 5) {
+            this.upcomingExercises = sortedExercises;
+        } else {
+            // sort after selected date and take the first 5 elements
+            this.upcomingExercises = sortedExercises.slice(0, 5);
+        }
+    }
+
     private groupExercises(exercises?: Exercise[]) {
         // set all values to 0
         this.exerciseCountMap = new Map<string, number>();
@@ -173,11 +220,11 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
         this.weeklyIndexKeys = [];
         const groupedExercises = {};
         const indexKeys: string[] = [];
-        const sortedExercises = this.sortExercises(exercises) || [];
+        const sortedExercises = this.sortExercises(this.getSortingAttributeFromExercise(), exercises) || [];
         const notAssociatedExercises: Exercise[] = [];
         const upcomingExercises: Exercise[] = [];
         sortedExercises.forEach((exercise) => {
-            const dateValue = exercise.dueDate;
+            const dateValue = this.getSortingAttributeFromExercise()(exercise);
             this.increaseExerciseCounter(exercise);
             if (!dateValue) {
                 notAssociatedExercises.push(exercise);
@@ -186,24 +233,16 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
             const dateIndex = dateValue ? moment(dateValue).startOf('week').format('YYYY-MM-DD') : 'NoDate';
             if (!groupedExercises[dateIndex]) {
                 indexKeys.push(dateIndex);
-                if (dateValue) {
-                    groupedExercises[dateIndex] = {
-                        start: moment(dateValue).startOf('week'),
-                        end: moment(dateValue).endOf('week'),
-                        isCollapsed: dateValue.isBefore(moment(), 'week'),
-                        isCurrentWeek: dateValue.isSame(moment(), 'week'),
-                        exercises: [],
-                    };
-                } else {
-                    groupedExercises[dateIndex] = {
-                        isCollapsed: false,
-                        isCurrentWeek: false,
-                        exercises: [],
-                    };
-                }
+                groupedExercises[dateIndex] = {
+                    start: moment(dateValue).startOf('week'),
+                    end: moment(dateValue).endOf('week'),
+                    isCollapsed: dateValue.isBefore(moment(), 'week'),
+                    isCurrentWeek: dateValue.isSame(moment(), 'week'),
+                    exercises: [],
+                };
             }
             groupedExercises[dateIndex].exercises.push(exercise);
-            if (exercise.dueDate && moment().isSameOrBefore(exercise.dueDate, 'day')) {
+            if (exercise.dueDate && moment().isSameOrBefore(dateValue, 'day')) {
                 upcomingExercises.push(exercise);
             }
         });
@@ -226,30 +265,13 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
         this.calcNumberOfExercises();
     }
 
-    private sortExercises(exercises?: Exercise[]) {
+    private sortExercises(byAttribute: (exercise: Exercise) => Moment | undefined, exercises?: Exercise[]) {
         return exercises?.sort((a, b) => {
-            const aValue = a.dueDate ? a.dueDate.valueOf() : moment().valueOf();
-            const bValue = b.dueDate ? b.dueDate.valueOf() : moment().valueOf();
+            const sortingAttributeA = byAttribute(a);
+            const sortingAttributeB = byAttribute(b);
+            const aValue = sortingAttributeA ? sortingAttributeA.valueOf() : moment().valueOf();
+            const bValue = sortingAttributeB ? sortingAttributeB.valueOf() : moment().valueOf();
             return this.sortingOrder.valueOf() * (aValue - bValue);
         });
-    }
-
-    private increaseExerciseCounter(exercise: Exercise) {
-        if (!this.exerciseCountMap.has(exercise.type!)) {
-            this.exerciseCountMap.set(exercise.type!, 1);
-        } else {
-            let exerciseCount = this.exerciseCountMap.get(exercise.type!)!;
-            this.exerciseCountMap.set(exercise.type!, ++exerciseCount);
-        }
-    }
-
-    private updateUpcomingExercises(upcomingExercises: Exercise[]) {
-        const sortedExercises = this.sortExercises(upcomingExercises) || [];
-        if (upcomingExercises.length <= 5) {
-            this.upcomingExercises = sortedExercises;
-        } else {
-            // sort after due date and take the first 5 elements
-            this.upcomingExercises = sortedExercises.slice(0, 5);
-        }
     }
 }

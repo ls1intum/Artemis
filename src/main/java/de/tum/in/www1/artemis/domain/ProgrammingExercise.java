@@ -575,7 +575,7 @@ public class ProgrammingExercise extends Exercise {
     private boolean checkForRatedAndAssessedResult(Result result) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
         return Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null
-                && ((result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC));
+                && ((result.isManual() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC));
     }
 
     @Override
