@@ -147,27 +147,17 @@
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Visibility</span>
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'visibility')"></fa-icon>
-                                        <fa-icon
-                                            *ngIf="buildAfterDueDateActive === false"
-                                            [icon]="'question-circle'"
-                                            class="text-secondary ml-2"
-                                            [ngbPopover]="popoverContent"
-                                            placement="bottom"
-                                            container="body"
-                                        ></fa-icon>
+                                        <fa-icon [icon]="'question-circle'" class="text-secondary ml-2" [ngbPopover]="popoverContent" placement="bottom" container="body"></fa-icon>
                                     </span>
                                     <ng-template #popoverContent>
                                         <div class="d-flex flex-column run-after-due-date-disabled">
-                                            <pre jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.runAfterDueDateDisabled"></pre>
-                                            <a [routerLink]="['/course-management/', this.courseId, 'programming-exercise', this.exercise.id!, 'edit']" class="ml-auto">
-                                                <jhi-button [icon]="'arrow-right'" placement="top" ngbTooltip="{{ 'entity.action.edit' | translate }}"></jhi-button>
-                                            </a>
+                                            <pre jhiTranslate="artemisApp.programmingExercise.configureGrading.help.visibility"></pre>
                                         </div>
                                     </ng-template>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                                     <select [ngModel]="value" class="p-1" (change)="updateEditedField(row, EditableField.VISIBILITY)($event.target.value)">
-                                        <option *ngFor="let s of testCaseVisibilities()" [value]="s.value">
+                                        <option *ngFor="let s of testCaseVisibilityList" [value]="s.value">
                                             {{ 'artemisApp.programmingExerciseTestCase.visibility.' + s.name | translate }}
                                         </option>
                                     </select>

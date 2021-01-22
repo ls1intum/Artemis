@@ -471,6 +471,18 @@ public abstract class Exercise extends DomainObject {
         return ZonedDateTime.now().isAfter(getDueDate());
     }
 
+    /**
+     * Checks if the due date is in the future. Returns true, if no due date is set.
+     *
+     * @return true if the due date is in the future, otherwise false
+     */
+    public boolean isBeforeDueDate() {
+        if (dueDate == null) {
+            return true;
+        }
+        return ZonedDateTime.now().isBefore(dueDate);
+    }
+
     public Set<LearningGoal> getLearningGoals() {
         return learningGoals;
     }

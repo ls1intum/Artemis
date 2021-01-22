@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -24,6 +23,8 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -58,12 +59,18 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
     private final AuditEventRepository auditEventRepository;
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
-            ResultService resultService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository) {
+            ResultService resultService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, AuditEventRepository auditEventRepository) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.participationService = participationService;
@@ -73,6 +80,8 @@ public class ProgrammingExerciseGradingService {
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.resultService = resultService;
         this.auditEventRepository = auditEventRepository;
     }
@@ -273,17 +282,17 @@ public class ProgrammingExerciseGradingService {
 
         ArrayList<Result> updatedResults = new ArrayList<>();
 
-        Result templateResult = exercise.getTemplateParticipation().findLatestResult();
-        Result solutionResult = exercise.getSolutionParticipation().findLatestResult();
-        // template and solution are always updated using ALL test cases
-        if (templateResult != null) {
-            updateResult(testCases, testCases, templateResult, exercise);
-            updatedResults.add(templateResult);
-        }
-        if (solutionResult != null) {
-            updateResult(testCases, testCases, solutionResult, exercise);
-            updatedResults.add(solutionResult);
-        }
+        templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksByProgrammingExerciseId(exercise.getId())
+                .flatMap(p -> Optional.ofNullable(p.findLatestResult())).ifPresent(result -> {
+                    updateResult(testCases, testCases, result, exercise);
+                    updatedResults.add(result);
+                });
+        solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksByProgrammingExerciseId(exercise.getId())
+                .flatMap(p -> Optional.ofNullable(p.findLatestResult())).ifPresent(result -> {
+                    updateResult(testCases, testCases, result, exercise);
+                    updatedResults.add(result);
+                });
+
         // filter the test cases for the student results if necessary
         Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
         // We only update the latest automatic results here, later manual assessments are not affected
@@ -324,16 +333,14 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Filter all test cases from the score calculation that are never executed or only executed after due date if the due date has not yet passed.
+     * Filter all test cases from the score calculation that are never visible or ones with visibility "after due date" if the due date has not yet passed.
      * @param exercise to which the test cases belong to.
      * @param testCases which should be filtered.
      * @return testCases, but the ones based on the described visibility criterion removed.
      */
     private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(ProgrammingExercise exercise, Set<ProgrammingExerciseTestCase> testCases) {
-        boolean shouldTestsWithAfterDueDateFlagBeRemoved = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
-        return testCases.stream().filter(testCase -> !testCase.isInvisible()).filter(testCase -> !(shouldTestsWithAfterDueDateFlagBeRemoved && testCase.isAfterDueDate()))
-                .collect(Collectors.toSet());
+        boolean isBeforeDueDate = exercise.isBeforeDueDate();
+        return testCases.stream().filter(testCase -> !testCase.isInvisible()).filter(testCase -> !(isBeforeDueDate && testCase.isAfterDueDate())).collect(Collectors.toSet());
     }
 
     /**
@@ -376,8 +383,9 @@ public class ProgrammingExerciseGradingService {
 
             // If there are no feedbacks left after filtering those not valid, also setHasFeedback to false.
             if (result.getFeedbacks().stream().noneMatch(feedback -> Boolean.FALSE.equals(feedback.isPositive())
-                    || feedback.getType() != null && (feedback.getType().equals(FeedbackType.MANUAL) || feedback.getType().equals(FeedbackType.MANUAL_UNREFERENCED))))
+                    || feedback.getType() != null && (feedback.getType().equals(FeedbackType.MANUAL) || feedback.getType().equals(FeedbackType.MANUAL_UNREFERENCED)))) {
                 result.setHasFeedback(false);
+            }
 
             Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(isSuccessful(result)).collect(Collectors.toSet());
 

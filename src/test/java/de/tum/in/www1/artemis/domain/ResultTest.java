@@ -86,24 +86,24 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    public void filterSensitiveInformationAfterDueDate() {
+    public void filterSensitiveFeedbacksAfterDueDate() {
         Feedback feedback1 = new Feedback().visibility(TestCaseVisibility.ALWAYS);
         Feedback feedback2 = new Feedback().visibility(TestCaseVisibility.AFTER_DUE_DATE);
         Feedback feedback3 = new Feedback().visibility(TestCaseVisibility.NEVER);
         result.setFeedbacks(new ArrayList<>(List.of(feedback1, feedback2, feedback3)));
 
-        result.filterSensitiveInformation(false);
+        result.filterSensitiveFeedbacks(false);
         assertThat(result.getFeedbacks()).isEqualTo(List.of(feedback1, feedback2));
     }
 
     @Test
-    public void filterSensitiveInformationBeforeDueDate() {
+    public void filterSensitiveFeedbacksBeforeDueDate() {
         Feedback feedback1 = new Feedback().visibility(TestCaseVisibility.ALWAYS);
         Feedback feedback2 = new Feedback().visibility(TestCaseVisibility.AFTER_DUE_DATE);
         Feedback feedback3 = new Feedback().visibility(TestCaseVisibility.NEVER);
         result.setFeedbacks(new ArrayList<>(List.of(feedback1, feedback2, feedback3)));
 
-        result.filterSensitiveInformation(true);
+        result.filterSensitiveFeedbacks(true);
         assertThat(result.getFeedbacks()).isEqualTo(List.of(feedback1));
     }
 }

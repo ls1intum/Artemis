@@ -8,8 +8,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.swing.*;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -330,7 +328,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         setTotalScoreToZero(withZeroTotalScore, false);
 
         // Set programming exercise due date in future.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(10));
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -361,7 +359,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         setTotalScoreToZero(withZeroTotalScore, false);
 
         // Set programming exercise due date in future.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(10));
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -391,7 +389,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         setTotalScoreToZero(withZeroTotalScore, false);
 
         // Set programming exercise due date in past.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(10));
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(10));
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -449,7 +447,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
     private void testAndAssertZeroScoreIfThereAreNoTestCasesBeforeDueDate(ProgrammingExercise programmingExercise, String expectedResultString, int expectedFeedbackSize) {
         // Set programming exercise due date in future.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(10));
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
         Long scoreBeforeUpdate = result.getScore();
 
         // Set all test cases of the programming exercise to be executed after due date.

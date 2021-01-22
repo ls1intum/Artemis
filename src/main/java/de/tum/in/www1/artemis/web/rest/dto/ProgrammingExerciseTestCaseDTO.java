@@ -17,8 +17,6 @@ public class ProgrammingExerciseTestCaseDTO {
 
     private Double bonusPoints;
 
-    // private boolean afterDueDate;
-
     private TestCaseVisibility visibility;
 
     public Long getId() {

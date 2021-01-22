@@ -321,10 +321,8 @@ public class ResultResource {
         boolean filterForStudent = authCheckService.isOnlyStudentInCourse(course, user);
 
         if (filterForStudent) {
-            final ZonedDateTime dueDate = participation.getExercise().getDueDate();
-            System.out.println(dueDate);
-            boolean isBeforeDueDate = dueDate != null && ZonedDateTime.now().isBefore(dueDate);
-            result.filterSensitiveInformation(isBeforeDueDate);
+            result.filterSensitiveInformation();
+            result.filterSensitiveFeedbacks(participation.getExercise().isBeforeDueDate());
         }
 
         return new ResponseEntity<>(result.getFeedbacks(), HttpStatus.OK);

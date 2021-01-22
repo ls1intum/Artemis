@@ -1187,7 +1187,7 @@ public class DatabaseUtilService {
     public Result addVariousVisibilityFeedbackToResults(Result result) {
         Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("afterDueDate1").visibility(TestCaseVisibility.AFTER_DUE_DATE));
         Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("never1").visibility(TestCaseVisibility.NEVER));
-        Feedback feedback3 = feedbackRepo.save(new Feedback().detailText("always11").visibility(TestCaseVisibility.ALWAYS));
+        Feedback feedback3 = feedbackRepo.save(new Feedback().detailText("always1").visibility(TestCaseVisibility.ALWAYS));
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(feedback1);
         feedbacks.add(feedback2);

@@ -497,7 +497,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         fixture.destroy();
     });
 
-    it('should not be able to select after due date as visibility option if the programming exercise does not have a buildAndTestAfterDueDate', async () => {
+    it('should also be able to select after due date as visibility option if the programming exercise does not have a buildAndTestAfterDueDate', async () => {
         initGradingComponent({ hasBuildAndTestAfterDueDate: false, showInactive: true });
 
         fixture.detectChanges();
@@ -505,8 +505,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         const table = debugElement.query(By.css(testCaseTableId));
         const options = table.queryAll(By.all()).filter((elem) => elem.name === 'option');
-        expect(options).to.have.lengthOf(testCases1.length * 2);
-        expect(options.every((option) => option.properties.value !== TestCaseVisibility.AfterDueDate)).to.be.true;
+        // three options for each test case should still be available
+        expect(options).to.have.lengthOf(testCases1.length * 3);
 
         fixture.destroy();
     });

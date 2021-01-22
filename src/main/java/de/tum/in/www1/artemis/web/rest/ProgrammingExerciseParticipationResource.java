@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -79,10 +78,10 @@ public class ProgrammingExerciseParticipationResource {
             // hide details that should not be shown to the students
             participation.get().getExercise().filterSensitiveInformation();
 
-            final ZonedDateTime dueDate = participation.get().getExercise().getDueDate();
-            boolean isBeforeDueDate = dueDate != null && ZonedDateTime.now().isBefore(dueDate);
+            final boolean isBeforeDueDate = participation.get().getExercise().isBeforeDueDate();
             for (Result r : participation.get().getResults()) {
-                r.filterSensitiveInformation(isBeforeDueDate);
+                r.filterSensitiveInformation();
+                r.filterSensitiveFeedbacks(isBeforeDueDate);
             }
         }
         return ResponseEntity.ok(participation.get());
@@ -230,9 +229,8 @@ public class ProgrammingExerciseParticipationResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise())) {
             // hide details that should not be shown to the students
             participation.getProgrammingExercise().filterSensitiveInformation();
-            final ZonedDateTime dueDate = participation.getProgrammingExercise().getDueDate();
-            boolean isBeforeDueDate = dueDate != null && ZonedDateTime.now().isBefore(dueDate);
-            latestResult.filterSensitiveInformation(isBeforeDueDate);
+            latestResult.filterSensitiveInformation();
+            latestResult.filterSensitiveFeedbacks(participation.getProgrammingExercise().isBeforeDueDate());
         }
 
         return ResponseEntity.ok(latestResult);

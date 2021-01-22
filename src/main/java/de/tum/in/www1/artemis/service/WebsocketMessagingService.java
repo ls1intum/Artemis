@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.EXERCISE_TOPIC_ROOT;
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_TOPIC;
 
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,12 +48,19 @@ public class WebsocketMessagingService {
         // remove unnecessary properties to reduce the data sent to the client (we should not send the exercise and its potentially huge problem statement)
         var originalParticipation = result.getParticipation();
         result.setParticipation(originalParticipation.copyParticipationId());
+        var originalFeedback = new ArrayList<>(result.getFeedbacks());
 
         // TODO: Are there other cases that must be handled here?
         if (participation instanceof StudentParticipation) {
             StudentParticipation studentParticipation = (StudentParticipation) participation;
+
+            result.filterSensitiveInformation();
+            result.filterSensitiveFeedbacks(studentParticipation.getExercise().isBeforeDueDate());
+
             studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
         }
+
+        result.setFeedbacks(originalFeedback);
 
         // Send to tutors, instructors and admins
         messagingTemplate.convertAndSend(getResultDestination(participation.getExercise().getId()), result);

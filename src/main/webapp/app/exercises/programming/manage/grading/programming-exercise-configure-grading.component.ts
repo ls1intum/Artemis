@@ -79,9 +79,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
     testCaseVisibilityList = Object.entries(TestCaseVisibility).map(([name, value]) => ({ value, name }));
-    testCaseVisibilityListAfterDueDateInactive = Object.entries(TestCaseVisibility)
-        .filter((v) => v[1] !== TestCaseVisibility.AfterDueDate)
-        .map(([name, value]) => ({ value, name }));
 
     testCaseColors = {};
     categoryColors = {};
@@ -404,17 +401,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         saveCodeAnalysis.subscribe(() => {
             this.isSaving = false;
         });
-    }
-
-    /**
-     * Return the possible value/name pairs for visibility options depending on if after due date is active for the current exercise.
-     */
-    testCaseVisibilities() {
-        if (this.buildAfterDueDateActive) {
-            return this.testCaseVisibilityList;
-        } else {
-            return this.testCaseVisibilityListAfterDueDateInactive;
-        }
     }
 
     /**
