@@ -32,8 +32,8 @@
                 <jhi-progress-bar
                     [tooltip]="'artemisApp.course.students' | translate"
                     [percentage]="statistic.participationRateInPercent"
-                    [numerator]="statistic.noOfParticipatingStudentsOrTeams"
-                    [denominator]="statistic.participationRateInPercent! * statistic.noOfParticipatingStudentsOrTeams!"
+                    [numerator]="statistic.participationRateInPercent! * statistic.noOfParticipatingStudentsOrTeams!"
+                    [denominator]="statistic.noOfParticipatingStudentsOrTeams"
                 >
                 </jhi-progress-bar>
             </div>
