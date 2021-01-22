@@ -173,8 +173,8 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                 this.result = response.body!;
                 this.state.edit();
                 this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
-            }, this.onError);
-        }, this.onError);
+            }, this.jhiAlertService.error);
+        }, this.jhiAlertService.error);
     }
 
     /**
@@ -186,7 +186,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             this.state.edit();
             this.unsavedChanges = false;
             this.jhiAlertService.success('artemisApp.exampleSubmission.saveSuccessful');
-        }, this.onError);
+        }, this.jhiAlertService.error);
     }
 
     public async startAssessment(): Promise<void> {
@@ -214,7 +214,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                     .subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                         this.exampleSubmission = exampleSubmissionResponse.body!;
                         this.unsavedChanges = false;
-                    }, this.onError);
+                    }, this.jhiAlertService.error);
             }
         });
     }
@@ -267,7 +267,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                         this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
                         break;
                     default:
-                        this.onError(error.message);
+                        this.jhiAlertService.error(error.message);
                         break;
                 }
             },
@@ -305,10 +305,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             this.jhiAlertService.success('artemisApp.exampleSubmission.readSuccessfully');
             this.back();
         });
-    }
-
-    private onError(error: string) {
-        this.jhiAlertService.error(error);
     }
 
     private prepareTextBlocksAndFeedbacks() {
