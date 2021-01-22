@@ -119,15 +119,12 @@ public class ProgrammingExerciseGradingService {
                 triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), programmingSubmission);
             }
 
-            if (!isSolutionParticipation && !isTemplateParticipation) {
-
-                if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual()) {
-                    // Note: in this case, we do not want to save the newResult, but we only want to update the latest semi-automatic one
-                    Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), newResult,
-                            programmingExercise);
-                    programmingSubmissionRepository.save(programmingSubmission);
-                    return Optional.of(updatedLatestSemiAutomaticResult);
-                }
+            if (!isSolutionParticipation && !isTemplateParticipation && programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual()) {
+                // Note: in this case, we do not want to save the newResult, but we only want to update the latest semi-automatic one
+                Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), newResult,
+                        programmingExercise);
+                programmingSubmissionRepository.save(programmingSubmission);
+                return Optional.of(updatedLatestSemiAutomaticResult);
             }
 
             // Finally save the new result once and make sure the order column between submission and result is maintained
