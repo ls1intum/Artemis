@@ -743,7 +743,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(storedResult.getAssessor()).as("assessor has not been set").isNull();
         assertThat(storedResult.getResultString()).as("result string has not been set").isNull();
         assertThat(storedResult.getCompletionDate()).as("completion date has not been set").isNull();
-        assertThat(storedResult.getAssessmentType()).as("result type is AUTOMATIC").isEqualTo(AssessmentType.AUTOMATIC);
+        assertThat(storedResult.getAssessmentType()).as("result type is SEMI AUTOMATIC").isEqualTo(AssessmentType.SEMI_AUTOMATIC);
     }
 
     private void saveModelingSubmission() throws Exception {
