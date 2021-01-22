@@ -51,7 +51,7 @@ public class TextAssessmentService extends AssessmentService {
     public void prepareSubmissionForAssessment(TextSubmission textSubmission, int correctionRound) {
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
-        Result result = textSubmission.getResultForCorrectionRound(correctionRound, true);
+        Result result = textSubmission.getResultForCorrectionRound(correctionRound);
 
         final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
 

@@ -231,7 +231,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final TextSubmission textSubmission = optionalTextSubmission.get();
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
-        Result result = textSubmission.getResultForCorrectionRound(correctionRound, true);
+        Result result = textSubmission.getResultForCorrectionRound(correctionRound);
 
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(exercise, user);
@@ -256,7 +256,7 @@ public class TextAssessmentResource extends AssessmentResource {
         textSubmission.getResults().forEach(r -> r.setSubmission(null));
 
         // set result again as it was changed
-        result = textSubmission.getResultForCorrectionRound(correctionRound, true);
+        result = textSubmission.getResultForCorrectionRound(correctionRound);
 
         // sets results for participation as legacy requires it, will change in follow up NR SE
         participation.setResults(Set.copyOf(textSubmission.getResults()));

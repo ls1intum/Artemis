@@ -587,7 +587,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         assertThat(assessedSubmissionList.size()).isEqualTo(1);
         assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
-        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0, true)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
+        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
 
         // assess submission and submit
         var manualResultLockedFirstRound = submissionWithoutFirstAssessment.getLatestResult();
@@ -610,7 +610,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         assertThat(assessedSubmissionList.size()).isEqualTo(1);
         assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
-        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0, true)).isEqualTo(firstSubmittedManualResult);
+        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(firstSubmittedManualResult);
 
         // change the user here, so that for the next query the result will show up again.
         if (this.tutorAssessUnique) {
@@ -708,7 +708,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         assertThat(assessedSubmissionList.size()).isEqualTo(1);
         assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
-        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(1, true)).isEqualTo(manualResultLockedSecondRound);
+        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(1)).isEqualTo(manualResultLockedSecondRound);
 
         // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
