@@ -696,7 +696,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
 
         List<Feedback> automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
-        // Create a new result (manual result) and a new submission for it and set assessor and type to manual
+        // Create a new result (manual result) and try to reuse the existing submission with the latest commit hash
         ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);
         Result newResult = saveNewEmptyResult(existingSubmission);
