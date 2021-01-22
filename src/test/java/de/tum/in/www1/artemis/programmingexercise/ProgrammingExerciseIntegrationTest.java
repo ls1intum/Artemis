@@ -375,6 +375,17 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation() throws Exception {
+        database.addStudentParticipationForProgrammingExercise(programmingExercise, "tutor1");
+        final var path = ROOT + PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
+        assertThat(programmingExerciseServer.getTitle()).isEqualTo(programmingExercise.getTitle());
+        assertThat(programmingExerciseServer.getSolutionParticipation().getId()).isEqualTo(1);
+        assertThat(programmingExerciseServer.getTemplateParticipation().getId()).isEqualTo(2);
+    }
+
+    @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     void testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
