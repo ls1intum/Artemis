@@ -358,6 +358,10 @@ public class ProgrammingSubmissionResource {
         else {
             programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly, examMode, correctionRound);
         }
+
+        if (!examMode) {
+            programmingSubmissions.forEach(programmingSubmission -> programmingSubmission.removeNullResults());
+        }
         return ResponseEntity.ok().body(programmingSubmissions);
     }
 
