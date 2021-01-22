@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.time.ZonedDateTime.now;
-import static java.util.stream.Collectors.toList;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -626,19 +625,6 @@ public class ParticipationResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
         List<Submission> submissions = participationService.getSubmissionsWithResultsAndAssessorsByParticipationId(participationId);
-
-        // Sort results by completion date
-        submissions = submissions.stream().map(submission -> {
-            var results = submission.getResults();
-            // Don't do anything
-            if (results == null) {
-                return submission;
-            }
-
-            var sortedResultsByCompletionDate = submission.getResults().stream().sorted(Comparator.comparing(Result::getCompletionDate)).collect(toList());
-            submission.setResults(sortedResultsByCompletionDate);
-            return submission;
-        }).collect(toList());
         return ResponseEntity.ok(submissions);
     }
 
