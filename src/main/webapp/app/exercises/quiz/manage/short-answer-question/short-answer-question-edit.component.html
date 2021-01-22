@@ -109,7 +109,6 @@
                             step="1"
                             value="85"
                             id="{{ 'matchPercentageSlider' + questionIndex }}"
-                            [disabled]="question.similarityValue === 100"
                             [(ngModel)]="question.similarityValue"
                             (ngModelChange)="questionUpdated.emit()"
                         />
