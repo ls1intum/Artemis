@@ -27,6 +27,7 @@ export class CourseManagementExerciseRowComponent implements OnInit {
     exerciseType = ExerciseType;
     exerciseRowType = ExerciseRowType;
     leftoverAssessments = false;
+    isTeamExercise: boolean;
 
     getIcon(type: ExerciseType | undefined) {
         switch (type) {
@@ -68,6 +69,7 @@ export class CourseManagementExerciseRowComponent implements OnInit {
 
     ngOnInit() {
         this.displayTitle = this.exercise.title ?? '';
+        this.isTeamExercise = this.exercise.teamMode ?? false;
         if (this.displayTitle.length > TITLE_LENGTH) {
             this.displayTitle = this.displayTitle.substring(0, TITLE_LENGTH - 3) + '...';
         }
