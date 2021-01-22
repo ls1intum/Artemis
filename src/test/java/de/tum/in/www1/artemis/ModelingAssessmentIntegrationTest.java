@@ -151,7 +151,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
                 HttpStatus.OK);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
         assertThat(exampleSubmissionService.findById(storedExampleSubmission.getId())).isPresent();
-        // NOTE: for some reason this test failes in IntelliJ but works fine on the command line
+        // NOTE: for some reason this test fails in IntelliJ but works fine on the command line
         request.get("/api/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
                 Result.class);
     }
@@ -958,8 +958,9 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
         params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
-        final var firstSubmittedManualResult = request.putWithResponseBodyAndParams(API_MODELING_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/assessment", feedbacks,
-                Result.class, HttpStatus.OK, params);
+        final var firstSubmittedManualResult = request.putWithResponseBodyAndParams(
+                API_MODELING_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/result/" + submissionWithoutFirstAssessment.getFirstResult().getId() + "/assessment",
+                feedbacks, Result.class, HttpStatus.OK, params);
 
         // make sure that new result correctly appears after the assessment for first correction round
         assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
@@ -1034,8 +1035,9 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
         params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
-        final var secondSubmittedManualResult = request.putWithResponseBodyAndParams(API_MODELING_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/assessment", feedbacks,
-                Result.class, HttpStatus.OK, params);
+        final var secondSubmittedManualResult = request.putWithResponseBodyAndParams(
+                API_MODELING_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/result/" + submissionWithoutSecondAssessment.getResults().get(1).getId() + "/assessment",
+                feedbacks, Result.class, HttpStatus.OK, params);
         assertThat(secondSubmittedManualResult).isNotNull();
 
         // make sure that new result correctly appears after the assessment for second correction round
