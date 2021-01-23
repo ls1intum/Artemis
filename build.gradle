@@ -331,13 +331,6 @@ wrapper {
 task stage(dependsOn: "bootWar") {
 }
 
-if (project.hasProperty("nodeInstall")) {
-    node {
-        version = "${node_version}"
-        yarnVersion = "${yarn_version}"
-    }
-}
-
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
     toolVersion "8.39"
