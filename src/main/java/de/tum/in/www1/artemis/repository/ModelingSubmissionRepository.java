@@ -49,7 +49,7 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
      *         participations
      */
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "participation", "participation.results" })
-    List<ModelingSubmission> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsByIdIn(Collection<Long> submissionIds);
+    List<ModelingSubmission> findWithEagerResultsFeedbacksAssessorAndParticipationResultsByIdIn(Collection<Long> submissionIds);
 
     @Query("select distinct submission from ModelingSubmission submission left join fetch submission.results r left join fetch r.feedbacks where submission.participation.exercise.id = :#{#exerciseId} and submission.submitted = true")
     List<ModelingSubmission> findSubmittedByExerciseIdWithEagerResultsAndFeedback(@Param("exerciseId") Long exerciseId);

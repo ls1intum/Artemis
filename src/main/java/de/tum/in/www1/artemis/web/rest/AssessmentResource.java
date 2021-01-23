@@ -125,13 +125,13 @@ public abstract class AssessmentResource {
     }
 
     /**
-     * @param submissionId id of the submission
+     * @param exampleSubmissionId id of the example submission
      * @param feedbacks list of feedbacks
      * @return result after saving example assessment
      */
-    ResponseEntity<Result> saveExampleAssessment(long submissionId, List<Feedback> feedbacks) {
+    protected ResponseEntity<Result> saveExampleAssessment(long exampleSubmissionId, List<Feedback> feedbacks) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(submissionId);
+        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(exampleSubmissionId);
         Submission submission = exampleSubmission.getSubmission();
         Exercise exercise = exampleSubmission.getExercise();
         checkAuthorization(exercise, user);
