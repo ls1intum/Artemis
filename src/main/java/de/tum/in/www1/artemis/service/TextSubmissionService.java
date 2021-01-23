@@ -1,17 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.util.stream.Collectors.*;
-
-import java.security.Principal;
-import java.time.ZonedDateTime;
-import java.util.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
@@ -20,6 +8,17 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.security.Principal;
+import java.time.ZonedDateTime;
+import java.util.*;
+
+import static java.util.stream.Collectors.*;
 
 @Service
 public class TextSubmissionService extends SubmissionService {
@@ -228,18 +227,14 @@ public class TextSubmissionService extends SubmissionService {
      * @return a list of text submissions for the given exercise id
      */
     public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly, boolean examMode, int correctionRound) {
-        // TODO Nicolas Rauscher and Simon Entholzer: the following query for the exam mode does not work. Instructors assume to see all submissions on the submissions
-        // page independent whether they already have results or not.
-        // List<StudentParticipation> participations;
-        // if (examMode) {
-        // participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(exerciseId,
-        // (long) correctionRound);
-        // }
-        // else {
-        // participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
-        // }
-        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
-        ;
+        //Instructors assume to see all submissions on the submissions page independent whether they already have results or not.
+        List<StudentParticipation> participations;
+        if (examMode) {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+        }
+        else {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+        }
 
         List<TextSubmission> textSubmissions = new ArrayList<>();
 
