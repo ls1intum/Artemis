@@ -44,6 +44,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
         main: './src/main/webapp/app/app.main'
     },
     output: {
+        publicPath: '',
         path: utils.root('build/resources/main/static/'),
         filename: 'app/[name].bundle.js',
         chunkFilename: 'app/[id].chunk.js'
@@ -77,10 +78,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
                 'style-loader',
                 {
                     loader: 'css-loader',
-                    options: {
-                        esModule: false,
-                        publicPath: '',
-                    }
+                    options: { esModule: false }
                 },
                 'postcss-loader',
                 {
@@ -118,7 +116,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
             reload: false
         }),
         new webpack.ContextReplacementPlugin(
-            /angular(\\|\/)core(\\|\/)/,
+            /angular([\\/])core([\\/])/,
             path.resolve(__dirname, './src/main/webapp')
         ),
         new writeFilePlugin(),

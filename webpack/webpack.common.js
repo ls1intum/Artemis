@@ -11,7 +11,11 @@ module.exports = (options) => ({
         extensions: ['.ts', '.js'],
         modules: ['node_modules'],
         mainFields: ['es2015', 'browser', 'module', 'main'],
-        alias: utils.mapTypescriptAliasToWebpackAlias()
+        alias: utils.mapTypescriptAliasToWebpackAlias(),
+        fallback: {
+            "crypto": require.resolve("crypto-browserify"),
+            "stream": require.resolve("stream-browserify"),
+        },
     },
     stats: {
         children: false
