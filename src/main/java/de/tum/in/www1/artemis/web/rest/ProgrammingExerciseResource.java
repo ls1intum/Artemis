@@ -52,6 +52,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.service.programming.TemplateUpgradePolicy;
@@ -64,7 +65,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 
-/** REST controller for managing ProgrammingExercise. */
+/**
+ * REST controller for managing ProgrammingExercise.
+ */
 @RestController
 @RequestMapping(ProgrammingExerciseResource.Endpoints.ROOT)
 public class ProgrammingExerciseResource {
@@ -89,6 +92,8 @@ public class ProgrammingExerciseResource {
     private final Optional<VersionControlService> versionControlService;
 
     private final ExerciseService exerciseService;
+
+    private final PlagiarismService plagiarismService;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -127,9 +132,9 @@ public class ProgrammingExerciseResource {
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
-            ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionService gradingCriterionService,
-            ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy) {
+            PlagiarismService plagiarismService, ProgrammingExerciseImportService programmingExerciseImportService,
+            ProgrammingExerciseExportService programmingExerciseExportService, ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService,
+            GradingCriterionService gradingCriterionService, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -137,6 +142,7 @@ public class ProgrammingExerciseResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
+        this.plagiarismService = plagiarismService;
         this.programmingExerciseService = programmingExerciseService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
@@ -1084,6 +1090,40 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * GET /programming-exercises/{exerciseId}/plagiarism-result
+     * <p>
+     * Return the latest plagiarism result or null, if no plagiarism was detected for this exercise
+     * yet.
+     *
+     * @param exerciseId ID of the programming exercise for which the plagiarism result should be
+     *                   returned
+     * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the
+     * parameters are invalid
+     */
+    @GetMapping(Endpoints.PLAGIARISM_RESULT)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<TextPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
+        log.debug("REST request to get the latest plagiarism result for the programming exercise with id: {}", exerciseId);
+
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findById(exerciseId);
+
+        if (optionalProgrammingExercise.isEmpty()) {
+            return notFound();
+        }
+
+        ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
+
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
+            return forbidden();
+        }
+
+        TextPlagiarismResult result = plagiarismService.getPlagiarismResult(programmingExercise);
+
+        return ResponseEntity.ok(result);
+    }
+
+    /**
      * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism
      * and returns the generated output as zip file
      *
@@ -1260,6 +1300,8 @@ public class ProgrammingExerciseResource {
         public static final String GENERATE_TESTS = PROGRAMMING_EXERCISE + "/generate-tests";
 
         public static final String CHECK_PLAGIARISM = PROGRAMMING_EXERCISE + "/check-plagiarism";
+
+        public static final String PLAGIARISM_RESULT = PROGRAMMING_EXERCISE + "/plagiarism-result";
 
         public static final String CHECK_PLAGIARISM_JPLAG_REPORT = PROGRAMMING_EXERCISE + "/check-plagiarism-jplag-report";
 
