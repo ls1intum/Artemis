@@ -178,7 +178,9 @@
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span></dt>
                 <dd>
                     <div class="d-flex align-items-center" *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
-                        <a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank">{{ programmingExercise.templateParticipation.repositoryUrl }}</a>
+                        <a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{
+                            programmingExercise.templateParticipation.repositoryUrl
+                        }}</a>
                         <jhi-clone-repo-button
                             class="ml-2"
                             [smallButtons]="true"
@@ -195,7 +197,9 @@
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionRepositoryUrl">Solution Repository Url</span></dt>
                 <dd>
                     <div class="d-flex align-items-center" *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl">
-                        <a href="{{ programmingExercise.solutionParticipation.repositoryUrl }}" target="_blank">{{ programmingExercise.solutionParticipation.repositoryUrl }}</a>
+                        <a href="{{ programmingExercise.solutionParticipation.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{
+                            programmingExercise.solutionParticipation.repositoryUrl
+                        }}</a>
                         <jhi-clone-repo-button
                             class="ml-2"
                             [smallButtons]="true"
@@ -212,7 +216,7 @@
                 <dt><span jhiTranslate="artemisApp.programmingExercise.testRepositoryUrl">Test Repository Url</span></dt>
                 <dd>
                     <div class="d-flex align-items-center" *ngIf="programmingExercise.testRepositoryUrl">
-                        <a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">{{ programmingExercise.testRepositoryUrl }}</a>
+                        <a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ programmingExercise.testRepositoryUrl }}</a>
                         <jhi-clone-repo-button class="ml-2" [smallButtons]="true" [repositoryUrl]="programmingExercise.testRepositoryUrl" [isTeamParticipation]="false">
                         </jhi-clone-repo-button>
                         <jhi-programming-exercise-instructor-repo-download
