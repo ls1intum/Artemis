@@ -69,14 +69,17 @@ public class ExerciseService {
 
     private final ExerciseUnitRepository exerciseUnitRepository;
 
+    private final UserService userService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ResultService resultService,
             ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamRepository studentExamRepository, ExamRepository exampRepository) {
+            ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamRepository studentExamRepository, ExamRepository examRepository,
+            UserService userService) {
         this.exerciseRepository = exerciseRepository;
         this.resultService = resultService;
-        this.examRepository = exampRepository;
+        this.examRepository = examRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.programmingExerciseService = programmingExerciseService;
@@ -90,6 +93,7 @@ public class ExerciseService {
         this.quizScheduleService = quizScheduleService;
         this.studentExamRepository = studentExamRepository;
         this.exerciseUnitRepository = exerciseUnitRepository;
+        this.userService = userService;
     }
 
     /**
@@ -596,9 +600,15 @@ public class ExerciseService {
         courseExerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxScore());
         courseExerciseStatisticsDTO.setExerciseMode(exercise.getMode().toString());
 
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        courseExerciseStatisticsDTO.setNoOfStudentsInCourse(course.getNumberOfStudents().intValue());
-        courseExerciseStatisticsDTO.setNoOfTeamsInCourse(0); // TODO: Get number of teams in course
+        if (exercise.isTeamMode()) {
+            int numberOfTeamsInCourse = exercise.getTeams().size();
+            courseExerciseStatisticsDTO.setNoOfTeamsInCourse(numberOfTeamsInCourse);
+        }
+        else {
+            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            long numberOfStudentsInCourse = userService.countUserInGroup(course.getStudentGroupName());
+            courseExerciseStatisticsDTO.setNoOfStudentsInCourse(Math.toIntExact(numberOfStudentsInCourse));
+        }
 
         if (exerciseIdToRawStatisticQueryData.containsKey(exercise.getId())) {
             Object[] exerciseStatistics = exerciseIdToRawStatisticQueryData.get(exercise.getId());
