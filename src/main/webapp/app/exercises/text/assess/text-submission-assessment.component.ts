@@ -15,16 +15,14 @@ import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
-import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { notUndefined } from 'app/shared/util/global.utils';
-import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { TranslateService } from '@ngx-translate/core';
-import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submission-assessment.route';
+import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess/text-submission-assessment.route';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
-import { TextAssessmentBaseComponent } from 'app/exercises/text/assess-new/text-assessment-base.component';
 import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, setSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
+import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -39,12 +37,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
 
     participation?: StudentParticipation;
-    submission?: TextSubmission;
     result?: Result;
     generalFeedback: Feedback;
     unreferencedFeedback: Feedback[];
-    textBlockRefs: TextBlockRef[];
-    unusedTextBlockRefs: TextBlockRef[];
     complaint?: Complaint;
     totalScore: number;
     isTestRun = false;
@@ -80,12 +75,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
     }
 
-    private get textBlocksWithFeedback(): TextBlock[] {
-        return [...this.textBlockRefs, ...this.unusedTextBlockRefs]
-            .filter(({ block, feedback }) => block?.type === TextBlockType.AUTOMATIC || !!feedback)
-            .map(({ block }) => block!);
-    }
-
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
@@ -98,7 +87,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         translateService: TranslateService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
-        super(jhiAlertService, accountService, assessmentsService, translateService, structuredGradingCriterionService);
+        super(jhiAlertService, accountService, assessmentsService, structuredGradingCriterionService);
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         this.correctionRound = 0;
         this.resetComponent();
@@ -134,7 +123,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     /**
      * Life cycle hook to indicate component creation is done
      */
-    async ngOnInit() {
+    async ngOnInit(): Promise<void> {
         await super.ngOnInit();
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
@@ -319,8 +308,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Validate the feedback of the assessment
      */
     validateFeedback(): void {
-        const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isValid).length > 0;
-        const hasUnreferencedFeedback = this.unreferencedFeedback.filter(Feedback.isValid).length > 0;
+        const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
+        const hasUnreferencedFeedback = this.unreferencedFeedback.filter(Feedback.isPresent).length > 0;
         const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
 
         this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback || hasUnreferencedFeedback;
@@ -344,20 +333,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         const matchBlocksWithFeedbacks = TextAssessmentsService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
-    }
-
-    /**
-     * Invoked by Child @Output when adding/removing text blocks. Recalculating refs to keep order and prevent duplicate text displayed.
-     */
-    public recalculateTextBlockRefs(): void {
-        // This is racing with another @Output, so we wait one loop
-        setTimeout(() => {
-            const refs = [...this.textBlockRefs, ...this.unusedTextBlockRefs].filter(({ block, feedback }) => block!.type === TextBlockType.AUTOMATIC || !!feedback);
-            this.textBlockRefs = [];
-            this.unusedTextBlockRefs = [];
-
-            this.sortAndSetTextBlockRefs(refs, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
-        });
     }
 
     private getComplaint(): void {

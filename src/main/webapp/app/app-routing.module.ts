@@ -47,8 +47,12 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     },
                 },
                 {
-                    path: 'course-management/:courseId/text-exercises/:exerciseId/submissions',
-                    loadChildren: () => import('./exercises/text/assess-new/text-submission-assessment.module').then((m) => m.ArtemisTextSubmissionAssessmentModule),
+                    path: 'course-management/:courseId/text-exercises/:exerciseId',
+                    loadChildren: () => import('./exercises/text/assess/text-submission-assessment.module').then((m) => m.ArtemisTextSubmissionAssessmentModule),
+                },
+                {
+                    path: 'course-management/:courseId/text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
+                    loadChildren: () => import('./exercises/text/manage/example-text-submission/example-text-submission.module').then((m) => m.ArtemisExampleTextSubmissionModule),
                 },
                 // ===== COURSES =====
                 {

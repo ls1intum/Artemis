@@ -51,10 +51,9 @@ export class TextSubmissionService {
             params = params.set('correction-round', correctionRound.toString());
         }
 
-        const returvalue = this.http
+        return this.http
             .get<TextSubmission[]>(url, { observe: 'response', params })
             .pipe(map((res: HttpResponse<TextSubmission[]>) => TextSubmissionService.convertArrayResponse(res)));
-        return returvalue;
     }
 
     /**

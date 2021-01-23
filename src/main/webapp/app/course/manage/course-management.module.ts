@@ -26,7 +26,6 @@ import { ArtemisModelingExerciseManagementModule } from 'app/exercises/modeling/
 import { ArtemisCourseScoresModule } from 'app/course/course-scores/course-scores.module';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
-import { ArtemisTextExerciseAssessmentModule } from 'app/exercises/text/assess/text-assessment.module';
 import { ArtemisFileUploadAssessmentModule } from 'app/exercises/file-upload/assess/file-upload-assessment.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';
@@ -73,7 +72,6 @@ import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tuto
         ArtemisParticipationModule,
         ArtemisComplaintsForTutorModule,
         ArtemisListOfComplaintsModule,
-        ArtemisTextExerciseAssessmentModule,
         ArtemisFileUploadAssessmentModule,
         ArtemisModelingAssessmentEditorModule,
         NgxDatatableModule,

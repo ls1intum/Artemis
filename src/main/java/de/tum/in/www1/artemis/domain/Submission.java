@@ -122,9 +122,9 @@ public abstract class Submission extends DomainObject {
     @Nullable
     @JsonIgnore
     public Result getResultForCorrectionRound(int correctionRound) {
-        List<Result> withoutAutomaticResults = filterNonAutomaticResults();
-        if (withoutAutomaticResults.size() > correctionRound) {
-            return withoutAutomaticResults.get(correctionRound);
+        List<Result> filteredResults = filterNonAutomaticResults();
+        if (filteredResults.size() > correctionRound) {
+            return filteredResults.get(correctionRound);
         }
         return null;
     }
