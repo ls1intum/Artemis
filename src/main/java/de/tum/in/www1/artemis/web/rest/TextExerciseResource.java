@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.service.plagiarism.TextPlagiarismDetectionService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -60,6 +61,8 @@ public class TextExerciseResource {
     private final TextExerciseService textExerciseService;
 
     private final ExerciseService exerciseService;
+
+    private final PlagiarismService plagiarismService;
 
     private final TextExerciseRepository textExerciseRepository;
 
@@ -91,9 +94,9 @@ public class TextExerciseResource {
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
-            ResultRepository resultRepository, GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService,
-            TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
-            GradingCriterionService gradingCriterionService, TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService,
+            ResultRepository resultRepository, PlagiarismService plagiarismService, GroupNotificationService groupNotificationService,
+            TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository,
+            ExerciseService exerciseService, GradingCriterionService gradingCriterionService, TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService,
             InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService) {
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
@@ -104,6 +107,7 @@ public class TextExerciseResource {
         this.authCheckService = authCheckService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
+        this.plagiarismService = plagiarismService;
         this.textExerciseImportService = textExerciseImportService;
         this.textSubmissionExportService = textSubmissionExportService;
         this.groupNotificationService = groupNotificationService;
@@ -557,6 +561,38 @@ public class TextExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
+    }
+
+    /**
+     * GET /text-exercises/{exerciseId}/plagiarism-result
+     * <p>
+     * Return the latest plagiarism result or null, if no plagiarism was detected for this exercise
+     * yet.
+     *
+     * @param exerciseId ID of the text exercise for which the plagiarism result should be returned
+     * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the
+     * parameters are invalid
+     */
+    @GetMapping("/text-exercises/{exerciseId}/plagiarism-result")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<TextPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
+        log.debug("REST request to get the latest plagiarism result for the text exercise with id: {}", exerciseId);
+
+        Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissionsAndResults(exerciseId);
+
+        if (optionalTextExercise.isEmpty()) {
+            return notFound();
+        }
+
+        TextExercise textExercise = optionalTextExercise.get();
+
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            return forbidden();
+        }
+
+        TextPlagiarismResult result = plagiarismService.getPlagiarismResult(textExercise);
+
+        return ResponseEntity.ok(result);
     }
 
     /**

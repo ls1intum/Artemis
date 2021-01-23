@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
@@ -61,6 +62,8 @@ public class ModelingExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final PlagiarismService plagiarismService;
+
     private final ModelingExerciseImportService modelingExerciseImportService;
 
     private final SubmissionExportService modelingSubmissionExportService;
@@ -77,15 +80,16 @@ public class ModelingExerciseResource {
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, ModelingExerciseService modelingExerciseService, ModelingExerciseImportService modelingExerciseImportService,
-            SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService, CompassService compassService,
-            ExerciseService exerciseService, GradingCriterionService gradingCriterionService, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
-            ExampleSubmissionRepository exampleSubmissionRepository) {
+            SubmissionExportService modelingSubmissionExportService, PlagiarismService plagiarismService, GroupNotificationService groupNotificationService,
+            CompassService compassService, ExerciseService exerciseService, GradingCriterionService gradingCriterionService,
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.modelingExerciseImportService = modelingExerciseImportService;
         this.modelingSubmissionExportService = modelingSubmissionExportService;
         this.userService = userService;
         this.courseService = courseService;
+        this.plagiarismService = plagiarismService;
         this.authCheckService = authCheckService;
         this.compassService = compassService;
         this.groupNotificationService = groupNotificationService;
@@ -411,6 +415,38 @@ public class ModelingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
+    }
+
+    /**
+     * GET /modeling-exercises/{exerciseId}/plagiarism-result
+     * <p>
+     * Return the latest plagiarism result or null, if no plagiarism was detected for this exercise
+     * yet.
+     *
+     * @param exerciseId ID of the modeling exercise for which the plagiarism result should be returned
+     * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the
+     * parameters are invalid
+     */
+    @GetMapping("/modeling-exercises/{exerciseId}/plagiarism-result")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ModelingPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
+        log.debug("REST request to get the latest plagiarism result for the modeling exercise with id: {}", exerciseId);
+
+        Optional<ModelingExercise> optionalModelingExercise = modelingExerciseService.findOneWithParticipationsSubmissionsResults(exerciseId);
+
+        if (optionalModelingExercise.isEmpty()) {
+            return notFound();
+        }
+
+        ModelingExercise modelingExercise = optionalModelingExercise.get();
+
+        if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
+            return forbidden();
+        }
+
+        ModelingPlagiarismResult result = plagiarismService.getPlagiarismResult(modelingExercise);
+
+        return ResponseEntity.ok(result);
     }
 
     /**
