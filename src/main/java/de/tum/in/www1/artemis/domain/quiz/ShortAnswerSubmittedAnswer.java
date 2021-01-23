@@ -28,8 +28,6 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
     @JsonView(QuizView.Before.class)
     private Set<ShortAnswerSubmittedText> submittedTexts = new HashSet<>();
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-
     public Set<ShortAnswerSubmittedText> getSubmittedTexts() {
         return submittedTexts;
     }
