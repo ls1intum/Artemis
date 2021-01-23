@@ -663,7 +663,6 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 50L);
         addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
         addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
-        // TODO: check for isRated == false ?
     }
 
     @Test

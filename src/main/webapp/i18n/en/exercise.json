@@ -67,7 +67,7 @@
             "includedCompletely": "Included",
             "includedCompletelyTooltip": "All points and bonus points earned in this exercise count towards your course/exam score!",
             "includedAsBonus": "Bonus",
-            "includedAsBonusTooltip": "All points earned in this exercise count towards your course/exam score as bonus points!.",
+            "includedAsBonusTooltip": "All points earned in this exercise count towards your course/exam score as bonus points!",
             "notIncluded": "Optional",
             "notIncludedTooltip": "No points earned in this exercise count towards your course/exam score!",
             "yes": "Yes",

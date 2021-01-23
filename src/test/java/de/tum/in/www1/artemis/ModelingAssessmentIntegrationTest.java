@@ -372,7 +372,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50L);
         addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
         addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
-        // TODO: check for isRated() == false ?
     }
 
     public void addAssessmentFeedbackAndCheckScore(ModelingSubmission submission, List<Feedback> feedbacks, double pointsAwarded, Long expectedScore) throws Exception {
