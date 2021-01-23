@@ -108,7 +108,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         afterReleaseFileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         afterReleaseFileUploadExercise.setMaxScore(10.0);
         afterReleaseFileUploadExercise.setBonusPoints(10.0);
-        exerciseRepo.save(afterReleaseFileUploadExercise);
+        exerciseRepository.save(afterReleaseFileUploadExercise);
 
         // setting up student submission
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
@@ -132,7 +132,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         afterReleaseFileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         afterReleaseFileUploadExercise.setMaxScore(10.0);
         afterReleaseFileUploadExercise.setBonusPoints(0.0);
-        exerciseRepo.save(afterReleaseFileUploadExercise);
+        exerciseRepository.save(afterReleaseFileUploadExercise);
 
         // setting up student submission
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
@@ -154,7 +154,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         afterReleaseFileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
         afterReleaseFileUploadExercise.setMaxScore(10.0);
         afterReleaseFileUploadExercise.setBonusPoints(0.0);
-        exerciseRepo.save(afterReleaseFileUploadExercise);
+        exerciseRepository.save(afterReleaseFileUploadExercise);
 
         // setting up student submission
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
@@ -176,7 +176,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         afterReleaseFileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         afterReleaseFileUploadExercise.setMaxScore(10.0);
         afterReleaseFileUploadExercise.setBonusPoints(0.0);
-        exerciseRepo.save(afterReleaseFileUploadExercise);
+        exerciseRepository.save(afterReleaseFileUploadExercise);
 
         // setting up student submission
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);

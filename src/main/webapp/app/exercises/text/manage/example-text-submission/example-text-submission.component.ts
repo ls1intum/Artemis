@@ -23,8 +23,6 @@ import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-asse
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { notUndefined } from 'app/shared/util/global.utils';
 import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
-import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
-import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-example-text-submission',
@@ -195,36 +193,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         await this.fetchExampleResult();
         this.state.assess();
     }
-    /**
-     * Calculates the total score of the current assessment.
-     * Returns an error if the total score cannot be calculated
-     * because a score is not a number/empty.
-     */
-    public checkScoreBoundaries() {
-        if (!this.assessments || this.assessments.length === 0) {
-            this.totalScore = 0;
-            this.assessmentsAreValid = true;
-            return;
-        }
-
-        const credits = this.assessments.map((assessment) => assessment.credits);
-
-        if (!credits.every((credit) => credit != undefined && !isNaN(credit))) {
-            this.invalidError = 'The score field must be a number and can not be empty!';
-            this.assessmentsAreValid = false;
-            return;
-        }
-
-        const maxPoints = this.exercise.maxScore! + (this.exercise.bonusPoints! ?? 0.0);
-        const creditsTotalScore = credits.reduce((a, b) => a! + b!, 0)!;
-        this.totalScore = getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints);
-        this.assessmentsAreValid = true;
-        this.invalidError = undefined;
-        if (this.guidedTourService.currentTour && this.toComplete) {
-            this.guidedTourService.updateAssessmentResult(this.assessments.length, this.totalScore);
-        }
-    }
-
     /**
      * Checks if the score boundaries have been respected and save the assessment.
      */
