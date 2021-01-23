@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -70,7 +71,7 @@ public class StudentScoreService {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void updateStudentScores(Result result) {
         // results without a score are uninteresting
-        if (result.getScore() == null) {
+        if (result.getScore() == null || result.getCompletionDate() == null) {
             return;
         }
 
@@ -79,12 +80,15 @@ public class StudentScoreService {
         if (participationOptional.isEmpty()) {
             return;
         }
-        StudentParticipation studentParticipation = participationOptional.get();
-        Exercise exercise = studentParticipation.getExercise();
-        // results for exam exercises or team exercises are uninteresting
-        if (exercise.isExamExercise()) {
+        Participation participation = participationOptional.get();
+        boolean isInstanceOfStudentParticipation = participation.getClass().equals(StudentParticipation.class);
+        if (!isInstanceOfStudentParticipation) {
             return;
         }
+        StudentParticipation studentParticipation = (StudentParticipation) participation;
+
+        Exercise exercise = studentParticipation.getExercise();
+        // team exercises are uninteresting
         if (exercise.isTeamMode()) {
             return;
         }
