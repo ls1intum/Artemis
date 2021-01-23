@@ -56,7 +56,10 @@
                     "openSecond": "Open second assessment",
                     "cancel": "Cancel assessment",
                     "assess": "Assess Submission",
-                    "assessSecond": "Assess second time"
+                    "assessSecond": "Assess second time",
+                    "continue": "Continue assessment",
+                    "continueFirst": "Continue assessment 1",
+                    "continueSecond": "Continue assessment 2"
                 },
                 "filters": {
                     "showAll": "Show all",
