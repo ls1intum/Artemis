@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.UrlService;
 
@@ -132,7 +131,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
                 // ignore
                 log.error("Could not delete directory of the failed cloned repository in: " + localPath);
             }
-            throw new BitbucketException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, e);
+            throw new VersionControlException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, e);
         }
 
         return targetRepoUrl;
