@@ -577,11 +577,17 @@ public class ProgrammingSubmissionService extends SubmissionService {
     /**
      * Given an exercise id and a tutor id, it returns all the programming submissions where the tutor has assessed a result
      *
+     * Exam mode:
      * The query that returns the participations returns the contained submissions in a particular way:
      * Due to hibernate, the result list has null values at all places where a result was assessed by another tutor.
      * At the beginning of the list remain all the automatic results without assessor.
      * Then filtering out all submissions which have no result at the place of the correctionround leaves us with the submissions we are interested in.
      * Before returning the submissions we strip away all automatic results, to be able to correctly display them in the client.
+     *
+     * Not exam mode:
+     * In this case the query that returns the participations returns the contained sumbissions in a different way:
+     * Here hibernate sets all automatic results to null, therefore we must filter all those out. This way the client can access the subissions'
+     * single result.
      *
      * @param exerciseId - the id of the exercise we are looking for
      * @param correctionRound - the correctionRound for which the submissions should be fetched for
@@ -600,6 +606,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
+            // automatic resutls are null in the received results list. We need to filter them out for the client to display the dashboard correctly
+            submissions.forEach(submission -> submission.removeNullResults());
         }
         // strip away all automatic results from the submissions list
         submissions.forEach(submission -> submission.removeAutomaticResults());
@@ -621,7 +629,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         List<StudentParticipation> participations;
         if (examMode) {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(exerciseId,
-                    correctionRound);
+                    (long) correctionRound);
         }
         else {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
