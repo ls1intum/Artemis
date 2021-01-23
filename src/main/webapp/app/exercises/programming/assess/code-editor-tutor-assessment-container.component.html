@@ -47,13 +47,18 @@
         (onUpdateFeedback)="onUpdateFeedback($event)"
         (onFileLoad)="onFileLoad($event)"
     >
-        <span editorTitle
-            >{{ exercise.title }}
-            <jhi-included-in-score-badge
-                *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                [includedInOverallScore]="exercise.includedInOverallScore"
-            ></jhi-included-in-score-badge
-        ></span>
+        <div editorTitle>
+            <span>{{ exercise?.title }}</span>
+            <span
+                >&nbsp;[{{ exercise?.maxScore }} {{ 'artemisApp.examParticipation.points' | translate
+                }}<span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | translate }}</span
+                >]
+                <jhi-included-in-score-badge
+                    *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                    [includedInOverallScore]="exercise.includedInOverallScore"
+                ></jhi-included-in-score-badge
+            ></span>
+        </div>
         <div editorToolbar>
             <jhi-programming-assessment-repo-export
                 [exerciseId]="exercise.id"
