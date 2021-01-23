@@ -21,7 +21,7 @@ plugins {
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "2.7.1"
-    id "com.github.node-gradle.node"
+    id "com.github.node-gradle.node" version "3.0.0-rc7"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
