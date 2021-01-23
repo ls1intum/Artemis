@@ -34,7 +34,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
         }],
         stats: options.stats,
         watchOptions: {
-            ignored: /node_modules/
+            ignored: 'node_modules/**'
         },
         https: options.tls,
         historyApiFallback: true
@@ -50,7 +50,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
     },
     module: {
         rules: [{
-            test: /\.(j|t)s$/,
+            test: /\.([jt])s$/,
             enforce: 'pre',
             loader: 'eslint-loader',
             exclude: /node_modules/
@@ -77,7 +77,10 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
                 'style-loader',
                 {
                     loader: 'css-loader',
-                    options: { esModule: false }
+                    options: {
+                        esModule: false,
+                        publicPath: '',
+                    }
                 },
                 'postcss-loader',
                 {
@@ -119,9 +122,9 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
             path.resolve(__dirname, './src/main/webapp')
         ),
         new writeFilePlugin(),
-        new webpack.WatchIgnorePlugin([
-            utils.root('src/test'),
-        ]),
+        new webpack.WatchIgnorePlugin({
+            paths: [utils.root('src/test')],
+        }),
         new WebpackNotifierPlugin({
             title: 'Artemis'
         })
