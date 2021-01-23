@@ -116,9 +116,9 @@ public class ProgrammingExerciseExportService {
         Repository repository = null;
         Path zippedRepoFile = null;
         try {
-            // Checkout the rpository
-            gitService.resetToOriginMaster(repository);
+            // Checkout the repository
             repository = gitService.getOrCheckoutRepository(repositoryUrl, repoProjectPath, true);
+            gitService.resetToOriginMaster(repository);
 
             // Zip it
             String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
