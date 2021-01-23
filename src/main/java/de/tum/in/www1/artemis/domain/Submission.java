@@ -155,9 +155,19 @@ public abstract class Submission extends DomainObject {
      * removes all automatic results from a submissions result list
      * (do not save it like this in the database, as it could remove the automatic results!)
      */
+    @Nullable
     @JsonIgnore
     public void removeAutomaticResults() {
         this.results = this.results.stream().filter(result -> result == null || !result.isAutomatic()).collect(Collectors.toList());
+    }
+
+    /**
+     * removes all elemnts from the results list, which are null
+     */
+    @Nullable
+    @JsonIgnore
+    public void removeNullResults() {
+        this.results = this.results.stream().filter(result -> result != null).collect(Collectors.toList());
     }
 
     @Nullable

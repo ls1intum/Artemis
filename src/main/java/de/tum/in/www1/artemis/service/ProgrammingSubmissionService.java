@@ -600,6 +600,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
+            // automatic resutls are null in the result list. We need to filter them out fo
+            submissions.forEach(submission -> submission.removeNullResults());
         }
         // strip away all automatic results from the submissions list
         submissions.forEach(submission -> submission.removeAutomaticResults());
