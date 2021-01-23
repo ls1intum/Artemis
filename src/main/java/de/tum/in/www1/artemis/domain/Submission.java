@@ -164,7 +164,7 @@ public abstract class Submission extends DomainObject {
     /**
      * removes all elements from the results list, which are null.
      *
-     * This can be use to prepare a submission before sending it to the client. In some cases the submission is loaded from the database
+     * This can be used to prepare a submission before sending it to the client. In some cases the submission is loaded from the database
      * with a results list which contains undesired null values. To get rid of them this function can be used.
      */
     @Nullable
