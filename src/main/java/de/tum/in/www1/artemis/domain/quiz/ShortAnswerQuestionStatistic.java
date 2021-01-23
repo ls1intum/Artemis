@@ -112,19 +112,18 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
             setParticipantsRated(getParticipantsRated() + change);
 
             if (shortAnswerSubmittedAnswer.getSubmittedTexts() != null) {
-                ShortAnswerSubmittedText shortAnswerSubmittedText;
-                Set<ShortAnswerSolution> shortAnswerSolutions;
 
                 // change rated spotCounter if spot is correct
                 for (ShortAnswerSpotCounter spotCounter : shortAnswerSpotCounters) {
-                    shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spotCounter.getSpot());
-                    shortAnswerSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
+                    ShortAnswerSpot spot = spotCounter.getSpot();
+                    ShortAnswerSubmittedText shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spot);
+                    Set<ShortAnswerSolution> shortAnswerSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spot);
 
-                    // TODO Francisco: please double check if this makes sense: it definitely avoids a null pointer exception because the method getSubmittedTextForSpot(...) above
-                    // can return null
                     if (shortAnswerSubmittedText == null) {
                         continue;
                     }
+                    // reconnect to avoid issues
+                    shortAnswerSubmittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer);
                     for (ShortAnswerSolution solution : shortAnswerSolutions) {
                         if (shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText())
                                 && Boolean.TRUE.equals(shortAnswerSubmittedText.isIsCorrect())) {
@@ -144,16 +143,17 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
             setParticipantsUnrated(getParticipantsUnrated() + change);
 
             if (shortAnswerSubmittedAnswer.getSubmittedTexts() != null) {
-                ShortAnswerSubmittedText shortAnswerSubmittedText;
-                Set<ShortAnswerSolution> shortAnswerSolutions;
                 // change unrated spotCounter if spot is correct
                 for (ShortAnswerSpotCounter spotCounter : shortAnswerSpotCounters) {
-                    shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spotCounter.getSpot());
-                    shortAnswerSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
+                    ShortAnswerSpot spot = spotCounter.getSpot();
+                    ShortAnswerSubmittedText shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spot);
+                    Set<ShortAnswerSolution> shortAnswerSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spot);
 
                     if (shortAnswerSubmittedText == null) {
                         continue;
                     }
+                    // reconnect to avoid issues
+                    shortAnswerSubmittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer);
                     for (ShortAnswerSolution solution : shortAnswerSolutions) {
                         if (shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText())
                                 && Boolean.TRUE.equals(shortAnswerSubmittedText.isIsCorrect())) {

@@ -5,7 +5,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 
 export const exampleTextSubmissionRoute: Routes = [
     {
-        path: ':courseId/text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
+        path: '',
         component: ExampleTextSubmissionComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
