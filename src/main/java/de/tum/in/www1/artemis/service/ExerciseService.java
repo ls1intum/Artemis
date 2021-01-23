@@ -657,6 +657,7 @@ public class ExerciseService {
      * 2. If the IncludedInOverallScore enum is either INCLUDED_AS_BONUS or NOT_INCLUDED, no bonus points are allowed
      *
      * @param exercise exercise to validate
+     * @param <T>      specific type of exercise
      * @return Optional validation error response
      */
     public <T extends Exercise> Optional<ResponseEntity<T>> validateScoreSettings(T exercise) {
