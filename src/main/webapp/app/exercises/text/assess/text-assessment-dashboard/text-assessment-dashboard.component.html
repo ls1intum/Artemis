@@ -41,7 +41,6 @@
                     </th>
                     <th>
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</a>
-                        abc
                     </th>
                     <th></th>
                 </tr>
@@ -109,7 +108,7 @@
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
                                 </button>
-                                <div *ngFor="let round of submission.results; let j = index">
+                                <span *ngFor="let round of submission.results; let j = index">
                                     <button
                                         *ngIf="submission.results[j]"
                                         [disabled]="busy"
@@ -125,7 +124,16 @@
                                         ]"
                                         class="btn btn-outline-secondary btn-sm mb-1"
                                     >
-                                        <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                                        <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;
+                                        <span *ngIf="numberOfCorrectionrounds === 1">
+                                            {{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                                        </span>
+                                        <span *ngIf="numberOfCorrectionrounds === 2 && j == 0">
+                                            {{ 'artemisApp.assessment.dashboard.actions.openFirst' | translate }}
+                                        </span>
+                                        <span *ngIf="numberOfCorrectionrounds === 2 && j == 1">
+                                            {{ 'artemisApp.assessment.dashboard.actions.openSecond' | translate }}
+                                        </span>
                                     </button>
                                     <button
                                         *ngIf="numberOfCorrectionrounds > submission.results.length"
@@ -139,14 +147,13 @@
                                             submission.id,
                                             'assessment'
                                         ]"
-                                        [queryParams]="{ 'correction-round': 1 }"
+                                        [queryParams]="{ 'correction-round': submission.results.length }"
                                         class="btn btn-outline-secondary btn-sm mb-1"
                                     >
-                                        <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>{{ submission.results?.length }} {{ j }} &nbsp;{{
-                                            'artemisApp.assessment.dashboard.actions.assess' | translate
-                                        }}
+                                        <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
+                                        {{ 'artemisApp.assessment.dashboard.actions.assessSecond' | translate }}
                                     </button>
-                                </div>
+                                </span>
                             </span>
                         </span>
                         <span *ngIf="exercise.isAtLeastInstructor">
