@@ -189,7 +189,6 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50L);
         addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
         addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
-        // TODO: check for assertThat(response.isRated()).isFalse(); ?
     }
 
     public void addAssessmentFeedbackAndCheckScore(FileUploadSubmission fileUploadSubmission, List<Feedback> feedbacks, double pointsAwarded, long expectedScore) throws Exception {
