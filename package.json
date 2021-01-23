@@ -176,7 +176,7 @@
         "write-file-webpack-plugin": "4.5.1"
     },
     "engines": {
-        "node": ">=14.14.0",
+        "node": ">=15.4.0",
         "yarn": ">=1.22.5"
     },
     "lint-staged": {
@@ -209,7 +209,7 @@
         "webpack:build": "yarn run cleanup && yarn run webpack:build:main",
         "webpack:prod:main": "yarn run webpack --config webpack/webpack.prod.js --progress",
         "webpack:prod": "yarn run cleanup && yarn run webpack:prod:main && yarn run clean-www",
-        "webpack-dev-server": "node --max-old-space-size=3072 node_modules/webpack-dev-server/bin/webpack-dev-server.js",
-        "webpack": "node --max-old-space-size=3072 node_modules/webpack/bin/webpack.js"
+        "webpack-dev-server": "node --max-old-space-size=4096 node_modules/webpack-dev-server/bin/webpack-dev-server.js",
+        "webpack": "node --max-old-space-size=4096 --heapsnapshot-near-heap-limit=3 --report-on-fatalerror node_modules/webpack/bin/webpack.js"
     }
 }

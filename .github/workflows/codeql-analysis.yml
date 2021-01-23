@@ -12,7 +12,7 @@ on:
 # Keep in sync with build.yml and test.yml
 env:
   CI: true
-  node: 14.x
+  node: 15.x
   java: 15
 
 
