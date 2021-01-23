@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -11,6 +10,7 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -18,18 +18,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
@@ -97,6 +97,61 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         gitlabRequestMockProvider.reset();
     }
 
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void shouldUpdateFeedbackInSemiAutomaticResult() throws Exception {
+        SecurityUtils.setAuthorizationObject();
+        // Required for created a result
+        var resultAccessor = database.getUserByLogin("instructor1");
+
+        // Add a student submission with two manual results and a semi automatic result
+        var participation = studentParticipationRepository.findByExerciseId(exercise.getId()).get(0);
+        var submission = database.createProgrammingSubmission(participation, false);
+        database.addResultToSubmission(submission, AssessmentType.MANUAL, resultAccessor);
+        database.addResultToSubmission(submission, AssessmentType.MANUAL, resultAccessor);
+        database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, resultAccessor);
+
+        // Add a manual feedback to the semi automatic result
+        var feedback = new Feedback();
+        feedback.setType(FeedbackType.MANUAL);
+        feedback.setText("feedback1");
+        feedback.setCredits(10.0);
+
+        var resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exercise.getId());
+        var semiAutoResult = resultsWithFeedback.get(2);
+        database.addFeedbackToResult(feedback, semiAutoResult);
+
+        // Assert that the results have been created successfully.
+        resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exercise.getId());
+        assertThat(resultsWithFeedback.size()).isEqualTo(3);
+        assertThat(resultsWithFeedback.get(0).getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertThat(resultsWithFeedback.get(1).getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertThat(resultsWithFeedback.get(2).getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+
+        // Re-trigger the build. We create a notification with feedback of a successful test
+        database.changeUser("instructor1");
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), "student1", exercise.getProgrammingLanguage(), List.of("test1"));
+        postResult(notification);
+
+        // Retrieve updated results
+        var updatedResults = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exercise.getId());
+        assertThat(updatedResults.size()).isEqualTo(3);
+
+        // Assert that the result order stays the same
+        assertThat(updatedResults.get(0).getId()).isEqualTo(resultsWithFeedback.get(0).getId());
+        assertThat(updatedResults.get(1).getId()).isEqualTo(resultsWithFeedback.get(1).getId());
+        assertThat(updatedResults.get(2).getId()).isEqualTo(resultsWithFeedback.get(2).getId());
+
+        // Assert that the last result is the SEMI_AUTOMATIC result
+        semiAutoResult = updatedResults.get(2);
+        assertThat(semiAutoResult.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        // Assert that the SEMI_AUTOMATIC result has two feedbacks whereas the last one is the automatic one
+        assertThat(semiAutoResult.getFeedbacks().size()).isEqualTo(2);
+        assertThat(semiAutoResult.getFeedbacks().get(0).getType()).isEqualTo(FeedbackType.MANUAL);
+        assertThat(semiAutoResult.getFeedbacks().get(1).getType()).isEqualTo(FeedbackType.AUTOMATIC);
+
+    }
+
     private static Stream<Arguments> shouldSavebuildLogsOnStudentParticipationArguments() {
         return Arrays.stream(ProgrammingLanguage.values())
                 .flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true), Arguments.of(programmingLanguage, false)));
@@ -113,14 +168,14 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         var submission = database.createProgrammingSubmission(participation, false);
 
         // Call programming-exercises/new-result which do not include build log entries yet
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage);
-        postResult(notification, HttpStatus.OK, false);
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of());
+        postResult(notification);
 
         var result = assertBuildError(participation.getId(), userLogin);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
 
         // Call again and assert that no new submissions have been created
-        postResult(notification, HttpStatus.OK, false);
+        postResult(notification);
         assertNoNewSubmissions(submission);
     }
 
@@ -134,8 +189,8 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         // Call programming-exercises/new-result which do not include build log entries yet
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage);
-        postResult(notification, HttpStatus.OK, false);
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of());
+        postResult(notification);
 
         assertBuildError(participation.getId(), userLogin);
     }
@@ -189,28 +244,21 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertThat(updatedSubmissions.get(0).getId()).isEqualTo(existingSubmission.getId());
     }
 
-    private void postResult(TestResultsDTO requestBodyMap, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
-        if (additionalCommit) {
-            var newCommit = new CommitDTO();
-            newCommit.setHash("90b6af5650c30d35a0836fd58c677f8980e1df27");
-            newCommit.setRepositorySlug(requestBodyMap.getCommits().get(0).getRepositorySlug());
-            requestBodyMap.getCommits().add(newCommit);
-        }
-
+    private void postResult(TestResultsDTO requestBodyMap) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         final var alteredObj = mapper.convertValue(requestBodyMap, Object.class);
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
-        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, expectedStatus, httpHeaders);
+        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, HttpStatus.OK, httpHeaders);
     }
 
-    private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage) {
+    private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfullTests) {
         var repoName = (projectKey + "-" + loginName).toUpperCase();
         // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
         var fullName = exercise.getProjectKey() + " » " + repoName + " #3";
-        var notification = ModelFactory.generateTestResultDTO(repoName, List.of(), List.of(), programmingLanguage, false);
+        var notification = ModelFactory.generateTestResultDTO(repoName, successfullTests, List.of(), programmingLanguage, false);
         notification.setFullName(fullName);
         return notification;
     }
