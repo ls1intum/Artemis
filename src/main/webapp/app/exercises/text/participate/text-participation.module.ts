@@ -7,7 +7,6 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { TextEditorComponent } from 'app/exercises/text/participate/text-editor.component';
-import { TextEditorScoreCardComponent } from 'app/exercises/text/participate/text-editor-score-card/text-editor-score-card.component';
 import { TextResultComponent } from 'app/exercises/text/participate/text-result/text-result.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
@@ -29,6 +28,6 @@ const ENTITY_STATES = [...textEditorRoute];
         ArtemisTeamSubmissionSyncModule,
         RatingModule,
     ],
-    declarations: [TextEditorComponent, TextEditorScoreCardComponent, TextResultComponent],
+    declarations: [TextEditorComponent, TextResultComponent],
 })
 export class ArtemisTextParticipationModule {}

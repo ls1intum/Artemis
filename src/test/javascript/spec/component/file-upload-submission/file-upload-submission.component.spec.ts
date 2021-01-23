@@ -10,7 +10,6 @@ import { MockComponent } from 'ng-mocks';
 
 import { JhiAlertService } from 'ng-jhipster';
 import { Router } from '@angular/router';
-import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resizable-instructions/resizable-instructions.component';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -72,12 +71,7 @@ describe('FileUploadSubmissionComponent', () => {
                 ArtemisHeaderExercisePageWithDetailsModule,
                 RatingModule,
             ],
-            declarations: [
-                FileUploadSubmissionComponent,
-                MockComponent(ResizableInstructionsComponent),
-                MockComponent(ComplaintsForTutorComponent),
-                MockComponent(FileUploadResultComponent),
-            ],
+            declarations: [FileUploadSubmissionComponent, MockComponent(ComplaintsForTutorComponent), MockComponent(FileUploadResultComponent)],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
