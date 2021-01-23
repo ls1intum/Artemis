@@ -621,7 +621,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         List<StudentParticipation> participations;
         if (examMode) {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(exerciseId,
-                    correctionRound);
+                    (long) correctionRound);
         }
         else {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);

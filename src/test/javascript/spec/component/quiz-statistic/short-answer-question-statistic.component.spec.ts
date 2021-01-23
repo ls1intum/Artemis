@@ -19,6 +19,7 @@ import { ShortAnswerQuestionStatistic } from 'app/entities/quiz/short-answer-que
 import { ShortAnswerSpotCounter } from 'app/entities/quiz/short-answer-spot-counter.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
+import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 
 const route = { params: of({ courseId: 1, exerciseId: 4, questionId: 1 }) };
 const answerSpot = { posX: 5, invalid: false, id: 1, tempID: 2 } as ShortAnswerSpot;
@@ -35,7 +36,15 @@ const question = {
     correctMappings: [shortAnswerMapping],
 } as ShortAnswerQuestion;
 const course = { id: 1 } as Course;
-let quizExercise = { id: 4, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
+let quizExercise = {
+    id: 4,
+    started: true,
+    course,
+    quizQuestions: [question],
+    adjustedDueDate: undefined,
+    numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
+    studentAssignedTeamIdComputed: false,
+} as QuizExercise;
 
 describe('QuizExercise Short Answer Question Statistic Component', () => {
     let comp: ShortAnswerQuestionStatisticComponent;
@@ -69,7 +78,15 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
     });
 
     afterEach(() => {
-        quizExercise = { id: 4, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
+        quizExercise = {
+            id: 4,
+            started: true,
+            course,
+            quizQuestions: [question],
+            adjustedDueDate: undefined,
+            numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
+            studentAssignedTeamIdComputed: false,
+        } as QuizExercise;
     });
 
     describe('OnInit', function () {
