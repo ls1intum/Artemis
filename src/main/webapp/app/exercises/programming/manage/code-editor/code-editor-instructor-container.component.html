@@ -18,7 +18,13 @@
     [buildable]="selectedRepository !== REPOSITORY.TEST"
     (onResizeEditorInstructions)="onResizeEditorInstructions()"
 >
-    <span editorTitle>{{ exercise?.title }}</span>
+    <span editorTitle
+        >{{ exercise?.title }}
+        <jhi-included-in-score-badge
+            *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+            [includedInOverallScore]="exercise.includedInOverallScore"
+        ></jhi-included-in-score-badge
+    ></span>
     <div editorTitleActions class="d-flex align-items-center ml-2">
         <jhi-programming-exercise-instructor-exercise-status
             class="mr-2"

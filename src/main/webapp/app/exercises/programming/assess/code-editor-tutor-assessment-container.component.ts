@@ -8,7 +8,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
@@ -46,6 +46,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
     readonly dmp = new diff_match_patch();
+    readonly IncludedInOverallScore = IncludedInOverallScore;
 
     paramSub: Subscription;
     participation: ProgrammingExerciseStudentParticipation;

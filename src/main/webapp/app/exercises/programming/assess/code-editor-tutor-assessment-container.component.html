@@ -47,7 +47,13 @@
         (onUpdateFeedback)="onUpdateFeedback($event)"
         (onFileLoad)="onFileLoad($event)"
     >
-        <span editorTitle>{{ exercise.title }}</span>
+        <span editorTitle
+            >{{ exercise.title }}
+            <jhi-included-in-score-badge
+                *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                [includedInOverallScore]="exercise.includedInOverallScore"
+            ></jhi-included-in-score-badge
+        ></span>
         <div editorToolbar>
             <jhi-programming-assessment-repo-export
                 [exerciseId]="exercise.id"

@@ -19,9 +19,17 @@
     [isTutorAssessment]="hasTutorAssessment"
     [readOnlyManualFeedback]="true"
 >
-    <span editorTitle>{{ exercise.title }}</span>
+    <span editorTitle
+        >{{ exercise.title }}
+        <jhi-included-in-score-badge
+            *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+            [includedInOverallScore]="exercise.includedInOverallScore"
+        ></jhi-included-in-score-badge
+    ></span>
+    <!-- prettier-ignore -->
     <div editorToolbar class="d-inline-flex">
-        <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="mr-3"></jhi-code-editor-repository-is-locked>
+        <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked"
+                                              class="mr-3"></jhi-code-editor-repository-is-locked>
         <jhi-updating-result
             *ngIf="participation"
             [exercise]="exercise"
