@@ -11,7 +11,6 @@ import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercis
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
-import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
@@ -20,6 +19,8 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Course } from 'app/entities/course.model';
 import * as moment from 'moment';
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,11 +44,17 @@ describe('ProgrammingExamSubmissionComponent', () => {
             imports: [
                 MockModule(ArtemisProgrammingExerciseActionsModule),
                 MockModule(OrionModule),
-                MockModule(ArtemisCoursesModule),
                 MockModule(ArtemisResultModule),
                 MockModule(ArtemisProgrammingExerciseInstructionsRenderModule),
             ],
-            declarations: [ProgrammingExamSubmissionComponent, MockComponent(ModelingEditorComponent), MockComponent(CodeEditorContainerComponent), MockPipe(TranslatePipe)],
+            declarations: [
+                ProgrammingExamSubmissionComponent,
+                MockComponent(ModelingEditorComponent),
+                MockComponent(CodeEditorContainerComponent),
+                MockPipe(TranslatePipe),
+                MockComponent(IncludedInScoreBadgeComponent),
+                MockComponent(ExerciseDetailsStudentActionsComponent),
+            ],
             providers: [MockProvider(DomainService)],
         })
             .compileComponents()
