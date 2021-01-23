@@ -151,12 +151,22 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Finds the programming exercise for the given exerciseId with the corresponding participation's
+     * Finds the programming exercise for the given exerciseId with the corresponding participation's with results
+     * @param programmingExerciseId of the programming exercise to retrieve
+     */
+    findWithTemplateAndSolutionParticipationAndResults(programmingExerciseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-participations`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    /**
+     * Finds the programming exercise for the given exerciseId with the template and solution participation
      * @param programmingExerciseId of the programming exercise to retrieve
      */
     findWithTemplateAndSolutionParticipation(programmingExerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-participations`, { observe: 'response' })
+            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-template-and-solution-participation`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 

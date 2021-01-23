@@ -2127,13 +2127,14 @@ public class DatabaseUtilService {
     }
 
     public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission) {
+        Submission submission;
         if (exampleSubmission.getSubmission() instanceof ModelingSubmission) {
-            modelingSubmissionRepo.save((ModelingSubmission) exampleSubmission.getSubmission());
+            submission = modelingSubmissionRepo.save((ModelingSubmission) exampleSubmission.getSubmission());
         }
         else {
-            textSubmissionRepo.save((TextSubmission) exampleSubmission.getSubmission());
+            submission = textSubmissionRepo.save((TextSubmission) exampleSubmission.getSubmission());
         }
-
+        exampleSubmission.setSubmission(submission);
         return exampleSubmissionRepo.save(exampleSubmission);
     }
 
@@ -2304,11 +2305,12 @@ public class DatabaseUtilService {
             for (var spot : ((ShortAnswerQuestion) question).getSpots()) {
                 ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
                 submittedText.setSpot(spot);
+                var correctText = ((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText();
                 if (correct) {
-                    submittedText.setText(((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText());
+                    submittedText.setText(correctText);
                 }
                 else {
-                    submittedText.setText("wrong short answer");
+                    submittedText.setText(correctText.toUpperCase());
                 }
                 submittedAnswer.addSubmittedTexts(submittedText);
                 // also invoke remove once
@@ -2346,6 +2348,9 @@ public class DatabaseUtilService {
     public ShortAnswerQuestion createShortAnswerQuestion() {
         ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(2).text("This is a long answer text");
         sa.setScoringType(ScoringType.ALL_OR_NOTHING);
+        // TODO: we should test different values here
+        sa.setMatchLetterCase(true);
+        sa.setSimilarityValue(100);
 
         var shortAnswerSpot1 = new ShortAnswerSpot().spotNr(0).width(1);
         shortAnswerSpot1.setTempID(generateTempId());

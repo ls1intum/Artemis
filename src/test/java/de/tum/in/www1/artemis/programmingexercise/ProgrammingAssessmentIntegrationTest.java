@@ -659,7 +659,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
             assertThat(submission.getResults()).isNotNull();
             assertThat(submission.getLatestResult()).isNotNull();
             assertThat(submission.getResults().size()).isEqualTo(1);
-            assertThat(submission.getResults().get(0).assessmentType(AssessmentType.AUTOMATIC));
+            assertThat(submission.getResults().get(0).getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
         }
 
         // request to manually assess latest submission (correction round: 0)

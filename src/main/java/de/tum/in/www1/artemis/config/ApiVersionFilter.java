@@ -39,7 +39,7 @@ public class ApiVersionFilter implements Filter {
         final HttpServletRequest httpRequest = (HttpServletRequest) request;
         final HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        logger.debug("Adding Version and current Server Time to Request {} {}", httpRequest.getMethod(), httpRequest.getRequestURI());
+        logger.debug("Adding Version to Request {} {}", httpRequest.getMethod(), httpRequest.getRequestURI());
 
         httpResponse.addHeader(CONTENT_VERSION_HEADER, VERSION);
 

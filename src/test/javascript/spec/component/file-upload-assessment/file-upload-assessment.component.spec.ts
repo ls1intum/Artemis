@@ -11,6 +11,7 @@ import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent } from 'ng-mocks';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 import { Router } from '@angular/router';
@@ -38,6 +39,7 @@ import { By } from '@angular/platform-browser';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { Complaint } from 'app/entities/complaint.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
@@ -75,6 +77,7 @@ describe('FileUploadAssessmentComponent', () => {
                 MockComponent(UpdatingResultComponent),
                 MockComponent(CollapsableAssessmentInstructionsComponent),
                 MockComponent(ComplaintsForTutorComponent),
+                MockComponent(AssessmentInstructionsComponent),
             ],
             providers: [
                 JhiLanguageHelper,
@@ -84,6 +87,12 @@ describe('FileUploadAssessmentComponent', () => {
                 { provide: ComplaintService, useClass: MockComplaintService },
             ],
         })
+            .overrideModule(ArtemisTestModule, {
+                remove: {
+                    declarations: [MockComponent(FaIconComponent)],
+                    exports: [MockComponent(FaIconComponent)],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(FileUploadAssessmentComponent);

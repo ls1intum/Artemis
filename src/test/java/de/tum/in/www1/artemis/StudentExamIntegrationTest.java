@@ -831,8 +831,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     final var newText = "New Text";
                     textSubmission.setText(newText);
                     request.put("/api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
-
-                    var savedTextSubmission = request.get("/api/text-submissions/" + textSubmission.getId(), HttpStatus.OK, TextSubmission.class);
+                    var savedTextSubmission = (TextSubmission) submissionRepository.findById(textSubmission.getId()).get();
                     // check that the submission was saved
                     assertThat(newText).isEqualTo(savedTextSubmission.getText());
                     // check that a submitted version was created

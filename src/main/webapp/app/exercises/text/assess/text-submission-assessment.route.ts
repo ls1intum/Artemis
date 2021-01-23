@@ -10,6 +10,7 @@ import { TextSubmissionService } from 'app/exercises/text/participate/text-submi
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextFeedbackConflictsComponent } from './conflicts/text-feedback-conflicts.component';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { TextAssessmentDashboardComponent } from 'app/exercises/text/assess/text-assessment-dashboard/text-assessment-dashboard.component';
 
 @Injectable({ providedIn: 'root' })
 export class NewStudentParticipationResolver implements Resolve<StudentParticipation | undefined> {
@@ -68,8 +69,18 @@ export class FeedbackConflictResolver implements Resolve<TextSubmission[] | unde
     }
 }
 
-export const NEW_ASSESSMENT_PATH = 'new/assessment';
+export const NEW_ASSESSMENT_PATH = 'submissions/new/assessment';
 export const textSubmissionAssessmentRoutes: Routes = [
+    {
+        path: 'assessment',
+        component: TextAssessmentDashboardComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            usePathForBreadcrumbs: true,
+            pageTitle: 'assessmentDashboard.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
     {
         path: NEW_ASSESSMENT_PATH,
         component: TextSubmissionAssessmentComponent,
@@ -85,7 +96,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':submissionId/assessment',
+        path: 'submissions/:submissionId/assessment',
         component: TextSubmissionAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
@@ -99,7 +110,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':submissionId/text-feedback-conflict/:feedbackId',
+        path: 'submissions/:submissionId/text-feedback-conflict/:feedbackId',
         component: TextFeedbackConflictsComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
