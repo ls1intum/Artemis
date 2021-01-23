@@ -205,6 +205,23 @@
                             </button>
                         </span>
                         <button
+                            *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && submission.latestResult && modelingExercise.exerciseGroup"
+                            [routerLink]="[
+                                '/course-management',
+                                modelingExercise.exerciseGroup?.exam.course.id,
+                                'modeling-exercises',
+                                modelingExercise.id,
+                                'submissions',
+                                submission.id,
+                                'assessment'
+                            ]"
+                            [disabled]="busy"
+                            [queryParams]="{ optimal: false, hideBackButton: true, 'correction-round': submission.results?.length - 1 }"
+                            class="btn btn-outline-secondary btn-sm mb-1"
+                        >
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                        </button>
+                        <button
                             *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && submission.latestResult && modelingExercise.course"
                             [routerLink]="[
                                 '/course-management',
@@ -217,23 +234,6 @@
                             ]"
                             [disabled]="busy"
                             [queryParams]="{ optimal: false, hideBackButton: true }"
-                            class="btn btn-outline-secondary btn-sm mb-1"
-                        >
-                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
-                        </button>
-                        <button
-                            *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && submission.latestResult && modelingExercise.exerciseGroup"
-                            [routerLink]="[
-                                '/course-management',
-                                modelingExercise.exerciseGroup?.exam.course.id,
-                                'modeling-exercises',
-                                modelingExercise.id,
-                                'submissions',
-                                submission.id,
-                                'assessment'
-                            ]"
-                            [disabled]="busy"
-                            [queryParams]="{ optimal: false, hideBackButton: true, 'correction-round': submission.results?.length }"
                             class="btn btn-outline-secondary btn-sm mb-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
