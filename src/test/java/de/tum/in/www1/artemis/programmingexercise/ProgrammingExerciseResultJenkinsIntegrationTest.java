@@ -39,6 +39,18 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void shouldUpdateFeedbackInSemiAutomaticResult() throws Exception {
+        var loginName = "student1";
+        var exercise = programmingExerciseResultTestService.getProgrammingExercise();
+        var repoName = (exercise.getProjectKey() + "-" + loginName).toUpperCase();
+        var notification = ModelFactory.generateTestResultDTO(repoName, List.of("test1"), List.of(), exercise.getProgrammingLanguage(), false);
+        // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
+        notification.setFullName(exercise.getProjectKey() + " » " + repoName + " #3");
+        programmingExerciseResultTestService.shouldUpdateFeedbackInSemiAutomaticResult(notification, loginName);
+    }
+
+    @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() {
         var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of(), ProgrammingLanguage.JAVA, true);
