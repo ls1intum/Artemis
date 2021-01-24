@@ -130,21 +130,8 @@ public class ModelingSubmissionService extends SubmissionService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        if (modelingSubmission.getId() != null) {
-            final var modelingSubmissionId = modelingSubmission.getId();
-            final var optionalExistingModelingSubmission = participation.getSubmissions().stream().filter(submission -> submission.getId().equals(modelingSubmissionId))
-                    .findFirst();
-            // the existing modeling submission contains the Result proxy which we do not want to override (for Test Runs)
-            // therefore we use the existing modeling submission object and replace the model with the new submission's model
-            ModelingSubmission existingModelingSubmission = (ModelingSubmission) optionalExistingModelingSubmission.get();
-            existingModelingSubmission.setModel(modelingSubmission.getModel());
-            modelingSubmission = existingModelingSubmission;
-        }
-        else {
-            // if no existing submission exists, then we can be sure that there is no existing result
-            // therefore, remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-            modelingSubmission.setResults(new ArrayList<>());
-        }
+        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+        modelingSubmission.setResults(new ArrayList<>());
 
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here!

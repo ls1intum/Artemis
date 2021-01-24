@@ -196,6 +196,10 @@ public class QuizSubmissionService {
      * @return                  the updated quiz submission after it has been saved to the database
      */
     public QuizSubmission saveSubmissionForExamMode(QuizExercise quizExercise, QuizSubmission quizSubmission, String user) {
+        // update submission properties
+        quizSubmission.setSubmitted(true);
+        quizSubmission.setType(SubmissionType.MANUAL);
+        quizSubmission.setSubmissionDate(ZonedDateTime.now());
 
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, user);
 
@@ -206,27 +210,9 @@ public class QuizSubmissionService {
                     "Participation for quiz exercise " + quizExercise.getId() + " and quiz submission " + quizSubmission.getId() + " for user " + user + " was not found!");
         }
         StudentParticipation studentParticipation = optionalParticipation.get();
-
-        if (quizSubmission.getId() != null) {
-            final var quizSubmissionId = quizSubmission.getId();
-            final var optionalExistingQuizSubmission = studentParticipation.getSubmissions().stream().filter(submission -> submission.getId().equals(quizSubmissionId)).findFirst();
-            // the existing quiz submission contains the Result proxy which we do not want to override (for Test Runs)
-            // therefore we use the existing quiz submission object and replace the submitted answers with the new submission's submitted answers
-            QuizSubmission existingQuizSubmission = (QuizSubmission) optionalExistingQuizSubmission.get();
-            existingQuizSubmission.setSubmittedAnswers(quizSubmission.getSubmittedAnswers());
-            quizSubmission = existingQuizSubmission;
-        }
-        else {
-            // if no existing submission exists, then we can be sure that there is no existing result
-            // therefore, remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-            quizSubmission.setResults(new ArrayList<>());
-        }
-
-        // update submission properties
-        quizSubmission.setSubmitted(true);
-        quizSubmission.setType(SubmissionType.MANUAL);
-        quizSubmission.setSubmissionDate(ZonedDateTime.now());
         quizSubmission.setParticipation(studentParticipation);
+        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+        quizSubmission.setResults(new ArrayList<>());
         quizSubmissionRepository.save(quizSubmission);
 
         // versioning of submission
