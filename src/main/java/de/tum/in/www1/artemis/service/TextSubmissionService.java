@@ -93,6 +93,9 @@ public class TextSubmissionService extends SubmissionService {
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
         textSubmission.setParticipation(participation);
+
+        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+        textSubmission.setResults(new ArrayList<>());
         textSubmission = textSubmissionRepository.save(textSubmission);
 
         // versioning of submission
