@@ -297,14 +297,16 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param participation to create submission for.
      * @param submissionType of the submission to create.
-     * @return created submission.
+     * @return created or reused submission.
      * @throws IllegalStateException if the last commit hash can't be retrieved.
      */
-    public ProgrammingSubmission createSubmissionWithLastCommitHashForParticipation(ProgrammingExerciseParticipation participation, SubmissionType submissionType)
+    public ProgrammingSubmission getOrCreateSubmissionWithLastCommitHashForParticipation(ProgrammingExerciseParticipation participation, SubmissionType submissionType)
             throws IllegalStateException {
         ObjectId lastCommitHash = getLastCommitHashForParticipation(participation);
-        // TODO: we should not create a new submission here, but simply use the existing one with the last CommitHash
-        return createSubmissionWithCommitHashAndSubmissionType(participation, lastCommitHash, submissionType);
+        // we first try to get an existing programming submission with the last commit hash
+        var programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participation.getId(), lastCommitHash.getName());
+        // in case no programming submission is available, we create one
+        return Objects.requireNonNullElseGet(programmingSubmission, () -> createSubmissionWithCommitHashAndSubmissionType(participation, lastCommitHash, submissionType));
     }
 
     private ObjectId getLastCommitHashForParticipation(ProgrammingExerciseParticipation participation) throws IllegalStateException {
@@ -367,27 +369,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Uses {@link #createSubmissionWithLastCommitHashForParticipation(ProgrammingExerciseParticipation, SubmissionType)} but for multiple participations.
-     * Will ignore exceptions that are raised by this method and just not create a submission for the concerned participations.
-     *
-     * @param participations for which to create new submissions.
-     * @param submissionType the type for the submissions to be created.
-     * @return list of created submissions (might be smaller as the list of provided participations!).
-     */
-    public List<ProgrammingSubmission> createSubmissionWithLastCommitHashForParticipationsOfExercise(List<ProgrammingExerciseParticipation> participations,
-            SubmissionType submissionType) {
-        return participations.stream().map(participation -> {
-            try {
-                return createSubmissionWithLastCommitHashForParticipation(participation, submissionType);
-            }
-            catch (IllegalStateException ex) {
-                // The exception is already logged, we just return null here.
-                return null;
-            }
-        }).filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
-    /**
      * Trigger a CI build for each submission & notify each user on a new programming submission.
      * Instead of triggering all builds at the same time, we execute the builds in batches to not overload the CIS system.
      *
@@ -396,7 +377,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param participation the participation for which we create a new submission and new result
      */
     public void triggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation) {
-        var submission = createSubmissionWithLastCommitHashForParticipation(participation, SubmissionType.INSTRUCTOR);
+        var submission = getOrCreateSubmissionWithLastCommitHashForParticipation(participation, SubmissionType.INSTRUCTOR);
         triggerBuildAndNotifyUser(submission);
     }
 
@@ -577,11 +558,17 @@ public class ProgrammingSubmissionService extends SubmissionService {
     /**
      * Given an exercise id and a tutor id, it returns all the programming submissions where the tutor has assessed a result
      *
+     * Exam mode:
      * The query that returns the participations returns the contained submissions in a particular way:
      * Due to hibernate, the result list has null values at all places where a result was assessed by another tutor.
      * At the beginning of the list remain all the automatic results without assessor.
      * Then filtering out all submissions which have no result at the place of the correctionround leaves us with the submissions we are interested in.
      * Before returning the submissions we strip away all automatic results, to be able to correctly display them in the client.
+     *
+     * Not exam mode:
+     * In this case the query that returns the participations returns the contained sumbissions in a different way:
+     * Here hibernate sets all automatic results to null, therefore we must filter all those out. This way the client can access the subissions'
+     * single result.
      *
      * @param exerciseId - the id of the exercise we are looking for
      * @param correctionRound - the correctionRound for which the submissions should be fetched for
@@ -600,6 +587,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
+            // automatic resutls are null in the received results list. We need to filter them out for the client to display the dashboard correctly
+            submissions.forEach(submission -> submission.removeNullResults());
         }
         // strip away all automatic results from the submissions list
         submissions.forEach(submission -> submission.removeAutomaticResults());
@@ -706,7 +695,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     @Override
     protected Result lockSubmission(Submission submission, int correctionRound) {
-
         Result existingResult;
         if (correctionRound == 0 && submission.getLatestResult().getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
             existingResult = submission.getLatestResult();
@@ -716,8 +704,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
 
         List<Feedback> automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
-
-        Result newResult = saveNewEmptyResult(submission);
+        // Create a new result (manual result) and try to reuse the existing submission with the latest commit hash
+        ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
+                SubmissionType.MANUAL);
+        Result newResult = saveNewEmptyResult(existingSubmission);
         newResult.setAssessor(userService.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         // Copy automatic feedbacks into the manual result
@@ -731,7 +721,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         newResult = resultRepository.save(newResult);
         log.debug("Assessment locked with result id: " + newResult.getId() + " for assessor: " + newResult.getAssessor().getName());
         // Make sure that submission is set back after saving
-        newResult.setSubmission(submission);
+        newResult.setSubmission(existingSubmission);
         return newResult;
     }
 

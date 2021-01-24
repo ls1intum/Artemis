@@ -58,13 +58,10 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
     private ProgrammingExercise programmingExercise;
 
-    private Result result;
-
     @BeforeEach
     public void setUp() {
         database.addUsers(5, 1, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
-        result = new Result();
         var programmingExercises = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations();
         programmingExercise = programmingExercises.get(0);
         bambooRequestMockProvider.enableMockingOfRequests();
