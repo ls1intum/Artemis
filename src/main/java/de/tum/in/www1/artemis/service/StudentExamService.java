@@ -57,10 +57,12 @@ public class StudentExamService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
@@ -70,6 +72,7 @@ public class StudentExamService {
         this.submissionVersionService = submissionVersionService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     @Autowired
@@ -460,6 +463,9 @@ public class StudentExamService {
                 .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist"));
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         examService.setUpExerciseParticipationsAndSubmissions(generatedParticipations, testRun);
+        // use the flag test run for all participations of the created test run
+        generatedParticipations.forEach(studentParticipation -> studentParticipation.setTestRun(true));
+        studentParticipationRepository.saveAll(generatedParticipations);
     }
 
     /**

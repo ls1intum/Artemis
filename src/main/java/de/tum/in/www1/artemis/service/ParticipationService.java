@@ -1052,7 +1052,9 @@ public class ParticipationService {
      * @return list of participations belonging to course
      */
     public List<StudentParticipation> findByExamIdWithSubmissionRelevantResult(Long examId) {
-        List<StudentParticipation> participations = studentParticipationRepository.findByExamIdWithEagerSubmissionsRatedResults(examId);
+        var participations = studentParticipationRepository.findByExamIdWithEagerSubmissionsRatedResults(examId);
+        // filter out the participations of test runs which can only be made by instructors
+        participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRunParticipation()).collect(Collectors.toList());
         return filterParticipationsWithRelevantResults(participations, true);
     }
 
@@ -1074,11 +1076,6 @@ public class ParticipationService {
      * @return the filtered participations
      */
     private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
-        // if exam exercise
-        if (!participations.isEmpty() && participations.get(0).getExercise().isExamExercise()) {
-            // filter out the participations of test runs which can only be made by instructors
-            participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRunParticipation()).collect(Collectors.toList());
-        }
 
         return participations.stream()
 
