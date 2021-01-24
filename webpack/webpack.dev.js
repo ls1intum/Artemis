@@ -1,5 +1,4 @@
 const webpack = require('webpack');
-const writeFilePlugin = require('write-file-webpack-plugin');
 const { merge } = require('webpack-merge');
 const BrowserSyncPlugin = require('browser-sync-webpack-plugin');
 const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
@@ -118,7 +117,6 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
             /angular([\\/])core([\\/])/,
             path.resolve(__dirname, './src/main/webapp')
         ),
-        new writeFilePlugin(),
         new webpack.WatchIgnorePlugin({
             paths: [utils.root('src/test')],
         }),
