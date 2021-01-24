@@ -24,6 +24,9 @@ module.exports = (options) => ({
         maxEntrypointSize: 1024*1024,
         maxAssetSize: 1024*1024,
     },
+    output: {
+        publicPath: '',
+    },
     module: {
         rules: [
             {
