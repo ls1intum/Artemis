@@ -1068,22 +1068,16 @@ public class ParticipationService {
     }
 
     /**
-     * filters the relevant results by removing all irrelevent ones
+     * filters the relevant results by removing all irrelevant ones
      * @param participations the participations to get filtered
      * @param resultInSubmission flag to indicate if the results are represented in the submission or participation
      * @return the filtered participations
      */
     private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
         // if exam exercise
-        if (!participations.isEmpty() && participations.get(0).getExercise().getExerciseGroup() != null) {
-            List<User> instructors = userService.getInstructors(participations.get(0).getExercise().getExerciseGroup().getExam().getCourse());
+        if (!participations.isEmpty() && participations.get(0).getExercise().isExamExercise()) {
             // filter out the participations of test runs which can only be made by instructors
-            participations = participations.stream().filter(studentParticipation -> {
-                if (studentParticipation.getStudent().isPresent()) {
-                    return !instructors.contains(studentParticipation.getStudent().get());
-                }
-                return true;
-            }).collect(Collectors.toList());
+            participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRunParticipation()).collect(Collectors.toList());
         }
 
         return participations.stream()
@@ -1094,7 +1088,7 @@ public class ParticipationService {
 
                 // filter all irrelevant results, i.e. rated = false or no completion date or no score
                 .peek(participation -> {
-                    List<Result> relevantResults = new ArrayList<Result>();
+                    List<Result> relevantResults = new ArrayList<>();
 
                     // Get the results over the participation or over submissions
                     Set<Result> resultsOfParticipation;

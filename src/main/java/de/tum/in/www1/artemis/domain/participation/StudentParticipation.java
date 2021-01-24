@@ -127,7 +127,7 @@ public class StudentParticipation extends Participation {
     /**
      * Utility method to flag whether the participation is part of an exam test run.
      * This is indicated by {@link StudentParticipation#student} equals {@link Result#getAssessor()}
-     * <b>Note:</b> Test runs are only available for exams and only instructors are eligable to create test runs.
+     * <b>Note:</b> Test runs are only available for exams and only instructors are eligible to create test runs.
      * User permissions should therefore be checked before using this utility method.
      * Requires submissions and results to be eagerly loaded
      * @return returns whether the exam participation is a test run participation
