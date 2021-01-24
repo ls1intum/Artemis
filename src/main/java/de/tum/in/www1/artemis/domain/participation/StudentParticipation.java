@@ -23,6 +23,7 @@ public class StudentParticipation extends Participation {
     @Column(name = "presentation_score")
     private Integer presentationScore;
 
+    // information whether this student participation belongs to a test run exam, not relevant for course exercises
     @Column(name = "test_run")
     private Boolean testRun;
 
