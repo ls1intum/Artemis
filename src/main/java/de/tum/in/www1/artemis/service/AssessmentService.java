@@ -88,7 +88,12 @@ public class AssessmentService {
         // Set score and resultString according to maxScore, to establish results with score > 100%
         result.setScore(totalScore, maxScore);
         result.setResultString(totalScore, maxScore);
-        return resultRepository.save(result);
+
+        // Workaround to prevent the assessor turning into a proxy object after saving
+        var assessor = result.getAssessor();
+        result = resultRepository.save(result);
+        result.setAssessor(assessor);
+        return result;
     }
 
     /**
@@ -355,7 +360,11 @@ public class AssessmentService {
             submission.addResult(result);
             submissionRepository.save(submission);
         }
-        return resultRepository.save(result);
+        // Workaround to prevent the assessor turning into a proxy object after saving
+        var assessor = result.getAssessor();
+        result = resultRepository.save(result);
+        result.setAssessor(assessor);
+        return result;
     }
 
     private List<Feedback> saveFeedbacks(List<Feedback> feedbackList) {
