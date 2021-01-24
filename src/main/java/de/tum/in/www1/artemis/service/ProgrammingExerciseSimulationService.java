@@ -126,7 +126,7 @@ public class ProgrammingExerciseSimulationService {
         ProgrammingSubmission templateProgrammingSubmission = new ProgrammingSubmission();
         templateProgrammingSubmission.setParticipation(templateProgrammingExerciseParticipation.get());
         templateProgrammingSubmission.setSubmitted(true);
-        templateProgrammingSubmission.setType(SubmissionType.OTHER);
+        templateProgrammingSubmission.setType(SubmissionType.MANUAL);
         templateProgrammingSubmission.setCommitHash(commitHashBase);
         templateProgrammingSubmission.setSubmissionDate(templateProgrammingExerciseParticipation.get().getInitializationDate());
         programmingSubmissionRepository.save(templateProgrammingSubmission);
@@ -144,7 +144,7 @@ public class ProgrammingExerciseSimulationService {
         String commitHashSolution = VCSSimulationUtils.simulateCommitHash();
         solutionProgrammingSubmission.setParticipation(solutionProgrammingExerciseParticipation.get());
         solutionProgrammingSubmission.setSubmitted(true);
-        solutionProgrammingSubmission.setType(SubmissionType.OTHER);
+        solutionProgrammingSubmission.setType(SubmissionType.MANUAL);
         solutionProgrammingSubmission.setCommitHash(commitHashSolution);
         solutionProgrammingSubmission.setSubmissionDate(solutionProgrammingExerciseParticipation.get().getInitializationDate());
         programmingSubmissionRepository.save(solutionProgrammingSubmission);
