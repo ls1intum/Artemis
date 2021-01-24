@@ -103,11 +103,9 @@ public class StudentExamService {
      * @param userId the id of the user
      * @return the student exam with exercises
      */
-    @NotNull
-    public StudentExam findOneWithExercisesByUserIdAndExamId(Long userId, Long examId) {
+    public Optional<StudentExam> findOneWithExercisesByUserIdAndExamId(Long userId, Long examId) {
         log.debug("Request to get student exam by userId {} and examId {}", userId, examId);
-        return studentExamRepository.findWithExercisesByUserIdAndExamId(userId, examId)
-                .orElseThrow(() -> new EntityNotFoundException("Student exam with for userId \"" + userId + "\" and examId \"" + examId + "\" does not exist"));
+        return studentExamRepository.findWithExercisesByUserIdAndExamId(userId, examId);
     }
 
     /**

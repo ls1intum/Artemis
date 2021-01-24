@@ -92,7 +92,7 @@ public class Result extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Participation participation;
 
-    @OneToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(unique = false)
     private User assessor;
 
