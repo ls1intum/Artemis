@@ -80,6 +80,8 @@ public class ParticipationService {
 
     private final QuizScheduleService quizScheduleService;
 
+    private final QuizExerciseService quizExerciseService;
+
     private final UrlService urlService;
 
     public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
@@ -89,7 +91,7 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserService userService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService,
-            @Lazy QuizScheduleService quizScheduleService, RatingRepository ratingRepository, UrlService urlService) {
+            @Lazy QuizScheduleService quizScheduleService, QuizExerciseService quizExerciseService, RatingRepository ratingRepository, UrlService urlService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -108,6 +110,7 @@ public class ParticipationService {
         this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
         this.quizScheduleService = quizScheduleService;
+        this.quizExerciseService = quizExerciseService;
         this.ratingRepository = ratingRepository;
         this.urlService = urlService;
     }
@@ -270,9 +273,10 @@ public class ParticipationService {
     }
 
     /**
-     * In order to distinguish test run submissions from student exam submissions we add a manual result to the test run submissions.
+     * In order to distinguish test run submissions from student exam submissions we add a Test Run result to the test run submissions.
      * We add draft assessments with the instructor as assessor to the empty submissions in order to hide them from tutors for correction.
      * This way the submission appears to, and can only by assessed by, the instructor who created the test run.
+     * For quizzes, we also calculate the score.
      * @param participations The test run participations
      */
     public void markSubmissionsOfTestRunParticipations(List<StudentParticipation> participations) {
@@ -298,13 +302,32 @@ public class ParticipationService {
             submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).get();
             if (submission.getLatestResult() == null) {
                 Result result = new Result();
-                result.setParticipation(submission.getParticipation());
+                result.setParticipation(participation);
                 result.setAssessor(participation.getStudent().get());
                 result.setAssessmentType(AssessmentType.TEST_RUN);
-                result = resultRepository.save(result);
-                result.setSubmission(submission);
-                submission.addResult(result);
-                submissionRepository.save(submission);
+
+                if (submission instanceof QuizSubmission) {
+                    participation.setExercise(quizExerciseService.findOneWithQuestions(participation.getExercise().getId()));
+                    // set submission to calculate scores
+                    result.setSubmission(submission);
+                    // calculate scores and update result and submission accordingly
+                    ((QuizSubmission) submission).calculateAndUpdateScores((QuizExercise) participation.getExercise());
+                    result.evaluateSubmission();
+                    // remove submission to follow save order for ordered collections
+                    result.setSubmission(null);
+                    result = resultRepository.save(result);
+                    participation.setResults(Set.of(result));
+                    studentParticipationRepository.save(participation);
+                    result.setSubmission(submission);
+                    submission.addResult(result);
+                    submissionRepository.save(submission);
+                }
+                else {
+                    result = resultRepository.save(result);
+                    result.setSubmission(submission);
+                    submission.addResult(result);
+                    submissionRepository.save(submission);
+                }
             }
             save(participation);
         }

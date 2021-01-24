@@ -171,6 +171,9 @@ public class StudentExamService {
             // we do not apply the following checks for programming exercises or file upload exercises
             try {
                 saveSubmission(currentUser, existingParticipations, exercise);
+                if (studentExam.isTestRun()) {
+                    participationService.markSubmissionsOfTestRunParticipations(existingParticipations);
+                }
             }
             catch (Exception e) {
                 log.error("saveSubmission threw an exception", e);
@@ -448,8 +451,7 @@ public class StudentExamService {
 
     /**
      * Sets up the participations and submissions for all the exercises of the test run.
-     * Calls {@link ExamService#setUpExerciseParticipationsAndSubmissions} to set up the exercise participations
-     * and {@link ParticipationService#markSubmissionsOfTestRunParticipations} to mark them as test run participations
+     * Calls {@link ExamService#setUpExerciseParticipationsAndSubmissions} to set up the exercise participations.
      *
      * @param testRunId the id of the TestRun
      */
@@ -458,7 +460,6 @@ public class StudentExamService {
                 .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist"));
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         examService.setUpExerciseParticipationsAndSubmissions(generatedParticipations, testRun);
-        participationService.markSubmissionsOfTestRunParticipations(generatedParticipations);
     }
 
     /**

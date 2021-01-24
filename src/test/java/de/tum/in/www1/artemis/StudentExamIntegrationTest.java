@@ -1420,7 +1420,5 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(testRun.isTestRun()).isEqualTo(true);
         assertThat(testRun.getWorkingTime()).isEqualTo(6000);
         assertThat(testRun.getUser()).isEqualTo(instructor);
-        testRun.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream())
-                .forEach(studentParticipation -> assertThat(studentParticipation.isTestRunParticipation()).isEqualTo(true));
     }
 }
