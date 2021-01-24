@@ -444,7 +444,10 @@ public class SubmissionService {
         }
 
         result.setAssessmentType(AssessmentType.MANUAL);
+        // Workaround to prevent the assessor turning into a proxy object after saving
+        var assessor = result.getAssessor();
         result = resultRepository.save(result);
+        result.setAssessor(assessor);
         return result;
     }
 

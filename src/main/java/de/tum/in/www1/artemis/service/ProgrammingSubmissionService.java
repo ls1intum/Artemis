@@ -710,13 +710,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param submission the submission to lock
      * @param correctionRound the correction round for the assessment
-     * @return
+     * @return the result that is locked with the current user
      */
     @Override
+    // TODO: why do we override this method and why do we not try to reuse the method in the super class?
     protected Result lockSubmission(Submission submission, int correctionRound) {
 
         Result existingResult;
-        if (correctionRound == 0 && submission.getLatestResult().getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
+        if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC.equals(submission.getLatestResult().getAssessmentType())) {
             existingResult = submission.getLatestResult();
         }
         else {
@@ -735,8 +736,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
         newResult.setFeedbacks(automaticFeedbacks);
         newResult.setResultString(existingResult.getResultString());
-        // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
+        // Workaround to prevent the assessor turning into a proxy object after saving
+        var assessor = newResult.getAssessor();
         newResult = resultRepository.save(newResult);
+        newResult.setAssessor(assessor);
         log.debug("Assessment locked with result id: " + newResult.getId() + " for assessor: " + newResult.getAssessor().getName());
         // Make sure that submission is set back after saving
         newResult.setSubmission(submission);
