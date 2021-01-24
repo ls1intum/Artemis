@@ -330,6 +330,8 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         var assessedSubmission = ModelFactory.generateProgrammingSubmission(true);
         assessedSubmission = database.addProgrammingSubmission(exercise, assessedSubmission, "student2");
         final var tutor = database.getUserByLogin("tutor1");
+        database.addResultToSubmission(assessedSubmission, AssessmentType.SEMI_AUTOMATIC, null);
+        database.addResultToSubmission(assessedSubmission, AssessmentType.AUTOMATIC, null);
         database.addResultToSubmission(assessedSubmission, AssessmentType.SEMI_AUTOMATIC, tutor);
 
         final var paramMap = new LinkedMultiValueMap<String, String>();
@@ -337,6 +339,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         final var responseSubmissions = request.getList("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class, paramMap);
 
         assertThat(responseSubmissions).containsExactly(assessedSubmission);
+        assertThat(responseSubmissions.get(0).getResults().size()).isEqualTo(1);
     }
 
     @Test

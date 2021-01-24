@@ -298,7 +298,7 @@ public interface ContinuousIntegrationService {
      */
     default String getDockerImageName(ProgrammingLanguage language) {
         return switch (language) {
-            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-4";
+            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-5";
             case PYTHON -> "ls1tum/artemis-python-docker:latest";
             case C -> "ls1tum/artemis-c-docker:latest";
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";
