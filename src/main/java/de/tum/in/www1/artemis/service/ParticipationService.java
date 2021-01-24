@@ -1368,14 +1368,14 @@ public class ParticipationService {
     }
 
     /**
-     * Loads the test run participation for the instructor.
+     * Loads the test run participation for the given user id (which typically belongs to an instructor or admin)
      * See {@link StudentParticipation#isTestRunParticipation()}
-     * @param instructorId the id of the instructor
+     * @param userId the id of the user
      * @param exercise the exercise id
      * @return the optional test run participation with submissions and results loaded
      */
-    public Optional<StudentParticipation> findTestRunParticipationOfInstructorForExercise(Long instructorId, Exercise exercise) {
-        var studentParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructorId, List.of(exercise));
+    public Optional<StudentParticipation> findTestRunParticipationForExercise(Long userId, Exercise exercise) {
+        var studentParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(userId, List.of(exercise));
         if (studentParticipations.isEmpty() || !studentParticipations.get(0).isTestRunParticipation()) {
             return Optional.empty();
         }
