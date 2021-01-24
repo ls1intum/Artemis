@@ -117,6 +117,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     long countByExerciseIdSubmittedAfterDueDate(@Param("exerciseId") long exerciseId);
 
     /**
+     * Returns submissions for a exercise. Returns only a submission that has a result with a matching assessor. Since the results list may also contain
+     * automatic results but those results do not have an assessor, hibernate simply sets null values for them. Make sure to use a different query if you need
+     * your submission to have all its results set.
      *
      * @param exerciseId the exercise id we are interested in
      * @param assessor the assessor we are interested in
