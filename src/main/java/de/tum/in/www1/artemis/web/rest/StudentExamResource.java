@@ -403,6 +403,13 @@ public class StudentExamResource {
             return badRequest();
         }
 
+        // also add results to all remaining test runs
+        List<StudentExam> testRuns = studentExamService.findAllTestRuns(examId);
+        for (final var testRun : testRuns) {
+            final var participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(testRun.getUser().getId(), testRun.getExercises());
+            participationService.markSubmissionsOfTestRunParticipations(participations);
+        }
+
         final var instructor = userService.getUser();
         var assessedUnsubmittedStudentExams = studentExamService.assessUnsubmittedStudentExams(exam, instructor);
         log.info("Graded {} unsubmitted student exams of exam {}", assessedUnsubmittedStudentExams.size(), examId);
