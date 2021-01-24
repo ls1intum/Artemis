@@ -1,23 +1,21 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import { SinonStub, stub } from 'sinon';
+import { stub } from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseManagementComponent } from 'app/course/manage/course-management.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
-import { SessionStorageService } from 'ngx-webstorage';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs/internal/observable/of';
-import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { JhiSortDirective, JhiSortByDirective } from 'ng-jhipster';
+import { JhiAlertService, JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MomentModule } from 'ngx-moment';
 import { CoursesComponent } from 'app/overview/courses.component';
@@ -26,13 +24,11 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration-selector/course-registration-selector.component';
-import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import * as moment from 'moment';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-import { JhiAlertService } from 'ng-jhipster';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
@@ -124,10 +120,10 @@ describe('CoursesComponent', () => {
         });
 
         it('Should load courses on init', () => {
-            let findAllForDashboardStub = stub(courseService, 'findAllForDashboard');
-            let courseScoreCalculationServiceStub = stub(courseScoreCalculationService, 'setCourses');
-            let serverDateServiceStub = stub(serverDateService, 'now');
-            let findNextRelevantExerciseSpy = sinon.spy(component, 'findNextRelevantExercise');
+            const findAllForDashboardStub = stub(courseService, 'findAllForDashboard');
+            const courseScoreCalculationServiceStub = stub(courseScoreCalculationService, 'setCourses');
+            const serverDateServiceStub = stub(serverDateService, 'now');
+            const findNextRelevantExerciseSpy = sinon.spy(component, 'findNextRelevantExercise');
             findAllForDashboardStub.returns(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
             serverDateServiceStub.returns(moment());
 
@@ -154,9 +150,9 @@ describe('CoursesComponent', () => {
                 }
             };
 
-            let findAllForDashboardStub = stub(courseService, 'findAllForDashboard');
-            let getNextExerciseForHoursStub = stub(exerciseService, 'getNextExerciseForHours').callsFake(mockFunction);
-            let serverDateServiceStub = stub(serverDateService, 'now');
+            const findAllForDashboardStub = stub(courseService, 'findAllForDashboard');
+            const getNextExerciseForHoursStub = stub(exerciseService, 'getNextExerciseForHours').callsFake(mockFunction);
+            const serverDateServiceStub = stub(serverDateService, 'now');
 
             findAllForDashboardStub.returns(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
 
@@ -174,7 +170,7 @@ describe('CoursesComponent', () => {
         const navigateSpy = sinon.spy(router, 'navigate');
         component.nextRelevantCourseForExam = course1;
         component.nextRelevantExams = exams;
-        let findAllForDashboardStub = stub(courseService, 'findAllForDashboard');
+        const findAllForDashboardStub = stub(courseService, 'findAllForDashboard');
         findAllForDashboardStub.returns(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
 
         component.openExam();
