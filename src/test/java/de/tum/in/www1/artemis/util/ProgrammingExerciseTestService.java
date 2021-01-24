@@ -591,6 +591,8 @@ public class ProgrammingExerciseTestService {
         var participant = participation.getParticipant();
 
         mockDelegate.mockTriggerParticipationBuild(participation);
+        // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
+        mockDelegate.mockTriggerParticipationBuild(participation);
 
         // These will be updated when triggering a build
         participation.setInitializationState(InitializationState.INACTIVE);
@@ -607,12 +609,19 @@ public class ProgrammingExerciseTestService {
         assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
+
+        // Trigger the build again and make sure no new submission is created
+        request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
+        var submissions = database.submissionRepository.findAll();
+        assertThat(submissions.size()).isEqualTo(1);
     }
 
     public void resumeProgrammingExerciseByTriggeringFailedBuild_correctInitializationState(ExerciseMode exerciseMode, boolean buildPlanExists) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
 
+        mockDelegate.mockTriggerFailedBuild(participation);
+        // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
         mockDelegate.mockTriggerFailedBuild(participation);
 
         // These will be updated triggering a failed build
@@ -635,6 +644,11 @@ public class ProgrammingExerciseTestService {
         assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
+
+        // Trigger the build again and make sure no new submission is created
+        request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
+        var submissions = database.submissionRepository.findAll();
+        assertThat(submissions.size()).isEqualTo(1);
     }
 
     public void resumeProgrammingExerciseByTriggeringInstructorBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
@@ -642,13 +656,16 @@ public class ProgrammingExerciseTestService {
         var participant = participation.getParticipant();
 
         mockDelegate.mockTriggerInstructorBuildAll(participation);
+        // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
+        mockDelegate.mockTriggerInstructorBuildAll(participation);
 
         // These will be updated triggering a failed build
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
         participationService.save(participation);
 
-        request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all", null, HttpStatus.OK, new HttpHeaders());
+        var url = "/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all";
+        request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
         await().until(() -> programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exercise.getId()).isPresent());
 
         // Fetch updated participation and assert
@@ -656,6 +673,11 @@ public class ProgrammingExerciseTestService {
         assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
+
+        // Trigger the build again and make sure no new submission is created
+        request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
+        var submissions = database.submissionRepository.findAll();
+        assertThat(submissions.size()).isEqualTo(1);
     }
 
     private ProgrammingExerciseStudentParticipation createStudentParticipationWithSubmission(ExerciseMode exerciseMode) throws Exception {

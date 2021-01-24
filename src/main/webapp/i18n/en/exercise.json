@@ -96,7 +96,7 @@
             "teamName": "Team Name",
             "teamShortName": "Short Name",
             "completionDate": "Completion Date",
-            "result": "Result",
+            "lastResult": "Last Result",
             "submissionCount": "Submissions",
             "score": "Score",
             "duration": "Duration",
