@@ -52,8 +52,14 @@
                 "minutes": "Minuten",
                 "actions": {
                     "open": "Bewertung öffnen",
+                    "openFirst": "Erste Bewertung öffnen",
+                    "openSecond": "Zweite Bewertung öffnent",
                     "cancel": "Bewertung abbrechen",
-                    "assess": "Abgabe bewerten"
+                    "assess": "Abgabe bewerten",
+                    "assessSecond": "Abgabe Zweitkorrektur",
+                    "continue": "Continue assessment",
+                    "continueFirst": "Continue assessment 1",
+                    "continueSecond": "Continue assessment 2"
                 },
                 "filters": {
                     "showAll": "Alle anzeigen",

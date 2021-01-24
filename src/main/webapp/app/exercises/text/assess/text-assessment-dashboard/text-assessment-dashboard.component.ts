@@ -11,6 +11,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { SortService } from 'app/shared/service/sort.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
@@ -23,12 +24,14 @@ export class TextAssessmentDashboardComponent implements OnInit {
     predicate = 'id';
     reverse = false;
     numberOfCorrectionrounds = 1;
+    isAtLeastInstructor = false;
 
     private cancelConfirmationText: string;
 
     constructor(
         private route: ActivatedRoute,
         private exerciseService: ExerciseService,
+        private accountService: AccountService,
         private textSubmissionService: TextSubmissionService,
         private assessmentsService: TextAssessmentsService,
         private translateService: TranslateService,
@@ -56,6 +59,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
                 this.exercise = exercise;
                 this.getSubmissions();
                 this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
+                this.setPermissions();
             });
     }
 
@@ -103,6 +107,13 @@ export class TextAssessmentDashboardComponent implements OnInit {
             return `artemisApp.AssessmentType.${result.assessmentType}`;
         }
         return 'artemisApp.AssessmentType.null';
+    }
+    private setPermissions() {
+        if (this.exercise.course) {
+            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
+        } else {
+            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup?.exam?.course!);
+        }
     }
 
     /**

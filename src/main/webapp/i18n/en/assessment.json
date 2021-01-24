@@ -52,8 +52,14 @@
                 "minutes": "minutes",
                 "actions": {
                     "open": "Open assessment",
+                    "openFirst": "Open first assessment",
+                    "openSecond": "Open second assessment",
                     "cancel": "Cancel assessment",
-                    "assess": "Assess Submission"
+                    "assess": "Assess Submission",
+                    "assessSecond": "Assess second time",
+                    "continue": "Continue assessment",
+                    "continueFirst": "Continue assessment 1",
+                    "continueSecond": "Continue assessment 2"
                 },
                 "filters": {
                     "showAll": "Show all",
