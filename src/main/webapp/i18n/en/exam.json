@@ -222,6 +222,7 @@
                 "assess": "Assess Your Test Runs",
                 "manage": "Manage Working Time",
                 "text": "Here you can create a test run for the exam. Pick which exercises your exam should contain and run the conduction. Afterwards you will be able to assess your submissions and grade them as a tutor. You have the option to view the results and complain as a student. Additionally, you can also respond to the complaints about the assessment as a tutor.\n<strong>Note:</strong> Submissions made within test runs do not count towards the exam scores.",
+                "reminderToDelete": "Make sure to delete all Test Runs before the exam conduction.",
                 "createTestRunDisabled": "No exercises found",
                 "assessTestRunDisabled": "None of your test runs have ended",
                 "delete": {

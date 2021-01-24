@@ -222,6 +222,7 @@
                 "manage": "Arbeitszeit verwalten",
                 "text": "Hier kannst du einen Testlauf für die Klausur erstellen. Wähle aus, welche Aufgaben die Klausur enthalten soll und führe sie aus. Anschließend, kannst du die Abgabe als Tutor bewerten. Das Ergebnis, kannst du als Student einsehen und dich beschweren. Diese Beschwerden kannst du dann als Tutor bewerten.\n<strong>Hinweis:</strong> Abgaben innerhalb von Testläufen werden nicht bei den Klausurergebnissen gezählt.",
                 "createTestRunDisabled": "Keine Aufgaben gefunden",
+                "reminderToDelete": "Achte darauf, dass du alle Testläufe vor der Durchführung der Klausur löschst.",
                 "assessTestRunDisabled": "Keiner deiner Testläufe ist beendet",
                 "delete": {
                     "question": "Soll der <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen elemente werden ebenfalls gelöscht, falls sie von keinem anderen Testlauf referenziert werden.",
