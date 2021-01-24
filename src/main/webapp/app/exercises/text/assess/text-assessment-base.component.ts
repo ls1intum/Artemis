@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextBlockType } from 'app/entities/text-block.model';
+import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
@@ -10,7 +10,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { JhiAlertService } from 'ng-jhipster';
-import { TranslateService } from '@ngx-translate/core';
 import { Feedback } from 'app/entities/feedback.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 
@@ -25,6 +24,9 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     exercise?: TextExercise;
     isAtLeastInstructor: boolean;
     protected userId?: number;
+    textBlockRefs: TextBlockRef[];
+    unusedTextBlockRefs: TextBlockRef[];
+    submission?: TextSubmission;
 
     protected get course(): Course | undefined {
         return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
@@ -34,7 +36,6 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
         protected jhiAlertService: JhiAlertService,
         protected accountService: AccountService,
         protected assessmentsService: TextAssessmentsService,
-        translateService: TranslateService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {}
 
@@ -109,7 +110,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
                             break;
                         case ref.block!.type:
                             unusedTextBlockRefs.push(previousRef);
-                            this.addTextBlockByIndices(previousRef.block!.startIndex!, nextIndex, submission!, textBlockRefs);
+                            TextAssessmentBaseComponent.addTextBlockByIndices(previousRef.block!.startIndex!, nextIndex, submission!, textBlockRefs);
                             break;
                     }
                 }
@@ -117,7 +118,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
                 // If there is a gap between the current and previous block (most likely whitespace or linebreak), we need to create a new text block as well.
             } else if (previousIndex < nextIndex) {
                 // There is a gap. We need to add a Text Block in between
-                this.addTextBlockByIndices(previousIndex, nextIndex, submission!, textBlockRefs);
+                TextAssessmentBaseComponent.addTextBlockByIndices(previousIndex, nextIndex, submission!, textBlockRefs);
                 previousIndex = nextIndex;
             }
 
@@ -128,7 +129,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
         }
     }
 
-    private addTextBlockByIndices(startIndex: number, endIndex: number, submission: TextSubmission, textBlockRefs: TextBlockRef[]): void {
+    private static addTextBlockByIndices(startIndex: number, endIndex: number, submission: TextSubmission, textBlockRefs: TextBlockRef[]): void {
         if (startIndex >= endIndex) {
             return;
         }
@@ -141,5 +142,25 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
             newRef.block.computeId();
         }
         textBlockRefs.push(newRef);
+    }
+
+    /**
+     * Invoked by Child @Output when adding/removing text blocks. Recalculating refs to keep order and prevent duplicate text displayed.
+     */
+    public recalculateTextBlockRefs(): void {
+        // This is racing with another @Output, so we wait one loop
+        setTimeout(() => {
+            const refs = [...this.textBlockRefs, ...this.unusedTextBlockRefs].filter(({ block, feedback }) => block!.type === TextBlockType.AUTOMATIC || !!feedback);
+            this.textBlockRefs = [];
+            this.unusedTextBlockRefs = [];
+
+            this.sortAndSetTextBlockRefs(refs, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
+        });
+    }
+
+    protected get textBlocksWithFeedback(): TextBlock[] {
+        return [...this.textBlockRefs, ...this.unusedTextBlockRefs]
+            .filter(({ block, feedback }) => block?.type === TextBlockType.AUTOMATIC || !!feedback)
+            .map(({ block }) => block!);
     }
 }

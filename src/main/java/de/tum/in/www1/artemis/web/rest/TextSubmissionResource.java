@@ -150,18 +150,22 @@ public class TextSubmissionResource {
     /**
      * GET /text-submissions/:id : get the "id" textSubmission.
      *
-     * @param id the id of the textSubmission to retrieve
+     * @param submissionId the id of the textSubmission to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the textSubmission, or with status 404 (Not Found)
      */
-    @GetMapping("/text-submissions/{id}")
-    public ResponseEntity<TextSubmission> getTextSubmission(@PathVariable Long id) {
-        log.debug("REST request to get TextSubmission : {}", id);
-        Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findWithEagerResultsById(id);
+    @GetMapping("/text-submissions/{submissionId}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<TextSubmission> getTextSubmissionWithResults(@PathVariable Long submissionId) {
+        log.debug("REST request to get TextSubmission : {}", submissionId);
+        Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findWithEagerResultsById(submissionId);
 
         if (optionalTextSubmission.isEmpty()) {
             return notFound();
         }
-        final TextSubmission textSubmission = optionalTextSubmission.get();
+        final var textSubmission = optionalTextSubmission.get();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(textSubmission.getParticipation().getExercise())) {
+            return forbidden();
+        }
 
         // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
