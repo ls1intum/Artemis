@@ -41,6 +41,55 @@ describe('Participation Service', () => {
         req.flush(JSON.stringify(returnedFromService));
     });
 
+    it('should find an element with latest result', async () => {
+        const returnedFromService = { ...elemDefault, initializationDate: currentDate.toDate() };
+        returnedFromService.results = [{ id: 1 }];
+        service
+            .findWithLatestResult(123)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(JSON.stringify(returnedFromService));
+    });
+
+    it('should find participation for the exercise', async () => {
+        const returnedFromService = { ...elemDefault, initializationDate: currentDate.toDate() };
+        returnedFromService.id = 123;
+        service
+            .findParticipation(123)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(JSON.stringify(returnedFromService));
+    });
+
+    it('should find no participation for the exercise', async () => {
+        service
+            .findParticipation(123)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toBeUndefined());
+
+        httpMock.expectOne({ method: 'GET' });
+    });
+
+    it('should delete for guided tour', async () => {
+        service.deleteForGuidedTour(123).subscribe((resp) => expect(resp.ok));
+        let request = httpMock.expectOne({ method: 'DELETE' });
+        expect(request.request.params.keys().length).toEqual(0);
+
+        service.deleteForGuidedTour(123, { a: 'param' }).subscribe((resp) => expect(resp.ok));
+        request = httpMock.expectOne({ method: 'DELETE' });
+        expect(request.request.params.keys().length).toEqual(1);
+        expect(request.request.params.get('a')).toEqual('param');
+    });
+
+    it('should cleanup build plan', async () => {
+        service.cleanupBuildPlan(elemDefault).subscribe((resp) => expect(resp).toMatchObject(elemDefault));
+        httpMock.expectOne({ method: 'PUT' });
+    });
+
     it('should update a Participation', async () => {
         const returnedFromService = Object.assign(
             {
