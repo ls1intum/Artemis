@@ -131,7 +131,7 @@ public class ExamSubmissionService {
      */
     public Submission preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
         // Return immediately if it is not a exam submissions or if it is a programming exercise
-        if (!isExamSubmission(exercise) || exercise.getClass() == ProgrammingExercise.class) {
+        if (!isExamSubmission(exercise) || exercise instanceof ProgrammingExercise) {
             return submission;
         }
 

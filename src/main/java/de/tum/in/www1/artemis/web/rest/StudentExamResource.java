@@ -213,6 +213,7 @@ public class StudentExamResource {
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/conduction")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, HttpServletRequest request) {
+        // NOTE: it is important that this method has the same logic (except really small differences) as getTestRunForConduction
         long start = System.currentTimeMillis();
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
@@ -251,6 +252,7 @@ public class StudentExamResource {
     @GetMapping("/courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId, HttpServletRequest request) {
+        // NOTE: it is important that this method has the same logic (except really small differences) as getStudentExamForConduction
         long start = System.currentTimeMillis();
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the test run for exam {} with id {}", examId, testRunId);
@@ -272,6 +274,9 @@ public class StudentExamResource {
         }
 
         prepareStudentExamForConduction(request, currentUser, testRun);
+
+        // TODO: filter results in participations and submissions before the end of the test run
+        // This avoids issues when the submissions are saved during the test run, because of the cascade annotation between submission and result
 
         log.info("getTestRunForConduction done in " + (System.currentTimeMillis() - start) + "ms for " + testRun.getExercises().size() + " exercises for user "
                 + currentUser.getLogin());

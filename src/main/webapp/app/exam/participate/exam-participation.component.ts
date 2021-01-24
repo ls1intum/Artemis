@@ -50,7 +50,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     courseId: number;
     examId: number;
     testRunId: number;
-    testRunStartTime: Moment | null;
+    testRunStartTime?: Moment;
 
     // determines if component was once drawn visited
     submissionComponentVisited: boolean[];
