@@ -603,6 +603,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     /**
      * Check if the build result received is the initial build of the plan.
+     * Note: this is an edge case and means it was not created with a commit+push by the user
      *
      * @param buildResult Build result data provided by build notification.
      * @return true if build is the first build.

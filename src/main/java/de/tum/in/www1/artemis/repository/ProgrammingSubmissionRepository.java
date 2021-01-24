@@ -43,19 +43,8 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     @Query("select s from ProgrammingSubmission s where s.participation.id = :#{#participationId} order by s.submissionDate desc")
     List<ProgrammingSubmission> findLatestSubmissionForParticipation(@Param("participationId") Long participationId, Pageable pageable);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks" })
-    List<ProgrammingSubmission> findByParticipationIdAndResultsIsNullOrderBySubmissionDateDesc(Long participationId);
-
-    /**
-     * Load submission with eager Results
-     * @param submissionId the submissionId
-     * @return optional submission
-     */
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findWithEagerResultsById(Long submissionId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "results", "buildLogEntries" })
-    Optional<ProgrammingSubmission> findWithEagerResultsAndBuildLogEntriesById(Long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor" })
     Optional<ProgrammingSubmission> findWithEagerResultAssessorFeedbackById(long submissionId);
@@ -69,7 +58,4 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     @EntityGraph(type = LOAD, attributePaths = "results")
     @Query("select s from ProgrammingSubmission s where s.participation.id = :#{#participationId}")
     List<ProgrammingSubmission> findAllByParticipationIdWithResults(@Param("participationId") Long participationId);
-
-    @Query("select count(r) from ProgrammingSubmission s left join s.results r where s.id = :#{#submissionId} and r.assessmentType = 'AUTOMATIC'")
-    Long countAutomaticResults(@Param("submissionId") Long submissionId);
 }
