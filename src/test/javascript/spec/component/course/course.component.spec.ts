@@ -57,10 +57,8 @@ describe('CoursesComponent', () => {
     let component: CoursesComponent;
     let fixture: ComponentFixture<CoursesComponent>;
     let courseService: CourseManagementService;
-    let guidedTourService: GuidedTourService;
     let courseScoreCalculationService: CourseScoreCalculationService;
     let serverDateService: ArtemisServerDateService;
-    let jhiAlertService: JhiAlertService;
     let exerciseService: ExerciseService;
     const router = new MockRouter();
 
@@ -96,10 +94,10 @@ describe('CoursesComponent', () => {
                 fixture = TestBed.createComponent(CoursesComponent);
                 component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
-                guidedTourService = TestBed.inject(GuidedTourService);
+                TestBed.inject(GuidedTourService);
                 courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
                 serverDateService = TestBed.inject(ArtemisServerDateService);
-                jhiAlertService = TestBed.inject(JhiAlertService);
+                TestBed.inject(JhiAlertService);
                 exerciseService = TestBed.inject(ExerciseService);
                 fixture.detectChanges();
             });

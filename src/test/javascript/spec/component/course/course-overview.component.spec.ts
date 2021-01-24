@@ -27,7 +27,6 @@ import { CourseOverviewComponent } from 'app/overview/course-overview.component'
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import * as moment from 'moment';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
@@ -63,7 +62,6 @@ describe('CourseOverviewComponent', () => {
     let fixture: ComponentFixture<CourseOverviewComponent>;
     let courseService: CourseManagementService;
     let courseScoreCalculationService: CourseScoreCalculationService;
-    let serverDateService: ArtemisServerDateService;
     let teamService: TeamService;
     let jhiWebsocketService: JhiWebsocketService;
 
@@ -145,7 +143,7 @@ describe('CourseOverviewComponent', () => {
         findOneForDashboardStub.returns(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
 
         component.ngOnInit();
-        tick(100);
+        tick(600);
 
         expect(getCourseStub).to.have.been.called;
         expect(adjustCourseDescriptionStub).to.have.been.called;
