@@ -46,7 +46,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
 import de.tum.in.www1.artemis.web.rest.ResultResource;
 
-class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private enum IntegrationTestParticipationType {
         STUDENT, TEMPLATE, SOLUTION
@@ -642,8 +642,8 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     }
 
     private void postResultWithBuildLogs(String participationId, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
-        var notification = ModelFactory.generateBambooBuildResultWithLogs(ASSIGNMENT_REPO_NAME, List.of(), List.of());
-        postResult(participationId, notification, expectedStatus, additionalCommit);
+        var bambooBuildResult = ModelFactory.generateBambooBuildResultWithLogs(ASSIGNMENT_REPO_NAME, List.of(), List.of());
+        postResult(participationId, bambooBuildResult, expectedStatus, additionalCommit);
     }
 
     private void postResult(String participationId, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
