@@ -80,7 +80,7 @@ public class ParticipationService {
 
     private final QuizScheduleService quizScheduleService;
 
-    private final QuizExerciseService quizExerciseService;
+    private final QuizExerciseRepository quizExerciseRepository;
 
     private final UrlService urlService;
 
@@ -91,7 +91,7 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserService userService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService,
-            @Lazy QuizScheduleService quizScheduleService, QuizExerciseService quizExerciseService, RatingRepository ratingRepository, UrlService urlService) {
+            @Lazy QuizScheduleService quizScheduleService, QuizExerciseRepository quizExerciseRepository, RatingRepository ratingRepository, UrlService urlService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -110,7 +110,7 @@ public class ParticipationService {
         this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
         this.quizScheduleService = quizScheduleService;
-        this.quizExerciseService = quizExerciseService;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.ratingRepository = ratingRepository;
         this.urlService = urlService;
     }
@@ -307,7 +307,7 @@ public class ParticipationService {
                 result.setAssessmentType(AssessmentType.TEST_RUN);
 
                 if (submission instanceof QuizSubmission) {
-                    participation.setExercise(quizExerciseService.findOneWithQuestions(participation.getExercise().getId()));
+                    participation.setExercise(quizExerciseRepository.findWithEagerQuestionsById(participation.getExercise().getId()).orElse(null));
                     // set submission to calculate scores
                     result.setSubmission(submission);
                     // calculate scores and update result and submission accordingly
