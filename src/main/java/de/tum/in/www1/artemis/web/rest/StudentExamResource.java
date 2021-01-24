@@ -627,7 +627,7 @@ public class StudentExamResource {
                 // reload and replace the quiz exercise
                 var quizExercise = quizExerciseService.findOneWithQuestions(exercise.getId());
                 // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
-                if (!studentExam.areResultsPublishedYet()) {
+                if (!(studentExam.areResultsPublishedYet() || studentExam.isTestRun())) {
                     quizExercise.filterForStudentsDuringQuiz();
                 }
                 studentExam.getExercises().set(i, quizExercise);
