@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.C;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,7 +31,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -43,7 +47,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
 import de.tum.in.www1.artemis.web.rest.ResultResource;
 
-class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private enum IntegrationTestParticipationType {
         STUDENT, TEMPLATE, SOLUTION
@@ -203,6 +207,10 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         assertThat(submission.getLatestResult().getId()).isEqualTo(createdResult.getId());
         assertThat(updatedParticipation.getSubmissions()).hasSize(1);
         assertThat(updatedParticipation.getSubmissions().stream().anyMatch(s -> s.getId().equals(submissionId))).isTrue();
+
+        // Do a call to new-result again and assert that no new submission is created.
+        postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
+        assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
     /**
@@ -234,6 +242,10 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         assertThat(submission.getLatestResult().getId()).isEqualTo(createdResult.getId());
         assertThat(participation.getSubmissions()).hasSize(1);
         assertThat(participation.getSubmissions().stream().anyMatch(s -> s.getId().equals(submissionId))).isTrue();
+
+        // Do a call to new-result again and assert that no new submission is created.
+        postResult(participationType, 0, HttpStatus.OK, additionalCommit);
+        assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
     private static Stream<Arguments> participationTypeAndAdditionalCommitProvider() {
@@ -255,26 +267,31 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     void shouldNotLinkTwoResultsToTheSameSubmission(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         // Create 1 submission.
-        postSubmission(participationId, HttpStatus.OK);
+        var submission = postSubmission(participationId, HttpStatus.OK);
         // Create 2 results for the same submission.
         postResult(participationType, 0, HttpStatus.OK, false);
         postResult(participationType, 0, HttpStatus.OK, false);
 
-        // Make sure there are now 2 submission: 1 that was created on submit and 1 when the second result came in.
-        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
-        assertThat(submissions).hasSize(2);
-        ProgrammingSubmission submission1 = submissionRepository.findWithEagerResultsById(submissions.get(0).getId()).get();
-        ProgrammingSubmission submission2 = submissionRepository.findWithEagerResultsById(submissions.get(1).getId()).get();
+        // Make sure there's only 1 submission
+        assertNoNewSubmissionsAndIsSubmission(submission);
 
-        // There should be 1 result linked to each submission.
+        // The results should be linked to the submission.
         List<Result> results = resultRepository.findAll();
         assertThat(results).hasSize(2);
-        Result result1 = resultRepository.findWithEagerSubmissionAndFeedbackById(results.get(0).getId()).get();
-        Result result2 = resultRepository.findWithEagerSubmissionAndFeedbackById(results.get(1).getId()).get();
-        assertThat(result1.getSubmission()).isNotNull();
-        assertThat(result2.getSubmission()).isNotNull();
-        assertThat(submission1.getLatestResult().getId()).isEqualTo(result1.getId());
-        assertThat(submission2.getLatestResult().getId()).isEqualTo(result2.getId());
+        results.forEach(result -> {
+            var resultWithSubmission = resultRepository.findWithEagerSubmissionAndFeedbackById(result.getId());
+            assertThat(resultWithSubmission).isPresent();
+            assertThat(resultWithSubmission.get().getSubmission()).isNotNull();
+            assertThat(resultWithSubmission.get().getSubmission().getId()).isEqualTo(submission.getId());
+        });
+
+        // Make sure the latest result is the last result
+        var latestSubmissionOrEmpty = submissionRepository.findWithEagerResultsById(submission.getId());
+        assertThat(latestSubmissionOrEmpty).isPresent();
+        var latestSubmission = latestSubmissionOrEmpty.get();
+        var latestResult = latestSubmission.getLatestResult();
+        assertThat(latestResult).isNotNull();
+        assertThat(latestResult.getId()).isEqualTo(results.get(1).getId());
     }
 
     /**
@@ -302,6 +319,10 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.getLatestResult().getId()).isEqualTo(result.getId());
+
+        // Do another call to new-result again and assert that no new submission is created.
+        postResult(participationType, 0, HttpStatus.OK, false);
+        assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
     // TODO: write a test case that invokes notifyPush on ProgrammingSubmissionService with two identical commits. This test should then expect an IllegalStateException
@@ -327,10 +348,13 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         Result result = results.get(0);
         assertThat(submission.getCommitHash()).isEqualTo("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
         // The submission should be other as it was not created by a commit.
-        assertThat(submission.getType()).isEqualTo(SubmissionType.OTHER);
+        assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
         assertThat(participation.getSubmissions().size()).isEqualTo(1);
+
+        postResult(participationType, 0, HttpStatus.OK, false);
+        assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
     /**
@@ -368,6 +392,10 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         Result result = results.get(0);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
         assertThat(participation.getSubmissions().size()).isEqualTo(1);
+
+        // Do another call to new-result again and assert that no new submission is created.
+        postResult(participationType, 0, HttpStatus.OK, false);
+        assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
     /**
@@ -409,6 +437,10 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
         assertThat(participation.getSubmissions().size()).isEqualTo(1);
         assertThat(result.isRated()).isTrue();
+
+        // Do another call to new-result again and assert that no new submission is created.
+        postResult(participationType, 0, HttpStatus.OK, false);
+        assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
     /**
@@ -482,8 +514,12 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         buildLog.setUnstyledLog("[ERROR] COMPILATION ERROR missing something");
         postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
 
-        var result = assertBuildError(participation.getId(), userLogin);
+        var result = assertBuildError(participation.getId(), userLogin, programmingLanguage);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
+
+        // Do another call to new-result again and assert that no new submission is created.
+        postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
+        assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
     @ParameterizedTest
@@ -497,11 +533,21 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
         // Call programming-exercises/new-result which includes build log entries
         postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
+        assertBuildError(participation.getId(), userLogin, programmingLanguage);
 
-        assertBuildError(participation.getId(), userLogin);
+        // Do another call to new-result again and assert that no new submission is created.
+        var submisstion = submissionRepository.findAll().get(0);
+        postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
+        assertNoNewSubmissionsAndIsSubmission(submisstion);
     }
 
-    private Result assertBuildError(Long participationId, String userLogin) throws Exception {
+    private void assertNoNewSubmissionsAndIsSubmission(ProgrammingSubmission submission) {
+        var submissions = submissionRepository.findAll();
+        assertThat(submissions.size()).isEqualTo(1);
+        assertThat(submissions.get(0).getId()).isEqualTo(submission.getId());
+    }
+
+    private Result assertBuildError(Long participationId, String userLogin, ProgrammingLanguage programmingLanguage) throws Exception {
         // Assert that result linked to the participation
         var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results.size()).isEqualTo(1);
@@ -520,7 +566,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         // Assert that build logs have been saved in the build log repository.
         assertThat(submissionWithLogsOptional).isPresent();
         var submissionWithLogs = submissionWithLogsOptional.get();
-        assertThat(submissionWithLogs.getBuildLogEntries()).hasSize(4);
+        assertThat(submissionWithLogs.getBuildLogEntries()).hasSize(programmingLanguage.equals(C) ? 8 : 7);
 
         // Assert that the build logs can be retrieved from the REST API
         database.changeUser(userLogin);
@@ -597,8 +643,8 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     }
 
     private void postResultWithBuildLogs(String participationId, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
-        var notification = ModelFactory.generateBambooBuildResultWithLogs(ASSIGNMENT_REPO_NAME, List.of(), List.of());
-        postResult(participationId, notification, expectedStatus, additionalCommit);
+        var bambooBuildResult = ModelFactory.generateBambooBuildResultWithLogs(ASSIGNMENT_REPO_NAME, List.of(), List.of());
+        postResult(participationId, bambooBuildResult, expectedStatus, additionalCommit);
     }
 
     private void postResult(String participationId, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {

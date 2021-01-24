@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
@@ -113,11 +112,15 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         var submission = database.createProgrammingSubmission(participation, false);
 
         // Call programming-exercises/new-result which do not include build log entries yet
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage);
-        postResult(notification, HttpStatus.OK, false);
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of());
+        postResult(notification);
 
         var result = assertBuildError(participation.getId(), userLogin);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
+
+        // Call again and assert that no new submissions have been created
+        postResult(notification);
+        assertNoNewSubmissions(submission);
     }
 
     @ParameterizedTest
@@ -130,8 +133,8 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         // Call programming-exercises/new-result which do not include build log entries yet
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage);
-        postResult(notification, HttpStatus.OK, false);
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of());
+        postResult(notification);
 
         assertBuildError(participation.getId(), userLogin);
     }
@@ -179,28 +182,27 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         return result;
     }
 
-    private void postResult(TestResultsDTO requestBodyMap, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
-        if (additionalCommit) {
-            var newCommit = new CommitDTO();
-            newCommit.setHash("90b6af5650c30d35a0836fd58c677f8980e1df27");
-            newCommit.setRepositorySlug(requestBodyMap.getCommits().get(0).getRepositorySlug());
-            requestBodyMap.getCommits().add(newCommit);
-        }
+    private void assertNoNewSubmissions(ProgrammingSubmission existingSubmission) {
+        var updatedSubmissions = submissionRepository.findAll();
+        assertThat(updatedSubmissions.size()).isEqualTo(1);
+        assertThat(updatedSubmissions.get(0).getId()).isEqualTo(existingSubmission.getId());
+    }
 
+    private void postResult(TestResultsDTO requestBodyMap) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         final var alteredObj = mapper.convertValue(requestBodyMap, Object.class);
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
-        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, expectedStatus, httpHeaders);
+        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, HttpStatus.OK, httpHeaders);
     }
 
-    private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage) {
+    private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfullTests) {
         var repoName = (projectKey + "-" + loginName).toUpperCase();
         // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
         var fullName = exercise.getProjectKey() + " » " + repoName + " #3";
-        var notification = ModelFactory.generateTestResultDTO(repoName, List.of(), List.of(), programmingLanguage, false);
+        var notification = ModelFactory.generateTestResultDTO(repoName, successfullTests, List.of(), programmingLanguage, false);
         notification.setFullName(fullName);
         return notification;
     }

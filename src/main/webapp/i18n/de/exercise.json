@@ -109,7 +109,7 @@
             "teamName": "Team Name",
             "teamShortName": "Kurzname",
             "completionDate": "Abgabedatum",
-            "result": "Ergebnis",
+            "lastResult": "Letztes Ergebnis",
             "submissionCount": "Abgaben",
             "score": "Punktzahl",
             "duration": "Dauer",

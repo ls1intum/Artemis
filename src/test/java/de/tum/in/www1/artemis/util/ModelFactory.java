@@ -894,7 +894,32 @@ public class ModelFactory {
         largeBuildLogDTO.setDate(ZonedDateTime.now());
         largeBuildLogDTO.setLog(logWith254Chars + logWith254Chars);
 
-        notification.getBuild().getJobs().iterator().next().setLogs(List.of(buildLogDTO254Chars, buildLogDTO255Chars, buildLogDTO256Chars, largeBuildLogDTO));
+        var logTypicalErrorLog = new BambooBuildLogDTO();
+        logTypicalErrorLog.setDate(ZonedDateTime.now());
+        logTypicalErrorLog.setLog("error: the java class ABC does not exist");
+
+        var logTypicalDuplicatedErrorLog = new BambooBuildLogDTO();
+        logTypicalDuplicatedErrorLog.setDate(ZonedDateTime.now());
+        logTypicalDuplicatedErrorLog.setLog("error: the java class ABC does not exist");
+
+        var logCompilationError = new BambooBuildLogDTO();
+        logCompilationError.setDate(ZonedDateTime.now());
+        logCompilationError.setLog("COMPILATION ERROR");
+
+        var logBuildError = new BambooBuildLogDTO();
+        logBuildError.setDate(ZonedDateTime.now());
+        logBuildError.setLog("BUILD FAILURE");
+
+        var logWarning = new BambooBuildLogDTO();
+        logWarning.setDate(ZonedDateTime.now());
+        logWarning.setLog("[WARNING]");
+
+        var logWarningIllegalReflectiveAccess = new BambooBuildLogDTO();
+        logWarningIllegalReflectiveAccess.setDate(ZonedDateTime.now());
+        logWarningIllegalReflectiveAccess.setLog("WARNING: Illegal reflective access by");
+
+        notification.getBuild().getJobs().iterator().next().setLogs(List.of(buildLogDTO254Chars, buildLogDTO255Chars, buildLogDTO256Chars, largeBuildLogDTO, logTypicalErrorLog,
+                logTypicalDuplicatedErrorLog, logWarning, logWarningIllegalReflectiveAccess, logCompilationError, logBuildError));
 
         return notification;
     }

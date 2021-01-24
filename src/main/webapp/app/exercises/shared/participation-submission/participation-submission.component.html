@@ -39,12 +39,20 @@
                 {{ value | artemisDate: 'long':true }}
             </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column prop="latestResult">
+        <ngx-datatable-column prop="results">
             <ng-template ngx-datatable-header-template>
-                <span jhiTranslate="artemisApp.participation.participationSubmission.result"></span>
+                <span jhiTranslate="artemisApp.participation.participationSubmission.resultCount"></span>
             </ng-template>
             <ng-template ngx-datatable-cell-template let-value="value">
-                <jhi-result [result]="value" [participation]="participation"></jhi-result>
+                {{ value.length || 0 }}
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column prop="latestResult">
+            <ng-template ngx-datatable-header-template>
+                <span jhiTranslate="artemisApp.participation.participationSubmission.lastResult"></span>
+            </ng-template>
+            <ng-template ngx-datatable-cell-template let-value="value">
+                <jhi-result [result]="value" [participation]="participation" [showUngradedResults]="true" [showGradedBadge]="true"></jhi-result>
             </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column prop="latestResult">
