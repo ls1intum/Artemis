@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.util.Arrays;
 import java.util.List;
@@ -10,7 +11,6 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -18,15 +18,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -95,61 +94,6 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         database.resetDatabase();
         jenkinsRequestMockProvider.reset();
         gitlabRequestMockProvider.reset();
-    }
-
-    @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    void shouldUpdateFeedbackInSemiAutomaticResult() throws Exception {
-        SecurityUtils.setAuthorizationObject();
-        // Required for created a result
-        var resultAccessor = database.getUserByLogin("instructor1");
-
-        // Add a student submission with two manual results and a semi automatic result
-        var participation = studentParticipationRepository.findByExerciseId(exercise.getId()).get(0);
-        var submission = database.createProgrammingSubmission(participation, false);
-        database.addResultToSubmission(submission, AssessmentType.MANUAL, resultAccessor);
-        database.addResultToSubmission(submission, AssessmentType.MANUAL, resultAccessor);
-        database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, resultAccessor);
-
-        // Add a manual feedback to the semi automatic result
-        var feedback = new Feedback();
-        feedback.setType(FeedbackType.MANUAL);
-        feedback.setText("feedback1");
-        feedback.setCredits(10.0);
-
-        var resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exercise.getId());
-        var semiAutoResult = resultsWithFeedback.get(2);
-        database.addFeedbackToResult(feedback, semiAutoResult);
-
-        // Assert that the results have been created successfully.
-        resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exercise.getId());
-        assertThat(resultsWithFeedback.size()).isEqualTo(3);
-        assertThat(resultsWithFeedback.get(0).getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
-        assertThat(resultsWithFeedback.get(1).getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
-        assertThat(resultsWithFeedback.get(2).getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-
-        // Re-trigger the build. We create a notification with feedback of a successful test
-        database.changeUser("instructor1");
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), "student1", exercise.getProgrammingLanguage(), List.of("test1"));
-        postResult(notification);
-
-        // Retrieve updated results
-        var updatedResults = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exercise.getId());
-        assertThat(updatedResults.size()).isEqualTo(3);
-
-        // Assert that the result order stays the same
-        assertThat(updatedResults.get(0).getId()).isEqualTo(resultsWithFeedback.get(0).getId());
-        assertThat(updatedResults.get(1).getId()).isEqualTo(resultsWithFeedback.get(1).getId());
-        assertThat(updatedResults.get(2).getId()).isEqualTo(resultsWithFeedback.get(2).getId());
-
-        // Assert that the last result is the SEMI_AUTOMATIC result
-        semiAutoResult = updatedResults.get(2);
-        assertThat(semiAutoResult.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-        // Assert that the SEMI_AUTOMATIC result has two feedbacks whereas the last one is the automatic one
-        assertThat(semiAutoResult.getFeedbacks().size()).isEqualTo(2);
-        assertThat(semiAutoResult.getFeedbacks().get(0).getType()).isEqualTo(FeedbackType.MANUAL);
-        assertThat(semiAutoResult.getFeedbacks().get(1).getType()).isEqualTo(FeedbackType.AUTOMATIC);
-
     }
 
     private static Stream<Arguments> shouldSavebuildLogsOnStudentParticipationArguments() {

@@ -1,29 +1,30 @@
 package de.tum.in.www1.artemis.util;
 
+import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
@@ -32,6 +33,9 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNot
  */
 @Service
 public class ProgrammingExerciseResultTestService {
+
+    @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
+    private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
 
     @Autowired
     private DatabaseUtilService database;
@@ -65,13 +69,20 @@ public class ProgrammingExerciseResultTestService {
 
     private ProgrammingExercise programmingExercise;
 
-    private ProgrammingExercise programmingExerciseWithStaticCodeAnalysis;
-
     private SolutionProgrammingExerciseParticipation solutionParticipation;
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipationStaticCodeAnalysis;
+
+    @Autowired
+    ProgrammingExerciseStudentParticipationRepository participationRepository;
+
+    @Autowired
+    ResultRepository resultRepository;
+
+    @Autowired
+    protected RequestUtilService request;
 
     public void setup() {
         database.addUsers(10, 2, 2);
@@ -81,16 +92,78 @@ public class ProgrammingExerciseResultTestService {
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
         Course course = database.addCourseWithOneProgrammingExercise(false, programmingLanguage);
         programmingExercise = programmingExerciseRepository.findAll().get(0);
-        programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, programmingLanguage);
+        ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-        programmingExerciseStudentParticipationStaticCodeAnalysis = database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, "student1");
+        programmingExerciseStudentParticipationStaticCodeAnalysis = database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, "student2");
     }
 
     public void tearDown() {
         database.resetDatabase();
+    }
+
+    // Test
+    public void shouldUpdateFeedbackInSemiAutomaticResult(AbstractBuildResultNotificationDTO buildResultNotification, String loginName) throws Exception {
+        // Make sure we only have one participation
+        participationRepository.deleteAll();
+        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, loginName);
+
+        // Add a student submission with two manual results and a semi automatic result
+        var submission = database.createProgrammingSubmission(programmingExerciseStudentParticipation, false, TestConstants.COMMIT_HASH_STRING);
+        var accessor = database.getUserByLogin("instructor1");
+        database.addResultToSubmission(submission, AssessmentType.MANUAL, accessor);
+        database.addResultToSubmission(submission, AssessmentType.MANUAL, accessor);
+        database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, accessor);
+
+        // Add a manual feedback to the semi automatic result
+        var feedback = new Feedback();
+        feedback.setType(FeedbackType.MANUAL);
+        feedback.setText("feedback1");
+        feedback.setCredits(10.0);
+
+        var resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
+        var semiAutoResult = resultsWithFeedback.get(2);
+        database.addFeedbackToResult(feedback, semiAutoResult);
+
+        // Assert that the results have been created successfully.
+        resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
+        assertThat(resultsWithFeedback.size()).isEqualTo(3);
+        assertThat(resultsWithFeedback.get(0).getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertThat(resultsWithFeedback.get(1).getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertThat(resultsWithFeedback.get(2).getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+
+        // Re-trigger the build. We create a notification with feedback of a successful test
+        database.changeUser("instructor1");
+        postResult(buildResultNotification);
+
+        // Retrieve updated results
+        var updatedResults = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
+        assertThat(updatedResults.size()).isEqualTo(3);
+
+        // Assert that the result order stays the same
+        assertThat(updatedResults.get(0).getId()).isEqualTo(resultsWithFeedback.get(0).getId());
+        assertThat(updatedResults.get(1).getId()).isEqualTo(resultsWithFeedback.get(1).getId());
+        assertThat(updatedResults.get(2).getId()).isEqualTo(resultsWithFeedback.get(2).getId());
+
+        // Assert that the last result is the SEMI_AUTOMATIC result
+        semiAutoResult = updatedResults.get(2);
+        assertThat(semiAutoResult.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        // Assert that the SEMI_AUTOMATIC result has two feedbacks whereas the last one is the automatic one
+        assertThat(semiAutoResult.getFeedbacks().size()).isEqualTo(2);
+        assertThat(semiAutoResult.getFeedbacks().get(0).getType()).isEqualTo(FeedbackType.MANUAL);
+        assertThat(semiAutoResult.getFeedbacks().get(1).getType()).isEqualTo(FeedbackType.AUTOMATIC);
+    }
+
+    private void postResult(AbstractBuildResultNotificationDTO requestBodyMap) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        final var alteredObj = mapper.convertValue(requestBodyMap, Object.class);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
+        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, HttpStatus.OK, httpHeaders);
     }
 
     // Test
@@ -213,5 +286,9 @@ public class ProgrammingExerciseResultTestService {
             return ((BambooBuildResultNotificationDTO) resultNotification).getBuild().getJobs().iterator().next().getLogs().size();
         }
         throw new UnsupportedOperationException("Build logs are only part of the Bamboo notification");
+    }
+
+    public ProgrammingExercise getProgrammingExercise() {
+        return programmingExercise;
     }
 }

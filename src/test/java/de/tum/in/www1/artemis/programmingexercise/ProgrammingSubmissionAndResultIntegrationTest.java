@@ -30,16 +30,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -489,61 +489,6 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
             // Submissions with type TEST and no buildAndTestAfterDueDate should be rated.
             assertThat(participationResult.isRated()).isTrue();
         }
-    }
-
-    @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    void shouldUpdateFeedbackInSemiAutomaticResult() throws Exception {
-        SecurityUtils.setAuthorizationObject();
-        // Required for created a result
-        var resultAccessor = database.getUserByLogin("instructor1");
-
-        // Add a student submission with two manual results and a semi automatic result
-        var participation = studentParticipationRepository.findByExerciseId(exercise.getId()).get(0);
-        var submission = database.createProgrammingSubmission(participation, false);
-        database.addResultToSubmission(submission, AssessmentType.MANUAL, resultAccessor);
-        database.addResultToSubmission(submission, AssessmentType.MANUAL, resultAccessor);
-        database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, resultAccessor);
-
-        // Add a manual feedback to the semi automatic result
-        var feedback = new Feedback();
-        feedback.setType(FeedbackType.MANUAL);
-        feedback.setText("feedback1");
-        feedback.setCredits(10.0);
-
-        var resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exercise.getId());
-        var semiAutoResult = resultsWithFeedback.get(2);
-        database.addFeedbackToResult(feedback, semiAutoResult);
-
-        // Assert that the results have been created successfully.
-        resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exercise.getId());
-        assertThat(resultsWithFeedback.size()).isEqualTo(3);
-        assertThat(resultsWithFeedback.get(0).getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
-        assertThat(resultsWithFeedback.get(1).getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
-        assertThat(resultsWithFeedback.get(2).getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-
-        // Re-trigger the build. We create a notification with feedback of a successful test
-        database.changeUser("instructor1");
-        var notification = createBambooBuildResultNotificationDTO();
-        postResult(participation.getBuildPlanId(), notification, HttpStatus.OK, false);
-
-        // Retrieve updated results
-        var updatedResults = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exercise.getId());
-        assertThat(updatedResults.size()).isEqualTo(3);
-
-        // Assert that the result order stays the same
-        assertThat(updatedResults.get(0).getId()).isEqualTo(resultsWithFeedback.get(0).getId());
-        assertThat(updatedResults.get(1).getId()).isEqualTo(resultsWithFeedback.get(1).getId());
-        assertThat(updatedResults.get(2).getId()).isEqualTo(resultsWithFeedback.get(2).getId());
-
-        // Assert that the last result is the SEMI_AUTOMATIC result
-        semiAutoResult = updatedResults.get(2);
-        assertThat(semiAutoResult.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-        // Assert that the SEMI_AUTOMATIC result has two feedbacks whereas the last one is the automatic one
-        assertThat(semiAutoResult.getFeedbacks().size()).isEqualTo(2);
-        assertThat(semiAutoResult.getFeedbacks().get(0).getType()).isEqualTo(FeedbackType.MANUAL);
-        assertThat(semiAutoResult.getFeedbacks().get(1).getType()).isEqualTo(FeedbackType.AUTOMATIC);
-
     }
 
     private static Stream<Arguments> shouldSavebuildLogsOnStudentParticipationArguments() {
