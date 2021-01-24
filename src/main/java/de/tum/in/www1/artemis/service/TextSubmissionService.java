@@ -89,13 +89,28 @@ public class TextSubmissionService extends SubmissionService {
      * @return the textSubmission entity that was saved to the database
      */
     public TextSubmission save(TextSubmission textSubmission, StudentParticipation participation, TextExercise textExercise, Principal principal) {
+        if (textSubmission.getId() != null) {
+            final var textSubmissionId = textSubmission.getId();
+            final var optionalExistingTextSubmission = participation.getSubmissions().stream().filter(submission -> submission.getId().equals(textSubmissionId)).findFirst();
+            // the existing text submission contains the Result proxy which we do not want to override (for Test Runs)
+            // therefore we use the existing text submission object and replace the text with the new submission's text
+            TextSubmission existingTextSubmission = (TextSubmission) optionalExistingTextSubmission.get();
+            existingTextSubmission.setText(textSubmission.getText());
+            existingTextSubmission.setLanguage(textSubmission.getLanguage());
+            existingTextSubmission.setBlocks(textSubmission.getBlocks());
+            textSubmission = existingTextSubmission;
+        }
+        else {
+            // if no existing submission exists, then we can be sure that there is no existing result
+            // therefore, remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+            textSubmission.setResults(new ArrayList<>());
+        }
+
         // update submission properties
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
         textSubmission.setParticipation(participation);
 
-        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        textSubmission.setResults(new ArrayList<>());
         textSubmission = textSubmissionRepository.save(textSubmission);
 
         // versioning of submission
