@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
-import java.net.URL;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -43,7 +42,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
@@ -62,43 +60,25 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private static final String PIPELINE_SCRIPT_DETECTION_COMMENT = "// ARTEMIS: JenkinsPipeline";
 
-    @Value("${artemis.continuous-integration.url}")
-    private URL jenkinsServerUrl;
-
     @Value("${jenkins.use-crumb:#{true}}")
     private boolean useCrumb;
 
     private final JenkinsBuildPlanCreator jenkinsBuildPlanCreator;
 
-    private final RestTemplate restTemplate;
-
-    private final RestTemplate shortTimeoutRestTemplate;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ResultRepository resultRepository;
-
     private final JenkinsServer jenkinsServer;
-
-    private final FeedbackService feedbackService;
-
-    private final BuildLogEntryService buildLogService;
 
     // Pattern of the DateTime that is included in the logs received from Jenkins
     private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
     public JenkinsService(JenkinsBuildPlanCreator jenkinsBuildPlanCreator, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, FeedbackService feedbackService,
-            ResultRepository resultRepository, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService) {
-        super(programmingSubmissionRepository);
+            @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService) {
+        super(programmingSubmissionRepository, feedbackService, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
-        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
-        this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.feedbackService = feedbackService;
-        this.resultRepository = resultRepository;
-        this.buildLogService = buildLogService;
     }
 
     @Override
@@ -187,9 +167,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
         final var headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_XML);
-        final var entity = new HttpEntity(writeXmlToString(jobXmlDocument), headers);
+        final var entity = new HttpEntity<>(writeXmlToString(jobXmlDocument), headers);
 
-        URI uri = Endpoint.PLAN_CONFIG.buildEndpoint(jenkinsServerUrl.toString(), buildProjectKey, buildPlanKey).build(true).toUri();
+        URI uri = Endpoint.PLAN_CONFIG.buildEndpoint(serverUrl.toString(), buildProjectKey, buildPlanKey).build(true).toUri();
 
         final var errorMessage = "Error trying to configure build plan in Jenkins " + buildPlanKey;
         try {
@@ -364,7 +344,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
-        return Optional.of(jenkinsServerUrl + "/project/" + projectKey + "/" + buildPlanId);
+        return Optional.of(serverUrl + "/project/" + projectKey + "/" + buildPlanId);
     }
 
     @Override
@@ -379,7 +359,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         }
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
-        final var url = Endpoint.LAST_BUILD.buildEndpoint(jenkinsServerUrl.toString(), projectKey, planKey).build(true).toString();
+        final var url = Endpoint.LAST_BUILD.buildEndpoint(serverUrl.toString(), projectKey, planKey).build(true).toString();
         try {
             final var jobStatus = restTemplate.getForObject(url, JsonNode.class);
             return jobStatus.get("building").asBoolean() ? BuildStatus.BUILDING : BuildStatus.INACTIVE;
@@ -637,8 +617,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     public ConnectorHealth health() {
         try {
             // Note: we simply check if the login page is reachable
-            shortTimeoutRestTemplate.getForObject(jenkinsServerUrl + "/login", String.class);
-            return new ConnectorHealth(true, Map.of("url", jenkinsServerUrl));
+            shortTimeoutRestTemplate.getForObject(serverUrl + "/login", String.class);
+            return new ConnectorHealth(true, Map.of("url", serverUrl));
         }
         catch (Exception emAll) {
             return new ConnectorHealth(new JenkinsException("Jenkins Server is down!"));
@@ -712,7 +692,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     private <T> T post(Endpoint endpoint, HttpStatus allowedStatus, String messageInCaseOfError, Class<T> responseType, Object... args) {
-        final var builder = endpoint.buildEndpoint(jenkinsServerUrl.toString(), args);
+        final var builder = endpoint.buildEndpoint(serverUrl.toString(), args);
         try {
             final var response = restTemplate.postForEntity(builder.build(true).toString(), null, responseType);
             if (response.getStatusCode() != allowedStatus) {

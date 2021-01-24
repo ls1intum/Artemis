@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +46,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.UrlService;
@@ -61,15 +59,10 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
-    @Value("${artemis.continuous-integration.url}")
-    private URL bambooServerUrl;
-
     @Value("${artemis.continuous-integration.empty-commit-necessary}")
     private Boolean isEmptyCommitNecessary;
 
     private final GitService gitService;
-
-    private final ResultRepository resultRepository;
 
     private final Optional<VersionControlService> versionControlService;
 
@@ -77,34 +70,21 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final BambooBuildPlanService bambooBuildPlanService;
 
-    private final FeedbackService feedbackService;
-
-    private final RestTemplate restTemplate;
-
-    private final RestTemplate shortTimeoutRestTemplate;
-
     private final ObjectMapper mapper;
 
     private final UrlService urlService;
 
-    private final BuildLogEntryService buildLogService;
-
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackService feedbackService,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
-            UrlService urlService, ResultRepository resultRepository, BuildLogEntryService buildLogService) {
-        super(programmingSubmissionRepository);
+            UrlService urlService, BuildLogEntryService buildLogService) {
+        super(programmingSubmissionRepository, feedbackService, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.gitService = gitService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
-        this.feedbackService = feedbackService;
-        this.restTemplate = restTemplate;
-        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.mapper = mapper;
         this.urlService = urlService;
-        this.resultRepository = resultRepository;
-        this.buildLogService = buildLogService;
     }
 
     @Override
@@ -171,7 +151,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException {
         var buildPlan = participation.getBuildPlanId();
         try {
-            restTemplate.exchange(bambooServerUrl + "/rest/api/latest/queue/" + buildPlan, HttpMethod.POST, null, Void.class);
+            restTemplate.exchange(serverUrl + "/rest/api/latest/queue/" + buildPlan, HttpMethod.POST, null, Void.class);
         }
         catch (RestClientException e) {
             log.error("HttpError while triggering build plan " + buildPlan + " with error: " + e.getMessage());
@@ -194,7 +174,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             return;
         }
 
-        // NOTE: we cannot use official the REST API, e.g. restTemplate.delete(bambooServerUrl + "/rest/api/latest/plan/" + buildPlanId) here,
+        // NOTE: we cannot use official the REST API, e.g. restTemplate.delete(serverUrl + "/rest/api/latest/plan/" + buildPlanId) here,
         // because then the build plan is not deleted directly and subsequent calls to create build plans with the same id might fail
 
         executeDelete("selectedBuilds", buildPlanId);
@@ -209,7 +189,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
      */
     private List<BambooBuildPlanDTO> getBuildPlans(String projectKey) {
 
-        String requestUrl = bambooServerUrl + "/rest/api/latest/project/" + projectKey;
+        String requestUrl = serverUrl + "/rest/api/latest/project/" + projectKey;
         // we use 5000 just in case of exercises with really really many students ;-)
         try {
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "plans").queryParam("max-results", 5000);
@@ -243,7 +223,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
         // TODO: check if the project actually exists, if not, we can immediately return
 
-        // NOTE: we cannot use official the REST API, e.g. restTemplate.delete(bambooServerUrl + "/rest/api/latest/project/" + projectKey) here,
+        // NOTE: we cannot use official the REST API, e.g. restTemplate.delete(serverUrl + "/rest/api/latest/project/" + projectKey) here,
         // because then the build plans are not deleted directly and subsequent calls to create build plans with the same id might fail
 
         // in normal cases this list should be empty, because all build plans have been deleted before
@@ -267,7 +247,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         parameters.add("confirm", "true");
         parameters.add("bamboo.successReturnMode", "json");
 
-        String requestUrl = bambooServerUrl + "/admin/deleteBuilds.action";
+        String requestUrl = serverUrl + "/admin/deleteBuilds.action";
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
         // TODO: in order to do error handling, we have to read the return value of this REST call
         var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
@@ -330,7 +310,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             return null;
         }
         try {
-            String requestUrl = bambooServerUrl + "/rest/api/latest/plan/" + planKey;
+            String requestUrl = serverUrl + "/rest/api/latest/plan/" + planKey;
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
             if (expand) {
                 builder.queryParam("expand", "");
@@ -413,7 +393,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         parameters.add("save", "Create");
         parameters.add("bamboo.successReturnMode", "json");
 
-        String requestUrl = bambooServerUrl + "/build/admin/create/performClonePlan.action";
+        String requestUrl = serverUrl + "/build/admin/create/performClonePlan.action";
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
         // TODO: in order to do error handling, we have to read the return value of this REST call
         var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
@@ -432,7 +412,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         final var roles = List.of("ANONYMOUS", "LOGGED_IN");
 
         roles.forEach(role -> {
-            final var url = bambooServerUrl + "/rest/api/latest/permissions/project/" + projectKey + "/roles/" + role;
+            final var url = serverUrl + "/rest/api/latest/permissions/project/" + projectKey + "/roles/" + role;
             final var response = restTemplate.exchange(url, HttpMethod.DELETE, entity, String.class);
             if (response.getStatusCode() != HttpStatus.NO_CONTENT && response.getStatusCode() != HttpStatus.NOT_MODIFIED) {
                 throw new BambooException("Unable to remove default project permissions from exercise " + projectKey + "\n" + response.getBody());
@@ -446,7 +426,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         final var entity = new HttpEntity<>(permissionData, null);
 
         groupNames.forEach(group -> {
-            final var url = bambooServerUrl + "/rest/api/latest/permissions/project/" + projectKey + "/groups/" + group;
+            final var url = serverUrl + "/rest/api/latest/permissions/project/" + projectKey + "/groups/" + group;
             final var response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
             if (response.getStatusCode() != HttpStatus.NO_CONTENT && response.getStatusCode() != HttpStatus.NOT_MODIFIED) {
                 final var errorMessage = "Unable to give permissions to project " + projectKey + "; error body: " + response.getBody() + "; headers: " + response.getHeaders()
@@ -470,7 +450,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
     public void enablePlan(String projectKey, String planKey) throws BambooException {
         try {
             log.debug("Enable build plan " + planKey);
-            restTemplate.postForObject(bambooServerUrl + "/rest/api/latest/plan/" + planKey + "/enable", null, Void.class);
+            restTemplate.postForObject(serverUrl + "/rest/api/latest/plan/" + planKey + "/enable", null, Void.class);
             log.info("Enable build plan " + planKey + " was successful.");
         }
         catch (Exception e) {
@@ -574,23 +554,21 @@ public class BambooService extends AbstractContinuousIntegrationService {
         }
 
         // Filter unwanted logs
-        var filteredLogs = filterBuildLogs(buildLogEntries, programmingLanguage);
-
-        return filteredLogs;
+        return filterBuildLogs(buildLogEntries, programmingLanguage);
     }
 
     @Override
     public ConnectorHealth health() {
         ConnectorHealth health;
         try {
-            final var status = shortTimeoutRestTemplate.exchange(bambooServerUrl + "/rest/api/latest/server", HttpMethod.GET, null, JsonNode.class);
+            final var status = shortTimeoutRestTemplate.exchange(serverUrl + "/rest/api/latest/server", HttpMethod.GET, null, JsonNode.class);
             health = status.getBody().get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
         }
         catch (Exception emAll) {
             health = new ConnectorHealth(emAll);
         }
 
-        health.setAdditionalInfo(Map.of("url", bambooServerUrl));
+        health.setAdditionalInfo(Map.of("url", serverUrl));
         return health;
     }
 
@@ -649,7 +627,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
     }
 
     /**
-     * Performs a request to the Bamboo REST API to retrive the latest result for the given plan.
+     * Performs a request to the Bamboo REST API to retrieve the latest result for the given plan.
      *
      * @param planKey the key of the plan for which to retrieve the latest result
      * @return a map containing the following data:
@@ -657,11 +635,12 @@ public class BambooService extends AbstractContinuousIntegrationService {
      * - buildTestSummary:      a string generated by Bamboo summarizing the build result
      * - buildCompletedDate:    the completion date of the build
      */
-    public @Nullable QueriedBambooBuildResultDTO queryLatestBuildResultFromBambooServer(String planKey) {
+    @Nullable
+    public QueriedBambooBuildResultDTO queryLatestBuildResultFromBambooServer(String planKey) {
         ResponseEntity<QueriedBambooBuildResultDTO> response = null;
         try {
             response = restTemplate.exchange(
-                    bambooServerUrl + "/rest/api/latest/result/" + planKey.toUpperCase()
+                    serverUrl + "/rest/api/latest/result/" + planKey.toUpperCase()
                             + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors,artifacts,changes,vcsRevisions",
                     HttpMethod.GET, null, QueriedBambooBuildResultDTO.class);
         }
@@ -678,36 +657,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
                 buildResult.getArtifacts().setArtifacts(
                         buildResult.getArtifacts().getArtifacts().stream().filter(artifact -> !artifactLabelFilter.contains(artifact.getName())).collect(Collectors.toList()));
             }
-
-            // search for version control information
-            // if (response.getBody().containsKey("vcsRevisions")) {
-            // TODO: in case we have multiple commits here, we should expose this to the calling method so that this can potentially match this.
-            // In the following example, the tests commit has is stored in vcsRevisionKey, but we might be interested in the assignment commit
-            // "vcsRevisionKey":"20253bd4c2783aa5314efeee98d3503e4d25e668",
-            // "vcsRevisions":{
-            // "size":2,
-            // "expand":"vcsRevision",
-            // "vcsRevision":[
-            // {
-            // "repositoryId":239584155,
-            // "repositoryName":"tests",
-            // "vcsRevisionKey":"20253bd4c2783aa5314efeee98d3503e4d25e668"
-            // },
-            // {
-            // "repositoryId":239584156,
-            // "repositoryName":"assignment",
-            // "vcsRevisionKey":"1c140ccff2be8c3d0d00c0d370557e258c1292cb"
-            // }
-            // ],
-            // "start-index":0,
-            // "max-result":2
-            // },
-            // List<Object> vcsRevisions = (List<Object>) response.getBody().get("vcsRevisions");
-            // }
-
             return buildResult;
         }
-
         return null;
     }
 
@@ -721,7 +672,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
     private List<BuildLogEntry> retrieveLatestBuildLogsFromBamboo(String planKey) {
         var logs = new ArrayList<BuildLogEntry>();
         try {
-            String requestUrl = bambooServerUrl + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json";
+            String requestUrl = serverUrl + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json";
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "logEntries").queryParam("max-results", "2000");
             var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, BambooBuildResultDTO.class);
 
@@ -744,44 +695,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
             log.error("HttpError while retrieving build result logs from Bamboo: " + e.getMessage());
         }
         return logs;
-    }
-
-    /**
-     * Filter the given list of unfiltered build log entries and return A NEW list only including the filtered build logs.
-     *
-     * @param unfilteredBuildLogs the original, unfiltered list
-     * @return the filtered list
-     */
-    private List<BuildLogEntry> filterBuildLogs(List<BuildLogEntry> unfilteredBuildLogs, ProgrammingLanguage programmingLanguage) {
-        List<BuildLogEntry> filteredBuildLogs = new ArrayList<>();
-        for (BuildLogEntry unfilteredBuildLog : unfilteredBuildLogs) {
-            boolean compilationErrorFound = false;
-            String logString = unfilteredBuildLog.getLog();
-
-            if (logString.contains("COMPILATION ERROR")) {
-                compilationErrorFound = true;
-            }
-
-            if (compilationErrorFound && logString.contains("BUILD FAILURE")) {
-                // hide duplicated information that is displayed in the section COMPILATION ERROR and in the section BUILD FAILURE and stop here
-                break;
-            }
-
-            // filter unnecessary logs and illegal reflection logs
-            if (buildLogService.isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage) || buildLogService.isIllegalReflectionLog(logString)) {
-                continue;
-            }
-
-            // Replace some unnecessary information and hide complex details to make it easier to read the important information
-            final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
-
-            // Avoid duplicate log entries
-            if (buildLogService.checkIfBuildLogIsNotADuplicate(programmingLanguage, filteredBuildLogs, shortenedLogString)) {
-                filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), shortenedLogString, unfilteredBuildLog.getProgrammingSubmission()));
-            }
-        }
-
-        return filteredBuildLogs;
     }
 
     /**
@@ -808,7 +721,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
         try {
-            restTemplate.exchange(bambooServerUrl + "/rest/api/latest/project/" + projectKey, HttpMethod.GET, null, Void.class);
+            restTemplate.exchange(serverUrl + "/rest/api/latest/project/" + projectKey, HttpMethod.GET, null, Void.class);
             log.warn("Bamboo project " + projectKey + " already exists");
             return "The project " + projectKey + " already exists in the CI Server. Please choose a different short name!";
         }
@@ -816,7 +729,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             log.debug("Bamboo project " + projectKey + " does not exit");
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 // only if this is the case, we additionally check that the project name is unique
-                final var response = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/search/projects?searchTerm=" + projectName, HttpMethod.GET, null,
+                final var response = restTemplate.exchange(serverUrl + "/rest/api/latest/search/projects?searchTerm=" + projectName, HttpMethod.GET, null,
                         BambooProjectsSearchDTO.class);
                 if (response.getBody() != null && response.getBody().getSize() > 0) {
                     final var exists = response.getBody().getSearchResults().stream().map(BambooProjectsSearchDTO.SearchResultDTO::getSearchEntity)
@@ -860,7 +773,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             if (matcher.find()) {
                 url = matcher.group(1);
                 // Recursively walk through the responses until we get the actual artifact.
-                return retrieveArtifactPage(bambooServerUrl + url);
+                return retrieveArtifactPage(serverUrl + url);
             }
             else {
                 throw new BambooException("No artifact link found on artifact page");

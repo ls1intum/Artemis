@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import java.net.URL;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -8,24 +10,46 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.client.RestTemplate;
 
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 public abstract class AbstractContinuousIntegrationService implements ContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(AbstractContinuousIntegrationService.class);
 
-    protected ProgrammingSubmissionRepository programmingSubmissionRepository;
+    @Value("${artemis.continuous-integration.url}")
+    protected URL serverUrl;
 
-    public AbstractContinuousIntegrationService(ProgrammingSubmissionRepository programmingSubmissionRepository) {
+    protected final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    protected final FeedbackService feedbackService;
+
+    protected final BuildLogEntryService buildLogService;
+
+    protected final RestTemplate restTemplate;
+
+    protected final RestTemplate shortTimeoutRestTemplate;
+
+    public AbstractContinuousIntegrationService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackService feedbackService,
+            BuildLogEntryService buildLogService, RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.feedbackService = feedbackService;
+        this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
+        this.buildLogService = buildLogService;
     }
 
     /**
@@ -129,4 +153,42 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      */
     protected abstract void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult);
 
+    /**
+     * Filter the given list of unfiltered build log entries and return A NEW list only including the filtered build logs.
+     *
+     * @param unfilteredBuildLogs the original, unfiltered list
+     * @return the filtered list
+     */
+    // TODO: think about moving it into the build log service
+    protected List<BuildLogEntry> filterBuildLogs(List<BuildLogEntry> unfilteredBuildLogs, ProgrammingLanguage programmingLanguage) {
+        List<BuildLogEntry> filteredBuildLogs = new ArrayList<>();
+        for (BuildLogEntry unfilteredBuildLog : unfilteredBuildLogs) {
+            boolean compilationErrorFound = false;
+            String logString = unfilteredBuildLog.getLog();
+
+            if (logString.contains("COMPILATION ERROR")) {
+                compilationErrorFound = true;
+            }
+
+            if (compilationErrorFound && logString.contains("BUILD FAILURE")) {
+                // hide duplicated information that is displayed in the section COMPILATION ERROR and in the section BUILD FAILURE and stop here
+                break;
+            }
+
+            // filter unnecessary logs and illegal reflection logs
+            if (buildLogService.isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage) || buildLogService.isIllegalReflectionLog(logString)) {
+                continue;
+            }
+
+            // Replace some unnecessary information and hide complex details to make it easier to read the important information
+            final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
+
+            // Avoid duplicate log entries
+            if (buildLogService.checkIfBuildLogIsNotADuplicate(programmingLanguage, filteredBuildLogs, shortenedLogString)) {
+                filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), shortenedLogString, unfilteredBuildLog.getProgrammingSubmission()));
+            }
+        }
+
+        return filteredBuildLogs;
+    }
 }
