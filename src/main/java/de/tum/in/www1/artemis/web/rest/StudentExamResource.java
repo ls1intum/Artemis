@@ -406,7 +406,7 @@ public class StudentExamResource {
         // also add results to all remaining test runs
         List<StudentExam> testRuns = studentExamService.findAllTestRuns(examId);
         for (final var testRun : testRuns) {
-            final var participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(testRun.getUser().getId(), testRun.getExercises());
+            final var participations = participationService.findByStudentIdAndIndividualExercises(testRun.getUser().getId(), testRun.getExercises());
             participationService.markSubmissionsOfTestRunParticipations(participations);
         }
 
