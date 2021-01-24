@@ -229,11 +229,11 @@ public class ProgrammingExerciseResultTestService {
 
         var submission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(programmingExerciseStudentParticipation.getId());
         var submissionWithLogs = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.get().getId());
-        var expectedNoOfLogs = getNumberOfBuildLogs(resultNotification);
+        var expectedNoOfLogs = getNumberOfBuildLogs(resultNotification) - 3;  // 3 of those should be filtered
         assertThat(((ProgrammingSubmission) optionalResult.get().getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);
         assertThat(submissionWithLogs.get().getBuildLogEntries()).hasSize(expectedNoOfLogs);
 
-        // Call again and shouln't re-create new submission.
+        // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
         assertThat(programmingSubmissionRepository.findAll().size()).isEqualTo(1);
     }
@@ -243,14 +243,13 @@ public class ProgrammingExerciseResultTestService {
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 
         var savedBuildLogs = buildLogEntryRepository.findAll();
-        var expectedBuildLogs = getNumberOfBuildLogs(resultNotification);
+        var expectedBuildLogs = getNumberOfBuildLogs(resultNotification) - 3; // 3 of those should be filtered
 
         assertThat(savedBuildLogs.size()).isEqualTo(expectedBuildLogs);
-        savedBuildLogs.forEach(buildLogEntry -> {
-            assertThat(buildLogEntry.getProgrammingSubmission().getParticipation().getId()).isEqualTo(programmingExerciseStudentParticipation.getId());
-        });
+        savedBuildLogs.forEach(
+                buildLogEntry -> assertThat(buildLogEntry.getProgrammingSubmission().getParticipation().getId()).isEqualTo(programmingExerciseStudentParticipation.getId()));
 
-        // Call again and shouln't re-create new submission.
+        // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
         assertThat(programmingSubmissionRepository.findAll().size()).isEqualTo(1);
     }
@@ -282,7 +281,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     private int getNumberOfBuildLogs(Object resultNotification) {
-        if (resultNotification.getClass() == BambooBuildResultNotificationDTO.class) {
+        if (resultNotification instanceof BambooBuildResultNotificationDTO) {
             return ((BambooBuildResultNotificationDTO) resultNotification).getBuild().getJobs().iterator().next().getLogs().size();
         }
         throw new UnsupportedOperationException("Build logs are only part of the Bamboo notification");

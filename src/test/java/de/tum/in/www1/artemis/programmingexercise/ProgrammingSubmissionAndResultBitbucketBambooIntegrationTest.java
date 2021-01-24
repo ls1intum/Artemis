@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.C;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -513,7 +514,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         buildLog.setUnstyledLog("[ERROR] COMPILATION ERROR missing something");
         postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
 
-        var result = assertBuildError(participation.getId(), userLogin);
+        var result = assertBuildError(participation.getId(), userLogin, programmingLanguage);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
 
         // Do another call to new-result again and assert that no new submission is created.
@@ -532,7 +533,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Call programming-exercises/new-result which includes build log entries
         postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
-        assertBuildError(participation.getId(), userLogin);
+        assertBuildError(participation.getId(), userLogin, programmingLanguage);
 
         // Do another call to new-result again and assert that no new submission is created.
         var submisstion = submissionRepository.findAll().get(0);
@@ -546,7 +547,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(submissions.get(0).getId()).isEqualTo(submission.getId());
     }
 
-    private Result assertBuildError(Long participationId, String userLogin) throws Exception {
+    private Result assertBuildError(Long participationId, String userLogin, ProgrammingLanguage programmingLanguage) throws Exception {
         // Assert that result linked to the participation
         var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results.size()).isEqualTo(1);
@@ -565,7 +566,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // Assert that build logs have been saved in the build log repository.
         assertThat(submissionWithLogsOptional).isPresent();
         var submissionWithLogs = submissionWithLogsOptional.get();
-        assertThat(submissionWithLogs.getBuildLogEntries()).hasSize(4);
+        assertThat(submissionWithLogs.getBuildLogEntries()).hasSize(programmingLanguage.equals(C) ? 8 : 7);
 
         // Assert that the build logs can be retrieved from the REST API
         database.changeUser(userLogin);
