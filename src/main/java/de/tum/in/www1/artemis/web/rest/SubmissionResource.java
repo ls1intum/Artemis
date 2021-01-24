@@ -101,7 +101,7 @@ public class SubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         User user = userService.getUserWithGroupsAndAuthorities();
-        var testRunParticipation = participationService.findTestRunParticipationOfInstructorForExercise(user.getId(), exercise);
+        var testRunParticipation = participationService.findTestRunParticipationForExercise(user.getId(), exercise);
         if (testRunParticipation.isPresent()) {
             var latestSubmission = testRunParticipation.get().findLatestSubmission().get();
             return ResponseEntity.ok().body(List.of(latestSubmission));
