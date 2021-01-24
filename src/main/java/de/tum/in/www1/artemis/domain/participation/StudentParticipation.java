@@ -128,7 +128,7 @@ public class StudentParticipation extends Participation {
         return "StudentParticipation{" + "id=" + getId() + ", presentationScore=" + presentationScore + ", " + participantString + "}";
     }
 
-    public boolean isTestRunParticipation() {
+    public boolean isTestRun() {
         return Boolean.TRUE.equals(testRun);
     }
 

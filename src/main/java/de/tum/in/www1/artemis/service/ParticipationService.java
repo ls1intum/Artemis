@@ -1054,7 +1054,7 @@ public class ParticipationService {
     public List<StudentParticipation> findByExamIdWithSubmissionRelevantResult(Long examId) {
         var participations = studentParticipationRepository.findByExamIdWithEagerSubmissionsRatedResults(examId);
         // filter out the participations of test runs which can only be made by instructors
-        participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRunParticipation()).collect(Collectors.toList());
+        participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).collect(Collectors.toList());
         return filterParticipationsWithRelevantResults(participations, true);
     }
 
@@ -1369,14 +1369,14 @@ public class ParticipationService {
 
     /**
      * Loads the test run participation for the given user id (which typically belongs to an instructor or admin)
-     * See {@link StudentParticipation#isTestRunParticipation()}
+     * See {@link StudentParticipation#isTestRun()}
      * @param userId the id of the user
      * @param exercise the exercise id
      * @return the optional test run participation with submissions and results loaded
      */
     public Optional<StudentParticipation> findTestRunParticipationForExercise(Long userId, Exercise exercise) {
         var studentParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(userId, List.of(exercise));
-        if (studentParticipations.isEmpty() || !studentParticipations.get(0).isTestRunParticipation()) {
+        if (studentParticipations.isEmpty() || !studentParticipations.get(0).isTestRun()) {
             return Optional.empty();
         }
 
