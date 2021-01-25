@@ -84,6 +84,8 @@ public class ParticipationService {
 
     private final UrlService urlService;
 
+    private final FeedbackRepository feedbackRepository;
+
     public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
@@ -91,7 +93,7 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserService userService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService,
-            @Lazy QuizScheduleService quizScheduleService, QuizExerciseRepository quizExerciseRepository, RatingRepository ratingRepository, UrlService urlService) {
+            @Lazy QuizScheduleService quizScheduleService, QuizExerciseRepository quizExerciseRepository, RatingRepository ratingRepository, UrlService urlService, FeedbackRepository feedbackRepository) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -113,6 +115,7 @@ public class ParticipationService {
         this.quizExerciseRepository = quizExerciseRepository;
         this.ratingRepository = ratingRepository;
         this.urlService = urlService;
+        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -281,17 +284,36 @@ public class ParticipationService {
      */
     public void markSubmissionsOfTestRunParticipations(List<StudentParticipation> participations) {
         for (final var participation : participations) {
-            Submission submission = participation.getSubmissions().iterator().next();
+            Submission submission = participation.findLatestSubmission().get();
+
             // We add a result for test runs with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
-            submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).get();
-            if (submission.getLatestResult() == null) {
+            submission = submissionRepository.findWithEagerResultAndFeedbackById(submission.getId()).get();
+            var submissionWithManualResult = submission.getManualResults();
+            if (submissionWithManualResult == null || submissionWithManualResult.isEmpty()) {
                 submission.setSubmissionDate(ZonedDateTime.now());
                 Result result = new Result();
                 result.setParticipation(participation);
                 result.setAssessor(participation.getStudent().get());
                 result.setAssessmentType(AssessmentType.TEST_RUN);
 
-                if (submission instanceof QuizSubmission) {
+                if (submission instanceof ProgrammingSubmission) {
+                    // TODO: clarify how to handle submission with no automatic results (student did not participate in exam exercise/test runs)
+                    var latestAutomaticResult = submission.getLatestResult();
+                    List<Feedback> automaticFeedbacks = latestAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+                    result = resultRepository.save(result);
+
+                    // Copy automatic feedbacks into the manual result
+                    for (Feedback feedback : automaticFeedbacks) {
+                        feedback = feedbackRepository.save(feedback);
+                        feedback.setResult(result);
+                    }
+                    result.setFeedbacks(automaticFeedbacks);
+                    result.setResultString(latestAutomaticResult.getResultString());
+                    resultRepository.save(result);
+                    result.setSubmission(submission);
+                    submission.addResult(result);
+                    submissionRepository.save(submission);
+                } else if (submission instanceof QuizSubmission) {
                     participation.setExercise(quizExerciseRepository.findWithEagerQuestionsById(participation.getExercise().getId()).orElse(null));
                     // set submission to calculate scores
                     result.setSubmission(submission);
@@ -328,7 +350,7 @@ public class ParticipationService {
                 Set<Submission> programmingSubmissions = new HashSet<>(submissionRepository.findAllByParticipationId(programmingParticipation.getId()));
                 programmingParticipation.setSubmissions(programmingSubmissions);
                 if (programmingSubmissions.isEmpty()) {
-                    final var submission = initializeSubmission(programmingParticipation, programmingParticipation.getExercise(), null).get();
+                    final var submission = initializeSubmission(programmingParticipation, programmingParticipation.getExercise(), SubmissionType.MANUAL).get();
                     // required so that the assessment dashboard statistics are calculated correctly
                     submission.setSubmitted(true);
                     submissionRepository.save(submission);

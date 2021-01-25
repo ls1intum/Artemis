@@ -101,9 +101,11 @@ public class SubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         User user = userService.getUserWithGroupsAndAuthorities();
+
         var testRunParticipation = participationService.findTestRunParticipationForExercise(user.getId(), exercise);
         if (testRunParticipation.isPresent()) {
             var latestSubmission = testRunParticipation.get().findLatestSubmission().get();
+            latestSubmission.removeAutomaticResults();
             return ResponseEntity.ok().body(List.of(latestSubmission));
         }
         throw new EntityNotFoundException("There is no test run participation for exercise: " + exerciseId);
