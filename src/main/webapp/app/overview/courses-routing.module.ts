@@ -107,13 +107,6 @@ const routes: Routes = [
             pageTitle: 'overview.lectures',
         },
         canActivate: [UserRouteAccessService],
-        children: [
-            {
-                path: '',
-                pathMatch: 'full',
-                loadChildren: () => import('app/overview/student-questions/student-questions.module').then((m) => m.ArtemisStudentQuestionsModule),
-            },
-        ],
     },
 ];
 

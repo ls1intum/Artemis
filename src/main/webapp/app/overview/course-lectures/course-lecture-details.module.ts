@@ -7,6 +7,7 @@ import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/cour
 import { NgModule } from '@angular/core';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
+import { ArtemisStudentQuestionsModule } from 'app/overview/student-questions/student-questions.module';
 
 @NgModule({
     imports: [
@@ -17,6 +18,7 @@ import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module
         ArtemisLectureUnitsModule,
         ArtemisLearningGoalsModule,
         ArtemisCoursesRoutingModule,
+        ArtemisStudentQuestionsModule,
     ],
     declarations: [CourseLectureDetailsComponent],
     exports: [CourseLectureDetailsComponent],
