@@ -8,10 +8,8 @@ import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-l
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
-import { ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview/exercise-details/programming-exercise-student-ide-actions.component';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
-import { ExerciseActionButtonComponent } from 'app/overview/exercise-details/exercise-action-button.component';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
@@ -21,7 +19,6 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { CoursesComponent } from 'app/overview/courses.component';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
-import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration-selector/course-registration-selector.component';
@@ -39,9 +36,11 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { CourseLearningGoalsComponent } from './course-learning-goals/course-learning-goals.component';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
+import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 
 @NgModule({
     imports: [
+        ArtemisExerciseButtonsModule,
         ArtemisMarkdownEditorModule,
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
@@ -74,9 +73,6 @@ import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-g
         CourseLecturesComponent,
         CourseLectureRowComponent,
         CourseLectureDetailsComponent,
-        ExerciseActionButtonComponent,
-        ExerciseDetailsStudentActionsComponent,
-        ProgrammingExerciseStudentIdeActionsComponent,
         CourseExamsComponent,
         CourseExamDetailComponent,
         ExerciseUnitComponent,
@@ -85,6 +81,6 @@ import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-g
         TextUnitComponent,
         CourseLearningGoalsComponent,
     ],
-    exports: [ExerciseActionButtonComponent, ExerciseDetailsStudentActionsComponent, ExerciseUnitComponent, AttachmentUnitComponent, VideoUnitComponent, TextUnitComponent],
+    exports: [ExerciseUnitComponent, AttachmentUnitComponent, VideoUnitComponent, TextUnitComponent],
 })
 export class ArtemisCoursesModule {}

@@ -26,6 +26,7 @@ import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-participation-summary.module';
 import { ExamTimerComponent } from './timer/exam-timer.component';
+import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 
 const ENTITY_STATES = [...examParticipationState];
 
@@ -45,6 +46,7 @@ const ENTITY_STATES = [...examParticipationState];
         ArtemisExerciseHintParticipationModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisCoursesModule,
+        ArtemisExerciseButtonsModule,
         OrionModule,
         ArtemisProgrammingAssessmentModule,
         ArtemisParticipationSummaryModule,
