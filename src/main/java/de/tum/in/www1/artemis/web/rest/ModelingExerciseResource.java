@@ -423,7 +423,8 @@ public class ModelingExerciseResource {
      * Return the latest plagiarism result or null, if no plagiarism was detected for this exercise
      * yet.
      *
-     * @param exerciseId ID of the modeling exercise for which the plagiarism result should be returned
+     * @param exerciseId ID of the modeling exercise for which the plagiarism result should be
+     *                   returned
      * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the
      * parameters are invalid
      */
@@ -454,14 +455,16 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * GET /check-plagiarism : Run similarity check pair-wise against all submissions of a given
-     * exercises. This can be used with human intelligence to identify suspicious similar
-     * submissions which might be a sign for plagiarism.
+     * GET /modeling-exercises/{exerciseId}/check-plagiarism
+     * <p>
+     * Start the automated plagiarism detection for the given exercise and return its result.
      *
-     * @param exerciseId for which all submission should be checked
+     * @param exerciseId          for which all submission should be checked
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
-     * @param minimumScore consider only submissions whose score is greater or equal to this value
-     * @param minimumSize consider only submissions whose size is greater or equal to this value
+     * @param minimumScore        consider only submissions whose score is greater or equal to this
+     *                            value
+     * @param minimumSize         consider only submissions whose size is greater or equal to this
+     *                            value
      * @return the ResponseEntity with status 200 (OK) and the list of pair-wise submission
      * similarities above a threshold of 80%.
      */
@@ -482,6 +485,8 @@ public class ModelingExerciseResource {
         }
 
         ModelingPlagiarismResult result = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
+
+        plagiarismService.savePlagiarismResult(result);
 
         return ResponseEntity.ok(result);
     }

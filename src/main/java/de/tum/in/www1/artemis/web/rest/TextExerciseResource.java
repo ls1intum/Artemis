@@ -600,12 +600,16 @@ public class TextExerciseResource {
     }
 
     /**
-     * GET /check-plagiarism : Use JPlag to detect plagiarism in text exercises
+     * GET /text-exercises/{exerciseId}/check-plagiarism
+     * <p>
+     * Start the automated plagiarism detection for the given exercise and return its result.
      *
-     * @param exerciseId ID of the exercise for which to detect plagiarism
+     * @param exerciseId          ID of the exercise for which to detect plagiarism
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
-     * @param minimumScore consider only submissions whose score is greater or equal to this value
-     * @param minimumSize consider only submissions whose size is greater or equal to this value
+     * @param minimumScore        consider only submissions whose score is greater or equal to this
+     *                            value
+     * @param minimumSize         consider only submissions whose size is greater or equal to this
+     *                            value
      * @return the result of the JPlag plagiarism detection
      */
     @GetMapping("/text-exercises/{exerciseId}/check-plagiarism")
@@ -625,6 +629,8 @@ public class TextExerciseResource {
         }
 
         TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise, similarityThreshold, minimumScore, minimumSize);
+
+        plagiarismService.savePlagiarismResult(result);
 
         return ResponseEntity.ok(result);
     }
