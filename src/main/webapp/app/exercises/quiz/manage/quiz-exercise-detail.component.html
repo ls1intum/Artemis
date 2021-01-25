@@ -113,7 +113,19 @@
                     </div>
                 </div>
             </div>
-
+            <div class="row">
+                <div class="col">
+                    <div class="form-group-narrow">
+                        <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | translate }}</label>
+                        <div>
+                            <jhi-included-in-overall-score-picker
+                                [includedInOverallScore]="quizExercise.includedInOverallScore"
+                                (includedInOverallScoreChange)="includedInOverallScoreChange($event)"
+                            ></jhi-included-in-overall-score-picker>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="text-left mt-1 mb-1">
                 <h4>
                     <span jhiTranslate="artemisApp.quizExercise.questions"> </span>

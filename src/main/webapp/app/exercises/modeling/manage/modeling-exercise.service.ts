@@ -37,7 +37,8 @@ export class ModelingExerciseService {
     }
 
     create(modelingExercise: ModelingExercise): Observable<EntityResponseType> {
-        const copy = this.exerciseService.convertDateFromClient(modelingExercise);
+        let copy = this.exerciseService.convertDateFromClient(modelingExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
             .post<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
@@ -45,7 +46,8 @@ export class ModelingExerciseService {
 
     update(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        const copy = this.exerciseService.convertDateFromClient(modelingExercise);
+        let copy = this.exerciseService.convertDateFromClient(modelingExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
             .put<ModelingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));

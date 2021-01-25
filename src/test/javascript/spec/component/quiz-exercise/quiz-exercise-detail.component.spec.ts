@@ -70,6 +70,7 @@ describe('QuizExercise Management Detail Component', () => {
         quizExercise.duration = 600;
         answerOption.isCorrect = true;
         mcQuestion.title = 'test';
+        mcQuestion.score = 10;
         mcQuestion.answerOptions = [answerOption];
         quizExercise.quizQuestions = [mcQuestion];
         quizExercise.isPlannedToStart = false;
@@ -114,6 +115,7 @@ describe('QuizExercise Management Detail Component', () => {
         question.dropLocations = [dropLocation];
         const correctDragAndDropMapping = new DragAndDropMapping(dragItem1, dropLocation);
         question.correctMappings = [correctDragAndDropMapping];
+        question.score = 10;
         return { question, dragItem1, dragItem2, dropLocation, correctDragAndDropMapping };
     };
 
@@ -137,6 +139,7 @@ describe('QuizExercise Management Detail Component', () => {
         const shortAnswerMapping1 = new ShortAnswerMapping(spot1, shortAnswerSolution1);
         const shortAnswerMapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
         question.correctMappings = [shortAnswerMapping1, shortAnswerMapping2];
+        question.score = 10;
         return { question, shortAnswerMapping1, shortAnswerMapping2, spot1, spot2, shortAnswerSolution1, shortAnswerSolution2 };
     };
 

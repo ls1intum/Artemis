@@ -92,6 +92,12 @@ public class FileUploadExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new fileUploadExercise cannot already have an ID", "idexists")).body(null);
         }
 
+        // Validate score settings
+        Optional<ResponseEntity<FileUploadExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(fileUploadExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
+        }
+
         // Validate the new file upload exercise
         validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
 
@@ -164,6 +170,12 @@ public class FileUploadExerciseResource {
 
         // Validate the updated file upload exercise
         validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
+
+        // Validate score settings
+        Optional<ResponseEntity<FileUploadExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(fileUploadExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
+        }
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
