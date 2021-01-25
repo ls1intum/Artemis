@@ -31,18 +31,23 @@ public class ResultListener {
     }
 
     /**
-     * Remove associated student scores before a result is removed
+     * Remove or update associated participation scores before a result is removed
      *
      * @param resultToBeDeleted result about to be remove
      */
     @PreRemove
-    public void removeAssociatedStudentScores(Result resultToBeDeleted) {
+    public void removeOrUpdateAssociatedParticipantScore(Result resultToBeDeleted) {
         scoreService.removeOrUpdateAssociatedParticipantScore(resultToBeDeleted);
     }
 
+    /**
+     * Update or create a new participation score after a result is created or updated
+     *
+     * @param result created or updated result
+     */
     @PostUpdate
     @PostPersist
-    public void updateStudentScores(Result result) {
+    public void updateOrCreateParticipantScore(Result result) {
         scoreService.updateOrCreateParticipantScore(result);
 
     }
