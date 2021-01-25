@@ -55,6 +55,10 @@ a.disabled {
     white-space: nowrap;
 }
 
+a.btn {
+    -webkit-appearance: none !important;
+}
+
 .btn-default {
     color: #333;
     background-color: #fff;
