@@ -6,19 +6,37 @@ import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-
 import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { NgModule } from '@angular/core';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
-import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
-import { ArtemisStudentQuestionsModule } from 'app/overview/student-questions/student-questions.module';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { RouterModule, Routes } from '@angular/router';
 
+const routes: Routes = [
+    {
+        path: '',
+        component: CourseLectureDetailsComponent,
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'overview.lectures',
+        },
+        canActivate: [UserRouteAccessService],
+        children: [
+            {
+                path: '',
+                pathMatch: 'full',
+                loadChildren: () => import('../../overview/student-questions/student-questions.module').then((m) => m.ArtemisStudentQuestionsModule),
+            },
+        ],
+    },
+];
 @NgModule({
     imports: [
+        RouterModule.forChild(routes),
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
         MomentModule,
         ArtemisSharedPipesModule,
         ArtemisLectureUnitsModule,
         ArtemisLearningGoalsModule,
-        ArtemisCoursesRoutingModule,
-        ArtemisStudentQuestionsModule,
     ],
     declarations: [CourseLectureDetailsComponent],
     exports: [CourseLectureDetailsComponent],

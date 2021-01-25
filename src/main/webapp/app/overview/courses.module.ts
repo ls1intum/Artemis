@@ -31,11 +31,9 @@ import { CourseLearningGoalsComponent } from './course-learning-goals/course-lea
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
-import { ArtemisCourseLectureDetailsModule } from 'app/overview/course-lectures/course-lecture-details.module';
 
 @NgModule({
     imports: [
-        ArtemisCourseLectureDetailsModule,
         ArtemisExerciseButtonsModule,
         ArtemisCourseExerciseRowModule,
         ArtemisSharedModule,

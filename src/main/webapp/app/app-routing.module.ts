@@ -33,6 +33,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 },
                 // ===== COURSE MANAGEMENT =====
                 {
+                    path: 'courses/:courseId/lectures/:lectureId',
+                    loadChildren: () => import('./overview/course-lectures/course-lecture-details.module').then((m) => m.ArtemisCourseLectureDetailsModule),
+                },
+                {
                     path: 'course-management',
                     loadChildren: () => import('./course/manage/course-management.module').then((m) => m.ArtemisCourseManagementModule),
                     data: {
