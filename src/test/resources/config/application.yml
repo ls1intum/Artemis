@@ -20,13 +20,16 @@ artemis:
     version: 1.3.3-beta7
     file-upload-path: uploads
     submission-export-path: exports
+    resultListener:
+        isActive: false
+
 
 spring:
     application:
         name: Artemis
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:h2:mem:Artemis;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        url: jdbc:h2:mem:Artemis;MODE=MYSQL;DATABASE_TO_UPPER=false;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;
         name:
         username:
         password:

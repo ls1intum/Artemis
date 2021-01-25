@@ -51,24 +51,6 @@ public class ScoreService {
         participantScoreRepository.removeAssociatedWithExercise(exercise.getId());
     }
 
-    /**
-     * Remove all student scores associated with an user
-     *
-     * @param user user for which to remove the associated student scores
-     */
-    public void removeAssociatedWithUser(User user) {
-        studentScoreRepository.removeAssociatedWithUser(user.getId());
-    }
-
-    /**
-     * Remove all team scores associated with a team
-     *
-     * @param team team for which to remove the associated team scores
-     */
-    public void removeAssociatedWithTeam(Team team) {
-        teamScoreRepository.removeAssociatedWithTeam(team.getId());
-    }
-
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void removeOrUpdateAssociatedParticipantScore(Result resultToBeDeleted) {
         Optional<ParticipantScore> associatedStudentScoreOptional = participantScoreRepository.findParticipantScoreAssociatedWithResult(resultToBeDeleted.getId());

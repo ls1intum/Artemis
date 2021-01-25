@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -14,12 +14,11 @@ import de.tum.in.www1.artemis.domain.scores.TeamScore;
 public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
 
     @Query("""
-            DELETE
-            FROM TeamScore ts
-            WHERE ts.team.id= :#{#teamId}
+                SELECT DISTINCT ts
+                FROM TeamScore ts
+                WHERE ts.team.id = :#{#teamId}
             """)
-    @Modifying
-    void removeAssociatedWithTeam(@Param("teamId") Long teamId);
+    List<TeamScore> findTeamScoreByTeamId(@Param("teamId") Long teamId);
 
     @Query("""
                 SELECT ts
