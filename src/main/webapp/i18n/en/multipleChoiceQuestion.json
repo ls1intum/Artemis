@@ -40,6 +40,7 @@
                 "link": "Link",
                 "orderedList": "Ordered List",
                 "imageUpload": "Attachment",
+                "codeBlock": "Code Block",
                 "code": "Code",
                 "color": "Color",
                 "style": "Style"

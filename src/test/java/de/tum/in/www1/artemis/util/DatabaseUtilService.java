@@ -1192,6 +1192,12 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
+    public Result addFeedbackToResult(Feedback feedback, Result result) {
+        feedbackRepo.save(feedback);
+        result.addFeedback(feedback);
+        return resultRepo.save(result);
+    }
+
     public Result addFeedbackToResults(Result result) {
         List<Feedback> feedback = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
         feedback.addAll(ModelFactory.generateFeedback());
@@ -1319,13 +1325,17 @@ public class DatabaseUtilService {
         return programmingExercise;
     }
 
-    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed) {
+    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed, String commitHash) {
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
         programmingSubmission.setBuildFailed(buildFailed);
         programmingSubmission.type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now());
-        programmingSubmission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
+        programmingSubmission.setCommitHash(commitHash);
         programmingSubmission.setParticipation(participation);
         return submissionRepository.save(programmingSubmission);
+    }
+
+    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed) {
+        return createProgrammingSubmission(participation, buildFailed, TestConstants.COMMIT_HASH_STRING);
     }
 
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
@@ -2109,13 +2119,14 @@ public class DatabaseUtilService {
     }
 
     public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission) {
+        Submission submission;
         if (exampleSubmission.getSubmission() instanceof ModelingSubmission) {
-            modelingSubmissionRepo.save((ModelingSubmission) exampleSubmission.getSubmission());
+            submission = modelingSubmissionRepo.save((ModelingSubmission) exampleSubmission.getSubmission());
         }
         else {
-            textSubmissionRepo.save((TextSubmission) exampleSubmission.getSubmission());
+            submission = textSubmissionRepo.save((TextSubmission) exampleSubmission.getSubmission());
         }
-
+        exampleSubmission.setSubmission(submission);
         return exampleSubmissionRepo.save(exampleSubmission);
     }
 
@@ -2286,11 +2297,12 @@ public class DatabaseUtilService {
             for (var spot : ((ShortAnswerQuestion) question).getSpots()) {
                 ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
                 submittedText.setSpot(spot);
+                var correctText = ((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText();
                 if (correct) {
-                    submittedText.setText(((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText());
+                    submittedText.setText(correctText);
                 }
                 else {
-                    submittedText.setText("wrong short answer");
+                    submittedText.setText(correctText.toUpperCase());
                 }
                 submittedAnswer.addSubmittedTexts(submittedText);
                 // also invoke remove once
@@ -2328,6 +2340,9 @@ public class DatabaseUtilService {
     public ShortAnswerQuestion createShortAnswerQuestion() {
         ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(2).text("This is a long answer text");
         sa.setScoringType(ScoringType.ALL_OR_NOTHING);
+        // TODO: we should test different values here
+        sa.setMatchLetterCase(true);
+        sa.setSimilarityValue(100);
 
         var shortAnswerSpot1 = new ShortAnswerSpot().spotNr(0).width(1);
         shortAnswerSpot1.setTempID(generateTempId());

@@ -42,7 +42,8 @@
             "participationSubmission": {
                 "submissionType": "Abgabe Typ",
                 "submissionDate": "Abgabe Datum",
-                "result": "Ergebnis",
+                "resultCount": "Anzahl Ergebnisse",
+                "lastResult": "Letztes Ergebnis",
                 "assessor": "Bewerter",
                 "submissionsForParticipation": "Abgaben von {{ participant }} für die Übung {{ exercise }}",
                 "action": "Aktion",
