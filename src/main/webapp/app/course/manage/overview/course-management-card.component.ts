@@ -17,6 +17,7 @@ export class CourseManagementCardComponent implements OnChanges {
 
     @Input() course: Course;
     @Input() courseStatistic: CourseManagementOverviewCourseDto;
+    @Input() isGuidedTour: boolean;
 
     futureExercises: Exercise[];
     currentExercises: Exercise[];

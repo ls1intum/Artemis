@@ -35,7 +35,7 @@
     <div class="container flex-container">
         <div class="row">
             <div class="col-12 section-card exercises-cards">
-                <div class="col section-header" [routerLink]="['/course-management', course.id, 'exercises']">
+                <div class="col section-header" [routerLink]="['/course-management', course.id, 'exercises']" [class.guided-tour]="isGuidedTour">
                     <h5 class="text-white text-center">{{ 'entity.action.exercise' | translate }}</h5>
                 </div>
                 <div class="section-content" *ngIf="!!courseStatistic">
@@ -151,6 +151,7 @@
             [routerLink]="['/course-management', course.id, 'tutor-dashboard']"
             class="btn btn-info mr-1 mb-1"
             [ngbTooltip]="'entity.action.assessmentDashboard' | translate"
+            [class.guided-tour]="isGuidedTour"
         >
             <fa-icon [icon]="'th-list'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.assessmentDashboard' | translate }}</span>

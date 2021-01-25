@@ -43,6 +43,7 @@
                     class="col-md-8"
                     [course]="course"
                     [courseStatistic]="statistics[course.id]"
+                    [isGuidedTour]="course === courseForGuidedTour"
                 ></jhi-course-management-card>
             </div>
             <div class="collapsed"></div>
