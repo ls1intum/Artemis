@@ -14,37 +14,18 @@ import de.tum.in.www1.artemis.domain.scores.StudentScore;
 public interface StudentScoreRepository extends JpaRepository<StudentScore, Long> {
 
     @Query("""
-            SELECT ss
-            FROM StudentScore ss
-            WHERE ss.lastResult.id= :#{#resultId} OR ss.lastRatedResult.id = :#{#resultId}
-            """)
-    Optional<StudentScore> findStudentScoreAssociatedWithResult(@Param("resultId") Long resultId);
-
-    @Query("""
             DELETE
             FROM StudentScore ss
-            WHERE ss.exercise.id= :#{#exerciseId}
+            WHERE ss.user.id= :#{#userId}
             """)
     @Modifying
-    void removeAssociatedWithExercise(@Param("exerciseId") Long exerciseId);
+    void removeAssociatedWithUser(@Param("userId") Long userId);
 
     @Query("""
-                SELECT ss
+            SELECT ss
                     FROM StudentScore ss
                     WHERE ss.user.id = :#{#userId} AND ss.exercise.id = :#{#exerciseId}
             """)
     Optional<StudentScore> findStudentScoreByStudentAndExercise(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
-
-    // @Query("""
-    // SELECT ss
-    // FROM StudentScore ss
-    // WHERE ss.lastRatedResult.id= :#{#ratedRatedResultId}
-    // """) Optional<StudentScore> studentScoreConnectedToRatedResult(@Param("ratedResultId") Long ratedRatedResultId);
-    //
-    // @Query("""
-    // SELECT ss
-    // FROM StudentScore ss
-    // WHERE ss.lastResult.id= :#{#resultId}
-    // """) Optional<StudentScore> studentScoreConnectedToResult(@Param("resultId") Long resultId);
 
 }

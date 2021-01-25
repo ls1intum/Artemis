@@ -35,10 +35,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
-import de.tum.in.www1.artemis.repository.AuthorityRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -92,6 +89,8 @@ public class UserService {
 
     private final AuthorityRepository authorityRepository;
 
+    private final StudentScoreRepository studentScoreRepository;
+
     private final GuidedTourSettingsRepository guidedTourSettingsRepository;
 
     private final CacheManager cacheManager;
@@ -103,13 +102,14 @@ public class UserService {
     private ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService,
-            GuidedTourSettingsRepository guidedTourSettingsRepository, CourseRepository courseRepository) {
+            GuidedTourSettingsRepository guidedTourSettingsRepository, CourseRepository courseRepository, StudentScoreRepository studentScoreRepository) {
         this.userRepository = userRepository;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
         this.ldapUserService = ldapUserService;
         this.guidedTourSettingsRepository = guidedTourSettingsRepository;
         this.courseRepository = courseRepository;
+        this.studentScoreRepository = studentScoreRepository;
     }
 
     @Autowired
@@ -641,6 +641,7 @@ public class UserService {
         // 8) Remove the user from its teams
         // 9) Delete the submissionVersion / remove the user from the submissionVersion
         // 10) Delete the tutor participation
+        studentScoreRepository.removeAssociatedWithUser(user.getId());
         userRepository.delete(user);
         clearUserCaches(user);
         userRepository.flush();

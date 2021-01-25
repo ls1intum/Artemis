@@ -10,24 +10,24 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.service.StudentScoreService;
+import de.tum.in.www1.artemis.service.ScoreService;
 
 @Component
 public class ResultListener {
 
     private final Logger log = LoggerFactory.getLogger(ResultListener.class);
 
-    private StudentScoreService studentScoreService;
+    private ScoreService scoreService;
 
     /**
      * While {@link javax.persistence.EntityManager} is being initialized it instantiates {@link javax.persistence.EntityListeners} including
-     * {@link ResultListener}. Now {@link ResultListener} requires the {@link StudentScoreService} which requires {@link de.tum.in.www1.artemis.repository.StudentScoreRepository}
+     * {@link ResultListener}. Now {@link ResultListener} requires the {@link ScoreService} which requires {@link de.tum.in.www1.artemis.repository.StudentScoreRepository}
      * which requires {@link javax.persistence.EntityManager}. To break this circular dependency we use lazy injection of the service here.
      *
-     * @param studentScoreService the student score service that will be lazily injected by Spring
+     * @param scoreService the student score service that will be lazily injected by Spring
      */
-    public ResultListener(@Lazy StudentScoreService studentScoreService) {
-        this.studentScoreService = studentScoreService;
+    public ResultListener(@Lazy ScoreService scoreService) {
+        this.scoreService = scoreService;
     }
 
     /**
@@ -37,13 +37,13 @@ public class ResultListener {
      */
     @PreRemove
     public void removeAssociatedStudentScores(Result resultToBeDeleted) {
-        studentScoreService.removeAssociatedStudentScores(resultToBeDeleted);
+        scoreService.removeOrUpdateAssociatedParticipantScore(resultToBeDeleted);
     }
 
     @PostUpdate
     @PostPersist
     public void updateStudentScores(Result result) {
-        studentScoreService.updateStudentScores(result);
+        scoreService.updateOrCreateParticipantScore(result);
 
     }
 }

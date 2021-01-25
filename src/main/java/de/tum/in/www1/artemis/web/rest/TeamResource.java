@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.TeamScoreRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -65,9 +66,11 @@ public class TeamResource {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final TeamScoreRepository teamScoreRepository;
+
     public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseService courseService,
             ExerciseService exerciseService, UserService userService, AuthorizationCheckService authCheckService, ParticipationService participationService,
-            SubmissionService submissionService, AuditEventRepository auditEventRepository) {
+            SubmissionService submissionService, AuditEventRepository auditEventRepository, TeamScoreRepository teamScoreRepository) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.teamWebsocketService = teamWebsocketService;
@@ -78,6 +81,7 @@ public class TeamResource {
         this.participationService = participationService;
         this.submissionService = submissionService;
         this.auditEventRepository = auditEventRepository;
+        this.teamScoreRepository = teamScoreRepository;
     }
 
     /**
@@ -269,6 +273,8 @@ public class TeamResource {
         auditEventRepository.add(auditEvent);
         // Delete all participations of the team first and then the team itself
         participationService.deleteAllByTeamId(id, false, false);
+        // delete all team scores associated with the team
+        teamScoreRepository.removeAssociatedWithTeam(team.getId());
         teamRepository.delete(team);
 
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, team, null);

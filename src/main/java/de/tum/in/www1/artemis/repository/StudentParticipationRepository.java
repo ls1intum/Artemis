@@ -27,13 +27,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     boolean existsByExerciseId(@Param("exerciseId") Long exerciseId);
 
-    @Query("""
-            SELECT DISTINCT p
-            FROM Result r JOIN r.submission s JOIN s.participation p
-            WHERE r.id = :#{#resultId}
-            """)
-    Optional<StudentParticipation> findStudentParticipationAssociatedWithResult(@Param("resultId") Long resultId);
-
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results r where participation.exercise.course.id = :#{#courseId} and (r.rated is null or r.rated = true)")
     List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") Long courseId);
 

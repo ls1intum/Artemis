@@ -66,7 +66,19 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                     ORDER BY p.id DESC, s.id DESC, r.id DESC
 
             """)
-    List<Result> getResultsOrderedByParticipationIdSubmissionIdResultIdDesc(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+    List<Result> getResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+
+    @Query("""
+                    SELECT r
+                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+                    WHERE e.id = :exerciseId
+                    AND p.team.id = :teamId
+                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
+
+                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+
+            """)
+    List<Result> getResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     @Query("""
                     SELECT r
@@ -76,7 +88,17 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                     AND r.score IS NOT NULL AND r.completionDate IS NOT NULL AND r.rated = true
                     ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDesc(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+    List<Result> getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+
+    @Query("""
+                    SELECT r
+                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+                    WHERE e.id = :exerciseId
+                    AND p.team.id = :teamId
+                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL AND r.rated = true
+                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+            """)
+    List<Result> getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     /**
      * calculates the average score and the participation rate of students for each given individual course exercise
@@ -87,31 +109,31 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      */
     @Query("""
             SELECT
-            e.id,
-            AVG(r.score),
-                Count(Distinct p.student.id),
-                (SELECT count(distinct u.id)
-                FROM User u
-                WHERE
-                e.course.studentGroupName member of u.groups
-                AND e.course.teachingAssistantGroupName not member of u.groups
-                AND e.course.instructorGroupName not member of u.groups
-                )
-                FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
-                WHERE e.id IN :exerciseIds
-                AND e.course.studentGroupName member of p.student.groups
-                AND e.course.teachingAssistantGroupName not member of p.student.groups
-                AND e.course.instructorGroupName not member of p.student.groups
-                AND r.score IS NOT NULL
-                AND
-                s.id = (
-                    SELECT max(s2.id)
-                    FROM Submission s2 JOIN s2.results r2
-                    WHERE s2.participation.id = s.participation.id
-                    AND r2.score IS NOT NULL
+                e.id,
+                AVG(r.score),
+                    Count(Distinct p.student.id),
+                    (SELECT count(distinct u.id)
+                    FROM User u
+                    WHERE
+                    e.course.studentGroupName member of u.groups
+                    AND e.course.teachingAssistantGroupName not member of u.groups
+                    AND e.course.instructorGroupName not member of u.groups
                     )
-                GROUP BY e.id
-                """)
+                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+                    WHERE e.id IN :exerciseIds
+                    AND e.course.studentGroupName member of p.student.groups
+                    AND e.course.teachingAssistantGroupName not member of p.student.groups
+                    AND e.course.instructorGroupName not member of p.student.groups
+                    AND r.score IS NOT NULL
+                    AND
+                    s.id = (
+                        SELECT max(s2.id)
+                        FROM Submission s2 JOIN s2.results r2
+                        WHERE s2.participation.id = s.participation.id
+                        AND r2.score IS NOT NULL
+                        )
+                    GROUP BY e.id
+                    """)
     List<Object[]> calculateExerciseStatisticsForIndividualCourseExercises(@Param("exerciseIds") List<Long> exerciseIds);
 
     /**
