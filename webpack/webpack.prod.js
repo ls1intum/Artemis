@@ -96,7 +96,7 @@ module.exports = merge(commonConfig({ env: ENV }), {
         runtimeChunk: false,
         minimizer: [
             new TerserPlugin({
-                parallel: true,
+                parallel: 2,
                 cache: true,
                 sourceMap: true, // Enable source maps. Please note that this will slow down the build
                 terserOptions: {

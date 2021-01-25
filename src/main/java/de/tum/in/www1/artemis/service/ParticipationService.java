@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -576,7 +576,7 @@ public class ParticipationService {
             try {
                 continuousIntegrationService.get().configureBuildPlan(participation);
             }
-            catch (ContinousIntegrationException ex) {
+            catch (ContinuousIntegrationException ex) {
                 // this means something with the configuration of the build plan is wrong.
                 // we try to recover from typical edge cases by setting the initialization state back, so that the previous action (copy build plan) is tried again, when
                 // the user again clicks on the start / resume exercise button.
