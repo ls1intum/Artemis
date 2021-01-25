@@ -123,6 +123,7 @@ public class ProgrammingExerciseTestCaseService {
         Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findByExerciseId(exercise.getId());
         // Do not generate test cases for static code analysis feedback
         Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = feedbacks.stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback())
+                // we use default values for weight, bonus multiplier and bonus points
                 .map(feedback -> new ProgrammingExerciseTestCase().testName(feedback.getText()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true)
                         .visibility(TestCaseVisibility.ALWAYS))
                 .collect(Collectors.toSet());

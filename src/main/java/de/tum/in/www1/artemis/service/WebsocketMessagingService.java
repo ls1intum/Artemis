@@ -48,7 +48,9 @@ public class WebsocketMessagingService {
         // remove unnecessary properties to reduce the data sent to the client (we should not send the exercise and its potentially huge problem statement)
         var originalParticipation = result.getParticipation();
         result.setParticipation(originalParticipation.copyParticipationId());
-        var originalFeedback = new ArrayList<>(result.getFeedbacks());
+
+        final var originalAssessor = result.getAssessor();
+        final var originalFeedback = new ArrayList<>(result.getFeedbacks());
 
         // TODO: Are there other cases that must be handled here?
         if (participation instanceof StudentParticipation) {
@@ -60,6 +62,8 @@ public class WebsocketMessagingService {
             studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
         }
 
+        // Restore information that should not go to students but tutors, instructors, and admins should still see
+        result.setAssessor(originalAssessor);
         result.setFeedbacks(originalFeedback);
 
         // Send to tutors, instructors and admins
