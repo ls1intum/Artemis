@@ -117,6 +117,12 @@ public class ModelingExerciseResource {
             return responseFailure;
         }
 
+        // Validate score settings
+        Optional<ResponseEntity<ModelingExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(modelingExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
+        }
+
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(modelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
@@ -182,6 +188,12 @@ public class ModelingExerciseResource {
         ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(modelingExercise);
         if (responseFailure != null) {
             return responseFailure;
+        }
+
+        // Validate score settings
+        Optional<ResponseEntity<ModelingExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(modelingExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
         }
 
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
@@ -341,6 +353,12 @@ public class ModelingExerciseResource {
         ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(importedExercise);
         if (responseFailure != null) {
             return responseFailure;
+        }
+
+        // Validate score settings
+        Optional<ResponseEntity<ModelingExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(importedExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
         }
 
         if (importedExercise.isExamExercise()) {
