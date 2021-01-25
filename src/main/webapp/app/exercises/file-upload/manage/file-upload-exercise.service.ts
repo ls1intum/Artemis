@@ -24,6 +24,7 @@ export class FileUploadExerciseService {
     create(fileUploadExercise: FileUploadExercise): Observable<EntityResponseType> {
         let copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
         copy = this.formatFilePattern(copy);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
             .post<FileUploadExercise>(this.resourceUrl, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
@@ -39,6 +40,7 @@ export class FileUploadExerciseService {
         const options = createRequestOption(req);
         let copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
         copy = this.formatFilePattern(copy);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
             .put<FileUploadExercise>(`${this.resourceUrl}/${exerciseId}`, copy, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));

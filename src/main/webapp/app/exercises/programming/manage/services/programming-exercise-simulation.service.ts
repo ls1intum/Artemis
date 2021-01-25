@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 /**
  *
@@ -15,7 +16,12 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 export class ProgrammingExerciseSimulationService {
     public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
 
-    constructor(private http: HttpClient, private programmingExerciseService: ProgrammingExerciseService, private profileService: ProfileService) {}
+    constructor(
+        private http: HttpClient,
+        private programmingExerciseService: ProgrammingExerciseService,
+        private profileService: ProfileService,
+        private exerciseService: ExerciseService,
+    ) {}
 
     /**
      * Triggers the creation and setup of a new programming exercise without connection
@@ -24,7 +30,8 @@ export class ProgrammingExerciseSimulationService {
      * @param programmingExercise
      */
     automaticSetupWithoutConnectionToVCSandCI(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
-        const copy = this.programmingExerciseService.convertDataFromClient(programmingExercise);
+        let copy = this.programmingExerciseService.convertDataFromClient(programmingExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/no-vcs-and-ci-available', copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.programmingExerciseService.convertDateFromServer(res)));

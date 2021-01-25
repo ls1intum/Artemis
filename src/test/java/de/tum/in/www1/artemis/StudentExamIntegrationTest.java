@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
-import static de.tum.in.www1.artemis.util.TestConstants.*;
+import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
+import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_STRING;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -227,7 +228,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         // start exercises
 
         List<ProgrammingExercise> programmingExercises = new ArrayList<>();
-        for (var exercise : exam2.getExerciseGroups().get(4).getExercises()) {
+        for (var exercise : exam2.getExerciseGroups().get(6).getExercises()) {
             var programmingExercise = (ProgrammingExercise) exercise;
             programmingExercises.add(programmingExercise);
 
@@ -1305,7 +1306,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.reset();
         bambooRequestMockProvider.enableMockingOfRequests(true);
-        final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam2.getExerciseGroups().get(4).getExercises().iterator().next();
+        final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam2.getExerciseGroups().get(6).getExercises().iterator().next();
         final String projectKey = programmingExercise.getProjectKey();
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
 
