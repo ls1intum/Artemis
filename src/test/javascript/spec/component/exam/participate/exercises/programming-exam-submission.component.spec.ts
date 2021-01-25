@@ -20,6 +20,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Course } from 'app/entities/course.model';
 import * as moment from 'moment';
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -41,6 +42,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
 
         return TestBed.configureTestingModule({
             imports: [
+                MockModule(ArtemisExerciseButtonsModule),
                 MockModule(ArtemisProgrammingExerciseActionsModule),
                 MockModule(OrionModule),
                 MockModule(ArtemisCoursesModule),
