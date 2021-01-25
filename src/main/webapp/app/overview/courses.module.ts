@@ -26,23 +26,19 @@ import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
-import { ExerciseUnitComponent } from './course-lectures/exercise-unit/exercise-unit.component';
-import { AttachmentUnitComponent } from './course-lectures/attachment-unit/attachment-unit.component';
-import { VideoUnitComponent } from './course-lectures/video-unit/video-unit.component';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
-import { TextUnitComponent } from './course-lectures/text-unit/text-unit.component';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { CourseLearningGoalsComponent } from './course-learning-goals/course-learning-goals.component';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
+import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
 
 @NgModule({
     imports: [
+        ArtemisLectureUnitsModule,
         ArtemisExerciseButtonsModule,
         ArtemisCourseExerciseRowModule,
-        ArtemisMarkdownEditorModule,
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
         ChartsModule,
@@ -75,12 +71,7 @@ import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/co
         CourseLectureDetailsComponent,
         CourseExamsComponent,
         CourseExamDetailComponent,
-        ExerciseUnitComponent,
-        AttachmentUnitComponent,
-        VideoUnitComponent,
-        TextUnitComponent,
         CourseLearningGoalsComponent,
     ],
-    exports: [ExerciseUnitComponent, AttachmentUnitComponent, VideoUnitComponent, TextUnitComponent],
 })
 export class ArtemisCoursesModule {}
