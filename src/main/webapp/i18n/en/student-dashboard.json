@@ -93,6 +93,8 @@
                 "totalPoints": "Overall points: {{ number }} ({{ relative }}%)",
                 "presentationScore": "Presentation score: {{ number }}",
                 "noStatistics": "No statistics available for the course.",
+                "bonusPointTooltip": "Bonus Exercise: Points count as bonus points towards your course score!",
+                "notIncludedTooltip": "Not Included Exercise: Points do NOT count towards your course score!",
                 "exerciseAchievedScore": "Achieved Score: {{ points }} points ({{ percentage }}%)",
                 "exerciseMissedScore": "Missed Score: {{ points }} points ({{ percentage }}%)",
                 "exerciseNotGraded": "{{ exercise }} has not yet been graded.",

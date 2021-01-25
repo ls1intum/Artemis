@@ -1,7 +1,6 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiEventManager } from 'ng-jhipster';
-import { JhiAlertService } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -38,7 +37,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseExerciseService: CourseExerciseService,
-        private exerciseService: ExerciseService,
+        public exerciseService: ExerciseService,
         private accountService: AccountService,
         private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,

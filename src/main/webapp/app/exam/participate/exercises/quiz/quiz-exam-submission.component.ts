@@ -17,7 +17,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
 import { cloneDeep } from 'lodash';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { Submission } from 'app/entities/submission.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -32,6 +32,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
     readonly ButtonSize = ButtonSize;
     readonly ButtonType = ButtonType;
+    readonly IncludedInOverallScore = IncludedInOverallScore;
 
     @ViewChildren(MultipleChoiceQuestionComponent)
     mcQuestionComponents: QueryList<MultipleChoiceQuestionComponent>;

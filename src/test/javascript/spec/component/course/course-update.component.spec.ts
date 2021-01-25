@@ -7,8 +7,9 @@ import { CourseUpdateComponent } from 'app/course/manage/course-update.component
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
-import { SessionStorageService } from 'ngx-webstorage';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('Course Management Update Component', () => {
     let comp: CourseUpdateComponent;
@@ -18,10 +19,7 @@ describe('Course Management Update Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-            ],
+            providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
             declarations: [CourseUpdateComponent],
         })
             .overrideTemplate(CourseUpdateComponent, '')

@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { JhiEventManager } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { TranslateService } from '@ngx-translate/core';
 import { filter } from 'rxjs/operators';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -9,9 +9,9 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { JhiAlertService } from 'ng-jhipster';
 import { CourseExerciseService, CourseManagementService } from '../../../course/manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
@@ -21,6 +21,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     @Input() fileUploadExercises: FileUploadExercise[] = [];
 
     constructor(
+        public exerciseService: ExerciseService,
         private fileUploadExerciseService: FileUploadExerciseService,
         private courseExerciseService: CourseExerciseService,
         private jhiAlertService: JhiAlertService,

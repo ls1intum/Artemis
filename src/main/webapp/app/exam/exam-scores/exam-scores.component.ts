@@ -350,10 +350,14 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         headers.push('Overall Score (%)');
         headers.push('Submitted');
 
-        const data = this.studentResults.map((studentResult) => {
+        const rows = this.studentResults.map((studentResult) => {
             return this.convertToCSVRow(studentResult);
         });
 
+        this.exportAsCsv(rows, headers);
+    }
+
+    exportAsCsv(rows: any[], headers: string[]) {
         const options = {
             fieldSeparator: ';',
             quoteStrings: '"',
@@ -367,8 +371,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         };
 
         const csvExporter = new ExportToCsv(options);
-
-        csvExporter.generateCsv(data);
+        csvExporter.generateCsv(rows);
     }
 
     /**

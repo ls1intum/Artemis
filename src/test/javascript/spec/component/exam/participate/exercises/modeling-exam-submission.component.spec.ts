@@ -17,6 +17,7 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../../test.module';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -51,6 +52,7 @@ describe('ModelingExamSubmissionComponent', () => {
                 TranslatePipeMock,
                 MockPipe(HtmlForMarkdownPipe, (markdown) => markdown as SafeHtml),
                 MockDirective(NgbTooltip),
+                MockComponent(IncludedInScoreBadgeComponent),
             ],
             providers: [MockProvider(ChangeDetectorRef)],
         })
