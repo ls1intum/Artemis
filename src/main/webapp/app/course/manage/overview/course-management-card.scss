@@ -2,6 +2,7 @@
 
 .card {
     min-height: 100%;
+    max-width: 2200px;
     .card-heading {
         display: flex;
         cursor: pointer;
@@ -17,6 +18,10 @@
         .collapsed {
             margin-top: 2px;
         }
+    }
+    .statistics-card {
+        min-width: 550px;
+        max-width: 800px;
     }
     .section-header {
         height: 40px;
@@ -57,5 +62,19 @@
     }
     .flex-container {
         flex: 1;
+    }
+}
+
+@media screen and (min-width: 2010px) {
+    .exercises-cards {
+        max-width: 1400px;
+    }
+}
+
+@media screen and (max-width: 800px) {
+    .card {
+        .statistics-card {
+            display: none;
+        }
     }
 }

@@ -108,10 +108,10 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                         (result: HttpResponse<CourseManagementOverviewCourseDto[]>) => {
                             result.body!.forEach((dto) => (this.statistics[dto.courseId] = dto));
                         },
-                        (result: HttpErrorResponse) => onError(this.jhiAlertService, result),
+                        (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
                     );
             },
-            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+            (res: HttpErrorResponse) => onError(this.jhiAlertService, res, false),
         );
     }
 

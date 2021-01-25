@@ -7,16 +7,31 @@
     border-radius: 0.1rem;
     display: block ruby;
     overflow: hidden;
+    flex-shrink: 0;
     .exercise-icon {
         margin-top: 10px;
     }
     .item-title {
         margin-top: 10px;
         margin-left: 15px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .item-category {
         color: gray;
         margin-left: 15px;
+
+        h4 {
+            margin-bottom: 0;
+            .badge {
+                max-width: 225px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                vertical-align: top;
+            }
+        }
     }
     .btn {
         margin-top: 5px;
@@ -37,5 +52,20 @@
         padding-top: 5px;
         width: 250px;
         text-align: center;
+    }
+    .pointer-row {
+        cursor: pointer;
+    }
+    .container {
+        max-width: 100%;
+    }
+    .button-row {
+        min-width: 132px;
+    }
+}
+
+@media screen and (max-width: 1200px) {
+    .hide-1200 {
+        display: none;
     }
 }

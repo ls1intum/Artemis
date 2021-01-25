@@ -34,7 +34,7 @@
 
     <div class="container flex-container">
         <div class="row">
-            <div class="col-8 section-card">
+            <div class="col-12 section-card exercises-cards">
                 <div class="col section-header" [routerLink]="['/course-management', course.id, 'exercises']">
                     <h5 class="text-white text-center">{{ 'entity.action.exercise' | translate }}</h5>
                 </div>
@@ -92,7 +92,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-4 section-card">
+            <div class="col-xl section-card statistics-card">
                 <div class="col section-header" [routerLink]="['/course-management', course.id]">
                     <h5 class="text-white text-center">{{ 'artemisApp.course.statistics' | translate }}</h5>
                 </div>
@@ -105,27 +105,63 @@
     </div>
 
     <div class="card-footer">
-        <button type="submit" *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'scores']" class="btn btn-info mr-1 mb-1">
+        <button
+            type="submit"
+            *ngIf="course.isAtLeastTutor"
+            [routerLink]="['/course-management', course.id, 'scores']"
+            class="btn btn-info mr-1 mb-1"
+            [ngbTooltip]="'entity.action.scores' | translate"
+        >
             <fa-icon [icon]="'eye'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.scores' | translate }}</span>
         </button>
-        <button type="submit" *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'lectures']" class="btn btn-info mr-1 mb-1">
+        <button
+            type="submit"
+            *ngIf="course.isAtLeastTutor"
+            [routerLink]="['/course-management', course.id, 'lectures']"
+            class="btn btn-info mr-1 mb-1"
+            [ngbTooltip]="'entity.action.lecture' | translate"
+        >
             <fa-icon [icon]="'list-alt'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.lecture' | translate }}</span>
         </button>
-        <button type="submit" *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'exams']" class="btn btn-info mr-1 mb-1">
+        <button
+            type="submit"
+            *ngIf="course.isAtLeastTutor"
+            [routerLink]="['/course-management', course.id, 'exams']"
+            class="btn btn-info mr-1 mb-1"
+            [ngbTooltip]="'entity.action.exams' | translate"
+        >
             <fa-icon [icon]="'list-alt'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.exams' | translate }}</span>
         </button>
-        <button type="submit" *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id]" class="btn btn-info mr-1 mb-1">
+        <button
+            type="submit"
+            *ngIf="course.isAtLeastTutor"
+            [routerLink]="['/course-management', course.id]"
+            class="btn btn-info mr-1 mb-1"
+            [ngbTooltip]="'artemisApp.course.courseDashboard' | translate"
+        >
             <fa-icon [icon]="'th-list'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'artemisApp.course.courseDashboard' | translate }}</span>
         </button>
-        <button type="submit" *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'tutor-dashboard']" class="btn btn-info mr-1 mb-1">
+        <button
+            type="submit"
+            *ngIf="course.isAtLeastTutor"
+            [routerLink]="['/course-management', course.id, 'tutor-dashboard']"
+            class="btn btn-info mr-1 mb-1"
+            [ngbTooltip]="'entity.action.assessmentDashboard' | translate"
+        >
             <fa-icon [icon]="'th-list'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.assessmentDashboard' | translate }}</span>
         </button>
-        <button type="submit" *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'instructor-dashboard']" class="btn btn-info mr-1 mb-1">
+        <button
+            type="submit"
+            *ngIf="course.isAtLeastInstructor"
+            [routerLink]="['/course-management', course.id, 'instructor-dashboard']"
+            class="btn btn-info mr-1 mb-1"
+            [ngbTooltip]="'artemisApp.course.instructorDashboard' | translate"
+        >
             <fa-icon [icon]="'th-list'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'artemisApp.course.instructorDashboard' | translate }}</span>
         </button>
