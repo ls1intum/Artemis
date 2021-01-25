@@ -19,6 +19,7 @@ import { AssessmentInstructionsModule } from 'app/assessment/assessment-instruct
 import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { TextExerciseRowButtonsComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-row-buttons.component';
+import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -29,6 +30,7 @@ const ENTITY_STATES = [...textExerciseRoute];
         FormDateTimePickerModule,
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
+        ArtemisIncludedInOverallScorePickerModule,
         ArtemisMarkdownEditorModule,
         ArtemisPresentationScoreModule,
         ArtemisAssessmentSharedModule,
