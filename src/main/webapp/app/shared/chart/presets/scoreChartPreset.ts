@@ -54,7 +54,8 @@ export class ScoreChartPreset implements ChartPreset {
      * @param receivedPositive Sum of positive credits of the score
      * @param appliedNegative Sum of applied negative credits
      * @param receivedNegative Sum of received negative credits
-     * @param exercise The active exercise
+     * @param maxScore The relevant maximal points of the exercise
+     * @param maxScoreWithBonus The actual received points + optional bonus points
      */
     setValues(receivedPositive: number, appliedNegative: number, receivedNegative: number, maxScore: number, maxScoreWithBonus: number) {
         let appliedPositive = receivedPositive;

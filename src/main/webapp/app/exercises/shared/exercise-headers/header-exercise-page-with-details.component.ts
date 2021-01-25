@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import * as moment from 'moment';
-import { Exercise, ExerciseCategory, getIcon } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
 
@@ -9,12 +9,12 @@ import { Exam } from 'app/entities/exam.model';
     templateUrl: './header-exercise-page-with-details.component.html',
 })
 export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges {
+    readonly IncludedInOverallScore = IncludedInOverallScore;
     @Input() public exercise: Exercise;
     @Input() public onBackClick: () => void;
     @Input() public title: string;
     @Input() public exam: Exam | null;
     @Input() public isTestRun = false;
-
     public exerciseStatusBadge = 'badge-success';
     public exerciseCategories: ExerciseCategory[];
     public isExamMode = false;

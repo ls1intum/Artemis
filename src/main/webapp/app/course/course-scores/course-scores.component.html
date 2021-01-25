@@ -1,11 +1,14 @@
 <div *ngIf="course">
     <h4>
         {{ course.title }}
-        <small jhiTranslate="instructorDashboard.exerciseResultSummery" [translateValues]="{ exercisesLength: exercises.length, studentsLength: students.length }"
-            >{{ exercises.length }} released exercises, {{ students.length }} students with results</small
+        <small
+            jhiTranslate="instructorDashboard.exerciseResultSummery"
+            [translateValues]="{ exercisesLength: exercisesOfCourseThatAreIncludedInScoreCalculation.length, studentsLength: students.length }"
+            >{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }} released exercises, {{ students.length }} students with results</small
         >
         <button *ngIf="exportReady" class="btn btn-primary btn-sm float-right" (click)="exportResults()">
-            <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon><span jhiTranslate="instructorDashboard.exportCSV">&nbsp;Export Results as CSV</span>
+            <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon>
+            <span jhiTranslate="instructorDashboard.exportCSV">&nbsp;Export Results as CSV</span>
         </button>
     </h4>
     <jhi-alert></jhi-alert>
@@ -43,8 +46,8 @@
                 <tr>
                     <th><span jhiTranslate="instructorDashboard.max">Max</span></th>
                     <th></th>
-                    <th>{{ exercises.length }}</th>
-                    <th>{{ exercises.length }}</th>
+                    <th>{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }}</th>
+                    <th>{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }}</th>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
                         <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0">{{ maxNumberOfPointsPerExerciseType.get(exerciseType) }}</th>
                     </ng-container>
@@ -55,13 +58,13 @@
                     <th></th>
                     <th>
                         {{ getLocaleConversionService().toLocaleString(averageNumberOfParticipatedExercises) }} ({{
-                            getLocaleConversionService().toLocaleString((averageNumberOfParticipatedExercises / exercises.length) * 100)
+                            getLocaleConversionService().toLocaleString((averageNumberOfParticipatedExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length) * 100)
                         }}
                         %)
                     </th>
                     <th>
                         {{ getLocaleConversionService().toLocaleString(averageNumberOfSuccessfulExercises) }} ({{
-                            getLocaleConversionService().toLocaleString((averageNumberOfSuccessfulExercises / exercises.length) * 100)
+                            getLocaleConversionService().toLocaleString((averageNumberOfSuccessfulExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length) * 100)
                         }}
                         %)
                     </th>
@@ -89,12 +92,13 @@
                     <td>{{ student.user.login }}</td>
                     <td>
                         {{ student.numberOfParticipatedExercises }} ({{
-                            getLocaleConversionService().toLocaleString((student.numberOfParticipatedExercises / exercises.length) * 100)
+                            getLocaleConversionService().toLocaleString((student.numberOfParticipatedExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length) * 100)
                         }}
                         %)
                     </td>
                     <td>
-                        {{ student.numberOfSuccessfulExercises }} ({{ getLocaleConversionService().toLocaleString((student.numberOfSuccessfulExercises / exercises.length) * 100) }}
+                        {{ student.numberOfSuccessfulExercises }}
+                        ({{ getLocaleConversionService().toLocaleString((student.numberOfSuccessfulExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length) * 100) }}
                         %)
                     </td>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">

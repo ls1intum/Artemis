@@ -16,6 +16,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
 
+import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,18 +94,13 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise);
         jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey);
         jenkinsRequestMockProvider.mockTriggerBuild();
+
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
     @Override
     public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans) throws Exception {
-
-        final var sourceProjectKey = sourceExercise.getProjectKey();
         final var targetProjectKey = exerciseToBeImported.getProjectKey();
-
-        final var sourceTemplateRepoName = sourceExercise.generateRepositoryName(RepositoryType.TEMPLATE);
-        final var sourceSolutionRepoName = sourceExercise.generateRepositoryName(RepositoryType.SOLUTION);
-        final var sourceTestsRepoName = sourceExercise.generateRepositoryName(RepositoryType.TESTS);
-
         final var targetTemplateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
         final var targetSolutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
         final var targetTestsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
@@ -114,9 +110,9 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
         // Mock ProgramingExerciseImportService::importRepositories
         gitlabRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
-        gitlabRequestMockProvider.mockForkRepository(sourceProjectKey, targetProjectKey, sourceTemplateRepoName, targetTemplateRepoName, HttpStatus.CREATED);
-        gitlabRequestMockProvider.mockForkRepository(sourceProjectKey, targetProjectKey, sourceSolutionRepoName, targetSolutionRepoName, HttpStatus.CREATED);
-        gitlabRequestMockProvider.mockForkRepository(sourceProjectKey, targetProjectKey, sourceTestsRepoName, targetTestsRepoName, HttpStatus.CREATED);
+        gitlabRequestMockProvider.mockCreateRepository(exerciseToBeImported, targetTemplateRepoName);
+        gitlabRequestMockProvider.mockCreateRepository(exerciseToBeImported, targetSolutionRepoName);
+        gitlabRequestMockProvider.mockCreateRepository(exerciseToBeImported, targetTestsRepoName);
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
@@ -149,15 +145,15 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockForkRepositoryForParticipation(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException {
-        gitlabRequestMockProvider.mockForkRepositoryForParticipation(exercise, username, status);
+    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws GitLabApiException {
+        gitlabRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
     }
 
     @Override
     public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists, HttpStatus status)
             throws Exception {
         // Step 1a)
-        gitlabRequestMockProvider.mockForkRepositoryForParticipation(exercise, username, status);
+        gitlabRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
         // Step 1b)
         gitlabRequestMockProvider.mockConfigureRepository(exercise, username, users, ltiUserExists);
         // Step 2a)

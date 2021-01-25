@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +10,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -152,16 +150,7 @@ public class ProgrammingExerciseImportService {
         final var reposToCopy = List.of(Pair.of(RepositoryType.TEMPLATE, templateExercise.getTemplateRepositoryName()),
                 Pair.of(RepositoryType.SOLUTION, templateExercise.getSolutionRepositoryName()), Pair.of(RepositoryType.TESTS, templateExercise.getTestRepositoryName()));
 
-        // create a unique folder to prevent issues in follow-up requests
-        String targetPath = fileService.getUniquePathString(repoDownloadClonePath);
-        reposToCopy.forEach(repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName(), targetPath));
-        // Delete source project folder which contained all cloned source repos
-        try {
-            FileUtils.deleteDirectory(new File(targetPath));
-        }
-        catch (IOException e) {
-            log.warn("The project root folder '" + targetPath + "' couldn't be deleted.");
-        }
+        reposToCopy.forEach(repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName()));
 
         // Unprotect the master branch of the template exercise repo.
         versionControlService.get().unprotectBranch(newExercise.getVcsTemplateRepositoryUrl(), "master");

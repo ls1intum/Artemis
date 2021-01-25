@@ -21,6 +21,7 @@ import { CourseStatisticsComponent } from 'app/overview/course-statistics/course
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,6 +38,7 @@ describe('CourseStatisticsComponent', () => {
             title: 'test 17.06. 1',
             dueDate: moment('2019-06-17T09:47:12+02:00'),
             assessmentDueDate: moment('2019-06-17T09:55:17+02:00'),
+            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
             maxScore: 12.0,
             studentParticipations: [
                 {
@@ -66,6 +68,7 @@ describe('CourseStatisticsComponent', () => {
             title: 'test 17.06. 2',
             dueDate: moment('2019-06-17T17:50:08+02:00'),
             assessmentDueDate: moment('2019-06-17T17:51:13+02:00'),
+            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
             maxScore: 12.0,
             studentParticipations: [
                 {
@@ -92,6 +95,7 @@ describe('CourseStatisticsComponent', () => {
             id: 194,
             title: 'test 18.06. 1',
             dueDate: moment('2019-06-18T07:56:41+02:00'),
+            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
             maxScore: 12.0,
             studentParticipations: [],
             diagramType: 'ClassDiagram',
@@ -104,6 +108,7 @@ describe('CourseStatisticsComponent', () => {
             id: 191,
             title: 'Until 18:20',
             dueDate: moment('2019-06-16T18:15:03+02:00'),
+            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
             assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
             maxScore: 12.0,
             studentParticipations: [
@@ -143,6 +148,7 @@ describe('CourseStatisticsComponent', () => {
             type: 'modeling',
             id: 195,
             title: 'Until 18:20 too',
+            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
             dueDate: moment('2019-06-16T18:15:03+02:00'),
             assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
             maxScore: 12.0,
@@ -277,6 +283,7 @@ describe('CourseStatisticsComponent', () => {
                 dueDate: moment('2019-06-16T18:15:03+02:00'),
                 assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
                 maxScore: 10.0,
+                includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
                 studentParticipations: [
                     {
                         id: 289,

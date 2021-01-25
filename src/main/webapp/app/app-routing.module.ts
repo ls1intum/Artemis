@@ -31,11 +31,11 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                         pageTitle: 'aboutUs',
                     },
                 },
-                // ===== COURSE MANAGEMENT =====
                 {
                     path: 'courses/:courseId/lectures/:lectureId',
                     loadChildren: () => import('./overview/course-lectures/course-lecture-details.module').then((m) => m.ArtemisCourseLectureDetailsModule),
                 },
+                // ===== COURSE MANAGEMENT =====
                 {
                     path: 'course-management',
                     loadChildren: () => import('./course/manage/course-management.module').then((m) => m.ArtemisCourseManagementModule),
