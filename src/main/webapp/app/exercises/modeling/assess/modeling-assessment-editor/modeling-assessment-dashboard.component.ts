@@ -36,6 +36,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
     nextOptimalSubmissionIds: number[] = [];
+    numberOfCorrectionrounds = 1;
 
     private cancelConfirmationText: string;
 
@@ -90,6 +91,8 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                 if (res.body!.type === ExerciseType.MODELING) {
                     this.modelingExercise = res.body as ModelingExercise;
                     this.getSubmissions(true);
+                    this.numberOfCorrectionrounds = this.modelingExercise.exerciseGroup ? this.modelingExercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
+                    this.setPermissions();
                 } else {
                     // TODO: error message if this is not a modeling exercise
                 }
@@ -131,7 +134,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                 this.assessedSubmissions = this.submissions.filter((submission) => {
                     const result = getLatestSubmissionResult(submission);
                     setLatestSubmissionResult(submission, result);
-                    return result && result!.completionDate && result!.score;
+                    return !!result;
                 }).length;
             });
     }
@@ -242,6 +245,14 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
             this.nextOptimalSubmissionIds[randomInt],
             'assessment',
         ]);
+    }
+
+    private setPermissions() {
+        if (this.modelingExercise.course) {
+            this.modelingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course!);
+        } else {
+            this.modelingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.exerciseGroup?.exam?.course!);
+        }
     }
 
     /**

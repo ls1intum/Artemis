@@ -76,7 +76,7 @@
                                     *ngIf="!submission.latestResult"
                                     [disabled]="busy"
                                     [routerLink]="['/course-management', exercise.course?.id, 'text-exercises', exercise.id, 'submissions', submission.id, 'assessment']"
-                                    class="btn btn-outline-secondary btn-sm mb-1"
+                                    class="btn btn-outline-success btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
                                 </button>
@@ -85,7 +85,7 @@
                                     *ngIf="submission.latestResult"
                                     [disabled]="busy"
                                     [routerLink]="['/course-management', exercise.course?.id, 'text-exercises', exercise.id, 'submissions', submission.id, 'assessment']"
-                                    class="btn btn-outline-secondary btn-sm mb-1"
+                                    class="btn btn-outline-primary btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
                                 </button>

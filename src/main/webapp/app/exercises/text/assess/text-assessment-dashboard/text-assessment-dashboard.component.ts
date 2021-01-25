@@ -24,7 +24,6 @@ export class TextAssessmentDashboardComponent implements OnInit {
     predicate = 'id';
     reverse = false;
     numberOfCorrectionrounds = 1;
-    isAtLeastInstructor = false;
 
     private cancelConfirmationText: string;
 
