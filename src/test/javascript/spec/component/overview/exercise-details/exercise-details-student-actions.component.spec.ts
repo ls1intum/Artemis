@@ -34,6 +34,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -46,6 +48,11 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     let profileService: ProfileService;
     let startExerciseStub: SinonStub;
     let getProfileInfoSub: SinonStub;
+
+    let localStorageUseSshRetrieveStub: SinonStub;
+    let localStorageUseSshObserveStub: SinonStub;
+    let localStorageUseSshObserveStubSubject: Subject<boolean|undefined>;
+    let localStorageUseSshStoreStub: SinonStub;
 
     const team = { id: 1, students: [{ id: 99 } as User] } as Team;
     const teamExerciseWithoutTeamAssigned = ({
@@ -68,6 +75,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -82,6 +90,13 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 getProfileInfoSub = stub(profileService, 'getProfileInfo');
                 getProfileInfoSub.returns(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
                 startExerciseStub = stub(courseExerciseService, 'startExercise');
+
+                const localStorageMock = fixture.debugElement.injector.get(LocalStorageService);
+                localStorageUseSshRetrieveStub = stub(localStorageMock, 'retrieve');
+                localStorageUseSshObserveStub = stub(localStorageMock, 'observe');
+                localStorageUseSshStoreStub = stub(localStorageMock, 'store');
+                localStorageUseSshObserveStubSubject = new Subject();
+                localStorageUseSshObserveStub.returns(localStorageUseSshObserveStubSubject);
             });
     });
 
@@ -183,5 +198,37 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         fixture.destroy();
         flush();
+    }));
+
+    it('should fetch and store ssh preference', fakeAsync(() => {
+        comp.exercise = teamExerciseWithTeamAssigned;
+        comp.sshEnabled = true;
+
+        fixture.detectChanges();
+        tick();
+
+        expect(localStorageUseSshRetrieveStub).to.have.been.calledOnceWithExactly('useSsh');
+        expect(localStorageUseSshObserveStub).to.have.been.calledOnceWithExactly('useSsh');
+        expect(comp.useSsh).to.be.false;
+
+        fixture.debugElement.query(By.css('.clone-repository')).nativeElement.click();
+        tick();
+        fixture.debugElement.query(By.css('.use-ssh')).nativeElement.click();
+        tick();
+        expect(localStorageUseSshStoreStub).to.have.been.calledOnceWithExactly('useSsh', true);
+        expect(comp.useSsh).to.be.true;
+
+        fixture.debugElement.query(By.css('.use-ssh')).nativeElement.click();
+        tick();
+        expect(localStorageUseSshStoreStub).to.have.been.calledWithExactly('useSsh', false);
+        expect(comp.useSsh).to.be.false;
+
+        localStorageUseSshObserveStubSubject.next(true);
+        tick();
+        expect(comp.useSsh).to.be.true;
+
+        localStorageUseSshObserveStubSubject.next(false);
+        tick();
+        expect(comp.useSsh).to.be.false;
     }));
 });
