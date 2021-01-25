@@ -153,7 +153,7 @@
         "sass": "1.32.5",
         "sass-loader": "10.1.1",
         "simple-progress-webpack-plugin": "1.1.2",
-        "sinon": "9.2.3",
+        "sinon": "9.2.4",
         "sinon-chai": "3.5.0",
         "style-loader": "2.0.0",
         "terser-webpack-plugin": "4.2.3",
@@ -176,7 +176,7 @@
         "write-file-webpack-plugin": "4.5.1"
     },
     "engines": {
-        "node": ">=14.14.0",
+        "node": ">=15.4.0",
         "yarn": ">=1.22.5"
     },
     "lint-staged": {
@@ -210,6 +210,6 @@
         "webpack:prod:main": "yarn run webpack --config webpack/webpack.prod.js --progress",
         "webpack:prod": "yarn run cleanup && yarn run webpack:prod:main && yarn run clean-www",
         "webpack-dev-server": "node --max-old-space-size=3072 node_modules/webpack-dev-server/bin/webpack-dev-server.js",
-        "webpack": "node --max-old-space-size=3072 node_modules/webpack/bin/webpack.js"
+        "webpack": "node --max-old-space-size=3072 --report-on-fatalerror node_modules/webpack/bin/webpack.js"
     }
 }
