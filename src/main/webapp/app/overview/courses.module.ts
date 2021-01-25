@@ -19,7 +19,6 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { CoursesComponent } from 'app/overview/courses.component';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
-import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration-selector/course-registration-selector.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -37,10 +36,12 @@ import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { CourseLearningGoalsComponent } from './course-learning-goals/course-learning-goals.component';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
+import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 
 @NgModule({
     imports: [
         ArtemisExerciseButtonsModule,
+        ArtemisCourseExerciseRowModule,
         ArtemisMarkdownEditorModule,
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
@@ -67,7 +68,6 @@ import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exer
         CourseRegistrationSelectorComponent,
         CourseCardComponent,
         CourseStatisticsComponent,
-        CourseExerciseRowComponent,
         CourseExercisesComponent,
         CourseExerciseDetailsComponent,
         CourseLecturesComponent,
