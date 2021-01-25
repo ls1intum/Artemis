@@ -19,6 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.*;
@@ -252,6 +253,34 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void createQuizExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(null);
         request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExercise_InvalidMaxScore() throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        quizExercise.setMaxScore(0.0);
+        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        quizExercise.setMaxScore(10.0);
+        quizExercise.setBonusPoints(1.0);
+        quizExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExercise_NotIncludedInvalidBonusPoints() throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        quizExercise.setMaxScore(10.0);
+        quizExercise.setBonusPoints(1.0);
+        quizExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

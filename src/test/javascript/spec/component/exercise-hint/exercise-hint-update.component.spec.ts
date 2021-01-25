@@ -7,6 +7,8 @@ import { ExerciseHintUpdateComponent } from 'app/exercises/shared/exercise-hint/
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ArtemisTestModule } from '../../test.module';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('ExerciseHint Management Update Component', () => {
     let comp: ExerciseHintUpdateComponent;
@@ -17,7 +19,7 @@ describe('ExerciseHint Management Update Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ExerciseHintUpdateComponent],
-            providers: [FormBuilder],
+            providers: [FormBuilder, MockProvider(TranslateService)],
         })
             .overrideTemplate(ExerciseHintUpdateComponent, '')
             .compileComponents();

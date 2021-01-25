@@ -19,9 +19,19 @@
     [isTutorAssessment]="hasTutorAssessment"
     [readOnlyManualFeedback]="true"
 >
-    <span editorTitle>{{ exercise.title }}</span>
+    <div editorTitle>
+        <span>{{ exercise?.title }}</span>
+        <!-- prettier-ignore -->
+        <span>&nbsp;[{{ exercise?.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}<span
+            *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | translate }}</span>]
+            <jhi-included-in-score-badge
+                *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span>
+    </div>
+    <!-- prettier-ignore -->
     <div editorToolbar class="d-inline-flex">
-        <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="mr-3"></jhi-code-editor-repository-is-locked>
+        <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked"
+                                              class="mr-3"></jhi-code-editor-repository-is-locked>
         <jhi-updating-result
             *ngIf="participation"
             [exercise]="exercise"

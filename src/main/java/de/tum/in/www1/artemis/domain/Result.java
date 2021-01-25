@@ -126,7 +126,7 @@ public class Result extends DomainObject {
      * @param totalScore total amount of scored points between 0 and maxScore
      * @param maxScore   maximum score reachable at corresponding exercise
      */
-    public void setResultString(Double totalScore, @Nullable Double maxScore) {
+    public void setResultString(Double totalScore, Double maxScore) {
         resultString = createResultString(totalScore, maxScore);
     }
 
@@ -135,16 +135,11 @@ public class Result extends DomainObject {
      *
      * @param totalScore total amount of scored points
      * @param maxScore   maximum score reachable at corresponding exercise
-     * @return String with result string in this format "2 of 13 points" or "2 points"
+     * @return String with result string in this format "2 of 13 points"
      */
-    public String createResultString(Double totalScore, @Nullable Double maxScore) {
+    public String createResultString(Double totalScore, Double maxScore) {
         DecimalFormat formatter = new DecimalFormat("#.##");
-        if (maxScore == null) {
-            return formatter.format(totalScore) + " points";
-        }
-        else {
-            return formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points";
-        }
+        return formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points";
     }
 
     public ZonedDateTime getCompletionDate() {
@@ -235,8 +230,8 @@ public class Result extends DomainObject {
      * @param totalScore total amount of scored points between 0 and maxScore
      * @param maxScore   maximum score reachable at corresponding exercise
      */
-    public void setScore(Double totalScore, @Nullable Double maxScore) {
-        Long score = (maxScore == null) ? 100L : Math.round(totalScore / maxScore * 100);
+    public void setScore(Double totalScore, Double maxScore) {
+        Long score = Math.round(totalScore / maxScore * 100);
         setScore(score);
     }
 

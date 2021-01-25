@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
 
@@ -22,6 +22,8 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     studentSubmission: TextSubmission;
     @Input()
     exercise: Exercise;
+
+    readonly IncludedInOverallScore = IncludedInOverallScore;
 
     // answer represents the view state
     answer: string;
