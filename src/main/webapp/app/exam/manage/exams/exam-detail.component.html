@@ -14,7 +14,7 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exam.title">Title</span></dt>
                 <dd>
-                    <span>{{ exam.title }}</span>
+                    <span id="examTitle">{{ exam.title }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.examiner">Examiner</span></dt>
                 <dd>
@@ -101,11 +101,11 @@
                 <span *ngIf="!formattedConfirmationEndText" jhiTranslate="artemisApp.exam.notSet"></span>
             </dl>
 
-            <a type="button" [routerLink]="getEditRoute()" class="btn btn-primary">
+            <a id="editButton" type="button" [routerLink]="getEditRoute()" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </a>
 
-            <a type="submit" *ngIf="isAtLeastInstructor" [routerLink]="getStudentExamRoute()" class="btn btn-primary">
+            <a id="studentExamsButton" type="submit" *ngIf="isAtLeastInstructor" [routerLink]="getStudentExamRoute()" class="btn btn-primary">
                 <fa-icon [icon]="'eye'"></fa-icon> <span>{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
             </a>
         </div>

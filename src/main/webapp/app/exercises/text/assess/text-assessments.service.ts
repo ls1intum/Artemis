@@ -13,7 +13,7 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { cloneDeep } from 'lodash';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 type EntityResponseType = HttpResponse<Result>;
 type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
@@ -78,10 +78,11 @@ export class TextAssessmentsService {
             .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
-    saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<EntityResponseType> {
+    saveExampleAssessment(exampleSubmissionId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/text-submissions/${exampleSubmissionId}/example-assessment`;
+        const body = TextAssessmentsService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
-            .put<Result>(url, feedbacks, { observe: 'response' })
+            .put<Result>(url, body, { observe: 'response' })
             .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
@@ -98,7 +99,7 @@ export class TextAssessmentsService {
      * Get all feedback items for a submission.
      * @param submissionId id of the submission for which the feedback items should be retrieved of type {number}
      */
-    public getFeedbackDataForExerciseSubmission(submissionId: number): Observable<StudentParticipation> {
+    public getFeedbackDataForExerciseSubmission(submissionId: number, correctionRound = 0): Observable<StudentParticipation> {
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`, { observe: 'response' })
             .pipe(
@@ -106,9 +107,10 @@ export class TextAssessmentsService {
                 tap((response) => {
                     const participation = response.body!;
                     const submission = participation.submissions![0];
+                    setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     submission.participation = participation;
-                    submission.results = participation.results!;
-                    const result = getLatestSubmissionResult(submission)!;
+                    participation.results = submission.results!;
+                    const result = getSubmissionResultByCorrectionRound(submission, correctionRound)!;
                     result.submission = submission;
                     result.participation = participation;
                     // Make sure Feedbacks Array is initialized
@@ -127,6 +129,10 @@ export class TextAssessmentsService {
      */
     public getExampleResult(exerciseId: number, submissionId: number): Observable<Result> {
         return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/example-result`);
+    }
+
+    public deleteExampleFeedback(exampleSubmissionId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/text-submissions/${exampleSubmissionId}/example-assessment/feedback`);
     }
 
     /**

@@ -308,7 +308,7 @@ public class ExerciseService {
         // make sure tutor participations are deleted before the exercise is deleted
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
 
-        if (exercise.hasExerciseGroup()) {
+        if (exercise.isExamExercise()) {
             Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(exercise.getExerciseGroup().getExam().getId());
             for (StudentExam studentExam : exam.getStudentExams()) {
                 if (studentExam.getExercises().contains(exercise)) {
@@ -385,11 +385,11 @@ public class ExerciseService {
         }
         else {
             numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
-            numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
-                    ComplaintType.COMPLAINT);
+            numberOfComplaintResponses = complaintResponseRepository
+                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT);
             numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
-            numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
-                    ComplaintType.MORE_FEEDBACK);
+            numberOfMoreFeedbackComplaintResponses = complaintResponseRepository
+                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.MORE_FEEDBACK);
         }
 
         exercise.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
@@ -411,7 +411,7 @@ public class ExerciseService {
         if (examMode) {
             // set number of corrections specific to each correction round
             int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
-            numberOfAssessmentsOfCorrectionRounds = resultService.countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(exercise, (long) numberOfCorrectionRounds);
+            numberOfAssessmentsOfCorrectionRounds = resultService.countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(exercise, numberOfCorrectionRounds);
         }
         else {
             // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
@@ -428,7 +428,7 @@ public class ExerciseService {
      * @throws BadRequestAlertException if course and exerciseGroup are set or course and exerciseGroup are not set
      */
     public void checkCourseAndExerciseGroupExclusivity(Exercise exercise, String entityName) throws BadRequestAlertException {
-        if (exercise.hasCourse() == exercise.hasExerciseGroup()) {
+        if (exercise.isCourseExercise() == exercise.isExamExercise()) {
             throw new BadRequestAlertException("An exercise must have either a course or an exerciseGroup", entityName, "eitherCourseOrExerciseGroupSet");
         }
     }
@@ -442,7 +442,7 @@ public class ExerciseService {
      * @throws BadRequestAlertException if updated exercise was converted
      */
     public void checkForConversionBetweenExamAndCourseExercise(Exercise updatedExercise, Exercise oldExercise, String entityName) throws BadRequestAlertException {
-        if (updatedExercise.hasExerciseGroup() != oldExercise.hasExerciseGroup() || updatedExercise.hasCourse() != oldExercise.hasCourse()) {
+        if (updatedExercise.isExamExercise() != oldExercise.isExamExercise() || updatedExercise.isCourseExercise() != oldExercise.isCourseExercise()) {
             throw new BadRequestAlertException("Course exercise cannot be converted to exam exercise and vice versa", entityName, "conversionBetweenExamAndCourseExercise");
         }
     }
@@ -558,7 +558,7 @@ public class ExerciseService {
             }
             Exercise exerciseFromDb = exerciseFromDbOptional.get();
 
-            if (!exerciseFromDb.hasCourse()) {
+            if (!exerciseFromDb.isCourseExercise()) {
                 throw new IllegalArgumentException("Exercise is not a course exercise");
             }
 

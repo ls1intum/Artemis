@@ -13,6 +13,8 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,11 +46,14 @@ import org.springframework.util.LinkedMultiValueMap;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.GitUtilService;
@@ -76,15 +81,21 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
+    @Autowired
+    BitbucketRequestMockProvider bitbucketRequestMockProvider;
+
+    @Autowired
+    NotificationRepository notificationRepository;
+
     Course course;
 
     ProgrammingExercise programmingExercise;
 
     ProgrammingExercise programmingExerciseInExam;
 
-    ProgrammingExerciseParticipation participation1;
+    ProgrammingExerciseStudentParticipation participation1;
 
-    ProgrammingExerciseParticipation participation2;
+    ProgrammingExerciseStudentParticipation participation2;
 
     File downloadedFile;
 
@@ -361,6 +372,17 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(programmingExerciseServer.getTemplateParticipation()).isNotNull();
         assertThat(programmingExerciseServer.getSolutionParticipation()).isNotNull();
         // TODO add more assertions
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation() throws Exception {
+        database.addStudentParticipationForProgrammingExercise(programmingExercise, "tutor1");
+        final var path = ROOT + PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
+        assertThat(programmingExerciseServer.getTitle()).isEqualTo(programmingExercise.getTitle());
+        assertThat(programmingExerciseServer.getSolutionParticipation().getId()).isNotNull();
+        assertThat(programmingExerciseServer.getTemplateParticipation().getId()).isNotNull();
     }
 
     @Test
@@ -1149,5 +1171,77 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.addInstructor("other-instructors", "other-instructor");
         final var endpoint = ProgrammingExerciseGradingResource.RESET.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.patchWithResponseBody(ROOT + endpoint, "{}", String.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void lockAllRepositories_asStudent_forbidden() throws Exception {
+        final var endpoint = ProgrammingExerciseResource.Endpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void lockAllRepositories_asTutor_forbidden() throws Exception {
+        final var endpoint = ProgrammingExerciseResource.Endpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void lockAllRepositories() throws Exception {
+        bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(BitbucketRequestMockProvider.repositorySlugOf(participation1), programmingExercise.getProjectKey(),
+                participation1.getStudents());
+        bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(BitbucketRequestMockProvider.repositorySlugOf(participation2), programmingExercise.getProjectKey(),
+                participation2.getStudents());
+
+        final var endpoint = ProgrammingExerciseResource.Endpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        request.put(ROOT + endpoint, null, HttpStatus.OK);
+
+        verify(versionControlService, times(1)).setRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUrl(), programmingExercise.getProjectKey(),
+                participation1.getStudents());
+        verify(versionControlService, times(1)).setRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUrl(), programmingExercise.getProjectKey(),
+                participation2.getStudents());
+
+        database.changeUser("instructor1");
+
+        var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+        assertThat(notifications).as("Intructor get notified that lock operations were successful")
+                .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION))
+                .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION));
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void unlockAllRepositories_asStudent_forbidden() throws Exception {
+        final var endpoint = ProgrammingExerciseResource.Endpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void unlockAllRepositories_asTutor_forbidden() throws Exception {
+        final var endpoint = ProgrammingExerciseResource.Endpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void unlockAllRepositories() throws Exception {
+        bitbucketRequestMockProvider.mockConfigureRepository(programmingExercise, participation1.getParticipantIdentifier(), participation1.getStudents(), false);
+        bitbucketRequestMockProvider.mockConfigureRepository(programmingExercise, participation2.getParticipantIdentifier(), participation2.getStudents(), false);
+
+        final var endpoint = ProgrammingExerciseResource.Endpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        request.put(ROOT + endpoint, null, HttpStatus.OK);
+
+        verify(versionControlService, times(1)).configureRepository(programmingExercise, participation1.getVcsRepositoryUrl(), participation1.getStudents(), true);
+        verify(versionControlService, times(1)).configureRepository(programmingExercise, participation2.getVcsRepositoryUrl(), participation2.getStudents(), true);
+
+        database.changeUser("instructor1");
+
+        var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+        assertThat(notifications).as("Intructor get notified that unlock operations were successful")
+                .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION))
+                .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION));
     }
 }

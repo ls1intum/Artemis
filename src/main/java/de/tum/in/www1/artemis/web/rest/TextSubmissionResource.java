@@ -150,18 +150,22 @@ public class TextSubmissionResource {
     /**
      * GET /text-submissions/:id : get the "id" textSubmission.
      *
-     * @param id the id of the textSubmission to retrieve
+     * @param submissionId the id of the textSubmission to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the textSubmission, or with status 404 (Not Found)
      */
-    @GetMapping("/text-submissions/{id}")
-    public ResponseEntity<TextSubmission> getTextSubmission(@PathVariable Long id) {
-        log.debug("REST request to get TextSubmission : {}", id);
-        Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findWithEagerResultsById(id);
+    @GetMapping("/text-submissions/{submissionId}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<TextSubmission> getTextSubmissionWithResults(@PathVariable Long submissionId) {
+        log.debug("REST request to get TextSubmission : {}", submissionId);
+        Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findWithEagerResultsById(submissionId);
 
         if (optionalTextSubmission.isEmpty()) {
             return notFound();
         }
-        final TextSubmission textSubmission = optionalTextSubmission.get();
+        final var textSubmission = optionalTextSubmission.get();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(textSubmission.getParticipation().getExercise())) {
+            return forbidden();
+        }
 
         // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
@@ -188,7 +192,7 @@ public class TextSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
-            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
+            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all TextSubmissions");
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = textExerciseService.findOne(exerciseId);
@@ -202,7 +206,7 @@ public class TextSubmissionResource {
         }
 
         List<TextSubmission> textSubmissions;
-        final boolean examMode = exercise.hasExerciseGroup();
+        final boolean examMode = exercise.isExamExercise();
         if (assessedByTutor) {
             textSubmissions = textSubmissionService.getAllTextSubmissionsAssessedByTutorWithForExercise(exerciseId, user, examMode, correctionRound);
         }
@@ -239,7 +243,7 @@ public class TextSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "head", defaultValue = "false") boolean skipAssessmentOrderOptimization,
-            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
 
@@ -266,17 +270,17 @@ public class TextSubmissionResource {
 
         final TextSubmission textSubmission;
         if (lockSubmission) {
-            textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise, exercise.hasExerciseGroup(), correctionRound);
-            textAssessmentService.prepareSubmissionForAssessment(textSubmission);
+            textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise, exercise.isExamExercise(), correctionRound);
+            textAssessmentService.prepareSubmissionForAssessment(textSubmission, correctionRound);
         }
         else {
             Optional<TextSubmission> optionalTextSubmission;
             if (skipAssessmentOrderOptimization) {
-                optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, true, exercise.hasExerciseGroup(),
+                optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, true, exercise.isExamExercise(),
                         correctionRound);
             }
             else {
-                optionalTextSubmission = this.textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, exercise.hasExerciseGroup(),
+                optionalTextSubmission = this.textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, exercise.isExamExercise(),
                         correctionRound);
             }
             if (optionalTextSubmission.isEmpty()) {

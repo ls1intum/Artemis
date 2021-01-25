@@ -37,12 +37,10 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, TextClusterRepository textClusterRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
             Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService,
-            CourseService courseService, ExamService examService, FeedbackRepository feedbackRepository) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository, participationService,
-                feedbackRepository);
+            FeedbackRepository feedbackRepository) {
+        super(submissionRepository, userService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.textClusterRepository = textClusterRepository;
-        this.resultRepository = resultRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
         this.submissionVersionService = submissionVersionService;
     }
@@ -64,7 +62,7 @@ public class TextSubmissionService extends SubmissionService {
         }
         final var participation = optionalParticipation.get();
         // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
-        if (textExercise.hasCourse()) {
+        if (textExercise.isCourseExercise()) {
             if (dueDate != null && participation.getInitializationDate().isBefore(dueDate) && dueDate.isBefore(ZonedDateTime.now())) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN);
             }
@@ -149,10 +147,10 @@ public class TextSubmissionService extends SubmissionService {
      *
      * @param textExercise the exercise for which we want to retrieve a submission without manual result
      * @param correctionRound - the correction round we want our submission to have results for
-     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param examMode flag to determine if test runs should be ignored. This should be set to true for exam exercises
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean examMode, long correctionRound) {
+    public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean examMode, int correctionRound) {
         return getRandomTextSubmissionEligibleForNewAssessment(textExercise, false, examMode, correctionRound);
     }
 
@@ -166,8 +164,7 @@ public class TextSubmissionService extends SubmissionService {
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean skipAssessmentQueue, boolean examMode,
-            long correctionRound) {
+    public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound) {
         if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent() && !skipAssessmentQueue) {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
         }
@@ -216,7 +213,7 @@ public class TextSubmissionService extends SubmissionService {
      * @param examMode - flag should be set to ignore the test run submissions
      * @return a list of text Submissions
      */
-    public List<TextSubmission> getAllTextSubmissionsAssessedByTutorWithForExercise(Long exerciseId, User tutor, boolean examMode, Long correctionRound) {
+    public List<TextSubmission> getAllTextSubmissionsAssessedByTutorWithForExercise(Long exerciseId, User tutor, boolean examMode, int correctionRound) {
         var submissions = super.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, tutor, examMode, correctionRound);
         return submissions.stream().map(submission -> (TextSubmission) submission).collect(toList());
     }
@@ -230,15 +227,19 @@ public class TextSubmissionService extends SubmissionService {
      * @param examMode - set flag to ignore test run submissions
      * @return a list of text submissions for the given exercise id
      */
-    public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly, boolean examMode, Long correctionRound) {
-        List<StudentParticipation> participations;
-        if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(exerciseId,
-                    correctionRound);
-        }
-        else {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
-        }
+    public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly, boolean examMode, int correctionRound) {
+        // TODO Nicolas Rauscher and Simon Entholzer: the following query for the exam mode does not work. Instructors assume to see all submissions on the submissions
+        // page independent whether they already have results or not.
+        // List<StudentParticipation> participations;
+        // if (examMode) {
+        // participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(exerciseId,
+        // (long) correctionRound);
+        // }
+        // else {
+        // participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+        // }
+        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+        ;
 
         List<TextSubmission> textSubmissions = new ArrayList<>();
 
@@ -276,13 +277,13 @@ public class TextSubmissionService extends SubmissionService {
      *
      * @param textExercise the exercise the submission should belong to
      * @param correctionRound get submission with results in the correction round
-     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param ignoreTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a locked modeling submission that needs an assessment
      */
-    public TextSubmission findAndLockTextSubmissionToBeAssessed(TextExercise textExercise, boolean removeTestRunParticipations, long correctionRound) {
-        TextSubmission textSubmission = getRandomTextSubmissionEligibleForNewAssessment(textExercise, removeTestRunParticipations, correctionRound)
+    public TextSubmission findAndLockTextSubmissionToBeAssessed(TextExercise textExercise, boolean ignoreTestRunParticipations, int correctionRound) {
+        TextSubmission textSubmission = getRandomTextSubmissionEligibleForNewAssessment(textExercise, ignoreTestRunParticipations, correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission for exercise " + textExercise.getId() + " could not be found"));
-        lockSubmission(textSubmission);
+        lockSubmission(textSubmission, correctionRound);
         return textSubmission;
     }
 

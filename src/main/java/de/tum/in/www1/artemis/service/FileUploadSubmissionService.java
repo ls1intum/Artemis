@@ -22,11 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.EmptyFileException;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -38,11 +34,9 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository, FileService fileService,
-            AuthorizationCheckService authCheckService, CourseService courseService, ExamService examService, FeedbackRepository feedbackRepository) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository, participationService,
-                feedbackRepository);
+            AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository) {
+        super(submissionRepository, userService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
-        this.resultRepository = resultRepository;
         this.fileService = fileService;
     }
 
@@ -75,10 +69,10 @@ public class FileUploadSubmissionService extends SubmissionService {
      *
      * @param fileUploadExercise the exercise for which we want to retrieve a submission without manual result
      * @param correctionRound - the correction round we want our submission to have results for
-     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param examMode flag to determine if test runs should be ignored. This should be set to true for exam exercises
      * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<FileUploadSubmission> getRandomFileUploadSubmissionEligibleForNewAssessment(FileUploadExercise fileUploadExercise, boolean examMode, long correctionRound) {
+    public Optional<FileUploadSubmission> getRandomFileUploadSubmissionEligibleForNewAssessment(FileUploadExercise fileUploadExercise, boolean examMode, int correctionRound) {
         var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(fileUploadExercise, examMode, correctionRound);
         if (submissionWithoutResult.isPresent()) {
             FileUploadSubmission fileUploadSubmission = (FileUploadSubmission) submissionWithoutResult.get();
@@ -203,7 +197,8 @@ public class FileUploadSubmissionService extends SubmissionService {
             checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         }
 
-        lockSubmission(fileUploadSubmission);
+        // correctionRound always defaults to 0, as fileUpload exercises currently are not supported within exams
+        lockSubmission(fileUploadSubmission, 0);
         return fileUploadSubmission;
     }
 
@@ -212,13 +207,13 @@ public class FileUploadSubmissionService extends SubmissionService {
      *
      * @param fileUploadExercise the exercise the submission should belong to
      * @param correctionRound - the correction round we want our submission to have results for
-     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param ignoreTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a locked file upload submission that needs an assessment
      */
-    public FileUploadSubmission lockAndGetFileUploadSubmissionWithoutResult(FileUploadExercise fileUploadExercise, boolean removeTestRunParticipations, long correctionRound) {
-        FileUploadSubmission fileUploadSubmission = getRandomFileUploadSubmissionEligibleForNewAssessment(fileUploadExercise, removeTestRunParticipations, correctionRound)
+    public FileUploadSubmission lockAndGetFileUploadSubmissionWithoutResult(FileUploadExercise fileUploadExercise, boolean ignoreTestRunParticipations, int correctionRound) {
+        FileUploadSubmission fileUploadSubmission = getRandomFileUploadSubmissionEligibleForNewAssessment(fileUploadExercise, ignoreTestRunParticipations, correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("File upload submission for exercise " + fileUploadExercise.getId() + " could not be found"));
-        lockSubmission(fileUploadSubmission);
+        lockSubmission(fileUploadSubmission, correctionRound);
         return fileUploadSubmission;
     }
 

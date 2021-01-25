@@ -27,6 +27,8 @@
     [result]="manualResult"
     [assessmentsAreValid]="assessmentsAreValid"
     [complaint]="complaint"
+    [exercise]="exercise"
+    [submission]="submission"
     [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed"
     (save)="save()"
     (submit)="submit()"
@@ -40,6 +42,7 @@
         [participation]="participation"
         [showEditorInstructions]="showEditorInstructions"
         [isTutorAssessment]="true"
+        [highlightFileChanges]="true"
         [readOnlyManualFeedback]="readOnly()"
         (onUpdateFeedback)="onUpdateFeedback($event)"
         (onFileLoad)="onFileLoad($event)"
@@ -49,7 +52,7 @@
             <jhi-programming-assessment-repo-export
                 [exerciseId]="exercise.id"
                 [singleParticipantMode]="true"
-                [participationIdList]="participation?.id"
+                [participationIdList]="[participation?.id]"
             ></jhi-programming-assessment-repo-export>
             <a
                 class="ml-2 mr-5"

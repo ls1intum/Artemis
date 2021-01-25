@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.apache.http.HttpException;
 import org.springframework.http.ResponseEntity;
@@ -10,12 +14,19 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 
 /**
  * Abstract service for managing entities related to continuous integration.
  */
 public interface ContinuousIntegrationService {
+
+    // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/
+    String matchPathEndingWithAssignmentDirectory = "(/?[^\0]+)*" + ASSIGNMENT_DIRECTORY;
+
+    String orMatchStartingWithRepoName = "|^" + ASSIGNMENT_REPO_NAME + "/"; // Needed for C build logs
+
+    Pattern ASSIGNMENT_PATH = Pattern.compile(matchPathEndingWithAssignmentDirectory + orMatchStartingWithRepoName);
 
     enum BuildStatus {
         INACTIVE, QUEUED, BUILDING
@@ -105,9 +116,9 @@ public interface ContinuousIntegrationService {
      * @param participation The participation for which the build finished
      * @param requestBody   The request Body received from the CI-Server.
      * @return the result of the build
-     * @throws ContinousIntegrationException if the Body could not be parsed
+     * @throws ContinuousIntegrationException if the Body could not be parsed
      */
-    Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) throws ContinousIntegrationException;
+    Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) throws ContinuousIntegrationException;
 
     /**
      * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
@@ -287,7 +298,7 @@ public interface ContinuousIntegrationService {
      */
     default String getDockerImageName(ProgrammingLanguage language) {
         return switch (language) {
-            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-4";
+            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-5";
             case PYTHON -> "ls1tum/artemis-python-docker:latest";
             case C -> "ls1tum/artemis-c-docker:latest";
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";

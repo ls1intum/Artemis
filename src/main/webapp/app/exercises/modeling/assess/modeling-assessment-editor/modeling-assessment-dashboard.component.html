@@ -198,7 +198,7 @@
                                     'assessment'
                                 ]"
                                 [class.disabled]="busy"
-                                [queryParams]="{ optimal: false, hideBackButton: true }"
+                                [queryParams]="{ optimal: false, hideBackButton: true , 'correction-round': submission.results?.length }"
                                 class="btn btn-outline-secondary btn-sm mb-1"
                             >
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
@@ -233,7 +233,7 @@
                                 'assessment'
                             ]"
                             [class.disabled]="busy"
-                            [queryParams]="{ optimal: false, hideBackButton: true }"
+                            [queryParams]="{ optimal: false, hideBackButton: true, 'correction-round': submission.results?.length }"
                             class="btn btn-outline-secondary btn-sm mb-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}

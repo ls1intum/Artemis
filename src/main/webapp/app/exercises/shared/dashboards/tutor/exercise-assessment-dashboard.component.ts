@@ -14,7 +14,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
-import { getLatestSubmissionResult, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -36,6 +36,7 @@ import { Exam } from 'app/entities/exam.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { Result } from 'app/entities/result.model';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -89,6 +90,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     formattedGradingInstructions?: SafeHtml;
     formattedProblemStatement?: SafeHtml;
     formattedSampleSolution?: SafeHtml;
+    getSubmissionResultByCorrectionRound = getSubmissionResultByCorrectionRound;
 
     readonly ExerciseType = ExerciseType;
 
@@ -129,6 +131,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         private programmingSubmissionService: ProgrammingSubmissionService,
         private modalService: NgbModal,
         private guidedTourService: GuidedTourService,
+        private artemisDatePipe: ArtemisDatePipe,
     ) {}
 
     /**
@@ -205,7 +208,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     this.isExamMode = true;
                     this.exam = this.exercise?.exerciseGroup?.exam;
                 }
-                // TODO write loop over all correctionRounds
                 this.getAllTutorAssessedSubmissionsForAllCorrectionRounds();
 
                 // 1. We don't want to assess submissions before the exercise due date
@@ -344,6 +346,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
                 const sub = submissions.map((submission) => {
                     submission.participation!.submissions = [submission];
+                    submission.participation!.results = submission.results;
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     return submission;
                 });
@@ -469,13 +472,41 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     /**
      * Calculates the status of a submission by inspecting the result
      * @param submission Submission which to check
+     * @param correctionRound for which to get status
      */
-    calculateStatus(submission: Submission) {
-        const tmpResult = submission.latestResult;
+    calculateSubmissionStatus(submission: Submission, correctionRound = 0) {
+        const tmpResult = submission.results?.[correctionRound];
         if (tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!)) {
             return 'DONE';
         }
         return 'DRAFT';
+    }
+
+    calculateComplaintStatus(complaint: Complaint) {
+        // a complaint is handled if it is either accepted or denied and a complaint response exists
+        const handled = complaint.accepted !== undefined && complaint.complaintResponse !== undefined;
+        if (handled) {
+            return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.complaintEvaluated');
+        } else {
+            if (this.complaintService.isComplaintLocked(complaint)) {
+                if (this.complaintService.isComplaintLockedByLoggedInUser(complaint)) {
+                    const endDate = this.artemisDatePipe.transform(complaint.complaintResponse?.lockEndDate);
+                    return this.translateService.instant('artemisApp.locks.lockInformationYou', {
+                        endDate,
+                    });
+                } else {
+                    const endDate = this.artemisDatePipe.transform(complaint.complaintResponse?.lockEndDate);
+                    const user = complaint.complaintResponse?.reviewer?.login;
+
+                    return this.translateService.instant('artemisApp.locks.lockInformation', {
+                        endDate,
+                        user,
+                    });
+                }
+            } else {
+                return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.complaintNotEvaluated');
+            }
+        }
     }
 
     /**
@@ -501,11 +532,16 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         this.router.navigate([route], { queryParams });
     }
 
+    isComplaintLocked(complaint: Complaint) {
+        return this.complaintService.isComplaintLockedForLoggedInUser(complaint, this.exercise);
+    }
+
     /**
      * Uses the router to navigate to the assessment editor for a given/new submission
      * @param submission Either submission or 'new'.
+     * @param correctionRound
      */
-    async openAssessmentEditor(submission: Submission | 'new'): Promise<void> {
+    async openAssessmentEditor(submission: Submission | 'new', correctionRound = 0): Promise<void> {
         if (!this.exercise || !this.exercise.type || !submission) {
             return;
         }
@@ -520,9 +556,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment`;
         }
         if (this.isTestRun) {
-            await this.router.navigate([route], { queryParams: { testRun: this.isTestRun } });
+            await this.router.navigate([route], { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
         } else {
-            await this.router.navigate([route]);
+            await this.router.navigate([route], { queryParams: { 'correction-round': correctionRound } });
         }
         this.openingAssessmentEditorForNewSubmission = false;
     }
@@ -535,7 +571,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         const submission: Submission = complaint.result?.submission!;
         // For programming exercises we need the participationId
         submission.participation = complaint.result?.participation;
-        this.openAssessmentEditor(submission);
+        // numberOfAssessmentsOfCorrectionRounds size is the number of correction rounds
+        this.openAssessmentEditor(submission, this.numberOfAssessmentsOfCorrectionRounds.length - 1);
     }
 
     /**

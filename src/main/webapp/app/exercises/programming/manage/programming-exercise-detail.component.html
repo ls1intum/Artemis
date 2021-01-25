@@ -134,6 +134,28 @@
                     </button>
                     <fa-icon [icon]="'question-circle'" class="text-secondary" ngbTooltip="{{ 'artemisApp.programmingExercise.structureTestOracleWarning' | translate }}"></fa-icon>
                 </span>
+                <button
+                    id="unlockAllRepositoriesButton"
+                    class="btn btn-danger btn-sm mr-1"
+                    (click)="handleUnlockAllRepositories()"
+                    *ngIf="programmingExercise.isAtLeastInstructor"
+                    [disabled]="lockingOrUnlockingRepositories"
+                >
+                    <span *ngIf="lockingOrUnlockingRepositories" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <fa-icon [icon]="'exclamation-triangle'" class="text-warning"></fa-icon>
+                    <span jhiTranslate="artemisApp.programmingExercise.unlockAllRepositories">Unlock all repositories</span>
+                </button>
+                <button
+                    id="lockAllRepositoriesButton"
+                    class="btn btn-danger btn-sm mr-1"
+                    (click)="handleLockAllRepositories()"
+                    *ngIf="programmingExercise.isAtLeastInstructor"
+                    [disabled]="lockingOrUnlockingRepositories"
+                >
+                    <span *ngIf="lockingOrUnlockingRepositories" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <fa-icon [icon]="'exclamation-triangle'" class="text-warning"></fa-icon>
+                    <span jhiTranslate="artemisApp.programmingExercise.lockAllRepositories">Lock all repositories</span>
+                </button>
             </div>
             <dl class="row-md jh-entity-details">
                 <jhi-exercise-details [exercise]="programmingExercise"></jhi-exercise-details>

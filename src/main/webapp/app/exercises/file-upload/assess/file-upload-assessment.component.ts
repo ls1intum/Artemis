@@ -1,13 +1,11 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
-import interact from 'interactjs';
 import * as moment from 'moment';
-import * as $ from 'jquery';
-import { Interactable } from '@interactjs/core/Interactable';
+import { now } from 'moment';
 import { Location } from '@angular/common';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -28,16 +26,15 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { now } from 'moment';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     providers: [FileUploadAssessmentsService],
     templateUrl: './file-upload-assessment.component.html',
-    styleUrls: ['./file-upload-assessment.component.scss'],
+    styles: [],
     encapsulation: ViewEncapsulation.None,
 })
-export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnDestroy {
+export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     text: string;
     participation: StudentParticipation;
     submission: FileUploadSubmission;
@@ -62,13 +59,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     isTestRun = false;
     courseId: number;
     hasAssessmentDueDatePassed: boolean;
-
-    /** Resizable constants **/
-    resizableMinWidth = 100;
-    resizableMaxWidth = 1200;
-    resizableMinHeight = 200;
-    interactResizable: Interactable;
-    interactResizableTop: Interactable;
 
     private cancelConfirmationText: string;
 
@@ -197,69 +187,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.isLoading = false;
     }
 
-    /**
-     * @function ngAfterViewInit
-     * @desc After the view was initialized, we create an interact.js resizable object,
-     *       designate the edges which can be used to resize the target element and set min and max values.
-     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
-     */
-    ngAfterViewInit(): void {
-        this.resizableMinWidth = window.screen.width / 6;
-        this.resizableMinHeight = window.screen.height / 7;
-
-        this.interactResizable = interact('.resizable-submission')
-            .resizable({
-                // Enable resize from left edge; triggered by class .resizing-bar
-                edges: { left: '.resizing-bar', right: false, bottom: false, top: false },
-                // Set min and max width
-                modifiers: [
-                    // Set maximum width
-                    interact.modifiers!.restrictSize({
-                        min: { width: this.resizableMinWidth, height: 0 },
-                        max: { width: this.resizableMaxWidth, height: 2000 },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function (event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', function (event: any) {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', function (event: any) {
-                const target = event.target;
-                // Update element width
-                target.style.width = event.rect.width + 'px';
-                target.style.minWidth = event.rect.width + 'px';
-            });
-
-        this.interactResizableTop = interact('.resizable-horizontal')
-            .resizable({
-                // Enable resize from bottom edge; triggered by class .resizing-bar-bottom
-                edges: { left: false, right: false, top: false, bottom: '.resizing-bar-bottom' },
-                // Set min height
-                modifiers: [
-                    interact.modifiers!.restrictSize({
-                        min: { width: 0, height: this.resizableMinHeight },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function (event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', function (event: any) {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', function (event: any) {
-                const target = event.target;
-                // Update element height
-                target.style.minHeight = event.rect.height + 'px';
-                $('#submission-area').css('min-height', event.rect.height - 100 + 'px');
-            });
-    }
-
     public ngOnDestroy(): void {
         this.changeDetectorRef.detach();
     }
@@ -281,7 +208,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
      * It calls the api to load the new unassessed submission in the same page.
      * For the new submission to appear on the same page, the url has to be reloaded.
      */
-    assessNextOptimal() {
+    assessNext() {
         this.generalFeedback = new Feedback();
         this.referencedFeedback = [];
         this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!).subscribe(
@@ -494,9 +421,14 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                     this.jhiAlertService.clear();
                     this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
                 },
-                () => {
+                (httpErrorResponse: HttpErrorResponse) => {
                     this.jhiAlertService.clear();
-                    this.jhiAlertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
+                    const error = httpErrorResponse.error;
+                    if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                        this.jhiAlertService.error(error.message, error.params);
+                    } else {
+                        this.jhiAlertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
+                    }
                 },
             );
     }

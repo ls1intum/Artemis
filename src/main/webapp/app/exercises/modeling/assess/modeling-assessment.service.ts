@@ -18,12 +18,12 @@ export class ModelingAssessmentService {
 
     constructor(private http: HttpClient) {}
 
-    saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false): Observable<Result> {
+    saveAssessment(resultId: number, feedbacks: Feedback[], submissionId: number, submit = false): Observable<Result> {
         let params = new HttpParams();
         if (submit) {
             params = params.set('submit', 'true');
         }
-        const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/assessment`;
+        const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/result/${resultId}/assessment`;
         return this.http
             .put<Result>(url, feedbacks, { params })
             .map((res: Result) => this.convertResult(res));
@@ -54,10 +54,20 @@ export class ModelingAssessmentService {
         return this.http.get<Result>(url).map((res) => this.convertResult(res));
     }
 
+    /**
+     * TODO delete
+     * @deprecated do not use any more, instead use modeling-submission-service.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(...)
+     * @param exerciseId the modeling exercise id
+     */
     getOptimalSubmissions(exerciseId: number): Observable<number[]> {
         return this.http.get<number[]>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`);
     }
 
+    /**
+     * TODO delete
+     * @deprecated do not use any more
+     * @param exerciseId the modeling exercise id
+     */
     resetOptimality(exerciseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`, { observe: 'response' });
     }

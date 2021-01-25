@@ -8,11 +8,9 @@
 shadowFilePath="../tests/testUtils/c/shadow_exec.c"
 
 foundIncludeDirs=`grep -m 1 'INCLUDEDIRS\s*=' assignment/Makefile`
-echo "Include: $foundIncludeDirs"
 
 foundSource=`grep -m 1 'SOURCE\s*=' assignment/Makefile`
-# foundSource="$foundSource $shadowFilePath"
-echo "Source: $foundSource"
+foundSource="$foundSource $shadowFilePath"
 
 rm -f assignment/GNUmakefile
 rm -f assignment/makefile

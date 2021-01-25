@@ -5,8 +5,10 @@ import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -125,7 +127,7 @@ public class ProgrammingExerciseImportService {
         }
 
         // An exam exercise can only be in individual mode
-        if (!newExercise.hasCourse()) {
+        if (!newExercise.isCourseExercise()) {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
             newExercise.setTeamAssignmentConfig(null);
         }
@@ -151,15 +153,14 @@ public class ProgrammingExerciseImportService {
                 Pair.of(RepositoryType.SOLUTION, templateExercise.getSolutionRepositoryName()), Pair.of(RepositoryType.TESTS, templateExercise.getTestRepositoryName()));
 
         // create a unique folder to prevent issues in follow-up requests
-        var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
+        String targetPath = fileService.getUniquePathString(repoDownloadClonePath);
         reposToCopy.forEach(repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName(), targetPath));
         // Delete source project folder which contained all cloned source repos
-        Path projectPath = new File(targetPath + sourceProjectKey).toPath();
         try {
-            FileUtils.deleteDirectory(projectPath.toFile());
+            FileUtils.deleteDirectory(new File(targetPath));
         }
         catch (IOException e) {
-            log.warn("The project root folder '" + projectPath.toString() + "' couldn't be deleted.");
+            log.warn("The project root folder '" + targetPath + "' couldn't be deleted.");
         }
 
         // Unprotect the master branch of the template exercise repo.

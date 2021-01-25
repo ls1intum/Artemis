@@ -19,13 +19,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.dto.SubmissionComparisonDTO;
 
 public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -88,15 +88,24 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void getOwnTextSubmission() throws Exception {
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getTextSubmissionWithResult() throws Exception {
         textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
+        database.addResultToSubmission(textSubmission, AssessmentType.MANUAL);
 
         TextSubmission textSubmission = request.get("/api/text-submissions/" + this.textSubmission.getId(), HttpStatus.OK, TextSubmission.class);
 
         assertThat(textSubmission).as("text submission without assessment was found").isNotNull();
         assertThat(textSubmission.getId()).as("correct text submission was found").isEqualTo(this.textSubmission.getId());
         assertThat(textSubmission.getText()).as("text of text submission is correct").isEqualTo(this.textSubmission.getText());
+        assertThat(textSubmission.getResults()).as("results are not loaded properly").isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getTextSubmissionWithResult_NotAllowed() throws Exception {
+        textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
+        request.get("/api/text-submissions/" + this.textSubmission.getId(), HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
@@ -370,26 +379,5 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         else {
             assertThat(((StudentParticipation) submission.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
         }
-    }
-
-    @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testPlagiarismCheck() throws Exception {
-        final TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
-        final TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("example test", Language.ENGLISH, true);
-        final TextSubmission textSubmission3 = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
-
-        database.saveTextSubmission(finishedTextExercise, textSubmission1, "student1");
-        database.saveTextSubmission(finishedTextExercise, textSubmission2, "student2");
-        database.saveTextSubmission(finishedTextExercise, textSubmission3, "tutor1");
-
-        final var list = request.getList("/api/text-exercises/" + finishedTextExercise.getId() + "/check-plagiarism", HttpStatus.OK, SubmissionComparisonDTO.class);
-
-        final var comparisonFirstSecond = list.stream().filter(dto -> dto.submissions.containsAll(Set.of(textSubmission1, textSubmission2))).findFirst().get();
-        comparisonFirstSecond.distanceMetrics
-                .forEach((metric, value) -> assertThat(value).as("Metric '" + metric + "' is greater than 0.92 for text vs test.").isGreaterThan(0.91));
-
-        final var comparisonFirstThird = list.stream().filter(dto -> dto.submissions.containsAll(Set.of(textSubmission1, textSubmission3))).findFirst().get();
-        comparisonFirstThird.distanceMetrics.forEach((metric, value) -> assertThat(value).as("Metric '" + metric + "' is 0 for equal text.").isEqualTo(1d));
     }
 }

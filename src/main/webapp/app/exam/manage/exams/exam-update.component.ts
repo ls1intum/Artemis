@@ -100,7 +100,7 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
-        return this.exam?.numberOfCorrectionRoundsInExam! < 2 && this.exam?.numberOfCorrectionRoundsInExam! > 0;
+        return this.exam?.numberOfCorrectionRoundsInExam! < 3 && this.exam?.numberOfCorrectionRoundsInExam! > 0;
     }
 
     get isValidStartDate(): boolean {

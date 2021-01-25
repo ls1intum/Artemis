@@ -113,7 +113,7 @@ public class ExerciseResource {
         Exercise exercise = exerciseService.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
 
         // Exam exercise
-        if (exercise.hasExerciseGroup()) {
+        if (exercise.isExamExercise()) {
             Exam exam = exercise.getExerciseGroup().getExam();
             if (authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
                 // instructors and admins should always be able to see exam exercises
@@ -219,7 +219,7 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise, exercise.hasExerciseGroup());
+        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise, exercise.isExamExercise());
 
         return ResponseEntity.ok(stats);
     }
@@ -270,13 +270,13 @@ public class ExerciseResource {
         }
         stats.setNumberOfComplaints(numberOfComplaints);
 
-        long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exerciseId,
-                ComplaintType.COMPLAINT);
+        long numberOfComplaintResponses = complaintResponseRepository
+                .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exerciseId, ComplaintType.COMPLAINT);
 
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
-        long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exerciseId,
-                ComplaintType.MORE_FEEDBACK);
+        long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository
+                .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exerciseId, ComplaintType.MORE_FEEDBACK);
 
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
 
@@ -302,7 +302,7 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise, exercise.hasExerciseGroup());
+        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise, exercise.isExamExercise());
         long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfOpenComplaints);
 
@@ -368,7 +368,7 @@ public class ExerciseResource {
 
         // TODO: Create alternative route so that instructors and admins can access the exercise details
         // The users are not allowed to access the exercise details over this route if the exercise belongs to an exam
-        if (exercise.hasExerciseGroup()) {
+        if (exercise.isExamExercise()) {
             return forbidden();
         }
 

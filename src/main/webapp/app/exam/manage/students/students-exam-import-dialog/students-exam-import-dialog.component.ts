@@ -11,9 +11,19 @@ import { StudentDTO } from 'app/entities/student-dto.model';
 import * as Papa from 'papaparse';
 
 const csvColumns = Object.freeze({
-    registrationNumber: 'REGISTRATION_NUMBER',
-    firstName: 'FIRST_NAME_OF_STUDENT',
-    lastName: 'FAMILY_NAME_OF_STUDENT',
+    registrationNumber: 'registrationnumber',
+    matrikelNummer: 'matrikelnummer',
+    matriculationNumber: 'matriculationnumber',
+    firstNameOfStudent: 'firstnameofstudent',
+    familyNameOfStudent: 'familynameofstudent',
+    firstName: 'firstname',
+    familyName: 'familyname',
+    lastName: 'lastname',
+    login: 'login',
+    username: 'username',
+    user: 'user',
+    benutzer: 'benutzer',
+    benutzerName: 'benutzername',
 });
 
 type CsvStudent = object;
@@ -89,9 +99,16 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
         return csvStudents.map(
             (student) =>
                 ({
-                    registrationNumber: student[csvColumns.registrationNumber],
-                    firstName: student[csvColumns.firstName] || '',
-                    lastName: student[csvColumns.lastName] || '',
+                    registrationNumber: student[csvColumns.registrationNumber] || student[csvColumns.matrikelNummer] || student[csvColumns.matriculationNumber] || '',
+                    login:
+                        student[csvColumns.login] ||
+                        student[csvColumns.username] ||
+                        student[csvColumns.user] ||
+                        student[csvColumns.benutzer] ||
+                        student[csvColumns.benutzerName] ||
+                        '',
+                    firstName: student[csvColumns.firstName] || student[csvColumns.firstNameOfStudent] || '',
+                    lastName: student[csvColumns.lastName] || student[csvColumns.familyName] || student[csvColumns.familyNameOfStudent] || '',
                 } as StudentDTO),
         );
     }
@@ -108,12 +125,12 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
         if (invalidStudentEntries) {
             const msg = (body: string) => `
                 Could not read file <b>${csvFile.name}</b> due to the following error:
-                <ul class="mt-1"><li><b>Rows without value in required column ${body}</b></li></ul>
+                <ul class="mt-1"><li><b>Rows must have a value in one of the required columns ${body}</b></li></ul>
                 Please repair the file and try again.
             `;
             const maxLength = 30;
             const entriesFormatted = invalidStudentEntries.length <= maxLength ? invalidStudentEntries : invalidStudentEntries.slice(0, maxLength) + '...';
-            this.validationError = msg(`"${csvColumns.registrationNumber}": ${entriesFormatted}`);
+            this.validationError = msg(`${csvColumns.registrationNumber} or ${csvColumns.login}: ${entriesFormatted}`);
         }
     }
 
@@ -124,8 +141,18 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
     computeInvalidStudentEntries(csvStudents: CsvStudent[]): string | null {
         const invalidList: number[] = [];
         for (const [i, student] of csvStudents.entries()) {
-            if (!student[csvColumns.registrationNumber]) {
-                invalidList.push(i + 2); // +2 instead of +1 due to header column in csv file
+            if (
+                !student[csvColumns.registrationNumber] &&
+                !student[csvColumns.matrikelNummer] &&
+                !student[csvColumns.matriculationNumber] &&
+                !student[csvColumns.login] &&
+                !student[csvColumns.user] &&
+                !student[csvColumns.username] &&
+                !student[csvColumns.benutzer] &&
+                !student[csvColumns.benutzerName]
+            ) {
+                // '+ 2' instead of '+ 1' due to the header column in the csv file
+                invalidList.push(i + 2);
             }
         }
         return invalidList.length === 0 ? null : invalidList.join(', ');
@@ -139,6 +166,7 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
         return new Promise((resolve, reject) => {
             Papa.parse(csvFile, {
                 header: true,
+                transformHeader: (header: string) => header.toLowerCase().replace(' ', '').replace('_', ''),
                 skipEmptyLines: true,
                 complete: (results) => resolve(results.data as CsvStudent[]),
                 error: (error) => reject(error),
@@ -170,7 +198,20 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
      * @param student The student to be checked
      */
     wasNotImported(student: StudentDTO): boolean {
-        return this.hasImported && this.notFoundStudents.map((s) => s.registrationNumber).includes(student.registrationNumber);
+        if (this.hasImported && this.notFoundStudents?.length === 0) {
+            return false;
+        }
+
+        for (const notFound of this.notFoundStudents) {
+            if (
+                (notFound.registrationNumber?.length > 0 && notFound.registrationNumber === student.registrationNumber) ||
+                (notFound.login?.length > 0 && notFound.login === student.login)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

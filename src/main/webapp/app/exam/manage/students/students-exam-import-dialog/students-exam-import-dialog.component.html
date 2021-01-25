@@ -11,6 +11,7 @@
         <jhi-alert></jhi-alert>
         <div class="form-group">
             <p class="intro-text" jhiTranslate="artemisApp.examManagement.examStudents.importStudents.introText">This dialog can be used to import students into this exam.</p>
+            <p class="intro-text" jhiTranslate="artemisApp.examManagement.examStudents.importStudents.dialogText"></p>
         </div>
         <div class="form-group">
             <div class="d-flex align-items-end">
@@ -36,7 +37,8 @@
                 <thead>
                     <tr>
                         <th scope="col">#</th>
-                        <th scope="col" jhiTranslate="artemisApp.examManagement.examStudents.registrationNumber">Matriculation number</th>
+                        <th scope="col" style="width: 300px" jhiTranslate="artemisApp.examManagement.examStudents.registrationNumber">Matriculation number</th>
+                        <th scope="col">Login</th>
                         <th scope="col" jhiTranslate="artemisApp.examManagement.examStudents.firstName">First name</th>
                         <th scope="col" jhiTranslate="artemisApp.examManagement.examStudents.lastName">Last name</th>
                     </tr>
@@ -44,7 +46,8 @@
                 <tbody class="table-body--students">
                     <tr *ngFor="let student of studentsToImport; let i = index" [class.import-success]="wasImported(student)" [class.import-fail]="wasNotImported(student)">
                         <th scope="row">{{ i + 1 }}</th>
-                        <td>{{ student.registrationNumber }}</td>
+                        <td style="width: 300px">{{ student.registrationNumber }}</td>
+                        <td>{{ student.login }}</td>
                         <td>{{ student.firstName }}</td>
                         <td>{{ student.lastName }}</td>
                     </tr>

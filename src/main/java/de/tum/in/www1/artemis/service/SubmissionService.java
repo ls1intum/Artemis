@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -30,36 +31,45 @@ public class SubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(SubmissionService.class);
 
-    protected SubmissionRepository submissionRepository;
+    private ExamService examService;
 
-    protected ResultRepository resultRepository;
+    private CourseService courseService;
 
-    protected AuthorizationCheckService authCheckService;
+    protected final SubmissionRepository submissionRepository;
 
-    protected StudentParticipationRepository studentParticipationRepository;
+    protected final ResultRepository resultRepository;
 
-    protected ParticipationService participationService;
+    protected final AuthorizationCheckService authCheckService;
 
-    private final ExamService examService;
+    protected final StudentParticipationRepository studentParticipationRepository;
+
+    protected final ParticipationService participationService;
 
     protected final UserService userService;
 
-    private final CourseService courseService;
-
     protected final FeedbackRepository feedbackRepository;
 
-    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService,
-            ResultRepository resultRepository, ExamService examService, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
-            FeedbackRepository feedbackRepository) {
+    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
+            StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, FeedbackRepository feedbackRepository) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
-        this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
-        this.examService = examService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.feedbackRepository = feedbackRepository;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setExamService(ExamService examService) {
+        this.examService = examService;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setCourseService(CourseService courseService) {
+        this.courseService = courseService;
     }
 
     /**
@@ -148,13 +158,12 @@ public class SubmissionService {
      * @param <T> the submission type
      * @return a list of Submissions
      */
-    public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(Long exerciseId, User tutor, boolean examMode, Long correctionRound) {
+    public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(Long exerciseId, User tutor, boolean examMode, int correctionRound) {
         List<T> submissions;
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
             submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
-                    .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound.intValue()) != null)
-                    .collect(toList());
+                    .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound) != null).collect(toList());
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
@@ -168,13 +177,14 @@ public class SubmissionService {
      * Given an exercise id, find a random submission for that exercise which still doesn't have any manual result.
      * No manual result means that no user has started an assessment for the corresponding submission yet.
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
+     * If @param correctionRound is bigger than 0, only submission are shown for which the user has not assessed the first result.
      *
      * @param exercise the exercise for which we want to retrieve a submission without manual result
      * @param correctionRound - the correction round we want our submission to have results for
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise exercise, boolean examMode, long correctionRound) {
+    public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise exercise, boolean examMode, int correctionRound) {
         Random random = new Random();
         List<StudentParticipation> participations;
 
@@ -187,6 +197,13 @@ public class SubmissionService {
 
         List<Submission> submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toList());
+
+        if (correctionRound > 0) {
+            // remove submission if user already assessed first correction round
+            // if disabled, please switch tutorAssessUnique within the tests
+            submissionsWithoutResult = submissionsWithoutResult.stream()
+                    .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1).getAssessor().equals(userService.getUser())).collect(Collectors.toList());
+        }
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
@@ -305,13 +322,58 @@ public class SubmissionService {
     }
 
     /**
+     * Copy Feedbacks from one Result to a another Result
+     * @param newResult new result to copy feedback to
+     * @param oldResult old result to copy feedback from
+     * @return the list of newly created feedbacks
+     */
+    public List<Feedback> copyFeedbackToNewResult(Result newResult, Result oldResult) {
+        List<Feedback> oldFeedback = oldResult.getFeedbacks();
+        oldFeedback.forEach(feedback -> {
+            Feedback newFeedback = feedback.copyFeedback();
+            newResult.addFeedback(newFeedback);
+        });
+        resultRepository.save(newResult);
+        return newResult.getFeedbacks();
+    }
+
+    /**
+     * This method is used to create a copy of a result, used in the exam mode with correctionRound > 1,
+     * because an assessment with current correctionRound > 1 contains all previous work,
+     * which the tutor can then edit. Assigns the newly created Result to the submission
+     *
+     * @param submission submission to which the new Result is assigned
+     * @param oldResult result to copy from
+     * @return the newly created copy of the oldResult
+     */
+    public Result copyResultFromPreviousRoundAndSave(Submission submission, Result oldResult) {
+        if (oldResult == null) {
+            return saveNewEmptyResult(submission);
+        }
+        Result newResult = new Result();
+        newResult.setParticipation(submission.getParticipation());
+        copyFeedbackToNewResult(newResult, oldResult);
+
+        newResult.setResultString(oldResult.getResultString());
+        newResult.setScore(oldResult.getScore());
+        newResult.setHasFeedback(oldResult.getHasFeedback());
+        newResult.setRated(oldResult.isRated());
+        newResult = resultRepository.save(newResult);
+        newResult.setSubmission(submission);
+        submission.addResult(newResult);
+        submissionRepository.save(submission);
+        return newResult;
+    }
+
+    /**
      * used to assign and save results to submissions
+     * Make sure submission.results is loaded
      *
      * @param submission the parent submission of the result
      * @param result the result which we want to save and order
      * @return the result with correctly persisted relationship to its submission
      */
-    public Result saveNewResult(final Submission submission, final Result result) {
+    public Result saveNewResult(Submission submission, final Result result) {
         result.setSubmission(null);
         submission.setResults(new ArrayList<>());
         if (result.getParticipation() == null) {
@@ -335,7 +397,7 @@ public class SubmissionService {
      * @param feedbackText the feedback text for the
      */
     public void addResultWithFeedback(StudentParticipation studentParticipation, User assessor, long score, String feedbackText) {
-        if (studentParticipation.getExercise().hasExerciseGroup() && studentParticipation.findLatestSubmission().isPresent()
+        if (studentParticipation.getExercise().isExamExercise() && studentParticipation.findLatestSubmission().isPresent()
                 && studentParticipation.findLatestSubmission().get().getLatestResult() == null) {
             final var latestSubmission = studentParticipation.findLatestSubmission().get();
             Result result = new Result();
@@ -362,14 +424,18 @@ public class SubmissionService {
     }
 
     /**
-     * Soft lock the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
+     * Soft the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
      * tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
      *
      * @param submission the submission to lock
      */
-    protected Result lockSubmission(Submission submission) {
-        Result result = submission.getLatestResult();
-        if (result == null) {
+    protected Result lockSubmission(Submission submission, int correctionRound) {
+        Result result = submission.getResultForCorrectionRound(correctionRound);
+        if (result == null && correctionRound > 0L) {
+            // copy the result of the previous correction round
+            result = copyResultFromPreviousRoundAndSave(submission, submission.getResultForCorrectionRound(correctionRound - 1));
+        }
+        else if (result == null) {
             result = saveNewEmptyResult(submission);
         }
 
@@ -432,7 +498,7 @@ public class SubmissionService {
      * @return boolean
      */
     public boolean checkIfExerciseDueDateIsReached(Exercise exercise) {
-        final boolean isExamMode = exercise.hasExerciseGroup();
+        final boolean isExamMode = exercise.isExamExercise();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (isExamMode) {
             ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
