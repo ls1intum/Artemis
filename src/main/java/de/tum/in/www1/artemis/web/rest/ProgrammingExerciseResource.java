@@ -1154,13 +1154,15 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism
-     * and returns the generated output as zip file
+     * GET /programming-exercises/{exerciseId}/check-plagiarism
+     * <p>
+     * Start the automated plagiarism detection for the given exercise and return its result.
      *
-     * @param exerciseId The ID of the programming exercise for which the plagiarism check should be
-     *                   executed
+     * @param exerciseId          The ID of the programming exercise for which the plagiarism check
+     *                            should be executed
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
-     * @param minimumScore consider only submissions whose score is greater or equal to this value
+     * @param minimumScore        consider only submissions whose score is greater or equal to this
+     *                            value
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the
      * parameters are invalid
      * @throws ExitException is thrown if JPlag exits unexpectedly
@@ -1172,17 +1174,20 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore)
             throws ExitException, IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
-        long start = System.nanoTime();
 
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
-        if (programmingExercise.isEmpty()) {
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findById(exerciseId);
+
+        if (optionalProgrammingExercise.isEmpty()) {
             return notFound();
         }
-        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise.get())) {
+
+        ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
+
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             return forbidden();
         }
 
-        var language = programmingExercise.get().getProgrammingLanguage();
+        ProgrammingLanguage language = programmingExercise.getProgrammingLanguage();
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
 
         if (!programmingLanguageFeature.isPlagiarismCheckSupported()) {
@@ -1192,8 +1197,7 @@ public class ProgrammingExerciseResource {
 
         TextPlagiarismResult result = programmingExerciseExportService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore);
 
-        log.info("Check plagiarism of programming exercise {} with title '{}' was successful in {}.", programmingExercise.get().getId(), programmingExercise.get().getTitle(),
-                formatDurationFrom(start));
+        plagiarismService.savePlagiarismResult(result);
 
         return ResponseEntity.ok(result);
     }
