@@ -430,7 +430,12 @@ public class StudentExamService {
      */
     public StudentExam generateTestRun(StudentExam testRunConfiguration) {
         StudentExam testRun = createTestRun(testRunConfiguration);
-        setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId());
+        final var generatedParticipations = setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId());
+        final var programmingParticipations = generatedParticipations.stream().filter(participation -> participation.getExercise() instanceof ProgrammingExercise)
+                .collect(Collectors.toSet());
+        if (!programmingParticipations.isEmpty()) {
+            participationService.createInitialProgrammingSubmissionForTestRun(programmingParticipations);
+        }
         return testRun;
     }
 
@@ -458,14 +463,14 @@ public class StudentExamService {
      *
      * @param testRunId the id of the TestRun
      */
-    private void setUpTestRunExerciseParticipationsAndSubmissions(Long testRunId) {
+    private List<StudentParticipation> setUpTestRunExerciseParticipationsAndSubmissions(Long testRunId) {
         StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true)
-                .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist"));
+                .orElseThrow(() -> new EntityNotFoundException("StudentExam with id:" + testRunId + "does not exist"));
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         examService.setUpExerciseParticipationsAndSubmissions(generatedParticipations, testRun);
         // use the flag test run for all participations of the created test run
         generatedParticipations.forEach(studentParticipation -> studentParticipation.setTestRun(true));
-        studentParticipationRepository.saveAll(generatedParticipations);
+        return studentParticipationRepository.saveAll(generatedParticipations);
     }
 
     /**

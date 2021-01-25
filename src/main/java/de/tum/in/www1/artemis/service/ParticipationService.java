@@ -281,26 +281,11 @@ public class ParticipationService {
      */
     public void markSubmissionsOfTestRunParticipations(List<StudentParticipation> participations) {
         for (final var participation : participations) {
-            final Exercise exercise = participation.getExercise();
-            Submission submission;
-            if (participation instanceof ProgrammingExerciseParticipation) {
-                Set<Submission> programmingSubmissions = new HashSet<>(submissionRepository.findAllByParticipationId(participation.getId()));
-                participation.setSubmissions(programmingSubmissions);
-                if (programmingSubmissions.isEmpty()) {
-                    submission = initializeSubmission(participation, exercise, null).get();
-                    // required so that the assessment dashboard statistics are calculated correctly
-                    submission.setSubmitted(true);
-                }
-                submission = participation.getSubmissions().iterator().next();
-
-            }
-            else {
-                submission = participation.getSubmissions().iterator().next();
-            }
-            submission.setSubmissionDate(ZonedDateTime.now());
+            Submission submission = participation.getSubmissions().iterator().next();
             // We add a result for test runs with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
             submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).get();
             if (submission.getLatestResult() == null) {
+                submission.setSubmissionDate(ZonedDateTime.now());
                 Result result = new Result();
                 result.setParticipation(participation);
                 result.setAssessor(participation.getStudent().get());
@@ -330,6 +315,25 @@ public class ParticipationService {
                 }
             }
             save(participation);
+        }
+    }
+
+    /**
+     * Creates an initial ProgrammingSubmission for every participation of Test Runs
+     * @param programmingParticipations the student participations of programming exercises in test runs
+     */
+    public void createInitialProgrammingSubmissionForTestRun(Set<StudentParticipation> programmingParticipations) {
+        for (final var programmingParticipation : programmingParticipations) {
+            if (programmingParticipation instanceof ProgrammingExerciseParticipation) {
+                Set<Submission> programmingSubmissions = new HashSet<>(submissionRepository.findAllByParticipationId(programmingParticipation.getId()));
+                programmingParticipation.setSubmissions(programmingSubmissions);
+                if (programmingSubmissions.isEmpty()) {
+                    final var submission = initializeSubmission(programmingParticipation, programmingParticipation.getExercise(), null).get();
+                    // required so that the assessment dashboard statistics are calculated correctly
+                    submission.setSubmitted(true);
+                    submissionRepository.save(submission);
+                }
+            }
         }
     }
 
