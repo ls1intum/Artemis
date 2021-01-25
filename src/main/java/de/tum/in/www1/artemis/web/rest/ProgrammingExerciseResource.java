@@ -1144,9 +1144,13 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
 
-        TextPlagiarismResult result = plagiarismService.getPlagiarismResult(programmingExercise);
+        Optional<TextPlagiarismResult> optionalResult = plagiarismService.getPlagiarismResult(programmingExercise);
 
-        return ResponseEntity.ok(result);
+        if (optionalResult.isEmpty()) {
+            return notFound();
+        }
+
+        return ResponseEntity.ok(optionalResult.get());
     }
 
     /**

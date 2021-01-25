@@ -590,9 +590,13 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        TextPlagiarismResult result = plagiarismService.getPlagiarismResult(textExercise);
+        Optional<TextPlagiarismResult> optionalResult = plagiarismService.getPlagiarismResult(textExercise);
 
-        return ResponseEntity.ok(result);
+        if (optionalResult.isEmpty()) {
+            return notFound();
+        }
+
+        return ResponseEntity.ok(optionalResult.get());
     }
 
     /**

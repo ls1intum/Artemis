@@ -444,9 +444,13 @@ public class ModelingExerciseResource {
             return forbidden();
         }
 
-        ModelingPlagiarismResult result = plagiarismService.getPlagiarismResult(modelingExercise);
+        Optional<ModelingPlagiarismResult> optionalResult = plagiarismService.getPlagiarismResult(modelingExercise);
 
-        return ResponseEntity.ok(result);
+        if (optionalResult.isEmpty()) {
+            return notFound();
+        }
+
+        return ResponseEntity.ok(optionalResult.get());
     }
 
     /**
