@@ -391,10 +391,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false);
         var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         List<Submission> response = request.getList("/api/exercises/" + testRun.getExercises().get(0).getId() + "/test-run-submissions", HttpStatus.OK, Submission.class);
-        response.get(0).getParticipation().setSubmissions(new HashSet<>(response));
-        assertThat(((StudentParticipation) response.get(0).getParticipation()).isTestRunParticipation()).isTrue();
-        assertThat(response.get(0).getLatestResult().getAssessor()).isEqualTo(instructor);
-        assertThat(response.get(0).getLatestResult().getAssessor()).isEqualTo(((StudentParticipation) response.get(0).getParticipation()).getStudent().get());
+        assertThat(response).isNotEmpty();
+        assertThat(((StudentParticipation) response.get(0).getParticipation()).isTestRun()).isTrue();
     }
 
     @Test

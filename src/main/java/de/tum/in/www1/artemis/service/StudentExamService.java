@@ -479,7 +479,7 @@ public class StudentExamService {
 
     /**
      * Deletes a test run.
-     * In case the participation is  not referenced by other test runs, the participation, submission, buildplans and repositories are deleted as well.
+     * In case the participation is not referenced by other test runs, the participation, submission, build plans and repositories are deleted as well.
      * @param testRunId the id of the test run
      * @return the deleted test run
      */

@@ -742,25 +742,27 @@ public class DatabaseUtilService {
     }
 
     public StudentExam generateTestRunForInstructor(Exam exam, User instructor, List<Exercise> exercises) {
-        var testRun = ModelFactory.generateStudentExam(exam);
-        testRun.setTestRun(true);
+        var testRun = ModelFactory.generateExamTestRun(exam);
         testRun.setUser(instructor);
         examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         for (final var exercise : exercises) {
             testRun.addExercise(exercise);
+            assertThat(exercise.isExamExercise()).isTrue();
             Submission submission;
             if (exercise instanceof ModelingExercise) {
-                submission = markModelingParticipationForTestRun((ModelingExercise) exercise, instructor.getLogin());
+                submission = addModelingSubmission((ModelingExercise) exercise, ModelFactory.generateModelingSubmission("", false), instructor.getLogin());
             }
             else if (exercise instanceof TextExercise) {
-                submission = markTextExerciseParticipationForTestRun((TextExercise) exercise, instructor.getLogin());
+                submission = saveTextSubmission((TextExercise) exercise, ModelFactory.generateTextSubmission("", null, false), instructor.getLogin());
             }
             else {
-                submission = markProgrammingParticipationForTestRun((ProgrammingExercise) exercise, instructor.getLogin());
+                submission = new ProgrammingSubmission().submitted(true);
+                addProgrammingSubmission((ProgrammingExercise) exercise, (ProgrammingSubmission) submission, instructor.getLogin());
+                submission = submissionRepository.save(submission);
             }
-            assertThat(exercise.isExamExercise()).isTrue();
-            assertThat(submission.getLatestResult().getAssessor().getLogin()).isEqualTo(instructor.getLogin());
-            assertThat(((StudentParticipation) submission.getParticipation()).getStudent().get().getLogin()).isEqualTo(instructor.getLogin());
+            var studentParticipation = (StudentParticipation) submission.getParticipation();
+            studentParticipation.setTestRun(true);
+            studentParticipationRepo.save(studentParticipation);
         }
         return testRun;
     }
@@ -999,48 +1001,6 @@ public class DatabaseUtilService {
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
     }
 
-    public StudentParticipation saveStudentParticipation(StudentParticipation participation) {
-        return studentParticipationRepo.save(participation);
-    }
-
-    /**
-     * Stores test run participation of the user with the given login for the given modeling exercise
-     *
-     * @param exercise the exercise for which the participation will be created
-     * @param login    login of the user
-     * @return eagerly loaded representation of the participation object stored in the database
-     */
-    public ModelingSubmission markModelingParticipationForTestRun(ModelingExercise exercise, String login) {
-        var modelingSubmission = addModelingSubmissionWithEmptyResult(exercise, "", login);
-        modelingSubmission.getLatestResult().setAssessor(getUserByLogin(login));
-        resultRepo.save(modelingSubmission.getLatestResult());
-        return modelingSubmission;
-    }
-
-    /**
-     * Stores test run participation of the user with the given login for the given modeling exercise
-     *
-     * @param exercise the exercise for which the participation will be created
-     * @param login    login of the user
-     * @return eagerly loaded representation of the participation object stored in the database
-     */
-    public TextSubmission markTextExerciseParticipationForTestRun(TextExercise exercise, String login) {
-        var textSubmission = saveTextSubmissionWithResultAndAssessor(exercise, ModelFactory.generateTextSubmission("", null, false), login, login);
-        textSubmission.getLatestResult().setCompletionDate(null);
-        resultRepo.save(textSubmission.getLatestResult());
-        return textSubmission;
-    }
-
-    public ProgrammingSubmission markProgrammingParticipationForTestRun(ProgrammingExercise exercise, String login) {
-        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submitted(true);
-        submission = addProgrammingSubmissionWithResult(exercise, submission, login);
-        submission.getLatestResult().setAssessor(getUserByLogin(login));
-        submission.getLatestResult().setCompletionDate(null);
-        resultRepo.save(submission.getLatestResult());
-        submissionRepository.save(submission);
-        return submission;
-    }
-
     /**
      * Stores participation of the team with the given id for the given exercise
      *
@@ -1192,6 +1152,12 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
+    public Result addFeedbackToResult(Feedback feedback, Result result) {
+        feedbackRepo.save(feedback);
+        result.addFeedback(feedback);
+        return resultRepo.save(result);
+    }
+
     public Result addFeedbackToResults(Result result) {
         List<Feedback> feedback = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
         feedback.addAll(ModelFactory.generateFeedback());
@@ -1319,13 +1285,17 @@ public class DatabaseUtilService {
         return programmingExercise;
     }
 
-    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed) {
+    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed, String commitHash) {
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
         programmingSubmission.setBuildFailed(buildFailed);
         programmingSubmission.type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now());
-        programmingSubmission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
+        programmingSubmission.setCommitHash(commitHash);
         programmingSubmission.setParticipation(participation);
         return submissionRepository.save(programmingSubmission);
+    }
+
+    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed) {
+        return createProgrammingSubmission(participation, buildFailed, TestConstants.COMMIT_HASH_STRING);
     }
 
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {

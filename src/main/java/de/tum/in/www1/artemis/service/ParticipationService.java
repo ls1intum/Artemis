@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -80,7 +80,7 @@ public class ParticipationService {
 
     private final QuizScheduleService quizScheduleService;
 
-    private final QuizExerciseService quizExerciseService;
+    private final QuizExerciseRepository quizExerciseRepository;
 
     private final UrlService urlService;
 
@@ -91,7 +91,7 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserService userService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService,
-            @Lazy QuizScheduleService quizScheduleService, QuizExerciseService quizExerciseService, RatingRepository ratingRepository, UrlService urlService) {
+            @Lazy QuizScheduleService quizScheduleService, QuizExerciseRepository quizExerciseRepository, RatingRepository ratingRepository, UrlService urlService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -110,7 +110,7 @@ public class ParticipationService {
         this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
         this.quizScheduleService = quizScheduleService;
-        this.quizExerciseService = quizExerciseService;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.ratingRepository = ratingRepository;
         this.urlService = urlService;
     }
@@ -307,7 +307,7 @@ public class ParticipationService {
                 result.setAssessmentType(AssessmentType.TEST_RUN);
 
                 if (submission instanceof QuizSubmission) {
-                    participation.setExercise(quizExerciseService.findOneWithQuestions(participation.getExercise().getId()));
+                    participation.setExercise(quizExerciseRepository.findWithEagerQuestionsById(participation.getExercise().getId()).orElse(null));
                     // set submission to calculate scores
                     result.setSubmission(submission);
                     // calculate scores and update result and submission accordingly
@@ -599,7 +599,7 @@ public class ParticipationService {
             try {
                 continuousIntegrationService.get().configureBuildPlan(participation);
             }
-            catch (ContinousIntegrationException ex) {
+            catch (ContinuousIntegrationException ex) {
                 // this means something with the configuration of the build plan is wrong.
                 // we try to recover from typical edge cases by setting the initialization state back, so that the previous action (copy build plan) is tried again, when
                 // the user again clicks on the start / resume exercise button.
@@ -1054,7 +1054,7 @@ public class ParticipationService {
     public List<StudentParticipation> findByExamIdWithSubmissionRelevantResult(Long examId) {
         var participations = studentParticipationRepository.findByExamIdWithEagerSubmissionsRatedResults(examId);
         // filter out the participations of test runs which can only be made by instructors
-        participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRunParticipation()).collect(Collectors.toList());
+        participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).collect(Collectors.toList());
         return filterParticipationsWithRelevantResults(participations, true);
     }
 
@@ -1369,14 +1369,14 @@ public class ParticipationService {
 
     /**
      * Loads the test run participation for the given user id (which typically belongs to an instructor or admin)
-     * See {@link StudentParticipation#isTestRunParticipation()}
+     * See {@link StudentParticipation#isTestRun()}
      * @param userId the id of the user
      * @param exercise the exercise id
      * @return the optional test run participation with submissions and results loaded
      */
     public Optional<StudentParticipation> findTestRunParticipationForExercise(Long userId, Exercise exercise) {
         var studentParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(userId, List.of(exercise));
-        if (studentParticipations.isEmpty() || !studentParticipations.get(0).isTestRunParticipation()) {
+        if (studentParticipations.isEmpty() || !studentParticipations.get(0).isTestRun()) {
             return Optional.empty();
         }
 
