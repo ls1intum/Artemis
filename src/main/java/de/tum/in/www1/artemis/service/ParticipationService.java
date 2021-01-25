@@ -93,7 +93,8 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserService userService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService,
-            @Lazy QuizScheduleService quizScheduleService, QuizExerciseRepository quizExerciseRepository, RatingRepository ratingRepository, UrlService urlService, FeedbackRepository feedbackRepository) {
+            @Lazy QuizScheduleService quizScheduleService, QuizExerciseRepository quizExerciseRepository, RatingRepository ratingRepository, UrlService urlService,
+            FeedbackRepository feedbackRepository) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -313,7 +314,8 @@ public class ParticipationService {
                     result.setSubmission(submission);
                     submission.addResult(result);
                     submissionRepository.save(submission);
-                } else if (submission instanceof QuizSubmission) {
+                }
+                else if (submission instanceof QuizSubmission) {
                     participation.setExercise(quizExerciseRepository.findWithEagerQuestionsById(participation.getExercise().getId()).orElse(null));
                     // set submission to calculate scores
                     result.setSubmission(submission);
@@ -1245,28 +1247,19 @@ public class ParticipationService {
     @Transactional // ok
     public Participation deleteResultsAndSubmissionsOfParticipation(Long participationId) {
         Participation participation = participationRepository.getOneWithEagerSubmissionsAndResults(participationId);
-        // This is the default case: We delete results and submissions from direction result -> submission. This will only delete submissions that have a result.
-        if (participation.getResults() != null) {
-            for (Result result : participation.getResults()) {
+        Set<Submission> submissions = participation.getSubmissions();
+        List<Result> resultsToBeDeleted = new ArrayList<>();
 
-                resultRepository.deleteById(result.getId());
-                // The following code is necessary, because we might have submissions in results which are not properly connected to a participation and CASCASE_REMOVE is not
-                // active in this case
-                if (result.getSubmission() != null) {
-                    Submission submissionToDelete = result.getSubmission();
-                    submissionRepository.deleteById(submissionToDelete.getId());
-                    result.setSubmission(null);
-                    participation.removeSubmissions(submissionToDelete);
-                }
-            }
-        }
-        // The following case is necessary, because we might have submissions without a result.
-        // At this point only submissions without a result will still be connected to the participation.
-        if (participation.getSubmissions() != null) {
-            for (Submission submission : participation.getSubmissions()) {
-                submissionRepository.deleteById(submission.getId());
-            }
-        }
+        // The result of the submissions will be deleted via cascade
+        submissions.forEach(submission -> {
+            resultsToBeDeleted.addAll(Objects.requireNonNull(submission.getResults()));
+            submissionRepository.deleteById(submission.getId());
+        });
+
+        // The results that are only connected to a participation are also deleted
+        resultsToBeDeleted.forEach(participation::removeResult);
+        participation.getResults().forEach(result -> resultRepository.deleteById(result.getId()));
+
         return participation;
     }
 
