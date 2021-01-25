@@ -15,9 +15,9 @@ import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 @Service
 public class BuildLogEntryService {
 
-    private BuildLogEntryRepository buildLogEntryRepository;
+    private final BuildLogEntryRepository buildLogEntryRepository;
 
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository, ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.buildLogEntryRepository = buildLogEntryRepository;

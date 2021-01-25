@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 
 /**
  * Abstract service for managing entities related to continuous integration.
@@ -116,9 +116,9 @@ public interface ContinuousIntegrationService {
      * @param participation The participation for which the build finished
      * @param requestBody   The request Body received from the CI-Server.
      * @return the result of the build
-     * @throws ContinousIntegrationException if the Body could not be parsed
+     * @throws ContinuousIntegrationException if the Body could not be parsed
      */
-    Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) throws ContinousIntegrationException;
+    Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) throws ContinuousIntegrationException;
 
     /**
      * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
