@@ -150,7 +150,8 @@ public class ProgrammingSubmissionResource {
         }
 
         try {
-            ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, submissionType);
+            ProgrammingSubmission submission = programmingSubmissionService.getOrCreateSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation,
+                    submissionType);
             programmingSubmissionService.triggerBuildAndNotifyUser(submission);
         }
         catch (IllegalStateException ex) {
@@ -358,6 +359,10 @@ public class ProgrammingSubmissionResource {
         }
         else {
             programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly, examMode);
+        }
+
+        if (!examMode) {
+            programmingSubmissions.forEach(programmingSubmission -> programmingSubmission.removeNullResults());
         }
         return ResponseEntity.ok().body(programmingSubmissions);
     }

@@ -193,7 +193,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         await this.fetchExampleResult();
         this.state.assess();
     }
-
     /**
      * Checks if the score boundaries have been respected and save the assessment.
      */

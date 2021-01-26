@@ -9,6 +9,8 @@ import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/tex
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('TextExercise Management Detail Component', () => {
     let comp: TextExerciseDetailComponent;
@@ -19,7 +21,7 @@ describe('TextExercise Management Detail Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [TextExerciseDetailComponent],
-            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
+            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }, MockProvider(TranslateService)],
         })
             .overrideTemplate(TextExerciseDetailComponent, '')
             .compileComponents();

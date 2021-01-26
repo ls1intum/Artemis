@@ -771,6 +771,7 @@ public class DatabaseUtilService {
         exam.setRandomizeExerciseOrder(true);
         exam.setStartDate(ZonedDateTime.now().plusHours(2));
         exam.setEndDate(ZonedDateTime.now().plusHours(4));
+        exam.setMaxPoints(20);
         exam = examRepository.save(exam);
 
         // add exercise groups: 3 mandatory, 2 optional
@@ -892,13 +893,18 @@ public class DatabaseUtilService {
         ModelFactory.generateExerciseGroup(true, exam); // quiz
         ModelFactory.generateExerciseGroup(true, exam); // file upload
         ModelFactory.generateExerciseGroup(true, exam); // modeling
-        exam.setNumberOfExercisesInExam(4);
+        ModelFactory.generateExerciseGroup(true, exam); // bonus text
+        ModelFactory.generateExerciseGroup(true, exam); // not included text
+        exam.setNumberOfExercisesInExam(6);
+        exam.setMaxPoints(24);
         exam = examRepository.save(exam);
         // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
         var exerciseGroup0 = exam.getExerciseGroups().get(0);
         var exerciseGroup1 = exam.getExerciseGroups().get(1);
         var exerciseGroup2 = exam.getExerciseGroups().get(2);
         var exerciseGroup3 = exam.getExerciseGroups().get(3);
+        var exerciseGroup4 = exam.getExerciseGroups().get(4);
+        var exerciseGroup5 = exam.getExerciseGroups().get(5);
 
         TextExercise textExercise1 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
         TextExercise textExercise2 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
@@ -924,18 +930,29 @@ public class DatabaseUtilService {
         exerciseRepo.save(modelingExercise1);
         exerciseRepo.save(modelingExercise2);
 
+        TextExercise bonusTextExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup4);
+        bonusTextExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        exerciseGroup4.setExercises(Set.of(bonusTextExercise));
+        exerciseRepo.save(bonusTextExercise);
+
+        TextExercise notIncludedTextExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup5);
+        notIncludedTextExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        exerciseGroup5.setExercises(Set.of(notIncludedTextExercise));
+        exerciseRepo.save(notIncludedTextExercise);
+
         if (withProgrammingExercise) {
             ModelFactory.generateExerciseGroup(true, exam); // programming
-            exam.setNumberOfExercisesInExam(5);
+            exam.setNumberOfExercisesInExam(7);
+            exam.setMaxPoints(29);
             exam = examRepository.save(exam);
-            var exerciseGroup4 = exam.getExerciseGroups().get(4);
+            var exerciseGroup6 = exam.getExerciseGroups().get(6);
             // Programming exercises need a proper setup for 'prepare exam start' to work
-            ProgrammingExercise programmingExercise1 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup4);
+            ProgrammingExercise programmingExercise1 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup6);
             exerciseRepo.save(programmingExercise1);
             addTemplateParticipationForProgrammingExercise(programmingExercise1);
             addSolutionParticipationForProgrammingExercise(programmingExercise1);
 
-            exerciseGroup4.setExercises(Set.of(programmingExercise1));
+            exerciseGroup6.setExercises(Set.of(programmingExercise1));
         }
 
         return exam;
@@ -1192,6 +1209,12 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
+    public Result addFeedbackToResult(Feedback feedback, Result result) {
+        feedbackRepo.save(feedback);
+        result.addFeedback(feedback);
+        return resultRepo.save(result);
+    }
+
     public Result addFeedbackToResults(Result result) {
         List<Feedback> feedback = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
         feedback.addAll(ModelFactory.generateFeedback());
@@ -1225,6 +1248,7 @@ public class DatabaseUtilService {
     }
 
     public Exercise addMaxScoreAndBonusPointsToExercise(Exercise exercise) {
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         exercise.setMaxScore(100.0);
         exercise.setBonusPoints(10.0);
         return exerciseRepo.save(exercise);
@@ -1319,13 +1343,17 @@ public class DatabaseUtilService {
         return programmingExercise;
     }
 
-    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed) {
+    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed, String commitHash) {
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
         programmingSubmission.setBuildFailed(buildFailed);
         programmingSubmission.type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now());
-        programmingSubmission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
+        programmingSubmission.setCommitHash(commitHash);
         programmingSubmission.setParticipation(participation);
         return submissionRepository.save(programmingSubmission);
+    }
+
+    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed) {
+        return createProgrammingSubmission(participation, buildFailed, TestConstants.COMMIT_HASH_STRING);
     }
 
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {

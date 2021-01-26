@@ -1,13 +1,19 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class BambooBuildResultNotificationDTO {
+public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotificationDTO {
 
     private String secret;
 
@@ -47,6 +53,48 @@ public class BambooBuildResultNotificationDTO {
 
     public void setBuild(BambooBuildDTO build) {
         this.build = build;
+    }
+
+    @Override
+    public ZonedDateTime getBuildRunDate() {
+        return getBuild().getBuildCompletedDate();
+    }
+
+    @Override
+    public Optional<String> getCommitHashFromAssignmentRepo() {
+        return getCommitHashFromRepo(ASSIGNMENT_REPO_NAME);
+    }
+
+    @Override
+    public Optional<String> getCommitHashFromTestsRepo() {
+        return getCommitHashFromRepo(TEST_REPO_NAME);
+    }
+
+    @Override
+    public boolean isBuildSuccessful() {
+        return getBuild().isSuccessful();
+    }
+
+    @Override
+    public Long getBuildScore() {
+        // the real score is calculated in the grading service
+        return 0L;
+    }
+
+    @Override
+    public String getTestsPassedString() {
+        if ("No tests found".equals(getBuild().getTestSummary().getDescription())) {
+            return "No tests found";
+        }
+
+        int total = getBuild().getTestSummary().getTotalCount();
+        int passed = getBuild().getTestSummary().getSuccessfulCount();
+        return String.format("%d of %d passed", passed, total);
+    }
+
+    private Optional<String> getCommitHashFromRepo(String repoName) {
+        var repo = getBuild().getVcs().stream().filter(vcs -> vcs.getRepositoryName().equalsIgnoreCase(repoName)).findFirst();
+        return repo.map(BambooVCSDTO::getId);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
