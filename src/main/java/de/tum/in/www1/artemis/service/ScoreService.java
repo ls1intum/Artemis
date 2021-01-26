@@ -101,17 +101,17 @@ public class ScoreService {
     /**
      * Either updates an existing participant score or creates a new participant score if a new result comes in
      *
-     * @param result newly created or updated result
+     * @param createdOrUpdatedResult newly created or updated result
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public void updateOrCreateParticipantScore(Result result) {
-        if (result.getScore() == null || result.getCompletionDate() == null || result.getParticipation() == null) {
+    public void updateOrCreateParticipantScore(Result createdOrUpdatedResult) {
+        if (createdOrUpdatedResult.getScore() == null || createdOrUpdatedResult.getCompletionDate() == null || createdOrUpdatedResult.getParticipation() == null) {
             return;
         }
 
         // There is a deadlock problem with programming exercises here if we use the participation from the result (reason unknown at the moment)
         // ,therefore we get the participation from the database
-        Optional<StudentParticipation> studentParticipationOptional = getStudentParticipationForResult(result);
+        Optional<StudentParticipation> studentParticipationOptional = getStudentParticipationForResult(createdOrUpdatedResult);
         if (studentParticipationOptional.isEmpty()) {
             return;
         }
@@ -120,10 +120,10 @@ public class ScoreService {
         ParticipantScore existingParticipationScoreForExerciseAndParticipant = getExistingParticipationScore(studentParticipation, exercise);
         // there already exists a participant score -> we need to update it
         if (existingParticipationScoreForExerciseAndParticipant != null) {
-            updateExistingParticipantScore(existingParticipationScoreForExerciseAndParticipant, result);
+            updateExistingParticipantScore(existingParticipationScoreForExerciseAndParticipant, createdOrUpdatedResult);
         }
         else { // there does not already exists a participant score -> we need to create it
-            createNewParticipantScore(result, studentParticipation, exercise);
+            createNewParticipantScore(createdOrUpdatedResult, studentParticipation, exercise);
         }
     }
 
@@ -179,20 +179,20 @@ public class ScoreService {
     /**
      * Create a new Participant Score
      *
-     * @param result               result containing the information about the score achieved
+     * @param newResult            result containing the information about the score achieved
      * @param studentParticipation participation containing the information about the participant
      * @param exercise             exercise for which to create participant score
      */
-    private void createNewParticipantScore(Result result, StudentParticipation studentParticipation, Exercise exercise) {
+    private void createNewParticipantScore(Result newResult, StudentParticipation studentParticipation, Exercise exercise) {
         if (exercise.isTeamMode()) {
             TeamScore newTeamScore = new TeamScore();
             newTeamScore.setExercise(exercise);
             newTeamScore.setTeam(studentParticipation.getTeam().get());
-            newTeamScore.setLastScore(result.getScore());
-            newTeamScore.setLastResult(result);
-            if (result.isRated() != null && result.isRated()) {
-                newTeamScore.setLastRatedScore(result.getScore());
-                newTeamScore.setLastRatedResult(result);
+            newTeamScore.setLastScore(newResult.getScore());
+            newTeamScore.setLastResult(newResult);
+            if (newResult.isRated() != null && newResult.isRated()) {
+                newTeamScore.setLastRatedScore(newResult.getScore());
+                newTeamScore.setLastRatedResult(newResult);
             }
             teamScoreRepository.saveAndFlush(newTeamScore);
         }
@@ -200,11 +200,11 @@ public class ScoreService {
             StudentScore newStudentScore = new StudentScore();
             newStudentScore.setExercise(exercise);
             newStudentScore.setUser(studentParticipation.getStudent().get());
-            newStudentScore.setLastScore(result.getScore());
-            newStudentScore.setLastResult(result);
-            if (result.isRated() != null && result.isRated()) {
-                newStudentScore.setLastRatedScore(result.getScore());
-                newStudentScore.setLastRatedResult(result);
+            newStudentScore.setLastScore(newResult.getScore());
+            newStudentScore.setLastResult(newResult);
+            if (newResult.isRated() != null && newResult.isRated()) {
+                newStudentScore.setLastRatedScore(newResult.getScore());
+                newStudentScore.setLastRatedResult(newResult);
             }
             studentScoreRepository.saveAndFlush(newStudentScore);
         }
