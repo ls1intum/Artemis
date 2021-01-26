@@ -51,43 +51,27 @@ public class ScoreService {
         participantScoreRepository.removeAssociatedWithExercise(exercise.getId());
     }
 
+    /**
+     * Either updates or removes an existing participant score when a result is removed
+     *
+     * @param resultToBeDeleted result that will be removes
+     */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void removeOrUpdateAssociatedParticipantScore(Result resultToBeDeleted) {
         Optional<ParticipantScore> associatedStudentScoreOptional = participantScoreRepository.findParticipantScoreAssociatedWithResult(resultToBeDeleted.getId());
         if (associatedStudentScoreOptional.isEmpty()) {
             return;
         }
+        // There is a participant score connected to the result that will be deleted
         ParticipantScore associatedParticipantScore = associatedStudentScoreOptional.get();
 
-        List<Result> resultOrdered;
-        List<Result> ratedResultOrdered;
-
-        if (associatedParticipantScore.getClass().equals(StudentScore.class)) {
-            StudentScore studentScore = (StudentScore) associatedParticipantScore;
-
-            resultOrdered = exerciseRepository
-                    .getResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(associatedParticipantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
-                    .filter(r -> !resultToBeDeleted.equals(r)).collect(Collectors.toList());
-
-            ratedResultOrdered = exerciseRepository
-                    .getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(associatedParticipantScore.getExercise().getId(), studentScore.getUser().getId())
-                    .stream().filter(r -> !resultToBeDeleted.equals(r)).collect(Collectors.toList());
-        }
-        else {
-            TeamScore teamScore = (TeamScore) associatedParticipantScore;
-
-            resultOrdered = exerciseRepository
-                    .getResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(associatedParticipantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
-                    .filter(r -> !resultToBeDeleted.equals(r)).collect(Collectors.toList());
-
-            ratedResultOrdered = exerciseRepository
-                    .getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(associatedParticipantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
-                    .filter(r -> !resultToBeDeleted.equals(r)).collect(Collectors.toList());
-        }
-
+        // There are two possibilities now:
+        // A: Another result exists for the exercise and the student / team -> update participant score with the newest one
+        // B: No other result exists for the exercise and the student / team -> remove participant score
         if (resultToBeDeleted.equals(associatedParticipantScore.getLastRatedResult())) {
-            if (!ratedResultOrdered.isEmpty()) {
-                Result newLastRatedResult = ratedResultOrdered.get(0);
+            Optional<Result> newLastRatedResultOptional = getNewLastRatedResultForParticipantScore(associatedParticipantScore);
+            if (newLastRatedResultOptional.isPresent()) {
+                Result newLastRatedResult = newLastRatedResultOptional.get();
                 associatedParticipantScore.setLastRatedResult(newLastRatedResult);
                 associatedParticipantScore.setLastRatedScore(newLastRatedResult.getScore());
             }
@@ -98,8 +82,9 @@ public class ScoreService {
         }
 
         if (resultToBeDeleted.equals(associatedParticipantScore.getLastResult())) {
-            if (!resultOrdered.isEmpty()) {
-                Result newLastResult = resultOrdered.get(0);
+            Optional<Result> newLastResultOptional = getNewLastResultForParticipantScore(associatedParticipantScore);
+            if (newLastResultOptional.isPresent()) {
+                Result newLastResult = newLastResultOptional.get();
                 associatedParticipantScore.setLastResult(newLastResult);
                 associatedParticipantScore.setLastScore(newLastResult.getScore());
             }
@@ -108,6 +93,7 @@ public class ScoreService {
                 associatedParticipantScore.setLastScore(null);
             }
         }
+
         if (associatedParticipantScore.getLastResult() == null && associatedParticipantScore.getLastRatedResult() == null) {
             participantScoreRepository.deleteById(associatedParticipantScore.getId());
         }
@@ -127,26 +113,44 @@ public class ScoreService {
             return;
         }
 
-        Optional<Participation> participationOptional = participationRepository.findParticipationAssociatedWithResult(result.getId());
-        if (participationOptional.isEmpty()) {
+        // There is a deadlock problem with programming exercises here if we use the participation from the result (reason unknown at the moment)
+        // ,therefore we get the participation from the database
+        Optional<StudentParticipation> studentParticipationOptional = getStudentParticipationForResult(result);
+        if (studentParticipationOptional.isEmpty()) {
             return;
         }
-        Participation participation = participationOptional.get();
-
-        boolean isInstanceOfStudentParticipation = participation.getClass().equals(StudentParticipation.class)
-                || participation.getClass().equals(ProgrammingExerciseStudentParticipation.class);
-        if (!isInstanceOfStudentParticipation) {
-            return;
-        }
-        StudentParticipation studentParticipation = (StudentParticipation) participation;
+        StudentParticipation studentParticipation = studentParticipationOptional.get();
         Exercise exercise = studentParticipation.getExercise();
-
         ParticipantScore existingParticipationScoreForExerciseAndParticipant = getExistingParticipationScore(studentParticipation, exercise);
+        // there already exists a participant score -> we need to update it
         if (existingParticipationScoreForExerciseAndParticipant != null) {
             updateExistingParticipantScore(existingParticipationScoreForExerciseAndParticipant, result);
         }
-        else {
+        else { // there does not already exists a participant score -> we need to create it
             createNewParticipantScore(result, studentParticipation, exercise);
+        }
+    }
+
+    /**
+     * Gets the student participation for a result from the database
+     *
+     * @param result result for which to get the student participation
+     * @return student participation optional
+     */
+    private Optional<StudentParticipation> getStudentParticipationForResult(Result result) {
+        Optional<Participation> participationOptional = participationRepository.findParticipationAssociatedWithResult(result.getId());
+        if (participationOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        Participation participation = participationOptional.get();
+
+        boolean isStudentParticipation = participation.getClass().equals(StudentParticipation.class)
+                || participation.getClass().equals(ProgrammingExerciseStudentParticipation.class);
+        if (!isStudentParticipation) {
+            return Optional.empty();
+        }
+        else {
+            return Optional.of((StudentParticipation) participation);
         }
     }
 
@@ -237,6 +241,54 @@ public class ScoreService {
             ps.setLastRatedScore(null);
             participantScoreRepository.saveAndFlush(ps);
         }
+    }
+
+    /**
+     * Get the result that can replace the currently set last result for a participant score
+     *
+     * @param participantScore participant score
+     * @return optional of new result
+     */
+    private Optional<Result> getNewLastResultForParticipantScore(ParticipantScore participantScore) {
+        List<Result> resultOrdered;
+        if (participantScore.getClass().equals(StudentScore.class)) {
+            StudentScore studentScore = (StudentScore) participantScore;
+            resultOrdered = exerciseRepository
+                    .getResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
+                    .filter(r -> !participantScore.getLastResult().equals(r)).collect(Collectors.toList());
+        }
+        else {
+            TeamScore teamScore = (TeamScore) participantScore;
+            resultOrdered = exerciseRepository
+                    .getResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
+                    .filter(r -> !participantScore.getLastResult().equals(r)).collect(Collectors.toList());
+        }
+        return resultOrdered.isEmpty() ? Optional.empty() : Optional.of(resultOrdered.get(0));
+
+    }
+
+    /**
+     * Get the result that can replace the currently set last rated result for a participant score
+     *
+     * @param participantScore participant score
+     * @return optional of new result
+     */
+    private Optional<Result> getNewLastRatedResultForParticipantScore(ParticipantScore participantScore) {
+        List<Result> ratedResultsOrdered;
+        if (participantScore.getClass().equals(StudentScore.class)) {
+            StudentScore studentScore = (StudentScore) participantScore;
+            ratedResultsOrdered = exerciseRepository
+                    .getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
+                    .filter(r -> !participantScore.getLastRatedResult().equals(r)).collect(Collectors.toList());
+        }
+        else {
+            TeamScore teamScore = (TeamScore) participantScore;
+            ratedResultsOrdered = exerciseRepository
+                    .getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
+                    .filter(r -> !participantScore.getLastRatedResult().equals(r)).collect(Collectors.toList());
+        }
+        return ratedResultsOrdered.isEmpty() ? Optional.empty() : Optional.of(ratedResultsOrdered.get(0));
+
     }
 
 }
