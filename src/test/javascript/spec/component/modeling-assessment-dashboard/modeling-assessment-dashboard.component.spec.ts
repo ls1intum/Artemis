@@ -26,7 +26,7 @@ const route = { params: of({ courseId: 3, exerciseId: 22 }) };
 const course = { id: 1 };
 const modelingExercise = {
     id: 22,
-    course_id: course.id,
+    course,
     type: ExerciseType.MODELING,
     studentAssignedTeamIdComputed: true,
     assessmentType: AssessmentType.SEMI_AUTOMATIC,
@@ -83,7 +83,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
         component.ngOnDestroy();
     });
 
-    it('should set parameters and call functions on init', fakeAsync(() => {
+    it('should set parameters and call functions on init', () => {
         // setup
         const getSubmissionsSpy = spyOn(component, 'getSubmissions');
         const registerChangeInResultsSpy = spyOn(component, 'registerChangeInResults');
@@ -99,7 +99,6 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
         // call
         component.ngOnInit();
-        tick();
 
         // check
         expect(getSubmissionsSpy).toHaveBeenCalledWith(true);
@@ -108,7 +107,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
         expect(exerciseFindSpy).toHaveBeenCalled();
         expect(component.course).toEqual(course);
         expect(component.modelingExercise).toEqual(modelingExercise as ModelingExercise);
-    }));
+    });
 
     it('should get Submissions', () => {
         // test getSubmissions
