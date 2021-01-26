@@ -14,7 +14,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Result;
 
 /**
  * Spring Data JPA repository for the Exercise entity.
@@ -55,50 +54,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("select distinct exercise from Exercise exercise left join fetch exercise.exerciseHints left join fetch exercise.studentQuestions left join fetch exercise.categories where exercise.id = :#{#exerciseId}")
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
-
-    @Query("""
-                    SELECT r
-                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
-                    WHERE e.id = :exerciseId
-                    AND p.student.id = :studentId
-                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
-
-                    ORDER BY p.id DESC, s.id DESC, r.id DESC
-
-            """)
-    List<Result> getResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
-
-    @Query("""
-                    SELECT r
-                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
-                    WHERE e.id = :exerciseId
-                    AND p.team.id = :teamId
-                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
-
-                    ORDER BY p.id DESC, s.id DESC, r.id DESC
-
-            """)
-    List<Result> getResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
-
-    @Query("""
-                    SELECT r
-                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
-                    WHERE e.id = :exerciseId
-                    AND p.student.id = :studentId
-                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL AND r.rated = true
-                    ORDER BY p.id DESC, s.id DESC, r.id DESC
-            """)
-    List<Result> getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
-
-    @Query("""
-                    SELECT r
-                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
-                    WHERE e.id = :exerciseId
-                    AND p.team.id = :teamId
-                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL AND r.rated = true
-                    ORDER BY p.id DESC, s.id DESC, r.id DESC
-            """)
-    List<Result> getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     /**
      * calculates the average score and the participation rate of students for each given individual course exercise

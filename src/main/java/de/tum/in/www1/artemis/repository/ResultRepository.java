@@ -134,8 +134,51 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     /**
      * Returns true if there is at least one result for the given exercise.
+     *
      * @param exerciseId id of an Exercise.
      * @return true if there is a result, false if not.
      */
     boolean existsByParticipation_ExerciseId(long exerciseId);
+
+    @Query("""
+                    SELECT r
+                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+                    WHERE e.id = :exerciseId
+                    AND p.student.id = :studentId
+                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
+                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+
+            """)
+    List<Result> getResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+
+    @Query("""
+                    SELECT r
+                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+                    WHERE e.id = :exerciseId
+                    AND p.team.id = :teamId
+                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
+                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+
+            """)
+    List<Result> getResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+
+    @Query("""
+                    SELECT r
+                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+                    WHERE e.id = :exerciseId
+                    AND p.student.id = :studentId
+                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL AND r.rated = true
+                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+            """)
+    List<Result> getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+
+    @Query("""
+                    SELECT r
+                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+                    WHERE e.id = :exerciseId
+                    AND p.team.id = :teamId
+                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL AND r.rated = true
+                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+            """)
+    List<Result> getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 }

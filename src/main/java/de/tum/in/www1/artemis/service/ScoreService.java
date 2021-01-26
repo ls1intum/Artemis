@@ -31,15 +31,15 @@ public class ScoreService {
 
     private final ParticipationRepository participationRepository;
 
-    private final ExerciseRepository exerciseRepository;
+    private final ResultRepository resultRepository;
 
     public ScoreService(StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, ParticipationRepository participationRepository,
-            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository) {
+            ResultRepository resultRepository, ParticipantScoreRepository participantScoreRepository) {
         this.studentScoreRepository = studentScoreRepository;
         this.participationRepository = participationRepository;
-        this.exerciseRepository = exerciseRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -248,16 +248,16 @@ public class ScoreService {
         List<Result> resultOrdered;
         if (participantScore.getClass().equals(StudentScore.class)) {
             StudentScore studentScore = (StudentScore) participantScore;
-            resultOrdered = exerciseRepository
+            resultOrdered = resultRepository
                     .getResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
                     .filter(r -> !participantScore.getLastResult().equals(r)).collect(Collectors.toList());
         }
         else {
             TeamScore teamScore = (TeamScore) participantScore;
-            resultOrdered = exerciseRepository
-                    .getResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
-                    .filter(r -> !participantScore.getLastResult().equals(r)).collect(Collectors.toList());
+            resultOrdered = resultRepository.getResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId())
+                    .stream().filter(r -> !participantScore.getLastResult().equals(r)).collect(Collectors.toList());
         }
+        // the new last result (result with highest id of submission with highest id) will be at the beginning of the list
         return resultOrdered.isEmpty() ? Optional.empty() : Optional.of(resultOrdered.get(0));
 
     }
@@ -272,16 +272,17 @@ public class ScoreService {
         List<Result> ratedResultsOrdered;
         if (participantScore.getClass().equals(StudentScore.class)) {
             StudentScore studentScore = (StudentScore) participantScore;
-            ratedResultsOrdered = exerciseRepository
+            ratedResultsOrdered = resultRepository
                     .getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
                     .filter(r -> !participantScore.getLastRatedResult().equals(r)).collect(Collectors.toList());
         }
         else {
             TeamScore teamScore = (TeamScore) participantScore;
-            ratedResultsOrdered = exerciseRepository
+            ratedResultsOrdered = resultRepository
                     .getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
                     .filter(r -> !participantScore.getLastRatedResult().equals(r)).collect(Collectors.toList());
         }
+        // the new last rated result (rated result with highest id of submission with highest id) will be at the beginning of the list
         return ratedResultsOrdered.isEmpty() ? Optional.empty() : Optional.of(ratedResultsOrdered.get(0));
 
     }
