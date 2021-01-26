@@ -292,7 +292,7 @@ public class ParticipationService {
                 // We add a result for test runs with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
                 submission = submissionRepository.findWithEagerResultAndFeedbackById(submission.getId()).get();
                 var manualResults = submission.getManualResults();
-                if (manualResults == null || manualResults.isEmpty()) {
+                if (manualResults.isEmpty()) {
                     submission.setSubmissionDate(ZonedDateTime.now());
                     Result result = new Result();
                     result.setParticipation(participation);
@@ -301,20 +301,22 @@ public class ParticipationService {
 
                     if (submission instanceof ProgrammingSubmission) {
                         var latestAutomaticResult = submission.getLatestResult();
-                        List<Feedback> automaticFeedbacks = latestAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
-                        result = resultRepository.save(result);
+                        if (latestAutomaticResult != null) {
+                            List<Feedback> automaticFeedbacks = latestAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+                            result = resultRepository.save(result);
 
-                        // Copy automatic feedbacks into the manual result
-                        for (Feedback feedback : automaticFeedbacks) {
-                            feedback = feedbackRepository.save(feedback);
-                            feedback.setResult(result);
+                            // Copy automatic feedbacks into the manual result
+                            for (Feedback feedback : automaticFeedbacks) {
+                                feedback = feedbackRepository.save(feedback);
+                                feedback.setResult(result);
+                            }
+                            result.setFeedbacks(automaticFeedbacks);
+                            result.setResultString(latestAutomaticResult.getResultString());
+                            resultRepository.save(result);
+                            result.setSubmission(submission);
+                            submission.addResult(result);
+                            submissionRepository.save(submission);
                         }
-                        result.setFeedbacks(automaticFeedbacks);
-                        result.setResultString(latestAutomaticResult.getResultString());
-                        resultRepository.save(result);
-                        result.setSubmission(submission);
-                        submission.addResult(result);
-                        submissionRepository.save(submission);
                     }
                     else if (submission instanceof QuizSubmission) {
                         participation.setExercise(quizExerciseRepository.findWithEagerQuestionsById(participation.getExercise().getId()).orElse(null));
