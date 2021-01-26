@@ -403,11 +403,10 @@ public class StudentExamResource {
             return badRequest();
         }
 
-        // also add results to all remaining test runs
+        // delete all test runs if the instructor forgot to delete them
         List<StudentExam> testRuns = studentExamService.findAllTestRuns(examId);
         for (final var testRun : testRuns) {
-            final var participations = participationService.findByStudentIdAndIndividualExercises(testRun.getUser().getId(), testRun.getExercises());
-            participationService.markSubmissionsOfTestRunParticipations(participations);
+            studentExamService.deleteTestRun(testRun.getId());
         }
 
         final var instructor = userService.getUser();
