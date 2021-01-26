@@ -238,9 +238,9 @@
                                     <!-- button for existing result with lock-->
                                     <span *ngIf="!submission.results[correctionRound].completionDate">
                                         <button
-                                                [disabled]="busy"
-                                                [queryParams]="{ 'correction-round': correctionRound }"
-                                                [routerLink]="[
+                                            [disabled]="busy"
+                                            [queryParams]="{ 'correction-round': correctionRound }"
+                                            [routerLink]="[
                                                             '/course-management',
                                                             modelingExercise.exerciseGroup?.exam.course.id,
                                                             'modeling-exercises',
@@ -248,7 +248,7 @@
                                                             'submissions',
                                                             submission.id,
                                                             'assessment']"
-                                                    class="btn btn-warning btn-sm mb-1">
+                                            class="btn btn-warning btn-sm mb-1">
                                             <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;
                                             <span>
                                                 {{ 'artemisApp.assessment.dashboard.actions.continue' | translate }}
@@ -267,11 +267,11 @@
                                     </span>
 
                                 </span>
-                                <!-- button for submission without result for this correction round-->
+                            <!-- button for submission without result for this correction round-->
                                 <button
-                                    *ngIf="correctionRound == submission.results.length && submission.latestResult!.completionDate"
+                                    *ngIf="correctionRound == ( submission.results ? submission.results.length : 0 ) && submission.latestResult!.completionDate"
                                     [disabled]="busy"
-                                    [queryParams]="{ 'correction-round': submission.results.length }"
+                                    [queryParams]="{ 'correction-round': ( submission.results ? submission.results.length : 0 ) }"
                                     [routerLink]="[
                                         '/course-management',
                                         modelingExercise.exerciseGroup?.exam.course.id,

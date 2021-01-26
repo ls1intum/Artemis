@@ -17,6 +17,7 @@ import { AccountService } from 'app/core/auth/account.service';
     templateUrl: './text-assessment-dashboard.component.html',
 })
 export class TextAssessmentDashboardComponent implements OnInit {
+    ExerciseType = ExerciseType;
     exercise: TextExercise;
     submissions: TextSubmission[] = [];
     filteredSubmissions: TextSubmission[] = [];

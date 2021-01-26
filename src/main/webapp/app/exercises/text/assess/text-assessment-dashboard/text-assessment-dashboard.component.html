@@ -40,7 +40,10 @@
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th>
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</a>
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentFirst">Assessment</a>
+                    </th>
+                    <th *ngIf="numberOfCorrectionrounds == 2">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentSecond">Assessment</a>
                     </th>
                     <th></th>
                 </tr>
@@ -69,14 +72,15 @@
                     <td>
                         <span *ngIf="submission.latestResult && submission.latestResult!.assessor">{{ submission.latestResult!.assessor!.name }}</span>
                     </td>
-                    <td>
+                    <td *ngFor="let item of [].constructor(numberOfCorrectionrounds); let correctionRound = index">
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
-                            <span *ngIf="exercise.course && submission">
+                            <!-- exercise without exam-->
+                            <span *ngIf="exercise.type === ExerciseType.TEXT && exercise.course && submission">
                                 <button
                                     *ngIf="!submission.latestResult"
                                     [disabled]="busy"
                                     [routerLink]="['/course-management', exercise.course?.id, 'text-exercises', exercise.id, 'submissions', submission.id, 'assessment']"
-                                    class="btn btn-outline-success btn-sm mb-1"
+                                    class="btn btn-success btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
                                 </button>
@@ -85,87 +89,20 @@
                                     *ngIf="submission.latestResult"
                                     [disabled]="busy"
                                     [routerLink]="['/course-management', exercise.course?.id, 'text-exercises', exercise.id, 'submissions', submission.id, 'assessment']"
-                                    class="btn btn-outline-primary btn-sm mb-1"
+                                    class="btn btn-primary btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
                                 </button>
                             </span>
-                            <span *ngIf="exercise.exerciseGroup && submission">
-                                <button
-                                    *ngIf="!submission.latestResult"
-                                    [disabled]="busy"
-                                    [routerLink]="[
-                                        '/course-management',
-                                        exercise.exerciseGroup?.exam.course.id,
-                                        'text-exercises',
-                                        exercise.id,
-                                        'submissions',
-                                        submission.id,
-                                        'assessment'
-                                    ]"
-                                    [queryParams]="{ 'correction-round': submission.results?.length }"
-                                    class="btn btn-outline-success btn-sm mb-1"
-                                >
-                                    <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
-                                </button>
-                                <span *ngFor="let round of submission.results; let j = index">
-                                    <span *ngIf="submission.results[j]">
-                                        <button
-                                            *ngIf="submission.results[j].completionDate"
-                                            [disabled]="busy"
-                                            [queryParams]="{ 'correction-round': j }"
-                                            [routerLink]="[
-                                                '/course-management',
-                                                exercise.exerciseGroup?.exam.course.id,
-                                                'text-exercises',
-                                                exercise.id,
-                                                'submissions',
-                                                submission.id,
-                                                'assessment'
-                                            ]"
-                                            class="btn btn-outline-primary btn-sm mb-1"
-                                        >
-                                            <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;
-                                            <span *ngIf="numberOfCorrectionrounds === 1">
-                                                {{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
-                                            </span>
-                                            <span *ngIf="numberOfCorrectionrounds === 2 && j == 0">
-                                                {{ 'artemisApp.assessment.dashboard.actions.openFirst' | translate }}
-                                            </span>
-                                            <span *ngIf="numberOfCorrectionrounds === 2 && j == 1">
-                                                {{ 'artemisApp.assessment.dashboard.actions.openSecond' | translate }}
-                                            </span>
-                                        </button>
-                                        <button
-                                            *ngIf="!submission.results[j].completionDate"
-                                            [disabled]="busy"
-                                            [queryParams]="{ 'correction-round': j }"
-                                            [routerLink]="[
-                                                '/course-management',
-                                                exercise.exerciseGroup?.exam.course.id,
-                                                'text-exercises',
-                                                exercise.id,
-                                                'submissions',
-                                                submission.id,
-                                                'assessment'
-                                            ]"
-                                            class="btn btn-outline-warning btn-sm mb-1"
-                                        >
-                                            <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;
-                                            <span *ngIf="numberOfCorrectionrounds === 1">
-                                                {{ 'artemisApp.assessment.dashboard.actions.continue' | translate }}
-                                            </span>
-                                            <span *ngIf="numberOfCorrectionrounds === 2 && j == 0">
-                                                {{ 'artemisApp.assessment.dashboard.actions.continueFirst' | translate }}
-                                            </span>
-                                            <span *ngIf="numberOfCorrectionrounds === 2 && j == 1">
-                                                {{ 'artemisApp.assessment.dashboard.actions.continueSecond' | translate }}
-                                            </span>
-                                        </button>
-                                    </span>
+                            <!-- start-->
+                            <span *ngIf="exercise.type === ExerciseType.TEXT && submission && exercise.exerciseGroup">
+                            <!-- exercise within exam-->
+                                <span *ngIf="submission.results && submission.results[correctionRound]">
+                                    <!-- button for existing result without lock-->
                                     <button
-                                        *ngIf="numberOfCorrectionrounds > submission.results.length && submission.latestResult!.completionDate"
+                                        *ngIf="submission.results[correctionRound].completionDate"
                                         [disabled]="busy"
+                                        [queryParams]="{ 'correction-round': correctionRound }"
                                         [routerLink]="[
                                             '/course-management',
                                             exercise.exerciseGroup?.exam.course.id,
@@ -175,25 +112,65 @@
                                             submission.id,
                                             'assessment'
                                         ]"
-                                        [queryParams]="{ 'correction-round': submission.results.length }"
-                                        class="btn btn-outline-success btn-sm mb-1"
+                                        class="btn btn-primary btn-sm mb-1"
                                     >
-                                        <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
-                                        {{ 'artemisApp.assessment.dashboard.actions.assessSecond' | translate }}
+                                        <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;
+                                        <span>
+                                            {{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                                        </span>
                                     </button>
-                                </span>
-                            </span>
-                        </span>
+                                    <!-- button for existing result with lock-->
+                                    <span *ngIf="submission.results && !submission?.results[correctionRound].completionDate">
+                                        <button
+                                            [disabled]="busy"
+                                            [queryParams]="{ 'correction-round': correctionRound }"
+                                            [routerLink]="[
+                                                            '/course-management',
+                                                            exercise.exerciseGroup?.exam.course.id,
+                                                            'text-exercises',
+                                                            exercise.id,
+                                                            'submissions',
+                                                            submission.id,
+                                                            'assessment']"
+                                            class="btn btn-warning btn-sm mb-1">
+                                            <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;
+                                            <span>
+                                                {{ 'artemisApp.assessment.dashboard.actions.continue' | translate }}
+                                            </span>
+                                        </button>
+                                        <!-- button to cancel result -->
+                                         <span *ngIf="exercise.isAtLeastInstructor">
+                                            <button
+                                                (click)="cancelAssessment(submission)"
+                                                *ngIf="submission && submission.latestResult && !submission.latestResult!.completionDate"
+                                                [disabled]="busy"
+                                                class="btn btn-danger btn-sm mb-1">
+                                                <fa-icon [fixedWidth]="true" [icon]="'ban'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | translate }}
+                                            </button>
+                                        </span>
+                                    </span>
 
-                        <span *ngIf="exercise.isAtLeastInstructor">
-                            <button
-                                (click)="cancelAssessment(submission)"
-                                *ngIf="submission && submission.latestResult && !submission.latestResult!.completionDate"
-                                [disabled]="busy"
-                                class="btn btn-outline-danger btn-sm mb-1"
-                            >
-                                <fa-icon [fixedWidth]="true" [icon]="'ban'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | translate }}
-                            </button>
+                                </span>
+                                <!-- button for submission without result for this correction round-->
+                                <button
+                                    *ngIf="correctionRound == ( submission.results ? submission.results.length : 0 ) && (!submission.latestResult || submission.latestResult!.completionDate)"
+                                    [disabled]="busy"
+                                    [queryParams]="{ 'correction-round': ( submission.results ? submission.results.length : 0 ) }"
+                                    [routerLink]="[
+                                        '/course-management',
+                                        exercise.exerciseGroup?.exam.course.id,
+                                        'text-exercises',
+                                        exercise.id,
+                                        'submissions',
+                                        submission.id,
+                                        'assessment'
+                                    ]"
+                                    class="btn btn-success btn-sm mb-1">
+                                    <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
+                                    {{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
+                                </button>
+                            </span>
+                            <!-- end -->
                         </span>
                     </td>
                 </tr>
