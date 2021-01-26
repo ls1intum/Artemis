@@ -102,7 +102,6 @@ export class TextAssessmentsService {
     public getFeedbackDataForExerciseSubmission(submissionId: number, correctionRound = 0): Observable<StudentParticipation> {
         let params = new HttpParams();
         params = params.set('correction-round', correctionRound.toString());
-        console.log('abc');
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`, { observe: 'response', params })
             .pipe(
