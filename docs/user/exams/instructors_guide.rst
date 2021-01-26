@@ -347,6 +347,7 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
    Assessor responding to a Complaint
 
 .. |assess_test_runs| image:: instructor/buttons/assess_test_runs.png
+.. |assess_unsubmitted_student_exams| image:: instructor/buttons/assess_unsubmitted_student_exams.png
 .. |check_plagiarism| image:: instructor/buttons/check_plagiarism.png
 .. |configure_grading| image:: instructor/buttons/configure_grading.png
 .. |course_management| image:: instructor/buttons/course_management.png
