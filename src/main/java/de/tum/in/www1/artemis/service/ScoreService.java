@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -56,7 +55,7 @@ public class ScoreService {
      *
      * @param resultToBeDeleted result that will be removes
      */
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @Transactional
     public void removeOrUpdateAssociatedParticipantScore(Result resultToBeDeleted) {
         Optional<ParticipantScore> associatedStudentScoreOptional = participantScoreRepository.findParticipantScoreAssociatedWithResult(resultToBeDeleted.getId());
         if (associatedStudentScoreOptional.isEmpty()) {
@@ -103,7 +102,7 @@ public class ScoreService {
      *
      * @param createdOrUpdatedResult newly created or updated result
      */
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @Transactional
     public void updateOrCreateParticipantScore(Result createdOrUpdatedResult) {
         if (createdOrUpdatedResult.getScore() == null || createdOrUpdatedResult.getCompletionDate() == null || createdOrUpdatedResult.getParticipation() == null) {
             return;
