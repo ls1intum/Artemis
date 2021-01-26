@@ -275,9 +275,6 @@ public class StudentExamResource {
 
         prepareStudentExamForConduction(request, currentUser, testRun);
 
-        // TODO: filter results in participations and submissions before the end of the test run
-        // This avoids issues when the submissions are saved during the test run, because of the cascade annotation between submission and result
-
         log.info("getTestRunForConduction done in " + (System.currentTimeMillis() - start) + "ms for " + testRun.getExercises().size() + " exercises for user "
                 + currentUser.getLogin());
         return ResponseEntity.ok(testRun);
