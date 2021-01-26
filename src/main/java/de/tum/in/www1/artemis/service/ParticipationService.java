@@ -339,7 +339,25 @@ public class ParticipationService {
                         submissionRepository.save(submission);
                     }
                 }
-                save(participation);
+            }
+            else {
+                if (participation.getExercise() instanceof ProgrammingExercise) {
+                    // required to catch the case when the user did not wait until the CI server returned a build result and there is no submission and result
+                    // we must create one to ensure that the test run participations dont appear outside the test run assessment dashboards
+                    var submission = initializeSubmission(participation, participation.getExercise(), SubmissionType.MANUAL).get();
+                    submission.setSubmitted(true);
+                    submission.setSubmissionDate(ZonedDateTime.now());
+                    submission = submissionRepository.save(submission);
+                    Result result = new Result();
+                    result.setParticipation(participation);
+                    result.setAssessor(participation.getStudent().get());
+                    result.setAssessmentType(AssessmentType.TEST_RUN);
+                    result.setResultString("");
+                    result = resultRepository.save(result);
+                    result.setSubmission(submission);
+                    submission.addResult(result);
+                    submissionRepository.save(submission);
+                }
             }
         }
     }
