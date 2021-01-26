@@ -53,7 +53,7 @@
                     <span class="bold">{{ 'artemisApp.course.averageScore' | translate }}</span>
                     <jhi-progress-bar
                         [tooltip]="'artemisApp.course.averageScore' | translate"
-                        [percentage]="averageScore"
+                        [percentage]="statistic.averageScoreInPercent"
                         [numerator]="averageScoreNumerator"
                         [denominator]="statistic.exerciseMaxPoints"
                     >
