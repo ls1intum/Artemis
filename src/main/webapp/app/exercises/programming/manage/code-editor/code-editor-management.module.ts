@@ -10,6 +10,7 @@ import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programmi
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-instructions-editor.module';
 import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-participation.module';
+import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 
 @NgModule({
     imports: [
@@ -22,6 +23,7 @@ import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exe
         ArtemisExerciseHintParticipationModule,
         OrionModule,
         ArtemisProgrammingExerciseInstructionsEditorModule,
+        ArtemisHeaderExercisePageWithDetailsModule,
     ],
     declarations: [CodeEditorInstructorContainerComponent, CodeEditorInstructorOrionContainerComponent],
 })

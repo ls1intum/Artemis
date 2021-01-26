@@ -7,6 +7,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.Set;
 
+import org.gitlab4j.api.GitLabApiException;
 import org.springframework.http.HttpStatus;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -35,7 +36,7 @@ public interface MockDelegate {
 
     void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) throws Exception;
 
-    void mockForkRepositoryForParticipation(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException;
+    void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException, GitLabApiException;
 
     void mockRepositoryWritePermissions(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws Exception;
 

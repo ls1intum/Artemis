@@ -1,6 +1,15 @@
 import { group, sleep } from 'k6';
 import { login } from './requests/requests.js';
-import { createProgrammingExercise, startExercise, simulateSubmission, ParticipationSimulation, TestResult, deleteProgrammingExercise } from './requests/programmingExercise.js';
+import {
+    createProgrammingExercise,
+    configureScaCategories,
+    getScaCategories,
+    startExercise,
+    simulateSubmission,
+    ParticipationSimulation,
+    TestResult,
+    deleteProgrammingExercise,
+} from './requests/programmingExercise.js';
 import { deleteCourse, newCourse } from './requests/course.js';
 import { createUsersIfNeeded } from './requests/user.js';
 import { allSuccessfulContentJava, buildErrorContentJava, someSuccessfulErrorContentJava } from './resource/constants_java.js';
@@ -18,10 +27,11 @@ export const options = {
 
 const adminUsername = __ENV.ADMIN_USERNAME;
 const adminPassword = __ENV.ADMIN_PASSWORD;
-let baseUsername = __ENV.BASE_USERNAME;
-let basePassword = __ENV.BASE_PASSWORD;
-let userOffset = parseInt(__ENV.USER_OFFSET);
-let programmingLanguage = __ENV.PROGRAMMING_LANGUAGE;
+const baseUsername = __ENV.BASE_USERNAME;
+const basePassword = __ENV.BASE_PASSWORD;
+const userOffset = parseInt(__ENV.USER_OFFSET);
+const programmingLanguage = __ENV.PROGRAMMING_LANGUAGE;
+const enableSCA = __ENV.ENABLE_SCA === 'true';
 
 export function setup() {
     console.log('__ENV.CREATE_USERS: ' + __ENV.CREATE_USERS);
@@ -29,7 +39,7 @@ export function setup() {
     console.log('__ENV.TIMEOUT_EXERCISE: ' + __ENV.TIMEOUT_EXERCISE);
     console.log('__ENV.ITERATIONS: ' + __ENV.ITERATIONS);
 
-    let artemis, exerciseId, course, userId;
+    let artemis, exerciseId, course;
 
     if (parseInt(__ENV.COURSE_ID) === 0 || parseInt(__ENV.EXERCISE_ID) === 0) {
         console.log('Creating new course and exercise as no parameters are given');
@@ -55,10 +65,19 @@ export function setup() {
         }
 
         // Create new exercise
-        exerciseId = createProgrammingExercise(artemis, course.id, programmingLanguage);
+        exerciseId = createProgrammingExercise(artemis, course.id, undefined, programmingLanguage, enableSCA);
 
         // Wait some time for builds to finish and test results to come in
         sleep(20);
+
+        if (enableSCA) {
+            // Get SCA categories
+            const scaCategories = getScaCategories(artemis, exerciseId, programmingLanguage);
+
+            // Configure SCA categories
+            configureScaCategories(artemis, exerciseId, scaCategories, programmingLanguage);
+            sleep(2);
+        }
 
         return { exerciseId: exerciseId, courseId: course.id };
     } else {
@@ -85,10 +104,10 @@ export default function (data) {
     let someSuccessfulErrorContent, allSuccessfulContent, buildErrorContent, somePassedString;
     switch (programmingLanguage) {
         case 'JAVA':
-            someSuccessfulErrorContent = someSuccessfulErrorContentJava;
+            someSuccessfulErrorContent = someSuccessfulErrorContentJava(enableSCA);
             allSuccessfulContent = allSuccessfulContentJava;
             buildErrorContent = buildErrorContentJava;
-            somePassedString = '2 of 13 passed';
+            somePassedString = enableSCA ? '2 of 13 passed' : '1 of 13 passed, 1 issue';
             break;
         case 'PYTHON':
             someSuccessfulErrorContent = someSuccessfulErrorContentPython;

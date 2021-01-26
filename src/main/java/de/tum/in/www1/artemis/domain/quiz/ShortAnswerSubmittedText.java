@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import java.util.Objects;
+
 import javax.persistence.*;
 
 import me.xdrop.fuzzywuzzy.FuzzySearch;
@@ -27,7 +29,7 @@ public class ShortAnswerSubmittedText extends DomainObject {
     @JsonView(QuizView.Before.class)
     private String text;
 
-    @Column(name = "isCorrect")
+    @Column(name = "is_correct")
     @JsonView(QuizView.Before.class)
     private Boolean isCorrect;
 
@@ -80,7 +82,14 @@ public class ShortAnswerSubmittedText extends DomainObject {
      * @return boolean true if submittedText fits the restrictions above, false when not
      */
     public boolean isSubmittedTextCorrect(String submittedText, String solution) {
-        return FuzzySearch.ratio(submittedText.toLowerCase().trim(), solution.toLowerCase().trim()) > 85;
+        ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) submittedAnswer.getQuizQuestion();
+        int similarityValue = Objects.requireNonNullElse(saQuestion.getSimilarityValue(), 85); // default value
+        if (Boolean.TRUE.equals(saQuestion.matchLetterCase())) {
+            // only trim whitespace left and right
+            return FuzzySearch.ratio(submittedText.trim(), solution.trim()) >= similarityValue;
+        }
+        // also use lowercase to allow different cases in the submitted text
+        return FuzzySearch.ratio(submittedText.toLowerCase().trim(), solution.toLowerCase().trim()) >= similarityValue;
     }
 
     @Override

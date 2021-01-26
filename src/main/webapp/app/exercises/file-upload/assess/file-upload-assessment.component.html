@@ -18,53 +18,50 @@
     (nextSubmission)="assessNext()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
 >
-    <div class="row mt-4 resizable-horizontal instructions-area" *ngIf="!busy && exercise">
-        <div class="row flex-nowrap col-12">
-            <div class="card flex-grow-1 file-upload-assessment">
-                <div class="card-header bg-primary text-white">
-                    <span *ngIf="exercise.title">{{ exercise.title }}</span>
-                    <span class="flex-fill"></span>
-                    <jhi-score-display [score]="totalScore" [maxScore]="exercise.maxScore"></jhi-score-display>
-                </div>
-
-                <div class="card-body">
-                    <div *ngIf="submission.filePath" class="mb-6 card-text">
-                        <a class="text-primary" (click)="downloadFile(submission.filePath)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
-                        <span class="ml-2 badge badge-info">
-                            {{ attachmentExtension(submission.filePath!) | uppercase }}
-                        </span>
-                    </div>
-                    <button class="btn btn-success mt-4" (click)="addFeedback()" [disabled]="readOnly">
-                        {{ 'artemisApp.fileUploadAssessment.addFeedback' | translate }}
-                    </button>
-                    <ng-container *ngIf="!busy && !notFound">
-                        <div class="row mt-4">
-                            <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</h4>
-                            <div *ngIf="invalidError" class="col-12 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
-                            <div *ngIf="!referencedFeedback || referencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6">
-                                <div class="alert alert-secondary text-center" role="alert">
-                                    <p>{{ 'artemisApp.fileUploadAssessment.assessInstruction' | translate }}</p>
-                                </div>
-                            </div>
-                            <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-lg-6 col-xl-6">
-                                <jhi-assessment-detail
-                                    [(assessment)]="referencedFeedback[i]"
-                                    (assessmentChange)="updateAssessment()"
-                                    (deleteAssessment)="deleteAssessment($event)"
-                                    [readOnly]="readOnly"
-                                ></jhi-assessment-detail>
-                            </div>
-                        </div>
-                        <jhi-assessment-general-feedback
-                            [(feedback)]="generalFeedback"
-                            (feedbackChange)="validateAssessment()"
-                            [readOnly]="readOnly"
-                        ></jhi-assessment-general-feedback>
-                    </ng-container>
+    <jhi-resizeable-container *ngIf="!busy && exercise">
+        <!--region Left Panel-->
+        <span *ngIf="exercise.title" left-header>{{ exercise.title }}</span>
+        <jhi-score-display left-header [score]="totalScore" [maxPoints]="exercise.maxScore" [maxBonusPoints]="exercise.bonusPoints"></jhi-score-display>
+        <div left-body>
+            <div class="row">
+                <div *ngIf="submission.filePath" class="col-12 card-text">
+                    <a class="text-primary" (click)="downloadFile(submission.filePath)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
+                    <span class="ml-2 badge badge-info">{{ attachmentExtension(submission.filePath!) | uppercase }}</span>
                 </div>
             </div>
-
-            <jhi-collapsable-assessment-instructions *ngIf="exercise" [readOnly]="false" [exercise]="exercise" [collapsed]="false"></jhi-collapsable-assessment-instructions>
+            <ng-container *ngIf="!busy && !notFound">
+                <div class="row mt-3 mb-3">
+                    <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</h4>
+                    <div *ngIf="invalidError" class="col-12 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
+                    <div *ngIf="!referencedFeedback || referencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6">
+                        <div class="alert alert-secondary text-center" role="alert">
+                            <p>{{ 'artemisApp.fileUploadAssessment.assessInstruction' | translate }}</p>
+                        </div>
+                    </div>
+                    <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-lg-6 col-xl-6">
+                        <jhi-assessment-detail
+                            [(assessment)]="referencedFeedback[i]"
+                            (assessmentChange)="updateAssessment()"
+                            (deleteAssessment)="deleteAssessment($event)"
+                            [readOnly]="readOnly"
+                        ></jhi-assessment-detail>
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-success" (click)="addFeedback()" [disabled]="readOnly">
+                            {{ 'artemisApp.fileUploadAssessment.addFeedback' | translate }}
+                        </button>
+                    </div>
+                </div>
+                <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateAssessment()" [readOnly]="readOnly"></jhi-assessment-general-feedback>
+            </ng-container>
         </div>
-    </div>
+        <!--endregion-->
+
+        <!--region Right Panel-->
+        <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
+        <span right-header jhiTranslate="assessmentInstructions.instructions.instructions">Instructions</span>
+        <div right-body class="alert alert-info text-center mb-4" role="alert" jhiTranslate="artemisApp.textAssessment.assessmentInstruction"></div>
+        <jhi-assessment-instructions right-body [exercise]="exercise" class="markdown-preview"></jhi-assessment-instructions>
+        <!--endregion-->
+    </jhi-resizeable-container>
 </jhi-assessment-layout>

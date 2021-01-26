@@ -12,10 +12,10 @@ public class ScoringStrategyShortAnswerUtil {
      * Get number of correct and incorrect solutions for the short answer question
      *
      * @param shortAnswerQuestion for which the correct and incorrect solutions should be counted
-     * @param shortAnswerAnswer for the given short answer question
+     * @param shortAnswerSubmittedAnswer for the given short answer question
      * @return array with correct and incorrect solution count
      */
-    public static int[] getCorrectAndIncorrectSolutionCount(ShortAnswerQuestion shortAnswerQuestion, ShortAnswerSubmittedAnswer shortAnswerAnswer) {
+    public static int[] getCorrectAndIncorrectSolutionCount(ShortAnswerQuestion shortAnswerQuestion, ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
         boolean foundCorrectSolution;
         int correctSolutionsCount = 0;
         int incorrectSolutionsCount = 0;
@@ -29,15 +29,17 @@ public class ScoringStrategyShortAnswerUtil {
             }
 
             Set<ShortAnswerSolution> solutionsForSpot = shortAnswerQuestion.getCorrectSolutionForSpot(spot);
-            ShortAnswerSubmittedText submittedTextForSpot = shortAnswerAnswer.getSubmittedTextForSpot(spot);
+            ShortAnswerSubmittedText shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spot);
             foundCorrectSolution = false;
 
-            if (submittedTextForSpot != null) {
-                submittedTextForSpot.setIsCorrect(false);
+            if (shortAnswerSubmittedText != null) {
+                // reconnect to avoid issues
+                shortAnswerSubmittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer);
+                shortAnswerSubmittedText.setIsCorrect(false);
                 for (ShortAnswerSolution solution : solutionsForSpot) {
-                    if (submittedTextForSpot.isSubmittedTextCorrect(submittedTextForSpot.getText(), solution.getText()) && notUsedSolutions.contains(solution)) {
+                    if (shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText()) && notUsedSolutions.contains(solution)) {
                         notUsedSolutions.remove(solution);
-                        submittedTextForSpot.setIsCorrect(true);
+                        shortAnswerSubmittedText.setIsCorrect(true);
                         correctSolutionsCount++;
                         foundCorrectSolution = true;
                         break;

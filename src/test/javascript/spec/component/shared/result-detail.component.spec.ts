@@ -354,32 +354,6 @@ describe('ResultDetailComponent', () => {
         checkChartPreset(0, 7, '7', '7 of 206');
     });
 
-    it('should calculate the correct chart values for zero point exercise with bonus points', () => {
-        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems(true);
-        comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.showScoreChart = true;
-        comp.showTestDetails = true;
-        comp.result.feedbacks = feedbacks;
-        exercise.maxScore = 0;
-        exercise.bonusPoints = 5;
-
-        comp.result.participation!.exercise! = exercise;
-
-        comp.scoreChartPreset.applyTo(new ChartComponent());
-        const chartSetValuesSpy = spy(comp.scoreChartPreset, 'setValues');
-
-        comp.ngOnInit();
-
-        expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
-        expect(comp.showScoreChartTooltip).to.equal(true);
-
-        // 7 positive points, 3 applied negative points, 6 received negative points, maxPoints, maxPoints + bonusPoints
-        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(7, 3, 6, 5, 5);
-        // 80% score, 20% missed score, 5 of 7 positive points
-        checkChartPreset(80, 20, '5 of 7', '1 of 6');
-        expect(comp.isLoading).to.be.false;
-    });
-
     const checkChartPreset = (d1: number, d2: number, l1: string, l2: string) => {
         // @ts-ignore
         expect(comp.scoreChartPreset.datasets.length).to.equal(2);

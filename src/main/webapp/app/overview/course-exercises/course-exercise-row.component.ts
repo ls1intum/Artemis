@@ -11,7 +11,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Exercise, ExerciseCategory, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, ExerciseType, getIcon, getIconTooltip, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 
@@ -26,6 +26,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
+    readonly IncludedInOverallScore = IncludedInOverallScore;
     @HostBinding('class') classes = 'exercise-row';
     @Input() exercise: Exercise;
     @Input() course: Course;
