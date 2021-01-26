@@ -13,6 +13,8 @@ import { MockFileUploadExerciseService } from '../../helpers/mocks/service/mock-
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Course } from 'app/entities/course.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('FileUploadExercise Management Update Component', () => {
     let comp: FileUploadExerciseUpdateComponent;
@@ -28,6 +30,7 @@ describe('FileUploadExercise Management Update Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                MockProvider(TranslateService),
             ],
         })
             .overrideTemplate(FileUploadExerciseUpdateComponent, '')

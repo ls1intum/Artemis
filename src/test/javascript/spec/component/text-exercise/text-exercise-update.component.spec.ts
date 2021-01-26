@@ -14,6 +14,8 @@ import { Course } from 'app/entities/course.model';
 import * as moment from 'moment';
 import { of } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -27,6 +29,7 @@ describe('TextExercise Management Update Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                MockProvider(TranslateService),
             ],
             declarations: [TextExerciseUpdateComponent],
         })

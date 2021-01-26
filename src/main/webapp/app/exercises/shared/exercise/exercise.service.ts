@@ -5,7 +5,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 
 import * as moment from 'moment';
 
-import { Exercise, ExerciseCategory, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
@@ -13,6 +13,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { LtiConfiguration } from 'app/entities/lti-configuration.model';
 import { CourseExerciseStatisticsDTO } from 'app/exercises/shared/exercise/exercise-statistics-dto.model';
+import { TranslateService } from '@ngx-translate/core';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -21,7 +22,7 @@ export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 export class ExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/exercises';
 
-    constructor(private http: HttpClient, private participationService: ParticipationService, private accountService: AccountService) {}
+    constructor(private http: HttpClient, private participationService: ParticipationService, private accountService: AccountService, private translateService: TranslateService) {}
 
     /**
      * Persist a new exercise
@@ -329,6 +330,31 @@ export class ExerciseService {
             params,
             observe: 'response',
         });
+    }
+
+    /**
+     * Makes sure that bonus points are zero and respect the constraint by includedInOverallScore
+     * @param exercise exercise for which to set the bonus points
+     */
+    setBonusPointsConstrainedByIncludedInOverallScore(exercise: Exercise) {
+        if (exercise.bonusPoints === undefined || exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            exercise.bonusPoints = 0;
+        }
+        return exercise;
+    }
+
+    isIncludedInScore(exercise: Exercise | undefined) {
+        if (!exercise?.includedInOverallScore) {
+            return '';
+        }
+        switch (exercise.includedInOverallScore) {
+            case IncludedInOverallScore.INCLUDED_AS_BONUS:
+                return this.translateService.instant('artemisApp.exercise.bonus');
+            case IncludedInOverallScore.INCLUDED_COMPLETELY:
+                return this.translateService.instant('artemisApp.exercise.yes');
+            case IncludedInOverallScore.NOT_INCLUDED:
+                return this.translateService.instant('artemisApp.exercise.no');
+        }
     }
 }
 

@@ -235,7 +235,7 @@ public class Exam extends DomainObject {
     }
 
     public Integer getNumberOfCorrectionRoundsInExam() {
-        return numberOfCorrectionRoundsInExam;
+        return this.numberOfCorrectionRoundsInExam != null ? this.numberOfCorrectionRoundsInExam : 1;
     }
 
     public void setNumberOfCorrectionRoundsInExam(Integer numberOfCorrectionRoundsInExam) {

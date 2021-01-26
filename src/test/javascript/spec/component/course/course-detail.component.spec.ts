@@ -4,6 +4,8 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { CourseDetailComponent } from 'app/course/manage/course-detail.component';
 import { Course } from 'app/entities/course.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('Course Management Detail Component', () => {
     let comp: CourseDetailComponent;
@@ -16,7 +18,7 @@ describe('Course Management Detail Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [CourseDetailComponent],
-            providers: [{ provide: ActivatedRoute, useValue: route }],
+            providers: [{ provide: ActivatedRoute, useValue: route }, MockProvider(TranslateService)],
         })
             .overrideTemplate(CourseDetailComponent, '')
             .compileComponents();
