@@ -5,7 +5,7 @@ import javax.persistence.*;
 import de.tum.in.www1.artemis.domain.Team;
 
 @Entity
-@DiscriminatorValue(value = "TS")
+@DiscriminatorValue("TS")
 public class TeamScore extends ParticipantScore {
 
     @ManyToOne(fetch = FetchType.EAGER)

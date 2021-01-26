@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.Result;
 @Table(name = "participant_score")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
-@DiscriminatorValue(value = "PS")
+@DiscriminatorValue("PS")
 @DiscriminatorOptions(force = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of ParticipantScore when deserializing from JSON

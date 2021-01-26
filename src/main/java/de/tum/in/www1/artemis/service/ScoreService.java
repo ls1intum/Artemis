@@ -217,24 +217,25 @@ public class ScoreService {
      * @param result           updated or new result
      */
     private void updateExistingParticipantScore(ParticipantScore participantScore, Result result) {
+        ParticipantScore ps = participantScore;
         // update the last result and last score if either it has not been set previously or new result is either the old one (=) or newer (>)
-        if (participantScore.getLastResult() == null || result.getId() >= participantScore.getLastResult().getId()) {
-            participantScore.setLastResult(result);
-            participantScore.setLastScore(result.getScore());
-            participantScore = participantScoreRepository.saveAndFlush(participantScore);
+        if (ps.getLastResult() == null || result.getId() >= ps.getLastResult().getId()) {
+            ps.setLastResult(result);
+            ps.setLastScore(result.getScore());
+            ps = participantScoreRepository.saveAndFlush(ps);
         }
         // update the last rated result and last rated score if either it has not been set previously or new rated result is either the old one (=) or newer (>)
-        if ((result.isRated() != null && result.isRated()) && (participantScore.getLastRatedResult() == null || result.getId() >= participantScore.getLastRatedResult().getId())) {
-            participantScore.setLastRatedResult(result);
-            participantScore.setLastRatedScore(result.getScore());
-            participantScore = participantScoreRepository.saveAndFlush(participantScore);
+        if ((result.isRated() != null && result.isRated()) && (ps.getLastRatedResult() == null || result.getId() >= ps.getLastRatedResult().getId())) {
+            ps.setLastRatedResult(result);
+            ps.setLastRatedScore(result.getScore());
+            ps = participantScoreRepository.saveAndFlush(ps);
         }
 
         // Edge Case: if the result is now unrated but is equal to the current last rated result we have to set these to null (result was switched from rated to unrated)
-        if ((result.isRated() == null || !result.isRated()) && result.equals(participantScore.getLastRatedResult())) {
-            participantScore.setLastRatedResult(null);
-            participantScore.setLastRatedScore(null);
-            participantScoreRepository.saveAndFlush(participantScore);
+        if ((result.isRated() == null || !result.isRated()) && result.equals(ps.getLastRatedResult())) {
+            ps.setLastRatedResult(null);
+            ps.setLastRatedScore(null);
+            participantScoreRepository.saveAndFlush(ps);
         }
     }
 

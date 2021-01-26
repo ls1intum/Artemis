@@ -5,7 +5,7 @@ import javax.persistence.*;
 import de.tum.in.www1.artemis.domain.User;
 
 @Entity
-@DiscriminatorValue(value = "SS")
+@DiscriminatorValue("SS")
 public class StudentScore extends ParticipantScore {
 
     @ManyToOne(fetch = FetchType.EAGER)

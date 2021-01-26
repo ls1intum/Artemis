@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.entityListener;
+package de.tum.in.www1.artemis.entitylistener;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
