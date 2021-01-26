@@ -37,6 +37,9 @@
                     <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.quizExercise.startTime">Start Time</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="duration"><span jhiTranslate="artemisApp.quizExercise.duration">Duration</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="includedInOverallScore">
+                        <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th>{{ 'artemisApp.quizExercise.quizLifecycle' | translate }}</th>
                     <th></th>
                 </tr>
@@ -67,6 +70,7 @@
                         </span>
                     </td>
                     <td>{{ quizExercise.maxScore }}</td>
+                    <td>{{ exerciseService.isIncludedInScore(quizExercise) }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button

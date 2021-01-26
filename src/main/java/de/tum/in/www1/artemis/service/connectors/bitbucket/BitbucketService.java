@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.bitbucket;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.Instant;
 import java.util.*;
@@ -11,7 +8,6 @@ import java.util.*;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,7 +17,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -43,8 +38,6 @@ import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 @Profile("bitbucket")
 public class BitbucketService extends AbstractVersionControlService {
 
-    private static final int MAX_FORK_RETRIES = 5;
-
     private static final int MAX_GIVE_PERMISSIONS_RETRIES = 5;
 
     private final Logger log = LoggerFactory.getLogger(BitbucketService.class);
@@ -55,12 +48,6 @@ public class BitbucketService extends AbstractVersionControlService {
     @Value("${artemis.version-control.url}")
     private URL bitbucketServerUrl;
 
-    @Value("${artemis.lti.user-prefix-edx:#{null}}")
-    private Optional<String> userPrefixEdx;
-
-    @Value("${artemis.lti.user-prefix-u4i:#{null}}")
-    private Optional<String> userPrefixU4I;
-
     @Value("${artemis.git.name}")
     private String artemisGitName;
 
@@ -70,17 +57,12 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    private final UrlService urlService;
-
-    private final GitService gitService;
-
     public BitbucketService(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, UrlService urlService, GitService gitService) {
+        super(urlService, gitService);
         this.userService = userService;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
-        this.urlService = urlService;
-        this.gitService = gitService;
     }
 
     @Override
@@ -195,7 +177,16 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
-        deleteRepositoryImpl(urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl));
+        final String projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+        final String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+        final String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase();
+        log.info("Delete repository " + baseUrl);
+        try {
+            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
+        }
+        catch (Exception e) {
+            log.error("Could not delete repository", e);
+        }
     }
 
     @Override
@@ -203,101 +194,6 @@ public class BitbucketService extends AbstractVersionControlService {
         final var cloneUrl = new BitbucketRepositoryUrl(projectKey, repositorySlug);
         log.debug("getCloneRepositoryUrl: " + cloneUrl.toString());
         return cloneUrl;
-    }
-
-    @Override
-    public VcsRepositoryUrl forkRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) {
-        sourceRepositoryName = sourceRepositoryName.toLowerCase();
-        targetRepositoryName = targetRepositoryName.toLowerCase();
-        final var targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
-        final var body = new BitbucketCloneDTO(targetRepoSlug, new BitbucketCloneDTO.CloneDetailsDTO(targetProjectKey));
-        HttpEntity<?> entity = new HttpEntity<>(body, null);
-        log.info("Try to fork repository " + sourceProjectKey + "/repos/" + sourceRepositoryName + " into " + targetRepoSlug);
-        final String repoUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + sourceProjectKey + "/repos/" + sourceRepositoryName;
-
-        try {
-            /*
-             * There is an edge case occurring when multiple students fork a repository leading to a race condition on the filelock for the gitconfig of the base repository since
-             * Bitbucket always tries to set pruneexpire to never as soon as one forks a repository. We only catch this case and loop over the request until we managed to fork the
-             * repository, or the maximum amount of retries has been exceeded. There is no direct other solution as of now since this is a default Bitbucket behavior we cannot
-             * control
-             */
-            for (int i = 0; i < MAX_FORK_RETRIES; i++) {
-                try {
-                    final var response = restTemplate.postForEntity(new URI(repoUrl), entity, BitbucketCloneDTO.class);
-                    if (response.getStatusCode().equals(HttpStatus.CREATED)) {
-                        return getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
-                    }
-                    else {
-                        log.warn("Invalid response code from Bitbucket while trying to fork repository {}: {}. Body from Bitbucket: {}", sourceRepositoryName,
-                                response.getStatusCode(), new ObjectMapper().writeValueAsString(response.getBody()));
-                    }
-                }
-                catch (HttpServerErrorException.InternalServerError e) {
-
-                    if (e.getResponseBodyAsString().contains("code 255 saying: error: could not lock config file config: File exists")) {
-                        log.warn("Could not acquire lock for gitconfig in Bitbucket while forking the repository. Trying again");
-                        if (i == MAX_FORK_RETRIES - 1) {
-                            // if the last attempt fails, we throw an exception to make sure to exit this method with an exception
-                            throw e;
-                        }
-                    }
-                    else {
-                        throw e;
-                    }
-                }
-            }
-        }
-        catch (URISyntaxException e) {
-            throw new BitbucketException("Invalid repository URL built while trying to fork: " + repoUrl);
-        }
-        catch (HttpClientErrorException e) {
-            if (e.getStatusCode().equals(HttpStatus.CONFLICT)) {
-                log.info("Repository already exists. Going to recover repository information...");
-                return getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
-            }
-            else {
-                log.error("Could not fork base repository on " + repoUrl + " using " + body.toString(), e);
-                throw new BitbucketException("Error while forking repository", e);
-            }
-        }
-        catch (HttpServerErrorException e) {
-            if (e instanceof HttpServerErrorException.InternalServerError) {
-                var internalServerError = (HttpServerErrorException.InternalServerError) e;
-                log.error("Internal Server Error on Bitbucket with message: '" + internalServerError.getMessage() + "', body: '" + internalServerError.getResponseBodyAsString()
-                        + "', headers: '" + internalServerError.getResponseHeaders() + "', status text: '" + internalServerError.getStatusText() + "'.");
-            }
-            log.error("Could not fork base repository on " + repoUrl + " using " + body.toString(), e);
-            throw new BitbucketException("Error while forking repository", e);
-        }
-        catch (Exception emAll) {
-            log.error("Could not fork base repository on " + repoUrl + " using " + body.toString(), emAll);
-            throw new BitbucketException("Error while forking repository", emAll);
-        }
-
-        throw new BitbucketException("Max retries for forking reached. Could not fork repository " + sourceRepositoryName + " to " + targetRepositoryName);
-    }
-
-    @Override
-    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName, String targetPath) {
-        final var targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName.toLowerCase();
-        try {
-            var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceRepositoryName.toLowerCase());
-            // checkout the source repo to a different folder than the default one. This avoids a possible conflict state.
-            Repository sourceRepo = gitService.getOrCheckoutRepository(sourceRepoUrl, targetPath, true);
-            // create target repo
-            createRepository(targetProjectKey, targetRepoSlug);
-            var targetRepoUrl = getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
-            // copy by pushing the source's content to the target's repo
-            gitService.pushSourceToTargetRepo(sourceRepo, targetRepoUrl);
-            // delete the source repo which is not needed anymore
-            gitService.deleteLocalRepository(sourceRepo);
-        }
-        catch (InterruptedException | GitAPIException | IOException e) {
-            throw new BitbucketException("Error while pushing the source repo to the target repo", e);
-        }
-
-        return getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
     }
 
     private BitbucketProjectDTO getBitbucketProject(String projectKey) {
@@ -663,23 +559,6 @@ public class BitbucketService extends AbstractVersionControlService {
         }
     }
 
-    /**
-     * Deletes the given repository from Bitbucket.
-     *
-     * @param projectKey     The project key of the repository's project.
-     * @param repositorySlug The repository's slug.
-     */
-    private void deleteRepositoryImpl(String projectKey, String repositorySlug) {
-        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase();
-        log.info("Delete repository " + baseUrl);
-        try {
-            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
-        }
-        catch (Exception e) {
-            log.error("Could not delete repository", e);
-        }
-    }
-
     @Override
     public Boolean repositoryUrlIsValid(@Nullable VcsRepositoryUrl repositoryUrl) {
         if (repositoryUrl == null || repositoryUrl.getURL() == null) {
@@ -777,11 +656,6 @@ public class BitbucketService extends AbstractVersionControlService {
     @Override
     public void createRepository(String entityName, String topLevelEntity, String parentEntity) {
         createRepository(entityName, topLevelEntity);
-    }
-
-    @Override
-    public String getRepositoryName(VcsRepositoryUrl repositoryUrl) {
-        return urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
     }
 
     public final class BitbucketRepositoryUrl extends VcsRepositoryUrl {

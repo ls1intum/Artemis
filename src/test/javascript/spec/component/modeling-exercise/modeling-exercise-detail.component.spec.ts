@@ -7,6 +7,8 @@ import { ArtemisTestModule } from '../../test.module';
 import { ModelingExerciseDetailComponent } from 'app/exercises/modeling/manage/modeling-exercise-detail.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('ModelingExercise Management Detail Component', () => {
     let comp: ModelingExerciseDetailComponent;
@@ -20,7 +22,7 @@ describe('ModelingExercise Management Detail Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ModelingExerciseDetailComponent],
-            providers: [{ provide: ActivatedRoute, useValue: route }],
+            providers: [{ provide: ActivatedRoute, useValue: route }, MockProvider(TranslateService)],
         })
             .overrideTemplate(ModelingExerciseDetailComponent, '')
             .compileComponents();

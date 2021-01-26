@@ -96,6 +96,12 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
+        // Validate score settings
+        Optional<ResponseEntity<QuizExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(quizExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
+        }
+
         // Valid exercises have set either a course or an exerciseGroup
         exerciseService.checkCourseAndExerciseGroupExclusivity(quizExercise, ENTITY_NAME);
 
@@ -143,6 +149,12 @@ public class QuizExerciseResource {
         if (!quizExercise.isValid()) {
             // TODO: improve error message and tell the client why the quiz is invalid (also see above in create Quiz)
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
+        }
+
+        // Validate score settings
+        Optional<ResponseEntity<QuizExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(quizExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
         }
 
         // Valid exercises have set either a course or an exerciseGroup
@@ -428,7 +440,12 @@ public class QuizExerciseResource {
 
         quizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise);
 
+        // Validate score settings
+        Optional<ResponseEntity<QuizExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(quizExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
+        }
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
     }
-
 }

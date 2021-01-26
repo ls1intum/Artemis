@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
@@ -32,7 +31,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 
 @Component
 @Profile("gitlab")
@@ -178,24 +176,11 @@ public class GitlabRequestMockProvider {
         }).when(userApi).createUser(any(), any(), anyBoolean());
     }
 
-    public void mockForkRepositoryForParticipation(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException {
+    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws GitLabApiException {
         final var projectKey = exercise.getProjectKey();
-        final var templateRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var clonedRepoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
 
-        mockForkRepository(projectKey, projectKey, templateRepoName, clonedRepoName, status);
-    }
-
-    public void mockForkRepository(String sourceProjectKey, String targetProjectKey, String sourceRepoName, String targetRepoName, HttpStatus httpStatus)
-            throws URISyntaxException, JsonProcessingException {
-        final var sourceNamespace = sourceProjectKey + "%2F" + sourceRepoName.toLowerCase();
-        final var targetRepoSlug = targetRepoName.toLowerCase();
-
-        final var uri = UriComponentsBuilder.fromUri(gitlabServerUrl.toURI()).path("/api/v4/projects/").path(sourceNamespace).path("/fork").build(true).toUri();
-        final var requestBody = Map.of("namespace", targetProjectKey, "path", targetRepoSlug, "name", targetRepoSlug);
-        final var requestContent = new ObjectMapper().writeValueAsString(requestBody);
-
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andExpect(content().string(requestContent)).andRespond(withStatus(httpStatus));
+        mockCreateRepository(exercise, clonedRepoName);
     }
 
     public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<de.tum.in.www1.artemis.domain.User> users, boolean ltiUserExists)
