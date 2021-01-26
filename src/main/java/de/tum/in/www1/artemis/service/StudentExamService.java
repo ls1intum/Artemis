@@ -278,9 +278,12 @@ public class StudentExamService {
             final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
-                    // required so that the submission is counted in the assessment dashboard
-                    studentParticipation.findLatestSubmission().get().submitted(true);
-                    submissionService.addResultWithFeedback(studentParticipation, assessor, 0L, "You did not submit your exam");
+                    for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
+                        // required so that the submission is counted in the assessment dashboard
+                        studentParticipation.findLatestSubmission().get().submitted(true);
+                        submissionService.addResultWithFeedbackByCorrectionRound(studentParticipation, assessor, 0L, "You did not submit your exam", correctionRound);
+                    }
+
                 }
             }
         }
@@ -305,9 +308,11 @@ public class StudentExamService {
             final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent() && studentParticipation.findLatestSubmission().get().isEmpty()) {
-                    // required so that the submission is counted in the assessment dashboard
-                    studentParticipation.findLatestSubmission().get().submitted(true);
-                    submissionService.addResultWithFeedback(studentParticipation, assessor, 0L, "Empty submission");
+                    for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
+                        // required so that the submission is counted in the assessment dashboard
+                        studentParticipation.findLatestSubmission().get().submitted(true);
+                        submissionService.addResultWithFeedbackByCorrectionRound(studentParticipation, assessor, 0L, "Empty submission", correctionRound);
+                    }
                 }
             }
         }

@@ -36,9 +36,14 @@
                         <span jhiTranslate="artemisApp.exercise.assessmentDueDate">Assessment Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="includedInOverallScore">
+                        <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
+
                     <th></th>
                 </tr>
             </thead>
@@ -52,6 +57,8 @@
                     <td>{{ textExercise.dueDate | artemisDate }}</td>
                     <td>{{ textExercise.assessmentDueDate | artemisDate }}</td>
                     <td>{{ textExercise.maxScore }}</td>
+                    <td>{{ textExercise.bonusPoints }}</td>
+                    <td>{{ exerciseService.isIncludedInScore(textExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ textExercise.presentationScoreEnabled }}</td>
                     <td class="text-right">
                         <jhi-text-exercise-row-buttons [courseId]="courseId" [exercise]="textExercise"></jhi-text-exercise-row-buttons>

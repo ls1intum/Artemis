@@ -14,6 +14,8 @@ import { Exercise } from 'app/entities/exercise.model';
 import { of } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { SinonStub, stub } from 'sinon';
+import { MockProvider } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -31,6 +33,7 @@ describe('ParticipationComponent', () => {
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                MockProvider(TranslateService),
             ],
         })
             .overrideTemplate(ParticipationComponent, '')

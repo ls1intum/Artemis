@@ -12,6 +12,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs/internal/observable/of';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
+import { MockProvider } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -32,6 +34,7 @@ describe('CourseRegistrationSelectorComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: Router, useValue: mockRouter },
+                MockProvider(TranslateService),
             ],
         })
             .overrideTemplate(CourseRegistrationSelectorComponent, '')

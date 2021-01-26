@@ -1,12 +1,12 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TranslatePipe } from '@ngx-translate/core';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 
 import { ExampleTextSubmissionComponent } from 'app/exercises/text/manage/example-text-submission/example-text-submission.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -69,6 +69,7 @@ describe('ExampleTextSubmissionComponent', () => {
                 },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                MockProvider(TranslateService),
             ],
         }).compileComponents();
 

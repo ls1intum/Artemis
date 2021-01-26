@@ -6,8 +6,10 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +17,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -28,12 +31,16 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * Service Implementation for managing Exercise.
  */
 @Service
 public class ExerciseService {
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final Logger log = LoggerFactory.getLogger(ExerciseService.class);
 
@@ -656,6 +663,35 @@ public class ExerciseService {
             exerciseIdToStatistic.put(((Number) exerciseStatistic[0]).longValue(), exerciseStatistic);
         }
         return exerciseIdToStatistic;
+    }
+
+    /**
+     * Validates score settings
+     * 1. The maxScore needs to be greater than 0
+     * 2. If the IncludedInOverallScore enum is either INCLUDED_AS_BONUS or NOT_INCLUDED, no bonus points are allowed
+     *
+     * @param exercise exercise to validate
+     * @param <T>      specific type of exercise
+     * @return Optional validation error response
+     */
+    public <T extends Exercise> Optional<ResponseEntity<T>> validateScoreSettings(T exercise) {
+        // Check if max score is set
+        if (exercise.getMaxScore() == null || exercise.getMaxScore() == 0) {
+            return Optional
+                    .of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score needs to be greater than 0", "maxscoreInvalid")).body(null));
+        }
+
+        // Check IncludedInOverallScore
+        if ((exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_AS_BONUS || exercise.getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED)
+                && exercise.getBonusPoints() > 0) {
+            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "Bonus points are not allowed", "bonusPointsInvalid")).body(null));
+        }
+
+        if (exercise.getBonusPoints() == null) {
+            // make sure the default value is set properly
+            exercise.setBonusPoints(0.0);
+        }
+        return Optional.empty();
     }
 
 }

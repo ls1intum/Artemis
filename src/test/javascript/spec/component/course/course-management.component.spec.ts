@@ -5,19 +5,18 @@ import { CourseManagementComponent } from 'app/course/manage/course-management.c
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
-import { SessionStorageService } from 'ngx-webstorage';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs/internal/observable/of';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { TranslatePipe } from '@ngx-translate/core';
-import { JhiSortDirective, JhiSortByDirective } from 'ng-jhipster';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MomentModule } from 'ngx-moment';
@@ -47,10 +46,7 @@ describe('CourseManagementComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockDirective(CourseManagementCardComponent),
             ],
-            providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-            ],
+            providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
         })
             .compileComponents()
             .then(() => {
