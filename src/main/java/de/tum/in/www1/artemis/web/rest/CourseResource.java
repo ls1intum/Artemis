@@ -792,7 +792,7 @@ public class CourseResource {
      * @return ResponseEntity with status
      */
     @GetMapping(value = "/courses/stats-for-management-overview")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<CourseManagementOverviewCourseDTO>> getExerciseStatsForCourseOverview(@RequestParam(value = "courseIds[]") Long[] courseIds,
             @RequestParam Integer periodIndex) {
         final User user = userService.getUserWithGroupsAndAuthorities();
