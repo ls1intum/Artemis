@@ -120,7 +120,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let exercise of exercises">
+                <tr *ngFor="let exercise of exercises; let i = index">
                     <td>
                         <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | translate" container="body"></fa-icon>
                     </td>
@@ -194,6 +194,25 @@
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams">Exercise Teams</span>
                             </button>
                         </ng-template>
+
+                        <span class="col-lg-3 col-md-6 col-sm-6 align-self-center" *ngIf="isExamMode">
+                            <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                                <ng-container *ngIf="exam && exam!.numberOfCorrectionRoundsInExam && exam.numberOfCorrectionRoundsInExam > 1">
+                                    <!-- Enable second correction with this button -->
+                                    <button *ngIf="!secondCorrectionEnabledForExercise[i]" (click)="toggleSecondCorrection(i, exercise.id)" class="btn btn-warning btn-sm">
+                                        <fa-icon [icon]="'toggle-off'" [fixedWidth]="true"></fa-icon>&nbsp;{{
+                                            'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOn' | translate
+                                        }}
+                                    </button>
+                                    <!-- Disable second correction with this button -->
+                                    <button *ngIf="secondCorrectionEnabledForExercise[i]" (click)="toggleSecondCorrection(i, exercise.id)" class="btn btn-primary btn-sm">
+                                        <fa-icon [icon]="'toggle-on'" [fixedWidth]="true"></fa-icon>&nbsp;{{
+                                            'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOff' | translate
+                                        }}
+                                    </button>
+                                </ng-container>
+                            </ng-container>
+                        </span>
                     </td>
                 </tr>
             </tbody>

@@ -356,6 +356,11 @@ export class ExerciseService {
                 return this.translateService.instant('artemisApp.exercise.no');
         }
     }
+
+    // TODO REST call to get second correction enabled from server, and save it
+    toggleSecondCorrection(exerciseId: number, secondCorrectionEnabled: boolean) {
+        return !secondCorrectionEnabled;
+    }
 }
 
 @Injectable({ providedIn: 'root' })

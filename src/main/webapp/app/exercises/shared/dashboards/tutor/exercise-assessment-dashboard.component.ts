@@ -86,7 +86,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     moreFeedbackRequests: Complaint[] = [];
     submissionLockLimitReached = false;
     openingAssessmentEditorForNewSubmission = false;
-    numberOfCorrectionRoundsEnabled = 0;
+    secondCorrectionEnabled = false;
+    numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
 
     formattedGradingInstructions?: SafeHtml;
     formattedProblemStatement?: SafeHtml;
@@ -208,6 +209,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 if (this.exercise?.exerciseGroup) {
                     this.isExamMode = true;
                     this.exam = this.exercise?.exerciseGroup?.exam;
+                    this.secondCorrectionEnabled = this.exercise?.secondCorrectionEnabled;
                 }
                 this.getAllTutorAssessedSubmissionsForAllCorrectionRounds();
 
@@ -380,6 +382,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     private getSubmissionWithoutAssessmentForAllCorrectionrounds(): void {
         if (this.isExamMode) {
+            console.log(this.secondCorrectionEnabled);
             console.log(this.numberOfCorrectionRoundsEnabled);
             for (let i = 0; i < this.exam!.numberOfCorrectionRoundsInExam!; i++) {
                 if (i <= this.numberOfCorrectionRoundsEnabled) {
@@ -587,12 +590,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         return exercise as ProgrammingExercise;
     }
 
-    enableSecondCorrection() {
+    toggleSecondCorrection() {
         console.log('enable second correction');
-        if (this.numberOfCorrectionRoundsEnabled < this.exam?.numberOfCorrectionRoundsInExam!) {
-            this.numberOfCorrectionRoundsEnabled += 1;
-        }
-
+        this.secondCorrectionEnabled = this.exerciseService.toggleSecondCorrection(this.exerciseId, this.secondCorrectionEnabled);
+        this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
         this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
         // TODO RESTCALL
     }

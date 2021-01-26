@@ -16,6 +16,7 @@ import { FilterProp as TeamFilterProp } from 'app/exercises/shared/team/teams.co
 import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-courses',
@@ -45,6 +46,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
     numberOfAssessmentLocks = 0;
     totalAssessmentPercentage = 0;
     showFinishedExercises = false;
+    secondCorrectionEnabledForExercise: boolean[] = [];
 
     stats = new StatsForDashboard();
 
@@ -62,6 +64,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
 
     constructor(
         private courseService: CourseManagementService,
+        private exerciseService: ExerciseService,
         private examManagementService: ExamManagementService,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
@@ -112,6 +115,9 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                     if (exerciseGroup.exercises) {
                         exercises.push(...exerciseGroup.exercises);
                     }
+                });
+                this.exercises.forEach((exercise) => {
+                    this.secondCorrectionEnabledForExercise.push(exercise.secondCorrectionEnabled);
                 });
 
                 this.extractExercises(exercises);
@@ -216,5 +222,11 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
 
     sortRows() {
         this.sortService.sortByProperty(this.exercises, this.exercisesSortingPredicate, this.exercisesReverseOrder);
+    }
+
+    toggleSecondCorrection(index: number, exerciseId: number) {
+        console.log('enable second correction');
+        this.secondCorrectionEnabledForExercise[index] = this.exerciseService.toggleSecondCorrection(exerciseId, this.secondCorrectionEnabledForExercise[index]);
+        // TODO RESTCALL
     }
 }
