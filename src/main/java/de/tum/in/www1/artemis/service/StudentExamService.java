@@ -429,18 +429,13 @@ public class StudentExamService {
 
     /**
      * Generates a Student Exam marked as a testRun for the instructor to test the exam as a student would experience it.
-     * Calls {@link StudentExamService#createTestRun and {@link ExamService#setUpTestRunExerciseParticipationsAndSubmissions}}
+     * Calls {@link StudentExamService#generateTestRun and {@link ExamService#setUpTestRunExerciseParticipationsAndSubmissions}}
      * @param testRunConfiguration the configured studentExam
      * @return the created testRun studentExam
      */
-    public StudentExam generateTestRun(StudentExam testRunConfiguration) {
-        StudentExam testRun = createTestRun(testRunConfiguration);
-        final var generatedParticipations = setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId());
-        final var programmingParticipations = generatedParticipations.stream().filter(participation -> participation.getExercise() instanceof ProgrammingExercise)
-                .collect(Collectors.toSet());
-        if (!programmingParticipations.isEmpty()) {
-            participationService.createInitialProgrammingSubmissionForTestRun(programmingParticipations);
-        }
+    public StudentExam createTestRun(StudentExam testRunConfiguration) {
+        StudentExam testRun = generateTestRun(testRunConfiguration);
+        setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId());
         return testRun;
     }
 
@@ -450,7 +445,7 @@ public class StudentExamService {
      * @param testRunConfiguration Contains the exercises and working time for this test run
      * @return The created test run
      */
-    private StudentExam createTestRun(StudentExam testRunConfiguration) {
+    private StudentExam generateTestRun(StudentExam testRunConfiguration) {
         StudentExam testRun = new StudentExam();
         testRun.setExercises(testRunConfiguration.getExercises());
         testRun.setExam(testRunConfiguration.getExam());
@@ -466,16 +461,15 @@ public class StudentExamService {
      * Sets up the participations and submissions for all the exercises of the test run.
      * Calls {@link ExamService#setUpExerciseParticipationsAndSubmissions} to set up the exercise participations.
      *
-     * @param testRunId the id of the TestRun
      */
-    private List<StudentParticipation> setUpTestRunExerciseParticipationsAndSubmissions(Long testRunId) {
+    private void setUpTestRunExerciseParticipationsAndSubmissions(Long testRunId) {
         StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true)
                 .orElseThrow(() -> new EntityNotFoundException("StudentExam with id:" + testRunId + "does not exist"));
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         examService.setUpExerciseParticipationsAndSubmissions(generatedParticipations, testRun);
         // use the flag test run for all participations of the created test run
         generatedParticipations.forEach(studentParticipation -> studentParticipation.setTestRun(true));
-        return studentParticipationRepository.saveAll(generatedParticipations);
+        studentParticipationRepository.saveAll(generatedParticipations);
     }
 
     /**

@@ -370,7 +370,7 @@ public class StudentExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        StudentExam testRun = studentExamService.generateTestRun(testRunConfiguration);
+        StudentExam testRun = studentExamService.createTestRun(testRunConfiguration);
         return ResponseEntity.ok(testRun);
     }
 
