@@ -57,9 +57,9 @@
                     "cancel": "Bewertung abbrechen",
                     "assess": "Abgabe bewerten",
                     "assessSecond": "Abgabe Zweitkorrektur",
-                    "continue": "Continue assessment",
-                    "continueFirst": "Continue assessment 1",
-                    "continueSecond": "Continue assessment 2"
+                    "continue": "Bewertung fortsetzen",
+                    "continueFirst": "Erste Bewertung fortsetzen",
+                    "continueSecond": "Zweite Bewertung fortsetzen"
                 },
                 "filters": {
                     "showAll": "Alle anzeigen",

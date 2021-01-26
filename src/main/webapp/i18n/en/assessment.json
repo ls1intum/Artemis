@@ -58,8 +58,8 @@
                     "assess": "Assess Submission",
                     "assessSecond": "Assess second time",
                     "continue": "Continue assessment",
-                    "continueFirst": "Continue assessment 1",
-                    "continueSecond": "Continue assessment 2"
+                    "continueFirst": "Continue first assessment",
+                    "continueSecond": "Continue second assessment"
                 },
                 "filters": {
                     "showAll": "Show all",
