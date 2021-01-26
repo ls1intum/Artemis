@@ -2,14 +2,24 @@ package de.tum.in.www1.artemis.domain.plagiarism;
 
 import java.util.List;
 
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import de.tum.in.www1.artemis.domain.DomainObject;
+
 /**
  * Base result of any automatic plagiarism detection.
  */
-public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> {
+@Entity
+@Table(name = "plagiarism_result")
+public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> extends DomainObject {
 
     /**
+     * TODO: Remove the @Transient annotation and store the comparisons in the database.
      * List of detected comparisons whose similarity is above the specified threshold.
      */
+    @Transient
     protected List<PlagiarismComparison<E>> comparisons;
 
     /**
@@ -23,13 +33,15 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> {
     protected long exerciseId;
 
     /**
-     * 10-element array representing the similarity distribution of the detected comparisons.
+     * TODO: Remove the @Transient annotation and store the similarity distribution in the database.
+     * List of 10 elements representing the similarity distribution of the detected comparisons.
      * <p>
      * Each entry represents the absolute frequency of comparisons whose similarity lies within the
      * respective interval.
      * <p>
      * Intervals: 0: [0% - 10%), 1: [10% - 20%), 2: [20% - 30%), ..., 9: [90% - 100%]
      */
+    @Transient
     protected int[] similarityDistribution;
 
     public List<PlagiarismComparison<E>> getComparisons() {
