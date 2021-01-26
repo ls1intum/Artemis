@@ -27,9 +27,10 @@ export interface IProgrammingExerciseGradingService {
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | undefined>;
     notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void;
     updateTestCase(exerciseId: number, testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]>;
-    reset(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
+    resetTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
     getCodeAnalysisCategories(exerciseId: number): Observable<StaticCodeAnalysisCategory[]>;
     updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<StaticCodeAnalysisCategoryUpdate[]>;
+    resetCategories(exerciseId: number): Observable<StaticCodeAnalysisCategory[]>;
     getGradingStatistics(exerciseId: number): Observable<ProgrammingExerciseGradingStatistics>;
 }
 
@@ -109,7 +110,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      *
      * @param exerciseId
      */
-    public reset(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
+    public resetTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
         return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.resourceUrl}/${exerciseId}/grading/reset`, {});
     }
 
@@ -168,5 +169,14 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      */
     public updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<StaticCodeAnalysisCategory[]> {
         return this.http.patch<StaticCodeAnalysisCategory[]>(`${this.resourceUrl}/${exerciseId}/static-code-analysis-categories`, updates);
+    }
+
+    /**
+     * Restores the default static code analysis configuration for the given exercise.
+     *
+     * @param exerciseId
+     */
+    public resetCategories(exerciseId: number): Observable<StaticCodeAnalysisCategory[]> {
+        return this.http.patch<StaticCodeAnalysisCategory[]>(`${this.resourceUrl}/${exerciseId}/static-code-analysis-categories/reset`, {});
     }
 }

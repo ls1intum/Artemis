@@ -148,7 +148,9 @@
                     "notGraded": "Nicht bewertet.",
                     "noFeedback": "Ohne sichtbares Feedback.",
                     "updated": "Die Kategorien wurden erfolgreich gespeichert.",
-                    "couldNotBeUpdated": "Die folgenden Kategorien konnten nicht gespeichert werden: {{categories}}."
+                    "couldNotBeUpdated": "Die folgenden Kategorien konnten nicht gespeichert werden: {{categories}}.",
+                    "resetSuccessful": "Die Kategorien wurden erfolgreich zurückgesetzt.",
+                    "resetFailed": "Die Kategorien konnten nicht zurückgesetzt werden."
                 },
                 "charts": {
                     "title": "Diagramme",

@@ -148,7 +148,9 @@
                     "notGraded": "Not graded.",
                     "noFeedback": "No visible feedback.",
                     "updated": "The categories were updated successfully.",
-                    "couldNotBeUpdated": "The following categories could not be updated: {{categories}}."
+                    "couldNotBeUpdated": "The following categories could not be updated: {{categories}}.",
+                    "resetSuccessful": "The categories were reset successfully.",
+                    "resetFailed": "The categories could not be reset."
                 },
                 "charts": {
                     "title": "Charts",

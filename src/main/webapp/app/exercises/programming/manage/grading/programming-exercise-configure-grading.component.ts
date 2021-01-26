@@ -416,7 +416,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     resetTestCases() {
         this.isSaving = true;
         this.gradingService
-            .reset(this.exercise.id!)
+            .resetTestCases(this.exercise.id!)
             .pipe(
                 tap((testCases: ProgrammingExerciseTestCase[]) => {
                     this.alertService.success(`artemisApp.programmingExercise.configureGrading.testCases.resetSuccessful`);
@@ -434,7 +434,23 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     resetCategories() {
-        // TODO
+        this.isSaving = true;
+        this.gradingService
+            .resetCategories(this.exercise.id!)
+            .pipe(
+                tap((categories: StaticCodeAnalysisCategory[]) => {
+                    this.alertService.success(`artemisApp.programmingExercise.configureGrading.categories.resetSuccessful`);
+                    this.staticCodeAnalysisCategories = categories;
+                }),
+                catchError(() => {
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.resetFailed`);
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
+                this.isSaving = false;
+                this.changedCategoryIds = [];
+            });
     }
 
     /**

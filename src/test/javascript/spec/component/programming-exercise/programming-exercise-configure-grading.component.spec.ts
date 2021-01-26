@@ -208,7 +208,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 updateTestCasesStub = stub(gradingService, 'updateTestCase');
                 updateCategoriesStub = stub(gradingService, 'updateCodeAnalysisCategories');
                 notifyTestCasesSpy = spy(gradingService, 'notifyTestCases');
-                resetTestCasesStub = stub(gradingService, 'reset');
+                resetTestCasesStub = stub(gradingService, 'resetTestCases');
                 loadStatisticsStub = stub(gradingService, 'getGradingStatistics');
 
                 // @ts-ignore
