@@ -20,6 +20,8 @@ artemis:
     version: 1.3.3-beta7
     file-upload-path: uploads
     submission-export-path: exports
+    resultListener:
+        isActive: false
 
 
 spring:
