@@ -145,6 +145,9 @@ public class StaticCodeAnalysisService {
         }
         staticCodeAnalysisCategoryRepository.saveAll(categories);
 
+        // We use this flag to inform the instructor about outdated student results.
+        programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exercise.getId());
+
         return categories;
     }
 
