@@ -40,23 +40,21 @@ public class ResultListener {
         if (isActive == null || !isActive) {
             return;
         }
-
         scoreService.removeOrUpdateAssociatedParticipantScore(resultToBeDeleted);
     }
 
     /**
      * Update or create a new participation score after a result is created or updated
      *
-     * @param result created or updated result
+     * @param createdOrUpdatedResult created or updated result
      */
     @PostUpdate
     @PostPersist
-    public void updateOrCreateParticipantScore(Result result) {
+    public void updateOrCreateParticipantScore(Result createdOrUpdatedResult) {
         if (isActive == null || !isActive) {
             return;
         }
-
-        scoreService.updateOrCreateParticipantScore(result);
+        scoreService.updateOrCreateParticipantScore(createdOrUpdatedResult);
 
     }
 }
