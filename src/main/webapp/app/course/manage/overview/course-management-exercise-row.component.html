@@ -43,7 +43,7 @@
                     <span class="bold">{{ 'artemisApp.course.students' | translate }}</span>
                     <jhi-progress-bar
                         [tooltip]="'artemisApp.course.students' | translate"
-                        [percentage]="participationScore"
+                        [percentage]="statistic.participationRateInPercent"
                         [numerator]="statistic.noOfParticipatingStudentsOrTeams"
                         [denominator]="isTeamExercise ? statistic.noOfTeamsInCourse : statistic.noOfStudentsInCourse"
                     >

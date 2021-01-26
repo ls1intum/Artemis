@@ -27,7 +27,6 @@ export class CourseManagementExerciseRowComponent implements OnInit, OnChanges {
     hasLeftoverAssessments = false;
     isTeamExercise: boolean;
     displayTitle: string;
-    participationScore: number;
     averageScore: number;
     averageScoreNumerator: number;
 
@@ -78,7 +77,6 @@ export class CourseManagementExerciseRowComponent implements OnInit, OnChanges {
             return;
         }
 
-        this.participationScore = Math.round(this.statistic.participationRateInPercent! / 100);
         this.averageScore = Math.round(this.statistic.averageScoreInPercent! / 100);
         this.averageScoreNumerator = Math.round((this.statistic.averageScoreInPercent! * this.statistic.exerciseMaxPoints!) / 100);
     }
