@@ -4,8 +4,9 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { map, take } from 'rxjs/operators';
 import * as moment from 'moment';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 describe('Participation Service', () => {
     let injector: TestBed;
@@ -39,6 +40,133 @@ describe('Participation Service', () => {
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(JSON.stringify(returnedFromService));
+    });
+
+    it('should find an element with latest result', async () => {
+        const returnedFromService = { ...elemDefault, initializationDate: currentDate.toDate() };
+        returnedFromService.results = [{ id: 1 }];
+        service
+            .findWithLatestResult(123)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(JSON.stringify(returnedFromService));
+    });
+
+    it('should find participation for the exercise', async () => {
+        const returnedFromService = { ...elemDefault, initializationDate: currentDate.toDate() };
+        returnedFromService.id = 123;
+        service
+            .findParticipation(123)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(JSON.stringify(returnedFromService));
+    });
+
+    it('should find no participation for the exercise', async () => {
+        service
+            .findParticipation(123)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toBeUndefined());
+
+        httpMock.expectOne({ method: 'GET' });
+    });
+
+    it('should delete for guided tour', async () => {
+        service.deleteForGuidedTour(123).subscribe((resp) => expect(resp.ok));
+        let request = httpMock.expectOne({ method: 'DELETE' });
+        expect(request.request.params.keys().length).toEqual(0);
+
+        service.deleteForGuidedTour(123, { a: 'param' }).subscribe((resp) => expect(resp.ok));
+        request = httpMock.expectOne({ method: 'DELETE' });
+        expect(request.request.params.keys().length).toEqual(1);
+        expect(request.request.params.get('a')).toEqual('param');
+    });
+
+    it('should cleanup build plan', async () => {
+        service.cleanupBuildPlan(elemDefault).subscribe((resp) => expect(resp).toMatchObject(elemDefault));
+        httpMock.expectOne({ method: 'PUT' });
+    });
+
+    it('should merge student participations', async () => {
+        const participation1: ProgrammingExerciseStudentParticipation = {
+            id: 1,
+            type: ParticipationType.PROGRAMMING,
+            repositoryUrl: 'repo-url',
+            buildPlanId: 'build-plan-id',
+            student: { id: 1, login: 'student1', guidedTourSettings: [] },
+            team: { id: 1, name: 'team1' },
+            results: [{ id: 3 }],
+            submissions: [{ id: 1 }],
+        };
+
+        const participation2: ProgrammingExerciseStudentParticipation = {
+            id: 2,
+            type: ParticipationType.PROGRAMMING,
+            repositoryUrl: 'repo-url-1',
+            buildPlanId: 'build-plan-id-1',
+            student: { id: 2, login: 'student2', guidedTourSettings: [] },
+            results: [{ id: 1 }, { id: 2 }],
+            submissions: [{ id: 2 }, { id: 3 }],
+        };
+
+        const mergedParticipation = service.mergeStudentParticipations([participation1, participation2]);
+        expect(mergedParticipation?.team!.id!).toEqual(participation1.team!.id);
+        expect(mergedParticipation?.team!.name!).toEqual(participation1.team!.name);
+        expect(mergedParticipation?.id).toEqual(participation1.id);
+        expect(mergedParticipation?.results).toEqual([...participation1.results!, ...participation2.results!]);
+        expect(mergedParticipation?.submissions).toEqual([...participation1.submissions!, ...participation2.submissions!]);
+        // eslint-disable-next-line chai-friendly/no-unused-expressions
+        mergedParticipation?.results?.forEach((result) => expect(result.participation).toMatchObject(mergedParticipation));
+        // eslint-disable-next-line chai-friendly/no-unused-expressions
+        mergedParticipation?.submissions?.forEach((submission) => expect(submission.participation).toMatchObject(mergedParticipation));
+    });
+
+    it('should merge student participations', async () => {
+        const participation1: StudentParticipation = {
+            id: 1,
+            type: ParticipationType.STUDENT,
+            student: { id: 1, login: 'student1', guidedTourSettings: [] },
+            results: [{ id: 3 }],
+            submissions: [{ id: 1 }],
+        };
+
+        const participation2: StudentParticipation = {
+            id: 2,
+            type: ParticipationType.STUDENT,
+            student: { id: 2, login: 'student2', guidedTourSettings: [] },
+            results: [{ id: 1 }, { id: 2 }],
+            submissions: [{ id: 2 }, { id: 3 }],
+        };
+
+        const mergedParticipation = service.mergeStudentParticipations([participation1, participation2]);
+        expect(mergedParticipation?.id).toEqual(participation1.id);
+        expect(mergedParticipation?.results).toEqual([...participation1.results!, ...participation2.results!]);
+        expect(mergedParticipation?.submissions).toEqual([...participation1.submissions!, ...participation2.submissions!]);
+        // eslint-disable-next-line chai-friendly/no-unused-expressions
+        mergedParticipation?.results?.forEach((result) => expect(result.participation).toMatchObject(mergedParticipation));
+        // eslint-disable-next-line chai-friendly/no-unused-expressions
+        mergedParticipation?.submissions?.forEach((submission) => expect(submission.participation).toMatchObject(mergedParticipation));
+    });
+
+    it('should merge no participations', async () => {
+        const participation: StudentParticipation = {
+            id: 1,
+            type: ParticipationType.SOLUTION,
+            student: { id: 1, login: 'student1', guidedTourSettings: [] },
+            results: [{ id: 3 }],
+            submissions: [{ id: 1 }],
+        };
+
+        let mergedParticipation = service.mergeStudentParticipations([participation]);
+        expect(mergedParticipation).toBeUndefined();
+
+        participation.type = ParticipationType.STUDENT;
+        mergedParticipation = service.mergeStudentParticipations([participation]);
+        expect(mergedParticipation?.id).toEqual(participation.id);
     });
 
     it('should update a Participation', async () => {
