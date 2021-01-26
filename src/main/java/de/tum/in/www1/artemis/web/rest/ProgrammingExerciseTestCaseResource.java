@@ -144,7 +144,7 @@ public class ProgrammingExerciseTestCaseResource {
 
         public static final String UPDATE_TEST_CASES = PROGRAMMING_EXERCISE + "/update-test-cases";
 
-        public static final String RESET = PROGRAMMING_EXERCISE + "/grading/reset";
+        public static final String RESET = PROGRAMMING_EXERCISE + "/test-cases/reset";
 
         private Endpoints() {
         }

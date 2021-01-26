@@ -111,7 +111,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      * @param exerciseId
      */
     public resetTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
-        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.resourceUrl}/${exerciseId}/grading/reset`, {});
+        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.resourceUrl}/${exerciseId}/test-cases/reset`, {});
     }
 
     /**
