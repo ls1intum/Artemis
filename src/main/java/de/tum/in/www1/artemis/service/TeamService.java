@@ -91,6 +91,15 @@ public class TeamService {
     }
 
     /**
+     * Returns the amount of teams for an exercise
+     * @param exercise Exercise for which to return the team amount
+     * @return The amount of teams as Integer
+     */
+    public Integer getAmountByExerciseId(Exercise exercise) {
+        return teamRepository.getAmountByExerciseId(exercise.getId());
+    }
+
+    /**
      * Returns whether the student is already assigned to a team for a given exercise
      *
      * @param exercise Exercise for which to check

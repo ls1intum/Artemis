@@ -608,7 +608,7 @@ public class ExerciseService {
         courseExerciseStatisticsDTO.setExerciseMode(exercise.getMode().toString());
 
         if (exercise.isTeamMode()) {
-            int numberOfTeamsInCourse = exercise.getTeams().size();
+            int numberOfTeamsInCourse = teamService.getAmountByExerciseId(exercise);
             courseExerciseStatisticsDTO.setNoOfTeamsInCourse(numberOfTeamsInCourse);
         }
         else {
