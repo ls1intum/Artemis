@@ -48,8 +48,8 @@
                     "student": "Student",
                     "assessor": "Reviewer",
                     "action": "Assessment",
-                    "assessmentFirst":  "Correction Round 1",
-                    "assessmentSecond":  "Correction Round 2"
+                    "assessmentFirst": "Correction Round 1",
+                    "assessmentSecond": "Correction Round 2"
                 },
                 "minutes": "minutes",
                 "actions": {
