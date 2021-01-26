@@ -18,17 +18,17 @@ public class Flowchart extends UMLDiagram {
 
     private final List<FlowchartFunctionCall> functionCalls;
 
-    private final List<FlowchartFlowline> links;
+    private final List<FlowchartFlowline> flowlines;
 
     public Flowchart(long modelSubmissionId, List<FlowchartTerminal> terminals, List<FlowchartProcess> processes, List<FlowchartDecision> decisions,
-            List<FlowchartInputOutput> inputOutputs, List<FlowchartFunctionCall> functionCalls, List<FlowchartFlowline> links) {
+            List<FlowchartInputOutput> inputOutputs, List<FlowchartFunctionCall> functionCalls, List<FlowchartFlowline> flowlines) {
         super(modelSubmissionId);
         this.terminals = terminals;
         this.processes = processes;
         this.decisions = decisions;
         this.inputOutputs = inputOutputs;
         this.functionCalls = functionCalls;
-        this.links = links;
+        this.flowlines = flowlines;
     }
 
     @Override
@@ -63,7 +63,7 @@ public class Flowchart extends UMLDiagram {
             }
         }
 
-        for (FlowchartFlowline link : getLinks()) {
+        for (FlowchartFlowline link : getFlowlines()) {
             if (link.getJSONElementID().equals(jsonElementId)) {
                 return link;
             }
@@ -91,8 +91,8 @@ public class Flowchart extends UMLDiagram {
         return functionCalls;
     }
 
-    public List<FlowchartFlowline> getLinks() {
-        return links;
+    public List<FlowchartFlowline> getFlowlines() {
+        return flowlines;
     }
 
     @Override
@@ -100,7 +100,7 @@ public class Flowchart extends UMLDiagram {
         List<UMLElement> modelElements = new ArrayList<>();
         modelElements.addAll(terminals);
         modelElements.addAll(processes);
-        modelElements.addAll(links);
+        modelElements.addAll(flowlines);
         return modelElements;
     }
 }
