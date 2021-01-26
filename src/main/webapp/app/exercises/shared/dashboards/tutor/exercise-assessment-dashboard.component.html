@@ -225,27 +225,28 @@
                 {{ 'artemisApp.submission.lockedSubmissionsLimitReached' | translate }}
             </div>
             <div *ngFor="let roundState of numberOfAssessmentsOfCorrectionRounds; let correctionRound = index">
-                <h4 *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && !isTestRun && !isExamMode">
-                    {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | translate }}
-                </h4>
+                <div *ngIf="!isTestRun || correctionRound < 1">
+                    <h4 *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && !isTestRun && !isExamMode">
+                        {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | translate }}
+                    </h4>
 
-                <h4 *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && !isTestRun && isExamMode">
-                    {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | translate }}, Correction Round {{ correctionRound + 1 }}:
-                </h4>
+                    <h4 *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && !isTestRun && isExamMode">
+                        {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | translate }}, Correction Round {{ correctionRound + 1 }}:
+                    </h4>
 
-                <h4 *ngIf="isTestRun">
-                    {{ 'artemisApp.exerciseAssessmentDashboard.testRunSubmissions' | translate }}
-                </h4>
-                <div class="table-responsive" *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED || isTestRun">
-                    <table
-                        class="table table-striped exercise-table"
-                        *ngIf="
+                    <h4 *ngIf="isTestRun">
+                        {{ 'artemisApp.exerciseAssessmentDashboard.testRunSubmissions' | translate }}
+                    </h4>
+                    <div class="table-responsive" *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED || isTestRun">
+                        <table
+                            class="table table-striped exercise-table"
+                            *ngIf="
                             (unassessedSubmissionByCorrectionRound && unassessedSubmissionByCorrectionRound.get(correctionRound)?.id > 0) ||
                                 submissionsByCorrectionRound.get(correctionRound)?.length > 0;
                             else noSubmissions
                         "
-                    >
-                        <thead>
+                        >
+                            <thead>
                             <tr>
                                 <th>#</th>
                                 <th>{{ 'artemisApp.exerciseAssessmentDashboard.submissionDate' | translate }}</th>
@@ -255,8 +256,8 @@
                                 <th *ngIf="exercise.type === ExerciseType.TEXT">{{ 'artemisApp.exerciseAssessmentDashboard.language' | translate }}</th>
                                 <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | translate }}</th>
                             </tr>
-                        </thead>
-                        <tbody>
+                            </thead>
+                            <tbody>
                             <tr *ngFor="let submission of submissionsByCorrectionRound.get(correctionRound); let i = index">
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ submission.submissionDate | artemisDate }}</td>
@@ -271,7 +272,7 @@
                                 </td>
                                 <td>
                                     <span *ngIf="submission.results[correctionRound] != undefined && submission.results[correctionRound]!.score != undefined"
-                                        >{{ submission.results[correctionRound]!.score }} %</span
+                                    >{{ submission.results[correctionRound]!.score }} %</span
                                     >
                                 </td>
                                 <td *ngIf="exercise.type === ExerciseType.TEXT">
@@ -286,7 +287,7 @@
                                                 class="btn btn-warning btn-sm"
                                             >
                                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{
-                                                    'artemisApp.exerciseAssessmentDashboard.continueAssessment' | translate
+                                                'artemisApp.exerciseAssessmentDashboard.continueAssessment' | translate
                                                 }}
                                             </button>
                                             <ng-template #continueButton>
@@ -331,21 +332,22 @@
                                     </button>
                                 </td>
                             </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <ng-template #noSubmissions>
-                    <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
-                    <div class="alert alert-info" *ngIf="!exercise.teamMode; else teamAssessmentInfo">
-                        {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissions' | translate }}
+                            </tbody>
+                        </table>
                     </div>
-                    <ng-template #teamAssessmentInfo>
-                        <div class="alert alert-warning">
-                            {{ 'artemisApp.exerciseAssessmentDashboard.startAssessmentFromTeamPages' | translate }}
+
+                    <ng-template #noSubmissions>
+                        <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
+                        <div class="alert alert-info" *ngIf="!exercise.teamMode; else teamAssessmentInfo">
+                            {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissions' | translate }}
                         </div>
+                        <ng-template #teamAssessmentInfo>
+                            <div class="alert alert-warning">
+                                {{ 'artemisApp.exerciseAssessmentDashboard.startAssessmentFromTeamPages' | translate }}
+                            </div>
+                        </ng-template>
                     </ng-template>
-                </ng-template>
+                </div>
             </div>
             <!-- Complaints -->
             <ng-container *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED || isTestRun">
