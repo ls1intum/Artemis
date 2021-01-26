@@ -6,6 +6,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-exercise-details',
@@ -22,7 +23,8 @@ export class ExerciseDetailsComponent implements OnInit {
     formattedGradingInstructions: SafeHtml;
     isExamExercise: boolean;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private accountService: AccountService) {}
+    constructor(private artemisMarkdown: ArtemisMarkdownService, private accountService: AccountService, public exerciseService: ExerciseService) {}
+
     /**
      * Life cycle hook to indicate component creation is done
      */

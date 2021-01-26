@@ -6,6 +6,7 @@ import java.text.BreakIterator;
 import java.util.*;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextSubmission;
@@ -71,7 +72,7 @@ public class TextBlockService {
                 final int startIndex = start;
                 final int endIndex = start + lineOrSentence.length();
                 start = endIndex + LINE_SEPARATOR_LENGTH;
-                if (startIndex == endIndex)
+                if (startIndex == endIndex || lineOrSentence.isBlank())
                     continue; // Do *not* define a text block for an empty line.
 
                 final TextBlock textBlock = new TextBlock().text(lineOrSentence).startIndex(startIndex).endIndex(endIndex).submission(submission).automatic();
@@ -81,6 +82,19 @@ public class TextBlockService {
         }
 
         return blocks;
+    }
+
+    /**
+     * Save Iterable collection of text blocks.
+     * @param textBlocks Iterable of TextBlocks.
+     */
+    public void saveAll(Iterable<TextBlock> textBlocks) {
+        textBlockRepository.saveAll(textBlocks);
+    }
+
+    @Transactional // ok
+    public void deleteForSubmission(TextSubmission textSubmission) {
+        textBlockRepository.deleteAllBySubmission_Id(textSubmission.getId());
     }
 
 }

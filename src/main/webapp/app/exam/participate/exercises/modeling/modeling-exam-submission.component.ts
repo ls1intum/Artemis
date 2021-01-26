@@ -6,7 +6,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
@@ -29,6 +29,8 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     umlModel: UMLModel; // input model for Apollon+
 
     explanationText: string; // current explanation text
+
+    readonly IncludedInOverallScore = IncludedInOverallScore;
 
     constructor(changeDetectorReference: ChangeDetectorRef) {
         super(changeDetectorReference);

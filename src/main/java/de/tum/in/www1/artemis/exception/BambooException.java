@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.exception;
 /**
  * Created by muenchdo on 22/06/16.
  */
-public class BambooException extends ContinousIntegrationException {
+public class BambooException extends ContinuousIntegrationException {
 
     public BambooException() {
     }

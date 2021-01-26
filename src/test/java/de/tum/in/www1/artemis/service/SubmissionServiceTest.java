@@ -102,7 +102,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
         examModelingExercise = (ModelingExercise) exam.getExerciseGroups().get(3).getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise).findAny()
                 .orElse(null);
-        examProgrammingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(4).getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
+        examProgrammingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
                 .findAny().orElse(null);
 
     }

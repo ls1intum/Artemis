@@ -2,7 +2,11 @@
     <!--region Left Panel-->
     <span left-header *ngIf="exercise.title">{{ exercise.title }}</span>
     <!-- prettier-ignore -->
-    <span left-header>&nbsp;[{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}<span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | translate }}</span>]</span>
+    <span left-header>&nbsp;[{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}<span
+        *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | translate }}</span>]
+    <jhi-included-in-score-badge
+        *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+        [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span>
     <div left-body class="submission-container d-flex flex-column pl-2 mt-3 w-100">
         <jhi-fullscreen>
             <div class="row flex-grow-1">

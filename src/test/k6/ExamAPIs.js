@@ -84,11 +84,11 @@ export function setup() {
 
         newTextExercise(artemis, exerciseGroup1);
 
-        createQuizExercise(artemis, null, exerciseGroup2, false);
+        createQuizExercise(artemis, undefined, exerciseGroup2, false);
 
         newModelingExercise(artemis, exerciseGroup3);
 
-        createProgrammingExercise(artemis, null, 'JAVA', exerciseGroup4);
+        createProgrammingExercise(artemis, undefined, exerciseGroup4, 'JAVA', false);
 
         for (let i = 1; i <= iterations; i++) {
             addUserToStudentsInExam(artemis, baseUsername.replace('USERID', i + userOffset), exam);

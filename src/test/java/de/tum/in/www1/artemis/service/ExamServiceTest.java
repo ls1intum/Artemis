@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,9 +16,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -67,4 +73,115 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(exams).contains(exam1, examInTheFuture);
         assertThat(exams).doesNotContain(examInThePast);
     }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void validateForStudentExamGeneration_differentCalculationTypesInExerciseGroup_shouldThrowException() {
+        Exam exam = createExam(1, 1L, 10);
+        ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
+        TextExercise includedTextExercise = addNewTextExerciseToExerciseGroup(exerciseGroup, 1L, 5.0, 5.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
+        TextExercise notIncludedTextExercise = addNewTextExerciseToExerciseGroup(exerciseGroup, 2L, 5.0, 5.0, IncludedInOverallScore.NOT_INCLUDED);
+
+        exerciseGroup.setExercises(Set.of(includedTextExercise, notIncludedTextExercise));
+
+        BadRequestAlertException thrown = assertThrows(BadRequestAlertException.class, () -> examService.validateForStudentExamGeneration(exam),
+                "Expected to throw bad request alert exception, but it didn't");
+
+        assertTrue(thrown.getMessage().contains("All exercises in an exercise group must have the same meaning for the exam score"));
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void validateForStudentExamGeneration_differentPointsInExerciseGroup_shouldThrowException() {
+        Exam exam = createExam(1, 1L, 9);
+        ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
+        TextExercise exercise1 = addNewTextExerciseToExerciseGroup(exerciseGroup, 1L, 4.0, 5.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
+        TextExercise exercise2 = addNewTextExerciseToExerciseGroup(exerciseGroup, 2L, 5.0, 5.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
+
+        exerciseGroup.setExercises(Set.of(exercise1, exercise2));
+
+        BadRequestAlertException thrown = assertThrows(BadRequestAlertException.class, () -> examService.validateForStudentExamGeneration(exam),
+                "Expected to throw bad request alert exception, but it didn't");
+
+        assertTrue(thrown.getMessage().contains("All exercises in an exercise group need to give the same amount of points"));
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void validateForStudentExamGeneration_differentBonusInExerciseGroup_shouldThrowException() {
+        Exam exam = createExam(1, 1L, 10);
+        ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
+        TextExercise exercise1 = addNewTextExerciseToExerciseGroup(exerciseGroup, 1L, 5.0, 5.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
+        TextExercise exercise2 = addNewTextExerciseToExerciseGroup(exerciseGroup, 2L, 5.0, 4.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
+
+        exerciseGroup.setExercises(Set.of(exercise1, exercise2));
+
+        BadRequestAlertException thrown = assertThrows(BadRequestAlertException.class, () -> examService.validateForStudentExamGeneration(exam),
+                "Expected to throw bad request alert exception, but it didn't");
+
+        assertTrue(thrown.getMessage().contains("All exercises in an exercise group need to give the same amount of points"));
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void validateForStudentExamGeneration_tooManyPointsInMandatoryExercises_shouldThrowException() {
+        Exam exam = createExam(1, 1L, 10);
+        ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
+        TextExercise exercise1 = addNewTextExerciseToExerciseGroup(exerciseGroup, 1L, 20.0, 5.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
+        TextExercise exercise2 = addNewTextExerciseToExerciseGroup(exerciseGroup, 2L, 20.0, 5.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
+
+        exerciseGroup.setExercises(Set.of(exercise1, exercise2));
+
+        BadRequestAlertException thrown = assertThrows(BadRequestAlertException.class, () -> examService.validateForStudentExamGeneration(exam),
+                "Expected to throw bad request alert exception, but it didn't");
+
+        assertTrue(thrown.getMessage().contains("Check that you set the exam max points correctly! The max points a student can earn in the mandatory exercise groups is too big"));
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void validateForStudentExamGeneration_tooFewPointsInExercisesGroups_shouldThrowException() {
+        Exam exam = createExam(1, 1L, 10);
+        ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
+        TextExercise exercise1 = addNewTextExerciseToExerciseGroup(exerciseGroup, 1L, 5.0, 5.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
+        TextExercise exercise2 = addNewTextExerciseToExerciseGroup(exerciseGroup, 2L, 5.0, 5.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
+
+        exerciseGroup.setExercises(Set.of(exercise1, exercise2));
+
+        BadRequestAlertException thrown = assertThrows(BadRequestAlertException.class, () -> examService.validateForStudentExamGeneration(exam),
+                "Expected to throw bad request alert exception, but it didn't");
+
+        assertTrue(thrown.getMessage().contains("Check that you set the exam max points correctly! The max points a student can earn in the exercise groups is too low"));
+    }
+
+    private Exam createExam(int numberOfExercisesInExam, Long id, Integer maxPoints) {
+        Exam exam = new Exam();
+        exam.setMaxPoints(maxPoints);
+        exam.setId(id);
+        exam.setNumberOfExercisesInExam(numberOfExercisesInExam);
+        exam.setStartDate(ZonedDateTime.now().plusDays(1));
+        exam.setEndDate(ZonedDateTime.now().plusDays(2));
+        return exam;
+    }
+
+    private ExerciseGroup addExerciseGroupToExam(Exam exam, Long id, boolean isMandatory) {
+        ExerciseGroup exerciseGroup = new ExerciseGroup();
+        exerciseGroup.setId(id);
+        exerciseGroup.setExam(exam);
+        exam.addExerciseGroup(exerciseGroup);
+        exerciseGroup.setIsMandatory(isMandatory);
+        return exerciseGroup;
+    }
+
+    private TextExercise addNewTextExerciseToExerciseGroup(ExerciseGroup exerciseGroup, Long id, Double maxPoints, Double maxBonusPoints,
+            IncludedInOverallScore includedInOverallScore) {
+        TextExercise includedTextExercise = new TextExercise();
+        includedTextExercise.setId(id);
+        includedTextExercise.setMaxScore(maxPoints);
+        includedTextExercise.setBonusPoints(maxBonusPoints);
+        includedTextExercise.setIncludedInOverallScore(includedInOverallScore);
+        includedTextExercise.setExerciseGroup(exerciseGroup);
+        return includedTextExercise;
+    }
+
 }

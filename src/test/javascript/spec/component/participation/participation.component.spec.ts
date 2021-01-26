@@ -20,6 +20,8 @@ import { Team } from 'app/entities/team.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,6 +45,7 @@ describe('ParticipationComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                MockProvider(TranslateService),
             ],
         })
             .overrideTemplate(ParticipationComponent, '')

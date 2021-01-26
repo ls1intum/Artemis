@@ -68,11 +68,11 @@ describe('Modeling Assessment Service', () => {
                 ];
                 const returnedFromService = Object.assign({}, elemDefault);
                 service
-                    .saveAssessment(feedbacks, submissionId)
+                    .saveAssessment(1, feedbacks, submissionId)
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
-                    url: `${SERVER_API_URL}api/modeling-submissions/${submissionId}/assessment`,
+                    url: `${SERVER_API_URL}api/modeling-submissions/${submissionId}/result/${1}/assessment`,
                     method: 'PUT',
                 });
                 req.flush(returnedFromService);
