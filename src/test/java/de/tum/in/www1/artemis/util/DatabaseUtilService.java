@@ -1840,7 +1840,7 @@ public class DatabaseUtilService {
 
     public ModelingSubmission addModelingSubmission(ModelingExercise exercise, ModelingSubmission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         modelingSubmissionRepo.save(submission);
         studentParticipationRepo.save(participation);
@@ -1849,7 +1849,7 @@ public class DatabaseUtilService {
 
     public ModelingSubmission addModelingTeamSubmission(ModelingExercise exercise, ModelingSubmission submission, Team team) {
         StudentParticipation participation = addTeamParticipationForExercise(exercise, team.getId());
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         modelingSubmissionRepo.save(submission);
         studentParticipationRepo.save(participation);
@@ -1876,7 +1876,7 @@ public class DatabaseUtilService {
         StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
         submission = programmingSubmissionRepo.save(submission);
         Result result = resultRepo.save(new Result().participation(participation));
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         submission.addResult(result);
         submission = programmingSubmissionRepo.save(submission);
@@ -1922,14 +1922,14 @@ public class DatabaseUtilService {
         submission.setCommitHash(commitHash);
         resultRepo.save(result);
         result.setSubmission(submission);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         studentParticipationRepo.save(participation);
         return submissionRepository.save(submission);
     }
 
     public Submission addSubmission(Exercise exercise, Submission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
         studentParticipationRepo.save(participation);
@@ -1937,7 +1937,7 @@ public class DatabaseUtilService {
     }
 
     public Submission addSubmission(StudentParticipation participation, Submission submission) {
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
         studentParticipationRepo.save(participation);
@@ -1947,7 +1947,7 @@ public class DatabaseUtilService {
     public ModelingSubmission addModelingSubmissionWithResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
 
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission = modelingSubmissionRepo.save(submission);
 
         Result result = new Result();
@@ -1970,7 +1970,7 @@ public class DatabaseUtilService {
 
     public ModelingSubmission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission = modelingSubmissionRepo.save(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
@@ -1988,7 +1988,7 @@ public class DatabaseUtilService {
 
     public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(fileUploadExercise, login);
-        participation.addSubmissions(fileUploadSubmission);
+        participation.addSubmission(fileUploadSubmission);
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmissionRepo.save(fileUploadSubmission);
         studentParticipationRepo.save(participation);
@@ -2001,7 +2001,7 @@ public class DatabaseUtilService {
 
         submissionRepository.save(fileUploadSubmission);
 
-        participation.addSubmissions(fileUploadSubmission);
+        participation.addSubmission(fileUploadSubmission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100L);
@@ -2029,7 +2029,7 @@ public class DatabaseUtilService {
 
     public TextSubmission saveTextSubmission(TextExercise exercise, TextSubmission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         submission = textSubmissionRepo.save(submission);
         return submission;
@@ -2041,7 +2041,7 @@ public class DatabaseUtilService {
 
         submissionRepository.save(submission);
 
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100L);

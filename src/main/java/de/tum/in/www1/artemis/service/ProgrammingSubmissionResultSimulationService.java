@@ -107,7 +107,7 @@ public class ProgrammingSubmissionResultSimulationService {
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
         programmingSubmission.setType(SubmissionType.MANUAL);
-        programmingExerciseStudentParticipation.addSubmissions(programmingSubmission);
+        programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
 
         programmingSubmissionRepository.save(programmingSubmission);
         return programmingSubmission;
