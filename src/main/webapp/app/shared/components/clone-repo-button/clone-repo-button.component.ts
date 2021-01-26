@@ -10,7 +10,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 @Component({
     selector: 'jhi-clone-repo-button',
     templateUrl: './clone-repo-button.component.html',
-    styles: [],
 })
 export class CloneRepoButtonComponent implements OnInit {
     @Input()

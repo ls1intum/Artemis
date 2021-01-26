@@ -36,10 +36,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.GradingCriterion;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -907,31 +904,22 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * POST /programming-exercises/:exerciseId/export-instructor-respository/:repositoryTypeString : sends a test, solution or template repository as a zip file
+     * POST /programming-exercises/:exerciseId/export-instructor-respository/:repositoryType : sends a test, solution or template repository as a zip file
      * @param exerciseId The id of the programming exercise
-     * @param repositoryTypeString The type of repository to zip and send
+     * @param repositoryType The type of repository to zip and send
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
      */
     @GetMapping(Endpoints.EXPORT_INSTRUCTOR_REPOSITORY)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<Resource> exportTestRepositoryForProgrammingExercise(@PathVariable long exerciseId, @PathVariable String repositoryTypeString) throws IOException {
+    public ResponseEntity<Resource> exportInstructorRepositoryForProgrammingExercise(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType)
+            throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             return forbidden();
-        }
-
-        RepositoryType repositoryType = null;
-        try {
-            repositoryType = RepositoryType.valueOf(repositoryTypeString.toUpperCase());
-        }
-        catch (Exception e) {
-            log.info("Failed to export instructor repository because the repository type is not supported.");
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "The repository type is not supprted. It must be either 'tests', 'solution' or 'template'")).body(null);
         }
 
         long start = System.nanoTime();
@@ -943,7 +931,7 @@ public class ProgrammingExerciseResource {
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
 
-        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryTypeString, programmingExercise.getId(),
+        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryType.getName(), programmingExercise.getId(),
                 programmingExercise.getTitle(), formatDurationFrom(start));
 
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
@@ -1332,7 +1320,7 @@ public class ProgrammingExerciseResource {
 
         public static final String EXPORT_SUBMISSIONS_BY_PARTICIPATIONS = PROGRAMMING_EXERCISE + "/export-repos-by-participation-ids/{participationIds}";
 
-        public static final String EXPORT_INSTRUCTOR_REPOSITORY = PROGRAMMING_EXERCISE + "/export-instructor-repository/{repositoryTypeString}";
+        public static final String EXPORT_INSTRUCTOR_REPOSITORY = PROGRAMMING_EXERCISE + "/export-instructor-repository/{repositoryType}";
 
         public static final String GENERATE_TESTS = PROGRAMMING_EXERCISE + "/generate-tests";
 

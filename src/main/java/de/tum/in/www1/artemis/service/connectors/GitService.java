@@ -251,7 +251,7 @@ public class GitService {
      * @param participation Participation the remote repository belongs to.
      * @return the repository if it could be checked out
      * @throws InterruptedException if the repository could not be checked out.
-     * @throws GitAPIException if the repository could not be checked out.
+     * @throws GitAPIException      if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation) throws InterruptedException, GitAPIException {
         return getOrCheckoutRepository(participation, repoClonePath);
@@ -262,10 +262,10 @@ public class GitService {
      * Saves the local repo in the default path.
      *
      * @param participation Participation the remote repository belongs to.
-     * @param targetPath path where the repo is located on disk
+     * @param targetPath    path where the repo is located on disk
      * @return the repository if it could be checked out
      * @throws InterruptedException if the repository could not be checked out.
-     * @throws GitAPIException if the repository could not be checked out.
+     * @throws GitAPIException      if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, String targetPath) throws InterruptedException, GitAPIException {
         var repoUrl = participation.getVcsRepositoryUrl();
@@ -277,15 +277,15 @@ public class GitService {
     /**
      * Get the local repository for a given participation.
      * If the local repo does not exist yet, it will be checked out.
-     *
+     * <p>
      * This method will include the participation ID in the local path of the repository so
      * JPlag can refer back to the correct participation.
      *
      * @param participation Participation the remote repository belongs to.
-     * @param targetPath path where the repo is located on disk
+     * @param targetPath    path where the repo is located on disk
      * @return the repository if it could be checked out
      * @throws InterruptedException if the repository could not be checked out.
-     * @throws GitAPIException if the repository could not be checked out.
+     * @throws GitAPIException      if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepositoryForJPlag(ProgrammingExerciseParticipation participation, String targetPath) throws InterruptedException, GitAPIException {
         var repoUrl = participation.getVcsRepositoryUrl();
@@ -310,7 +310,7 @@ public class GitService {
      * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @return the repository if it could be checked out.
      * @throws InterruptedException if the repository could not be checked out.
-     * @throws GitAPIException if the repository could not be checked out.
+     * @throws GitAPIException      if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, boolean pullOnGet) throws InterruptedException, GitAPIException {
         return getOrCheckoutRepository(repoUrl, repoClonePath, pullOnGet);
@@ -319,12 +319,12 @@ public class GitService {
     /**
      * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
      *
-     * @param repoUrl   The remote repository.
+     * @param repoUrl    The remote repository.
      * @param targetPath path where the repo is located on disk
-     * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
+     * @param pullOnGet  Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @return the repository if it could be checked out.
      * @throws InterruptedException if the repository could not be checked out.
-     * @throws GitAPIException if the repository could not be checked out.
+     * @throws GitAPIException      if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, String targetPath, boolean pullOnGet) throws InterruptedException, GitAPIException {
         Path localPath = Paths.get(targetPath, folderNameForRepositoryUrl(repoUrl));
@@ -339,7 +339,7 @@ public class GitService {
      * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @return the repository if it could be checked out.
      * @throws InterruptedException if the repository could not be checked out.
-     * @throws GitAPIException if the repository could not be checked out.
+     * @throws GitAPIException      if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, Path localPath, boolean pullOnGet) throws InterruptedException, GitAPIException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
@@ -395,7 +395,7 @@ public class GitService {
      * Get an existing git repository that is checked out on the server. Returns immediately null if the localPath does not exist. Will first try to retrieve a cached repository
      * from cachedRepositories. Side effect: This method caches retrieved repositories in a HashMap, so continuous retrievals can be avoided (reduces load).
      *
-     * @param localPath to git repo on server.
+     * @param localPath           to git repo on server.
      * @param remoteRepositoryUrl the remote repository url for the git repository, will be added to the Repository object for later use, can be null
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
@@ -448,9 +448,9 @@ public class GitService {
     /**
      * Commits with the given message into the repository and pushes it to the remote.
      *
-     * @param repo      Local Repository Object.
-     * @param message   Commit Message
-     * @param user      The user who should initiate the commit. If the user is null, the artemis user will be used
+     * @param repo    Local Repository Object.
+     * @param message Commit Message
+     * @param user    The user who should initiate the commit. If the user is null, the artemis user will be used
      * @throws GitAPIException if the commit failed.
      */
     public void commitAndPush(Repository repo, String message, @Nullable User user) throws GitAPIException {
@@ -637,8 +637,8 @@ public class GitService {
     /**
      * Stager Task #3: Filter late submissions Filter all commits after exercise due date
      *
-     * @param repository Local Repository Object.
-     * @param lastValidSubmission The last valid submission from the database or empty, if not found
+     * @param repository                Local Repository Object.
+     * @param lastValidSubmission       The last valid submission from the database or empty, if not found
      * @param filterLateSubmissionsDate the date after which all submissions should be filtered out (may be null)
      */
     // TODO: remove transactional
@@ -685,8 +685,8 @@ public class GitService {
     /**
      * Stager Task #6: Combine all commits after last instructor commit
      *
-     * @param repository Local Repository Object.
-     * @param programmingExercise   ProgrammingExercise associated with this repo.
+     * @param repository          Local Repository Object.
+     * @param programmingExercise ProgrammingExercise associated with this repo.
      */
     public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise) {
         try {
@@ -888,15 +888,15 @@ public class GitService {
     }
 
     /**
-     * Zip the content of a git repository.
+     * Zip the content of a git repository that contains a participation.
      *
-     * @param repo Local Repository Object.
-     * @param targetPath path where the repo is located on disk
+     * @param repo            Local Repository Object.
+     * @param targetPath      path where the repo is located on disk
      * @param hideStudentName option to hide the student name for the zip file
-     * @throws IOException if the zipping process failed.
      * @return path to zip file.
+     * @throws IOException if the zipping process failed.
      */
-    public Path zipRepository(Repository repo, String targetPath, boolean hideStudentName) throws IOException {
+    public Path zipRepositoryWithParticipation(Repository repo, String targetPath, boolean hideStudentName) throws IOException {
         /*
          * This will split the repositoryUrl e.g. http://artemis-admin@localhost:7990/scm/TC1SCHEDULER1/tc1scheduler1-artemis-admin.git into a string array e.g. ["http", "",
          * "artemis-admin@localhost:7990", "scm", "TC1SCHEDULER1", "tc1scheduler1-artemis-admin.git"]
@@ -904,7 +904,7 @@ public class GitService {
         // TODO: rework this implementation, we should instead use java URL to handle this better
         String[] repositoryUrlComponents = repo.getParticipation().getRepositoryUrl().split("/");
         ProgrammingExercise exercise = repo.getParticipation().getProgrammingExercise();
-        String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName().replaceAll("\\s", "");
+        String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         String zipRepoName;
         if (hideStudentName) {
             // Take the last but one component, which does not contain the students name
@@ -915,33 +915,29 @@ public class GitService {
             zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".zip";
         }
 
-        Path repoPath = repo.getLocalPath();
-        Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipRepoName);
-        Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
-        return zipFileService.createZipFileWithFolderContent(zipFilePath, repoPath);
+        return zipRepository(repo.getLocalPath(), zipRepoName, targetPath);
     }
 
     /**
-     * Zip the content of a git repository available for an instructor/tutor.
-     * @param repo Local Repository Object.
-     * @param zipName The name of the zipped file
-     * @param targetPath path where the repo is located on disk
-     * @return The path to the zipped file
+     * Zips the contents of a git repository.
+     *
+     * @param repoLocalPath  The local path to the repository contents (e.g Repository::getLocalPath())
+     * @param zipFilename the name of the zipped file
+     * @param targetPath  path where the repo is located on disk
+     * @return path to the zip file
      * @throws IOException if the zipping process failed.
      */
-    public Path zipInstructorRepository(Repository repo, String zipName, String targetPath) throws IOException {
+    public Path zipRepository(Path repoLocalPath, String zipFilename, String targetPath) throws IOException {
         // Strip slashes from name
-        var filenanme = zipName.replaceAll("\\s", "");
+        zipFilename = zipFilename.replaceAll("\\s", "");
 
-        // Append .zip if it doesn't exist
-        if (!filenanme.endsWith(".zip")) {
-            filenanme += ".zip";
+        if (!zipFilename.endsWith(".zip")) {
+            zipFilename += ".zip";
         }
 
-        Path repoPath = repo.getLocalPath();
-        Path zipFilePath = Paths.get(targetPath, "zippedRepos", filenanme);
+        Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipFilename);
         Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
-        return zipFileService.createZipFileWithFolderContent(zipFilePath, repoPath);
+        return zipFileService.createZipFileWithFolderContent(zipFilePath, repoLocalPath);
     }
 
     /**

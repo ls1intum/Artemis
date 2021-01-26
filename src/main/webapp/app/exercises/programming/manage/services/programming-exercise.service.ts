@@ -25,7 +25,7 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     buildAndTestStudentSubmissionsAfterDueDate?: Moment;
 };
 
-export type ProgrammingExerciseInstructorRepositoryType = 'tests' | 'solution' | 'template';
+export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION' | 'TESTS';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {

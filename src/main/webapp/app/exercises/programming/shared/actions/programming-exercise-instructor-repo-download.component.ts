@@ -19,7 +19,6 @@ import { JhiAlertService } from 'ng-jhipster';
             (onClick)="exportRepository()"
         ></jhi-button>
     `,
-    styles: [],
 })
 export class ProgrammingExerciseInstructorRepoDownloadComponent {
     ButtonType = ButtonType;
