@@ -213,7 +213,7 @@ public class AssessmentService {
          * {@link Result#feedbacks}.
          */
         if (participation instanceof ProgrammingExerciseStudentParticipation && submission.getResults().size() == 1) {
-            participation.removeSubmissions(submission);
+            participation.removeSubmission(submission);
             participation.removeResult(result);
             submissionRepository.deleteById(submission.getId());
         }

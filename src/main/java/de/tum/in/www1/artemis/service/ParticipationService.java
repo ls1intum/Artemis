@@ -458,7 +458,7 @@ public class ParticipationService {
         submission.setType(submissionType);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         return Optional.of(submission);
     }
 
@@ -1244,7 +1244,6 @@ public class ParticipationService {
         // The results that are only connected to a participation are also deleted
         resultsToBeDeleted.forEach(participation::removeResult);
         participation.getResults().forEach(result -> resultRepository.deleteById(result.getId()));
-
         return participation;
     }
 

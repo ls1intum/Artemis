@@ -18,6 +18,7 @@ import { User } from 'app/core/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -62,6 +63,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         private router: Router,
         private translateService: TranslateService,
         private profileService: ProfileService,
+        private localStorage: LocalStorageService,
     ) {}
 
     /**
@@ -84,6 +86,14 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.baseUrl = info.versionControlUrl;
             }
         });
+
+        this.useSsh = this.localStorage.retrieve('useSsh') || false;
+        this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
+    }
+
+    public toggleUseSsh(): void {
+        this.useSsh = !this.useSsh;
+        this.localStorage.store('useSsh', this.useSsh);
     }
 
     /**

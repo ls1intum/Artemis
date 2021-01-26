@@ -111,7 +111,7 @@ public class TextSubmissionService extends SubmissionService {
             log.error("Text submission version could not be saved: " + ex);
         }
 
-        participation.addSubmissions(textSubmission);
+        participation.addSubmission(textSubmission);
         participation.setInitializationState(InitializationState.FINISHED);
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (textSubmission.getId() == null) {

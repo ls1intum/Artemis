@@ -154,7 +154,7 @@ public class ModelingSubmissionService extends SubmissionService {
             log.error("Modeling submission version could not be saved: " + ex);
         }
 
-        participation.addSubmissions(modelingSubmission);
+        participation.addSubmission(modelingSubmission);
 
         try {
             notifyCompass(modelingSubmission, modelingExercise);
