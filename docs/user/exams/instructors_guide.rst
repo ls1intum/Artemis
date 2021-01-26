@@ -173,18 +173,16 @@ During the exam creation and configuration, you can create your exam and configu
     .. note::
        If you do not press this button, the students quiz exercises will not be graded.
 
+- After the :ref:`exam conduction <exam_conduction>` ends, you can click on |assess_unsubmitted_student_exams|. This action will automatically evaluate the text and modelling exercise submissions with 0 points for the unsubmitted student exams. 
+
+    .. note::
+        If you do not press this button, the unsubmitted student submissions will appear in the assessment dashboard of the exam.
+
 .. figure:: instructor/student_exams.png
    :alt: Student Exam Page
    :align: center
 
    Student Exam Page
-   
-Assess Unsubmitted Student Exams
-
-- After the :ref:`exam conduction <exam_conduction>` ends, you can click on |assess_unsubmitted_student_exams|. This action will automatically evaluate the text and modelling exercise submissions with 0 points for the unsubmitted student exams. 
-
-    .. note::
-        If you do not press this button, the unsubmitted student submissions will appear in the assessment dashboard of the exam.
 
 
 1.7 Conducting Test Runs
