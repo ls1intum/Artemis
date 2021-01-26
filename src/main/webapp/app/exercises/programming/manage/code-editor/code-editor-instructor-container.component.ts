@@ -12,6 +12,7 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -20,6 +21,8 @@ import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/p
 export class CodeEditorInstructorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
+
+    readonly IncludedInOverallScore = IncludedInOverallScore;
 
     constructor(
         router: Router,

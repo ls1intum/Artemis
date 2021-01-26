@@ -77,6 +77,10 @@
 <dd *ngIf="exercise.bonusPoints">
     <span>{{ exercise.bonusPoints }}</span>
 </dd>
+<dt><span jhiTranslate="artemisApp.exercise.includedInOverallScore">Score Calculation</span></dt>
+<dd>
+    <span>{{ exerciseService.isIncludedInScore(exercise) }}</span>
+</dd>
 <dt><span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span></dt>
 <dd>
     <span *ngIf="exercise.presentationScoreEnabled">{{ 'global.generic.yes' | translate }}</span>

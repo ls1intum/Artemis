@@ -1,5 +1,5 @@
 import { nextAlphanumeric, nextWSSubscriptionId, extractDestination } from '../util/utils.js';
-import { COMMIT, NEW_FILE, PARTICIPATION_WITH_RESULT, PARTICIPATIONS, PROGRAMMING_EXERCISE, PROGRAMMING_EXERCISES_SETUP, FILES } from './endpoints.js';
+import { COMMIT, NEW_FILE, PARTICIPATION_WITH_RESULT, PARTICIPATIONS, PROGRAMMING_EXERCISE, SCA_CATEGORIES, PROGRAMMING_EXERCISES_SETUP, FILES } from './endpoints.js';
 import { fail, sleep } from 'k6';
 import { programmingExerciseProblemStatementJava } from '../resource/constants_java.js';
 import { programmingExerciseProblemStatementPython } from '../resource/constants_python.js';
@@ -58,7 +58,7 @@ export const TestResult = {
     BUILD_ERROR: 'error',
 };
 
-export function createProgrammingExercise(artemis, courseId, programmingLanguage, exerciseGroup = null) {
+export function createProgrammingExercise(artemis, courseId, exerciseGroup = undefined, programmingLanguage, enableSCA = false) {
     let res;
 
     let programmingExerciseProblemStatement;
@@ -86,17 +86,16 @@ export function createProgrammingExercise(artemis, courseId, programmingLanguage
         packageName: 'de.test',
         problemStatement: programmingExerciseProblemStatement,
         presentationScoreEnabled: false,
-        staticCodeAnalysisEnabled: false,
+        staticCodeAnalysisEnabled: enableSCA,
         sequentialTestRuns: false,
         mode: 'INDIVIDUAL',
         projectType: programmingLanguage === 'JAVA' ? 'ECLIPSE' : undefined,
     };
 
     if (courseId) {
-        exercise.course = {
-            id: courseId,
-        };
+        exercise.course = { id: courseId };
     }
+
     if (exerciseGroup) {
         exercise.exerciseGroup = exerciseGroup;
     }
@@ -115,6 +114,41 @@ export function createProgrammingExercise(artemis, courseId, programmingLanguage
     return exerciseId;
 }
 
+export function getScaCategories(artemis, exerciseId) {
+    const res = artemis.get(SCA_CATEGORIES(exerciseId));
+    if (res[0].status !== 200) {
+        fail('FAILTEST: Could not get SCA categories (' + res[0].status + ')! Response was + ' + res[0].body);
+    }
+    console.log('GET SCA categories for programming exercise with id=' + exerciseId);
+    return JSON.parse(res[0].body);
+}
+
+export function configureScaCategories(artemis, exerciseId, scaCategories, programmingLanguage) {
+    // Find and prepare categories for the configuration update
+    let patchedCategories;
+    switch (programmingLanguage) {
+        case 'JAVA':
+            let badPracticeCategory = scaCategories.find((category) => (category.name = 'Bad Practice'));
+            if (!badPracticeCategory) {
+                fail(`FAILTEST: Could not find SCA category "Bad Practice" for exercise: ${exerciseId}`);
+            }
+            patchedCategories = [
+                {
+                    id: badPracticeCategory.id,
+                    penalty: 1,
+                    maxPenalty: 3,
+                    state: 'GRADED',
+                },
+            ];
+    }
+
+    const res = artemis.patch(SCA_CATEGORIES(exerciseId), patchedCategories);
+    if (res[0].status !== 200) {
+        fail('FAILTEST: Could not patch SCA categories (' + res[0].status + ')! Response was + ' + res[0].body);
+    }
+    console.log('PATCHED SCA categories for programming exercise with id=' + exerciseId);
+}
+
 export function deleteProgrammingExercise(artemis, exerciseId) {
     const res = artemis.delete(PROGRAMMING_EXERCISE(exerciseId), {
         deleteStudentReposBuildPlans: true,
@@ -128,7 +162,7 @@ export function deleteProgrammingExercise(artemis, exerciseId) {
 
 export function startExercise(artemis, courseId, exerciseId) {
     console.log('Try to start exercise for test user ' + __VU);
-    const res = artemis.post(PARTICIPATIONS(courseId, exerciseId), null, null);
+    const res = artemis.post(PARTICIPATIONS(courseId, exerciseId), undefined, undefined);
     // console.log('RESPONSE of starting exercise: ' + res[0].body);
 
     if (res[0].status === 400) {
@@ -146,14 +180,19 @@ export function startExercise(artemis, courseId, exerciseId) {
 }
 
 export function createNewFile(artemis, participationId, filename) {
-    const res = artemis.post(NEW_FILE(participationId), null, { file: filename });
+    const res = artemis.post(NEW_FILE(participationId), undefined, { file: filename });
 
     if (res[0].status !== 200) {
         fail('FAILTEST: Unable to create new file ' + filename);
     }
 }
 
-export function updateFileContent(artemis, participationId, content) {
+function subscribe(socket, exerciseId) {
+    socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/newResults\n\n\u0000');
+    socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/exercise/' + exerciseId + '/participation\n\n\u0000');
+}
+
+function updateFileContent(artemis, participationId, content) {
     const res = artemis.put(FILES(participationId), content);
 
     if (res[0].status !== 200) {
@@ -166,27 +205,7 @@ export function simulateSubmission(artemis, participationSimulation, expectedRes
     participationSimulation.newFiles.forEach((file) => createNewFile(artemis, participationSimulation.participationId, file));
 
     artemis.websocket(function (socket) {
-        // Send changes via websocket - DEPRECATED AS OF 2020-07-13, now REST is used (see commit e6038467a8cc5ea29cb0b50b0bb2d2c51c94d348)
-        function submitChange(content) {
-            const contentString = JSON.stringify(content);
-            const changeMessage =
-                'SEND\ndestination:/topic/repository/' +
-                participationSimulation.participationId +
-                '/files\ncontent-length:' +
-                contentString.length +
-                '\n\n' +
-                contentString +
-                '\u0000';
-            socket.send(changeMessage);
-            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/repository/' + participationSimulation.participationId + '/files\n\n\u0000');
-        }
-
         // Subscribe to new results and participations
-        function subscribe(exerciseId, participationId) {
-            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/newResults\n\n\u0000');
-            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/exercise/' + exerciseId + '/participation\n\n\u0000');
-        }
-
         socket.setTimeout(function () {
             subscribe(participationSimulation.exerciseId, participationSimulation.participationId);
         }, 5 * 1000);

@@ -228,14 +228,18 @@ public class TextSubmissionService extends SubmissionService {
      * @return a list of text submissions for the given exercise id
      */
     public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly, boolean examMode, int correctionRound) {
-        List<StudentParticipation> participations;
-        if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(exerciseId,
-                    correctionRound);
-        }
-        else {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
-        }
+        // TODO Nicolas Rauscher and Simon Entholzer: the following query for the exam mode does not work. Instructors assume to see all submissions on the submissions
+        // page independent whether they already have results or not.
+        // List<StudentParticipation> participations;
+        // if (examMode) {
+        // participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(exerciseId,
+        // (long) correctionRound);
+        // }
+        // else {
+        // participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+        // }
+        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+        ;
 
         List<TextSubmission> textSubmissions = new ArrayList<>();
 

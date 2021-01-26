@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,11 +14,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileUploadSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -40,7 +43,16 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     ComplaintRepository complaintRepo;
 
     @Autowired
-    FileUploadExerciseRepository exerciseRepo;
+    FileUploadExerciseRepository fileUploadExerciseRepository;
+
+    @Autowired
+    ExerciseRepository exerciseRepository;
+
+    @Autowired
+    ExamRepository examRepository;
+
+    @Autowired
+    StudentParticipationRepository studentParticipationRepository;
 
     private FileUploadExercise afterReleaseFileUploadExercise;
 
@@ -91,6 +103,105 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
+    public void testManualAssessmentSubmit_IncludedCompletelyWithBonusPointsExercise() throws Exception {
+        // setting up exercise
+        afterReleaseFileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        afterReleaseFileUploadExercise.setMaxScore(10.0);
+        afterReleaseFileUploadExercise.setBonusPoints(10.0);
+        exerciseRepository.save(afterReleaseFileUploadExercise);
+
+        // setting up student submission
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
+        submission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, submission, "student1");
+        List<Feedback> feedbacks = new ArrayList<>();
+
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 150L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 200L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 200L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testManualAssessmentSubmit_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
+        // setting up exercise
+        afterReleaseFileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        afterReleaseFileUploadExercise.setMaxScore(10.0);
+        afterReleaseFileUploadExercise.setBonusPoints(0.0);
+        exerciseRepository.save(afterReleaseFileUploadExercise);
+
+        // setting up student submission
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
+        submission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, submission, "student1");
+        List<Feedback> feedbacks = new ArrayList<>();
+
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testManualAssessmentSubmit_IncludedAsBonusExercise() throws Exception {
+        // setting up exercise
+        afterReleaseFileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        afterReleaseFileUploadExercise.setMaxScore(10.0);
+        afterReleaseFileUploadExercise.setBonusPoints(0.0);
+        exerciseRepository.save(afterReleaseFileUploadExercise);
+
+        // setting up student submission
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
+        submission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, submission, "student1");
+        List<Feedback> feedbacks = new ArrayList<>();
+
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testManualAssessmentSubmit_NotIncludedExercise() throws Exception {
+        // setting up exercise
+        afterReleaseFileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        afterReleaseFileUploadExercise.setMaxScore(10.0);
+        afterReleaseFileUploadExercise.setBonusPoints(0.0);
+        exerciseRepository.save(afterReleaseFileUploadExercise);
+
+        // setting up student submission
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
+        submission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, submission, "student1");
+        List<Feedback> feedbacks = new ArrayList<>();
+
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+    }
+
+    public void addAssessmentFeedbackAndCheckScore(FileUploadSubmission fileUploadSubmission, List<Feedback> feedbacks, double pointsAwarded, long expectedScore) throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("submit", "true");
+        feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj"));
+        Result response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
+                params);
+        assertThat(response.getScore()).isEqualTo(expectedScore);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void testSubmitFileUploadAssessment_withResultOver100Percent() throws Exception {
         afterReleaseFileUploadExercise = (FileUploadExercise) database.addMaxScoreAndBonusPointsToExercise(afterReleaseFileUploadExercise);
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
@@ -110,7 +221,6 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         // Check that result is capped to maximum of maxScore + bonus points -> 110
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
         response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK, params);
-
         assertThat(response.getScore()).isEqualTo(110);
     }
 
@@ -329,7 +439,168 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         FileUploadExercise assessedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(assessedFileUploadExercise, fileUploadSubmission, "student1", "tutor1");
-        Result result = request.get("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
+        request.get("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void multipleCorrectionRoundsForExam() throws Exception {
+        // Setup exam with 2 correction rounds and a programming exercise
+        ExerciseGroup exerciseGroup1 = new ExerciseGroup();
+        Exam exam = database.addExam(course);
+        exam.setNumberOfCorrectionRoundsInExam(2);
+        exam.addExerciseGroup(exerciseGroup1);
+        exam.setVisibleDate(ZonedDateTime.now().minusHours(3));
+        exam.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        exam = examRepository.save(exam);
+
+        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
+        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+        FileUploadExercise exercise = ModelFactory.generateFileUploadExerciseForExam("test.pdf", exerciseGroup1);
+        exercise = fileUploadExerciseRepository.save(exercise);
+        exerciseGroup1.addExercise(exercise);
+
+        // add student submission
+        var submission = ModelFactory.generateFileUploadSubmission(true);
+        submission = database.addFileUploadSubmission(exercise, submission, "student1");
+
+        // verify setup
+        assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
+        assertThat(exam.getEndDate()).isBefore(ZonedDateTime.now());
+        var optionalFetchedExercise = exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId());
+        assertThat(optionalFetchedExercise.isPresent()).isTrue();
+        final var exerciseWithParticipation = optionalFetchedExercise.get();
+        final var studentParticipation = exerciseWithParticipation.getStudentParticipations().stream().iterator().next();
+
+        // request to manually assess latest submission (correction round: 0)
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+        params.add("correction-round", "0");
+        FileUploadSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/file-upload-submission-without-assessment",
+                HttpStatus.OK, FileUploadSubmission.class, params);
+        // verify that no new submission was created
+        assertThat(submissionWithoutFirstAssessment).isEqualTo(submission);
+        // verify that the lock has been set
+        assertThat(submissionWithoutFirstAssessment.getLatestResult()).isNotNull();
+        assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo("tutor1");
+        assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+
+        // make sure that new result correctly appears inside the continue box
+        LinkedMultiValueMap<String, String> paramsGetAssessedCR1Tutor1 = new LinkedMultiValueMap<>();
+        paramsGetAssessedCR1Tutor1.add("assessedByTutor", "true");
+        paramsGetAssessedCR1Tutor1.add("correction-round", "0");
+        var assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/file-upload-submissions", HttpStatus.OK, FileUploadSubmission.class,
+                paramsGetAssessedCR1Tutor1);
+
+        assertThat(assessedSubmissionList.size()).isEqualTo(1);
+        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
+        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
+
+        // assess submission and submit
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        params = new LinkedMultiValueMap<>();
+        params.add("submit", "true");
+        final Result firstSubmittedManualResult = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/feedback",
+                feedbacks, Result.class, HttpStatus.OK, params);
+
+        // make sure that new result correctly appears after the assessment for first correction round
+        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/file-upload-submissions", HttpStatus.OK, FileUploadSubmission.class,
+                paramsGetAssessedCR1Tutor1);
+
+        assertThat(assessedSubmissionList.size()).isEqualTo(1);
+        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
+        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isNotNull();
+        assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo("tutor1");
+
+        // verify that the result contains the relationship
+        assertThat(firstSubmittedManualResult).isNotNull();
+        assertThat(firstSubmittedManualResult.getParticipation()).isEqualTo(studentParticipation);
+
+        // verify that the relationship between student participation,
+        var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
+        assertThat(databaseRelationshipStateOfResultsOverParticipation.isPresent()).isTrue();
+        var fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
+
+        assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(1);
+        assertThat(fetchedParticipation.findLatestSubmission().isPresent()).isTrue();
+        assertThat(fetchedParticipation.findLatestSubmission().get()).isEqualTo(submissionWithoutFirstAssessment);
+        assertThat(fetchedParticipation.findLatestResult()).isEqualTo(firstSubmittedManualResult);
+
+        var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
+                .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
+        assertThat(databaseRelationshipStateOfResultsOverSubmission.size()).isEqualTo(1);
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
+        assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(1);
+        assertThat(fetchedParticipation.findLatestSubmission().isPresent()).isTrue();
+        // it should contain the lock for the manual result
+        assertThat(fetchedParticipation.findLatestSubmission().get().getResults().size()).isEqualTo(1);
+        assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(firstSubmittedManualResult);
+
+        // SECOND ROUND OF CORRECTION
+
+        database.changeUser("tutor2");
+        LinkedMultiValueMap<String, String> paramsSecondCorrection = new LinkedMultiValueMap<>();
+        paramsSecondCorrection.add("lock", "true");
+        paramsSecondCorrection.add("correction-round", "1");
+
+        final var submissionWithoutSecondAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/file-upload-submission-without-assessment",
+                HttpStatus.OK, FileUploadSubmission.class, paramsSecondCorrection);
+
+        // verify that the submission is not new
+        assertThat(submissionWithoutSecondAssessment).isEqualTo(submission);
+        // verify that the lock has been set
+        assertThat(submissionWithoutSecondAssessment.getLatestResult()).isNotNull();
+        assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo("tutor2");
+        assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+
+        // verify that the relationship between student participation,
+        databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
+        assertThat(databaseRelationshipStateOfResultsOverParticipation.isPresent()).isTrue();
+        fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
+
+        assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(1);
+        assertThat(fetchedParticipation.findLatestSubmission().isPresent()).isTrue();
+        assertThat(fetchedParticipation.findLatestSubmission().get()).isEqualTo(submissionWithoutSecondAssessment);
+        assertThat(fetchedParticipation.getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst().get())
+                .isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
+
+        databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
+        assertThat(databaseRelationshipStateOfResultsOverSubmission.size()).isEqualTo(1);
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
+        assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(1);
+        assertThat(fetchedParticipation.findLatestSubmission().isPresent()).isTrue();
+        assertThat(fetchedParticipation.findLatestSubmission().get().getResults().size()).isEqualTo(2);
+        assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
+
+        // assess submission and submit
+        feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        params = new LinkedMultiValueMap<>();
+        params.add("submit", "true");
+        final var secondSubmittedManualResult = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/feedback",
+                feedbacks, Result.class, HttpStatus.OK, params);
+
+        assertThat(secondSubmittedManualResult).isNotNull();
+
+        // make sure that new result correctly appears after the assessment for second correction round
+        LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
+        paramsGetAssessedCR2.add("assessedByTutor", "true");
+        paramsGetAssessedCR2.add("correction-round", "1");
+        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/file-upload-submissions", HttpStatus.OK, FileUploadSubmission.class,
+                paramsGetAssessedCR2);
+
+        assertThat(assessedSubmissionList.size()).isEqualTo(1);
+        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
+        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(1)).isEqualTo(secondSubmittedManualResult);
+
+        // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
+        LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
+        paramsGetAssessedCR1.add("assessedByTutor", "true");
+        paramsGetAssessedCR1.add("correction-round", "0");
+        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/file-upload-submissions", HttpStatus.OK, FileUploadSubmission.class,
+                paramsGetAssessedCR1);
+
+        assertThat(assessedSubmissionList.size()).isEqualTo(0);
     }
 
 }

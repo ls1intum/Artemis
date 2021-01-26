@@ -28,4 +28,6 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
 
     @EntityGraph(type = LOAD, attributePaths = { "submission" })
     Set<TextBlock> findAllBySubmissionIdIn(Set<Long> submissionIdList);
+
+    void deleteAllBySubmission_Id(Long submissionId);
 }

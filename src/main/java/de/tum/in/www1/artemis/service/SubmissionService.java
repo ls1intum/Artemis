@@ -375,7 +375,6 @@ public class SubmissionService {
      */
     public Result saveNewResult(Submission submission, final Result result) {
         result.setSubmission(null);
-        submission.setResults(new ArrayList<>());
         if (result.getParticipation() == null) {
             result.setParticipation(submission.getParticipation());
         }
@@ -395,10 +394,11 @@ public class SubmissionService {
      * @param assessor the assessor
      * @param score the score which should be set
      * @param feedbackText the feedback text for the
+     * @param correctionRound the currectCorrection round
      */
-    public void addResultWithFeedback(StudentParticipation studentParticipation, User assessor, long score, String feedbackText) {
+    public void addResultWithFeedbackByCorrectionRound(StudentParticipation studentParticipation, User assessor, long score, String feedbackText, int correctionRound) {
         if (studentParticipation.getExercise().isExamExercise() && studentParticipation.findLatestSubmission().isPresent()
-                && studentParticipation.findLatestSubmission().get().getLatestResult() == null) {
+                && studentParticipation.findLatestSubmission().get().getResultForCorrectionRound(correctionRound) == null) {
             final var latestSubmission = studentParticipation.findLatestSubmission().get();
             Result result = new Result();
             result.setParticipation(studentParticipation);

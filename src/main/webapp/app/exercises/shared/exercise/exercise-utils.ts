@@ -161,3 +161,22 @@ export const areManualResultsAllowed = (exercise: Exercise) => {
     const relevantDueDate = progEx.buildAndTestStudentSubmissionsAfterDueDate ?? progEx.dueDate;
     return progEx.isAtLeastTutor === true && progEx.assessmentType === AssessmentType.SEMI_AUTOMATIC && (!relevantDueDate || moment(relevantDueDate).isBefore(now()));
 };
+
+/**
+ * Gets the positive and capped to maximum points which is fixed at two decimal numbers
+ *
+ * @param totalScore the calculated score of a student
+ * @param maxPoints the maximal points (including bonus points) of an exercise
+ */
+export const getPositiveAndCappedTotalScore = (totalScore: number, maxPoints: number): number => {
+    // Do not allow negative score
+    if (totalScore < 0) {
+        totalScore = 0;
+    }
+    // Cap totalScore to maxPoints
+    if (totalScore > maxPoints) {
+        totalScore = maxPoints;
+    }
+
+    return +totalScore.toFixed(2);
+};

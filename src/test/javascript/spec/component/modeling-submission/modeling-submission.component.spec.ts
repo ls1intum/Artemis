@@ -42,6 +42,9 @@ import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submi
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { Feedback } from 'app/entities/feedback.model';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -59,6 +62,7 @@ describe('Component Tests', () => {
         const route = ({ params: of({ courseId: 5, exerciseId: 22, participationId: 123 }) } as any) as ActivatedRoute;
         const participation = new StudentParticipation();
         participation.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        participation.id = 1;
         const submission = <ModelingSubmission>(<unknown>{ id: 20, submitted: true, participation });
         const result = { id: 1 } as Result;
 
@@ -99,6 +103,10 @@ describe('Component Tests', () => {
                     service = debugElement.injector.get(ModelingSubmissionService);
                     router = debugElement.injector.get(Router);
                 });
+        });
+
+        afterEach(() => {
+            sinon.restore();
         });
 
         it('Should call load getDataForModelingEditor on init', () => {
@@ -216,6 +224,62 @@ describe('Component Tests', () => {
             const modelSubmission = <ModelingSubmission>(<unknown>{ model: '{"elements": [{"id": 1}]}', submitted: true, participation });
             comp.submission = modelSubmission;
             const fake = sinon.replace(service, 'create', sinon.fake.returns(of({ body: submission })));
+            comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
+            comp.modelingExercise.id = 1;
+            comp.submit();
+            expect(fake).to.have.been.calledOnce;
+            expect(comp.submission).to.be.deep.equal(submission);
+        });
+
+        it('should set result when new result comes in from websocket', () => {
+            submission.model = '{"elements": [{"id": 1}]}';
+            sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
+            const participationWebSocketService = debugElement.injector.get(ParticipationWebsocketService);
+
+            const generalFeedback = new Feedback();
+            generalFeedback.id = 1;
+            generalFeedback.detailText = 'General Feedback';
+            const newResult = new Result();
+            newResult.score = 50.0;
+            newResult.assessmentType = AssessmentType.MANUAL;
+            newResult.submission = submission;
+            newResult.participation = submission.participation;
+            newResult.completionDate = moment();
+            newResult.feedbacks = [generalFeedback];
+            sinon.replace(participationWebSocketService, 'subscribeForLatestResultOfParticipation', sinon.fake.returns(of(newResult)));
+            fixture.detectChanges();
+            expect(comp.assessmentResult).to.deep.equal(newResult);
+        });
+
+        it('should update submission when new submission comes in from websocket', () => {
+            submission.submitted = false;
+            sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
+            const websocketService = debugElement.injector.get(JhiWebsocketService);
+            sinon.stub(websocketService, 'subscribe');
+            const receiveStub = sinon.stub(websocketService, 'receive');
+            const modelSubmission = <ModelingSubmission>(<unknown>{
+                id: 1,
+                model: '{"elements": [{"id": 1}]}',
+                submitted: true,
+                participation,
+            });
+            receiveStub.returns(of(modelSubmission));
+            fixture.detectChanges();
+            expect(comp.submission).to.deep.equal(modelSubmission);
+            expect(receiveStub).to.have.been.called;
+        });
+
+        it('should set correct properties on modeling exercise update when submitting', () => {
+            fixture.detectChanges();
+
+            const modelSubmission = <ModelingSubmission>(<unknown>{
+                id: 1,
+                model: '{"elements": [{"id": 1}]}',
+                submitted: true,
+                participation,
+            });
+            comp.submission = modelSubmission;
+            const fake = sinon.replace(service, 'update', sinon.fake.returns(of({ body: submission })));
             comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
             comp.modelingExercise.id = 1;
             comp.submit();

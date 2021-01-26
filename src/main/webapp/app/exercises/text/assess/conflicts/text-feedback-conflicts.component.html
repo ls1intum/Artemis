@@ -1,0 +1,85 @@
+<jhi-text-feedback-conflicts-header
+    [numberOfConflicts]="conflictingSubmissions?.length"
+    (didChangeConflictIndex)="didChangeConflictIndex($event)"
+    [haveRights]="canOverride(leftSubmission!.latestResult!)"
+    [overrideBusy]="overrideBusy"
+    [markBusy]="markBusy"
+    [isOverrideDisabled]="isOverrideDisabled"
+    [isMarkingDisabled]="isMarkingDisabled"
+    (overrideLeftSubmission)="overrideLeftSubmission()"
+    (discardConflict)="discardConflict()"
+></jhi-text-feedback-conflicts-header>
+
+<ng-container *ngIf="conflictingSubmissions && conflictingSubmissions.length > 0; then conflict; else noConflict"></ng-container>
+
+<ng-template #conflict>
+    <div class="conflict-container">
+        <div class="left card">
+            <div class="card-header bg-primary text-white">
+                <div class="flew-grow-1">
+                    <span *ngIf="isAssessor(this.leftSubmission!.latestResult!); else otherAssessorLeftCard" jhiTranslate="artemisApp.textAssessment.conflict.assessor"></span>
+                    <ng-template #otherAssessorLeftCard>
+                        <span
+                            jhiTranslate="artemisApp.textAssessment.conflict.otherAssessor"
+                            [translateValues]="{
+                                otherUser: this.leftSubmission!.latestResult?.assessor?.name + ' (' + this.leftSubmission!.latestResult?.assessor?.login + ')'
+                            }"
+                        ></span>
+                    </ng-template>
+                </div>
+                <jhi-score-display [maxPoints]="exercise?.maxScore" [score]="leftTotalScore" [maxBonusPoints]="exercise?.bonusPoints"></jhi-score-display>
+            </div>
+            <div class="left-body card-body">
+                <jhi-text-assessment-area
+                    [submission]="leftSubmission"
+                    [(textBlockRefs)]="leftTextBlockRefs"
+                    (textBlockRefsChange)="leftTextBlockRefsChange()"
+                    [readOnly]="true"
+                    [conflictMode]="true"
+                    [isLeftConflictingFeedback]="true"
+                    [selectedFeedbackIdWithConflicts]="leftFeedbackId"
+                ></jhi-text-assessment-area>
+            </div>
+        </div>
+        <div class="movable right">
+            <div class="draggable-left">
+                <fa-icon [icon]="'grip-lines-vertical'"></fa-icon>
+            </div>
+            <div class="right card">
+                <div class="card-header bg-primary text-white">
+                    <div class="flew-grow-1">
+                        <span *ngIf="isAssessor(rightSubmission!.latestResult!); else otherAssessorRightCard" jhiTranslate="artemisApp.textAssessment.conflict.assessor"></span>
+                        <ng-template #otherAssessorRightCard>
+                            <span
+                                jhiTranslate="artemisApp.textAssessment.conflict.otherAssessor"
+                                [translateValues]="{
+                                    otherUser: rightSubmission!.latestResult?.assessor?.name + ' (' + rightSubmission!.latestResult?.assessor?.login + ')'
+                                }"
+                            ></span>
+                        </ng-template>
+                    </div>
+                    <jhi-score-display [maxPoints]="exercise?.maxScore" [maxBonusPoints]="exercise?.bonusPoints" [score]="rightTotalScore"></jhi-score-display>
+                </div>
+                <div class="right-body card-body">
+                    <jhi-text-assessment-area
+                        [submission]="rightSubmission"
+                        [(textBlockRefs)]="rightTextBlockRefs"
+                        [readOnly]="true"
+                        [conflictMode]="true"
+                        [feedbackConflicts]="feedbackConflicts"
+                        (didSelectConflictingFeedback)="didSelectConflictingFeedback($event)"
+                    ></jhi-text-assessment-area>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #noConflict>
+    <div class="alert alert-warning text-center mt-4" role="alert">
+        <p jhiTranslate="artemisApp.textAssessment.conflict.notFound">We haven't found any conflicts for the selected feedback, please go back.</p>
+        <button type="submit" class="btn btn-info btn-sm mr-1 mb-1 tutor-dashboard" (click)="didClickedButtonNoConflict()">
+            <span class="d-none d-md-inline" jhiTranslate="entity.action.back">Back</span>
+        </button>
+    </div>
+</ng-template>
