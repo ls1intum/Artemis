@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CourseExerciseStatisticsDTO } from 'app/exercises/shared/exercise/exercise-statistics-dto.model';
@@ -14,7 +14,7 @@ export enum ExerciseRowType {
     templateUrl: './course-management-exercise-row.component.html',
     styleUrls: ['course-management-exercise-row.scss'],
 })
-export class CourseManagementExerciseRowComponent implements OnInit {
+export class CourseManagementExerciseRowComponent implements OnInit, OnChanges {
     @Input() course: Course;
     @Input() exercise: Exercise;
     @Input() statistic: CourseExerciseStatisticsDTO;
@@ -27,6 +27,9 @@ export class CourseManagementExerciseRowComponent implements OnInit {
     hasLeftoverAssessments = false;
     isTeamExercise: boolean;
     displayTitle: string;
+    participationScore: number;
+    averageScore: number;
+    averageScoreNumerator: number;
 
     // TODO:
     JSON = JSON;
@@ -68,5 +71,15 @@ export class CourseManagementExerciseRowComponent implements OnInit {
     ngOnInit() {
         this.displayTitle = this.exercise.title ?? '';
         this.isTeamExercise = this.exercise.teamMode ?? false;
+    }
+
+    ngOnChanges() {
+        if (!this.statistic) {
+            return;
+        }
+
+        this.participationScore = Math.round(this.statistic.participationRateInPercent! / 100);
+        this.averageScore = Math.round(this.statistic.averageScoreInPercent! / 100);
+        this.averageScoreNumerator = Math.round((this.statistic.averageScoreInPercent! * this.statistic.exerciseMaxPoints!) / 100);
     }
 }

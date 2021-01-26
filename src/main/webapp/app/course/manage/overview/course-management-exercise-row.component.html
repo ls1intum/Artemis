@@ -43,7 +43,7 @@
                     <span class="bold">{{ 'artemisApp.course.students' | translate }}</span>
                     <jhi-progress-bar
                         [tooltip]="'artemisApp.course.students' | translate"
-                        [percentage]="statistic.participationRateInPercent"
+                        [percentage]="participationScore"
                         [numerator]="statistic.noOfParticipatingStudentsOrTeams"
                         [denominator]="isTeamExercise ? statistic.noOfTeamsInCourse : statistic.noOfStudentsInCourse"
                     >
@@ -53,8 +53,8 @@
                     <span class="bold">{{ 'artemisApp.course.averageScore' | translate }}</span>
                     <jhi-progress-bar
                         [tooltip]="'artemisApp.course.averageScore' | translate"
-                        [percentage]="statistic.averageScoreInPercent"
-                        [numerator]="statistic.averageScoreInPercent! * statistic.exerciseMaxPoints!"
+                        [percentage]="averageScore"
+                        [numerator]="averageScoreNumerator"
                         [denominator]="statistic.exerciseMaxPoints"
                     >
                     </jhi-progress-bar>
