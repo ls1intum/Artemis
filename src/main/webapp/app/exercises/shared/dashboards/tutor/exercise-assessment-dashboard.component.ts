@@ -164,6 +164,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         this.exerciseService.getForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<Exercise>) => {
                 this.exercise = res.body!;
+                this.secondCorrectionEnabled = this.exercise.secondCorrectionEnabled;
+                this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
                 this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.gradingInstructions);
                 this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
 
@@ -591,15 +593,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     }
 
     toggleSecondCorrection() {
-        console.log('enable second correction');
         this.exerciseService.toggleSecondCorrection(this.exerciseId).subscribe((res: HttpResponse<Boolean>) => {
-            console.log(res);
-            this.secondCorrectionEnabled = res;
+            this.secondCorrectionEnabled = res.body! as boolean;
             this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
             this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
         });
-
-        // TODO RESTCALL
     }
     /**
      * Navigates back to the tutor (exam) dashboard

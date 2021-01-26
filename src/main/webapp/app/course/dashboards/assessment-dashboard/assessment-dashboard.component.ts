@@ -160,7 +160,6 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                 (response: string) => this.onError(response),
             );
         }
-        console.log('loadlall-end');
     }
 
     /**
@@ -223,15 +222,11 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
     }
 
     toggleSecondCorrection(exerciseId: number) {
-        console.log(this.exercises);
         const currentExercise = this.exercises.find((exercise) => exercise.id === exerciseId)!;
         const index = this.exercises.indexOf(currentExercise);
         this.exerciseService.toggleSecondCorrection(exerciseId).subscribe((res: HttpResponse<Boolean>) => {
-            console.log(res.body);
             this.exercises[index].secondCorrectionEnabled = !this.exercises[index].secondCorrectionEnabled;
-            // currentExercise!.secondCorrectionEnabled = !!res.body;
+            currentExercise!.secondCorrectionEnabled = res.body! as boolean;
         });
-        console.log(this.exercises);
-        // TODO RESTCALL
     }
 }
