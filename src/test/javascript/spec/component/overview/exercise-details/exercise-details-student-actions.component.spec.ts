@@ -51,7 +51,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
     let localStorageUseSshRetrieveStub: SinonStub;
     let localStorageUseSshObserveStub: SinonStub;
-    let localStorageUseSshObserveStubSubject: Subject<boolean|undefined>;
+    let localStorageUseSshObserveStubSubject: Subject<boolean | undefined>;
     let localStorageUseSshStoreStub: SinonStub;
 
     const team = { id: 1, students: [{ id: 99 } as User] } as Team;
