@@ -72,12 +72,10 @@ public class ScoreService {
             Optional<Result> newLastRatedResultOptional = getNewLastRatedResultForParticipantScore(associatedParticipantScore);
             if (newLastRatedResultOptional.isPresent()) {
                 Result newLastRatedResult = newLastRatedResultOptional.get();
-                associatedParticipantScore.setLastRatedResult(newLastRatedResult);
-                associatedParticipantScore.setLastRatedScore(newLastRatedResult.getScore());
+                setLastRatedResultAttributes(associatedParticipantScore, newLastRatedResult);
             }
             else {
-                associatedParticipantScore.setLastRatedResult(null);
-                associatedParticipantScore.setLastRatedScore(null);
+                setLastRatedResultAttributes(associatedParticipantScore, null);
             }
         }
 
@@ -85,12 +83,10 @@ public class ScoreService {
             Optional<Result> newLastResultOptional = getNewLastResultForParticipantScore(associatedParticipantScore);
             if (newLastResultOptional.isPresent()) {
                 Result newLastResult = newLastResultOptional.get();
-                associatedParticipantScore.setLastResult(newLastResult);
-                associatedParticipantScore.setLastScore(newLastResult.getScore());
+                setLastResultAttributes(associatedParticipantScore, newLastResult);
             }
             else {
-                associatedParticipantScore.setLastResult(null);
-                associatedParticipantScore.setLastScore(null);
+                setLastResultAttributes(associatedParticipantScore, null);
             }
         }
 
@@ -217,29 +213,28 @@ public class ScoreService {
     /**
      * Update an existing participant score when a new or updated result comes in
      *
-     * @param participantScore existing participant score that refers to the same exercise and participant as the result
-     * @param result           updated or new result
+     * @param participantScore            existing participant score that refers to the same exercise and participant as the result
+     * @param updatedOrNewlyCreatedResult updated or new result
      */
-    private void updateExistingParticipantScore(ParticipantScore participantScore, Result result) {
-        ParticipantScore ps = participantScore;
+    private void updateExistingParticipantScore(ParticipantScore participantScore, Result updatedOrNewlyCreatedResult) {
+        ParticipantScore participantScoreToSave = participantScore;
         // update the last result and last score if either it has not been set previously or new result is either the old one (=) or newer (>)
-        if (ps.getLastResult() == null || result.getId() >= ps.getLastResult().getId()) {
-            ps.setLastResult(result);
-            ps.setLastScore(result.getScore());
-            ps = participantScoreRepository.saveAndFlush(ps);
+        if (participantScoreToSave.getLastResult() == null || updatedOrNewlyCreatedResult.getId() >= participantScoreToSave.getLastResult().getId()) {
+            setLastResultAttributes(participantScoreToSave, updatedOrNewlyCreatedResult);
+            participantScoreToSave = participantScoreRepository.saveAndFlush(participantScoreToSave);
         }
         // update the last rated result and last rated score if either it has not been set previously or new rated result is either the old one (=) or newer (>)
-        if ((result.isRated() != null && result.isRated()) && (ps.getLastRatedResult() == null || result.getId() >= ps.getLastRatedResult().getId())) {
-            ps.setLastRatedResult(result);
-            ps.setLastRatedScore(result.getScore());
-            ps = participantScoreRepository.saveAndFlush(ps);
+        if ((updatedOrNewlyCreatedResult.isRated() != null && updatedOrNewlyCreatedResult.isRated())
+                && (participantScoreToSave.getLastRatedResult() == null || updatedOrNewlyCreatedResult.getId() >= participantScoreToSave.getLastRatedResult().getId())) {
+            setLastRatedResultAttributes(participantScoreToSave, updatedOrNewlyCreatedResult);
+            participantScoreToSave = participantScoreRepository.saveAndFlush(participantScoreToSave);
         }
 
         // Edge Case: if the result is now unrated but is equal to the current last rated result we have to set these to null (result was switched from rated to unrated)
-        if ((result.isRated() == null || !result.isRated()) && result.equals(ps.getLastRatedResult())) {
-            ps.setLastRatedResult(null);
-            ps.setLastRatedScore(null);
-            participantScoreRepository.saveAndFlush(ps);
+        if ((updatedOrNewlyCreatedResult.isRated() == null || !updatedOrNewlyCreatedResult.isRated())
+                && updatedOrNewlyCreatedResult.equals(participantScoreToSave.getLastRatedResult())) {
+            setLastRatedResultAttributes(participantScoreToSave, null);
+            participantScoreRepository.saveAndFlush(participantScoreToSave);
         }
     }
 
@@ -289,6 +284,27 @@ public class ScoreService {
         }
         return ratedResultsOrdered.isEmpty() ? Optional.empty() : Optional.of(ratedResultsOrdered.get(0));
 
+    }
+
+    private void setLastResultAttributes(ParticipantScore associatedParticipantScore, Result newLastResult) {
+        associatedParticipantScore.setLastResult(newLastResult);
+        if (newLastResult == null) {
+            associatedParticipantScore.setLastScore(null);
+        }
+        else {
+            associatedParticipantScore.setLastScore(newLastResult.getScore());
+        }
+
+    }
+
+    private void setLastRatedResultAttributes(ParticipantScore associatedParticipantScore, Result newLastRatedResult) {
+        associatedParticipantScore.setLastRatedResult(newLastRatedResult);
+        if (newLastRatedResult == null) {
+            associatedParticipantScore.setLastRatedScore(null);
+        }
+        else {
+            associatedParticipantScore.setLastRatedScore(newLastRatedResult.getScore());
+        }
     }
 
 }
