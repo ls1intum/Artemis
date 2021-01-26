@@ -21,7 +21,6 @@ import * as moment from 'moment';
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
-import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -55,7 +54,6 @@ describe('ProgrammingExamSubmissionComponent', () => {
                 MockComponent(CodeEditorContainerComponent),
                 MockPipe(TranslatePipe),
                 MockComponent(IncludedInScoreBadgeComponent),
-                MockComponent(ExerciseDetailsStudentActionsComponent),
             ],
             providers: [MockProvider(DomainService)],
         })
