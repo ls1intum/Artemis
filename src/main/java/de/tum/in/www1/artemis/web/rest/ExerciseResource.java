@@ -401,4 +401,22 @@ public class ExerciseResource {
 
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
+
+    /**
+     * GET /exercises/:exerciseId/toggle-second-correction
+     *
+     * @param exerciseId the exerciseId of the exercise to get the repos from
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/toggle-second-correction")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Boolean> toggleSecondCorrectionEnabled(@PathVariable Long exerciseId) {
+        log.debug("toggleSecondCorrectionEnabled for exercise with id:" + exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            return forbidden();
+        }
+        return ResponseUtil.wrapOrNotFound(Optional.of(exerciseService.toggleSecondCorrection(exercise)));
+    }
+
 }

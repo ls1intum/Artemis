@@ -358,8 +358,8 @@ export class ExerciseService {
     }
 
     // TODO REST call to get second correction enabled from server, and save it
-    toggleSecondCorrection(exerciseId: number, secondCorrectionEnabled: boolean) {
-        return !secondCorrectionEnabled;
+    toggleSecondCorrection(exerciseId: number): Observable<HttpResponse<Boolean>> {
+        return this.http.get<Boolean>(`${this.resourceUrl}/${exerciseId}/toggle-second-correction`, { observe: 'response' });
     }
 }
 

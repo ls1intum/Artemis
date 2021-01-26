@@ -25,14 +25,16 @@
         <div class="col-lg-3 col-md-6 col-sm-6 align-self-center" *ngIf="isExamMode">
             <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                 <ng-container *ngIf="exam && exam!.numberOfCorrectionRoundsInExam && exam.numberOfCorrectionRoundsInExam > 1">
-                    <!-- Enable second correction with this button -->
-                    <button *ngIf="!secondCorrectionEnabled" (click)="toggleSecondCorrection()" class="btn btn-warning float-right btn-sm">
-                        <fa-icon [icon]="'toggle-on'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOn' | translate }}
-                    </button>
-                    <!-- Disable second correction with this button -->
-                    <button *ngIf="secondCorrectionEnabled" (click)="toggleSecondCorrection()" class="btn btn-primary float-right btn-sm">
-                        <fa-icon [icon]="'toggle-off'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOff' | translate }}
-                    </button>
+                    <div class="btn-group">
+                        <!-- Enable second correction with this button -->
+                        <button *ngIf="!secondCorrectionEnabled" (click)="toggleSecondCorrection()" class="btn btn-primary float-right btn-sm">
+                            <fa-icon [icon]="'toggle-on'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOn' | translate }}
+                        </button>
+                        <!-- Disable second correction with this button -->
+                        <button *ngIf="secondCorrectionEnabled" (click)="toggleSecondCorrection()" class="btn btn-warning float-right btn-sm">
+                            <fa-icon [icon]="'toggle-off'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOff' | translate }}
+                        </button>
+                    </div>
                 </ng-container>
             </ng-container>
         </div>

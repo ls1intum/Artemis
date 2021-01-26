@@ -46,7 +46,6 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
     numberOfAssessmentLocks = 0;
     totalAssessmentPercentage = 0;
     showFinishedExercises = false;
-    secondCorrectionEnabledForExercise: boolean[] = [];
 
     stats = new StatsForDashboard();
 
@@ -101,6 +100,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
      * Percentages are calculated and rounded towards zero.
      */
     loadAll() {
+        console.log('loadlall');
         if (this.isExamMode) {
             this.showFinishedExercises = true;
             this.examManagementService.getExamWithInterestingExercisesForAssessmentDashboard(this.courseId, this.examId, this.isTestRun).subscribe((res: HttpResponse<Exam>) => {
@@ -115,9 +115,6 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                     if (exerciseGroup.exercises) {
                         exercises.push(...exerciseGroup.exercises);
                     }
-                });
-                this.exercises.forEach((exercise) => {
-                    this.secondCorrectionEnabledForExercise.push(exercise.secondCorrectionEnabled);
                 });
 
                 this.extractExercises(exercises);
@@ -163,6 +160,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                 (response: string) => this.onError(response),
             );
         }
+        console.log('loadlall-end');
     }
 
     /**
@@ -224,9 +222,16 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
         this.sortService.sortByProperty(this.exercises, this.exercisesSortingPredicate, this.exercisesReverseOrder);
     }
 
-    toggleSecondCorrection(index: number, exerciseId: number) {
-        console.log('enable second correction');
-        this.secondCorrectionEnabledForExercise[index] = this.exerciseService.toggleSecondCorrection(exerciseId, this.secondCorrectionEnabledForExercise[index]);
+    toggleSecondCorrection(exerciseId: number) {
+        console.log(this.exercises);
+        const currentExercise = this.exercises.find((exercise) => exercise.id === exerciseId)!;
+        const index = this.exercises.indexOf(currentExercise);
+        this.exerciseService.toggleSecondCorrection(exerciseId).subscribe((res: HttpResponse<Boolean>) => {
+            console.log(res.body);
+            this.exercises[index].secondCorrectionEnabled = !this.exercises[index].secondCorrectionEnabled;
+            // currentExercise!.secondCorrectionEnabled = !!res.body;
+        });
+        console.log(this.exercises);
         // TODO RESTCALL
     }
 }

@@ -592,9 +592,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
     toggleSecondCorrection() {
         console.log('enable second correction');
-        this.secondCorrectionEnabled = this.exerciseService.toggleSecondCorrection(this.exerciseId, this.secondCorrectionEnabled);
-        this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
-        this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
+        this.exerciseService.toggleSecondCorrection(this.exerciseId).subscribe((res: HttpResponse<Boolean>) => {
+            console.log(res);
+            this.secondCorrectionEnabled = res;
+            this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
+            this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
+        });
+
         // TODO RESTCALL
     }
     /**

@@ -680,4 +680,13 @@ public class ExerciseService {
         return Optional.empty();
     }
 
+    /**
+     *
+     * @param exercise - the exercise for which we want to toggle if the second correction round is enabled
+     * @return the new state of the
+     */
+    public Boolean toggleSecondCorrection(Exercise exercise) {
+        exercise.setSecondCorrectionEnabled(!exercise.getSecondCorrectionEnabled());
+        return exerciseRepository.save(exercise).getPresentationScoreEnabled();
+    }
 }
