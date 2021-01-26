@@ -164,7 +164,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
         programmingSubmission.setType(SubmissionType.MANUAL);
 
-        programmingExerciseParticipation.addSubmissions(programmingSubmission);
+        programmingExerciseParticipation.addSubmission(programmingSubmission);
 
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!

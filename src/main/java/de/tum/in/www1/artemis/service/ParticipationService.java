@@ -422,7 +422,7 @@ public class ParticipationService {
         submission.setType(submissionType);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         return Optional.of(submission);
     }
 
@@ -1216,7 +1216,7 @@ public class ParticipationService {
                     Submission submissionToDelete = result.getSubmission();
                     submissionRepository.deleteById(submissionToDelete.getId());
                     result.setSubmission(null);
-                    participation.removeSubmissions(submissionToDelete);
+                    participation.removeSubmission(submissionToDelete);
                 }
             }
         }
