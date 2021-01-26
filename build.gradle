@@ -21,7 +21,7 @@ plugins {
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "2.7.1"
-    id "com.github.node-gradle.node"
+    id "com.github.node-gradle.node" version "3.0.0-rc7"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
@@ -31,7 +31,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.9.1"
+version = "4.9.3"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -174,8 +174,8 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.3.1"
     implementation "com.atlassian.bamboo:bamboo-specs:7.1.2"
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
-    implementation "io.sentry:sentry-spring-boot-starter:3.2.0"
-    implementation "io.sentry:sentry-logback:3.2.0"
+    implementation "io.sentry:sentry-spring-boot-starter:3.2.1"
+    implementation "io.sentry:sentry-logback:3.2.1"
     implementation "org.jsoup:jsoup:1.13.1"
 
     implementation "org.springdoc:springdoc-openapi-ui:1.5.2"
@@ -242,6 +242,7 @@ dependencies {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
+    // at the moment, we cannot upgrade to 8.0.23 because of an error message in Liquibase java.lang.ClassCastException: class java.time.LocalDateTime cannot be cast to class java.lang.String
     implementation "mysql:mysql-connector-java:8.0.22"
 
     implementation "org.zalando:problem-spring-web:0.26.2"
@@ -324,17 +325,16 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.8"
+    gradleVersion = "6.8.1"
 }
 
 task stage(dependsOn: "bootWar") {
 }
 
-if (project.hasProperty("nodeInstall")) {
-    node {
-        version = "${node_version}"
-        yarnVersion = "${yarn_version}"
-    }
+node {
+    download = true
+    version = "${node_version}"
+    yarnVersion = "${yarn_version}"
 }
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain

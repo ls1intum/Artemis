@@ -2,7 +2,6 @@ import http from 'k6/http';
 import ws from 'k6/ws';
 import { fail } from 'k6';
 
-const defaultXSRFToken = '42d141b5-9e1c-4390-ae06-5143753b4459';
 const protocol = 'https'; // https or http
 const websocketProtocol = 'wss'; // wss if https is used; ws if http is used
 const host = __ENV.BASE_URL; // host including port if differing from 80 (http) or 443 (https)
@@ -12,7 +11,7 @@ const userAgent = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/201001
 const acceptLanguage = 'en-CA,en-US;q=0.7,en;q=0.3';
 const acceptEncoding = 'gzip, deflate, br';
 
-const request = function (method, endpoint, authToken, xsrftoken, body, params) {
+const request = function (method, endpoint, authToken, body, params) {
     let paramString;
     if (params) {
         paramString = Object.keys(params)
@@ -27,9 +26,6 @@ const request = function (method, endpoint, authToken, xsrftoken, body, params) 
             url: url,
             body: body ? JSON.stringify(body) : null,
             params: {
-                cookies: {
-                    'XSRF-TOKEN': xsrftoken,
-                },
                 headers: {
                     Host: host,
                     'User-Agent': userAgent,
@@ -38,7 +34,6 @@ const request = function (method, endpoint, authToken, xsrftoken, body, params) 
                     'Accept-Encoding': acceptEncoding,
                     Referer: baseUrl + '/',
                     Authorization: 'Bearer ' + authToken,
-                    'X-XSRF-TOKEN': xsrftoken,
                     'Content-Type': 'application/json',
                     'X-Artemis-Client-Fingerprint': 'b832814fcce0cab9fc5f717d5b93fa07',
                     'X-Artemis-Client-Instance-ID': '9e0b78ec-e43e-43da-a767-89b3f80df63a',
@@ -65,9 +60,6 @@ export function login(username, password) {
             url: baseUrl + '/api/authenticate',
             body: '{"username":"' + username + '","password":"' + password + '","rememberMe":true}',
             params: {
-                cookies: {
-                    'XSRF-TOKEN': defaultXSRFToken,
-                },
                 headers: {
                     Host: host,
                     'User-Agent': userAgent,
@@ -75,7 +67,6 @@ export function login(username, password) {
                     'Accept-Language': acceptLanguage,
                     'Accept-Encoding': acceptEncoding,
                     Referer: baseUrl + '/',
-                    'X-XSRF-TOKEN': defaultXSRFToken,
                     'Content-Type': 'application/json',
                     Connection: 'keep-alive',
                     TE: 'Trailers',
@@ -97,9 +88,6 @@ export function login(username, password) {
             method: 'get',
             url: baseUrl + '/api/account',
             params: {
-                cookies: {
-                    'XSRF-TOKEN': defaultXSRFToken,
-                },
                 headers: {
                     Host: host,
                     'User-Agent': userAgent,
@@ -116,27 +104,25 @@ export function login(username, password) {
         },
     ];
     res = http.batch(req);
-    // A new XSRF Token is needed now, we have to extract it from the cookies
-    const xsrftoken = res[0].headers['Set-Cookie'].match('(.*XSRF-TOKEN=)([a-z0-9]+[a-z0-9\\-]+[a-z0-9]+)(;.*)')[2];
 
-    return new Artemis(authToken, xsrftoken);
+    return new Artemis(authToken);
 }
 
-export function Artemis(authToken, xsrftoken) {
+export function Artemis(authToken) {
     this.get = function (endpoint, params) {
-        return request('get', endpoint, authToken, xsrftoken, null, params);
+        return request('get', endpoint, authToken, null, params);
     };
     this.post = function (endpoint, body, params) {
-        return request('post', endpoint, authToken, xsrftoken, body, params);
+        return request('post', endpoint, authToken, body, params);
     };
     this.put = function (endpoint, body, params) {
-        return request('put', endpoint, authToken, xsrftoken, body, params);
+        return request('put', endpoint, authToken, body, params);
     };
     this.patch = function (endpoint, body, params) {
-        return request('patch', endpoint, authToken, xsrftoken, body, params);
+        return request('patch', endpoint, authToken, body, params);
     };
     this.delete = function (endpoint, params) {
-        return request('delete', endpoint, authToken, xsrftoken, null, params);
+        return request('delete', endpoint, authToken, null, params);
     };
     this.websocket = function (doOnSocket) {
         const websocketEndpoint = websocketProtocol + '://' + host + '/websocket/tracker/websocket';
@@ -144,7 +130,7 @@ export function Artemis(authToken, xsrftoken) {
 
         ws.connect(websocketUrl, { tags: { name: websocketEndpoint } }, function (socket) {
             socket.on('open', function open() {
-                socket.send('CONNECT\nX-XSRF-TOKEN:' + xsrftoken + '\naccept-version:1.2\nheart-beat:10000,10000\n\n\u0000');
+                socket.send('CONNECT\naccept-version:1.2\nheart-beat:10000,10000\n\n\u0000');
                 socket.setInterval(function timeout() {
                     socket.ping();
                     // Pinging every 10sec (setInterval)

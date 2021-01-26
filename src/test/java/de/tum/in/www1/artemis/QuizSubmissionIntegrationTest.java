@@ -366,15 +366,15 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         quizExerciseService.save(quizExercise);
 
         int numberOfParticipants = 10;
-        QuizSubmission quizSubmission = new QuizSubmission();
-        for (var question : quizExercise.getQuizQuestions()) {
-            for (int i = 1; i <= numberOfParticipants; i++) {
+
+        for (int i = 1; i <= numberOfParticipants; i++) {
+            QuizSubmission quizSubmission = new QuizSubmission();
+            for (var question : quizExercise.getQuizQuestions()) {
                 quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(question, i % 2 == 0));
             }
+            Result receivedResult = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmission, Result.class, HttpStatus.OK);
+            assertThat(((QuizSubmission) receivedResult.getSubmission()).getSubmittedAnswers().size()).isEqualTo(quizSubmission.getSubmittedAnswers().size());
         }
-
-        Result receivedResult = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmission, Result.class, HttpStatus.OK);
-        assertThat(((QuizSubmission) receivedResult.getSubmission()).getSubmittedAnswers().size()).isEqualTo(quizSubmission.getSubmittedAnswers().size());
 
         // in the preview the submission will not be saved to the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);

@@ -701,4 +701,14 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @desc reset the question and calls the parsing method of the markdown editor
      */
     prepareForSave(): void {}
+
+    /**
+     * @function toggleExactMatchCheckbox
+     * @desc Sets the similarity value to 100 if the checkbox was checked or to 85 if it was unchecked
+     * @param checked
+     */
+    toggleExactMatchCheckbox(checked: boolean): void {
+        this.question.similarityValue = checked ? 100 : 85;
+        this.questionUpdated.emit();
+    }
 }

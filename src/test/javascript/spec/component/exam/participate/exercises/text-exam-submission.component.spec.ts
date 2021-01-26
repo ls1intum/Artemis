@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -20,6 +20,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { By } from '@angular/platform-browser';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -44,7 +45,7 @@ describe('TextExamSubmissionComponent', () => {
                 MockModule(FontAwesomeModule),
                 MockModule(ArtemisSharedModule),
             ],
-            declarations: [TextExamSubmissionComponent, MockPipe(TranslatePipe), MockPipe(HtmlForMarkdownPipe)],
+            declarations: [TextExamSubmissionComponent, MockPipe(TranslatePipe), MockPipe(HtmlForMarkdownPipe), MockComponent(IncludedInScoreBadgeComponent)],
             providers: [MockProvider(TextEditorService), MockProvider(JhiAlertService), MockProvider(TranslateService), MockProvider(ArtemisMarkdownService)],
         })
             .compileComponents()

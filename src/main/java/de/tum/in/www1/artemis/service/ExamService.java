@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -325,7 +326,11 @@ public class ExamService {
                 if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                     Result relevantResult = studentParticipation.getResults().iterator().next();
                     double achievedPoints = relevantResult.getScore() / 100.0 * exercise.getMaxScore();
-                    studentResult.overallPointsAchieved += Math.round(achievedPoints * 10) / 10.0;
+
+                    // points earned in NOT_INCLUDED exercises do not count towards the students result in the exam
+                    if (!exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
+                        studentResult.overallPointsAchieved += Math.round(achievedPoints * 10) / 10.0;
+                    }
 
                     // Check whether the student attempted to solve the exercise
                     boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise, objectMapper);
@@ -474,6 +479,61 @@ public class ExamService {
         // Check that there are not too much mandatory exercise groups
         if (numberOfOptionalExercises < 0) {
             throw new BadRequestAlertException("The number of mandatory exercise groups is too large", "Exam", "artemisApp.exam.validation.tooManyMandatoryExerciseGroups");
+        }
+
+        // Ensure that all exercises in an exercise group have the same meaning for the exam score calculation
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            Set<IncludedInOverallScore> meaningsForScoreCalculation = exerciseGroup.getExercises().stream().map(exercise -> exercise.getIncludedInOverallScore())
+                    .collect(Collectors.toSet());
+            if (meaningsForScoreCalculation.size() > 1) {
+                throw new BadRequestAlertException("All exercises in an exercise group must have the same meaning for the exam score", "Exam",
+                        "artemisApp.exam.validation.allExercisesInExerciseGroupOfSameIncludedType");
+            }
+        }
+
+        // Check that the exam max points is set
+        if (exam.getMaxPoints() == null) {
+            throw new BadRequestAlertException("The exam max points is not set.", "Exam", "artemisApp.exam.validation.maxPointsNotSet");
+        }
+
+        // Ensure that all exercises in an exercise group have the same amount of max points and max bonus points
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            Set<Double> maxPointsEarnable = exerciseGroup.getExercises().stream().map(Exercise::getMaxScore).collect(Collectors.toSet());
+            Set<Double> bonusPointsEarnable = exerciseGroup.getExercises().stream().map(Exercise::getBonusPoints).collect(Collectors.toSet());
+
+            if (maxPointsEarnable.size() > 1 || bonusPointsEarnable.size() > 1) {
+                throw new BadRequestAlertException("All exercises in an exercise group need to give the same amount of points", "Exam",
+                        "artemisApp.exam.validation.allExercisesInExerciseGroupGiveSameNumberOfPoints");
+            }
+        }
+
+        // Ensure that the sum of all max points of mandatory exercise groups is not bigger than the max points set in the exam
+        // At this point we are already sure that each exercise group has at least one exercise, all exercises in the group have the same no of points
+        // and all are of the same calculation type, therefore we can just use any as representation for the group here
+        Double pointsReachableByMandatoryExercises = 0.0;
+        Set<ExerciseGroup> mandatoryExerciseGroups = exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).collect(Collectors.toSet());
+        for (ExerciseGroup exerciseGroup : mandatoryExerciseGroups) {
+            Exercise groupRepresentativeExercise = exerciseGroup.getExercises().stream().findAny().get();
+            if (groupRepresentativeExercise.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_COMPLETELY)) {
+                pointsReachableByMandatoryExercises += groupRepresentativeExercise.getMaxScore();
+            }
+        }
+        if (pointsReachableByMandatoryExercises > exam.getMaxPoints()) {
+            throw new BadRequestAlertException("Check that you set the exam max points correctly! The max points a student can earn in the mandatory exercise groups is too big",
+                    "Exam", "artemisApp.exam.validation.tooManyMaxPoints");
+        }
+
+        // Ensure that the sum of all max points of all exercise groups is at least as big as the max points set in the exam
+        Double pointsReachable = 0.0;
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            Exercise groupRepresentativeExercise = exerciseGroup.getExercises().stream().findAny().get();
+            if (groupRepresentativeExercise.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_COMPLETELY)) {
+                pointsReachable += groupRepresentativeExercise.getMaxScore();
+            }
+        }
+        if (pointsReachable < exam.getMaxPoints()) {
+            throw new BadRequestAlertException("Check that you set the exam max points correctly! The max points a student can earn in the exercise groups is too low", "Exam",
+                    "artemisApp.exam.validation.tooFewMaxPoints");
         }
     }
 
@@ -931,7 +991,7 @@ public class ExamService {
 
     /**
      * Registers student to the exam. In order to do this,  we add the user the the course group, because the user only has access to the exam of a course if the student also has access to the course of the exam.
-     * We only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course). 
+     * We only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course).
      *
      * @param course the course containing the exam
      * @param exam the exam for which we want to register a student

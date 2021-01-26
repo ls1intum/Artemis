@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -64,6 +65,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     private Result manualResult;
 
+    private final String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+
     // set to true, if a tutor is only able to assess a submission if he has not assessed it any prior correction rounds
     private final boolean tutorAssessUnique = true;
 
@@ -100,7 +103,6 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         double points = programmingAssessmentService.calculateTotalScore(manualResult);
         manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxScore()));
 
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
     }
 
@@ -295,6 +297,104 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(response.getFeedbacks().size()).isEqualTo(manualResult.getFeedbacks().size());
         assertThat(response.isRated().equals(Boolean.TRUE));
         assertThat(response.getCompletionDate().equals(ZonedDateTime.now()));
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_IncludedCompletelyWithBonusPointsExercise() throws Exception {
+        // setting up exercise
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        programmingExercise.setMaxScore(10.0);
+        programmingExercise.setBonusPoints(10.0);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        manualResult.getParticipation().setExercise(programmingExercise);
+
+        // setting up student submission
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 150L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 200L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 200L);
+
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
+        // setting up exercise
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        programmingExercise.setMaxScore(10.0);
+        programmingExercise.setBonusPoints(0.0);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        manualResult.getParticipation().setExercise(programmingExercise);
+
+        // setting up student submission
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_IncludedAsBonusExercise() throws Exception {
+        // setting up exercise
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        programmingExercise.setMaxScore(10.0);
+        programmingExercise.setBonusPoints(0.0);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        manualResult.getParticipation().setExercise(programmingExercise);
+
+        // setting up student submission
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_NotIncludedExercise() throws Exception {
+        // setting up exercise
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        programmingExercise.setMaxScore(10.0);
+        programmingExercise.setBonusPoints(0.0);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        manualResult.getParticipation().setExercise(programmingExercise);
+
+        // setting up student submission
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+    }
+
+    private void addAssessmentFeedbackAndCheckScore(List<Feedback> feedbacks, Double pointsAwarded, Long expectedScore) throws Exception {
+        feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
+        manualResult.setFeedbacks(feedbacks);
+        double points = programmingAssessmentService.calculateTotalScore(manualResult);
+        long score = (long) ((points / programmingExercise.getMaxScore()) * 100.0);
+        manualResult.resultString(manualResult.createResultString(points, programmingExercise.getMaxScore()));
+        manualResult.score(score);
+        manualResult.rated(true);
+        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
+                Result.class, HttpStatus.OK);
+        assertThat(response.getScore()).isEqualTo(expectedScore);
+        double maxPoints = programmingExercise.getMaxScore();
+        assertThat(response.getResultString()).isEqualTo((int) points + " of " + (int) maxPoints + " points");
     }
 
     @Test
@@ -539,11 +639,12 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         // add three user submissions with automatic results to student participation
         final var studentParticipation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
-        final var firstSubmission = database.createProgrammingSubmission(studentParticipation, true);
+        final var firstSubmission = database.createProgrammingSubmission(studentParticipation, true, "1");
         database.addResultToSubmission(firstSubmission, AssessmentType.AUTOMATIC, null);
-        final var secondSubmission = database.createProgrammingSubmission(studentParticipation, false);
+        final var secondSubmission = database.createProgrammingSubmission(studentParticipation, false, "2");
         database.addResultToSubmission(secondSubmission, AssessmentType.AUTOMATIC, null);
-        final var thirdSubmission = database.createProgrammingSubmission(studentParticipation, false);
+        // The commit hash must be the same as the one used for initializing the tests because this test calls gitService.getLastCommitHash
+        final var thirdSubmission = database.createProgrammingSubmission(studentParticipation, false, dummyHash);
         database.addResultToSubmission(thirdSubmission, AssessmentType.AUTOMATIC, null);
 
         // verify setup
@@ -559,7 +660,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
             assertThat(submission.getResults()).isNotNull();
             assertThat(submission.getLatestResult()).isNotNull();
             assertThat(submission.getResults().size()).isEqualTo(1);
-            assertThat(submission.getResults().get(0).assessmentType(AssessmentType.AUTOMATIC));
+            assertThat(submission.getResults().get(0).getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
         }
 
         // request to manually assess latest submission (correction round: 0)
@@ -578,6 +679,17 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo("tutor1");
         assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
 
+        // make sure that new result correctly appears inside the continue box
+        LinkedMultiValueMap<String, String> paramsGetAssessedCR1Tutor1 = new LinkedMultiValueMap<>();
+        paramsGetAssessedCR1Tutor1.add("assessedByTutor", "true");
+        paramsGetAssessedCR1Tutor1.add("correction-round", "0");
+        var assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+                paramsGetAssessedCR1Tutor1);
+
+        assertThat(assessedSubmissionList.size()).isEqualTo(1);
+        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
+        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
+
         // assess submission and submit
         var manualResultLockedFirstRound = submissionWithoutFirstAssessment.getLatestResult();
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
@@ -592,6 +704,14 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         Result firstSubmittedManualResult = request.putWithResponseBodyAndParams("/api/participations/" + studentParticipation.getId() + "/manual-results",
                 manualResultLockedFirstRound, Result.class, HttpStatus.OK, params);
+
+        // make sure that new result correctly appears after the assessment for first correction round
+        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+                paramsGetAssessedCR1Tutor1);
+
+        assertThat(assessedSubmissionList.size()).isEqualTo(1);
+        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
+        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(firstSubmittedManualResult);
 
         // change the user here, so that for the next query the result will show up again.
         if (this.tutorAssessUnique) {
@@ -679,5 +799,25 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         var secondSubmittedManualResult = request.putWithResponseBodyAndParams("/api/participations/" + studentParticipation.getId() + "/manual-results",
                 manualResultLockedSecondRound, Result.class, HttpStatus.OK, paramsSecondCorrection);
         assertThat(secondSubmittedManualResult).isNotNull();
+
+        // make sure that new result correctly appears after the assessment for second correction round
+        LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
+        paramsGetAssessedCR2.add("assessedByTutor", "true");
+        paramsGetAssessedCR2.add("correction-round", "1");
+        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+                paramsGetAssessedCR2);
+
+        assertThat(assessedSubmissionList.size()).isEqualTo(1);
+        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
+        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(1)).isEqualTo(manualResultLockedSecondRound);
+
+        // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
+        LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
+        paramsGetAssessedCR1.add("assessedByTutor", "true");
+        paramsGetAssessedCR1.add("correction-round", "0");
+        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+                paramsGetAssessedCR1);
+
+        assertThat(assessedSubmissionList.size()).isEqualTo(0);
     }
 }

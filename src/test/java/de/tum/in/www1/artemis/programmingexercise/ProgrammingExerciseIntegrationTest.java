@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -372,6 +373,17 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(programmingExerciseServer.getTemplateParticipation()).isNotNull();
         assertThat(programmingExerciseServer.getSolutionParticipation()).isNotNull();
         // TODO add more assertions
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation() throws Exception {
+        database.addStudentParticipationForProgrammingExercise(programmingExercise, "tutor1");
+        final var path = ROOT + PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
+        assertThat(programmingExerciseServer.getTitle()).isEqualTo(programmingExercise.getTitle());
+        assertThat(programmingExerciseServer.getSolutionParticipation().getId()).isNotNull();
+        assertThat(programmingExerciseServer.getTemplateParticipation().getId()).isNotNull();
     }
 
     @Test
@@ -816,6 +828,37 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         programmingExercise.setCheckoutSolutionRepository(true);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_invalidMaxScore_badRequest() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        programmingExercise.setId(null);
+        programmingExercise.setMaxScore(0.0);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_includedAsBonus_invalidBonusPoints_badRequest() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        programmingExercise.setId(null);
+        programmingExercise.setMaxScore(10.0);
+        programmingExercise.setBonusPoints(1.0);
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        programmingExercise.setId(null);
+        programmingExercise.setMaxScore(10.0);
+        programmingExercise.setBonusPoints(1.0);
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 

@@ -161,7 +161,7 @@ describe('ProgrammingSubmissionService', () => {
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
         ]);
         // Wait 10ms.
-        await new Promise((resolve) => setTimeout(() => resolve(), 10));
+        await new Promise<void>((resolve) => setTimeout(() => resolve(), 10));
         expect(returnedSubmissions).to.deep.equal([
             { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },

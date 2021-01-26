@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess-new/text-submission-assessment.component';
+import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/text-submission-assessment.component';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { TextAssessmentAreaComponent } from 'app/exercises/text/assess-new/text-assessment-area/text-assessment-area.component';
+import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess-new/textblock-assessment-card/textblock-assessment-card.component';
-import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess-new/textblock-feedback-editor/textblock-feedback-editor.component';
+import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
+import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -23,21 +23,22 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, RouterModule } from '@angular/router';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { Course } from 'app/entities/course.model';
-import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess-new/manual-textblock-selection/manual-textblock-selection.component';
+import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { TextBlock } from 'app/entities/text-block.model';
 import { Feedback } from 'app/entities/feedback.model';
+import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { JhiAlertService } from 'ng-jhipster';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
     let fixture: ComponentFixture<TextSubmissionAssessmentComponent>;
     let textAssessmentsService: TextAssessmentsService;
 
-    const route = ({ snapshot: { path: '' } } as unknown) as ActivatedRoute;
     const exercise = {
         id: 20,
         type: ExerciseType.TEXT,
@@ -67,11 +68,12 @@ describe('TextSubmissionAssessmentComponent', () => {
             score: 8,
             rated: true,
             hasFeedback: true,
-            hasComplaint: false,
+            hasComplaint: true,
             submission,
             participation,
         } as unknown) as Result,
     ];
+
     getLatestSubmissionResult(submission)!.feedbacks = [
         {
             id: 1,
@@ -98,7 +100,20 @@ describe('TextSubmissionAssessmentComponent', () => {
     ];
     submission.participation!.submissions = [submission];
     submission.participation!.results = [getLatestSubmissionResult(submission)!];
-
+    const route = ({
+        snapshot: { path: '' },
+        paramMap: Observable.of(
+            convertToParamMap({
+                exerciseId: '1',
+            }),
+        ),
+        queryParams: of({
+            testRun: 'false',
+        }),
+        data: Observable.of({
+            studentParticipation: participation,
+        }),
+    } as unknown) as ActivatedRoute;
     beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [
@@ -194,6 +209,36 @@ describe('TextSubmissionAssessmentComponent', () => {
         );
     });
 
+    it('should display error when complaint resolved but assessment invalid', () => {
+        // would be called on receive of event
+        const complaintResponse = new ComplaintResponse();
+        const alertService = fixture.debugElement.injector.get(JhiAlertService);
+        spyOn(alertService, 'error');
+
+        component.updateAssessmentAfterComplaint(complaintResponse);
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
+    });
+
+    it('should send update when complaint resolved and assessments are valid', () => {
+        const generalFeedback = new Feedback();
+        generalFeedback.credits = 5;
+        generalFeedback.detailText = 'gj';
+        generalFeedback.id = 1;
+        component.generalFeedback = generalFeedback;
+        textAssessmentsService = fixture.debugElement.injector.get(TextAssessmentsService);
+        spyOn(textAssessmentsService, 'updateAssessmentAfterComplaint').and.returnValue(
+            of(
+                new HttpResponse({
+                    body: new Result(),
+                }),
+            ),
+        );
+
+        // would be called on receive of event
+        const complaintResponse = new ComplaintResponse();
+        component.updateAssessmentAfterComplaint(complaintResponse);
+        expect(textAssessmentsService.updateAssessmentAfterComplaint).toHaveBeenCalled();
+    });
     it('should submit the assessment with correct parameters', function () {
         textAssessmentsService = fixture.debugElement.injector.get(TextAssessmentsService);
         component['setPropertiesFromServerResponse'](participation);

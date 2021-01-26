@@ -13,6 +13,7 @@ import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercise
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
+import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 
 @NgModule({
     imports: [
@@ -20,6 +21,7 @@ import { StructuredGradingCriterionModule } from 'app/exercises/shared/structure
         ArtemisSharedComponentModule,
         OwlDateTimeModule,
         ArtemisTeamConfigFormGroupModule,
+        ArtemisIncludedInOverallScorePickerModule,
         ArtemisDifficultyPickerModule,
         ArtemisPresentationScoreModule,
         ArtemisProgrammingExerciseInstructionsEditorModule,

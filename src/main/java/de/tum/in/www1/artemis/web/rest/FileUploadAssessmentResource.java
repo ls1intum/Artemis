@@ -51,7 +51,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * PUT file-upload-submissions/:submissionId/assessment : save or submit manual assessment for file upload exercise. See {@link AssessmentResource#saveAssessment}.
+     * PUT file-upload-submissions/:submissionId/feedback : save or submit manual assessment for file upload exercise. See {@link AssessmentResource#saveAssessment}.
      *
      * @param submissionId the id of the submission that should be sent to the client
      * @param submit       defines if assessment is submitted or saved

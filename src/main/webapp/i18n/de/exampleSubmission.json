@@ -2,7 +2,7 @@
     "artemisApp": {
         "exampleSubmission": {
             "home": {
-                "title": "Beispiel Submission Editor"
+                "title": "Beispiel Lösung Editor"
             },
             "assessScore": {
                 "success": "Herzlichen Glückwunsch! Das ist eine gute Beurteilung!",
@@ -15,12 +15,14 @@
             "createNew": "Neu erstellen",
             "pageHeader": "Beispiel für eine Textvorlage zur Übung",
             "usedForTutorial": "Die Tutoren müssen diese Einreichung bewerten.",
-            "createNewSubmission": "Neue Abgabe erstellen",
-            "updateTextSubmission": "Aktualisieren der Textvorlage",
+            "createNewSubmission": "Neue Beispiel Lösung erstellen",
+            "editSampleSolution": "Beispiel Lösung bearbieten",
+            "updateSampleSolution": "Beispiel Lösung aktualisieren",
             "problemStatement": "Problemstellung",
             "sampleSolution": "Beispiel Lösung",
             "exampleAssessment": "Beispiel Bewertung",
             "createNewAssessment": "Neue Bewertung anlegen",
+            "saveNewAssessment": "Neue Bewertung speichern",
             "updateAssessment": "Bewertung aktualisieren",
             "youNeedToCreate": "Du musst die Beispiel Abgabe erstellen, bevor du die Beispiel Bewertung erstellen kannst.",
             "score": "Punktzahl",
