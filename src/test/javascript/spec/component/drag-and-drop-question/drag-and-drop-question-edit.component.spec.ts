@@ -12,7 +12,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TranslatePipe } from '@ngx-translate/core';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { FormsModule } from '@angular/forms';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DndModule } from 'ng2-dnd';
 import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { triggerChanges } from '../../helpers/utils/general.utils';
@@ -24,6 +24,8 @@ import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.mode
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
+import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -32,6 +34,7 @@ describe('DragAndDropQuestionEditComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
     let component: DragAndDropQuestionEditComponent;
     let uploadService: FileUploaderService;
+    let modalService: NgbModal;
 
     const question1 = new DragAndDropQuestion();
     question1.id = 1;
@@ -52,11 +55,12 @@ describe('DragAndDropQuestionEditComponent', () => {
                 MockComponent(DragAndDropQuestionComponent),
                 MockDirective(NgbCollapse),
             ],
-            providers: [],
+            providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
         }).compileComponents();
         fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
         component = fixture.componentInstance;
         uploadService = TestBed.inject(FileUploaderService);
+        modalService = TestBed.inject(NgbModal);
     });
 
     beforeEach(() => {
@@ -169,8 +173,8 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         expect(component.mouse.x).to.equal(0);
         expect(component.mouse.y).to.equal(0);
-        expect(component.currentDropLocation.posX).to.exist; // NaN
-        expect(component.currentDropLocation.posY).to.exist; // NaN
+        expect(component.currentDropLocation.posX).to.exist;
+        expect(component.currentDropLocation.posY).to.exist;
 
         // RESIZE_X
         component.draggingState = DragState.RESIZE_X;
@@ -179,8 +183,8 @@ describe('DragAndDropQuestionEditComponent', () => {
         fixture.detectChanges();
         component.mouseMove(event2);
 
-        expect(component.currentDropLocation.posX).to.exist; // NaN
-        expect(component.currentDropLocation.posY).to.exist; // NaN
+        expect(component.currentDropLocation.posX).to.exist;
+        expect(component.currentDropLocation.posY).to.exist;
 
         // RESIZE_Y
         component.draggingState = DragState.RESIZE_Y;
@@ -188,8 +192,8 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.mouseMove(event2);
 
-        expect(component.currentDropLocation.posX).to.exist; // NaN
-        expect(component.currentDropLocation.posY).to.exist; // NaN
+        expect(component.currentDropLocation.posX).to.exist;
+        expect(component.currentDropLocation.posY).to.exist;
     });
 
     it('should move mouse up', () => {
@@ -235,16 +239,27 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     it('should drop location on mouse down', () => {
         component.draggingState = DragState.NONE;
-        const mouse = { x: 10, y: 10, startX: 5, startY: 5, offsetX: 0, offsetY: 0 };
-        component.mouse = mouse;
+        component.mouse = { x: 10, y: 10, startX: 5, startY: 5, offsetX: 0, offsetY: 0 };
         const dropLocation = new DropLocation();
 
         component.dropLocationMouseDown(dropLocation);
 
-        expect(component.mouse.offsetX).to.exist; // NaN
-        expect(component.mouse.offsetY).to.exist; // NaN
+        expect(component.mouse.offsetX).to.exist;
+        expect(component.mouse.offsetY).to.exist;
         expect(component.currentDropLocation).to.deep.equal(dropLocation);
         expect(component.draggingState).to.equal(DragState.MOVE);
+    });
+
+    it('should open, drag, drop', () => {
+        const content = {};
+        const modalServiceSpy = sinon.spy(modalService, 'open');
+
+        component.open(content);
+        expect(modalServiceSpy).to.have.been.calledOnce;
+        component.drag();
+        expect(component.dropAllowed).to.be.true;
+        component.drop();
+        expect(component.dropAllowed).to.be.false;
     });
 
     it('should duplicate drop location', () => {
@@ -366,17 +381,22 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     it('should delete drag item', () => {
         const item = new DragItem();
+        const newItem = new DragItem();
+        const mapping = new DragAndDropMapping(newItem, new DropLocation());
         component.question.dragItems = [item];
+        component.question.correctMappings = [mapping];
 
         component.deleteDragItem(item);
 
         expect(component.question.dragItems).to.deep.equal([]);
+        expect(component.question.correctMappings).to.deep.equal([mapping]);
     });
 
     it('should delete mapping', () => {
         const item = new DragItem();
         const location = new DropLocation();
         const mapping = new DragAndDropMapping(item, location);
+        component.question.correctMappings = [mapping];
 
         component.deleteMapping(mapping);
 
@@ -498,6 +518,23 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.question.dragItems[2].invalid).to.be.false;
     });
 
+    it('should reset drop location', () => {
+        const firstItem = new DropLocation();
+        firstItem.id = 404;
+        firstItem.invalid = true;
+        const secondItem = new DropLocation();
+        secondItem.id = 404;
+        secondItem.invalid = false;
+        component.question = new DragAndDropQuestion();
+        component.question.dropLocations = [new DropLocation(), new DropLocation(), firstItem, new DropLocation()];
+        component.backupQuestion = new DragAndDropQuestion();
+        component.backupQuestion.dropLocations = [secondItem];
+
+        component.resetDropLocation(firstItem);
+
+        expect(component.question.dropLocations[2].invalid).to.be.false;
+    });
+
     it('should toggle preview', () => {
         component.showPreview = true;
         component.question = new DragAndDropQuestion();
@@ -522,12 +559,35 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     it('should detect domain commands', () => {
         component.question = new DragAndDropQuestion();
-        component.question.text = 'should be removed';
-        const domainCommand = new ExplanationCommand();
-        const commands = [['take this as a command', domainCommand]];
+        component.question.text = 'text';
+        component.question.explanation = 'explanation';
+        component.question.hint = 'hint';
+        let domainCommand: [string, DomainCommand];
 
-        component.domainCommandsFound([]);
+        // explanation
+        let command = new ExplanationCommand();
+        let text = 'take this as an explanationCommand';
+        domainCommand = [text, command];
 
-        expect(component.question.text).to.be.undefined;
+        component.domainCommandsFound([domainCommand]);
+
+        expect(component.question.explanation).to.equal(text);
+
+        // hint
+        command = new HintCommand();
+        text = 'take this as a hintCommand';
+        domainCommand = [text, command];
+
+        component.domainCommandsFound([domainCommand]);
+
+        expect(component.question.hint).to.equal(text);
+
+        // text
+        text = 'take this null as a command';
+        domainCommand = [text, (null as unknown) as DomainCommand];
+
+        component.domainCommandsFound([domainCommand]);
+
+        expect(component.question.text).to.equal(text);
     });
 });
