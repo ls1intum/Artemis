@@ -180,7 +180,7 @@ describe('JhiCloneRepoButtonComponent', () => {
 
         fixture.debugElement.query(By.css('.clone-repository')).nativeElement.click();
         tick();
-        const t = fixture.debugElement.query(By.css('.use-ssh'));
+        fixture.debugElement.query(By.css('.use-ssh'));
         fixture.debugElement.query(By.css('.use-ssh')).nativeElement.click();
         tick();
         expect(localStorageUseSshStoreStub).to.have.been.calledOnceWithExactly('useSsh', true);
