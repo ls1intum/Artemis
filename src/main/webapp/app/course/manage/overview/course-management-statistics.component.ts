@@ -1,6 +1,5 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Graphs, SpanType } from 'app/entities/statistics.model';
+import { Graphs } from 'app/entities/statistics.model';
 import { ChartDataSets, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,14 +21,7 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
     initialStats: number[];
     initialStatsReceived = false;
 
-    currentSpan: SpanType;
     graphType: Graphs = Graphs.ACTIVE_STUDENTS;
-
-    // Html properties
-    LEFT = false;
-    RIGHT = true;
-    SpanType = SpanType;
-    Graphs = Graphs;
 
     // Chart
     chartName: string;
@@ -46,10 +38,7 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
     chartData: ChartDataSets[] = [];
     dataForSpanType: number[];
 
-    // Left arrow -> decrease, right arrow -> increase
-    private currentPeriod = 0;
-
-    constructor(private service: CourseManagementService, private translateService: TranslateService) {}
+    constructor(private translateService: TranslateService) {}
 
     ngOnInit(): void {
         this.chartName = this.translateService.instant(`courseStatistics.${this.graphType.toString().toLowerCase()}`);
@@ -80,44 +69,19 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
         this.createChart();
     }
 
-    private reloadChart() {
-        this.createLabels();
-        this.service.getStatisticsData(this.courseId, this.currentPeriod).subscribe((res: number[]) => {
-            this.dataForSpanType = res;
-            this.chartData = [
-                {
-                    label: this.amountOfStudents,
-                    data: this.dataForSpanType,
-                    backgroundColor: 'rgba(53,61,71,1)',
-                    borderColor: 'rgba(53,61,71,1)',
-                    fill: false,
-                    pointBackgroundColor: 'rgba(53,61,71,1)',
-                    pointHoverBorderColor: 'rgba(53,61,71,1)',
-                },
-            ];
-        });
-        this.createChart();
-    }
-
     private createLabels() {
         const prefix = this.translateService.instant('calendar_week');
-        const startDate = moment().subtract(3 + 4 * -this.currentPeriod, 'weeks');
-        const endDate = this.currentPeriod !== 0 ? moment().subtract(4 * -this.currentPeriod, 'weeks') : moment();
+        const startDate = moment().subtract(3, 'weeks');
+        const endDate = moment();
         let currentWeek;
         for (let i = 0; i < 4; i++) {
             currentWeek = moment()
-                .subtract(3 + 4 * -this.currentPeriod - i, 'weeks')
+                .subtract(3 - i, 'weeks')
                 .isoWeekday(1)
                 .isoWeek();
             this.barChartLabels[i] = prefix + ' ' + currentWeek;
         }
         this.chartTime = startDate.isoWeekday(1).format('DD.MM.YYYY') + ' - ' + endDate.isoWeekday(7).format('DD.MM.YYYY');
-    }
-
-    switchTimeSpan(index: boolean): void {
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
-        index ? (this.currentPeriod += 1) : (this.currentPeriod -= 1);
-        this.reloadChart();
     }
 
     private createChart() {

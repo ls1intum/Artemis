@@ -1,11 +1,10 @@
 <div class="col">
     <h5 class="col-md-12 text-center" style="margin-top: 15px">{{ chartName }}</h5>
-    <div class="row">
-        <fa-icon [icon]="'arrow-left'" size="2x" class="col-md-1 d-flex justify-content-end align-items-center" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
+    <div>
         <canvas
-            class="col-md-10"
+            class="col-md-10 offset-md-1"
             baseChart
-            height="250"
+            height="350"
             width="750"
             [datasets]="chartData"
             [labels]="barChartLabels"
@@ -13,7 +12,6 @@
             [legend]="barChartLegend"
             [chartType]="barChartType"
         ></canvas>
-        <fa-icon [icon]="'arrow-right'" size="2x" class="col-md-1 d-flex justify-content-start align-items-center" role="button" (click)="switchTimeSpan(RIGHT)"></fa-icon>
     </div>
     <h5 class="col-md-10 offset-md-1 text-center mt-3 mb-5">{{ chartTime }}</h5>
 </div>

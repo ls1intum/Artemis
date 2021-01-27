@@ -333,11 +333,6 @@ export class CourseManagementService {
         return this.coursesForNotifications;
     }
 
-    getStatisticsData(courseId: number, periodIndex: number): Observable<number[]> {
-        const params = new HttpParams().set('periodIndex', '' + periodIndex);
-        return this.http.get<number[]>(`${this.resourceUrl}/${courseId}/statistics`, { params });
-    }
-
     private setCoursesForNotifications(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             this.coursesForNotifications.next(res.body);

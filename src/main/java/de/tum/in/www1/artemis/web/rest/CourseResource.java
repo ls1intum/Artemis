@@ -1055,17 +1055,4 @@ public class CourseResource {
             return forbidden();
         }
     }
-
-    /**
-     * GET /courses/:courseId/statistics : Get the active students for this particular course
-     *
-     * @param courseId the id of the course
-     * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
-     * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
-     */
-    @GetMapping(value = "/courses/{courseId}/statistics")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Integer[]> getCourseStatistics(@PathVariable Long courseId, @RequestParam Integer periodIndex) {
-        return ResponseEntity.ok(courseService.getCourseStatistics(courseId, periodIndex));
-    }
 }
