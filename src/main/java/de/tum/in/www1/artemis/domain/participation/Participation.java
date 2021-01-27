@@ -72,7 +72,7 @@ public abstract class Participation extends DomainObject implements Participatio
     /**
      * Because a submission has a reference to the participation and the participation has a collection of submissions, setting the cascade type to PERSIST would result in
      * exceptions, i.e., if you want to persist a submission, you have to follow these steps: 1. Set the participation of the submission: submission.setParticipation(participation)
-     * 2. Persist the submission: submissionRepository.save(submission) 3. Add the submission to the participation: participation.addSubmissions(submission) 4. Persist the
+     * 2. Persist the submission: submissionRepository.save(submission) 3. Add the submission to the participation: participation.addSubmission(submission) 4. Persist the
      * participation: participationRepository.save(participation) It is important that, if you want to persist the submission and the participation in the same transaction, you
      * have to use the save function and not the saveAndFlush function because otherwise an exception is thrown. We can think about adding orphanRemoval=true here, after adding the
      * participationId to all submissions.
@@ -168,15 +168,14 @@ public abstract class Participation extends DomainObject implements Participatio
         return this;
     }
 
-    public void addSubmissions(Submission submission) {
+    public void addSubmission(Submission submission) {
         this.submissions.add(submission);
         submission.setParticipation(this);
     }
 
-    public Participation removeSubmissions(Submission submission) {
+    public void removeSubmission(Submission submission) {
         this.submissions.remove(submission);
         submission.setParticipation(null);
-        return this;
     }
 
     public void setSubmissions(Set<Submission> submissions) {
