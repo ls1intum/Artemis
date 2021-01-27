@@ -129,6 +129,7 @@ export class StudentQuestionsComponent implements OnInit, AfterViewInit {
         } else {
             studentQuestion.lecture = Object.assign({}, this.lecture, {});
             delete studentQuestion.lecture.attachments;
+            delete studentQuestion.lecture.lectureUnits;
         }
         studentQuestion.creationDate = moment();
         this.studentQuestionService.create(this.courseId, studentQuestion).subscribe((studentQuestionResponse: HttpResponse<StudentQuestion>) => {
