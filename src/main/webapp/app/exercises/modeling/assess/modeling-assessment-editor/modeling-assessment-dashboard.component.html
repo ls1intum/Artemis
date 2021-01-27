@@ -213,7 +213,7 @@
 
                             <span *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && modelingExercise.exerciseGroup">
                                 <!-- exercise within exam-->
-                                <span *ngIf="submission.results[correctionRound]">
+                                <span *ngIf="submission.results && submission.results[correctionRound]">
                                     <!-- button for existing result without lock-->
                                     <button
                                         *ngIf="submission.results[correctionRound].completionDate"
@@ -271,7 +271,10 @@
                                 </span>
                                 <!-- button for submission without result for this correction round-->
                                 <button
-                                    *ngIf="correctionRound == (submission.results ? submission.results.length : 0) && submission.latestResult!.completionDate"
+                                    *ngIf="
+                                        correctionRound == (submission.results ? submission.results.length : 0) &&
+                                        (!submission.latestResult || submission.latestResult!.completionDate)
+                                    "
                                     [disabled]="busy"
                                     [queryParams]="{ 'correction-round': submission.results ? submission.results.length : 0 }"
                                     [routerLink]="[
