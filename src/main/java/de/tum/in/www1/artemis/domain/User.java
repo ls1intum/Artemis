@@ -112,7 +112,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     @BatchSize(size = 20)
     private Set<Authority> authorities = new HashSet<>();
 
-    @ManyToMany(mappedBy = "users")
+    @ManyToMany(mappedBy = "users", cascade = CascadeType.ALL)
     private Set<Organization> organizations = new HashSet<Organization>();
 
     public String getLogin() {

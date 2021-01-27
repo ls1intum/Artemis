@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service implementation for managing Organization entities
@@ -64,6 +65,11 @@ public class OrganizationService {
         organizationRepository.delete(organization);
     }
 
+    public Organization findOne(long organizationId) {
+        log.debug("Request to get Organization : {}", organizationId);
+        return organizationRepository.findById(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization with id: \"" + organizationId + "\" does not exist"));
+    }
+
     /**
      * Get all organizations
      * @return all organizations
@@ -96,7 +102,7 @@ public class OrganizationService {
      * @param organizationId the id of the organization where the user should be added
      */
     public void addUserToOrganization(User user, long organizationId) {
-        Optional<Organization> organization = organizationRepository.findById(organizationId);
+        Optional<Organization> organization = organizationRepository.findByIdWithEagerUsers(organizationId);
         if (organization.isPresent() && !(organization.get().getUsers().contains(user))) {
             organization.get().getUsers().add(user);
             save(organization.get());
@@ -118,12 +124,13 @@ public class OrganizationService {
     /**
      * Removes a user from an existing organization
      * @param user the user to remove
-     * @param organization the organization where the user should be removed from
+     * @param organizationId the id of the organization where the user should be removed from
      */
-    public void removeUserFromOrganization(User user, Organization organization) {
-        if (organization.getUsers().contains(user)) {
-            organization.getUsers().remove(user);
-            save(organization);
+    public void removeUserFromOrganization(User user, long organizationId) {
+        Optional<Organization> organization = organizationRepository.findByIdWithEagerUsers(organizationId);
+        if (organization.isPresent() && organization.get().getUsers().contains(user)) {
+            organization.get().getUsers().remove(user);
+            save(organization.get());
         }
     }
 
@@ -133,7 +140,7 @@ public class OrganizationService {
      * @param organizationId the id of the organization where the course should be added
      */
     public void addCourseToOrganization(Course course, long organizationId) {
-        Optional<Organization> organization = organizationRepository.findById(organizationId);
+        Optional<Organization> organization = organizationRepository.findByIdWithEagerCourses(organizationId);
         if (organization.isPresent() && !(organization.get().getCourses().contains(course))) {
             organization.get().getCourses().add(course);
             save(organization.get());
@@ -161,6 +168,19 @@ public class OrganizationService {
         if (organization.getCourses().contains(course)) {
             organization.getCourses().remove(course);
             save(organization);
+        }
+    }
+
+    /**
+     * Removes a course from an existing organization
+     * @param course the course to remove
+     * @param organizationId the id of organization where the course should be removed from
+     */
+    public void removeCourseFromOrganization(Course course, long organizationId) {
+        Optional<Organization> organization = organizationRepository.findByIdWithEagerCourses(organizationId);
+        if (organization.isPresent() && organization.get().getCourses().contains(course)) {
+            organization.get().getCourses().remove(course);
+            save(organization.get());
         }
     }
 }

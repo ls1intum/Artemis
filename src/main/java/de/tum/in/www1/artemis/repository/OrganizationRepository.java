@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +15,12 @@ import de.tum.in.www1.artemis.domain.Organization;
  */
 @Repository
 public interface OrganizationRepository extends JpaRepository<Organization, Long> {
+
+    @Query("select organization from Organization organization left join fetch organization.courses oc where organization.id = :#{#organizationId}")
+    Optional<Organization> findByIdWithEagerCourses(@Param("organizationId") long organizationId);
+
+    @Query("select organization from Organization organization left join fetch organization.users ou where organization.id = :#{#organizationId}")
+    Optional<Organization> findByIdWithEagerUsers(@Param("organizationId") long organizationId);
 
     @Query("select distinct organization from Organization organization join organization.users ou where ou.id = :#{#userId}")
     Set<Organization> findAllOrganizationsByUserId(@Param("userId") long userId);
