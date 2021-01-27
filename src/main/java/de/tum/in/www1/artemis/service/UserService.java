@@ -1129,10 +1129,10 @@ public class UserService {
     /**
      * Removes a user from an existing organization
      * @param user the user to remove
-     * @param organization the organization where the user should be removed from
+     * @param organizationId the id of the organization where the user should be removed from
      */
-    public void removeUserFromOrganization(User user, Organization organization) {
-        organizationService.removeUserFromOrganization(user, organization);
+    public void removeUserFromOrganization(User user, long organizationId) {
+        organizationService.removeUserFromOrganization(user, organizationId);
     }
 
     /**

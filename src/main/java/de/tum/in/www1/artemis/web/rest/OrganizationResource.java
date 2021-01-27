@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -117,5 +119,19 @@ public class OrganizationResource {
         organizationService.deleteOrganization(organization);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, organization.getName())).build();
+    }
+
+    @GetMapping("/organizations/all")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<List<Organization>> getAllOrganizations() {
+        List<Organization> organizations = organizationService.getAllOrganizations();
+        return new ResponseEntity<>(organizations, HttpStatus.OK);
+    }
+
+    @GetMapping("/organizations/{organizationId}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Organization> getOrganizationById(@PathVariable long organizationId) {
+        Organization organization = organizationService.findOne(organizationId);
+        return new ResponseEntity<>(organization, HttpStatus.OK);
     }
 }
