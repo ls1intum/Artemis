@@ -41,7 +41,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.StudentExamService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ProgrammingExerciseTestService;
@@ -493,7 +492,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             studentExamRepository.save(studentExam);
         }
 
-        SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
         assertThat(studentExamRepository.findMaxWorkingTimeByExamId(exam.getId())).contains(maxWorkingTime);
         assertThat(studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId())).containsExactlyInAnyOrderElementsOf(expectedWorkingTimes);
     }
@@ -1444,7 +1442,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         testRun2.setWorkingTime(testRun1.getWorkingTime());
         studentExamRepository.save(testRun2);
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun1.getId(), HttpStatus.OK);
-        SecurityUtils.setAuthorizationObject();
         var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
         assertThat(testRunList.size()).isEqualTo(1);
         testRunList.get(0).getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
@@ -1465,7 +1462,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         testRun2.setWorkingTime(testRun1.getWorkingTime());
         studentExamRepository.save(testRun2);
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun2.getId(), HttpStatus.OK);
-        SecurityUtils.setAuthorizationObject();
         var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
         assertThat(testRunList.size()).isEqualTo(1);
         testRunList.get(0).getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
@@ -1493,7 +1489,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         testRunConfiguration.setUser(instructor);
 
         request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/test-run", testRunConfiguration, StudentExam.class, HttpStatus.OK);
-        SecurityUtils.setAuthorizationObject();
         var testRuns = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
         assertThat(testRuns.size()).isEqualTo(1);
         var testRun = testRuns.get(0);
