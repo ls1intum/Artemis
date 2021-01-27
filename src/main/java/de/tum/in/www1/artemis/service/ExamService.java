@@ -272,8 +272,7 @@ public class ExamService {
     public ExamScoresDTO getExamScore(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
-        // TODO: Check that this doesn't break the applications server
-        List<StudentParticipation> studentParticipations = participationService.findByExamIdWithSubmissionRelevantResult(examId);
+        List<StudentParticipation> studentParticipations = participationService.findByExamIdWithSubmissionRelevantResult(examId); // without test run participations
 
         // Adding exam information to DTO
         ExamScoresDTO scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
@@ -285,7 +284,7 @@ public class ExamService {
         // Adding exercise group information to DTO
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             // Find the maximum points for this exercise group
-            OptionalDouble optionalMaxPointsGroup = exerciseGroup.getExercises().stream().mapToDouble(exercise -> exercise.getMaxScore()).max();
+            OptionalDouble optionalMaxPointsGroup = exerciseGroup.getExercises().stream().mapToDouble(Exercise::getMaxScore).max();
             Double maxPointsGroup = optionalMaxPointsGroup.orElse(0);
 
             // Counter for exerciseGroup participations. Is calculated by summing up the number of exercise participations
@@ -307,9 +306,10 @@ public class ExamService {
         }
 
         // Adding registered student information to DTO
-        Set<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
+        Set<StudentExam> studentExams = studentExamRepository.findByExamId(examId); // fetched without test runs
         ObjectMapper objectMapper = new ObjectMapper();
         for (StudentExam studentExam : studentExams) {
+
             User user = studentExam.getUser();
             var studentResult = new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(),
                     studentExam.isSubmitted());
