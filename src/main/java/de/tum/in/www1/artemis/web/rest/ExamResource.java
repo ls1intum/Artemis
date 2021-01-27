@@ -238,16 +238,16 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/:courseId/exams/:examId:for-exam-tutor-dashboard
+     * GET /courses/:courseId/exams/:examId/exam-for-assessment-dashboard
      *
      * @param courseId the id of the course to retrieve
      * @param examId the id of the exam that contains the exercises
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/for-exam-tutor-dashboard")
+    @GetMapping("/courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exam> getExamForAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
-        log.debug("REST request /courses/{courseId}/exams/{examId}/for-exam-tutor-dashboard");
+        log.debug("REST request /courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard");
 
         Exam exam = examService.findOneWithExerciseGroupsAndExercises(examId);
         Course course = exam.getCourse();
@@ -280,16 +280,16 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/:courseId/exams/:examId:for-exam-tutor-test-run-dashboard
+     * GET /courses/:courseId/exams/:examId:exam-for-test-run-assessment-dashboard
      *
      * @param courseId the id of the course to retrieve
      * @param examId the id of the exam that contains the exercises
      * @return data about a exam test run including all exercises, plus some data for the tutor as tutor status for assessment
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/for-exam-tutor-test-run-dashboard")
+    @GetMapping("/courses/{courseId}/exams/{examId}/exam-for-test-run-assessment-dashboard")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Exam> getExamForTutorTestRunDashboard(@PathVariable long courseId, @PathVariable long examId) {
-        log.debug("REST request /courses/{courseId}/exams/{examId}/for-exam-tutor-test-run-dashboard");
+    public ResponseEntity<Exam> getExamForTestRunAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request /courses/{courseId}/exams/{examId}/exam-for-test-run-assessment-dashboard");
 
         Exam exam = examService.findOneWithExerciseGroupsAndExercises(examId);
         Course course = exam.getCourse();

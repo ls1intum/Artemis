@@ -121,7 +121,7 @@ describe('Exam Management Service Tests', () => {
         service.getExamWithInterestingExercisesForAssessmentDashboard(course.id!, mockExam.id!, false).subscribe((res) => expect(res.body).to.equal([]));
 
         // THEN
-        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/for-exam-tutor-dashboard` });
+        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/exam-for-assessment-dashboard` });
     });
 
     it('should getExamWithInterestingExercisesForAssessmentDashboard with isTestRun=true', () => {

@@ -1084,8 +1084,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         User user = userRepo.findOneByLogin("student1").get();
         // we need an exam from the past, otherwise the tutor won't have access
         Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user, now().minusHours(3), now().minusHours(2), now().minusHours(1));
-        Exam receivedExam = request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.OK,
-                Exam.class);
+        Exam receivedExam = request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/exam-for-assessment-dashboard",
+                HttpStatus.OK, Exam.class);
 
         // Test that the received exam has two text exercises
         assertThat(receivedExam.getExerciseGroups().get(0).getExercises().size()).as("Two exercises are returned").isEqualTo(2);
@@ -1102,7 +1102,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam.setEndDate(now().plusWeeks(1));
         examRepository.save(exam);
 
-        request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.FORBIDDEN, Exam.class);
+        request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/exam-for-assessment-dashboard", HttpStatus.FORBIDDEN,
+                Exam.class);
     }
 
     @Test
@@ -1110,19 +1111,20 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testGetExamForExamAssessmentDashboard_asStudent_forbidden() throws Exception {
         User user = userRepo.findOneByLogin("student1").get();
         Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
-        request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
+        request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/exam-for-assessment-dashboard", HttpStatus.FORBIDDEN,
+                Course.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExamForExamAssessmentDashboard_courseIdDoesNotMatch_conflict() throws Exception {
-        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/for-exam-tutor-dashboard", HttpStatus.CONFLICT, Course.class);
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-assessment-dashboard", HttpStatus.CONFLICT, Course.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetExamForExamAssessmentDashboard_notFound() throws Exception {
-        request.get("/api/courses/1/exams/1/for-exam-tutor-dashboard", HttpStatus.NOT_FOUND, Course.class);
+        request.get("/api/courses/1/exams/1/exam-for-assessment-dashboard", HttpStatus.NOT_FOUND, Course.class);
     }
 
     @Test
@@ -1134,7 +1136,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam.setEndDate(now().plusWeeks(1));
         examRepository.save(exam);
 
-        request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
+        request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/exam-for-assessment-dashboard", HttpStatus.FORBIDDEN,
+                Course.class);
     }
 
     @Test

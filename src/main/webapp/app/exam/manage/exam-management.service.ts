@@ -97,9 +97,9 @@ export class ExamManagementService {
     getExamWithInterestingExercisesForAssessmentDashboard(courseId: number, examId: number, isTestRun: boolean): Observable<EntityResponseType> {
         let url: string;
         if (isTestRun) {
-            url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-test-run-dashboard`;
+            url = `${this.resourceUrl}/${courseId}/exams/${examId}/exam-for-test-run-assessment-dashboard`;
         } else {
-            url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-dashboard`;
+            url = `${this.resourceUrl}/${courseId}/exams/${examId}/exam-for-assessment-dashboard`;
         }
         return this.http
             .get<Exam>(url, { observe: 'response' })
