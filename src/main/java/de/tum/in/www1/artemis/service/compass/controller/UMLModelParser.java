@@ -1028,7 +1028,7 @@ public class UMLModelParser {
             }
         }
 
-        // loop over all JSON control flow elements and create syntax tree links
+        // loop over all JSON flowchart elements and create flowlines
         for (JsonElement rel : relationships) {
             Optional<FlowchartFlowline> flowchartFlowline = parseFlowchartFlowline(rel.getAsJsonObject(), allElementsMap);
             flowchartFlowline.ifPresent(flowchartFlowlineList::add);
