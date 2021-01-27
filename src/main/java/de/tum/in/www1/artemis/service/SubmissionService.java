@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -496,16 +497,18 @@ public class SubmissionService {
 
     /**
      * Checks if the exercise due date has passed. For exam exercises it checks if the latest possible exam end date has passed.
+     *
      * @param exercise course exercise or exam exercise that is checked
      * @return boolean
      */
-    public boolean checkIfExerciseDueDateIsReached(Exercise exercise) {
+    public void checkIfExerciseDueDateIsReached(Exercise exercise) throws AccessForbiddenException {
         final boolean isExamMode = exercise.isExamExercise();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (isExamMode) {
             ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
-                return false;
+                log.debug("The due date of exercise: " + exercise.getTitle() + " has not been reached yet.");
+                throw new AccessForbiddenException("The due date of exercise: " + exercise.getTitle() + " has not been reached yet.");
             }
         }
         else {
@@ -514,15 +517,16 @@ public class SubmissionService {
                 ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                         && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
-                    return false;
+                    log.debug("The due date to build and test of exercise: " + exercise.getTitle() + " has not been reached yet.");
+                    throw new AccessForbiddenException("The due date to build and test of exercise: " + exercise.getTitle() + " has not been reached yet.");
                 }
             }
 
             if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-                return false;
+                log.debug("The due date of exercise: " + exercise.getTitle() + " has not been reached yet.");
+                throw new AccessForbiddenException("The due date of exercise: " + exercise.getTitle() + " has not been reached yet.");
             }
         }
-        return true;
     }
 
     /**
