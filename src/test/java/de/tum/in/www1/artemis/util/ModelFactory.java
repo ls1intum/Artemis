@@ -536,6 +536,13 @@ public class ModelFactory {
         return studentExam;
     }
 
+    public static StudentExam generateExamTestRun(Exam exam) {
+        StudentExam studentExam = new StudentExam();
+        studentExam.setExam(exam);
+        studentExam.setTestRun(true);
+        return studentExam;
+    }
+
     public static GradingCriterion generateGradingCriterion(String title) {
         var criterion = new GradingCriterion();
         criterion.setTitle(title);

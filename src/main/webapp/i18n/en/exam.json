@@ -21,7 +21,8 @@
                     "yourPoints": "Your points",
                     "maxPoints": "Points",
                     "bonus": "Bonus points",
-                    "sum": "Sum"
+                    "youAchieved": "You achieved {{achievedPoints}} points out of possible {{normalPoints}} normal points and {{bonusPoints}} bonus points",
+                    "maxPointsNotSet": "The exam max points is not set."
                 }
             },
             "title": "Exam",
@@ -53,6 +54,10 @@
             "validation": {
                 "startAndEndMustBeSet": "The start and end date must be set for the exam",
                 "atLeastOneExercisePerExerciseGroup": "All exercise groups must have at least one exercise.",
+                "allExercisesInExerciseGroupOfSameIncludedType": "All exercises in an exercise group need to have the same meaning for the exam score calculation (normal exercise, bonus exercise, not included).",
+                "allExercisesInExerciseGroupGiveSameNumberOfPoints": "All exercises in an exercise group need to give the same number of points or bonus points",
+                "tooManyMaxPoints": "Check that you set the exam max points correctly! The max points a student can earn in the mandatory exercise groups is too big",
+                "tooFewMaxPoints": "Check that you set the exam max points correctly! The max points a student can earn in the exercise groups is too low",
                 "numberOfExercisesMustBeSet": "The number of exercises must be set for the exam.",
                 "numberOfExercisesInExamNotSet": "The number of exercises in the exam is not set.",
                 "tooFewExerciseGroups": "The number of exercise groups is too small.",
@@ -222,6 +227,7 @@
                 "assess": "Assess Your Test Runs",
                 "manage": "Manage Working Time",
                 "text": "Here you can create a test run for the exam. Pick which exercises your exam should contain and run the conduction. Afterwards you will be able to assess your submissions and grade them as a tutor. You have the option to view the results and complain as a student. Additionally, you can also respond to the complaints about the assessment as a tutor.\n<strong>Note:</strong> Submissions made within test runs do not count towards the exam scores.",
+                "reminderToDelete": "Make sure to delete all Test Runs before the exam conduction.",
                 "createTestRunDisabled": "No exercises found",
                 "assessTestRunDisabled": "None of your test runs have ended",
                 "delete": {

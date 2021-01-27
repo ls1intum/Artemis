@@ -1,9 +1,8 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 
 import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
@@ -12,15 +11,22 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import * as sinon from 'sinon';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
-import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ClipboardModule } from 'ngx-clipboard';
-import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { JhiTranslateDirective } from 'ng-jhipster';
-import { of, BehaviorSubject } from 'rxjs';
+import { JhiAlertService } from 'ng-jhipster';
+import { of, BehaviorSubject, Subject } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { SinonStub, stub } from 'sinon';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
+import { By } from '@angular/platform-browser';
+import { ArtemisTestModule } from '../../test.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -31,6 +37,11 @@ describe('JhiCloneRepoButtonComponent', () => {
     let profileService: ProfileService;
     let sourceTreeService: SourceTreeService;
     let accountService: AccountService;
+
+    let localStorageUseSshRetrieveStub: SinonStub;
+    let localStorageUseSshObserveStub: SinonStub;
+    let localStorageUseSshObserveStubSubject: Subject<boolean | undefined>;
+    let localStorageUseSshStoreStub: SinonStub;
 
     const info: ProfileInfo = {
         activeProfiles: [],
@@ -52,19 +63,16 @@ describe('JhiCloneRepoButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ClipboardModule],
-            declarations: [
-                CloneRepoButtonComponent,
-                MockComponent(ButtonComponent),
-                MockDirective(FeatureToggleDirective),
-                MockComponent(ExerciseActionButtonComponent),
-                MockDirective(NgbPopover),
-                MockPipe(SafeUrlPipe),
-                MockDirective(NgbTooltip),
-                MockComponent(FaIconComponent),
-                MockDirective(JhiTranslateDirective),
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisSharedModule, FeatureToggleModule, ClipboardModule],
+            declarations: [CloneRepoButtonComponent, MockComponent(ExerciseActionButtonComponent)],
+            providers: [
+                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                MockProvider(SourceTreeService, {}),
             ],
-            providers: [{ provide: ProfileService, useClass: MockProfileService }, { provide: AccountService, useClass: MockAccountService }, MockProvider(SourceTreeService, {})],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CloneRepoButtonComponent);
@@ -72,6 +80,13 @@ describe('JhiCloneRepoButtonComponent', () => {
         profileService = TestBed.inject(ProfileService);
         sourceTreeService = TestBed.inject(SourceTreeService);
         accountService = TestBed.inject(AccountService);
+
+        const localStorageMock = fixture.debugElement.injector.get(LocalStorageService);
+        localStorageUseSshRetrieveStub = stub(localStorageMock, 'retrieve');
+        localStorageUseSshObserveStub = stub(localStorageMock, 'observe');
+        localStorageUseSshStoreStub = stub(localStorageMock, 'store');
+        localStorageUseSshObserveStubSubject = new Subject();
+        localStorageUseSshObserveStub.returns(localStorageUseSshObserveStubSubject);
     });
 
     afterEach(function () {
@@ -80,14 +95,7 @@ describe('JhiCloneRepoButtonComponent', () => {
     });
 
     it('should initialize', fakeAsync(() => {
-        const identityStub = sinon.stub(accountService, 'identity');
-        identityStub.returns(Promise.resolve({ guidedTourSettings: [], login: 'edx_userLogin' }));
-
-        const getRepositoryPasswordStub = sinon.stub(sourceTreeService, 'getRepositoryPassword');
-        getRepositoryPasswordStub.returns(of({ password: 'repository_password' }));
-
-        const getProfileInfoStub = sinon.stub(profileService, 'getProfileInfo');
-        getProfileInfoStub.returns(new BehaviorSubject(info));
+        stubServices();
 
         component.ngOnInit();
         tick();
@@ -157,4 +165,49 @@ describe('JhiCloneRepoButtonComponent', () => {
         url = component.getHtmlOrSshRepositoryUrl();
         expect(url).to.equal(info.versionControlUrl!);
     });
+
+    it('should fetch and store ssh preference', fakeAsync(() => {
+        stubServices();
+
+        component.sshEnabled = true;
+
+        fixture.detectChanges();
+        tick();
+
+        expect(localStorageUseSshRetrieveStub).to.have.been.calledOnceWithExactly('useSsh');
+        expect(localStorageUseSshObserveStub).to.have.been.calledOnceWithExactly('useSsh');
+        expect(component.useSsh).to.be.false;
+
+        fixture.debugElement.query(By.css('.clone-repository')).nativeElement.click();
+        tick();
+        const t = fixture.debugElement.query(By.css('.use-ssh'));
+        fixture.debugElement.query(By.css('.use-ssh')).nativeElement.click();
+        tick();
+        expect(localStorageUseSshStoreStub).to.have.been.calledOnceWithExactly('useSsh', true);
+        expect(component.useSsh).to.be.true;
+
+        fixture.debugElement.query(By.css('.use-ssh')).nativeElement.click();
+        tick();
+        expect(localStorageUseSshStoreStub).to.have.been.calledWithExactly('useSsh', false);
+        expect(component.useSsh).to.be.false;
+
+        localStorageUseSshObserveStubSubject.next(true);
+        tick();
+        expect(component.useSsh).to.be.true;
+
+        localStorageUseSshObserveStubSubject.next(false);
+        tick();
+        expect(component.useSsh).to.be.false;
+    }));
+
+    function stubServices() {
+        const identityStub = sinon.stub(accountService, 'identity');
+        identityStub.returns(Promise.resolve({ guidedTourSettings: [], login: 'edx_userLogin' }));
+
+        const getRepositoryPasswordStub = sinon.stub(sourceTreeService, 'getRepositoryPassword');
+        getRepositoryPasswordStub.returns(of({ password: 'repository_password' }));
+
+        const getProfileInfoStub = sinon.stub(profileService, 'getProfileInfo');
+        getProfileInfoStub.returns(new BehaviorSubject(info));
+    }
 });

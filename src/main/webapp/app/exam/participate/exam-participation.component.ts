@@ -50,7 +50,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     courseId: number;
     examId: number;
     testRunId: number;
-    testRunStartTime: Moment | null;
+    testRunStartTime?: Moment;
 
     // determines if component was once drawn visited
     submissionComponentVisited: boolean[];
@@ -143,6 +143,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.individualStudentEndDate = moment(this.testRunStartTime).add(this.studentExam.workingTime, 'seconds');
                         this.loadingExam = false;
                     },
+                    // if error occurs
                     () => (this.loadingExam = false),
                 );
             } else {
@@ -223,7 +224,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         });
                     } else if (exercise.type === ExerciseType.PROGRAMMING) {
                         // We need to provide a submission to update the navigation bar status indicator
-                        if (participation.submissions && participation.submissions.length === 0) {
+                        if (!participation.submissions || participation.submissions.length === 0) {
+                            participation.submissions = [];
                             participation.submissions.push(ProgrammingSubmission.createInitialCleanSubmissionForExam());
                         }
                     }

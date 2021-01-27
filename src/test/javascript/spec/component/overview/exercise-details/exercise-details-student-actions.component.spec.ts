@@ -34,6 +34,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
+import { LocalStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -61,13 +63,14 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisSharedModule, FeatureToggleModule, RouterModule, ClipboardModule],
-            declarations: [ExerciseDetailsStudentActionsComponent, MockComponent(ExerciseActionButtonComponent), CloneRepoButtonComponent],
+            declarations: [ExerciseDetailsStudentActionsComponent, MockComponent(ExerciseActionButtonComponent), MockComponent(CloneRepoButtonComponent)],
             providers: [
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: JhiAlertService, useClass: MockAlertService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -164,7 +167,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startExerciseButton).to.not.exist;
 
         // Check that button "Clone repository" is shown
-        const cloneRepositoryButton = fixture.debugElement.query(By.css('.clone-repository'));
+        const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
         expect(cloneRepositoryButton).to.exist;
 
         fixture.destroy();

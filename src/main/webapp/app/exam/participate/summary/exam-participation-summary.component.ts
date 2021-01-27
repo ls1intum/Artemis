@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
@@ -20,6 +20,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly AssessmentType = AssessmentType;
+    readonly IncludedInOverallScore = IncludedInOverallScore;
 
     @Input()
     studentExam: StudentExam;

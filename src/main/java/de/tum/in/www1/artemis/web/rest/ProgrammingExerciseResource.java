@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -220,11 +218,36 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * Validate the general course settings.
+     * 1. Validate the title
+     * 2. Validate the course and programming exercise short name.
+     *
+     * @param programmingExercise Programming exercise to be validated
+     * @param course              Course of the programming exercise
+     * @return Optional validation error response
+     */
+    private Optional<ResponseEntity<ProgrammingExercise>> validateCourseSettings(ProgrammingExercise programmingExercise, Course course) {
+        // Validate exercise title
+        Optional<ResponseEntity<ProgrammingExercise>> optionalTitleValidationError = validateTitle(programmingExercise, course);
+        if (optionalTitleValidationError.isPresent()) {
+            return optionalTitleValidationError;
+        }
+
+        // Validate course and exercise short name
+        Optional<ResponseEntity<ProgrammingExercise>> optionalShortNameValidationError = validateCourseAndExerciseShortName(programmingExercise, course);
+        if (optionalShortNameValidationError.isPresent()) {
+            return optionalShortNameValidationError;
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Validate the programming exercise title.
      * 1. Check presence and length of exercise title
      * 2. Find forbidden patterns in exercise title
      *
      * @param programmingExercise Programming exercise to be validated
+     * @param course              Course of the programming exercise
      * @return Optional validation error response
      */
     private Optional<ResponseEntity<ProgrammingExercise>> validateTitle(ProgrammingExercise programmingExercise, Course course) {
@@ -249,6 +272,36 @@ public class ProgrammingExerciseResource {
                     .body(null));
         }
 
+        return Optional.empty();
+    }
+
+    /**
+     * Validates general programming exercise settings
+     * 1. Validate score settings
+     * 2. Validates the participation mode
+     * 3. Validates the programming language
+     *
+     * @param programmingExercise exercise to validate
+     * @return Optional validation error response
+     */
+    private Optional<ResponseEntity<ProgrammingExercise>> validateGeneralSettings(ProgrammingExercise programmingExercise) {
+        // Validate score settings
+        Optional<ResponseEntity<ProgrammingExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(programmingExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError;
+        }
+
+        // Check if a participation mode was selected
+        if (!Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(programmingExercise.isAllowOfflineIde())) {
+            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
+                    "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null));
+        }
+
+        // Check if programming language is set
+        if (programmingExercise.getProgrammingLanguage() == null) {
+            return Optional.of(
+                    ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "No programming language was specified", "programmingLanguageNotSet")).body(null));
+        }
         return Optional.empty();
     }
 
@@ -325,25 +378,10 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
 
-        // Check if max score is set
-        if (programmingExercise.getMaxScore() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
-        }
-
-        if (programmingExercise.getBonusPoints() == null) {
-            // make sure the default value is set properly
-            programmingExercise.setBonusPoints(0.0);
-        }
-
-        // Check if a participation mode was selected
-        if (!Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(programmingExercise.isAllowOfflineIde())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                    "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
-        }
-
-        // Check if programming language is set
-        if (programmingExercise.getProgrammingLanguage() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "No programming language was specified", "programmingLanguageNotSet")).body(null);
+        // Validate general programming exercise settings
+        Optional<ResponseEntity<ProgrammingExercise>> optionalGeneralError = validateGeneralSettings(programmingExercise);
+        if (optionalGeneralError.isPresent()) {
+            return optionalGeneralError.get();
         }
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
@@ -391,16 +429,10 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
 
-        // Validate exercise title
-        Optional<ResponseEntity<ProgrammingExercise>> optionalTitleValidationError = validateTitle(programmingExercise, course);
-        if (optionalTitleValidationError.isPresent()) {
-            return optionalTitleValidationError.get();
-        }
-
-        // Validate course and exercise short name
-        Optional<ResponseEntity<ProgrammingExercise>> optionalShortNameValidationError = validateCourseAndExerciseShortName(programmingExercise, course);
-        if (optionalShortNameValidationError.isPresent()) {
-            return optionalShortNameValidationError.get();
+        // Validate course settings
+        Optional<ResponseEntity<ProgrammingExercise>> optionalCourseError = validateCourseSettings(programmingExercise, course);
+        if (optionalCourseError.isPresent()) {
+            return optionalCourseError.get();
         }
 
         // Validate static code analysis settings
@@ -492,25 +524,10 @@ public class ProgrammingExerciseResource {
 
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
-        // Check if max score is set
-        if (newExercise.getMaxScore() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
-        }
-
-        if (newExercise.getBonusPoints() == null) {
-            // make sure the default value is set properly
-            newExercise.setBonusPoints(0.0);
-        }
-
-        // Check if a participation mode is set
-        if (!Boolean.TRUE.equals(newExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(newExercise.isAllowOfflineIde())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                    "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
-        }
-
-        // Check if programming language is set
-        if (newExercise.getProgrammingLanguage() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "No programming language was specified", "programmingLanguageNotSet")).body(null);
+        // Validate general programming exercise settings
+        Optional<ResponseEntity<ProgrammingExercise>> optionalGeneralError = validateGeneralSettings(newExercise);
+        if (optionalGeneralError.isPresent()) {
+            return optionalGeneralError.get();
         }
 
         // Validate static code analysis settings
@@ -526,16 +543,10 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
 
-        // Validate exercise title
-        Optional<ResponseEntity<ProgrammingExercise>> optionalTitleValidationError = validateTitle(newExercise, course);
-        if (optionalTitleValidationError.isPresent()) {
-            return optionalTitleValidationError.get();
-        }
-
-        // Validate course and exercise short name
-        Optional<ResponseEntity<ProgrammingExercise>> optionalShortNameValidationError = validateCourseAndExerciseShortName(newExercise, course);
-        if (optionalShortNameValidationError.isPresent()) {
-            return optionalShortNameValidationError.get();
+        // Validate course settings
+        Optional<ResponseEntity<ProgrammingExercise>> optionalCourseError = validateCourseSettings(newExercise, course);
+        if (optionalCourseError.isPresent()) {
+            return optionalCourseError.get();
         }
 
         final var optionalOriginalProgrammingExercise = programmingExerciseRepository

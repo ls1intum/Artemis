@@ -6,6 +6,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 @Component({
     selector: 'jhi-clone-repo-button',
@@ -40,6 +41,7 @@ export class CloneRepoButtonComponent implements OnInit {
         private sourceTreeService: SourceTreeService,
         private accountService: AccountService,
         private profileService: ProfileService,
+        private localStorage: LocalStorageService,
     ) {}
 
     ngOnInit() {
@@ -61,6 +63,14 @@ export class CloneRepoButtonComponent implements OnInit {
                 this.versionControlUrl = info.versionControlUrl;
             }
         });
+
+        this.useSsh = this.localStorage.retrieve('useSsh') || false;
+        this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
+    }
+
+    public toggleUseSsh(): void {
+        this.useSsh = !this.useSsh;
+        this.localStorage.store('useSsh', this.useSsh);
     }
 
     /**

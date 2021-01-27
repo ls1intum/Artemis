@@ -79,7 +79,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         // This must be a student participation as hasPermissions would have been false and an error already thrown
         var isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
         if (isStudentParticipation && !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)
-                && !examSubmissionService.isAllowedToSubmit(programmingExercise, user)) {
+                && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user)) {
             throw new IllegalAccessException();
         }
         var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
@@ -244,7 +244,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         // Checks only apply to students and tutors, otherwise template, solution and assignment participation can't be edited using the code editor
         User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExerciseParticipation.getProgrammingExercise())
-                && !examSubmissionService.isAllowedToSubmit(programmingExerciseParticipation.getProgrammingExercise(), user)) {
+                && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExerciseParticipation.getProgrammingExercise(), user)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "notAllowedExam");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }

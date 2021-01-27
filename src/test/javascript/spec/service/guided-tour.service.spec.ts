@@ -35,6 +35,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockCookieService } from '../helpers/mocks/service/mock-cookie.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { MockProvider } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -97,6 +98,7 @@ describe('GuidedTourService', () => {
                     { provide: DeviceDetectorService },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
+                    MockProvider(TranslateService),
                 ],
             })
                 .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })

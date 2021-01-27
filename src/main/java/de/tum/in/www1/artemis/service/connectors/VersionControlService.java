@@ -4,10 +4,7 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import de.tum.in.www1.artemis.domain.Commit;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
@@ -114,30 +111,16 @@ public interface VersionControlService {
     boolean checkIfProjectExists(String projectKey, String projectName);
 
     /**
-     * Forks a repository from one project to another one. The project can be the same.
-     *
-     * @param sourceProjectKey The key of the template project (normally based on the course and exercise short name)
-     * @param sourceRepositoryName The name of the repository which should be forked
-     * @param targetProjectKey The key of the target project to which to copy the new plan to
-     * @param targetRepositoryName The desired name of the target repository
-     * @return The URL for forking the repository
-     * @throws VersionControlException if the repository could not be forked on the VCS server (e.g. because the source repo does not exist)
-     */
-    VcsRepositoryUrl forkRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) throws VersionControlException;
-
-    /**
      * Copies a repository from one project to another one. The project can be the same.
      *
-     * @param sourceProjectKey The key of the template project (normally based on the course and exercise short name)
+     * @param sourceProjectKey     The key of the template project (normally based on the course and exercise short name)
      * @param sourceRepositoryName The name of the repository which should be copied
-     * @param targetProjectKey The key of the target project to which to copy the new plan to
+     * @param targetProjectKey     The key of the target project to which to copy the new plan to
      * @param targetRepositoryName The desired name of the target repository
-     * @param targetPath The path in the local Artemis server file system where the repo is cloned into in order to copy it
      * @return The URL for cloning the repository
      * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
      */
-    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName, String targetPath)
-            throws VersionControlException;
+    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) throws VersionControlException;
 
     /**
      * Add the user to the repository

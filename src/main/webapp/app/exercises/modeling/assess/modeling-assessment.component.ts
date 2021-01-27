@@ -25,6 +25,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() feedbacks: Feedback[] = [];
     @Input() diagramType: UMLDiagramType;
     @Input() maxScore: number;
+    @Input() maxBonusPoints = 0;
     @Input() totalScore: number;
     @Input() title: string;
     @Input() resizeOptions: { initialWidth: string; maxWidth?: number };

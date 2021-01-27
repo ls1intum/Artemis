@@ -7,7 +7,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import jplag.ExitException;
 
@@ -135,8 +138,10 @@ public class TextExerciseResource {
             throw new BadRequestAlertException("A new textExercise needs a title", ENTITY_NAME, "missingtitle");
         }
 
-        if (textExercise.getMaxScore() == null) {
-            throw new BadRequestAlertException("A new textExercise needs a max score", ENTITY_NAME, "missingmaxscore");
+        // Validate score settings
+        Optional<ResponseEntity<TextExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(textExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
         }
 
         if (textExercise.getDueDate() == null && textExercise.getAssessmentDueDate() != null) {
@@ -187,6 +192,12 @@ public class TextExerciseResource {
         log.debug("REST request to update TextExercise : {}", textExercise);
         if (textExercise.getId() == null) {
             return createTextExercise(textExercise);
+        }
+
+        // Validate score settings
+        Optional<ResponseEntity<TextExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(textExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
         }
 
         // Valid exercises have set either a course or an exerciseGroup
@@ -408,7 +419,7 @@ public class TextExerciseResource {
                 }
             }
 
-            participation.addSubmissions(textSubmission);
+            participation.addSubmission(textSubmission);
         }
 
         if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {
