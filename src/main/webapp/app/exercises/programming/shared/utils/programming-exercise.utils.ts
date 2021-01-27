@@ -7,6 +7,7 @@ import * as moment from 'moment';
 import { isMoment } from 'moment';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
 
@@ -24,27 +25,38 @@ export const isLegacyResult = (result: Result) => {
  * - The submission date of the result / result completionDate is before the buildAndTestAfterDueDate
  *
  * Note: We check some error cases in this method as a null value for the given parameters, because the clients using this method might unwillingly provide them (result component).
- * TODO: Remove the null checks when the result component is refactored.
  *
- * @param result Result with attached Submission - if submission is null, method will use the result completionDate as a reference.
+ * @param latestResult Result with attached Submission - if submission is null, method will use the result completionDate as a reference.
  * @param programmingExercise ProgrammingExercise
  */
-export const isResultPreliminary = (result: Result, programmingExercise: ProgrammingExercise | null) => {
+export const isResultPreliminary = (latestResult: Result, programmingExercise?: ProgrammingExercise) => {
     if (!programmingExercise) {
         return false;
     }
-    const { submission } = result;
-    // We use the result completionDate as a fallback when the submissionDate is not available (edge case, every result should have a submission).
-    let referenceDate = submission && submission.submissionDate ? submission.submissionDate : result.completionDate;
+
+    // We use the result completion date
+    if (!latestResult.completionDate) {
+        // in the unlikely case the completion date is not set yet (this should not happen), it is preliminary
+        return true;
+    }
+    let resultCompletionDate = latestResult.completionDate;
     // If not a moment date already, try to convert it (e.g. when it is a string).
-    if (referenceDate && !isMoment(referenceDate)) {
-        referenceDate = moment(referenceDate);
+    if (resultCompletionDate && !isMoment(resultCompletionDate)) {
+        resultCompletionDate = moment(resultCompletionDate);
     }
     // When the result completionDate would be null, we have to return here (edge case, every result should have a completionDate).
-    if (!referenceDate || !referenceDate.isValid()) {
-        return false;
+    if (!resultCompletionDate || !resultCompletionDate.isValid()) {
+        return true;
     }
-    return !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate && referenceDate.isBefore(moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
+    if (programmingExercise.assessmentType !== AssessmentType.AUTOMATIC && programmingExercise.assessmentDueDate) {
+        // either the semi-automatic result is not yet available as last result (then it is preliminary), or it is already available, then it still can be changed)
+        return moment().isBefore(moment(programmingExercise.assessmentDueDate));
+    }
+    // TODO: we should handle the case that manual grading is active but the assessment due date is not set.
+    if (programmingExercise.buildAndTestStudentSubmissionsAfterDueDate) {
+        return resultCompletionDate.isBefore(moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
+    }
+    return false;
 };
 
 export const isProgrammingExerciseStudentParticipation = (participation: Participation) => {
