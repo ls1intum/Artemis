@@ -8,14 +8,16 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 
 @Repository
 public interface StudentScoreRepository extends JpaRepository<StudentScore, Long> {
 
     @Query("""
-                SELECT DISTINCT ss
-                FROM StudentScore ss
+                    SELECT DISTINCT ss
+                    FROM StudentScore ss
                 WHERE ss.user.id = :#{#userId}
             """)
     List<StudentScore> findStudentScoreByUserId(@Param("userId") Long userId);
@@ -27,4 +29,5 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
             """)
     Optional<StudentScore> findStudentScoreByStudentAndExercise(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
+    Optional<StudentScore> findStudentScoreByExerciseAndUser(Exercise exercise, User user);
 }

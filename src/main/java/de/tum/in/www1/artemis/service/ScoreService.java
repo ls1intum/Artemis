@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -42,25 +43,24 @@ public class ScoreService {
     }
 
     /**
-     * Remove all participant scores associated with an exercise
-     *
-     * @param exercise exercise for which to remove the associated participant scores
-     */
-    public void removeAssociatedWithExercise(Exercise exercise) {
-        participantScoreRepository.removeAssociatedWithExercise(exercise.getId());
-    }
-
-    /**
      * Either updates or removes an existing participant score when a result is removed
      *
      * @param resultToBeDeleted result that will be removes
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeOrUpdateAssociatedParticipantScore(Result resultToBeDeleted) {
-        Optional<ParticipantScore> associatedStudentScoreOptional = participantScoreRepository.findParticipantScoreAssociatedWithResult(resultToBeDeleted.getId());
+        Optional<ParticipantScore> associatedStudentScoreOptional;
+        if (resultToBeDeleted.isRated() != null && resultToBeDeleted.isRated() == true) {
+            associatedStudentScoreOptional = participantScoreRepository.findParticipantScoreByLastRatedResult(resultToBeDeleted);
+        }
+        else {
+            associatedStudentScoreOptional = participantScoreRepository.findParticipantScoresByLastResult(resultToBeDeleted);
+        }
+
         if (associatedStudentScoreOptional.isEmpty()) {
             return;
         }
+
         // There is a participant score connected to the result that will be deleted
         ParticipantScore associatedParticipantScore = associatedStudentScoreOptional.get();
 
@@ -102,7 +102,7 @@ public class ScoreService {
      *
      * @param createdOrUpdatedResult newly created or updated result
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateOrCreateParticipantScore(Result createdOrUpdatedResult) {
         if (createdOrUpdatedResult.getScore() == null || createdOrUpdatedResult.getCompletionDate() == null || createdOrUpdatedResult.getParticipation() == null) {
             return;
@@ -133,7 +133,7 @@ public class ScoreService {
      * @return student participation optional
      */
     private Optional<StudentParticipation> getStudentParticipationForResult(Result result) {
-        Optional<Participation> participationOptional = participationRepository.findParticipationAssociatedWithResult(result.getId());
+        Optional<Participation> participationOptional = participationRepository.findByResults(result);
         if (participationOptional.isEmpty()) {
             return Optional.empty();
         }
@@ -160,14 +160,14 @@ public class ScoreService {
         ParticipantScore existingParticipationScoreForExerciseAndParticipant = null;
         if (exercise.isTeamMode()) {
             Team team = studentParticipation.getTeam().get();
-            Optional<TeamScore> teamScoreOptional = teamScoreRepository.findTeamScoreByTeamAndExercise(exercise.getId(), team.getId());
+            Optional<TeamScore> teamScoreOptional = teamScoreRepository.findTeamScoreByExerciseAndTeam(exercise, team);
             if (teamScoreOptional.isPresent()) {
                 existingParticipationScoreForExerciseAndParticipant = teamScoreOptional.get();
             }
         }
         else {
             User user = studentParticipation.getStudent().get();
-            Optional<StudentScore> studentScoreOptional = studentScoreRepository.findStudentScoreByStudentAndExercise(exercise.getId(), user.getId());
+            Optional<StudentScore> studentScoreOptional = studentScoreRepository.findStudentScoreByExerciseAndUser(exercise, user);
             if (studentScoreOptional.isPresent()) {
                 existingParticipationScoreForExerciseAndParticipant = studentScoreOptional.get();
             }

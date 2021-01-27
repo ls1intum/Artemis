@@ -76,13 +76,13 @@ public class ExerciseService {
 
     private final ExerciseUnitRepository exerciseUnitRepository;
 
-    private final ScoreService scoreService;
+    private final ParticipantScoreRepository participantScoreRepository;
 
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
             AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService,
-            StudentExamRepository studentExamRepository, ExamRepository examRepository, ScoreService scoreService, ResultService resultService) {
+            StudentExamRepository studentExamRepository, ExamRepository examRepository, ParticipantScoreRepository participantScoreRepository, ResultService resultService) {
         this.exerciseRepository = exerciseRepository;
         this.resultService = resultService;
         this.examRepository = examRepository;
@@ -99,7 +99,7 @@ public class ExerciseService {
         this.quizScheduleService = quizScheduleService;
         this.studentExamRepository = studentExamRepository;
         this.exerciseUnitRepository = exerciseUnitRepository;
-        this.scoreService = scoreService;
+        this.participantScoreRepository = participantScoreRepository;
     }
 
     /**
@@ -307,8 +307,6 @@ public class ExerciseService {
         // delete all exercise units linking to the exercise
         this.exerciseUnitRepository.removeAllByExerciseId(exerciseId);
 
-        // make sure student scores are deleted before the exercise is deleted
-        scoreService.removeAssociatedWithExercise(exercise);
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
         // clean up the many to many relationship to avoid problems when deleting the entities but not the relationship table
@@ -333,6 +331,8 @@ public class ExerciseService {
             }
         }
 
+        // make sure student scores are deleted before the exercise is deleted
+        participantScoreRepository.removeAllByExerciseId(exercise.getId());
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
         if (exercise instanceof ProgrammingExercise) {
             programmingExerciseService.delete(exercise.getId(), deleteBaseReposBuildPlans);

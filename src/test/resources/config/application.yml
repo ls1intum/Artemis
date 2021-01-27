@@ -21,7 +21,7 @@ artemis:
     file-upload-path: uploads
     submission-export-path: exports
     resultListener:
-        isActive: false
+        isActive: true
 
 
 spring:
