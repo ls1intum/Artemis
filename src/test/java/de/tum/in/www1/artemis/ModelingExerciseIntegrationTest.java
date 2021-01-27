@@ -470,7 +470,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         exerciseToBeImported = request.postWithResponseBody("/api/modeling-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, ModelingExercise.class,
                 HttpStatus.CREATED);
 
-        SecurityUtils.setAuthorizationObject();
         assertEquals(course2.getId(), exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
         assertEquals(ExerciseMode.TEAM, exerciseToBeImported.getMode());
         assertEquals(teamAssignmentConfig.getMinTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize());

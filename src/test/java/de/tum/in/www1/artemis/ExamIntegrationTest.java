@@ -757,7 +757,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExams).doesNotContain(studentExam2);
 
         // Ensure that the participations were not deleted
-        SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
         List<StudentParticipation> participationsStudent2 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student2.getId(),
                 studentExam2.getExercises());
         assertThat(participationsStudent2).hasSize(studentExam2.getExercises().size());
@@ -850,7 +849,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExams).doesNotContain(studentExam1);
 
         // Ensure that the participations of student1 were deleted
-        SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
         participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student1.getId(), studentExam1.getExercises());
         assertThat(participationsStudent1).isEmpty();
 

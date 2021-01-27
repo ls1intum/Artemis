@@ -14,6 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -569,7 +571,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         final var username = "student1";
         final Principal principal = () -> username;
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Quiz submissions are not yet in database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
