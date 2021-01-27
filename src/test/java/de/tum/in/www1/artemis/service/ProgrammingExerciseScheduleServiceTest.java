@@ -97,6 +97,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         // Lock student repository must be called once per participation.
         verifyLockStudentRepositoryOperation(true);
+        // Update all scores should have been triggered.
+        verify(programmingExerciseGradingService, Mockito.times(1)).updateAllResults(programmingExercise);
         // Instructor build should have been triggered.
         verify(programmingSubmissionService, Mockito.times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
@@ -112,6 +114,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         // Lock student repository must be called once per participation.
         verifyLockStudentRepositoryOperation(false);
+        // Update all scores should have been triggered.
+        verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
         verify(programmingSubmissionService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
@@ -124,6 +128,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         // Lock student repository must be called once per participation.
         verifyLockStudentRepositoryOperation(false);
         verify(programmingSubmissionService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
+        // Update all scores should have been triggered.
+        verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
     }
 
     @Test
@@ -146,6 +152,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         // Lock student repository must be called once per participation.
         verifyLockStudentRepositoryOperation(true);
         verify(programmingSubmissionService, Mockito.times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+        // Update all scores should have been triggered.
+        verify(programmingExerciseGradingService, Mockito.times(1)).updateAllResults(programmingExercise);
     }
 
     @Test
@@ -163,6 +171,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         verifyLockStudentRepositoryOperation(false);
         verify(programmingSubmissionService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
+        verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
     }
 
     @Test
@@ -184,6 +193,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         verifyLockStudentRepositoryOperation(true);
         verify(programmingSubmissionService, Mockito.times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+        // Update all scores should have been triggered.
+        verify(programmingExerciseGradingService, Mockito.times(1)).updateAllResults(programmingExercise);
     }
 
     @Test
@@ -201,6 +212,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         // Only lock participations
         verifyLockStudentRepositoryOperation(true);
+        // Update all scores should have been triggered.
+        verify(programmingExerciseGradingService, Mockito.times(1)).updateAllResults(programmingExercise);
         // but do not build all
         verify(programmingSubmissionService, Mockito.times(0)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }

@@ -50,6 +50,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected ProgrammingSubmissionService programmingSubmissionService;
 
     @SpyBean
+    protected ProgrammingExerciseGradingService programmingExerciseGradingService;
+
+    @SpyBean
     protected ExamAccessService examAccessService;
 
     @SpyBean
