@@ -140,10 +140,11 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testFindOneWithExercisesByUserIdAndExamId() {
-        assertThrows(EntityNotFoundException.class, () -> {
-            studentExamService.findOneWithExercisesByUserIdAndExamId(Long.MAX_VALUE, exam1.getId());
-        });
-        assertThat(studentExamService.findOneWithExercisesByUserIdAndExamId(users.get(0).getId(), exam1.getId())).isEqualTo(studentExam1);
+        var studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(Long.MAX_VALUE, exam1.getId());
+        assertThat(studentExam).isEmpty();
+        studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(users.get(0).getId(), exam1.getId());
+        assertThat(studentExam).isPresent();
+        assertThat(studentExam.get()).isEqualTo(studentExam1);
     }
 
     @Test
@@ -391,10 +392,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false);
         var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         List<Submission> response = request.getList("/api/exercises/" + testRun.getExercises().get(0).getId() + "/test-run-submissions", HttpStatus.OK, Submission.class);
-        response.get(0).getParticipation().setSubmissions(new HashSet<>(response));
-        assertThat(((StudentParticipation) response.get(0).getParticipation()).isTestRunParticipation()).isTrue();
-        assertThat(response.get(0).getLatestResult().getAssessor()).isEqualTo(instructor);
-        assertThat(response.get(0).getLatestResult().getAssessor()).isEqualTo(((StudentParticipation) response.get(0).getParticipation()).getStudent().get());
+        assertThat(response).isNotEmpty();
+        assertThat(((StudentParticipation) response.get(0).getParticipation()).isTestRun()).isTrue();
     }
 
     @Test
@@ -1500,7 +1499,5 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(testRun.isTestRun()).isEqualTo(true);
         assertThat(testRun.getWorkingTime()).isEqualTo(6000);
         assertThat(testRun.getUser()).isEqualTo(instructor);
-        testRun.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream())
-                .forEach(studentParticipation -> assertThat(studentParticipation.isTestRunParticipation()).isEqualTo(true));
     }
 }

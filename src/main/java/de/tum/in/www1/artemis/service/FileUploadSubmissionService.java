@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Optional;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -136,8 +137,14 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
         fileUploadSubmission.setType(SubmissionType.MANUAL);
         fileUploadSubmission.setParticipation(participation);
+
+        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+        fileUploadSubmission.setResults(new ArrayList<>());
+
+        // Note: we save before the new file path is set to potentially remove the old file on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
         fileUploadSubmission.setFilePath(newFilePath);
+        // Note: we save again so that the new file is stored on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
 
         participation.addSubmission(fileUploadSubmission);

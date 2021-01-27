@@ -744,11 +744,8 @@ public class ExamService {
                 .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
         var studentExams = exam.getStudentExams();
-
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
-
         executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> setUpExerciseParticipationsAndSubmissions(generatedParticipations, studentExam)));
-
         return generatedParticipations.size();
     }
 
@@ -770,7 +767,7 @@ public class ExamService {
                         final var programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
                         ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
                     }
-                    // this will create initial (empty) submissions for quiz, text, modeling and file upload
+                    // this will also create initial (empty) submissions for quiz, text, modeling and file upload
                     var participation = participationService.startExercise(exercise, student, true);
                     generatedParticipations.add(participation);
                 }
