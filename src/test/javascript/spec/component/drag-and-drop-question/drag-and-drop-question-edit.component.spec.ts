@@ -21,6 +21,9 @@ import { DragState } from 'app/entities/quiz/drag-state.enum';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
+import { ScoringType } from 'app/entities/quiz/quiz-question.model';
+import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
+import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -85,15 +88,18 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.backupQuestion).to.deep.equal(question1);
     });
 
-    it('should click question editing buttons', () => {
-        const eventSpy = sinon.spy(component.questionMoveUp, 'emit');
+    it('should edit question in different ways', () => {
+        const eventUpSpy = sinon.spy(component.questionMoveUp, 'emit');
+        const eventDownSpy = sinon.spy(component.questionMoveDown, 'emit');
+        const eventDeleteSpy = sinon.spy(component.questionDeleted, 'emit');
 
-        /*const moveUpButton = fixture.debugElement.query(By.css('#move-up'));
-        expect(moveUpButton).to.exist;
-        moveUpButton.nativeElement.click();*/
         component.moveUpQuestion();
+        component.moveDownQuestion();
+        component.deleteQuestion();
 
-        expect(eventSpy).to.be.calledOnce;
+        expect(eventUpSpy).to.be.calledOnce;
+        expect(eventDownSpy).to.be.calledOnce;
+        expect(eventDeleteSpy).to.be.calledOnce;
     });
 
     it('should set background file', () => {
@@ -371,7 +377,6 @@ describe('DragAndDropQuestionEditComponent', () => {
         const item = new DragItem();
         const location = new DropLocation();
         const mapping = new DragAndDropMapping(item, location);
-        component.question.correctMappings = [mapping];
 
         component.deleteMapping(mapping);
 
@@ -399,5 +404,130 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         expect(questionUpdatedSpy).to.have.been.calledOnce;
         expect(component.question.correctMappings).to.deep.equal([mapping, expectedMapping]);
+    });
+
+    it('should get mapping for drag item', () => {
+        const item = new DragItem();
+        const location = new DropLocation();
+        const mapping = new DragAndDropMapping(item, location);
+        component.question.correctMappings = [mapping];
+
+        expect(component.getMappingsForDragItem(item)).to.deep.equal([mapping]);
+    });
+
+    it('should change picture drag item to text drag item', () => {
+        const item = new DragItem();
+
+        component.changeToTextDragItem(item);
+
+        expect(component).to.be.ok; // ??
+    });
+
+    it('should change text drag item to picture drag item', fakeAsync(() => {
+        const questionUpdatedSpy = sinon.spy(component.questionUpdated, 'emit');
+        const newPath = 'alwaysGoYourPath';
+        const mockReturnValue = Promise.resolve({ path: newPath } as FileUploadResponse);
+        spyOn(uploadService, 'uploadFile').and.returnValue(mockReturnValue);
+        const item = new DragItem();
+        component.dragItemFile = new File([], 'file');
+        component.dragItemPicture = 'picturePath';
+
+        component.changeToPictureDragItem(item);
+        tick();
+
+        expect(component.dragItemPicture).to.equal(newPath);
+        expect(questionUpdatedSpy).to.have.been.calledOnce;
+        expect(component.isUploadingDragItemFile).to.be.false;
+    }));
+
+    it('should change question title', () => {
+        const title = 'backupQuestionTitle';
+        component.question = new DragAndDropQuestion();
+        component.question.title = 'alternativeBackupQuestionTitle';
+        component.backupQuestion = new DragAndDropQuestion();
+        component.backupQuestion.title = title;
+
+        component.resetQuestionTitle();
+
+        expect(component.question.title).to.equal(title);
+    });
+
+    it('should reset question', () => {
+        const title = 'backupQuestionTitle';
+        const dropLocation = new DropLocation();
+        const item = new DragItem();
+        component.question = new DragAndDropQuestion();
+        component.question.title = 'alternativeBackupQuestionTitle';
+
+        const backupQuestion = {
+            type: 'drag-and-drop',
+            randomizeOrder: false,
+            invalid: true,
+            exportQuiz: false,
+            title,
+            dropLocations: [dropLocation],
+            dragItems: [item],
+            correctMappings: [],
+            backgroundFilePath: 'filepath',
+            text: 'newText',
+            explanation: 'explanation',
+            hint: 'hint',
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        } as DragAndDropQuestion;
+        component.backupQuestion = backupQuestion;
+
+        component.resetQuestion();
+
+        expect(component.question).to.deep.equal(backupQuestion);
+    });
+
+    it('should reset drag item', () => {
+        const firstItem = new DragItem();
+        firstItem.id = 404;
+        firstItem.invalid = true;
+        const secondItem = new DragItem();
+        secondItem.id = 404;
+        secondItem.invalid = false;
+        component.question = new DragAndDropQuestion();
+        component.question.dragItems = [new DragItem(), new DragItem(), firstItem, new DragItem()];
+        component.backupQuestion = new DragAndDropQuestion();
+        component.backupQuestion.dragItems = [secondItem];
+
+        component.resetDragItem(firstItem);
+
+        expect(component.question.dragItems[2].invalid).to.be.false;
+    });
+
+    it('should toggle preview', () => {
+        component.showPreview = true;
+        component.question = new DragAndDropQuestion();
+        component.question.text = 'should be removed';
+
+        component.togglePreview();
+
+        expect(component.showPreview).to.be.false;
+        expect(component.question.text).to.be.undefined;
+    });
+
+    it('should detect changes in markdown and edit accordingly', () => {
+        const questionUpdatedSpy = sinon.spy(component.questionUpdated, 'emit');
+        component.question = new DragAndDropQuestion();
+        component.question.text = 'should be removed';
+
+        component.changesInMarkdown();
+
+        expect(questionUpdatedSpy).to.have.been.calledOnce;
+        expect(component.question.text).to.be.undefined;
+    });
+
+    it('should detect domain commands', () => {
+        component.question = new DragAndDropQuestion();
+        component.question.text = 'should be removed';
+        const domainCommand = new ExplanationCommand();
+        const commands = [['take this as a command', domainCommand]];
+
+        component.domainCommandsFound([]);
+
+        expect(component.question.text).to.be.undefined;
     });
 });
