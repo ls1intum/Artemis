@@ -1,0 +1,18 @@
+{
+    "organizationManagement": {
+        "title": "Organisationsverwaltung",
+        "name": "Name",
+        "shortName": "Kurz Name",
+        "url": "URL",
+        "description": "Beschreibung",
+        "logoUrl": "Logo URL",
+        "users": "Benutzer",
+        "courses": "Kurse",
+        "emailPattern": "Email Pattern",
+        "delete": {
+            "question": "Soll die Organisation <strong>{{ title }}</strong> wirklich gelöscht werden?"
+        },
+        "addLabel": "Organisation hinzufügen",
+        "editLabel": "Organisation bearbeiten"
+    }
+}

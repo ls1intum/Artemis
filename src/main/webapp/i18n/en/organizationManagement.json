@@ -1,0 +1,18 @@
+{
+    "organizationManagement": {
+        "title": "Organization management",
+        "name": "Name",
+        "shortName": "Short Name",
+        "url": "URL",
+        "description": "Description",
+        "logoUrl": "Logo URL",
+        "users": "Users",
+        "courses": "Courses",
+        "emailPattern": "Email Pattern",
+        "delete": {
+            "question": "Are you sure you want to delete the <strong>{{ title }}</strong> organization?"
+        },
+        "addLabel": "Add organization",
+        "editLabel": "Edit organization"
+    }
+}

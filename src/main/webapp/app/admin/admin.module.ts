@@ -22,6 +22,9 @@ import { SystemNotificationManagementDetailComponent } from 'app/admin/system-no
 import { UpcomingExamsAndExercisesComponent } from './upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
 import { StatisticsGraphComponent } from 'app/admin/statistics/statistics-graph.component';
 import { DocsComponent } from 'app/admin/docs/docs.component';
+import { OrganizationManagementComponent } from './organization-management/organization-management.component';
+import { OrganizationManagementDetailComponent } from './organization-management/organization-management-detail.component';
+import { OrganizationManagementUpdateComponent } from './organization-management/organization-management-update.component';
 
 /* jhipster-needle-add-admin-module-import - JHipster will add admin modules imports here */
 
@@ -54,6 +57,9 @@ const ENTITY_STATES = [...adminState];
         JhiMetricsMonitoringComponent,
         AdminFeatureToggleComponent,
         UpcomingExamsAndExercisesComponent,
+        OrganizationManagementComponent,
+        OrganizationManagementDetailComponent,
+        OrganizationManagementUpdateComponent,
     ],
     entryComponents: [HealthModalComponent],
 })
