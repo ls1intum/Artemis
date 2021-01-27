@@ -46,6 +46,10 @@
                     <th class="d-none d-md-table-cell" jhiSortBy="maxScore">
                         <span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
+                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="includedInOverallScore">
+                        <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiOrionFilter [showInOrionWindow]="false"><span jhiTranslate="artemisApp.programmingExercise.repositories">Repositories</span></th>
                     <th jhiOrionFilter [showInOrionWindow]="false"><span jhiTranslate="artemisApp.programmingExercise.buildplans">Build Plans</span>&nbsp;</th>
                     <th class="d-none d-md-table-cell" jhiSortBy="publishBuildPlanUrl">
@@ -81,6 +85,8 @@
                     <td>{{ programmingExercise.releaseDate | artemisDate }}</td>
                     <td>{{ programmingExercise.dueDate | artemisDate }}</td>
                     <td class="d-none d-md-table-cell">{{ programmingExercise.maxScore }}</td>
+                    <td>{{ programmingExercise.bonusPoints }}</td>
+                    <td>{{ exerciseService.isIncludedInScore(programmingExercise) }}</td>
                     <td *ngIf="!isOrion" class="d-flex flex-column">
                         <div class="d-flex justify-content-between">
                             <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">

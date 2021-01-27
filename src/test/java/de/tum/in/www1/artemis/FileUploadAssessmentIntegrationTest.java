@@ -16,6 +16,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -102,6 +103,105 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
+    public void testManualAssessmentSubmit_IncludedCompletelyWithBonusPointsExercise() throws Exception {
+        // setting up exercise
+        afterReleaseFileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        afterReleaseFileUploadExercise.setMaxScore(10.0);
+        afterReleaseFileUploadExercise.setBonusPoints(10.0);
+        exerciseRepository.save(afterReleaseFileUploadExercise);
+
+        // setting up student submission
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
+        submission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, submission, "student1");
+        List<Feedback> feedbacks = new ArrayList<>();
+
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 150L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 200L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 200L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testManualAssessmentSubmit_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
+        // setting up exercise
+        afterReleaseFileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        afterReleaseFileUploadExercise.setMaxScore(10.0);
+        afterReleaseFileUploadExercise.setBonusPoints(0.0);
+        exerciseRepository.save(afterReleaseFileUploadExercise);
+
+        // setting up student submission
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
+        submission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, submission, "student1");
+        List<Feedback> feedbacks = new ArrayList<>();
+
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testManualAssessmentSubmit_IncludedAsBonusExercise() throws Exception {
+        // setting up exercise
+        afterReleaseFileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        afterReleaseFileUploadExercise.setMaxScore(10.0);
+        afterReleaseFileUploadExercise.setBonusPoints(0.0);
+        exerciseRepository.save(afterReleaseFileUploadExercise);
+
+        // setting up student submission
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
+        submission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, submission, "student1");
+        List<Feedback> feedbacks = new ArrayList<>();
+
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testManualAssessmentSubmit_NotIncludedExercise() throws Exception {
+        // setting up exercise
+        afterReleaseFileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        afterReleaseFileUploadExercise.setMaxScore(10.0);
+        afterReleaseFileUploadExercise.setBonusPoints(0.0);
+        exerciseRepository.save(afterReleaseFileUploadExercise);
+
+        // setting up student submission
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
+        submission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, submission, "student1");
+        List<Feedback> feedbacks = new ArrayList<>();
+
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+    }
+
+    public void addAssessmentFeedbackAndCheckScore(FileUploadSubmission fileUploadSubmission, List<Feedback> feedbacks, double pointsAwarded, long expectedScore) throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("submit", "true");
+        feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj"));
+        Result response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
+                params);
+        assertThat(response.getScore()).isEqualTo(expectedScore);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void testSubmitFileUploadAssessment_withResultOver100Percent() throws Exception {
         afterReleaseFileUploadExercise = (FileUploadExercise) database.addMaxScoreAndBonusPointsToExercise(afterReleaseFileUploadExercise);
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
@@ -121,7 +221,6 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         // Check that result is capped to maximum of maxScore + bonus points -> 110
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
         response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK, params);
-
         assertThat(response.getScore()).isEqualTo(110);
     }
 

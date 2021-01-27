@@ -250,7 +250,7 @@ public class ParticipationService {
      */
     private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         // Step 1a) create the student repository (based on the template repository)
-        participation = forkRepository(participation);
+        participation = copyRepository(participation);
         // Step 1b) configure the student repository (e.g. access right, etc.)
         participation = configureRepository(exercise, participation);
         // Step 2a) create the build plan (based on the BASE build plan)
@@ -261,7 +261,7 @@ public class ParticipationService {
         // (when the web hook was already initialized, see below)
         participation = performEmptyCommit(participation);
         // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
-        // Step 1c) configure the web hook of the student repository
+        // Step 3) configure the web hook of the student repository
         participation = configureRepositoryWebHook(participation);
         participation.setInitializationState(INITIALIZED);
         participation.setInitializationDate(ZonedDateTime.now());
@@ -347,7 +347,7 @@ public class ParticipationService {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
             ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
             // Note: we need a repository, otherwise the student cannot click resume.
-            programmingParticipation = forkRepository(programmingParticipation);
+            programmingParticipation = copyRepository(programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
             programmingParticipation = configureRepositoryWebHook(programmingParticipation);
             participation = programmingParticipation;
@@ -422,7 +422,7 @@ public class ParticipationService {
         submission.setType(submissionType);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         return Optional.of(submission);
     }
 
@@ -515,7 +515,7 @@ public class ParticipationService {
         return save(participation);
     }
 
-    private ProgrammingExerciseStudentParticipation forkRepository(ProgrammingExerciseStudentParticipation participation) {
+    private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository url is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUrl() == null) {
             final var programmingExercise = participation.getProgrammingExercise();
@@ -524,7 +524,7 @@ public class ParticipationService {
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
-            var newRepoUrl = versionControlService.get().forkRepository(projectKey, templateRepoName, projectKey, participantIdentifier);
+            var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, projectKey, participantIdentifier);
             // add the userInfo part to the repoURL only if the participation belongs to a single student (and not a team of students)
             if (participation.getStudent().isPresent()) {
                 newRepoUrl = newRepoUrl.withUser(participantIdentifier);
@@ -1216,7 +1216,7 @@ public class ParticipationService {
                     Submission submissionToDelete = result.getSubmission();
                     submissionRepository.deleteById(submissionToDelete.getId());
                     result.setSubmission(null);
-                    participation.removeSubmissions(submissionToDelete);
+                    participation.removeSubmission(submissionToDelete);
                 }
             }
         }

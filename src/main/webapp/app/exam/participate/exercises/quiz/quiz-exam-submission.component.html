@@ -39,7 +39,13 @@
     <div class="quiz-content container" *ngIf="exercise">
         <h4>
             {{ exercise.title }}
-            <span>[{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
+            <span
+                >[{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]
+                <jhi-included-in-score-badge
+                    *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                    [includedInOverallScore]="exercise.includedInOverallScore"
+                ></jhi-included-in-score-badge
+            ></span>
         </h4>
         <div *ngFor="let question of exercise.quizQuestions; let i = index">
             <!-- TODO: Map vs Array consistency -->

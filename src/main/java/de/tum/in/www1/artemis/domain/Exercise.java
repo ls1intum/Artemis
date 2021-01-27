@@ -13,10 +13,7 @@ import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -73,6 +70,10 @@ public abstract class Exercise extends DomainObject {
     @Enumerated(EnumType.STRING)
     @Column(name = "assessment_type")
     private AssessmentType assessmentType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "included_in_overall_score")
+    private IncludedInOverallScore includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
 
     @Column(name = "problem_statement")
     @Lob
@@ -824,6 +825,14 @@ public abstract class Exercise extends DomainObject {
                 gradingCriterion.setExercise(this);
             });
         }
+    }
+
+    public IncludedInOverallScore getIncludedInOverallScore() {
+        return includedInOverallScore;
+    }
+
+    public void setIncludedInOverallScore(IncludedInOverallScore includedInOverallScore) {
+        this.includedInOverallScore = includedInOverallScore;
     }
 
     /**

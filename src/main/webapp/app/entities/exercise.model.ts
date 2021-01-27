@@ -35,6 +35,13 @@ export enum ExerciseType {
     FILE_UPLOAD = 'file-upload',
 }
 
+// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
+export enum IncludedInOverallScore {
+    INCLUDED_COMPLETELY = 'INCLUDED_COMPLETELY',
+    INCLUDED_AS_BONUS = 'INCLUDED_AS_BONUS',
+    NOT_INCLUDED = 'NOT_INCLUDED',
+}
+
 export enum ParticipationStatus {
     QUIZ_UNINITIALIZED = 'quiz-uninitialized',
     QUIZ_ACTIVE = 'quiz-active',
@@ -71,6 +78,7 @@ export abstract class Exercise implements BaseEntity {
     public assessmentType?: AssessmentType;
     public difficulty?: DifficultyLevel;
     public mode?: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
+    public includedInOverallScore?: IncludedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY; // default value
     public teamAssignmentConfig?: TeamAssignmentConfig;
     public categories?: string[];
     public type?: ExerciseType;

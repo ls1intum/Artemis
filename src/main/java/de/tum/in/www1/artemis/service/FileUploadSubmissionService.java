@@ -140,7 +140,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmission.setFilePath(newFilePath);
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
 
-        participation.addSubmissions(fileUploadSubmission);
+        participation.addSubmission(fileUploadSubmission);
         participation.setInitializationState(InitializationState.FINISHED);
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (fileUploadSubmission.getId() == null) {
