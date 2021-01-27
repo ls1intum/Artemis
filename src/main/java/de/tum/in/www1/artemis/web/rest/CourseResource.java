@@ -820,8 +820,24 @@ public class CourseResource {
      * @return                empty
      */
     @PutMapping("/courses/{courseId}/archive")
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<Void> archiveCourse(@PathVariable Long courseId) {
+        log.info("REST request to archive Course : {}", courseId);
+
+        // Get the course with all exercises
+        final Course course = courseService.findOneWithExercisesAndLectures(courseId);
+
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        // Archiving a course is only possible after the course is over
+        if (ZonedDateTime.now().isBefore(course.getEndDate())) {
+            throw new BadRequestAlertException("You cannot archive a course that has not over.", ENTITY_NAME, "courseNotOver", true);
+        }
+
+        courseService.archiveCourse(course);
         // TODOs Course Exercises
         // 1) Get the course with all exercises and iterate over each exercise
         // 2) Fetch all student participations for the exercise

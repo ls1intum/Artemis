@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC;
 
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,10 +24,12 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -61,9 +65,14 @@ public class CourseService {
 
     private final LearningGoalRepository learningGoalRepository;
 
+    private final ProgrammingExerciseExportService programmingExerciseExportService;
+
+    private final ZipFileService zipFileService;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
-            ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository) {
+            ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository,
+            ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -75,6 +84,8 @@ public class CourseService {
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
         this.learningGoalRepository = learningGoalRepository;
+        this.programmingExerciseExportService = programmingExerciseExportService;
+        this.zipFileService = zipFileService;
     }
 
     @Autowired
@@ -127,9 +138,9 @@ public class CourseService {
     /**
      * Get one course with exercises and lectures (filtered for given user)
      *
-     * @param courseId  the course to fetch
-     * @param user      the user entity
-     * @return          the course including exercises and lectures for the user
+     * @param courseId the course to fetch
+     * @param user     the user entity
+     * @return the course including exercises and lectures for the user
      */
     public Course findOneWithExercisesAndLecturesForUser(Long courseId, User user) {
         Course course = findOneWithLecturesAndExams(courseId);
@@ -146,6 +157,7 @@ public class CourseService {
 
     /**
      * Get all courses for the given user
+     *
      * @param user the user entity
      * @return the list of all courses for the user
      */
@@ -157,7 +169,7 @@ public class CourseService {
     /**
      * Get all courses with exercises and lectures (filtered for given user)
      *
-     * @param user      the user entity
+     * @param user the user entity
      * @return the list of all courses including exercises and lectures for the user
      */
     public List<Course> findAllActiveWithExercisesAndLecturesForUser(User user) {
@@ -338,6 +350,7 @@ public class CourseService {
 
     /**
      * filters the passed exercises for the relevant ones that need to be manually assessed. This excludes quizzes and automatic programming exercises
+     *
      * @param exercises all exercises (e.g. of a course or exercise group) that should be filtered
      * @return the filtered and relevant exercises for manual assessment
      */
@@ -349,7 +362,7 @@ public class CourseService {
     /**
      * Registers a user in a course by adding him to the student group of the course
      *
-     * @param user The user that should get added to the course
+     * @param user   The user that should get added to the course
      * @param course The course to which the user should get added to
      */
     public void registerUserForCourse(User user, Course course) {
@@ -358,5 +371,34 @@ public class CourseService {
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
+    }
+
+    public void archiveCourse(Course course) {
+        // Archiving a course is only possible after the course is over
+        if (ZonedDateTime.now().isBefore(course.getEndDate())) {
+            return;
+        }
+
+        // 1) Iterate over each exercise and export the exercise submissions of the students
+        ArrayList<Path> exportedExercises = new ArrayList<Path>();
+        course.getExercises().forEach(exercise -> {
+            var participations = exercise.getStudentParticipations();
+
+            // For programming exercises: download all source code repositories of the students and zip each repository.
+            // Also download exercise, tests and solution repositories.
+            if (exercise instanceof ProgrammingExercise) {
+                var programmingParticipations = participations.stream().map(participation -> (ProgrammingExerciseStudentParticipation) participation).collect(Collectors.toList());
+                var exportedStudentRepositories = programmingExerciseExportService.exportStudentRepositories(exercise.getId(), programmingParticipations,
+                        new RepositoryExportOptionsDTO());
+
+                // TODO: Download the template, solution, and tests repositories
+
+                // Zip everything into a course zip file
+                // var zippedExercise = zipFileService.createZipFile();
+            }
+
+            // TODO: Handle archiving for other exercise types
+
+        });
     }
 }
