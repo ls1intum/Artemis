@@ -929,13 +929,13 @@ public class GitService {
      */
     public Path zipRepository(Path repoLocalPath, String zipFilename, String targetPath) throws IOException {
         // Strip slashes from name
-        zipFilename = zipFilename.replaceAll("\\s", "");
+        var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
 
-        if (!zipFilename.endsWith(".zip")) {
-            zipFilename += ".zip";
+        if (!zipFilenameWithoutSlash.endsWith(".zip")) {
+            zipFilenameWithoutSlash += ".zip";
         }
 
-        Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipFilename);
+        Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipFilenameWithoutSlash);
         Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
         return zipFileService.createZipFileWithFolderContent(zipFilePath, repoLocalPath);
     }
