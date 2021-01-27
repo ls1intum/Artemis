@@ -158,6 +158,7 @@
                 "noQuestion": "Quiz: Das Quiz hat keine Fragen.",
                 "invalidStartTime": "Quiz: Die Startzeit ist nicht gültig.",
                 "startTimeInPast": "Quiz: Die Startzeit liegt in der Vergangenheit.",
+                "quizZeroPoints": "Quiz: Die Gesamtpunktzahl ist 0.",
                 "questionTitle": "Frage {{index}}: Der Titel fehlt.",
                 "questionScore": "Frage {{index}}: Ungültige Punktzahl.",
                 "questionCorrectAnswerOption": "Frage {{index}}: Es existiert keine korrekte Antwortmöglichkeit.",

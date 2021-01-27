@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -296,6 +297,104 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(response.getFeedbacks().size()).isEqualTo(manualResult.getFeedbacks().size());
         assertThat(response.isRated().equals(Boolean.TRUE));
         assertThat(response.getCompletionDate().equals(ZonedDateTime.now()));
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_IncludedCompletelyWithBonusPointsExercise() throws Exception {
+        // setting up exercise
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        programmingExercise.setMaxScore(10.0);
+        programmingExercise.setBonusPoints(10.0);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        manualResult.getParticipation().setExercise(programmingExercise);
+
+        // setting up student submission
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 150L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 200L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 200L);
+
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
+        // setting up exercise
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        programmingExercise.setMaxScore(10.0);
+        programmingExercise.setBonusPoints(0.0);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        manualResult.getParticipation().setExercise(programmingExercise);
+
+        // setting up student submission
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_IncludedAsBonusExercise() throws Exception {
+        // setting up exercise
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        programmingExercise.setMaxScore(10.0);
+        programmingExercise.setBonusPoints(0.0);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        manualResult.getParticipation().setExercise(programmingExercise);
+
+        // setting up student submission
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_NotIncludedExercise() throws Exception {
+        // setting up exercise
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        programmingExercise.setMaxScore(10.0);
+        programmingExercise.setBonusPoints(0.0);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        manualResult.getParticipation().setExercise(programmingExercise);
+
+        // setting up student submission
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+    }
+
+    private void addAssessmentFeedbackAndCheckScore(List<Feedback> feedbacks, Double pointsAwarded, Long expectedScore) throws Exception {
+        feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
+        manualResult.setFeedbacks(feedbacks);
+        double points = programmingAssessmentService.calculateTotalScore(manualResult);
+        long score = (long) ((points / programmingExercise.getMaxScore()) * 100.0);
+        manualResult.resultString(manualResult.createResultString(points, programmingExercise.getMaxScore()));
+        manualResult.score(score);
+        manualResult.rated(true);
+        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
+                Result.class, HttpStatus.OK);
+        assertThat(response.getScore()).isEqualTo(expectedScore);
+        double maxPoints = programmingExercise.getMaxScore();
+        assertThat(response.getResultString()).isEqualTo((int) points + " of " + (int) maxPoints + " points");
     }
 
     @Test

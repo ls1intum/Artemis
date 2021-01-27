@@ -21,7 +21,7 @@
                     "yourPoints": "Deine Punkte",
                     "maxPoints": "Punkte",
                     "bonus": "Bonus Punkte",
-                    "sum": "Summe"
+                    "youAchieved": "Du hast {{achievedPoints}} Punkte von möglichen {{normalPoints}} normalen Punkten und {{bonusPoints}} Bonuspunkten erreicht"
                 }
             },
             "title": "Klausur",
@@ -53,10 +53,15 @@
             "validation": {
                 "startAndEndMustBeSet": "Start- und Enddatum der Klausur müssen festgelegt werden.",
                 "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",
+                "allExercisesInExerciseGroupOfSameIncludedType": "Alle Aufgaben in einer Aufgabengruppe müssen alle die selbe Bedeutung haben für das Klausurergebnis (Normale Aufgabe, Bonusaufgabe, Keine Bedeutung).",
+                "allExercisesInExerciseGroupGiveSameNumberOfPoints": "Alle Aufgaben in einer Aufgabengruppe müssen dieselbe Anzahl an Punkte oder Bonuspunkte geben",
+                "tooManyMaxPoints": "Überprüfe die maximale Punkteanzahl in der Klausur! Die maximalen Punkte die ein Student in den verpflichtenden Aufgaben erreichen kann ist zu gross.",
+                "tooFewMaxPoints": "Überprüfe die maximale Punkteanzahl in der Klausur! Die maximalen Punkte die ein Student in den Aufgaben erreichen kann ist zu niedrig.",
                 "numberOfExercisesMustBeSet": "Die Anzahl der Aufgaben für die Klasur muss gesetzt sein.",
                 "numberOfExercisesInExamNotSet": "Die Anzahl an Aufgaben in der Klausur ist nicht gesetzt.",
                 "tooFewExerciseGroups": "Die Anzahl der Aufgabengruppen ist zu klein.",
-                "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß."
+                "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß.",
+                "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."
             },
             "error": {
                 "cannotRegisterInstructor": "Du kannst keine Dozenten oder Administratoren zu Klausuren anmelden."
@@ -222,6 +227,7 @@
                 "manage": "Arbeitszeit verwalten",
                 "text": "Hier kannst du einen Testlauf für die Klausur erstellen. Wähle aus, welche Aufgaben die Klausur enthalten soll und führe sie aus. Anschließend, kannst du die Abgabe als Tutor bewerten. Das Ergebnis, kannst du als Student einsehen und dich beschweren. Diese Beschwerden kannst du dann als Tutor bewerten.\n<strong>Hinweis:</strong> Abgaben innerhalb von Testläufen werden nicht bei den Klausurergebnissen gezählt.",
                 "createTestRunDisabled": "Keine Aufgaben gefunden",
+                "reminderToDelete": "Achte darauf, dass du alle Testläufe vor der Durchführung der Klausur löschst.",
                 "assessTestRunDisabled": "Keiner deiner Testläufe ist beendet",
                 "delete": {
                     "question": "Soll der <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen elemente werden ebenfalls gelöscht, falls sie von keinem anderen Testlauf referenziert werden.",
