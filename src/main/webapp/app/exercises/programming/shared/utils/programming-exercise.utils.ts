@@ -33,13 +33,12 @@ export const isResultPreliminary = (latestResult: Result, programmingExercise?: 
     if (!programmingExercise) {
         return false;
     }
-
+    let resultCompletionDate = latestResult.completionDate;
     // We use the result completion date
-    if (!latestResult.completionDate) {
+    if (!resultCompletionDate) {
         // in the unlikely case the completion date is not set yet (this should not happen), it is preliminary
         return true;
     }
-    let resultCompletionDate = latestResult.completionDate;
     // If not a moment date already, try to convert it (e.g. when it is a string).
     if (resultCompletionDate && !isMoment(resultCompletionDate)) {
         resultCompletionDate = moment(resultCompletionDate);
@@ -52,7 +51,9 @@ export const isResultPreliminary = (latestResult: Result, programmingExercise?: 
         // either the semi-automatic result is not yet available as last result (then it is preliminary), or it is already available, then it still can be changed)
         return moment().isBefore(moment(programmingExercise.assessmentDueDate));
     }
-    // TODO: we should handle the case that manual grading is active but the assessment due date is not set.
+    if (programmingExercise.assessmentType !== AssessmentType.AUTOMATIC && !programmingExercise.assessmentDueDate) {
+        return latestResult.assessmentType === AssessmentType.AUTOMATIC;
+    }
     if (programmingExercise.buildAndTestStudentSubmissionsAfterDueDate) {
         return resultCompletionDate.isBefore(moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
     }
