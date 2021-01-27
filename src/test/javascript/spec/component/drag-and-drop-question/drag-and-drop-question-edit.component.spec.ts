@@ -440,7 +440,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.changeToTextDragItem(item);
 
-        expect(component).to.be.ok; // ??
+        expect(component).to.be.ok;
     });
 
     it('should change text drag item to picture drag item', fakeAsync(() => {
