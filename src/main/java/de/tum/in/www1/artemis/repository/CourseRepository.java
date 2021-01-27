@@ -66,6 +66,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("select distinct course from Course course where (course.startDate is null or course.startDate <= :#{#now}) and (course.endDate is null or course.endDate >= :#{#now}) and course.onlineCourse = false and course.registrationEnabled = true")
     List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabled(@Param("now") ZonedDateTime now);
 
+    @Query("select course from Course course left join fetch course.organizations co where course.id = :#{#courseId}")
+    Course findWithEagerOrganizations(@Param("courseId") long courseId);
+
     List<Course> findAllByShortName(String shortName);
 
     Optional<Course> findById(long courseId);

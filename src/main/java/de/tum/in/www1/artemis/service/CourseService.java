@@ -231,6 +231,11 @@ public class CourseService {
         return courseRepository.findWithEagerExercisesAndLecturesById(courseId);
     }
 
+    public Course findOneWithOrganizations(long courseId) {
+        log.debug("Request to get Course : {}", courseId);
+        return courseRepository.findWithEagerOrganizations(courseId);
+    }
+
     public Course findOneWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(long courseId) {
         log.debug("Request to get Course : {}", courseId);
         return courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(courseId);

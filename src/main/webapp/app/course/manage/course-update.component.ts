@@ -15,6 +15,7 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import * as moment from 'moment';
+import { Organization } from 'app/entities/organization.model';
 
 @Component({
     selector: 'jhi-course-update',
@@ -42,6 +43,7 @@ export class CourseUpdateComponent implements OnInit {
 
     shortNamePattern = /^[a-zA-Z][a-zA-Z0-9]{2,}$/; // must start with a letter and cannot contain special characters, at least 3 characters
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
+    courseOrganizations: Organization[];
 
     constructor(
         private courseService: CourseManagementService,
