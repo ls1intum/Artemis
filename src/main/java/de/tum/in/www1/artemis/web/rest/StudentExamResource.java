@@ -106,7 +106,7 @@ public class StudentExamResource {
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
-            filterParticipation(studentExam, exercise, participations, true);
+            filterParticipationForSummary(studentExam, exercise, participations, true);
         }
 
         return ResponseEntity.ok(studentExam);
@@ -213,6 +213,7 @@ public class StudentExamResource {
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/conduction")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, HttpServletRequest request) {
+        // NOTE: it is important that this method has the same logic (except really small differences) as getTestRunForConduction
         long start = System.currentTimeMillis();
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
@@ -251,6 +252,7 @@ public class StudentExamResource {
     @GetMapping("/courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId, HttpServletRequest request) {
+        // NOTE: it is important that this method has the same logic (except really small differences) as getStudentExamForConduction
         long start = System.currentTimeMillis();
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the test run for exam {} with id {}", examId, testRunId);
@@ -314,7 +316,7 @@ public class StudentExamResource {
         loadExercisesForStudentExam(studentExam);
 
         // 3rd fetch participations, submissions and results and connect them to the studentExam
-        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, user);
+        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, user, false);
 
         // not needed
         studentExam.getExam().setCourse(null);
@@ -365,7 +367,7 @@ public class StudentExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        StudentExam testRun = studentExamService.generateTestRun(testRunConfiguration);
+        StudentExam testRun = studentExamService.createTestRun(testRunConfiguration);
         return ResponseEntity.ok(testRun);
     }
 
@@ -396,6 +398,12 @@ public class StudentExamResource {
         if (!this.examService.isExamOver(exam)) {
             // you can only grade not submitted exams if the exam is over
             return badRequest();
+        }
+
+        // delete all test runs if the instructor forgot to delete them
+        List<StudentExam> testRuns = studentExamService.findAllTestRuns(examId);
+        for (final var testRun : testRuns) {
+            studentExamService.deleteTestRun(testRun.getId());
         }
 
         final var instructor = userService.getUser();
@@ -448,7 +456,7 @@ public class StudentExamResource {
         studentExamRepository.save(studentExam);
 
         // 3rd fetch participations, submissions and results and connect them to the studentExam
-        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser);
+        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser, true);
 
         // 4th create new exam session
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
@@ -469,7 +477,7 @@ public class StudentExamResource {
      * @param studentExam the student exam in question
      * @param currentUser logged in user with groups and authorities
      */
-    private void fetchParticipationsSubmissionsAndResultsForStudentExam(StudentExam studentExam, User currentUser) {
+    private void fetchParticipationsSubmissionsAndResultsForStudentExam(StudentExam studentExam, User currentUser, boolean forConduction) {
         // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
         List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(currentUser.getId(),
@@ -480,7 +488,14 @@ public class StudentExamResource {
         // connect & filter the exercises and student participations including the latest submission and results where necessary, to make sure all relevant associations are
         // available
         for (Exercise exercise : studentExam.getExercises()) {
-            filterParticipation(studentExam, exercise, participations, isAtLeastInstructor);
+            if (forConduction) {
+                // for conduction of the exam and test runs we never send the results to the client
+                filterParticipationForConduction(exercise, participations);
+            }
+            else {
+                // otherwise it depends on the user role & whether the results are published
+                filterParticipationForSummary(studentExam, exercise, participations, isAtLeastInstructor);
+            }
         }
     }
 
@@ -494,7 +509,7 @@ public class StudentExamResource {
      * @param participations the set of participations, wherein to search for the relevant participation
      * @param isAtLeastInstructor flag for instructor access privileges
      */
-    private void filterParticipation(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, boolean isAtLeastInstructor) {
+    private void filterParticipationForSummary(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, boolean isAtLeastInstructor) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
         exercise.setExerciseGroup(null);
@@ -521,6 +536,45 @@ public class StudentExamResource {
                 if (exercise instanceof QuizExercise) {
                     // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
                     ((QuizSubmission) latestSubmission).filterForExam(studentExam.areResultsPublishedYet(), isAtLeastInstructor);
+                }
+                else {
+                    // Note: sensitive information for quizzes was already removed above
+                    exercise.filterSensitiveInformation();
+                }
+            }
+            // add participation into an array
+            exercise.setStudentParticipations(Set.of(participation));
+        }
+    }
+
+    private void filterParticipationForConduction(Exercise exercise, List<StudentParticipation> participations) {
+        // remove the unnecessary inner course attribute
+        exercise.setCourse(null);
+        exercise.setExerciseGroup(null);
+
+        if (exercise instanceof ProgrammingExercise) {
+            ((ProgrammingExercise) exercise).setTestRepositoryUrl(null);
+        }
+
+        // get user's participation for the exercise
+        StudentParticipation participation = participations != null ? exercise.findRelevantParticipation(participations) : null;
+
+        // add relevant submission (relevancy depends on InitializationState) with its result to participation
+        if (participation != null) {
+            // remove inner exercise from participation
+            participation.setExercise(null);
+            // only include the latest submission
+            Optional<Submission> optionalLatestSubmission = participation.findLatestSubmission();
+            if (optionalLatestSubmission.isPresent()) {
+                Submission latestSubmission = optionalLatestSubmission.get();
+                latestSubmission.setResults(null);
+                latestSubmission.setParticipation(null);
+                participation.setSubmissions(Set.of(latestSubmission));
+
+                if (exercise instanceof QuizExercise) {
+                    // filter quiz solutions during conduction
+                    // for test runs, the instructor emulates a student
+                    ((QuizSubmission) latestSubmission).filterForExam(false, false);
                 }
                 else {
                     // Note: sensitive information for quizzes was already removed above
@@ -569,7 +623,7 @@ public class StudentExamResource {
                 // reload and replace the quiz exercise
                 var quizExercise = quizExerciseService.findOneWithQuestions(exercise.getId());
                 // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
-                if (!studentExam.areResultsPublishedYet()) {
+                if (!(studentExam.areResultsPublishedYet() || studentExam.isTestRun())) {
                     quizExercise.filterForStudentsDuringQuiz();
                 }
                 studentExam.getExercises().set(i, quizExercise);

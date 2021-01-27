@@ -128,7 +128,7 @@ export function configureScaCategories(artemis, exerciseId, scaCategories, progr
     let patchedCategories;
     switch (programmingLanguage) {
         case 'JAVA':
-            let badPracticeCategory = scaCategories.find((category) => (category.name = 'Bad Practice'));
+            let badPracticeCategory = scaCategories.find((category) => category.name === 'Bad Practice');
             if (!badPracticeCategory) {
                 fail(`FAILTEST: Could not find SCA category "Bad Practice" for exercise: ${exerciseId}`);
             }
