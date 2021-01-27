@@ -25,7 +25,7 @@ public class StudentParticipation extends Participation {
 
     // information whether this student participation belongs to a test run exam, not relevant for course exercises
     @Column(name = "test_run")
-    private Boolean testRun;
+    private Boolean testRun = false;
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
