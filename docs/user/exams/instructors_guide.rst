@@ -176,7 +176,7 @@ During the exam creation and configuration, you can create your exam and configu
 - After the :ref:`exam conduction <exam_conduction>` ends, you can click on |assess_unsubmitted_student_exams|. This action will automatically evaluate the text and modeling exercise submissions with 0 points for the unsubmitted student exams. Additionally, empty submissions will be automatically graded with 0 points.
 
     .. note::
-        If you do not press this button, the unsubmitted student submissions and the empty submissions will appear in the assessment dashboard of the exam, which    leads to unnecessary effort during grading.
+        If you do not press this button, the unsubmitted student submissions and the empty submissions will appear in the assessment dashboard of the exam, which leads to unnecessary effort during grading.
 
 .. figure:: instructor/student_exams.png
    :alt: Student Exam Page
