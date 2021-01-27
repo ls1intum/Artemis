@@ -6,7 +6,6 @@ import { CourseExercisesComponent } from 'app/overview/course-exercises/course-e
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
-import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { TeamComponent } from 'app/exercises/shared/team/team.component';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
