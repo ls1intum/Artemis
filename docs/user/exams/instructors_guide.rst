@@ -173,11 +173,17 @@ During the exam creation and configuration, you can create your exam and configu
     .. note::
        If you do not press this button, the students quiz exercises will not be graded.
 
+- After the :ref:`exam conduction <exam_conduction>` ends, you can click on |assess_unsubmitted_student_exams|. This action will automatically evaluate the text and modeling exercise submissions with 0 points for the unsubmitted student exams. Additionally, empty submissions will be automatically graded with 0 points.
+
+    .. note::
+        If you do not press this button, the unsubmitted student submissions and the empty submissions will appear in the assessment dashboard of the exam, which leads to unnecessary effort during grading.
+
 .. figure:: instructor/student_exams.png
    :alt: Student Exam Page
    :align: center
 
    Student Exam Page
+
 
 1.7 Conducting Test Runs
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -339,6 +345,7 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
    Assessor responding to a Complaint
 
 .. |assess_test_runs| image:: instructor/buttons/assess_test_runs.png
+.. |assess_unsubmitted_student_exams| image:: instructor/buttons/assess_unsubmitted_student_exams.png
 .. |check_plagiarism| image:: instructor/buttons/check_plagiarism.png
 .. |configure_grading| image:: instructor/buttons/configure_grading.png
 .. |course_management| image:: instructor/buttons/course_management.png
