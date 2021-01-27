@@ -29,10 +29,12 @@ import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.com
 import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
-import { CourseLearningGoalsComponent } from './course-learning-goals/course-learning-goals.component';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
+
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 const routes: Routes = [
     {
