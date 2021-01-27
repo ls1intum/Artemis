@@ -45,6 +45,8 @@ public class StudentExamService {
 
     private SubmissionService submissionService;
 
+    private final ExamQuizService examQuizService;
+
     private final QuizSubmissionRepository quizSubmissionRepository;
 
     private final TextSubmissionRepository textSubmissionRepository;
@@ -62,7 +64,7 @@ public class StudentExamService {
     public StudentExamService(StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
@@ -73,6 +75,7 @@ public class StudentExamService {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.examQuizService = examQuizService;
     }
 
     @Autowired
@@ -156,6 +159,10 @@ public class StudentExamService {
                 log.error("lockStudentRepositories threw an exception", e);
             }
         }
+        else {
+            // immediately evaluate quiz participations for test runs
+            examQuizService.evaluateQuizParticipationsForTestRun(studentExam);
+        }
 
         return ResponseEntity.ok(studentExam);
     }
@@ -174,9 +181,6 @@ public class StudentExamService {
             // we do not apply the following checks for programming exercises or file upload exercises
             try {
                 saveSubmission(currentUser, existingParticipations, exercise);
-                if (studentExam.isTestRun()) {
-                    participationService.markSubmissionsOfTestRunParticipations(existingParticipations);
-                }
             }
             catch (Exception e) {
                 log.error("saveSubmission threw an exception", e);
