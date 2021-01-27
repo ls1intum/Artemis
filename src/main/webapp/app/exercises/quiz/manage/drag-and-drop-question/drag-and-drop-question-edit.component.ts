@@ -20,7 +20,7 @@ import { cloneDeep } from 'lodash';
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
     templateUrl: './drag-and-drop-question-edit.component.html',
-    providers: [ArtemisMarkdownService, DragAndDropQuestionUtil],
+    providers: [DragAndDropQuestionUtil],
     styleUrls: ['./drag-and-drop-question-edit.component.scss', '../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
 })

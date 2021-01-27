@@ -1,3 +1,8 @@
+// Needed for mathematical formulas
+@import '~katex/dist/katex.css';
+// Needed for highlighting code
+@import '~highlight.js/styles/vs.css';
+
 .markdown-editor-wrapper {
     display: flex;
     flex-flow: column nowrap;

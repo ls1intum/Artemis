@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import * as showdown from 'showdown';
-import * as showdownKatex from 'showdown-katex';
-import * as showdownHighlight from 'showdown-highlight';
 import * as DOMPurify from 'dompurify';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { TextHintExplanationInterface } from 'app/entities/quiz/quiz-question.model';
+
+const showdownKatex = require('showdown-katex');
+const showdownHighlight = require('showdown-highlight');
 
 /**
  * showdown will add the classes to the converted html
@@ -26,7 +27,7 @@ const addCSSClass = Object.keys(classMap).map((key) => ({
     replace: `<${key} class="${classMap[key]}" $1>`,
 }));
 
-@Injectable({ providedIn: 'root' })
+@Injectable()
 export class ArtemisMarkdownService {
     static hintOrExpRegex = new RegExp(escapeStringForUseInRegex(`${ExplanationCommand.identifier}`) + '|' + escapeStringForUseInRegex(`${HintCommand.identifier}`), 'g');
 
@@ -138,7 +139,7 @@ export class ArtemisMarkdownService {
             tables: true,
             openLinksInNewWindow: true,
             backslashEscapesHTMLTags: true,
-            extensions: [...extensions, showdownKatex(), showdownHighlight(), ...addCSSClass],
+            extensions: [...extensions, showdownKatex.showdownKatex(), showdownHighlight.showdownHighlight(), ...addCSSClass],
         });
         const html = converter.makeHtml(markdownText);
         const purifyParameters = {};

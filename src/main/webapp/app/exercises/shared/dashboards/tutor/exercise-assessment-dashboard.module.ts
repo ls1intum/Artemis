@@ -17,6 +17,7 @@ import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercise
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
 
@@ -38,6 +39,7 @@ const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
         ArtemisProgrammingAssessmentModule,
         ArtemisAssessmentSharedModule,
         ArtemisTutorParticipationGraphModule,
+        ArtemisMarkdownModule,
     ],
     declarations: [ExerciseAssessmentDashboardComponent],
     providers: [],

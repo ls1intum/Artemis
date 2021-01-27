@@ -10,6 +10,7 @@ import { AssessmentInstructionsComponent } from './assessment-instructions/asses
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
     imports: [
@@ -20,6 +21,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisAssessmentSharedModule,
         ArtemisSharedComponentModule,
+        ArtemisMarkdownModule,
     ],
     declarations: [ExpandableSectionComponent, AssessmentInstructionsComponent, CollapsableAssessmentInstructionsComponent, StructuredGradingInstructionsAssessmentLayoutComponent],
     exports: [CollapsableAssessmentInstructionsComponent, ExpandableSectionComponent, StructuredGradingInstructionsAssessmentLayoutComponent, AssessmentInstructionsComponent],
