@@ -75,19 +75,7 @@ const routes: Routes = [
     },
     {
         path: 'courses/:courseId/exercises/:exerciseId',
-        component: CourseExerciseDetailsComponent,
-        data: {
-            authorities: [Authority.USER],
-            pageTitle: 'overview.exercise',
-        },
-        canActivate: [UserRouteAccessService],
-        children: [
-            {
-                path: '',
-                pathMatch: 'full',
-                loadChildren: () => import('app/overview/student-questions/student-questions.module').then((m) => m.ArtemisStudentQuestionsModule),
-            },
-        ],
+        loadChildren: () => import('app/overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
     },
     {
         path: 'courses/:courseId/exercises/:exerciseId/teams/:teamId',

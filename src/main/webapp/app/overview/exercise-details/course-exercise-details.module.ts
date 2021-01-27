@@ -1,3 +1,7 @@
+import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
+import { RouterModule, Routes } from '@angular/router';
+
 import { NgModule } from '@angular/core';
 import { ChartsModule } from 'ng2-charts';
 import { ClipboardModule } from 'ngx-clipboard';
@@ -30,6 +34,25 @@ import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-g
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 
+const routes: Routes = [
+    {
+        path: '',
+        component: CourseExerciseDetailsComponent,
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'overview.exercise',
+        },
+        canActivate: [UserRouteAccessService],
+        children: [
+            {
+                path: '',
+                pathMatch: 'full',
+                loadChildren: () => import('app/overview/student-questions/student-questions.module').then((m) => m.ArtemisStudentQuestionsModule),
+            },
+        ],
+    },
+];
+
 @NgModule({
     imports: [
         ArtemisExerciseButtonsModule,
@@ -51,19 +74,12 @@ import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/co
         ArtemisTeamModule,
         RatingModule,
         ArtemisLearningGoalsModule,
+        ArtemisProgrammingExerciseInstructionsRenderModule,
+        RouterModule.forChild(routes),
     ],
     declarations: [
-        CoursesComponent,
-        CourseOverviewComponent,
-        CourseRegistrationSelectorComponent,
-        CourseCardComponent,
-        CourseStatisticsComponent,
-        CourseExercisesComponent,
-        CourseLecturesComponent,
-        CourseLectureRowComponent,
-        CourseExamsComponent,
-        CourseExamDetailComponent,
-        CourseLearningGoalsComponent,
+        CourseExerciseDetailsComponent,
     ],
+    exports: [CourseExerciseDetailsComponent],
 })
-export class ArtemisCoursesModule {}
+export class CourseExerciseDetailsModule {}
