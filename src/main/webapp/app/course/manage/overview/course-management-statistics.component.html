@@ -1,17 +1,14 @@
-<div class="col">
-    <h5 class="col-md-12 text-center" style="margin-top: 15px">{{ chartName }}</h5>
-    <div>
-        <canvas
-            class="col-md-10 offset-md-1"
-            baseChart
-            height="350"
-            width="750"
-            [datasets]="chartData"
-            [labels]="barChartLabels"
-            [options]="barChartOptions"
-            [legend]="barChartLegend"
-            [chartType]="barChartType"
-        ></canvas>
-    </div>
-    <h5 class="col-md-10 offset-md-1 text-center mt-3 mb-5">{{ chartTime }}</h5>
+<h5 class="col-md-12 text-center" style="margin-top: 15px">{{ chartName }}</h5>
+<div>
+    <canvas
+        class="col-md-10 offset-md-1"
+        baseChart
+        height="350"
+        width="750"
+        [datasets]="chartData"
+        [labels]="barChartLabels"
+        [options]="barChartOptions"
+        [legend]="barChartLegend"
+        [chartType]="barChartType"
+    ></canvas>
 </div>

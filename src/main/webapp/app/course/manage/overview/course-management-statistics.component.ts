@@ -4,7 +4,6 @@ import { ChartDataSets, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
-import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-course-management-statistics',
@@ -25,7 +24,6 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
 
     // Chart
     chartName: string;
-    chartTime: any;
 
     // Histogram related properties
     barChartOptions: any = {};
@@ -70,9 +68,7 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
     }
 
     private createLabels() {
-        const prefix = this.translateService.instant('calendar_week');
-        const startDate = moment().subtract(3, 'weeks');
-        const endDate = moment();
+        /*const prefix = this.translateService.instant('calendar_week');
         let currentWeek;
         for (let i = 0; i < 4; i++) {
             currentWeek = moment()
@@ -80,8 +76,10 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
                 .isoWeekday(1)
                 .isoWeek();
             this.barChartLabels[i] = prefix + ' ' + currentWeek;
+        }*/
+        for (let i = 0; i < 4; i++) {
+            this.barChartLabels[i] = this.translateService.instant(`overview.${3 - i}_weeks_ago`);
         }
-        this.chartTime = startDate.isoWeekday(1).format('DD.MM.YYYY') + ' - ' + endDate.isoWeekday(7).format('DD.MM.YYYY');
     }
 
     private createChart() {

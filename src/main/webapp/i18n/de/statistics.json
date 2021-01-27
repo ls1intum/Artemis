@@ -22,6 +22,12 @@
         "created_feedbacks": "Erstellte Rückmeldungen"
     },
     "calendar_week": "KW",
+    "overview": {
+        "3_weeks_ago": "Vor 3 Wochen",
+        "2_weeks_ago": "Vor 2 Wochen",
+        "1_weeks_ago": "Vor 1 Woche",
+        "0_weeks_ago": "Aktuelle Woche"
+    },
     "weekdays": {
         "monday": "Montag",
         "tuesday": "Dienstag",
