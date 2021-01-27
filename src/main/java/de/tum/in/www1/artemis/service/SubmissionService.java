@@ -387,7 +387,7 @@ public class SubmissionService {
 
     /**
      * Add a result to the last {@link Submission} of a {@link StudentParticipation}, see {@link StudentParticipation#findLatestSubmission()}, with a feedback of type {@link FeedbackType#AUTOMATIC}.
-     * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment, see {@link StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation}.
+     * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment, see {@link StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation}.
      * Sets the feedback text and result score.
      *
      * @param studentParticipation the studentParticipation containing the latest result

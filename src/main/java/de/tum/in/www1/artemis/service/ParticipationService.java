@@ -1044,7 +1044,7 @@ public class ParticipationService {
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
     public List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(Long exerciseId, int correctionRound) {
-        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation(exerciseId, correctionRound);
+        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exerciseId, correctionRound);
     }
 
     /**

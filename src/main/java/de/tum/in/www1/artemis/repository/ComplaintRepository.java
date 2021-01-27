@@ -88,13 +88,12 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     @Query("""
             SELECT COUNT (DISTINCT p) FROM StudentParticipation p
             WHERE p.exercise.id = :#{#exerciseId}
+            AND p.testRun = FALSE
             AND EXISTS (SELECT s FROM p.submissions s
                         WHERE s.results IS NOT EMPTY
                         AND EXISTS (SELECT c FROM Complaint c
                             WHERE EXISTS (SELECT r.id FROM s.results r WHERE r.id = c.result.id)
                             AND c.complaintType = :#{#complaintType}))
-            AND NOT EXISTS (SELECT prs FROM p.results prs
-                        WHERE prs.assessor.id = p.student.id)
             """)
     long countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(Long exerciseId, ComplaintType complaintType);
 
