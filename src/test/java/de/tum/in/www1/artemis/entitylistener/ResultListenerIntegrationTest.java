@@ -96,7 +96,6 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         idOfCourse = course.getId();
         createIndividualTextExercise(pastTimestamp, pastTimestamp, pastTimestamp);
         createTeamTextExerciseAndTeam(pastTimestamp, pastTimestamp, pastTimestamp);
-
     }
 
     @ParameterizedTest
