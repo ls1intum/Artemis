@@ -7,6 +7,9 @@ import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/ex
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { TextHintExplanationInterface } from 'app/entities/quiz/quiz-question.model';
 
+const showdownKatex = require('showdown-katex');
+const showdownHighlight = require('showdown-highlight');
+
 /**
  * showdown will add the classes to the converted html
  * see: https://github.com/showdownjs/showdown/wiki/Add-default-classes-for-each-HTML-element
@@ -136,6 +139,7 @@ export class ArtemisMarkdownService {
             tables: true,
             openLinksInNewWindow: true,
             backslashEscapesHTMLTags: true,
+            extensions: [...extensions, showdownKatex.showdownKatex(), showdownHighlight.showdownHighlight(), ...addCSSClass],
         });
         const html = converter.makeHtml(markdownText);
         const purifyParameters = {};

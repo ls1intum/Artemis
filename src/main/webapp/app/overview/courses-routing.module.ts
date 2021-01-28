@@ -73,10 +73,6 @@ const routes: Routes = [
         ],
     },
     {
-        path: 'courses/:courseId/exercises/:exerciseId',
-        loadChildren: () => import('app/overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
-    },
-    {
         path: 'courses/:courseId/exercises/:exerciseId/teams/:teamId',
         component: TeamComponent,
         data: {
