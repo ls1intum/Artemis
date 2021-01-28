@@ -1,14 +1,13 @@
 import { Injectable } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import * as showdown from 'showdown';
+import * as showdownKatex from 'showdown-katex';
+import * as showdownHighlight from 'showdown-highlight';
 import * as DOMPurify from 'dompurify';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { TextHintExplanationInterface } from 'app/entities/quiz/quiz-question.model';
-
-const showdownKatex = require('showdown-katex');
-const showdownHighlight = require('showdown-highlight');
 
 /**
  * showdown will add the classes to the converted html
