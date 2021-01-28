@@ -121,7 +121,7 @@ public class ScoreService {
         }
 
         // There is a deadlock problem with programming exercises here if we use the participation from the result (reason unknown at the moment)
-        // ,therefore we get the participation from the database
+        // therefore we get the participation from the database
         Optional<StudentParticipation> studentParticipationOptional = getStudentParticipationForResult(createdOrUpdatedResult);
         if (studentParticipationOptional.isEmpty()) {
             return;
