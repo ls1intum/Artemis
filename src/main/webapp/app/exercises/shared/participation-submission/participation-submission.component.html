@@ -17,13 +17,14 @@
         [rows]="submissions"
         [sorts]="[{ prop: 'id', dir: 'asc' }]"
         [rowClass]=""
+        [scrollbarH]="true"
     >
-        <ngx-datatable-column name="Id" prop="id">
+        <ngx-datatable-column name="Id" prop="id" [minWidth]="60" [width]="60">
             <ng-template ngx-datatable-cell-template let-value="value">
                 {{ value }}
             </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column prop="type">
+        <ngx-datatable-column prop="type" [minWidth]="80" [width]="80">
             <ng-template ngx-datatable-header-template>
                 <span jhiTranslate="artemisApp.participation.participationSubmission.submissionType"></span>
             </ng-template>
@@ -31,7 +32,7 @@
                 {{ value }}
             </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column prop="submissionDate">
+        <ngx-datatable-column prop="submissionDate" [minWidth]="80" [width]="80">
             <ng-template ngx-datatable-header-template>
                 <span jhiTranslate="artemisApp.participation.participationSubmission.submissionDate"></span>
             </ng-template>
@@ -39,7 +40,7 @@
                 {{ value | artemisDate: 'long':true }}
             </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column prop="results">
+        <ngx-datatable-column prop="results" [minWidth]="60" [width]="80">
             <ng-template ngx-datatable-header-template>
                 <span jhiTranslate="artemisApp.participation.participationSubmission.resultCount"></span>
             </ng-template>
@@ -47,23 +48,49 @@
                 {{ value.length || 0 }}
             </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column prop="latestResult">
+        <ngx-datatable-column prop="results" [minWidth]="500" [width]="500">
             <ng-template ngx-datatable-header-template>
-                <span jhiTranslate="artemisApp.participation.participationSubmission.lastResult"></span>
+                <span jhiTranslate="artemisApp.participation.participationSubmission.results"></span>
             </ng-template>
             <ng-template ngx-datatable-cell-template let-value="value">
-                <jhi-result [result]="value" [participation]="participation" [showUngradedResults]="true" [showGradedBadge]="true"></jhi-result>
+                <div class="d-flex flex-column">
+                    <div *ngFor="let result of value">
+                        <jhi-result [result]="result" [participation]="participation" [showUngradedResults]="true" [showGradedBadge]="true"></jhi-result>
+                    </div>
+                </div>
             </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column prop="latestResult">
+        <ngx-datatable-column prop="results" [minWidth]="180" [width]="180">
+            <ng-template ngx-datatable-header-template>
+                <span jhiTranslate="artemisApp.result.assessmentType"></span>
+            </ng-template>
+            <ng-template ngx-datatable-cell-template let-value="value">
+                <div class="d-flex flex-column">
+                    <div *ngFor="let result of value">{{ result.assessmentType }}</div>
+                </div>
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column prop="results" [minWidth]="200" [width]="200">
             <ng-template ngx-datatable-header-template>
                 <span jhiTranslate="artemisApp.participation.participationSubmission.assessor"></span>
             </ng-template>
             <ng-template ngx-datatable-cell-template let-value="value">
-                {{ value && value.assessor ? value.assessor.name : 'n.a' }}
+                <div class="d-flex flex-column">
+                    <div *ngFor="let result of value">{{ result.assessor ? result.assessor.name : 'n.a' }}</div>
+                </div>
             </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column prop="id">
+        <ngx-datatable-column prop="results" [minWidth]="200" [width]="200">
+            <ng-template ngx-datatable-header-template>
+                <span jhiTranslate="artemisApp.exercise.completionDate"></span>
+            </ng-template>
+            <ng-template ngx-datatable-cell-template let-value="value">
+                <div class="d-flex flex-column">
+                    <div *ngFor="let result of value">{{ result.completionDate | artemisDate }}</div>
+                </div>
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column prop="id" [minWidth]="120" [width]="120">
             <ng-template ngx-datatable-header-template>
                 <span jhiTranslate="artemisApp.participation.participationSubmission.action"></span>
             </ng-template>
