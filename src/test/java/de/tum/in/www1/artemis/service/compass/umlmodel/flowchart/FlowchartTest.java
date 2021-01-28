@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.flowchart;
 
 import static com.google.gson.JsonParser.parseString;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.Flowcharts.FLOWCHART_MODEL_1A;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.Flowcharts.FLOWCHART_MODEL_1B;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.Flowcharts.FLOWCHART_MODEL_2;
+import static de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartsHolder.FLOWCHART_MODEL_1A;
+import static de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartsHolder.FLOWCHART_MODEL_1B;
+import static de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartsHolder.FLOWCHART_MODEL_2;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 public class FlowchartTest extends AbstractUMLDiagramTest {
 
     @Test
-    void similarityFlowchart_equalModels() {
+    void similarityFlowchartEqualModels() {
         compareSubmissions(modelingSubmission(FLOWCHART_MODEL_1A), modelingSubmission(FLOWCHART_MODEL_1A), 0.8, 100.0);
         compareSubmissions(modelingSubmission(FLOWCHART_MODEL_2), modelingSubmission(FLOWCHART_MODEL_2), 0.8, 100.0);
 
@@ -26,7 +26,7 @@ public class FlowchartTest extends AbstractUMLDiagramTest {
     }
 
     @Test
-    void similarityFlowchart_differentModels() {
+    void similarityFlowchartDifferentModels() {
         compareSubmissions(modelingSubmission(FLOWCHART_MODEL_1A), modelingSubmission(FLOWCHART_MODEL_2), 0.0, 43.2);
     }
 
