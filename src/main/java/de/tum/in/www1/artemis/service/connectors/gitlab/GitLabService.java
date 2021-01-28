@@ -101,17 +101,24 @@ public class GitLabService extends AbstractVersionControlService {
         final var userId = gitLabUserManagementService.getUserId(user.getLogin());
 
         try {
+            if (userAlreadyMember(repositoryId, userId)) return;
             gitlab.getProjectApi().addMember(repositoryId, userId, DEVELOPER);
+        } catch (GitLabApiException e) {
+            throw new GitLabException("Error while trying to add user to repository: " + user.getLogin() + " to repo " + repositoryUrl, e);
         }
-        catch (GitLabApiException e) {
-            if (e.getValidationErrors().containsKey("access_level")
-                    && e.getValidationErrors().get("access_level").stream().anyMatch(s -> s.contains("should be greater than or equal to"))) {
+    }
+
+    private boolean userAlreadyMember(String repositoryId, int userId) {
+        try {
+            final Member member = gitlab.getProjectApi().getMember(repositoryId, userId);
+            if (member != null && member.getAccessLevel() == DEVELOPER) {
                 log.warn("Member already has the requested permissions! Permission stays the same");
+                return true;
             }
-            else {
-                throw new GitLabException("Error while trying to add user to repository: " + user.getLogin() + " to repo " + repositoryUrl, e);
-            }
+        } catch (GitLabApiException ignored) {
+            //Exception expected in case that the user doe not yet exist.
         }
+        return false;
     }
 
     @Override
