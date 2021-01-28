@@ -156,9 +156,7 @@ public class ScoreService {
         if (!isStudentParticipation) {
             return Optional.empty();
         }
-        else {
-            return Optional.of((StudentParticipation) participation);
-        }
+        return Optional.of((StudentParticipation) participation);
     }
 
     /**
