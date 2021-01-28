@@ -532,7 +532,7 @@ public class QuizScheduleService {
      * @param userSubmissionMap a Map with all submissions for the given quizExercise mapped by the username
      * @return the number of processed submissions (submit or timeout)
      */
-    int saveQuizSubmissionWithParticipationAndResultToDatabase(@NotNull QuizExercise quizExercise, Map<String, QuizSubmission> userSubmissionMap) {
+    private int saveQuizSubmissionWithParticipationAndResultToDatabase(@NotNull QuizExercise quizExercise, Map<String, QuizSubmission> userSubmissionMap) {
 
         int count = 0;
 
