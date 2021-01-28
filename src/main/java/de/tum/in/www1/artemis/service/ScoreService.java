@@ -50,7 +50,7 @@ public class ScoreService {
      *
      * @param resultToBeDeleted result that will be removes
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void removeOrUpdateAssociatedParticipantScore(Result resultToBeDeleted) {
 
         // In this method we use custom @Query methods that will fail if no authentication is available, therefore
@@ -114,7 +114,7 @@ public class ScoreService {
      *
      * @param createdOrUpdatedResult newly created or updated result
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void updateOrCreateParticipantScore(Result createdOrUpdatedResult) {
         if (createdOrUpdatedResult.getScore() == null || createdOrUpdatedResult.getCompletionDate() == null || createdOrUpdatedResult.getParticipation() == null) {
             return;
