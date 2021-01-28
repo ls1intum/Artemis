@@ -499,7 +499,6 @@ public class SubmissionService {
      * Checks if the exercise due date has passed. For exam exercises it checks if the latest possible exam end date has passed.
      *
      * @param exercise course exercise or exam exercise that is checked
-     * @return boolean
      */
     public void checkIfExerciseDueDateIsReached(Exercise exercise) throws AccessForbiddenException {
         final boolean isExamMode = exercise.isExamExercise();
