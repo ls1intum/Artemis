@@ -25,8 +25,17 @@
             Assessment locked by: otherUser
         </span>
         <span
+            id="moreFeedbackRequest"
+            *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && hasMoreFeedbackRequest && !complaintHandled"
+            class="ml-3"
+            style="font-size: 65%"
+            jhiTranslate="artemisApp.assessment.moreFeedbackRequest"
+        >
+            You have to respond to the feedback request.
+        </span>
+        <span
             id="assessmentReadOnlyUnhandledComplaint"
-            *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && !complaintHandled"
+            *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && !hasMoreFeedbackRequest && !complaintHandled"
             class="ml-3"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentReadOnlyUnhandledComplaint"
