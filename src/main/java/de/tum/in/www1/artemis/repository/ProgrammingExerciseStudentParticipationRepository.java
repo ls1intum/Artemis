@@ -28,7 +28,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             @Param("dateTime") ZonedDateTime dateTime);
 
     @Query("select p from ProgrammingExerciseStudentParticipation p left join fetch p.results pr left join fetch pr.feedbacks left join fetch pr.submission left join fetch pr.assessor"
-            + " where p.id = :participationId and pr.id = (select max(prr.id) from p.results prr where prr.assessmentType = 'MANUAL' or prr.assessmentType = 'SEMI_AUTOMATIC')")
+            + " where p.id = :participationId and pr.id = (select max(prr.id) from p.results prr where prr.assessmentType = 'MANUAL' or prr.assessmentType = 'SEMI_AUTOMATIC' or prr.assessmentType = 'TEST_RUN')")
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestManualOrSemiAutomaticResultAndFeedbacksAndRelatedSubmissionAndAssessor(
             @Param("participationId") Long participationId);
 

@@ -444,8 +444,10 @@ public class SubmissionService {
         }
 
         result.setAssessmentType(AssessmentType.MANUAL);
+        // Workaround to prevent the assessor turning into a proxy object after saving
+        var assessor = result.getAssessor();
         result = resultRepository.save(result);
-        log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getName());
+        result.setAssessor(assessor);
         return result;
     }
 

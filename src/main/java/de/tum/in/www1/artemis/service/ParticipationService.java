@@ -80,7 +80,11 @@ public class ParticipationService {
 
     private final QuizScheduleService quizScheduleService;
 
+    private final QuizExerciseRepository quizExerciseRepository;
+
     private final UrlService urlService;
+
+    private final FeedbackRepository feedbackRepository;
 
     public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -89,7 +93,8 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserService userService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService,
-            @Lazy QuizScheduleService quizScheduleService, RatingRepository ratingRepository, UrlService urlService) {
+            @Lazy QuizScheduleService quizScheduleService, QuizExerciseRepository quizExerciseRepository, RatingRepository ratingRepository, UrlService urlService,
+            FeedbackRepository feedbackRepository) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -108,8 +113,10 @@ public class ParticipationService {
         this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
         this.quizScheduleService = quizScheduleService;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.ratingRepository = ratingRepository;
         this.urlService = urlService;
+        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -270,43 +277,72 @@ public class ParticipationService {
     }
 
     /**
-     * In order to distinguish test run submissions from student exam submissions we add a manual result to the test run submissions.
+     * In order to distinguish test run submissions from student exam submissions we add a Test Run result to the test run submissions.
      * We add draft assessments with the instructor as assessor to the empty submissions in order to hide them from tutors for correction.
      * This way the submission appears to, and can only by assessed by, the instructor who created the test run.
+     * For quizzes, we also calculate the score.
      * @param participations The test run participations
      */
     public void markSubmissionsOfTestRunParticipations(List<StudentParticipation> participations) {
         for (final var participation : participations) {
-            final Exercise exercise = participation.getExercise();
-            Submission submission;
-            if (participation instanceof ProgrammingExerciseParticipation) {
-                Set<Submission> programmingSubmissions = new HashSet<>(submissionRepository.findAllByParticipationId(participation.getId()));
-                participation.setSubmissions(programmingSubmissions);
-                if (programmingSubmissions.isEmpty()) {
-                    submission = initializeSubmission(participation, exercise, null).get();
-                    // required so that the assessment dashboard statistics are calculated correctly
-                    submission.setSubmitted(true);
-                }
-                submission = participation.getSubmissions().iterator().next();
+            final var optionalExistingSubmission = participation.findLatestSubmission();
+            if (optionalExistingSubmission.isPresent()) {
+                Submission submission = optionalExistingSubmission.get();
 
+                // We add a result for test runs with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
+                submission = submissionRepository.findWithEagerResultAndFeedbackById(submission.getId()).get();
+                var manualResults = submission.getManualResults();
+                if (manualResults.isEmpty()) {
+                    submission.setSubmissionDate(ZonedDateTime.now());
+                    Result result = new Result();
+                    result.setParticipation(participation);
+                    result.setAssessor(participation.getStudent().get());
+                    result.setAssessmentType(AssessmentType.TEST_RUN);
+
+                    if (submission instanceof ProgrammingSubmission) {
+                        var latestAutomaticResult = submission.getLatestResult();
+                        if (latestAutomaticResult != null) {
+                            List<Feedback> automaticFeedbacks = latestAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+                            result = resultRepository.save(result);
+
+                            // Copy automatic feedbacks into the manual result
+                            for (Feedback feedback : automaticFeedbacks) {
+                                feedback = feedbackRepository.save(feedback);
+                                feedback.setResult(result);
+                            }
+                            result.setFeedbacks(automaticFeedbacks);
+                            result.setResultString(latestAutomaticResult.getResultString());
+                            resultRepository.save(result);
+                            result.setSubmission(submission);
+                            submission.addResult(result);
+                            submissionRepository.save(submission);
+                        }
+                    }
+                    else if (submission instanceof QuizSubmission) {
+                        participation.setExercise(quizExerciseRepository.findWithEagerQuestionsById(participation.getExercise().getId()).orElse(null));
+                        // set submission to calculate scores
+                        result.setSubmission(submission);
+                        // calculate scores and update result and submission accordingly
+                        ((QuizSubmission) submission).calculateAndUpdateScores((QuizExercise) participation.getExercise());
+                        result.evaluateSubmission();
+                        // remove submission to follow save order for ordered collections
+                        result.setSubmission(null);
+                        result = resultRepository.save(result);
+                        participation.setResults(Set.of(result));
+                        studentParticipationRepository.save(participation);
+                        result.setSubmission(submission);
+                        submission.addResult(result);
+                        submissionRepository.save(submission);
+                    }
+                    else {
+                        result = resultRepository.save(result);
+                        result.setSubmission(submission);
+                        submission.addResult(result);
+                        submissionRepository.save(submission);
+                    }
+                }
+                save(participation);
             }
-            else {
-                submission = participation.getSubmissions().iterator().next();
-            }
-            submission.setSubmissionDate(ZonedDateTime.now());
-            // We add a result for test runs with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
-            submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).get();
-            if (submission.getLatestResult() == null) {
-                Result result = new Result();
-                result.setParticipation(submission.getParticipation());
-                result.setAssessor(participation.getStudent().get());
-                result.setAssessmentType(AssessmentType.TEST_RUN);
-                result = resultRepository.save(result);
-                result.setSubmission(submission);
-                submission.addResult(result);
-                submissionRepository.save(submission);
-            }
-            save(participation);
         }
     }
 
@@ -1029,7 +1065,9 @@ public class ParticipationService {
      * @return list of participations belonging to course
      */
     public List<StudentParticipation> findByExamIdWithSubmissionRelevantResult(Long examId) {
-        List<StudentParticipation> participations = studentParticipationRepository.findByExamIdWithEagerSubmissionsRatedResults(examId);
+        var participations = studentParticipationRepository.findByExamIdWithEagerSubmissionsRatedResults(examId); // without test run participations
+        // filter out the participations of test runs which can only be made by instructors
+        participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).collect(Collectors.toList());
         return filterParticipationsWithRelevantResults(participations, true);
     }
 
@@ -1045,23 +1083,12 @@ public class ParticipationService {
     }
 
     /**
-     * filters the relevant results by removing all irrelevent ones
+     * filters the relevant results by removing all irrelevant ones
      * @param participations the participations to get filtered
      * @param resultInSubmission flag to indicate if the results are represented in the submission or participation
      * @return the filtered participations
      */
     private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
-        // if exam exercise
-        if (!participations.isEmpty() && participations.get(0).getExercise().getExerciseGroup() != null) {
-            List<User> instructors = userService.getInstructors(participations.get(0).getExercise().getExerciseGroup().getExam().getCourse());
-            // filter out the participations of test runs which can only be made by instructors
-            participations = participations.stream().filter(studentParticipation -> {
-                if (studentParticipation.getStudent().isPresent()) {
-                    return !instructors.contains(studentParticipation.getStudent().get());
-                }
-                return true;
-            }).collect(Collectors.toList());
-        }
 
         return participations.stream()
 
@@ -1071,7 +1098,7 @@ public class ParticipationService {
 
                 // filter all irrelevant results, i.e. rated = false or no completion date or no score
                 .peek(participation -> {
-                    List<Result> relevantResults = new ArrayList<Result>();
+                    List<Result> relevantResults = new ArrayList<>();
 
                     // Get the results over the participation or over submissions
                     Set<Result> resultsOfParticipation;
@@ -1205,28 +1232,18 @@ public class ParticipationService {
     @Transactional // ok
     public Participation deleteResultsAndSubmissionsOfParticipation(Long participationId) {
         Participation participation = participationRepository.getOneWithEagerSubmissionsAndResults(participationId);
-        // This is the default case: We delete results and submissions from direction result -> submission. This will only delete submissions that have a result.
-        if (participation.getResults() != null) {
-            for (Result result : participation.getResults()) {
+        Set<Submission> submissions = participation.getSubmissions();
+        List<Result> resultsToBeDeleted = new ArrayList<>();
 
-                resultRepository.deleteById(result.getId());
-                // The following code is necessary, because we might have submissions in results which are not properly connected to a participation and CASCASE_REMOVE is not
-                // active in this case
-                if (result.getSubmission() != null) {
-                    Submission submissionToDelete = result.getSubmission();
-                    submissionRepository.deleteById(submissionToDelete.getId());
-                    result.setSubmission(null);
-                    participation.removeSubmission(submissionToDelete);
-                }
-            }
-        }
-        // The following case is necessary, because we might have submissions without a result.
-        // At this point only submissions without a result will still be connected to the participation.
-        if (participation.getSubmissions() != null) {
-            for (Submission submission : participation.getSubmissions()) {
-                submissionRepository.deleteById(submission.getId());
-            }
-        }
+        // The result of the submissions will be deleted via cascade
+        submissions.forEach(submission -> {
+            resultsToBeDeleted.addAll(Objects.requireNonNull(submission.getResults()));
+            submissionRepository.deleteById(submission.getId());
+        });
+
+        // The results that are only connected to a participation are also deleted
+        resultsToBeDeleted.forEach(participation::removeResult);
+        participation.getResults().forEach(result -> resultRepository.deleteById(result.getId()));
         return participation;
     }
 
@@ -1354,15 +1371,15 @@ public class ParticipationService {
     }
 
     /**
-     * Loads the test run participation for the instructor.
-     * See {@link StudentParticipation#isTestRunParticipation()}
-     * @param instructorId the id of the instructor
+     * Loads the test run participation for the given user id (which typically belongs to an instructor or admin)
+     * See {@link StudentParticipation#isTestRun()}
+     * @param userId the id of the user
      * @param exercise the exercise id
      * @return the optional test run participation with submissions and results loaded
      */
-    public Optional<StudentParticipation> findTestRunParticipationOfInstructorForExercise(Long instructorId, Exercise exercise) {
-        var studentParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructorId, List.of(exercise));
-        if (studentParticipations.isEmpty() || !studentParticipations.get(0).isTestRunParticipation()) {
+    public Optional<StudentParticipation> findTestRunParticipationForExercise(Long userId, Exercise exercise) {
+        var studentParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(userId, List.of(exercise));
+        if (studentParticipations.isEmpty() || !studentParticipations.get(0).isTestRun()) {
             return Optional.empty();
         }
 

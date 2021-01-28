@@ -98,7 +98,7 @@ export class ExamParticipationService {
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      * @param studentExam: the student exam to submit
-     * @return returns the studentExam verison of the server
+     * @return returns the studentExam version of the server
      */
     public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/studentExams/submit';

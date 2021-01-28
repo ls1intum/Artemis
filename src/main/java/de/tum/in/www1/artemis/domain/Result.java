@@ -94,7 +94,7 @@ public class Result extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Participation participation;
 
-    @OneToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(unique = false)
     private User assessor;
 
@@ -480,7 +480,7 @@ public class Result extends DomainObject {
      */
     @JsonIgnore
     public boolean isManual() {
-        return AssessmentType.MANUAL.equals(assessmentType) || AssessmentType.SEMI_AUTOMATIC.equals(assessmentType);
+        return AssessmentType.MANUAL.equals(assessmentType) || AssessmentType.SEMI_AUTOMATIC.equals(assessmentType) || AssessmentType.TEST_RUN.equals(assessmentType);
     }
 
     /**

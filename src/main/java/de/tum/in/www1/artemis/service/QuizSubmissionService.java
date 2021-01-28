@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -210,6 +211,8 @@ public class QuizSubmissionService {
         }
         StudentParticipation studentParticipation = optionalParticipation.get();
         quizSubmission.setParticipation(studentParticipation);
+        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+        quizSubmission.setResults(new ArrayList<>());
         quizSubmissionRepository.save(quizSubmission);
 
         // versioning of submission
