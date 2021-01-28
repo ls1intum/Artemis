@@ -27,7 +27,7 @@ public class FlowchartTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityFlowchartDifferentModels() {
-        compareSubmissions(modelingSubmission(FLOWCHART_MODEL_1A), modelingSubmission(FLOWCHART_MODEL_2), 0.0, 43.2);
+        compareSubmissions(modelingSubmission(FLOWCHART_MODEL_1A), modelingSubmission(FLOWCHART_MODEL_2), 0.0, 45.0);
     }
 
     @Test

@@ -33,41 +33,13 @@ public class Flowchart extends UMLDiagram {
 
     @Override
     public UMLElement getElementByJSONID(String jsonElementId) {
-        for (FlowchartTerminal terminal : getTerminals()) {
-            if (terminal.getJSONElementID().equals(jsonElementId)) {
-                return terminal;
+
+        for (UMLElement element : getModelElements()) {
+            if (element.getJSONElementID().equals(jsonElementId)) {
+                return element;
             }
         }
 
-        for (FlowchartProcess process : getProcesses()) {
-            if (process.getJSONElementID().equals(jsonElementId)) {
-                return process;
-            }
-        }
-
-        for (FlowchartDecision decision : getDecisions()) {
-            if (decision.getJSONElementID().equals(jsonElementId)) {
-                return decision;
-            }
-        }
-
-        for (FlowchartInputOutput inputOutput : getInputOutputs()) {
-            if (inputOutput.getJSONElementID().equals(jsonElementId)) {
-                return inputOutput;
-            }
-        }
-
-        for (FlowchartFunctionCall functionCall : getFunctionCalls()) {
-            if (functionCall.getJSONElementID().equals(jsonElementId)) {
-                return functionCall;
-            }
-        }
-
-        for (FlowchartFlowline link : getFlowlines()) {
-            if (link.getJSONElementID().equals(jsonElementId)) {
-                return link;
-            }
-        }
         return null;
     }
 
@@ -100,6 +72,9 @@ public class Flowchart extends UMLDiagram {
         List<UMLElement> modelElements = new ArrayList<>();
         modelElements.addAll(terminals);
         modelElements.addAll(processes);
+        modelElements.addAll(decisions);
+        modelElements.addAll(inputOutputs);
+        modelElements.addAll(functionCalls);
         modelElements.addAll(flowlines);
         return modelElements;
     }
