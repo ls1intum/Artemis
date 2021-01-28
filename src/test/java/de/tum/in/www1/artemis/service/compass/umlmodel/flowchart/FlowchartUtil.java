@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
 
-public class FlowchartsHolder {
+public class FlowchartUtil {
 
     static final String FLOWCHART_MODEL_1A;
 
@@ -16,16 +16,16 @@ public class FlowchartsHolder {
 
     static {
         try {
-            FLOWCHART_MODEL_1A = IOUtils.toString(FlowchartsHolder.class.getResource("flowchartModel1a.json"), StandardCharsets.UTF_8);
-            FLOWCHART_MODEL_1B = IOUtils.toString(FlowchartsHolder.class.getResource("flowchartModel1b.json"), StandardCharsets.UTF_8);
-            FLOWCHART_MODEL_2 = IOUtils.toString(FlowchartsHolder.class.getResource("flowchartModel2.json"), StandardCharsets.UTF_8);
+            FLOWCHART_MODEL_1A = IOUtils.toString(FlowchartUtil.class.getResource("flowchartModel1a.json"), StandardCharsets.UTF_8);
+            FLOWCHART_MODEL_1B = IOUtils.toString(FlowchartUtil.class.getResource("flowchartModel1b.json"), StandardCharsets.UTF_8);
+            FLOWCHART_MODEL_2 = IOUtils.toString(FlowchartUtil.class.getResource("flowchartModel2.json"), StandardCharsets.UTF_8);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    private FlowchartsHolder() {
+    private FlowchartUtil() {
         // do not instantiate
     }
 }
