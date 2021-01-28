@@ -37,7 +37,6 @@ export class Exam implements BaseEntity {
 
     public numberOfRegisteredUsers?: number; // transient
 
-    public numberOfCorrectionRoundsEnabled?: number;
     // helper attributes
     public visible?: boolean;
     public started?: boolean;
