@@ -1,11 +1,11 @@
 @import 'bootstrap-variables';
 @import 'artemis-variables';
-@import '~@swimlane/ngx-datatable/themes/bootstrap.css';
+@import '~ng-pick-datetime/assets/style/picker.min.css';
 // Needed for mathematical formulas in markdown editor
 @import '~katex/dist/katex.css';
 // Needed for highlighting code in the markdown editor
 @import '~highlight.js/styles/vs.css';
-@import '~ng-pick-datetime/assets/style/picker.min.css';
+@import '~@swimlane/ngx-datatable/themes/bootstrap.css';
 
 /* ==============================================================
 Bootstrap tweaks
