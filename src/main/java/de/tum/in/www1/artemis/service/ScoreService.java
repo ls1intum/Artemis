@@ -318,5 +318,4 @@ public class ScoreService {
             associatedParticipantScore.setLastRatedScore(newLastRatedResult.getScore());
         }
     }
-
 }
