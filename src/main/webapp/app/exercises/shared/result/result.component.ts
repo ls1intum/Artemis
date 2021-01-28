@@ -226,7 +226,7 @@ export class ResultComponent implements OnInit, OnChanges {
      */
     buildResultString() {
         if (this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (this.submission as ProgrammingSubmission).buildFailed) {
-            const isManualResult = this.result?.assessmentType === AssessmentType.SEMI_AUTOMATIC;
+            const isManualResult = this.result?.assessmentType !== AssessmentType.AUTOMATIC;
             return isManualResult ? this.result!.resultString : this.translate.instant('artemisApp.editor.buildFailed');
             // Only show the 'preliminary' string for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         } else if (
