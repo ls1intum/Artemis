@@ -448,7 +448,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.submissionLockLimitReached = true;
                 } else {
-                    this.onError(error.message);
+                    this.onError(error?.error?.detail || error.message);
                 }
             },
         );

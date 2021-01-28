@@ -2,7 +2,7 @@
     <div class="col-8">
         <div *ngIf="course">
             <div>
-                <button type="button" [routerLink]="['/course-management', course.id, 'edit']" class="btn btn-warning mr-1 mb-1">
+                <button *ngIf="course.isAtLeastInstructor" type="button" [routerLink]="['/course-management', course.id, 'edit']" class="btn btn-warning mr-1 mb-1">
                     <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
                 </button>
 
@@ -28,10 +28,10 @@
                 <button type="button" [routerLink]="['/course-management', course.id, 'exercises']" class="btn btn-primary mr-1 mb-1">
                     <fa-icon [icon]="'list-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.exercise">Exercises</span>
                 </button>
-                <button type="button" [routerLink]="['/course-management', course.id, 'lectures']" class="btn btn-primary mr-1 mb-1">
+                <button *ngIf="course.isAtLeastInstructor" type="button" [routerLink]="['/course-management', course.id, 'lectures']" class="btn btn-primary mr-1 mb-1">
                     <fa-icon [icon]="'list-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.lecture">Lectures</span>
                 </button>
-                <button type="button" [routerLink]="['/course-management', course.id, 'scores']" class="btn btn-info mr-1 mb-1">
+                <button *ngIf="course.isAtLeastInstructor" type="button" [routerLink]="['/course-management', course.id, 'scores']" class="btn btn-info mr-1 mb-1">
                     <fa-icon [icon]="'eye'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.scores">Scores</span>
                 </button>
                 <button type="button" [routerLink]="['/course-management', course.id, 'exams']" class="btn btn-info mr-1 mb-1">
@@ -40,7 +40,7 @@
                 <button type="button" [routerLink]="['/course-management', course.id, 'tutor-dashboard']" class="btn btn-info mr-1 mb-1">
                     <fa-icon [icon]="'th-list'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
                 </button>
-                <button type="button" [routerLink]="['/course-management', course.id, 'instructor-dashboard']" class="btn btn-info mr-1 mb-1">
+                <button *ngIf="course.isAtLeastInstructor" type="button" [routerLink]="['/course-management', course.id, 'instructor-dashboard']" class="btn btn-info mr-1 mb-1">
                     <fa-icon [icon]="'th-list'"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.course.instructorDashboard">Instructor Dashboard</span>
                 </button>
             </div>

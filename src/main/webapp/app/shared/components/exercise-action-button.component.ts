@@ -4,7 +4,7 @@ import { Component, HostBinding, Input } from '@angular/core';
     /* tslint:disable-next-line component-selector */
     selector: 'button[jhi-exercise-action-button]',
     templateUrl: './exercise-action-button.component.html',
-    styleUrls: ['../course-overview.scss'],
+    styleUrls: ['../../overview/course-overview.scss'],
 })
 export class ExerciseActionButtonComponent {
     @Input() buttonVisible = true;
