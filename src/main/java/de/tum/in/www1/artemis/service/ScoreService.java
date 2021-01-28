@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,7 @@ import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 
 @Service
 public class ScoreService {
@@ -49,8 +52,17 @@ public class ScoreService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeOrUpdateAssociatedParticipantScore(Result resultToBeDeleted) {
+
+        // In this method we use custom @Query methods that will fail if no authentication is available, therefore
+        // we check this here and set a dummy authentication if none is available (this is the case in a scheduled service or
+        // websocket)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
+
         Optional<ParticipantScore> associatedStudentScoreOptional;
-        if (resultToBeDeleted.isRated() != null && resultToBeDeleted.isRated() == true) {
+        if (resultToBeDeleted.isRated() != null && resultToBeDeleted.isRated()) {
             associatedStudentScoreOptional = participantScoreRepository.findParticipantScoreByLastRatedResult(resultToBeDeleted);
         }
         else {

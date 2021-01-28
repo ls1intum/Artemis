@@ -11,9 +11,12 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.service.ScoreService;
 
 /**
- * Important: As the ResultListener potentially will be called from a situation where no {@link org.springframework.security.core.context.SecurityContext}
+ * Important: As the ResultListener potentially will be called from a situation where no {@link org.springframework.security.core.Authentication}
  * is available (for example from a scheduled service or from a websocket service), you can NOT use anything that requires
  * authentication in the listener. Most importantly this means that you can not use any custom @Query Methods!
+ * <p>
+ * A workaround can be found in {@link ScoreService#removeOrUpdateAssociatedParticipantScore(Result)} where
+ * we check if an authentication is available and if it is not, we set a dummy authentication.
  */
 @Component
 public class ResultListener {
