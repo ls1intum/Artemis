@@ -44,6 +44,7 @@ let quizExercise = {
     adjustedDueDate: undefined,
     numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
     studentAssignedTeamIdComputed: false,
+    secondCorrectionEnabled: true
 } as QuizExercise;
 
 describe('QuizExercise Short Answer Question Statistic Component', () => {
@@ -86,6 +87,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             adjustedDueDate: undefined,
             numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
             studentAssignedTeamIdComputed: false,
+            secondCorrectionEnabled: true
         } as QuizExercise;
     });
 
