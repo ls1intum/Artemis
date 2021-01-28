@@ -133,7 +133,7 @@ public class StudentParticipation extends Participation {
     }
 
     public void setTestRun(boolean testRun) {
-        this.testRun = testRun;
+        this.testRun = Boolean.TRUE.equals(testRun);
     }
 
     @Override
