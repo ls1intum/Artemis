@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -40,6 +43,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class CourseService {
 
     private final Logger log = LoggerFactory.getLogger(CourseService.class);
+
+    private final String pathToExportsFolder = "./exports";
 
     private final CourseRepository courseRepository;
 
@@ -69,10 +74,12 @@ public class CourseService {
 
     private final ZipFileService zipFileService;
 
+    private final FileService fileService;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
             ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository,
-            ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService) {
+            ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -86,6 +93,7 @@ public class CourseService {
         this.learningGoalRepository = learningGoalRepository;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
+        this.fileService = fileService;
     }
 
     @Autowired
@@ -373,32 +381,121 @@ public class CourseService {
         log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
     }
 
+    /**
+     * Archives the course. The course must be over before it can be archived.
+     *
+     * @param course The course to archive
+     */
     public void archiveCourse(Course course) {
         // Archiving a course is only possible after the course is over
         if (ZonedDateTime.now().isBefore(course.getEndDate())) {
             return;
         }
 
-        // 1) Iterate over each exercise and export the exercise submissions of the students
-        ArrayList<Path> exportedExercises = new ArrayList<Path>();
-        course.getExercises().forEach(exercise -> {
-            var participations = exercise.getStudentParticipations();
+        // Used to store temporary created zip files for this course.
+        var pathToCourseExportFolder = Path.of(pathToExportsFolder, course.getShortName());
+        try {
+            Files.createDirectories(pathToCourseExportFolder);
+        }
+        catch (IOException e) {
+            log.info("Cannot archive course {} because the temporary directories cannot be created: {}", course.getId(), e.getMessage());
+            return;
+        }
 
-            // For programming exercises: download all source code repositories of the students and zip each repository.
-            // Also download exercise, tests and solution repositories.
+        // Create a zip file for each exercise.
+        var exportedExercises = archiveExercisesOfCourse(course, pathToCourseExportFolder.toString());
+
+        try {
+            // Zip all of the exercises into a big course zip file
+            var pathToCourseZipFile = Path.of(pathToExportsFolder, course.getShortName() + "-archive");
+            zipFileService.createZipFile(pathToCourseZipFile, exportedExercises);
+            log.info("Successfully archived course {}. The archive is located at: {}", course.getId(), pathToCourseZipFile);
+        }
+        catch (IOException e) {
+            log.info("Failed to zip the course: {}: {}", course.getId(), e.getMessage());
+        }
+        finally {
+            // Delete the temporary directory
+            fileService.scheduleForDeletion(pathToCourseExportFolder, 5);
+        }
+    }
+
+    /**
+     * Archives the exercises of the given course by creating a zip file for
+     * each exercise.
+     *
+     * @param course              The course that contains the exercises to archive
+     * @param pathToStoreZipFiles The path to a directory that will be used to store the zipped files.
+     * @return Path to the exercise zip files,
+     */
+    private List<Path> archiveExercisesOfCourse(Course course, String pathToStoreZipFiles) {
+        // Iterate over each exercise and export the exercise submissions of the students
+        ArrayList<Path> exportedExercises = new ArrayList<>();
+        ArrayList<Long> exercisesThatFailedToExport = new ArrayList<>();
+
+        // Iterate over each exercise and zip all student submissions.
+        course.getExercises().forEach(exercise -> {
+            // We need this call because we need to lazy load the student participations.
+            var participations = exerciseService.findOneWithStudentParticipations(exercise.getId()).getStudentParticipations();
+
             if (exercise instanceof ProgrammingExercise) {
                 var programmingParticipations = participations.stream().map(participation -> (ProgrammingExerciseStudentParticipation) participation).collect(Collectors.toList());
-                var exportedStudentRepositories = programmingExerciseExportService.exportStudentRepositories(exercise.getId(), programmingParticipations,
-                        new RepositoryExportOptionsDTO());
+                var pathToArchivedExercise = archiveProgrammingExercise((ProgrammingExercise) exercise, programmingParticipations, pathToStoreZipFiles);
 
-                // TODO: Download the template, solution, and tests repositories
-
-                // Zip everything into a course zip file
-                // var zippedExercise = zipFileService.createZipFile();
+                if (pathToArchivedExercise == null) {
+                    exercisesThatFailedToExport.add(exercise.getId());
+                }
+                else {
+                    exportedExercises.add(pathToArchivedExercise);
+                }
             }
 
             // TODO: Handle archiving for other exercise types
-
+            log.info("Skipping export of exercise: {} because it's not supported yet.", exercise.getTitle());
         });
+
+        // Notify that we couldn't export every exercise
+        if (exercisesThatFailedToExport.size() > 0) {
+            var failedExerciseIds = exercisesThatFailedToExport.stream().map(String::valueOf).collect(Collectors.joining(","));
+            log.info("The following exercises couldn't be exported {}", failedExerciseIds);
+        }
+
+        return exportedExercises;
     }
+
+    /**
+     * Archives a programming exercise by creating a zip file. The zip file includes all student, template, solution,
+     * and tests repositories.
+     *
+     * @param exercise              the programming exercise
+     * @param studentParticipations the student participations
+     * @param pathToStoreZipFiles   The path to a directory that will be used to store the zipped files.
+     * @return the path to the zip file
+     */
+    private Path archiveProgrammingExercise(ProgrammingExercise exercise, List<ProgrammingExerciseStudentParticipation> studentParticipations, String pathToStoreZipFiles) {
+        // Export student repositories
+        var zippedStudentRepos = programmingExerciseExportService.exportStudentRepositories(exercise.getId(), studentParticipations, new RepositoryExportOptionsDTO());
+
+        // Export the template, solution, and tests repositories
+        var zippedTemplateRepo = programmingExerciseExportService.exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TEMPLATE);
+        var zippedSolutionRepo = programmingExerciseExportService.exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.SOLUTION);
+        var zippedTestsRepo = programmingExerciseExportService.exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TESTS);
+        var zipFilePaths = List.of(zippedStudentRepos.toPath(), zippedTemplateRepo.toPath(), zippedSolutionRepo.toPath(), zippedTestsRepo.toPath());
+
+        try {
+            // Zip the student and instructor repos together.
+            var pathToZippedExercise = Path.of(pathToStoreZipFiles, exercise.getShortName());
+            zipFileService.createZipFile(pathToZippedExercise, zipFilePaths);
+            return pathToZippedExercise;
+        }
+        catch (IOException e) {
+            log.info("Failed to export programming exercise {}: {}", exercise.getId(), e.getMessage());
+            return null;
+        }
+        finally {
+            // Delete the zipped repo files since we don't need those anymore.
+            zipFilePaths.forEach(zipFilePath -> fileService.scheduleForDeletion(zipFilePath, 5));
+        }
+    }
+
 }

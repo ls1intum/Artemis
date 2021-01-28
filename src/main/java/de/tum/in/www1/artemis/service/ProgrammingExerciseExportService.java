@@ -100,11 +100,18 @@ public class ProgrammingExerciseExportService {
      * Exports a repository available for an instructor/tutor for a given programming exercise. This can be a template,
      * solution, or tests repository
      *
-     * @param exercise       The programming exercise that has the repository
+     * @param exerciseId       The id of the programming exercise that has the repository
      * @param repositoryType the type of repository to export
      * @return a zipped file
      */
-    public File exportInstructorRepositoryForExercise(ProgrammingExercise exercise, RepositoryType repositoryType) {
+    public File exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType) {
+        var exerciseOrEmpty = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId);
+        if (exerciseOrEmpty.isEmpty()) {
+            log.info("Cannot export instructor repository because the exercise of id {} was not found", exerciseId);
+            return null;
+        }
+
+        var exercise = exerciseOrEmpty.get();
         log.info("Request to export instructor repository of type " + repositoryType.getName() + " of programming exercise " + exercise + " with title '" + exercise.getTitle()
                 + "'");
 

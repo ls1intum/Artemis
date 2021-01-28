@@ -838,6 +838,7 @@ public class CourseResource {
         }
 
         courseService.archiveCourse(course);
+
         // TODOs Course Exercises
         // 1) Get the course with all exercises and iterate over each exercise
         // 2) Fetch all student participations for the exercise
