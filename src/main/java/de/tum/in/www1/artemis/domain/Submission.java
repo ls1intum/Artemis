@@ -175,13 +175,11 @@ public abstract class Submission extends DomainObject {
         this.results = this.results.stream().filter(result -> result != null).collect(Collectors.toList());
     }
 
-    @Nullable
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
     public List<Result> getResults() {
         return results;
     }
 
-    @Nullable
     @JsonIgnore
     public List<Result> getManualResults() {
         return results.stream().filter(result -> result != null && !result.isAutomatic()).collect(Collectors.toList());

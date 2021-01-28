@@ -255,10 +255,7 @@ public class TextSubmissionResource {
         }
 
         // Check if tutors can start assessing the students submission
-        boolean startAssessingSubmissions = this.textSubmissionService.checkIfExerciseDueDateIsReached(exercise);
-        if (!startAssessingSubmissions) {
-            return forbidden();
-        }
+        this.textSubmissionService.checkIfExerciseDueDateIsReached(exercise);
 
         // Tutors cannot start assessing submissions if Athene is currently processing automatic feedback
         if (atheneScheduleService.isPresent() && atheneScheduleService.get().currentlyProcessing((TextExercise) exercise)) {

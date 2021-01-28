@@ -425,10 +425,7 @@ public class ProgrammingSubmissionResource {
         }
 
         // Check if tutors can start assessing the students submission
-        boolean startAssessingSubmissions = this.programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
-        if (!startAssessingSubmissions) {
-            return forbidden();
-        }
+        this.programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
 
         // Check if the limit of simultaneously locked submissions has been reached
         programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());

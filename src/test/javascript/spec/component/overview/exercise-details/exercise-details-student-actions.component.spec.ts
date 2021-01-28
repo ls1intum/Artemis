@@ -16,7 +16,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { MockFeatureToggleService } from '../../../helpers/mocks/service/mock-feature-toggle.service';
 import { ExerciseMode, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
-import { ExerciseActionButtonComponent } from 'app/overview/exercise-details/exercise-action-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisTestModule } from '../../../test.module';
 import { JhiAlertService } from 'ng-jhipster';
@@ -33,7 +33,9 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
+import { LocalStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -61,13 +63,14 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisSharedModule, FeatureToggleModule, RouterModule, ClipboardModule],
-            declarations: [ExerciseDetailsStudentActionsComponent, MockComponent(ExerciseActionButtonComponent)],
+            declarations: [ExerciseDetailsStudentActionsComponent, MockComponent(ExerciseActionButtonComponent), MockComponent(CloneRepoButtonComponent)],
             providers: [
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: JhiAlertService, useClass: MockAlertService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -137,20 +140,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startExerciseButton).to.exist;
     }));
 
-    it('should generate the correct clone urls for https and ssh', fakeAsync(() => {
-        comp.ngOnInit();
-
-        const participation = ({
-            repositoryUrl: 'https://testserver.com/scm/exercise/repository.git',
-        } as unknown) as ProgrammingExerciseStudentParticipation;
-
-        comp.useSsh = true;
-        expect(comp.repositoryUrl(participation)).to.be.equal('ssh://git@testserver.com:1234/exercise/repository.git');
-
-        comp.useSsh = false;
-        expect(comp.repositoryUrl(participation)).to.be.equal(participation.repositoryUrl);
-    }));
-
     it('should reflect the correct participation state when team exercise was started', fakeAsync(() => {
         const inactivePart = { id: 2, initializationState: InitializationState.UNINITIALIZED } as StudentParticipation;
         const initPart = { id: 2, initializationState: InitializationState.INITIALIZED } as StudentParticipation;
@@ -178,7 +167,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startExerciseButton).to.not.exist;
 
         // Check that button "Clone repository" is shown
-        const cloneRepositoryButton = fixture.debugElement.query(By.css('.clone-repository'));
+        const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
         expect(cloneRepositoryButton).to.exist;
 
         fixture.destroy();
