@@ -20,7 +20,7 @@ import { CourseExerciseSubmissionResultSimulationService } from 'app/course/mana
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { BehaviorSubject, empty, of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview/exercise-details/programming-exercise-student-ide-actions.component';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
