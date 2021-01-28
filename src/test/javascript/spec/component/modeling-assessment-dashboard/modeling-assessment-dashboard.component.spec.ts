@@ -26,11 +26,20 @@ const route = { params: of({ courseId: 3, exerciseId: 22 }) };
 const course = { id: 1 };
 const modelingExercise = {
     id: 22,
-    course_id: course.id,
+    course,
     type: ExerciseType.MODELING,
     studentAssignedTeamIdComputed: true,
     assessmentType: AssessmentType.SEMI_AUTOMATIC,
     numberOfAssessmentsOfCorrectionRounds: [],
+};
+const modelingExerciseOfExam = {
+    id: 23,
+    exerciseGroup: { id: 111, exam: { id: 112, course } },
+    type: ExerciseType.MODELING,
+    studentAssignedTeamIdComputed: true,
+    assessmentType: AssessmentType.SEMI_AUTOMATIC,
+    numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: true,
 };
 const modelingSubmission = { id: 1, submitted: true, results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [] } }] };
 const modelingSubmission2 = { id: 2, submitted: true, results: [{ id: 20, assessor: { id: 30, guidedTourSettings: [] } }] };
@@ -83,7 +92,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
         component.ngOnDestroy();
     });
 
-    it('should set parameters and call functions on init', fakeAsync(() => {
+    it('should set parameters and call functions on init', () => {
         // setup
         const getSubmissionsSpy = spyOn(component, 'getSubmissions');
         const registerChangeInResultsSpy = spyOn(component, 'registerChangeInResults');
@@ -99,7 +108,6 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
         // call
         component.ngOnInit();
-        tick();
 
         // check
         expect(getSubmissionsSpy).toHaveBeenCalledWith(true);
@@ -108,7 +116,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
         expect(exerciseFindSpy).toHaveBeenCalled();
         expect(component.course).toEqual(course);
         expect(component.modelingExercise).toEqual(modelingExercise as ModelingExercise);
-    }));
+    });
 
     it('should get Submissions', () => {
         // test getSubmissions
@@ -329,5 +337,35 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
         // check
         expect(paramSubSpy).toHaveBeenCalled();
+    });
+
+    describe('shouldGetAssessmentLink', () => {
+        it('should get assessment link for exam exercise', () => {
+            const submissionId = 7;
+            component.modelingExercise = modelingExercise;
+            expect(component.getAssessmentLink(submissionId)).toEqual([
+                '/course-management',
+                component.modelingExercise.course?.id,
+                'modeling-exercises',
+                component.modelingExercise.id,
+                'submissions',
+                submissionId,
+                'assessment',
+            ]);
+        });
+
+        it('should get assessment link for normal exercise', () => {
+            const submissionId = 8;
+            component.modelingExercise = modelingExerciseOfExam;
+            expect(component.getAssessmentLink(submissionId)).toEqual([
+                '/course-management',
+                component.modelingExercise.exerciseGroup?.exam?.course?.id,
+                'modeling-exercises',
+                component.modelingExercise.id,
+                'submissions',
+                submissionId,
+                'assessment',
+            ]);
+        });
     });
 });
