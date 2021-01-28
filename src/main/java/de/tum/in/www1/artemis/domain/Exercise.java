@@ -796,11 +796,11 @@ public abstract class Exercise extends DomainObject {
         this.presentationScoreEnabled = presentationScoreEnabled;
     }
 
-    public Boolean getSecondCorrectionEnabled() {
-        return secondCorrectionEnabled;
+    public boolean getSecondCorrectionEnabled() {
+        return Boolean.TRUE.equals(secondCorrectionEnabled);
     }
 
-    public void setSecondCorrectionEnabled(Boolean secondCorrectionEnabled) {
+    public void setSecondCorrectionEnabled(boolean secondCorrectionEnabled) {
         this.secondCorrectionEnabled = secondCorrectionEnabled;
     }
 

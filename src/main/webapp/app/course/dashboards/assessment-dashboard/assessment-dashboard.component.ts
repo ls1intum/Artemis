@@ -60,6 +60,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
 
     isExamMode = false;
     isTestRun = false;
+    toggelingSecondCorrectionButton = false;
 
     constructor(
         private courseService: CourseManagementService,
@@ -100,7 +101,6 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
      * Percentages are calculated and rounded towards zero.
      */
     loadAll() {
-        console.log('loadlall');
         if (this.isExamMode) {
             this.showFinishedExercises = true;
             this.examManagementService.getExamWithInterestingExercisesForAssessmentDashboard(this.courseId, this.examId, this.isTestRun).subscribe((res: HttpResponse<Exam>) => {
@@ -222,11 +222,13 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
     }
 
     toggleSecondCorrection(exerciseId: number) {
+        this.toggelingSecondCorrectionButton = true;
         const currentExercise = this.exercises.find((exercise) => exercise.id === exerciseId)!;
         const index = this.exercises.indexOf(currentExercise);
         this.exerciseService.toggleSecondCorrection(exerciseId).subscribe((res: HttpResponse<Boolean>) => {
             this.exercises[index].secondCorrectionEnabled = !this.exercises[index].secondCorrectionEnabled;
             currentExercise!.secondCorrectionEnabled = res.body! as boolean;
+            this.toggelingSecondCorrectionButton = false;
         });
     }
 }

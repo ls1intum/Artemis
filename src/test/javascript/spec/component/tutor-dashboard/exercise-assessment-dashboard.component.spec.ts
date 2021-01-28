@@ -58,6 +58,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -101,12 +102,14 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         id: 15,
         exerciseGroup,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+        secondCorrectionEnabled: false,
     } as ProgrammingExercise;
     const programmingExercise = {
         id: 16,
         exerciseGroup,
         type: ExerciseType.PROGRAMMING,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+        secondCorrectionEnabled: false,
     } as ProgrammingExercise;
     const modelingExercise = {
         id: 17,
@@ -114,12 +117,19 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         type: ExerciseType.MODELING,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
     } as ModelingExercise;
-    const textExercise = { id: 18, exerciseGroup, type: ExerciseType.TEXT, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as TextExercise;
+    const textExercise = {
+        id: 18,
+        exerciseGroup,
+        type: ExerciseType.TEXT,
+        tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+        secondCorrectionEnabled: false,
+    } as TextExercise;
     const fileUploadExercise = {
         id: 19,
         exerciseGroup,
         type: ExerciseType.FILE_UPLOAD,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+        secondCorrectionEnabled: false,
     } as FileUploadExercise;
 
     const participation = { id: 20, submissions: [] } as Participation;
@@ -176,6 +186,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 MockComponent(HeaderParticipationPageComponent),
                 MockComponent(SidePanelComponent),
                 MockComponent(ModelingEditorComponent),
+                MockComponent(SecondCorrectionEnableButtonComponent),
                 MockComponent(CollapsableAssessmentInstructionsComponent),
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(StructuredGradingInstructionsAssessmentLayoutComponent),

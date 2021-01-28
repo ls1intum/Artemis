@@ -684,9 +684,9 @@ public class ExerciseService {
      * Activates or deactivates the possiblility for tutors to assess within the correction round
      *
      * @param exercise - the exercise for which we want to toggle if the second correction round is enabled
-     * @return the new state of the
+     * @return the new state of the second correction
      */
-    public Boolean toggleSecondCorrection(Exercise exercise) {
+    public boolean toggleSecondCorrection(Exercise exercise) {
         exercise.setSecondCorrectionEnabled(!exercise.getSecondCorrectionEnabled());
         return exerciseRepository.save(exercise).getSecondCorrectionEnabled();
     }
