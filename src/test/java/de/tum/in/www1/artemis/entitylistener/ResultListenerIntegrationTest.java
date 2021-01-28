@@ -167,7 +167,6 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         List<Result> savedResults = resultRepository.findAll();
         assertThat(savedResults).size().isEqualTo(1);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), null, null);
-
     }
 
     @ParameterizedTest
