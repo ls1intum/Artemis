@@ -26,7 +26,7 @@ const addCSSClass = Object.keys(classMap).map((key) => ({
     replace: `<${key} class="${classMap[key]}" $1>`,
 }));
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ArtemisMarkdownService {
     static hintOrExpRegex = new RegExp(escapeStringForUseInRegex(`${ExplanationCommand.identifier}`) + '|' + escapeStringForUseInRegex(`${HintCommand.identifier}`), 'g');
 
