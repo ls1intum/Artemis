@@ -31,6 +31,7 @@ const modelingExercise = {
     studentAssignedTeamIdComputed: true,
     assessmentType: AssessmentType.SEMI_AUTOMATIC,
     numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: true,
 };
 const modelingExerciseOfExam = {
     id: 23,
