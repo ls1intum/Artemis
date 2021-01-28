@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -401,4 +402,25 @@ public class ExerciseResource {
 
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
+
+    /**
+     * GET /exercises/:exerciseId/toggle-second-correction
+     *
+     * @param exerciseId the exerciseId of the exercise to get the repos from
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     */
+    @PutMapping(value = "/exercises/{exerciseId}/toggle-second-correction")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Boolean> toggleSecondCorrectionEnabled(@PathVariable Long exerciseId) {
+        log.debug("toggleSecondCorrectionEnabled for exercise with id:" + exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if (exercise == null) {
+            throw new EntityNotFoundException("Exercise not found with id " + exerciseId);
+        }
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            return forbidden();
+        }
+        return ResponseEntity.ok(exerciseService.toggleSecondCorrection(exercise));
+    }
+
 }

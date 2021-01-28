@@ -115,6 +115,10 @@ public abstract class Exercise extends DomainObject {
     @Column(name = "presentation_score_enabled")
     private Boolean presentationScoreEnabled = false;
 
+    @Nullable
+    @Column(name = "second_correction_enabled")
+    private Boolean secondCorrectionEnabled = false;
+
     @ManyToOne
     @JsonView(QuizView.Before.class)
     private Course course;
@@ -790,6 +794,14 @@ public abstract class Exercise extends DomainObject {
 
     public void setPresentationScoreEnabled(Boolean presentationScoreEnabled) {
         this.presentationScoreEnabled = presentationScoreEnabled;
+    }
+
+    public boolean getSecondCorrectionEnabled() {
+        return Boolean.TRUE.equals(secondCorrectionEnabled);
+    }
+
+    public void setSecondCorrectionEnabled(boolean secondCorrectionEnabled) {
+        this.secondCorrectionEnabled = secondCorrectionEnabled;
     }
 
     public List<GradingCriterion> getGradingCriteria() {
