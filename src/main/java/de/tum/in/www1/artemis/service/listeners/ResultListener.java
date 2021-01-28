@@ -10,6 +10,11 @@ import org.springframework.stereotype.Component;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.service.ScoreService;
 
+/**
+ * Important: As the ResultListener potentially will be called from a situation where no {@link org.springframework.security.core.context.SecurityContext}
+ * is available (for example from a scheduled service or from a websocket service), you can NOT use anything that requires
+ * authentication in the listener. Most importantly this means that you can not use any custom @Query Methods!
+ */
 @Component
 public class ResultListener {
 
