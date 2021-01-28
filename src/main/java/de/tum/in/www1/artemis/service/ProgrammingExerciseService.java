@@ -695,6 +695,14 @@ public class ProgrammingExerciseService {
         gitService.combineAllCommitsIntoInitialCommit(exerciseRepository);
     }
 
+    /**
+     * Updates the timeline attributes of the given programming exercise
+     * @param updatedProgrammingExercise containing the changes that have to be saved
+     * @param notificationText optional text for a notification to all students about the update
+     * @return the updated ProgrammingExercise object.
+     * @throws EntityNotFoundException if there is no ProgrammingExercise for the given id.
+     * @throws IllegalAccessException  if the user does not have permissions to access the ProgrammingExercise.
+     */
     public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText)
             throws EntityNotFoundException, IllegalAccessException {
 

@@ -688,6 +688,13 @@ public class ProgrammingExerciseResource {
                 .body(savedProgrammingExercise);
     }
 
+    /**
+     * PUT /programming-exercises/timeline : Updates the timeline attributes of a given exercise
+     * @param updatedProgrammingExercise containing the changes that have to be saved
+     * @param notificationText an optional text to notify the student group about the update on the programming exercise
+     * @return the ResponseEntity with status 200 (OK) with the updated ProgrammingExercise, or with status 403 (Forbidden)
+     * if the user is not allowed to update the exercise or with 404 (Not Found) if the updated ProgrammingExercise couldn't be found in the database
+     */
     @PutMapping(Endpoints.TIMELINE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
