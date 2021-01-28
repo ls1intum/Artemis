@@ -384,8 +384,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     private getSubmissionWithoutAssessmentForAllCorrectionrounds(): void {
         if (this.isExamMode) {
-            console.log(this.secondCorrectionEnabled);
-            console.log(this.numberOfCorrectionRoundsEnabled);
             for (let i = 0; i < this.exam!.numberOfCorrectionRoundsInExam!; i++) {
                 if (i <= this.numberOfCorrectionRoundsEnabled) {
                     this.getSubmissionWithoutAssessmentForCorrectionround(i);
