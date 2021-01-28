@@ -45,9 +45,9 @@ const expect = chai.expect;
 const endDate1 = moment().add(1, 'days');
 const visibleDate1 = moment().subtract(1, 'days');
 const dueDateStat1: DueDateStat = { inTime: 1, late: 0, total: 1 };
-const exercise1: Exercise = { id: 5, numberOfAssessmentsOfCorrectionRounds: [dueDateStat1], studentAssignedTeamIdComputed: false, dueDate: moment().add(2, 'days') };
-const exercise2: Exercise = { id: 6, numberOfAssessmentsOfCorrectionRounds: [dueDateStat1], studentAssignedTeamIdComputed: false, dueDate: moment().add(1, 'days') };
-const quizExercise: QuizExercise = { id: 7, numberOfAssessmentsOfCorrectionRounds: [], studentAssignedTeamIdComputed: false };
+const exercise1: Exercise = { id: 5, numberOfAssessmentsOfCorrectionRounds: [dueDateStat1], studentAssignedTeamIdComputed: false, dueDate: moment().add(2, 'days'), secondCorrectionEnabled: true };
+const exercise2: Exercise = { id: 6, numberOfAssessmentsOfCorrectionRounds: [dueDateStat1], studentAssignedTeamIdComputed: false, dueDate: moment().add(1, 'days'), secondCorrectionEnabled: true };
+const quizExercise: QuizExercise = { id: 7, numberOfAssessmentsOfCorrectionRounds: [], studentAssignedTeamIdComputed: false, secondCorrectionEnabled: true };
 
 const courseEmpty: Course = {};
 

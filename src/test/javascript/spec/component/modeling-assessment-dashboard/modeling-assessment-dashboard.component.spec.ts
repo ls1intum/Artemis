@@ -31,6 +31,7 @@ const modelingExercise = {
     studentAssignedTeamIdComputed: true,
     assessmentType: AssessmentType.SEMI_AUTOMATIC,
     numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: true
 };
 const modelingSubmission = { id: 1, submitted: true, results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [] } }] };
 const modelingSubmission2 = { id: 2, submitted: true, results: [{ id: 20, assessor: { id: 30, guidedTourSettings: [] } }] };
