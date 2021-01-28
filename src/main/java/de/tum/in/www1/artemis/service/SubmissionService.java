@@ -507,8 +507,8 @@ public class SubmissionService {
         if (isExamMode) {
             ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
-                log.debug("The due date of exercise: " + exercise.getTitle() + " has not been reached yet.");
-                throw new AccessForbiddenException("The due date of exercise: " + exercise.getTitle() + " has not been reached yet.");
+                log.debug("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
+                throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
             }
         }
         else {
@@ -517,14 +517,14 @@ public class SubmissionService {
                 ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                         && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
-                    log.debug("The due date to build and test of exercise: " + exercise.getTitle() + " has not been reached yet.");
-                    throw new AccessForbiddenException("The due date to build and test of exercise: " + exercise.getTitle() + " has not been reached yet.");
+                    log.debug("The due date to build and test of exercise '" + exercise.getTitle() + "' has not been reached yet.");
+                    throw new AccessForbiddenException("The due date to build and test of exercise '" + exercise.getTitle() + "' has not been reached yet.");
                 }
             }
 
             if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-                log.debug("The due date of exercise: " + exercise.getTitle() + " has not been reached yet.");
-                throw new AccessForbiddenException("The due date of exercise: " + exercise.getTitle() + " has not been reached yet.");
+                log.debug("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
+                throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
             }
         }
     }
