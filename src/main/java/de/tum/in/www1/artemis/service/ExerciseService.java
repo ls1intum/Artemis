@@ -332,7 +332,7 @@ public class ExerciseService {
         }
 
         // make sure student scores are deleted before the exercise is deleted
-        participantScoreRepository.removeAllByExerciseId(exercise.getId());
+        participantScoreRepository.removeAllByExercise(exercise);
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
         if (exercise instanceof ProgrammingExercise) {
             programmingExerciseService.delete(exercise.getId(), deleteBaseReposBuildPlans);

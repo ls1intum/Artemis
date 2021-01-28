@@ -16,13 +16,6 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 @Repository
 public interface ParticipationRepository extends JpaRepository<Participation, Long> {
 
-    @Query("""
-            SELECT DISTINCT p
-            FROM Result r JOIN r.participation p
-            WHERE r.id = :#{#resultId}
-            """)
-    Optional<Participation> findParticipationAssociatedWithResult(@Param("resultId") Long resultId);
-
     Optional<Participation> findByResults(Result result);
 
     @Query("select distinct p from Participation p left join fetch p.submissions left join fetch p.results where p.id = :#{#participationId}")

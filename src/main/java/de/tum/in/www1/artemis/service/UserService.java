@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.repository.*;
@@ -643,10 +642,7 @@ public class UserService {
         // 9) Delete the submissionVersion / remove the user from the submissionVersion
         // 10) Delete the tutor participation
 
-        List<StudentScore> associatedStudentScores = studentScoreRepository.findStudentScoreByUserId(user.getId());
-        for (StudentScore studentScore : associatedStudentScores) {
-            studentScoreRepository.deleteById(studentScore.getId());
-        }
+        studentScoreRepository.deleteAllByUser(user);
 
         userRepository.delete(user);
         clearUserCaches(user);

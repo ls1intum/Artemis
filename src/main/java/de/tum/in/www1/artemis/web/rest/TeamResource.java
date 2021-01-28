@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.scores.TeamScore;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.TeamScoreRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -275,10 +274,7 @@ public class TeamResource {
         // Delete all participations of the team first and then the team itself
         participationService.deleteAllByTeamId(id, false, false);
         // delete all team scores associated with the team
-        List<TeamScore> associatedTeamScores = teamScoreRepository.findTeamScoreByTeamId(team.getId());
-        for (TeamScore teamScore : associatedTeamScores) {
-            teamScoreRepository.deleteById(teamScore.getId());
-        }
+        teamScoreRepository.deleteAllByTeam(team);
 
         teamRepository.delete(team);
 
