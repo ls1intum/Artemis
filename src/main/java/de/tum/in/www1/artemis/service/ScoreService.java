@@ -306,7 +306,6 @@ public class ScoreService {
         else {
             associatedParticipantScore.setLastScore(newLastResult.getScore());
         }
-
     }
 
     private void setLastRatedResultAttributes(ParticipantScore associatedParticipantScore, Result newLastRatedResult) {
