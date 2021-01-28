@@ -275,4 +275,24 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     public sortRows() {
         this.sortService.sortByProperty(this.otherSubmissions, this.predicate, this.reverse);
     }
+
+    /**
+     * get the link for the assessment of a specific submission of the current exercise
+     * @param submissionId
+     */
+    getAssessmentLink(submissionId: number) {
+        if (this.modelingExercise.exerciseGroup) {
+            return [
+                '/course-management',
+                this.modelingExercise.exerciseGroup.exam?.course?.id,
+                'modeling-exercises',
+                this.modelingExercise.id,
+                'submissions',
+                submissionId,
+                'assessment',
+            ];
+        } else {
+            return ['/course-management', this.modelingExercise.course?.id, 'modeling-exercises', this.modelingExercise.id, 'submissions', submissionId, 'assessment'];
+        }
+    }
 }

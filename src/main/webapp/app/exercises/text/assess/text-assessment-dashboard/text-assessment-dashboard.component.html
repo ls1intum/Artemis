@@ -76,21 +76,11 @@
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
                             <!-- exercise without exam-->
                             <span *ngIf="exercise.type === ExerciseType.TEXT && exercise.course && submission">
-                                <button
-                                    *ngIf="!submission.latestResult"
-                                    [disabled]="busy"
-                                    [routerLink]="['/course-management', exercise.course?.id, 'text-exercises', exercise.id, 'submissions', submission.id, 'assessment']"
-                                    class="btn btn-success btn-sm mb-1"
-                                >
+                                <button *ngIf="!submission.latestResult" [disabled]="busy" [routerLink]="getAssessmentLink(submission.id)" class="btn btn-success btn-sm mb-1">
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
                                 </button>
 
-                                <button
-                                    *ngIf="submission.latestResult"
-                                    [disabled]="busy"
-                                    [routerLink]="['/course-management', exercise.course?.id, 'text-exercises', exercise.id, 'submissions', submission.id, 'assessment']"
-                                    class="btn btn-primary btn-sm mb-1"
-                                >
+                                <button *ngIf="submission.latestResult" [disabled]="busy" [routerLink]="getAssessmentLink(submission.id)" class="btn btn-primary btn-sm mb-1">
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
                                 </button>
                             </span>
@@ -103,15 +93,7 @@
                                         *ngIf="submission.results[correctionRound].completionDate"
                                         [disabled]="busy"
                                         [queryParams]="{ 'correction-round': correctionRound }"
-                                        [routerLink]="[
-                                            '/course-management',
-                                            exercise.exerciseGroup?.exam.course.id,
-                                            'text-exercises',
-                                            exercise.id,
-                                            'submissions',
-                                            submission.id,
-                                            'assessment'
-                                        ]"
+                                        [routerLink]="getAssessmentLink(submission.id)"
                                         class="btn btn-primary btn-sm mb-1"
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;
@@ -124,15 +106,7 @@
                                         <button
                                             [disabled]="busy"
                                             [queryParams]="{ 'correction-round': correctionRound }"
-                                            [routerLink]="[
-                                                '/course-management',
-                                                exercise.exerciseGroup?.exam.course.id,
-                                                'text-exercises',
-                                                exercise.id,
-                                                'submissions',
-                                                submission.id,
-                                                'assessment'
-                                            ]"
+                                            [routerLink]="getAssessmentLink(submission.id)"
                                             class="btn btn-warning btn-sm mb-1"
                                         >
                                             <fa-icon [fixedWidth]="true" [icon]="'edit'"></fa-icon>&nbsp;
@@ -161,15 +135,7 @@
                                     "
                                     [disabled]="busy"
                                     [queryParams]="{ 'correction-round': submission.results ? submission.results.length : 0 }"
-                                    [routerLink]="[
-                                        '/course-management',
-                                        exercise.exerciseGroup?.exam.course.id,
-                                        'text-exercises',
-                                        exercise.id,
-                                        'submissions',
-                                        submission.id,
-                                        'assessment'
-                                    ]"
+                                    [routerLink]="getAssessmentLink(submission.id)"
                                     class="btn btn-success btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>

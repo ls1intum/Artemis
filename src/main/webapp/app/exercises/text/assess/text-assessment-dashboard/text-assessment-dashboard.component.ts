@@ -127,4 +127,15 @@ export class TextAssessmentDashboardComponent implements OnInit {
             });
         }
     }
+    /**
+     * get the link for the assessment of a specific submission of the current exercise
+     * @param submissionId
+     */
+    getAssessmentLink(submissionId: number) {
+        if (this.exercise.exerciseGroup) {
+            return ['/course-management', this.exercise.exerciseGroup.exam?.course?.id, 'text-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
+        } else {
+            return ['/course-management', this.exercise.course?.id, 'text-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
+        }
+    }
 }

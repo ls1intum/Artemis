@@ -179,15 +179,7 @@
                                     *ngIf="!submission.latestResult"
                                     [disabled]="busy"
                                     [queryParams]="{ optimal: false, hideBackButton: true }"
-                                    [routerLink]="[
-                                        '/course-management',
-                                        modelingExercise.course?.id,
-                                        'modeling-exercises',
-                                        modelingExercise.id,
-                                        'submissions',
-                                        submission.id,
-                                        'assessment'
-                                    ]"
+                                    [routerLink]="getAssessmentLink(submission.id)"
                                     class="btn btn-success btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
@@ -196,15 +188,7 @@
                                     *ngIf="submission.latestResult"
                                     [disabled]="busy"
                                     [queryParams]="{ optimal: false, hideBackButton: true }"
-                                    [routerLink]="[
-                                        '/course-management',
-                                        modelingExercise.course?.id,
-                                        'modeling-exercises',
-                                        modelingExercise.id,
-                                        'submissions',
-                                        submission.id,
-                                        'assessment'
-                                    ]"
+                                    [routerLink]="getAssessmentLink(submission.id)"
                                     class="btn btn-primary btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
@@ -219,15 +203,7 @@
                                         *ngIf="submission.results[correctionRound].completionDate"
                                         [disabled]="busy"
                                         [queryParams]="{ optimal: false, hideBackButton: true, 'correction-round': correctionRound }"
-                                        [routerLink]="[
-                                            '/course-management',
-                                            modelingExercise.exerciseGroup?.exam.course.id,
-                                            'modeling-exercises',
-                                            modelingExercise.id,
-                                            'submissions',
-                                            submission.id,
-                                            'assessment'
-                                        ]"
+                                        [routerLink]="getAssessmentLink(submission.id)"
                                         class="btn btn-primary btn-sm mb-1"
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;
@@ -240,15 +216,7 @@
                                         <button
                                             [disabled]="busy"
                                             [queryParams]="{ 'correction-round': correctionRound }"
-                                            [routerLink]="[
-                                                '/course-management',
-                                                modelingExercise.exerciseGroup?.exam.course.id,
-                                                'modeling-exercises',
-                                                modelingExercise.id,
-                                                'submissions',
-                                                submission.id,
-                                                'assessment'
-                                            ]"
+                                            [routerLink]="getAssessmentLink(submission.id)"
                                             class="btn btn-warning btn-sm mb-1"
                                         >
                                             <fa-icon [fixedWidth]="true" [icon]="'edit'"></fa-icon>&nbsp;
@@ -277,15 +245,7 @@
                                     "
                                     [disabled]="busy"
                                     [queryParams]="{ 'correction-round': submission.results ? submission.results.length : 0 }"
-                                    [routerLink]="[
-                                        '/course-management',
-                                        modelingExercise.exerciseGroup?.exam.course.id,
-                                        'modeling-exercises',
-                                        modelingExercise.id,
-                                        'submissions',
-                                        submission.id,
-                                        'assessment'
-                                    ]"
+                                    [routerLink]="getAssessmentLink(submission.id)"
                                     class="btn btn-success btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
