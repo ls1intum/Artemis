@@ -700,11 +700,8 @@ public class ProgrammingExerciseService {
      * @param updatedProgrammingExercise containing the changes that have to be saved
      * @param notificationText optional text for a notification to all students about the update
      * @return the updated ProgrammingExercise object.
-     * @throws EntityNotFoundException if there is no ProgrammingExercise for the given id.
-     * @throws IllegalAccessException  if the user does not have permissions to access the ProgrammingExercise.
      */
-    public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText)
-            throws EntityNotFoundException, IllegalAccessException {
+    public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
 
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(updatedProgrammingExercise.getId());
         if (programmingExercise.isPresent()) {
@@ -715,13 +712,6 @@ public class ProgrammingExerciseService {
         }
         else {
             throw new EntityNotFoundException("Programming exercise not found with id: " + updatedProgrammingExercise.getId());
-        }
-
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Course course = updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            throw new IllegalAccessException(
-                    "User with login " + user.getLogin() + " is not authorized to access programming exercise with id: " + updatedProgrammingExercise.getId());
         }
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise.get());

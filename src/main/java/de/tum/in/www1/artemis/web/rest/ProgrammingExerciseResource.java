@@ -702,15 +702,14 @@ public class ProgrammingExerciseResource {
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update the timeline of ProgrammingExercise : {}", updatedProgrammingExercise);
 
-        try {
-            updatedProgrammingExercise = programmingExerciseService.updateTimeline(updatedProgrammingExercise, notificationText);
-        }
-        catch (IllegalAccessException ex) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember();
+
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-        catch (EntityNotFoundException ex) {
-            return notFound();
-        }
+
+        updatedProgrammingExercise = programmingExerciseService.updateTimeline(updatedProgrammingExercise, notificationText);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
                 .body(updatedProgrammingExercise);
 
