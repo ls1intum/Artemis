@@ -76,7 +76,7 @@
             </ng-template>
             <ng-template ngx-datatable-cell-template let-value="value">
                 <div class="d-flex flex-column">
-                    <div *ngFor="let result of value">{{ result.assessor ? result.assessor.name : 'n.a' }}</div>
+                    <div *ngFor="let result of value">{{ result.assessor?.name || 'n.a' }}</div>
                 </div>
             </ng-template>
         </ngx-datatable-column>
