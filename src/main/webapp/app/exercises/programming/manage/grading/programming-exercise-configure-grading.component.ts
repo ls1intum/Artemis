@@ -446,6 +446,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.resetFailed`);
                     return of(null);
                 }),
+                tap(() => this.loadStatistics(this.exercise.id!)),
             )
             .subscribe(() => {
                 this.isSaving = false;
