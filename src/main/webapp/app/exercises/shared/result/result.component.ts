@@ -244,11 +244,11 @@ export class ResultComponent implements OnInit, OnChanges {
      * Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
      */
     buildResultTooltip() {
-        if (
-            this.participation &&
-            isProgrammingExerciseStudentParticipation(this.participation) &&
-            isResultPreliminary(this.result!, getExercise(this.participation) as ProgrammingExercise)
-        ) {
+        const programmingExercise = getExercise(this.participation) as ProgrammingExercise;
+        if (this.participation && isProgrammingExerciseStudentParticipation(this.participation) && isResultPreliminary(this.result!, programmingExercise)) {
+            if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC) {
+                return this.translate.instant('artemisApp.result.preliminaryTooltipSemiAutomatic');
+            }
             return this.translate.instant('artemisApp.result.preliminaryTooltip');
         }
     }
