@@ -16,6 +16,7 @@ import { FilterProp as TeamFilterProp } from 'app/exercises/shared/team/teams.co
 import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-courses',
@@ -59,9 +60,11 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
 
     isExamMode = false;
     isTestRun = false;
+    toggelingSecondCorrectionButton = false;
 
     constructor(
         private courseService: CourseManagementService,
+        private exerciseService: ExerciseService,
         private examManagementService: ExamManagementService,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
@@ -216,5 +219,21 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
 
     sortRows() {
         this.sortService.sortByProperty(this.exercises, this.exercisesSortingPredicate, this.exercisesReverseOrder);
+    }
+
+    toggleSecondCorrection(exerciseId: number) {
+        this.toggelingSecondCorrectionButton = true;
+        const currentExercise = this.exercises.find((exercise) => exercise.id === exerciseId)!;
+        const index = this.exercises.indexOf(currentExercise);
+        this.exerciseService.toggleSecondCorrection(exerciseId).subscribe(
+            (res: Boolean) => {
+                this.exercises[index].secondCorrectionEnabled = !this.exercises[index].secondCorrectionEnabled;
+                currentExercise!.secondCorrectionEnabled = res as boolean;
+                this.toggelingSecondCorrectionButton = false;
+            },
+            (err: string) => {
+                this.onError(err);
+            },
+        );
     }
 }

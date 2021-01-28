@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -626,5 +629,34 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     public void testCleanupExercise_forbidden() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         request.delete("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/cleanup", HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testSetSecondCorrectionEnabledFlagEnable() throws Exception {
+        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
+
+        Boolean bool = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.OK);
+        assertThat(bool).isEqualTo(true);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testSetSecondCorrectionEnabledFlagDisable() throws Exception {
+        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
+        exercise.setSecondCorrectionEnabled(true);
+        exerciseRepository.save(exercise);
+        Boolean bool = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.OK);
+        assertThat(bool).isEqualTo(false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor6", roles = "TA")
+    public void testSetSecondCorrectionEnabledFlagForbidden() throws Exception {
+        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
+        request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.FORBIDDEN);
     }
 }

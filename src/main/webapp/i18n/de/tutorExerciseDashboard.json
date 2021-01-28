@@ -10,6 +10,8 @@
             "pageHeader": "Bewertungs-Dashboard für die Übung",
             "testRunPageHeader": "Testlauf Übungs-dashboard für die Übung:",
             "yourStatus": "Dein Status",
+            "toggleSecondCorrectionOn": "Zweitkorrektur erlauben",
+            "toggleSecondCorrectionOff": "Zweitkorrektur verbieten",
             "youAssessedSoFar": "Du hast bisher {{numberOfTutorAssessments}} Abgaben bewertet.",
             "needToReadGradingInstructions": "Du musst die Bewertungsanweisungen lesen, bevor du mit der Bewertung beginnen kannst.",
             "readGradingInstructions": "Bewertungsanweisungen lesen",
