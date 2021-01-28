@@ -112,7 +112,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private loadSubmission(submissionId: number): void {
-        this.modelingSubmissionService.getSubmission(submissionId).subscribe(
+        this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
             },

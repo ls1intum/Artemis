@@ -48,13 +48,16 @@
                     "assessmentType": "Assessment Type",
                     "student": "Student",
                     "assessor": "Reviewer",
-                    "action": "Action"
+                    "action": "Assessment",
+                    "assessmentFirst": "Correction Round 1",
+                    "assessmentSecond": "Correction Round 2"
                 },
                 "minutes": "minutes",
                 "actions": {
                     "open": "Open assessment",
                     "cancel": "Cancel assessment",
-                    "assess": "Assess Submission"
+                    "assess": "Assess Submission",
+                    "continue": "Continue assessment"
                 },
                 "filters": {
                     "showAll": "Show all",
