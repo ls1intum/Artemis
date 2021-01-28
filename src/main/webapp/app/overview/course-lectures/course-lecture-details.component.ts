@@ -14,6 +14,9 @@ import { AttachmentService } from 'app/lecture/attachment.service';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { StudentQuestionsComponent } from 'app/overview/student-questions/student-questions.component';
 
+const showdownKatex = require('showdown-katex');
+const showdownHighlight = require('showdown-highlight');
+
 @Component({
     selector: 'jhi-course-lecture-details',
     templateUrl: './course-lecture-details.component.html',
@@ -66,6 +69,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 });
             }
         });
+        console.log(showdownHighlight);
+        console.log(showdownKatex);
     }
 
     ngOnDestroy(): void {
