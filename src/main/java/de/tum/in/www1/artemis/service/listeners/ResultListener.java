@@ -33,6 +33,8 @@ public class ResultListener {
 
     /**
      * Remove or update associated participation scores before a result is removed
+     * <p>
+     * Will be called by Hibernate BEFORE a result is deleted from the database.
      *
      * @param resultToBeDeleted result about to be remove
      */
@@ -43,6 +45,8 @@ public class ResultListener {
 
     /**
      * Update or create a new participation score after a result is created or updated
+     * <p>
+     * Will be called by Hibernate AFTER a result is updated or created
      *
      * @param createdOrUpdatedResult created or updated result
      */
