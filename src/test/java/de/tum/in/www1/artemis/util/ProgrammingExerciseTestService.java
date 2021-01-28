@@ -7,13 +7,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -580,6 +583,7 @@ public class ProgrammingExerciseTestService {
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
     }
 
+    // TEST
     public void resumeProgrammingExerciseByTriggeringBuild_correctInitializationState(ExerciseMode exerciseMode, SubmissionType submissionType) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
@@ -610,6 +614,7 @@ public class ProgrammingExerciseTestService {
         assertThat(submissions.size()).isEqualTo(1);
     }
 
+    // TEST
     public void resumeProgrammingExerciseByTriggeringFailedBuild_correctInitializationState(ExerciseMode exerciseMode, boolean buildPlanExists) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
@@ -645,6 +650,7 @@ public class ProgrammingExerciseTestService {
         assertThat(submissions.size()).isEqualTo(1);
     }
 
+    // TEST
     public void resumeProgrammingExerciseByTriggeringInstructorBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
@@ -672,6 +678,38 @@ public class ProgrammingExerciseTestService {
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
         var submissions = database.submissionRepository.findAll();
         assertThat(submissions.size()).isEqualTo(1);
+    }
+
+    // Test
+    public void exportInstructorRepositories_shouldReturnFile() throws Exception {
+        var zip = exportInstructorRepository("TEMPLATE", sourceExerciseRepo.localRepoFile.toPath(), HttpStatus.OK);
+        assertThat(zip).isNotNull();
+
+        zip = exportInstructorRepository("SOLUTION", sourceSolutionRepo.localRepoFile.toPath(), HttpStatus.OK);
+        assertThat(zip).isNotNull();
+
+        zip = exportInstructorRepository("TESTS", sourceTestRepo.localRepoFile.toPath(), HttpStatus.OK);
+        assertThat(zip).isNotNull();
+
+    }
+
+    // Test
+    public void exportInstructorRepositories_forbidden() throws Exception {
+        exportInstructorRepository("TEMPLATE", sourceExerciseRepo.localRepoFile.toPath(), HttpStatus.FORBIDDEN);
+        exportInstructorRepository("SOLUTION", sourceSolutionRepo.localRepoFile.toPath(), HttpStatus.FORBIDDEN);
+        exportInstructorRepository("TESTS", sourceTestRepo.localRepoFile.toPath(), HttpStatus.FORBIDDEN);
+    }
+
+    private String exportInstructorRepository(String repositoryType, Path localPathToRepository, HttpStatus expectedStatus) throws Exception {
+        exercise = programmingExerciseRepository.save(exercise);
+
+        var vcsUrl = exercise.getRepositoryURL(RepositoryType.valueOf(repositoryType));
+        var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localPathToRepository, null);
+        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
+
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-repository/" + repositoryType;
+        // return request.postWithResponseBodyFile(url, null, expectedStatus);
+        return request.get(url, expectedStatus, String.class);
     }
 
     private ProgrammingExerciseStudentParticipation createStudentParticipationWithSubmission(ExerciseMode exerciseMode) throws Exception {

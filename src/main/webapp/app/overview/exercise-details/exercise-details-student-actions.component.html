@@ -205,26 +205,19 @@
             "
             [routerLink]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor', exercise.studentParticipations[0].id]"
         ></button>
-        <button
-            jhi-exercise-action-button
-            buttonIcon="download"
-            class="clone-repository"
-            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [buttonLabel]="'artemisApp.exerciseActions.cloneRepository' | translate"
-            [buttonLoading]="exercise.loading"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
-            placement="right"
-            container="body"
+        <jhi-clone-repo-button
+            [loading]="exercise.loading"
+            [smallButtons]="smallButtons"
+            [repositoryUrl]="repositoryUrl(exercise.studentParticipations![0])"
+            [isTeamParticipation]="!!exercise.studentParticipations![0].team"
             *ngIf="
                 isOfflineIdeAllowed() &&
                 exercise.studentParticipations &&
                 participationStatusWrapper() == ParticipationStatus.INITIALIZED &&
                 exercise.studentParticipations.length > 0
             "
-            [ngbPopover]="popContent"
-            [autoClose]="'outside'"
-        ></button>
+        >
+        </jhi-clone-repo-button>
         <!-- NOTE: we use the same logic 'isStartExerciseAvailable' in ngIf as above because start and resume are not always possible -->
         <button
             jhi-exercise-action-button
@@ -237,49 +230,6 @@
             *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE && isStartExerciseAvailable()"
             (click)="resumeProgrammingExercise()"
         ></button>
-        <ng-template #popContent style="max-width: 660px">
-            <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | translate }}</p>
-            <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
-            <div class="row" style="margin: 0; max-width: 100%">
-                <pre
-                    style="flex: 1"
-                    [ngStyle]="sshEnabled ? { borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' } : {}"
-                    ngxClipboard
-                    [cbContent]="repositoryUrl(exercise.studentParticipations![0])"
-                    (cbOnSuccess)="onCopySuccess()"
-                    (cbOnError)="onCopyFailure()"
-                    >{{ repositoryUrl(exercise.studentParticipations![0]) }}</pre
-                >
-                <pre
-                    *ngIf="sshEnabled"
-                    class="btn btn-primary d-inline-flex align-items-center ml-0 use-ssh"
-                    style="border-top-left-radius: 0; border-bottom-left-radius: 0"
-                    (click)="toggleUseSsh()"
-                    >{{ useSsh ? 'USE HTTPS' : 'USE SSH' }}</pre
-                >
-            </div>
-            <p *ngIf="repositoryPassword">
-                {{ 'artemisApp.exerciseActions.repositoryPassword' | translate }} <code class="password">{{ repositoryPassword }}</code>
-                {{ 'artemisApp.exerciseActions.hoverToShow' | translate }}
-            </p>
-            <button
-                ngxClipboard
-                [cbContent]="repositoryUrl(exercise.studentParticipations![0])"
-                (cbOnSuccess)="onCopySuccess()"
-                (cbOnError)="onCopyFailure()"
-                [class.btn-success]="wasCopied"
-                class="btn btn-primary btn-sm mr-2"
-                type="button"
-                style="min-width: 90px"
-            >
-                {{ wasCopied ? ('artemisApp.exerciseActions.copiedUrl' | translate) : ('artemisApp.exerciseActions.copyUrl' | translate) }}
-            </button>
-            <a class="btn btn-primary btn-sm mr-2" target="hidden-iframe" [href]="buildSourceTreeUrl(repositoryUrl(exercise.studentParticipations![0])) | safeUrl"
-                >{{ 'artemisApp.exerciseActions.cloneSourceTree' | translate }}
-            </a>
-            <iframe name="hidden-iframe" style="visibility: hidden; position: absolute"></iframe>
-            <span [innerHTML]="'artemisApp.exerciseActions.sourceTreeDescription' | translate"></span>
-        </ng-template>
     </div>
     <!-- ACTION END -->
 </div>
