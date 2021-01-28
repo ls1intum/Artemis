@@ -129,14 +129,14 @@
 
         <div class="col-12" *ngIf="exercise.type === ExerciseType.MODELING && exampleSolutionModel">
             <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | translate }}</h4>
-            <jhi-modeling-editor [umlModel]="exampleSolutionModel" [diagramType]="modelingExercise.diagramType" [readOnly]="true"> </jhi-modeling-editor>
+            <jhi-modeling-editor [umlModel]="exampleSolutionModel" [diagramType]="modelingExercise.diagramType" [readOnly]="true"></jhi-modeling-editor>
             <p class="mt-2" *ngIf="formattedSampleSolution" [innerHTML]="formattedSampleSolution"></p>
         </div>
 
         <div class="col-12" *ngIf="exercise.type === ExerciseType.PROGRAMMING">
             <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | translate }}</h4>
             <a jhiSecureLink [href]="asProgrammingExercise(exercise).solutionParticipation!.repositoryUrl">
-                <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution">Example solution repository</jhi-button>
+                <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution"> Example solution repository </jhi-button>
             </a>
         </div>
 

@@ -252,9 +252,9 @@
                 >
                 <pre
                     *ngIf="sshEnabled"
-                    class="btn btn-primary d-inline-flex align-items-center ml-0"
+                    class="btn btn-primary d-inline-flex align-items-center ml-0 use-ssh"
                     style="border-top-left-radius: 0; border-bottom-left-radius: 0"
-                    (click)="useSsh = !useSsh"
+                    (click)="toggleUseSsh()"
                     >{{ useSsh ? 'USE HTTPS' : 'USE SSH' }}</pre
                 >
             </div>
