@@ -57,6 +57,5 @@ public class ResultListener {
     @PostPersist
     public void updateOrCreateParticipantScore(Result createdOrUpdatedResult) {
         scoreService.updateOrCreateParticipantScore(createdOrUpdatedResult);
-
     }
 }
