@@ -34,7 +34,7 @@ const modelingExercise = {
 };
 const modelingExerciseOfExam = {
     id: 23,
-    exerciseGroup: { id: 111, exam: { id: 112, course: course } },
+    exerciseGroup: { id: 111, exam: { id: 112, course } },
     type: ExerciseType.MODELING,
     studentAssignedTeamIdComputed: true,
     assessmentType: AssessmentType.SEMI_AUTOMATIC,
