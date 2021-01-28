@@ -32,7 +32,7 @@ export enum EditableField {
     STATE = 'state',
 }
 
-const DefaltFieldValues = {
+const DefaultFieldValues = {
     [EditableField.WEIGHT]: 1,
     [EditableField.BONUS_MULTIPLIER]: 1,
     [EditableField.BONUS_POINTS]: 0,
@@ -293,7 +293,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     checkFieldValue(newValue: any, oldValue: any, field: EditableField) {
         // Don't allow an empty string as a value!
         if (newValue === '') {
-            newValue = DefaltFieldValues[field];
+            newValue = DefaultFieldValues[field];
         }
         if (typeof oldValue === 'number') {
             newValue = Number(newValue);
