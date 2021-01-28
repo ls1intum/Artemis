@@ -708,6 +708,7 @@ public class ProgrammingExerciseService {
             programmingExercise.get().setReleaseDate(updatedProgrammingExercise.getReleaseDate());
             programmingExercise.get().setDueDate(updatedProgrammingExercise.getDueDate());
             programmingExercise.get().setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+            programmingExercise.get().setAssessmentType(updatedProgrammingExercise.getAssessmentType());
             programmingExercise.get().setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
         }
         else {
