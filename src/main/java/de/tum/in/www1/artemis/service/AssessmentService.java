@@ -135,7 +135,8 @@ public class AssessmentService {
             String[] resultStringParts = originalResult.getResultString().split(", ");
             resultStringParts[resultStringParts.length - 1] = originalResult.createResultString(points, exercise.getMaxScore());
             originalResult.setResultString(String.join(", ", resultStringParts));
-            return resultRepository.save(originalResult);
+            Result savedResult = resultRepository.save(originalResult);
+            return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).get(); // to eagerly load assessor
         }
         else {
             Double calculatedScore = calculateTotalScore(originalResult.getFeedbacks());
