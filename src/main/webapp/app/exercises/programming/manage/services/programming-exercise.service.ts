@@ -25,6 +25,8 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     buildAndTestStudentSubmissionsAfterDueDate?: Moment;
 };
 
+export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION' | 'TESTS';
+
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
@@ -272,5 +274,17 @@ export class ProgrammingExerciseService {
      */
     lockAllRepositories(exerciseId: number): Observable<HttpResponse<{}>> {
         return this.http.put<any>(`${this.resourceUrl}/${exerciseId}/lock-all-repositories`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Exports the solution, template or test repository for a given exercise.
+     * @param exerciseId
+     * @param repositoryType
+     */
+    exportInstructorRepository(exerciseId: number, repositoryType: ProgrammingExerciseInstructorRepositoryType): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-repository/${repositoryType}`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
     }
 }

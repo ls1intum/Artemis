@@ -43,7 +43,7 @@
                 "submissionType": "Submission Type",
                 "submissionDate": "Submission Date",
                 "resultCount": "Result Count",
-                "lastResult": "Last Result",
+                "results": "Results",
                 "assessor": "Assessor",
                 "submissionsForParticipation": "Submissions of {{ participant }} for Exercise {{ exercise }}",
                 "action": "Action",

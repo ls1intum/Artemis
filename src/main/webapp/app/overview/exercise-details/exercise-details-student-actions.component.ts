@@ -1,10 +1,9 @@
-import { Component, HostBinding, Input, OnInit } from '@angular/core';
+import { Component, HostBinding, Input } from '@angular/core';
 import * as moment from 'moment';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { HttpClient } from '@angular/common/http';
-import { AccountService } from 'app/core/auth/account.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -14,11 +13,6 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { User } from 'app/core/user/user.model';
-import { TranslateService } from '@ngx-translate/core';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { LocalStorageService } from 'ngx-webstorage';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -26,7 +20,7 @@ import { LocalStorageService } from 'ngx-webstorage';
     styleUrls: ['../course-overview.scss'],
     providers: [SourceTreeService],
 })
-export class ExerciseDetailsStudentActionsComponent implements OnInit {
+export class ExerciseDetailsStudentActionsComponent {
     FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
     readonly ParticipationStatus = ParticipationStatus;
@@ -43,85 +37,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     @Input() examMode: boolean;
 
-    public repositoryPassword: string;
-    public wasCopied = false;
-    public useSsh = false;
-
-    public sshEnabled = false;
-    private sshTemplateUrl: string;
-    public sshKeysUrl: string;
-    private baseUrl: string;
-
-    private user: User;
-
-    constructor(
-        private jhiAlertService: JhiAlertService,
-        private courseExerciseService: CourseExerciseService,
-        private httpClient: HttpClient,
-        private accountService: AccountService,
-        private sourceTreeService: SourceTreeService,
-        private router: Router,
-        private translateService: TranslateService,
-        private profileService: ProfileService,
-        private localStorage: LocalStorageService,
-    ) {}
-
-    /**
-     * load password if user login starts with 'edx_' or 'u4i_'
-     */
-    ngOnInit(): void {
-        this.accountService.identity().then((user) => {
-            this.user = user!;
-
-            // Only load password if current user login starts with 'edx_' or 'u4i_'
-            if (user && user.login && (user.login.startsWith('edx_') || user.login.startsWith('u4i_'))) {
-                this.getRepositoryPassword();
-            }
-        });
-        this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
-            this.sshKeysUrl = info.sshKeysURL;
-            this.sshTemplateUrl = info.sshCloneURLTemplate;
-            this.sshEnabled = !!this.sshTemplateUrl;
-            if (info.versionControlUrl) {
-                this.baseUrl = info.versionControlUrl;
-            }
-        });
-
-        this.useSsh = this.localStorage.retrieve('useSsh') || false;
-        this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
-    }
-
-    public toggleUseSsh(): void {
-        this.useSsh = !this.useSsh;
-        this.localStorage.store('useSsh', this.useSsh);
-    }
-
-    /**
-     * get repositoryUrl for participation
-     *
-     * @param {Participation} participation
-     */
-    repositoryUrl(participation?: Participation) {
-        const programmingParticipation = participation as ProgrammingExerciseStudentParticipation;
-        if (this.useSsh) {
-            // the same ssh url is used for individual and team exercises
-            return this.getSshCloneUrl(programmingParticipation?.repositoryUrl);
-        }
-        if (programmingParticipation?.team) {
-            return this.repositoryUrlForTeam(programmingParticipation);
-        }
-        return programmingParticipation?.repositoryUrl;
-    }
-
-    /**
-     * The user info part of the repository url of a team participation has to be be added with the current user's login.
-     *
-     * @return repository url with username of current user inserted
-     */
-    private repositoryUrlForTeam(participation?: ProgrammingExerciseStudentParticipation) {
-        // (https://)(bitbucket.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(bitbucket.ase.in.tum.de/...-team1.git)
-        return participation?.repositoryUrl?.replace(/^(\w*:\/\/)(.*)$/, `$1${this.user.login}@$2`);
-    }
+    constructor(private jhiAlertService: JhiAlertService, private courseExerciseService: CourseExerciseService, private httpClient: HttpClient, private router: Router) {}
 
     /**
      * check if practiceMode is available
@@ -156,21 +72,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     /**
-     * console log if copy fails
-     */
-    onCopyFailure() {}
-
-    /**
-     * set wasCopied for 3 seconds on success
-     */
-    onCopySuccess() {
-        this.wasCopied = true;
-        setTimeout(() => {
-            this.wasCopied = false;
-        }, 3000);
-    }
-
-    /**
      * start the exercise
      */
     startExercise() {
@@ -201,15 +102,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                     this.jhiAlertService.warning('artemisApp.exercise.startError');
                 },
             );
-    }
-
-    /**
-     * build the sourceTreeUrl from the cloneUrl
-     * @param {string} cloneUrl
-     * @return sourceTreeUrl
-     */
-    buildSourceTreeUrl(cloneUrl?: string) {
-        return this.sourceTreeService.buildSourceTreeUrl(this.baseUrl, cloneUrl);
     }
 
     /**
@@ -254,36 +146,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         return participation ? participation.team?.id : this.exercise.studentAssignedTeamId;
     }
 
-    /**
-     * start practice
-     */
-    startPractice() {
-        return this.router.navigate(['/courses', this.exercise.course?.id, 'quiz-exercises', this.exercise.id, 'practice']);
-    }
-
-    /**
-     * get the repositoryPassword
-     */
-    getRepositoryPassword() {
-        this.sourceTreeService.getRepositoryPassword().subscribe((res) => {
-            const password = res['password'];
-            if (password) {
-                this.repositoryPassword = password;
-            }
-        });
-    }
-
-    /**
-     * Transforms the repository url to a ssh url
-     */
-    getSshCloneUrl(url?: string) {
-        return url?.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/, this.sshTemplateUrl + '$2');
-    }
-
-    /**
-     * Inserts the correct link to the translated ssh tip.
-     */
-    getSshKeyTip() {
-        return this.translateService.instant('artemisApp.exerciseActions.sshKeyTip').replace(/{link:(.*)}/, '<a href="' + this.sshKeysUrl + '" target="_blank">$1</a>');
+    repositoryUrl(participation: Participation) {
+        const programmingParticipation = participation as ProgrammingExerciseStudentParticipation;
+        return programmingParticipation.repositoryUrl;
     }
 }
