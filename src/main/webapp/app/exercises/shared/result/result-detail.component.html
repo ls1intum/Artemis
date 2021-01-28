@@ -22,7 +22,7 @@
                         class="badge badge-warning"
                         [ngbTooltip]="
                             result.participation!.exercise!.assessmentType !== AssessmentType.AUTOMATIC
-                                ? 'artemisApp.result.preliminaryTooltipSemiAutomatic'
+                                ? ('artemisApp.result.preliminaryTooltipSemiAutomatic' | translate)
                                 : ('artemisApp.result.preliminaryTooltip' | translate)
                         "
                         >{{ 'artemisApp.result.preliminary' | translate | uppercase }}</span
