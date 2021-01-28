@@ -13,6 +13,7 @@
             "assessmentLockedComplaintView": "Original Assessor: {{otherUser}}",
             "assessmentLockedCurrentUser": "You have the lock for this assessment",
             "assessmentReadOnlyUnhandledComplaint": "There is a complaint for this assessment. Another tutor must respond.",
+            "moreFeedbackRequest": "You have to respond to the feedback request.",
             "assessmentReadOnlyHandledComplaint": "The complaint about your assessment has been resolved.",
             "assessmentDueDateIsOver": "Assessment Due Date is over, the assessment will be published immediately after submitting",
             "button": {
