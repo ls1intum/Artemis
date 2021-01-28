@@ -48,7 +48,7 @@
             "notGraded": "Not graded",
             "preliminary": "preliminary",
             "preliminaryTooltip": "Your result is not final. More tests will be executed after the exercise's due date.",
-            "preliminaryTooltipSemiAutomatic": "Your result is not final. More tests will be executed after the exercise's due date. A manual assessment of your tutor may still be pending.",
+            "preliminaryTooltipSemiAutomatic": "Your result is not final yet, because more tests will be executed after the due date or a manual assessment will be done.",
             "noResultDetails": "No result details available.",
             "chart": {
                 "points": "Points",
