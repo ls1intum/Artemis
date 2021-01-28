@@ -4,7 +4,6 @@ import javax.persistence.PostPersist;
 import javax.persistence.PostUpdate;
 import javax.persistence.PreRemove;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -13,9 +12,6 @@ import de.tum.in.www1.artemis.service.ScoreService;
 
 @Component
 public class ResultListener {
-
-    @Value("#{new Boolean('${artemis.resultListener.isActive}')}")
-    private Boolean isActive;
 
     private ScoreService scoreService;
 
@@ -37,9 +33,6 @@ public class ResultListener {
      */
     @PreRemove
     public void removeOrUpdateAssociatedParticipantScore(Result resultToBeDeleted) {
-        if (isActive == null || !isActive) {
-            return;
-        }
         scoreService.removeOrUpdateAssociatedParticipantScore(resultToBeDeleted);
     }
 
@@ -51,9 +44,6 @@ public class ResultListener {
     @PostUpdate
     @PostPersist
     public void updateOrCreateParticipantScore(Result createdOrUpdatedResult) {
-        if (isActive == null || !isActive) {
-            return;
-        }
         scoreService.updateOrCreateParticipantScore(createdOrUpdatedResult);
 
     }

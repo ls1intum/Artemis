@@ -25,8 +25,6 @@ artemis:
     version: #project.version#
     file-upload-path: uploads
     submission-export-path: exports
-    resultListener:
-        isActive: true
 
 management:
     endpoints:
