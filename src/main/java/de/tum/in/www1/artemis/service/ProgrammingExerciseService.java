@@ -695,6 +695,34 @@ public class ProgrammingExerciseService {
         gitService.combineAllCommitsIntoInitialCommit(exerciseRepository);
     }
 
+    public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText)
+            throws EntityNotFoundException, IllegalAccessException {
+
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(updatedProgrammingExercise.getId());
+        if (programmingExercise.isPresent()) {
+            programmingExercise.get().setReleaseDate(updatedProgrammingExercise.getReleaseDate());
+            programmingExercise.get().setDueDate(updatedProgrammingExercise.getDueDate());
+            programmingExercise.get().setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+            programmingExercise.get().setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
+        }
+        else {
+            throw new EntityNotFoundException("Programming exercise not found with id: " + updatedProgrammingExercise.getId());
+        }
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            throw new IllegalAccessException(
+                    "User with login " + user.getLogin() + " is not authorized to access programming exercise with id: " + updatedProgrammingExercise.getId());
+        }
+
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise.get());
+        if (notificationText != null) {
+            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
+        }
+        return savedProgrammingExercise;
+    }
+
     /**
      * Updates the problem statement of the given programming exercise.
      *

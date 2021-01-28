@@ -21,7 +21,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     failedExercises: string[] = [];
     failureOccurred = false;
     private translationBasePath = 'artemisApp.programmingExercise.';
-    notificationText: string | undefined;
+    notificationText?: string;
 
     constructor(
         private activeModal: NgbActiveModal,
@@ -32,6 +32,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
+        this.notificationText = undefined;
         this.newProgrammingExercise = new ProgrammingExercise(undefined, undefined);
     }
 
@@ -46,18 +47,11 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
         this.isSaving = true;
         this.selectedProgrammingExercises.forEach((programmingExercise) => {
             programmingExercise = this.setNewValues(programmingExercise);
-            if (programmingExercise.id !== undefined) {
-                const requestOptions = {} as any;
-                if (this.notificationText) {
-                    requestOptions.notificationText = this.notificationText;
-                }
-                this.subscribeToSaveResponse(programmingExercise.title, this.programmingExerciseService.update(programmingExercise, requestOptions));
-            } else if (programmingExercise.noVersionControlAndContinuousIntegrationAvailable) {
-                // only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
-                this.subscribeToSaveResponse(programmingExercise.title, this.programmingExerciseSimulationService.automaticSetupWithoutConnectionToVCSandCI(programmingExercise));
-            } else {
-                this.subscribeToSaveResponse(programmingExercise.title, this.programmingExerciseService.automaticSetup(programmingExercise));
+            const requestOptions = {} as any;
+            if (this.notificationText) {
+                requestOptions.notificationText = this.notificationText;
             }
+            this.subscribeToSaveResponse(programmingExercise.title, this.programmingExerciseService.updateTimeline(programmingExercise, requestOptions));
         });
     }
 

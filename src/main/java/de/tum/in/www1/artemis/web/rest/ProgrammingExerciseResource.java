@@ -688,6 +688,27 @@ public class ProgrammingExerciseResource {
                 .body(savedProgrammingExercise);
     }
 
+    @PutMapping(Endpoints.TIMELINE)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<ProgrammingExercise> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExercise updatedProgrammingExercise,
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
+        log.debug("REST request to update the timeline of ProgrammingExercise : {}", updatedProgrammingExercise);
+
+        try {
+            updatedProgrammingExercise = programmingExerciseService.updateTimeline(updatedProgrammingExercise, notificationText);
+        }
+        catch (IllegalAccessException ex) {
+            return forbidden();
+        }
+        catch (EntityNotFoundException ex) {
+            return notFound();
+        }
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
+                .body(updatedProgrammingExercise);
+
+    }
+
     /**
      * PATCH /programming-exercises-problem: Updates the problem statement of the exercise.
      *
@@ -1286,6 +1307,8 @@ public class ProgrammingExerciseResource {
         public static final String PROGRAMMING_EXERCISE = PROGRAMMING_EXERCISES + "/{exerciseId}";
 
         public static final String PROBLEM = PROGRAMMING_EXERCISE + "/problem-statement";
+
+        public static final String TIMELINE = PROGRAMMING_EXERCISES + "/timeline";
 
         public static final String PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS = PROGRAMMING_EXERCISE + "/with-participations";
 
