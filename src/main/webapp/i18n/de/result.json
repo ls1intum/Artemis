@@ -48,6 +48,7 @@
             "notGraded": "Nicht bewertet",
             "preliminary": "vorläufig",
             "preliminaryTooltip": "Dein Ergebnis ist nicht endgültig. Nach der Einreichungsfrist werden weitere Tests durchgeführt.",
+            "preliminaryTooltipSemiAutomatic": "Dein Ergebnis ist nicht endgültig. Nach der Einreichungsfrist werden weitere Tests durchgeführt. Eine manuelle Bewertung deines Tutors könnte noch ausstehen.",
             "noResultDetails": "Keine weiteren Informationen verfügbar für dieses Ergebnis.",
             "chart": {
                 "points": "Punkte",

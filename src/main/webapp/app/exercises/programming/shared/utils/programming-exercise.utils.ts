@@ -47,13 +47,16 @@ export const isResultPreliminary = (latestResult: Result, programmingExercise?: 
     if (!resultCompletionDate || !resultCompletionDate.isValid()) {
         return true;
     }
-    if (programmingExercise.assessmentType !== AssessmentType.AUTOMATIC && programmingExercise.assessmentDueDate) {
+    // If an exercise's assessment type is not automatic the last result is supposed to be manually assessed
+    if (programmingExercise.assessmentType !== AssessmentType.AUTOMATIC) {
         // either the semi-automatic result is not yet available as last result (then it is preliminary), or it is already available, then it still can be changed)
-        return moment().isBefore(moment(programmingExercise.assessmentDueDate));
-    }
-    if (programmingExercise.assessmentType !== AssessmentType.AUTOMATIC && !programmingExercise.assessmentDueDate) {
+        if (programmingExercise.assessmentDueDate) {
+            return moment().isBefore(moment(programmingExercise.assessmentDueDate));
+        }
+        // in case the assessment due date is not set, the assessment type of the latest result is checked. If it is automatic the result is still preliminary.
         return latestResult.assessmentType === AssessmentType.AUTOMATIC;
     }
+    // When the due date for the automatic building and testing is available but not reached, the result is preliminary
     if (programmingExercise.buildAndTestStudentSubmissionsAfterDueDate) {
         return resultCompletionDate.isBefore(moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
     }
