@@ -225,10 +225,15 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
         this.toggelingSecondCorrectionButton = true;
         const currentExercise = this.exercises.find((exercise) => exercise.id === exerciseId)!;
         const index = this.exercises.indexOf(currentExercise);
-        this.exerciseService.toggleSecondCorrection(exerciseId).subscribe((res: HttpResponse<Boolean>) => {
-            this.exercises[index].secondCorrectionEnabled = !this.exercises[index].secondCorrectionEnabled;
-            currentExercise!.secondCorrectionEnabled = res.body! as boolean;
-            this.toggelingSecondCorrectionButton = false;
-        });
+        this.exerciseService.toggleSecondCorrection(exerciseId).subscribe(
+            (res: Boolean) => {
+                this.exercises[index].secondCorrectionEnabled = !this.exercises[index].secondCorrectionEnabled;
+                currentExercise!.secondCorrectionEnabled = res as boolean;
+                this.toggelingSecondCorrectionButton = false;
+            },
+            (err: string) => {
+                this.onError(err);
+            },
+        );
     }
 }

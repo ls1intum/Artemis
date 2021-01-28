@@ -9,10 +9,9 @@ import { TranslateModule } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { SinonStub, stub } from 'sinon';
+import { stub } from 'sinon';
 
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
-import { Component, Input, Output, EventEmitter } from '@angular/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,7 +42,7 @@ describe('SecondCorrectionEnableButtonComponent', () => {
     });
 
     it('test call', () => {
-        let stubEmit = stub(comp.ngModelChange, 'emit');
+        const stubEmit = stub(comp.ngModelChange, 'emit');
         comp.triggerSecondCorrectionButton();
         expect(stubEmit).to.have.been.called;
     });

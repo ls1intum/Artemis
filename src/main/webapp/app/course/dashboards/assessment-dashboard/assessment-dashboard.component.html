@@ -195,15 +195,16 @@
                             </button>
                         </ng-template>
 
-                        <span class="col-lg-3 col-md-6 col-sm-6 align-self-center" *ngIf="isExamMode">
+                        <span
+                            class="col-lg-3 col-md-6 col-sm-6 align-self-center"
+                            *ngIf="isExamMode && exam && exam!.numberOfCorrectionRoundsInExam && exam.numberOfCorrectionRoundsInExam > 1"
+                        >
                             <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                <ng-container *ngIf="exam && exam!.numberOfCorrectionRoundsInExam && exam.numberOfCorrectionRoundsInExam > 1">
-                                    <jhi-second-correction-enable-button
-                                        (ngModelChange)="toggleSecondCorrection(exercise.id)"
-                                        [(secondCorrectionEnabled)]="exercise.secondCorrectionEnabled"
-                                        [(toggelingSecondCorrectionButton)]="toggelingSecondCorrectionButton"
-                                    ></jhi-second-correction-enable-button>
-                                </ng-container>
+                                <jhi-second-correction-enable-button
+                                    (ngModelChange)="toggleSecondCorrection(exercise.id)"
+                                    [(secondCorrectionEnabled)]="exercise.secondCorrectionEnabled"
+                                    [(toggelingSecondCorrectionButton)]="toggelingSecondCorrectionButton"
+                                ></jhi-second-correction-enable-button>
                             </ng-container>
                         </span>
                     </td>
