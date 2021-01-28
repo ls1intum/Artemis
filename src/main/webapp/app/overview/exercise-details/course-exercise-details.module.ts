@@ -17,15 +17,14 @@ import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
-import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
-
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 const routes: Routes = [
     {
@@ -69,6 +68,7 @@ const routes: Routes = [
         ArtemisLearningGoalsModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
         RouterModule.forChild(routes),
+        ArtemisMarkdownModule,
     ],
     declarations: [CourseExerciseDetailsComponent],
     exports: [CourseExerciseDetailsComponent],
