@@ -21,7 +21,6 @@ artemis:
     file-upload-path: uploads
     submission-export-path: exports
 
-
 spring:
     application:
         name: Artemis
