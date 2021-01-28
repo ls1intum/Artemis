@@ -13,6 +13,7 @@
             "assessmentLockedComplaintView": "Ursprünglicher Tutor: {{otherUser}}",
             "assessmentLockedCurrentUser": "Diese Bewertung ist von dir gesperrt",
             "assessmentReadOnlyUnhandledComplaint": "Es gibt eine Beschwerde für diese Bewertung. Ein anderer Tutor muss antworten.",
+            "moreFeedbackRequest": "Du musst auf die Feedback Anfrage antworten.",
             "assessmentReadOnlyHandledComplaint": "Die Beschwerde über deine Bewertung wurde bearbeitet.",
             "assessmentDueDateIsOver": "Die Einreichungsfrist der Bewertung ist vorbei, die nächste Einreichung wird direkt veröffentlicht",
             "button": {

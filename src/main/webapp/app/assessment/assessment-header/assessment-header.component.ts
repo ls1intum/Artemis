@@ -27,6 +27,7 @@ export class AssessmentHeaderComponent {
 
     @Input() result: Result | null;
     @Input() hasComplaint = false;
+    @Input() hasMoreFeedbackRequest = false;
     @Input() complaintHandled = false;
     @Input() assessmentsAreValid: boolean;
     @Input() hasAssessmentDueDatePassed: boolean;
