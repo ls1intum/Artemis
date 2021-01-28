@@ -88,7 +88,12 @@ public class AssessmentService {
         // Set score and resultString according to maxScore, to establish results with score > 100%
         result.setScore(totalScore, maxScore);
         result.setResultString(totalScore, maxScore);
-        return resultRepository.save(result);
+
+        // Workaround to prevent the assessor turning into a proxy object after saving
+        var assessor = result.getAssessor();
+        result = resultRepository.save(result);
+        result.setAssessor(assessor);
+        return result;
     }
 
     /**
@@ -130,7 +135,8 @@ public class AssessmentService {
             String[] resultStringParts = originalResult.getResultString().split(", ");
             resultStringParts[resultStringParts.length - 1] = originalResult.createResultString(points, exercise.getMaxScore());
             originalResult.setResultString(String.join(", ", resultStringParts));
-            return resultRepository.save(originalResult);
+            Result savedResult = resultRepository.save(originalResult);
+            return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).get(); // to eagerly load assessor
         }
         else {
             Double calculatedScore = calculateTotalScore(originalResult.getFeedbacks());
@@ -208,7 +214,7 @@ public class AssessmentService {
          * {@link Result#feedbacks}.
          */
         if (participation instanceof ProgrammingExerciseStudentParticipation && submission.getResults().size() == 1) {
-            participation.removeSubmissions(submission);
+            participation.removeSubmission(submission);
             participation.removeResult(result);
             submissionRepository.deleteById(submission.getId());
         }
@@ -355,7 +361,11 @@ public class AssessmentService {
             submission.addResult(result);
             submissionRepository.save(submission);
         }
-        return resultRepository.save(result);
+        // Workaround to prevent the assessor turning into a proxy object after saving
+        var assessor = result.getAssessor();
+        result = resultRepository.save(result);
+        result.setAssessor(assessor);
+        return result;
     }
 
     private List<Feedback> saveFeedbacks(List<Feedback> feedbackList) {
