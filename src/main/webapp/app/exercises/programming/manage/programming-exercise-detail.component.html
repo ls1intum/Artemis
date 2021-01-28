@@ -186,25 +186,54 @@
                 </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span></dt>
                 <dd>
-                    <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl"
-                        ><a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank">{{
+                    <div class="d-flex align-items-center" *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
+                        <a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{
                             programmingExercise.templateParticipation.repositoryUrl
-                        }}</a></span
-                    >
+                        }}</a>
+                        <jhi-clone-repo-button
+                            class="ml-2"
+                            [smallButtons]="true"
+                            [repositoryUrl]="programmingExercise.templateParticipation.repositoryUrl"
+                            [isTeamParticipation]="false"
+                        ></jhi-clone-repo-button>
+                        <jhi-programming-exercise-instructor-repo-download
+                            class="ml-2"
+                            [exerciseId]="programmingExercise.id"
+                            [repositoryType]="'TEMPLATE'"
+                        ></jhi-programming-exercise-instructor-repo-download>
+                    </div>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionRepositoryUrl">Solution Repository Url</span></dt>
                 <dd>
-                    <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl"
-                        ><a href="{{ programmingExercise.solutionParticipation.repositoryUrl }}" target="_blank">{{
+                    <div class="d-flex align-items-center" *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl">
+                        <a href="{{ programmingExercise.solutionParticipation.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{
                             programmingExercise.solutionParticipation.repositoryUrl
-                        }}</a></span
-                    >
+                        }}</a>
+                        <jhi-clone-repo-button
+                            class="ml-2"
+                            [smallButtons]="true"
+                            [repositoryUrl]="programmingExercise.solutionParticipation.repositoryUrl"
+                            [isTeamParticipation]="false"
+                        ></jhi-clone-repo-button>
+                        <jhi-programming-exercise-instructor-repo-download
+                            class="ml-2"
+                            [exerciseId]="programmingExercise.id"
+                            [repositoryType]="'SOLUTION'"
+                        ></jhi-programming-exercise-instructor-repo-download>
+                    </div>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.testRepositoryUrl">Test Repository Url</span></dt>
                 <dd>
-                    <span *ngIf="programmingExercise.testRepositoryUrl"
-                        ><a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">{{ programmingExercise.testRepositoryUrl }}</a></span
-                    >
+                    <div class="d-flex align-items-center" *ngIf="programmingExercise.testRepositoryUrl">
+                        <a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ programmingExercise.testRepositoryUrl }}</a>
+                        <jhi-clone-repo-button class="ml-2" [smallButtons]="true" [repositoryUrl]="programmingExercise.testRepositoryUrl" [isTeamParticipation]="false">
+                        </jhi-clone-repo-button>
+                        <jhi-programming-exercise-instructor-repo-download
+                            class="ml-2"
+                            [exerciseId]="programmingExercise.id"
+                            [repositoryType]="'TESTS'"
+                        ></jhi-programming-exercise-instructor-repo-download>
+                    </div>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateBuildPlanId">Template Build Plan Id</span></dt>
                 <dd>
