@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -32,6 +34,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -386,7 +389,9 @@ public class CourseService {
      *
      * @param course The course to archive
      */
+    @Async
     public void archiveCourse(Course course) {
+        SecurityUtils.setAuthorizationObject();
         // Archiving a course is only possible after the course is over
         if (ZonedDateTime.now().isBefore(course.getEndDate())) {
             return;
@@ -419,6 +424,7 @@ public class CourseService {
         // Attach the path to the archive to the course and save it in the database
         course.setCourseArchivePath(courseArchivePath.toString());
         courseRepository.save(course);
+
         log.info("Successfully archived course {}. The archive is located at: {}", course.getId(), courseArchivePath);
     }
 
@@ -431,25 +437,22 @@ public class CourseService {
      * @return Path to the exercise zip files,
      */
     private List<Path> archiveExercisesOfCourse(Course course, String pathToStoreZipFiles) {
-        // Iterate over each exercise and export the exercise submissions of the students
         ArrayList<Path> exportedExercises = new ArrayList<>();
         ArrayList<Long> exercisesThatFailedToExport = new ArrayList<>();
 
-        // Iterate over each exercise and zip all student submissions.
         course.getExercises().forEach(exercise -> {
             // We need this call because we need to lazy load the student participations.
             var participations = exerciseService.findOneWithStudentParticipations(exercise.getId()).getStudentParticipations();
 
             if (exercise instanceof ProgrammingExercise) {
                 var programmingParticipations = participations.stream().map(participation -> (ProgrammingExerciseStudentParticipation) participation).collect(Collectors.toList());
-                var pathToArchivedExercise = programmingExerciseExportService.archiveProgrammingExercise((ProgrammingExercise) exercise, programmingParticipations,
-                        pathToStoreZipFiles);
+                var exportedExercise = programmingExerciseExportService.archiveProgrammingExercise((ProgrammingExercise) exercise, programmingParticipations, pathToStoreZipFiles);
 
-                if (pathToArchivedExercise == null) {
+                if (exportedExercise == null) {
                     exercisesThatFailedToExport.add(exercise.getId());
                 }
                 else {
-                    exportedExercises.add(pathToArchivedExercise);
+                    exportedExercises.add(exportedExercise);
                 }
             }
 
@@ -480,10 +483,12 @@ public class CourseService {
             Files.createDirectories(Path.of(courseArchivesDirPath));
             log.info("Created the course archives directory at {} because it didn't exist.", courseArchivesDirPath);
 
-            // The course archive is stored at /exports/courses/course-archive.zip
-            var pathToCourseZipFile = Path.of(courseArchivesDirPath, course.getShortName() + "-archive");
+            // The course archive is stored at /exports/courses/
+            // The filename is : {Course_Short_Name}-{Course_Title}-{Current_Date}-archive.zip
+            var zipFilename = course.getShortName() + "-" + course.getTitle() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "-archive.zip";
+            var pathToCourseZipFile = Path.of(courseArchivesDirPath, zipFilename);
 
-            zipFileService.createZipFile(pathToCourseZipFile, pathsOfFilesToZip);
+            zipFileService.createZipFile(pathToCourseZipFile, pathsOfFilesToZip, false);
             log.info("Successfully created a zip file for course {}. The file is located at: {}", course.getId(), pathToCourseZipFile);
             return pathToCourseZipFile;
         }

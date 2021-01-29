@@ -102,12 +102,14 @@ public class ProgrammingExerciseExportService {
      *
      * @param exercise              the programming exercise
      * @param studentParticipations the student participations
-     * @param pathToStoreZipFile   The path to a directory that will be used to store the zipped programming exercise.
+     * @param pathToStoreZipFile    The path to a directory that will be used to store the zipped programming exercise.
      * @return the path to the zip file
      */
     public Path archiveProgrammingExercise(ProgrammingExercise exercise, List<ProgrammingExerciseStudentParticipation> studentParticipations, String pathToStoreZipFile) {
         // Export student repositories
-        var zippedStudentRepos = exportStudentRepositories(exercise.getId(), studentParticipations, new RepositoryExportOptionsDTO());
+        var exportOptions = new RepositoryExportOptionsDTO();
+        exportOptions.setHideStudentNameInZippedFolder(false);
+        var zippedStudentRepos = exportStudentRepositories(exercise.getId(), studentParticipations, exportOptions);
 
         // Export the template, solution, and tests repositories
         var zippedTemplateRepo = exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TEMPLATE);
@@ -117,8 +119,10 @@ public class ProgrammingExerciseExportService {
 
         try {
             // Zip the student and instructor repos together.
-            var pathToZippedExercise = Path.of(pathToStoreZipFile, exercise.getShortName());
-            zipFileService.createZipFile(pathToZippedExercise, zipFilePaths);
+            // The filename of the zip is: {Exercise_Short_Name}-{Exercise_Title}.zip
+            var filename = exercise.getShortName() + "-" + exercise.getTitle() + ".zip";
+            var pathToZippedExercise = Path.of(pathToStoreZipFile, filename);
+            zipFileService.createZipFile(pathToZippedExercise, zipFilePaths, false);
             return pathToZippedExercise;
         }
         catch (IOException e) {
@@ -135,7 +139,7 @@ public class ProgrammingExerciseExportService {
      * Exports a repository available for an instructor/tutor for a given programming exercise. This can be a template,
      * solution, or tests repository
      *
-     * @param exerciseId       The id of the programming exercise that has the repository
+     * @param exerciseId     The id of the programming exercise that has the repository
      * @param repositoryType the type of repository to export
      * @return a zipped file
      */
@@ -152,7 +156,7 @@ public class ProgrammingExerciseExportService {
 
         // Construct the name of the zip file
         String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        String zippedRepoName = courseShortName + "-" + exercise.getShortName();
+        String zippedRepoName = courseShortName + "-" + exercise.getShortName() + "-" + exercise.getTitle() + "-" + repositoryType.getName();
 
         // Get the url to the repository and zip it.
         var repositoryUrl = exercise.getRepositoryURL(repositoryType);
@@ -253,7 +257,7 @@ public class ProgrammingExerciseExportService {
             String filename = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getShortName() + "-"
                     + System.currentTimeMillis() + ".zip";
             Path zipFilePath = Paths.get(pathsToZippedRepos.get(0).getParent().toString(), filename);
-            zipFileService.createZipFile(zipFilePath, pathsToZippedRepos);
+            zipFileService.createZipFile(zipFilePath, pathsToZippedRepos, false);
             fileService.scheduleForDeletion(zipFilePath, 5);
             return new File(zipFilePath.toString());
         }
