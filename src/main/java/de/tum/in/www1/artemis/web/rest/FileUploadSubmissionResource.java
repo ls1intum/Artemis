@@ -210,10 +210,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         }
 
         // Check if tutors can start assessing the students submission
-        boolean startAssessingSubmissions = this.fileUploadSubmissionService.checkIfExerciseDueDateIsReached(fileUploadExercise);
-        if (!startAssessingSubmissions) {
-            return forbidden();
-        }
+        this.fileUploadSubmissionService.checkIfExerciseDueDateIsReached(fileUploadExercise);
 
         // Check if the limit of simultaneously locked submissions has been reached
         fileUploadSubmissionService.checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());

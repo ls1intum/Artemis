@@ -18,7 +18,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { MockFeatureToggleService } from '../../../helpers/mocks/service/mock-feature-toggle.service';
 import { Exercise, ParticipationStatus } from 'app/entities/exercise.model';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
-import { ExerciseActionButtonComponent } from 'app/overview/exercise-details/exercise-action-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ArtemisTestModule } from '../../../test.module';

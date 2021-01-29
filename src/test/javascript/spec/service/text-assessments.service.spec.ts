@@ -108,7 +108,7 @@ describe('TextAssessment Service', () => {
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: mockResponse }));
 
-        const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/text-assessments/submission/${submissionId}`, method: 'GET' });
+        const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/text-assessments/submission/${submissionId}?correction-round=0`, method: 'GET' });
         req.flush(JSON.stringify(returnedFromService));
     });
 

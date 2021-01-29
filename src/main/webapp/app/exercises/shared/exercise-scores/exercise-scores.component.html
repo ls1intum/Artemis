@@ -249,7 +249,7 @@
                             {{ 'artemisApp.programmingSubmission.view' | translate }}
                         </button>
                         <button
-                            *ngIf="exercise.exerciseGroup && newManualResultAllowed"
+                            *ngIf="exercise.exerciseGroup && newManualResultAllowed && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
                             [routerLink]="[
                                 '/course-management',
                                 exercise.exerciseGroup?.exam.course.id,
@@ -284,7 +284,7 @@
                             {{ 'artemisApp.fileUploadSubmission.view' | translate }}
                         </button>
                         <button
-                            *ngIf="exercise.exerciseGroup"
+                            *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
                             [routerLink]="[
                                 '/course-management',
                                 exercise.exerciseGroup?.exam.course.id,
@@ -314,7 +314,7 @@
                             {{ 'artemisApp.modelingSubmission.view' | translate }}
                         </button>
                         <button
-                            *ngIf="exercise.exerciseGroup"
+                            *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
                             [routerLink]="[
                                 '/course-management',
                                 exercise.exerciseGroup?.exam.course.id,
@@ -344,7 +344,7 @@
                             {{ 'artemisApp.textSubmission.view' | translate }}
                         </button>
                         <button
-                            *ngIf="exercise.exerciseGroup"
+                            *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
                             [routerLink]="[
                                 '/course-management',
                                 exercise.exerciseGroup?.exam.course.id,

@@ -43,7 +43,7 @@ export class StudentParticipationResolver implements Resolve<StudentParticipatio
      */
     resolve(route: ActivatedRouteSnapshot) {
         const submissionId = Number(route.paramMap.get('submissionId'));
-        const correctionRound = Number(route.paramMap.get('correction-round'));
+        const correctionRound = Number(route.queryParamMap.get('correction-round'));
         if (submissionId) {
             return this.textAssessmentsService.getFeedbackDataForExerciseSubmission(submissionId, correctionRound).catch(() => Observable.of(undefined));
         }
