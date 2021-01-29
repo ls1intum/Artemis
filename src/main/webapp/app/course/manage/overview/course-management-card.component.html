@@ -39,7 +39,7 @@
                     <div *ngIf="futureExercises?.length > 0">
                         <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
                             <fa-icon class="control-icon" [icon]="showFutureExercises ? 'angle-down' : 'angle-up'"></fa-icon>
-                            <strong>{{ 'artemisApp.course.futureExercises' | translate }}</strong>
+                            <strong>{{ 'artemisApp.course.releasedSoon' | translate }}</strong>
                         </div>
                         <div *ngIf="showFutureExercises">
                             <jhi-course-management-exercise-row
@@ -55,7 +55,7 @@
                     <div *ngIf="currentExercises?.length > 0">
                         <div class="control-label" (click)="showCurrentExercises = !showCurrentExercises">
                             <fa-icon class="control-icon" [icon]="showCurrentExercises ? 'angle-down' : 'angle-up'"></fa-icon>
-                            <strong>{{ 'artemisApp.course.currentExercises' | translate }}</strong>
+                            <strong>{{ 'artemisApp.course.currentWorking' | translate }}</strong>
                         </div>
                         <div *ngIf="showCurrentExercises">
                             <jhi-course-management-exercise-row
@@ -67,6 +67,22 @@
                             ></jhi-course-management-exercise-row>
                         </div>
                         <div *ngIf="!showCurrentExercises" class="collapsed"></div>
+                    </div>
+                    <div *ngIf="exercisesInAssessment?.length > 0">
+                        <div class="control-label" (click)="showExercisesInAssessment = !showExercisesInAssessment">
+                            <fa-icon class="control-icon" [icon]="showExercisesInAssessment ? 'angle-down' : 'angle-up'"></fa-icon>
+                            <strong>{{ 'artemisApp.course.inAssessment' | translate }}</strong>
+                        </div>
+                        <div *ngIf="showExercisesInAssessment">
+                            <jhi-course-management-exercise-row
+                                *ngFor="let exercise of exercisesInAssessment"
+                                [course]="course"
+                                [exercise]="exercise"
+                                [rowType]="exerciseRowType.ASSESSING"
+                                [statistic]="getStatisticForExercise(exercise)"
+                            ></jhi-course-management-exercise-row>
+                        </div>
+                        <div *ngIf="!showExercisesInAssessment" class="collapsed"></div>
                     </div>
                     <div *ngIf="pastExercises?.length > 0">
                         <div class="control-label" (click)="showPastExercises = !showPastExercises">

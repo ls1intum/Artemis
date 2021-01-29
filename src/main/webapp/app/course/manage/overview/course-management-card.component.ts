@@ -21,9 +21,12 @@ export class CourseManagementCardComponent implements OnChanges {
 
     futureExercises: Exercise[];
     currentExercises: Exercise[];
+    exercisesInAssessment: Exercise[];
     pastExercises: Exercise[];
+
     showFutureExercises = true;
     showCurrentExercises = true;
+    showExercisesInAssessment = true;
     showPastExercises = false;
 
     // Expose enums to the template
@@ -41,7 +44,10 @@ export class CourseManagementCardComponent implements OnChanges {
         const exercises = this.courseStatistic.exercises;
         this.futureExercises = exercises.filter((e) => e.releaseDate && moment(e.releaseDate) > moment());
         this.currentExercises = exercises.filter((e) => (!e.releaseDate || moment(e.releaseDate) <= moment()) && (!e.dueDate || moment(e.dueDate) > moment()));
-        this.pastExercises = exercises.filter((e) => e.dueDate && moment(e.dueDate) <= moment());
+        this.exercisesInAssessment = exercises.filter((e) => (!e.dueDate || moment(e.dueDate) <= moment()) && e.assessmentDueDate && moment(e.assessmentDueDate) > moment());
+        this.pastExercises = exercises.filter(
+            (e) => (!e.assessmentDueDate && e.dueDate && moment(e.dueDate) <= moment()) || (e.assessmentDueDate && moment(e.assessmentDueDate) <= moment()),
+        );
 
         this.courseStatistic.exerciseDTOS.forEach((e) => (this.statistics[e.exerciseId!] = e));
     }

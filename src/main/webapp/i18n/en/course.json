@@ -119,8 +119,9 @@
             },
             "statistics": "Statistics",
             "averageScore": "Average Score",
-            "futureExercises": "Future Exercises",
-            "currentExercises": "Current Exercises",
+            "releasedSoon": "Released Soon",
+            "currentWorking": "Current Working",
+            "inAssessment": "In Assessment",
             "pastExercises": "Past Exercises",
             "noExercises": "No exercises to display"
         }

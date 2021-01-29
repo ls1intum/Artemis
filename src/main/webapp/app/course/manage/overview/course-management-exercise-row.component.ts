@@ -6,6 +6,7 @@ import { CourseExerciseStatisticsDTO } from 'app/exercises/shared/exercise/exerc
 export enum ExerciseRowType {
     FUTURE = 'future',
     CURRENT = 'current',
+    ASSESSING = 'assessment',
     PAST = 'past',
 }
 
