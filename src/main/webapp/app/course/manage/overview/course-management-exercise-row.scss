@@ -124,3 +124,28 @@
         max-width: 30%;
     }
 }
+
+.timeline-box {
+    padding: 10px 15px;
+}
+
+.test-schedule {
+    display: table;
+    width: 100%;
+    position: relative;
+}
+
+.test-schedule-row {
+    display: table-row;
+}
+
+.test-schedule-row:before {
+    top: 42px;
+    bottom: 0;
+    position: absolute;
+    content: ' ';
+    width: 100%;
+    height: 4px;
+    background-color: #3e8acc;
+    z-index: 0;
+}

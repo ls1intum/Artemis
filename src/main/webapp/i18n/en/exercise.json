@@ -167,7 +167,8 @@
                     "pattern": "The maximum penalty must be between 0 and 100 percent!"
                 }
             },
-            "exam": "Exam"
+            "exam": "Exam",
+            "isTeamExercise": "This is a team exercise."
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",
