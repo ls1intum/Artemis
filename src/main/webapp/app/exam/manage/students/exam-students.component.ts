@@ -233,4 +233,16 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.jhiAlertService.error(error);
         this.isTransitioning = false;
     }
+
+    /**
+     * registers all students who are enrolled in the course for the exam
+     */
+    registerAllStudentsFromCourse() {
+        if (this.exam && this.exam.id) {
+            this.examManagementService
+                .addAllStudentsOfCourseToExam(this.courseId, this.exam.id)
+                .subscribe((error) => this.onError(`artemisApp.exam.${error.headers.get('x-null-error')}`));
+            this.reloadExamWithRegisteredUsers();
+        }
+    }
 }

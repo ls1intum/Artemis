@@ -1046,4 +1046,24 @@ public class ExamService {
         log.info("User " + currentUser.getLogin() + " has removed user " + student.getLogin() + " from the exam " + exam.getTitle() + " with id " + exam.getId()
                 + ". This also deleted a potentially existing student exam with all its participations and submissions.");
     }
+
+    /**
+     *
+     * @param courseId
+     * @param examId
+     *  @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     */
+    public List<StudentDTO> addAllStudentsOfCourseToExam(Long courseId, Long examId) {
+        Course course = courseService.findOne(courseId);
+        var users = userService.findAllUsersInGroup(course.getStudentGroupName());
+        var userDTOs = users.stream().map(user -> {
+            var studentDTO = new StudentDTO();
+            studentDTO.setFirstName(user.getFirstName());
+            studentDTO.setLastName(user.getLastName());
+            studentDTO.setLogin(user.getLogin());
+            studentDTO.setRegistrationNumber(user.getRegistrationNumber());
+            return studentDTO;
+        }).collect(Collectors.toList());
+        return registerStudentsForExam(courseId, examId, userDTOs);
+    }
 }

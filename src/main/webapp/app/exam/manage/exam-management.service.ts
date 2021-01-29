@@ -149,6 +149,14 @@ export class ExamManagementService {
     }
 
     /**
+     * Add all students of the course to the exam
+     * @param courseId
+     * @param examId
+     */
+    addAllStudentsOfCourseToExam(courseId: number, examId: number): Observable<HttpResponse<StudentDTO[]>> {
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/addAllStudentsOfCourse`, { observe: 'response' });
+    }
+    /**
      * Remove a student to the registered users for an exam
      * @param courseId The course id.
      * @param examId The id of the exam from which to remove the student
