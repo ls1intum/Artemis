@@ -492,7 +492,7 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
-        Integer numberOfGeneratedParticipations = examService.startExercises(examId);
+        int numberOfGeneratedParticipations = examService.startExercises(examId);
 
         log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
 
