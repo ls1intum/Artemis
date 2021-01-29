@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,8 @@ public class ScoreService {
 
     private final ResultRepository resultRepository;
 
+    private final Logger logger = LoggerFactory.getLogger(ScoreService.class);
+
     public ScoreService(StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, ParticipationRepository participationRepository,
             ResultRepository resultRepository, ParticipantScoreRepository participantScoreRepository) {
         this.studentScoreRepository = studentScoreRepository;
@@ -52,7 +56,6 @@ public class ScoreService {
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void removeOrUpdateAssociatedParticipantScore(Result resultToBeDeleted) {
-
         // In this method we use custom @Query methods that will fail if no authentication is available, therefore
         // we check this here and set a dummy authentication if none is available (this is the case in a scheduled service or
         // websocket)
@@ -75,6 +78,7 @@ public class ScoreService {
 
         // There is a participant score connected to the result that will be deleted
         ParticipantScore associatedParticipantScore = associatedStudentScoreOptional.get();
+        String originalParticipantScoreStructure = associatedParticipantScore.toString();
 
         // There are two possibilities now:
         // A: Another result exists for the exercise and the student / team -> update participant score with the newest one
@@ -103,9 +107,11 @@ public class ScoreService {
 
         if (associatedParticipantScore.getLastResult() == null && associatedParticipantScore.getLastRatedResult() == null) {
             participantScoreRepository.deleteById(associatedParticipantScore.getId());
+            logger.info("Deleted an existing participant score: " + originalParticipantScoreStructure);
         }
         else {
-            participantScoreRepository.saveAndFlush(associatedParticipantScore);
+            ParticipantScore updatedParticipantScore = participantScoreRepository.saveAndFlush(associatedParticipantScore);
+            logger.info("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + updatedParticipantScore.toString());
         }
     }
 
@@ -116,10 +122,9 @@ public class ScoreService {
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void updateOrCreateParticipantScore(Result createdOrUpdatedResult) {
-        if (createdOrUpdatedResult.getScore() == null || createdOrUpdatedResult.getCompletionDate() == null || createdOrUpdatedResult.getParticipation() == null) {
+        if (createdOrUpdatedResult.getScore() == null || createdOrUpdatedResult.getCompletionDate() == null) {
             return;
         }
-
         // There is a deadlock problem with programming exercises here if we use the participation from the result (reason unknown at the moment)
         // therefore we get the participation from the database
         Optional<StudentParticipation> studentParticipationOptional = getStudentParticipationForResult(createdOrUpdatedResult);
@@ -203,7 +208,8 @@ public class ScoreService {
                 newTeamScore.setLastRatedScore(newResult.getScore());
                 newTeamScore.setLastRatedResult(newResult);
             }
-            teamScoreRepository.saveAndFlush(newTeamScore);
+            TeamScore teamScore = teamScoreRepository.saveAndFlush(newTeamScore);
+            logger.info("Saved a new team score: " + teamScore.toString());
         }
         else {
             StudentScore newStudentScore = new StudentScore();
@@ -215,7 +221,8 @@ public class ScoreService {
                 newStudentScore.setLastRatedScore(newResult.getScore());
                 newStudentScore.setLastRatedResult(newResult);
             }
-            studentScoreRepository.saveAndFlush(newStudentScore);
+            StudentScore studentScore = studentScoreRepository.saveAndFlush(newStudentScore);
+            logger.info("Saved a new student score: " + studentScore.toString());
         }
     }
 
@@ -226,6 +233,8 @@ public class ScoreService {
      * @param updatedOrNewlyCreatedResult updated or new result
      */
     private void updateExistingParticipantScore(ParticipantScore participantScore, Result updatedOrNewlyCreatedResult) {
+        String originalParticipantScoreStructure = participantScore.toString();
+
         ParticipantScore participantScoreToSave = participantScore;
         // update the last result and last score if either it has not been set previously or new result is either the old one (=) or newer (>)
         if (participantScoreToSave.getLastResult() == null || updatedOrNewlyCreatedResult.getId() >= participantScoreToSave.getLastResult().getId()) {
@@ -243,8 +252,9 @@ public class ScoreService {
         if ((updatedOrNewlyCreatedResult.isRated() == null || !updatedOrNewlyCreatedResult.isRated())
                 && updatedOrNewlyCreatedResult.equals(participantScoreToSave.getLastRatedResult())) {
             setLastRatedResultAttributes(participantScoreToSave, null);
-            participantScoreRepository.saveAndFlush(participantScoreToSave);
+            participantScoreToSave = participantScoreRepository.saveAndFlush(participantScoreToSave);
         }
+        logger.info("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + participantScoreToSave.toString());
     }
 
     /**
@@ -315,4 +325,5 @@ public class ScoreService {
             associatedParticipantScore.setLastRatedScore(newLastRatedResult.getScore());
         }
     }
+
 }
