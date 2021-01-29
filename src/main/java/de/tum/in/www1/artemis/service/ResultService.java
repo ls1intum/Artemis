@@ -232,6 +232,17 @@ public class ResultService {
     }
 
     /**
+     * Given a courseId, return the number of assessments for that course that have been completed
+     * for rated (submitted within the dueDate) submissions (e.g. no draft!)
+     *
+     * @param courseId - the course we are interested in
+     * @return a number of assessments for the course
+     */
+    public Long countNumberOfRatedAssessments(Long courseId) {
+        return resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true);
+    }
+
+    /**
      * Given a courseId and a tutorId, return the number of assessments for that course written by that tutor that have been completed (e.g. no draft!)
      *
      * @param courseId - the course we are interested in

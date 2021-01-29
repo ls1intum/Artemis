@@ -30,6 +30,7 @@ export class CourseManagementExerciseRowComponent implements OnInit, OnChanges {
     isTeamExercise: boolean;
     displayTitle: string;
     averageScoreNumerator: number;
+    noOfAssessmentsDoneInPercent: number;
 
     // TODO:
     JSON = JSON;
@@ -77,7 +78,10 @@ export class CourseManagementExerciseRowComponent implements OnInit, OnChanges {
         if (!this.statistic) {
             return;
         }
-
+        this.noOfAssessmentsDoneInPercent =
+            this.statistic.noOfRatedAssessments && this.statistic.noOfRatedAssessments >= 0 && this.statistic.noOfSubmissionsInTime && this.statistic.noOfSubmissionsInTime > 0
+                ? Math.round(((this.statistic.noOfRatedAssessments / this.statistic.noOfSubmissionsInTime) * 1000) / 10)
+                : 0;
         this.averageScoreNumerator = Math.round((this.statistic.averageScoreInPercent! * this.statistic.exerciseMaxPoints!) / 100);
     }
 }

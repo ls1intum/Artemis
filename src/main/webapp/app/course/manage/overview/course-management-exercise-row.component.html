@@ -39,7 +39,7 @@
             </div>
 
             <div class="col-lg-3 col-md-5 d-none d-lg-flex row-flex">
-                <div class="exercise-score" *ngIf="statistic && (rowType == exerciseRowType.CURRENT || rowType == exerciseRowType.PAST)">
+                <div class="exercise-score" *ngIf="statistic && rowType == exerciseRowType.CURRENT">
                     <span class="bold">{{ 'artemisApp.course.students' | translate }}</span>
                     <jhi-progress-bar
                         [tooltip]="'artemisApp.course.students' | translate"
@@ -49,7 +49,17 @@
                     >
                     </jhi-progress-bar>
                 </div>
-                <div class="exercise-score hide-1200" *ngIf="statistic && (rowType == exerciseRowType.CURRENT || rowType == exerciseRowType.PAST)">
+                <div class="exercise-score" *ngIf="statistic && rowType == exerciseRowType.ASSESSING">
+                    <span class="bold">{{ 'artemisApp.course.assessmentProgress' | translate }}</span>
+                    <jhi-progress-bar
+                        [tooltip]="'artemisApp.course.assessmentProgress' | translate"
+                        [percentage]="noOfAssessmentsDoneInPercent"
+                        [numerator]="statistic.noOfRatedAssessments"
+                        [denominator]="statistic.noOfSubmissionsInTime"
+                    >
+                    </jhi-progress-bar>
+                </div>
+                <div class="exercise-score hide-1200" *ngIf="statistic && rowType == exerciseRowType.PAST">
                     <span class="bold">{{ 'artemisApp.course.averageScore' | translate }}</span>
                     <jhi-progress-bar
                         [tooltip]="'artemisApp.course.averageScore' | translate"

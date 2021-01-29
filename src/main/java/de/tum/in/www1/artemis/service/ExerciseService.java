@@ -78,12 +78,14 @@ public class ExerciseService {
 
     private final UserService userService;
 
+    private final SubmissionRepository submissionRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ResultService resultService,
             ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository,
             ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamRepository studentExamRepository, ExamRepository examRepository,
-            UserService userService) {
+            UserService userService, SubmissionRepository submissionRepository) {
         this.exerciseRepository = exerciseRepository;
         this.resultService = resultService;
         this.examRepository = examRepository;
@@ -101,6 +103,7 @@ public class ExerciseService {
         this.studentExamRepository = studentExamRepository;
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.userService = userService;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -607,12 +610,18 @@ public class ExerciseService {
         courseExerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxScore());
         courseExerciseStatisticsDTO.setExerciseMode(exercise.getMode().toString());
 
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        long numberOfRatedAssessments = resultService.countNumberOfRatedAssessments(course.getId());
+        courseExerciseStatisticsDTO.setNoOfRatedAssessments(numberOfRatedAssessments);
+
+        long noOfSubmissionsInTime = submissionRepository.countByCourseIdSubmittedBeforeDueDate(course.getId());
+        courseExerciseStatisticsDTO.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
+
         if (exercise.isTeamMode()) {
             int numberOfTeamsInCourse = teamService.getAmountByExerciseId(exercise);
             courseExerciseStatisticsDTO.setNoOfTeamsInCourse(numberOfTeamsInCourse);
         }
         else {
-            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
             long numberOfStudentsInCourse = userService.countUserInGroup(course.getStudentGroupName());
             courseExerciseStatisticsDTO.setNoOfStudentsInCourse(Math.toIntExact(numberOfStudentsInCourse));
         }

@@ -20,6 +20,10 @@ public class CourseExerciseStatisticsDTO {
 
     private Integer noOfTeamsInCourse;
 
+    private Long noOfRatedAssessments;
+
+    private Long noOfSubmissionsInTime;
+
     public Long getExerciseId() {
         return exerciseId;
     }
@@ -90,5 +94,21 @@ public class CourseExerciseStatisticsDTO {
 
     public void setNoOfTeamsInCourse(Integer noOfTeamsInCourse) {
         this.noOfTeamsInCourse = noOfTeamsInCourse;
+    }
+
+    public Long getNoOfRatedAssessments() {
+        return noOfRatedAssessments;
+    }
+
+    public void setNoOfRatedAssessments(Long noOfRatedAssessmentsInTime) {
+        this.noOfRatedAssessments = noOfRatedAssessmentsInTime;
+    }
+
+    public Long getNoOfSubmissionsInTime() {
+        return noOfSubmissionsInTime;
+    }
+
+    public void setNoOfSubmissionsInTime(Long noOfSubmissionsInTime) {
+        this.noOfSubmissionsInTime = noOfSubmissionsInTime;
     }
 }

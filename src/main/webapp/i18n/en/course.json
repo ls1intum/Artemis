@@ -123,7 +123,8 @@
             "currentWorking": "Current Working",
             "inAssessment": "In Assessment",
             "pastExercises": "Past Exercises",
-            "noExercises": "No exercises to display"
+            "noExercises": "No exercises to display",
+            "assessmentProgress": "Assessment progress"
         }
     }
 }

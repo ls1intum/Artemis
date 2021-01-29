@@ -8,6 +8,8 @@ export class CourseExerciseStatisticsDTO {
     public noOfStudentsInCourse?: number;
     public noOfTeamsInCourse?: number;
     public participationRateInPercent?: number;
+    public noOfRatedAssessments?: number;
+    public noOfSubmissionsInTime?: number;
 
     constructor() {}
 }
