@@ -447,6 +447,7 @@ public class CourseResource {
 
     /**
      * GET /courses/{courseId}/for-dashboard
+     *
      * @param courseId the courseId for which exercises and lectures should be fetched
      * @return a course wich all exercises and lectures visible to the student
      */
@@ -463,8 +464,9 @@ public class CourseResource {
 
     /**
      * Note: The number of courses should not change
-     * @param courses the courses for which the participations should be fetched
-     * @param user  the user for which the participations should be fetched
+     *
+     * @param courses           the courses for which the participations should be fetched
+     * @param user              the user for which the participations should be fetched
      * @param startTimeInMillis start time for logging purposes
      */
     public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, long startTimeInMillis) {
@@ -816,8 +818,8 @@ public class CourseResource {
      * PUT /courses/{courseId} : archive an existing course asynchronously. This method starts the process of archiving all course exercises, submissions and results in a large
      * zip file. It immediately returns and runs this task asynchronously. When the task is done, the course is marked as archived, which means the zip file can be downloaded.
      *
-     * @param courseId        the id of the course
-     * @return                empty
+     * @param courseId the id of the course
+     * @return empty
      */
     @PutMapping("/courses/{courseId}/archive")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
@@ -863,21 +865,29 @@ public class CourseResource {
     }
 
     /**
+     * Downloads the zip file of the archived course if it exists. Throws a 404 if the course doesn't exist
      *
-     * @param courseId
-     * @return
-     * @throws URISyntaxException
+     * @param courseId The course id of the archived course
+     * @return ResponseEntity with status
      */
     @GetMapping("/courses/{courseId}/download-archive")
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<Resource> downloadCourseArchive(@PathVariable Long courseId) throws FileNotFoundException {
-        // TODO: download the previously generated zip file from the filesystem
-        // the path is stored in the course table
-        File zipFile = null;
-        if (zipFile == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
+        log.info("REST request to download archive of Course : {}", courseId);
+
+        final Course course = courseService.findOne(courseId);
+
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
         }
+
+        if (!course.hasCourseArchive()) {
+            return notFound();
+        }
+
+        // the path is stored in the course table
+        File zipFile = new File(course.getCourseArchivePath());
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
