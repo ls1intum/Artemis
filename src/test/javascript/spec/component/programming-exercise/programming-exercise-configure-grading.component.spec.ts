@@ -58,6 +58,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let updateTestCasesStub: SinonStub;
     let updateCategoriesStub: SinonStub;
     let resetTestCasesStub: SinonStub;
+    let resetCategoriesStub: SinonStub;
     let notifyTestCasesSpy: SinonSpy;
     let testCasesChangedStub: SinonStub;
     let getExerciseTestCaseStateStub: SinonStub;
@@ -209,6 +210,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 updateCategoriesStub = stub(gradingService, 'updateCodeAnalysisCategories');
                 notifyTestCasesSpy = spy(gradingService, 'notifyTestCases');
                 resetTestCasesStub = stub(gradingService, 'resetTestCases');
+                resetCategoriesStub = stub(gradingService, 'resetCategories');
                 loadStatisticsStub = stub(gradingService, 'getGradingStatistics');
 
                 // @ts-ignore
@@ -600,6 +602,57 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(resetTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId);
         expect(comp.testCases).to.deep.equal(testCases1);
         expect(comp.changedTestCaseIds).to.have.lengthOf(0);
+
+        tick();
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should reset all categories when the reset button is clicked', fakeAsync(() => {
+        initGradingComponent({ tab: 'code-analysis' });
+
+        fixture.detectChanges();
+
+        comp.updateEditedField(codeAnalysisCategories1[0], EditableField.STATE)(StaticCodeAnalysisCategoryState.Feedback);
+        comp.updateEditedField(codeAnalysisCategories1[1], EditableField.STATE)(StaticCodeAnalysisCategoryState.Feedback);
+
+        comp.updateEditedField(codeAnalysisCategories1[0], EditableField.PENALTY)(3);
+        comp.updateEditedField(codeAnalysisCategories1[1], EditableField.PENALTY)(4);
+
+        comp.updateEditedField(codeAnalysisCategories1[0], EditableField.MAX_PENALTY)(15);
+        comp.updateEditedField(codeAnalysisCategories1[1], EditableField.MAX_PENALTY)(15);
+
+        const updatedCategories: StaticCodeAnalysisCategory[] = [
+            { ...codeAnalysisCategories1[0], state: StaticCodeAnalysisCategoryState.Feedback, penalty: 3, maxPenalty: 15 },
+            { ...codeAnalysisCategories1[1], state: StaticCodeAnalysisCategoryState.Feedback, penalty: 4, maxPenalty: 15 },
+        ];
+        updateCategoriesStub.returns(of(updatedCategories));
+
+        // Save tests.
+        comp.saveCategories();
+
+        fixture.detectChanges();
+
+        expect(updateCategoriesStub).to.have.been.calledOnce;
+        expect(comp.changedCategoryIds).to.have.lengthOf(0);
+
+        // Reset button is now enabled because the categories were saved.
+        expect(comp.hasUpdatedGradingConfig).to.be.true;
+
+        fixture.detectChanges();
+
+        resetCategoriesStub.returns(of(codeAnalysisCategories1));
+
+        const resetButton = getResetButton();
+        expectElementToBeEnabled(resetButton);
+        resetButton.click();
+
+        fixture.detectChanges();
+
+        expect(resetCategoriesStub).to.have.been.calledOnceWithExactly(exerciseId);
+        expect(loadStatisticsStub).to.have.been.calledOnceWithExactly(exerciseId);
+        expect(comp.staticCodeAnalysisCategories).to.deep.equal(codeAnalysisCategories1);
+        expect(comp.changedCategoryIds).to.have.lengthOf(0);
 
         tick();
         fixture.destroy();
