@@ -11,6 +11,9 @@
                         container="body"
                     ></fa-icon>
                 </div>
+                <div class="exercise-icon ml-2 mr-1" *ngIf="isTeamExercise">
+                    <fa-icon [icon]="'users'" placement="right" [ngbTooltip]="'artemisApp.exercise.isTeamExercise' | translate" container="body"></fa-icon>
+                </div>
                 <div class="exercise-icon ml-2">
                     <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | translate" container="body"></fa-icon>
                 </div>

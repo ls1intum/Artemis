@@ -24,7 +24,7 @@ export class CourseManagementCardComponent implements OnChanges {
     exercisesInAssessment: Exercise[];
     pastExercises: Exercise[];
 
-    showFutureExercises = true;
+    showFutureExercises = false;
     showCurrentExercises = true;
     showExercisesInAssessment = true;
     showPastExercises = false;
