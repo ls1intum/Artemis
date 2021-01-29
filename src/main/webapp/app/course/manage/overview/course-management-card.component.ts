@@ -51,7 +51,9 @@ export class CourseManagementCardComponent implements OnChanges {
         this.currentExercises = exercises.filter((e) => (!e.releaseDate || moment(e.releaseDate) <= moment()) && (!e.dueDate || moment(e.dueDate) > moment()));
         this.exercisesInAssessment = exercises.filter((e) => (!e.dueDate || moment(e.dueDate) <= moment()) && e.assessmentDueDate && moment(e.assessmentDueDate) > moment());
         this.pastExercises = exercises.filter(
-            (e) => (!e.assessmentDueDate && e.dueDate && moment(e.dueDate) <= moment()) || (e.assessmentDueDate && moment(e.assessmentDueDate) <= moment()),
+            (e) =>
+                (!e.assessmentDueDate && e.dueDate && moment(e.dueDate) <= moment() && !(moment(e.dueDate) < moment().subtract(7, 'days').startOf('day'))) ||
+                (e.assessmentDueDate && moment(e.assessmentDueDate) <= moment() && !(moment(e.assessmentDueDate) < moment().subtract(7, 'days').startOf('day'))),
         );
 
         this.courseStatistic.exerciseDTOS.forEach((e) => (this.statistics[e.exerciseId!] = e));
