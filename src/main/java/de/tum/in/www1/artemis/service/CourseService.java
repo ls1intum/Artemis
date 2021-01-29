@@ -418,7 +418,7 @@ public class CourseService {
         }
 
         // Attach the path to the archive to the course and save it in the database
-        course.setCourseArchivePath(courseArchivesDirPath);
+        course.setCourseArchivePath(courseArchivePath.toString());
         courseRepository.save(course);
 
         // Save it to the database
