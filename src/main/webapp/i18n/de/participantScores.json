@@ -1,0 +1,21 @@
+{
+    "artemisApp": {
+        "participantScores": {
+            "pageTitle": "Teilnehmer Ergebnisse",
+            "participantScoreDTO": {
+                "id": "Id",
+                "userId": "Nutzer Id",
+                "userName": "Nutzername",
+                "teamId": "Team Id",
+                "teamName": "Team Name",
+                "exerciseId": "Aufgaben Id",
+                "exerciseTitle": "Aufgabentitel",
+                "lastResultId": "Id letztes Ergebnis",
+                "lastResultScore": "Letztes Ergebnis (%)",
+                "lastRatedResultId": "Id letztes bewertetes Ergebnis",
+                "lastRatedResultScore": "Letztes bewertetes Ergebnis (%)"
+            },
+            "searchForStudentsOrTeam": "Suche nach Student oder Team"
+        }
+    }
+}
