@@ -10,6 +10,8 @@
             "pageHeader": "Exercise Assessment Dashboard for:",
             "testRunPageHeader": "Test Run Exercise Dashboard for exercise:",
             "yourStatus": "Your status",
+            "toggleSecondCorrectionOn": "Enable second correction",
+            "toggleSecondCorrectionOff": "Disable second correction",
             "youAssessedSoFar": "You assessed {{numberOfTutorAssessments}} submissions so far",
             "needToReadGradingInstructions": "You need to read the grading instructions before starting assessing",
             "readGradingInstructions": "Read grading instructions",

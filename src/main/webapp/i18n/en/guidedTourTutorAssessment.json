@@ -76,8 +76,8 @@
             },
             "addScore": {
                 "headline": "Add Score",
-                "content": "Here you can add a score and additional feedback for each assessment element.",
-                "task": "Add the score '1' for each assessment element."
+                "content": "Here you can add points and additional feedback for each assessment element.",
+                "task": "Add '1' point for each assessment element."
             },
             "submit": {
                 "headline": "Submit Assessment",

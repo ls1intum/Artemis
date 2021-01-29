@@ -250,4 +250,15 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         programmingExerciseTestService.configureRepository_testBadRequestError();
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void exportInstructorRepositories() throws Exception {
+        programmingExerciseTestService.exportInstructorRepositories_shouldReturnFile();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void exportInstructorRepositories_forbidden() throws Exception {
+        programmingExerciseTestService.exportInstructorRepositories_forbidden();
+    }
 }

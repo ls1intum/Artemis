@@ -11,12 +11,12 @@ import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leade
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
-import { ArtemisAssessmentDashboardModule } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
+import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 
 const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
 
@@ -27,7 +27,6 @@ const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
         MomentModule,
         ClipboardModule,
         RouterModule.forChild(ENTITY_STATES),
-        ArtemisAssessmentDashboardModule,
         ArtemisModelingEditorModule,
         AssessmentInstructionsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
@@ -39,7 +38,8 @@ const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
         ArtemisAssessmentSharedModule,
         ArtemisTutorParticipationGraphModule,
     ],
-    declarations: [ExerciseAssessmentDashboardComponent],
+    declarations: [ExerciseAssessmentDashboardComponent, SecondCorrectionEnableButtonComponent],
     providers: [],
+    exports: [SecondCorrectionEnableButtonComponent],
 })
 export class ArtemisExerciseAssessmentDashboardModule {}

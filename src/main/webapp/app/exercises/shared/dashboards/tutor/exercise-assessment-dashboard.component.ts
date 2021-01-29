@@ -86,6 +86,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     moreFeedbackRequests: Complaint[] = [];
     submissionLockLimitReached = false;
     openingAssessmentEditorForNewSubmission = false;
+    secondCorrectionEnabled = false;
+    numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
 
     formattedGradingInstructions?: SafeHtml;
     formattedProblemStatement?: SafeHtml;
@@ -111,6 +113,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
     tutor?: User;
+    toggelingSecondCorrectionButton = false;
 
     exerciseForGuidedTour?: Exercise;
 
@@ -162,6 +165,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         this.exerciseService.getForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<Exercise>) => {
                 this.exercise = res.body!;
+                this.secondCorrectionEnabled = this.exercise.secondCorrectionEnabled;
+                this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
                 this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.gradingInstructions);
                 this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
 
@@ -207,6 +212,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 if (this.exercise?.exerciseGroup) {
                     this.isExamMode = true;
                     this.exam = this.exercise?.exerciseGroup?.exam;
+                    this.secondCorrectionEnabled = this.exercise?.secondCorrectionEnabled;
                 }
                 this.getAllTutorAssessedSubmissionsForAllCorrectionRounds();
 
@@ -380,7 +386,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     private getSubmissionWithoutAssessmentForAllCorrectionrounds(): void {
         if (this.isExamMode) {
             for (let i = 0; i < this.exam!.numberOfCorrectionRoundsInExam!; i++) {
-                this.getSubmissionWithoutAssessmentForCorrectionround(i);
+                if (i <= this.numberOfCorrectionRoundsEnabled) {
+                    this.getSubmissionWithoutAssessmentForCorrectionround(i);
+                }
             }
         } else {
             this.getSubmissionWithoutAssessmentForCorrectionround(0);
@@ -440,7 +448,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.submissionLockLimitReached = true;
                 } else {
-                    this.onError(error.message);
+                    this.onError(error?.error?.detail || error.message);
                 }
             },
         );
@@ -583,6 +591,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         return exercise as ProgrammingExercise;
     }
 
+    toggleSecondCorrection() {
+        this.toggelingSecondCorrectionButton = true;
+        this.exerciseService.toggleSecondCorrection(this.exerciseId).subscribe((res: Boolean) => {
+            this.secondCorrectionEnabled = res as boolean;
+            this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
+            this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
+            this.toggelingSecondCorrectionButton = false;
+        });
+    }
     /**
      * Navigates back to the tutor (exam) dashboard
      */

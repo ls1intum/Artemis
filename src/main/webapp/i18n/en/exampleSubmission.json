@@ -6,8 +6,8 @@
             },
             "assessScore": {
                 "success": "Congratulations! This is a good assessment!",
-                "tooLow": "The score of your assessment of this submission is too low. Please carefully review the grading criteria and the submission again, and submit your improved assessment.",
-                "tooHigh": "The score of your assessment of this submission is too high. Please carefully review the grading criteria and the submission again, and submit your improved assessment."
+                "tooLow": "The points of your assessment of this submission is too low. Please carefully review the grading criteria and the submission again, and submit your improved assessment.",
+                "tooHigh": "The points of your assessment of this submission is too high. Please carefully review the grading criteria and the submission again, and submit your improved assessment."
             },
             "submitSuccessful": "Your example submission has been properly submitted",
             "saveSuccessful": "Your example submission has been saved",
