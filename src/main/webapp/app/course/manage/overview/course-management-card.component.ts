@@ -42,7 +42,12 @@ export class CourseManagementCardComponent implements OnChanges {
         }
 
         const exercises = this.courseStatistic.exercises;
-        this.futureExercises = exercises.filter((e) => e.releaseDate && moment(e.releaseDate) > moment());
+        this.futureExercises = exercises
+            .filter((e) => e.releaseDate && moment(e.releaseDate) > moment())
+            .sort((a, b) => {
+                return moment(a.releaseDate).valueOf() - moment(b.releaseDate).valueOf();
+            })
+            .slice(0, 5);
         this.currentExercises = exercises.filter((e) => (!e.releaseDate || moment(e.releaseDate) <= moment()) && (!e.dueDate || moment(e.dueDate) > moment()));
         this.exercisesInAssessment = exercises.filter((e) => (!e.dueDate || moment(e.dueDate) <= moment()) && e.assessmentDueDate && moment(e.assessmentDueDate) > moment());
         this.pastExercises = exercises.filter(
