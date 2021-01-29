@@ -34,7 +34,7 @@ export class ParticipantScoresService {
 
     constructor(private http: HttpClient) {}
 
-    findAllOfCoursPaged(courseId: number, sortingParameters: SortingParameter[], page: number, size: number): Observable<HttpResponse<ParticipantScoreDTO[]>> {
+    findAllOfCoursePaged(courseId: number, sortingParameters: SortingParameter[], page: number, size: number): Observable<HttpResponse<ParticipantScoreDTO[]>> {
         let params = new HttpParams();
         for (const sortParameter of sortingParameters) {
             params = params.append('sort', `${sortParameter.sortProperty},${sortParameter.sortDirection}`);
