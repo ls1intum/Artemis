@@ -46,8 +46,6 @@ public class CourseService {
 
     private final Logger log = LoggerFactory.getLogger(CourseService.class);
 
-    private final String pathToExportsFolder = "./exports";
-
     private final CourseRepository courseRepository;
 
     private final ExerciseService exerciseService;
@@ -395,6 +393,7 @@ public class CourseService {
         }
 
         // Used to store temporary created zip files for this course.
+        String pathToExportsFolder = "./exports";
         var courseTempDirectlyPath = Path.of(pathToExportsFolder, course.getShortName());
         try {
             Files.createDirectories(courseTempDirectlyPath);
@@ -420,8 +419,6 @@ public class CourseService {
         // Attach the path to the archive to the course and save it in the database
         course.setCourseArchivePath(courseArchivePath.toString());
         courseRepository.save(course);
-
-        // Save it to the database
         log.info("Successfully archived course {}. The archive is located at: {}", course.getId(), courseArchivePath);
     }
 

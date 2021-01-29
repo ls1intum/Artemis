@@ -115,6 +115,12 @@
                 "removeFromGroup": {
                     "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this course group?"
                 }
+            },
+            "archive": {
+                "archiveCourse": "Archive Course",
+                "archiveCourseError": "Failed to archive the course",
+                "archiveDownloadError": "There was a problem downloading the archive",
+                "downloadCourseArchive": "Download Archive"
             }
         }
     }

@@ -861,7 +861,7 @@ public class CourseResource {
         // Note: Questions and answers are not part of the archive at the moment and will be included in a future version
         // 1) Get all questions and answers for exercises and lectures and store those in structured text files
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, course.getId().toString())).build();
     }
 
     /**

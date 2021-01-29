@@ -115,6 +115,12 @@
                 "removeFromGroup": {
                     "modalQuestion": "Soll der Nutzer mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Kurs-Gruppe entfernt werden?"
                 }
+            },
+            "archive": {
+                "archiveCourse": "Kurs Archivieren",
+                "archiveCourseError": "Der Kurs konnte nicht archiviert werden",
+                "archiveDownloadError": "Beim Herunterladen des Archivs ist ein Problem aufgetreten",
+                "downloadCourseArchive": "Kursarchiv herunterladen"
             }
         }
     }

@@ -7,6 +7,8 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { JhiAlertService } from 'ng-jhipster';
+import * as moment from 'moment';
+import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 
 @Component({
     selector: 'jhi-course-detail',
@@ -16,6 +18,7 @@ import { JhiAlertService } from 'ng-jhipster';
 export class CourseDetailComponent implements OnInit, OnDestroy {
     CachingStrategy = CachingStrategy;
     course: Course;
+    courseIsBeingArchived = false;
     private eventSubscriber: Subscription;
 
     constructor(
@@ -73,5 +76,39 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 this.course = courseResponse.body!;
             });
         });
+    }
+
+    canArchiveCourse() {
+        // A course can only be archived if it's over.
+        const isCourseOver = this.course.endDate?.isBefore(moment()) ?? false;
+        return this.course.isAtLeastInstructor && isCourseOver;
+    }
+
+    archiveCourse() {
+        this.courseIsBeingArchived = true;
+        this.courseService.archiveCourse(this.course.id!).subscribe(
+            () => {
+                // We don't update the course here because registerChangeInCourses does that already
+                this.eventManager.broadcast('courseListModification');
+                this.courseIsBeingArchived = false;
+            },
+            () => {
+                this.jhiAlertService.error('artemisApp.course.archive.archiveCourseError');
+                this.courseIsBeingArchived = false;
+            },
+        );
+    }
+
+    downloadCourseArchive() {
+        this.courseService.downloadCourseArchive(this.course.id!).subscribe(
+            (response) => downloadZipFileFromResponse(response),
+            () => this.jhiAlertService.error('artemisApp.course.archive.archiveDownloadError'),
+        );
+    }
+
+    canDownloadArchive() {
+        const hasArchive = !!this.course.courseArchivePath && this.course.courseArchivePath.length > 0;
+        // You can only download one if the path to the archive is present
+        return this.course.isAtLeastInstructor && hasArchive;
     }
 }
