@@ -441,12 +441,12 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 tap((categories: StaticCodeAnalysisCategory[]) => {
                     this.alertService.success(`artemisApp.programmingExercise.configureGrading.categories.resetSuccessful`);
                     this.staticCodeAnalysisCategories = categories;
+                    this.loadStatistics(this.exercise.id!);
                 }),
                 catchError(() => {
                     this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.resetFailed`);
                     return of(null);
                 }),
-                tap(() => this.loadStatistics(this.exercise.id!)),
             )
             .subscribe(() => {
                 this.isSaving = false;
