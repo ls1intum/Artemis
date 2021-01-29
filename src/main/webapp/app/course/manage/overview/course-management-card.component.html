@@ -34,10 +34,7 @@
 
     <div class="container flex-container">
         <div class="row">
-            <div class="col-12 section-card exercises-cards">
-                <div class="col section-header" [routerLink]="['/course-management', course.id, 'exercises']" [class.guided-tour]="isGuidedTour">
-                    <h5 class="text-white text-center">{{ 'entity.action.exercise' | translate }}</h5>
-                </div>
+            <div class="col-md-8 section-card">
                 <div class="section-content" *ngIf="!!courseStatistic">
                     <div *ngIf="futureExercises?.length > 0">
                         <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
@@ -92,10 +89,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-xl section-card statistics-card">
-                <div class="col section-header" [routerLink]="['/course-management', course.id]">
-                    <h5 class="text-white text-center">{{ 'artemisApp.course.statistics' | translate }}</h5>
-                </div>
+            <div class="col-4 section-card">
                 <div class="section-content" *ngIf="courseStatistic">
                     <jhi-course-management-statistics [courseId]="course.id" [initialStats]="courseStatistic.activeStudents" [amountOfStudentsInCourse]="course.numberOfStudents">
                     </jhi-course-management-statistics>
@@ -105,6 +99,17 @@
     </div>
 
     <div class="card-footer">
+        <button
+            type="submit"
+            *ngIf="course.isAtLeastTutor"
+            [routerLink]="['/course-management', course.id, 'exercises']"
+            [class.guided-tour]="isGuidedTour"
+            class="btn btn-info mr-1 mb-1"
+            [ngbTooltip]="'entity.action.exercise' | translate"
+        >
+            <fa-icon [icon]="'list-alt'"></fa-icon>
+            <span class="d-none d-md-inline">{{ 'entity.action.exercise' | translate }}</span>
+        </button>
         <button
             type="submit"
             *ngIf="course.isAtLeastTutor"
