@@ -1,6 +1,6 @@
 <div class="course-item">
     <div class="container">
-        <div class="row justify-content-around" style="align-items: center">
+        <div class="row justify-content-between" style="align-items: center">
             <div class="col-4 row-flex pointer-row">
                 <div class="exercise-icon ml-2 mr-1" *ngIf="hasLeftoverAssessments">
                     <fa-icon
@@ -23,7 +23,7 @@
                 </div>
             </div>
 
-            <div class="col-3 row-flex hide-1200" style="min-width: 340px">
+            <div class="col-3 row-flex hide-1200 exercise-date-container">
                 <div class="exercise-date">
                     <div class="exercise-date-timeline"></div>
                     <span class="bold">{{ 'artemisApp.course.releaseDate' | translate }}</span>

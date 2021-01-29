@@ -77,6 +77,10 @@
         z-index: -1;
     }
 
+    .exercise-date-container {
+        min-width: 340px;
+    }
+
     .exercise-date {
         text-align: center;
         z-index: 1;
@@ -107,10 +111,16 @@
     .hide-1200 {
         display: none !important;
     }
+    .pointer-row {
+        max-width: 70% !important;
+    }
 }
 
 @media screen and (max-width: 1600px) {
     .hide-1600 {
         display: none !important;
+    }
+    .pointer-row {
+        max-width: 30%;
     }
 }
