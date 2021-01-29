@@ -62,15 +62,8 @@ describe('ModelingAssessmentDashboardComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        params: {
-                            subscribe: (fn: (value: Params) => void) =>
-                                fn({
-                                    courseId: 1,
-                                }),
-                        },
                         snapshot: {
                             paramMap: convertToParamMap({
-                                courseId: '1',
                                 exerciseId: fileUploadExercise.id,
                             }),
                         },
@@ -99,10 +92,11 @@ describe('ModelingAssessmentDashboardComponent', () => {
     //     component.ngOnDestroy();
     // });
 
-    it('should set parameters and call functions on init', fakeAsync(() => {
+    it('should set parameters and call functions on init', () => {
         // setup
-        spyOn<any>(component, 'getSubmissions');
+        const getSubmissionsSpy = spyOn<any>(component, 'getSubmissions');
         spyOn<any>(component, 'setPermissions');
+
         // test for init values
         expect(component).toBeTruthy();
         expect(component.submissions).toEqual([]);
@@ -120,7 +114,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
         expect(courseFindSpy).toHaveBeenCalled();
         expect(exerciseFindSpy).toHaveBeenCalled();
         expect(component.exercise).toEqual(fileUploadExercise as FileUploadExercise);
-    }));
+    });
 
     it('should get Submissions', () => {
         // test getSubmissions
