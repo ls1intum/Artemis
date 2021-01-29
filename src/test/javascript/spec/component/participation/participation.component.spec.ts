@@ -33,7 +33,7 @@ describe('ParticipationComponent', () => {
     let exerciseService: ExerciseService;
     let submissionService: ProgrammingSubmissionService;
 
-    const exercise: Exercise = { numberOfAssessmentsOfCorrectionRounds: [], studentAssignedTeamIdComputed: false, id: 1 };
+    const exercise: Exercise = { numberOfAssessmentsOfCorrectionRounds: [], studentAssignedTeamIdComputed: false, id: 1, secondCorrectionEnabled: true };
 
     const route = { params: of({ exerciseId: 1 } as Params) } as ActivatedRoute;
 

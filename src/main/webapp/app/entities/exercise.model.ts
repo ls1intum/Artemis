@@ -108,6 +108,7 @@ export abstract class Exercise implements BaseEntity {
     public studentAssignedTeamIdComputed = false;
 
     // helper attributes
+    public secondCorrectionEnabled = false;
     public isAtLeastTutor?: boolean;
     public isAtLeastInstructor?: boolean;
     public teamMode?: boolean;
