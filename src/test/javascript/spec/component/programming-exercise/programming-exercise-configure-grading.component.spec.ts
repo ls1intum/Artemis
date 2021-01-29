@@ -636,12 +636,17 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(updateCategoriesStub).to.have.been.calledOnce;
         expect(comp.changedCategoryIds).to.have.lengthOf(0);
 
+        testCasesChangedSubject.next(true);
+
         // Reset button is now enabled because the categories were saved.
         expect(comp.hasUpdatedGradingConfig).to.be.true;
 
         fixture.detectChanges();
 
         resetCategoriesStub.returns(of(codeAnalysisCategories1));
+
+        // Reset the stub to ensure that it function is called exactly once on category reset
+        loadStatisticsStub.reset();
 
         const resetButton = getResetButton();
         expectElementToBeEnabled(resetButton);
