@@ -43,7 +43,7 @@ export class CourseManagementCardComponent implements OnChanges {
 
         const exercises = this.courseStatistic.exercises;
         this.futureExercises = exercises
-            .filter((e) => e.releaseDate && moment(e.releaseDate) > moment())
+            .filter((e) => e.releaseDate && moment(e.releaseDate) > moment() && !(moment(e.releaseDate) > moment().add(7, 'days').endOf('day')))
             .sort((a, b) => {
                 return moment(a.releaseDate).valueOf() - moment(b.releaseDate).valueOf();
             })
