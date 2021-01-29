@@ -97,6 +97,41 @@ public class ProgrammingExerciseExportService {
     }
 
     /**
+     * Archives a programming exercise by creating a zip file. The zip file includes all student, template, solution,
+     * and tests repositories.
+     *
+     * @param exercise              the programming exercise
+     * @param studentParticipations the student participations
+     * @param pathToStoreZipFile   The path to a directory that will be used to store the zipped programming exercise.
+     * @return the path to the zip file
+     */
+    public Path archiveProgrammingExercise(ProgrammingExercise exercise, List<ProgrammingExerciseStudentParticipation> studentParticipations, String pathToStoreZipFile) {
+        // Export student repositories
+        var zippedStudentRepos = exportStudentRepositories(exercise.getId(), studentParticipations, new RepositoryExportOptionsDTO());
+
+        // Export the template, solution, and tests repositories
+        var zippedTemplateRepo = exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TEMPLATE);
+        var zippedSolutionRepo = exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.SOLUTION);
+        var zippedTestsRepo = exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TESTS);
+        var zipFilePaths = List.of(zippedStudentRepos.toPath(), zippedTemplateRepo.toPath(), zippedSolutionRepo.toPath(), zippedTestsRepo.toPath());
+
+        try {
+            // Zip the student and instructor repos together.
+            var pathToZippedExercise = Path.of(pathToStoreZipFile, exercise.getShortName());
+            zipFileService.createZipFile(pathToZippedExercise, zipFilePaths);
+            return pathToZippedExercise;
+        }
+        catch (IOException e) {
+            log.info("Failed to export programming exercise {}: {}", exercise.getId(), e.getMessage());
+            return null;
+        }
+        finally {
+            // Delete the zipped repo files since we don't need those anymore.
+            zipFilePaths.forEach(zipFilePath -> fileService.scheduleForDeletion(zipFilePath, 5));
+        }
+    }
+
+    /**
      * Exports a repository available for an instructor/tutor for a given programming exercise. This can be a template,
      * solution, or tests repository
      *
