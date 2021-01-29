@@ -44,8 +44,10 @@
         flex-direction: row;
     }
     .exercise-date {
-        padding-left: 15px;
-        padding-top: 10px;
+        padding-top: 5px;
+        text-align: center;
+        z-index: 1;
+        min-width: 100px;
     }
     .exercise-score {
         padding-left: 15px;
@@ -62,6 +64,32 @@
     .button-row {
         min-width: 132px;
     }
+}
+
+.calender-icon-container {
+    width: 30px;
+    height: 30px;
+    background-color: $light-border-color;
+    border-radius: 25px;
+    border-color: #3e8acc;
+    border-width: 2px;
+    margin: auto;
+}
+
+.calender-icon {
+    position: relative;
+    top: 3px;
+}
+
+.exercise-date-timeline {
+    top: 50%;
+    bottom: 0;
+    position: relative;
+    content: ' ';
+    width: 100%;
+    height: 4px;
+    background-color: #3e8acc;
+    z-index: -1;
 }
 
 @media screen and (max-width: 1200px) {

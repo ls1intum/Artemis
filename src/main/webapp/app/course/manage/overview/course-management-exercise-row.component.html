@@ -24,17 +24,61 @@
             </div>
 
             <div class="col-3 d-none d-md-flex row-flex">
-                <div class="exercise-date" *ngIf="rowType == exerciseRowType.FUTURE && exercise.releaseDate">
-                    <span class="bold">{{ 'artemisApp.exercise.releaseDate' | translate }}: </span>
-                    <span>{{ exercise.releaseDate | amTimeAgo }}</span>
+                <div class="exercise-date">
+                    <div class="exercise-date-timeline"></div>
+                    <span class="bold">{{ 'artemisApp.course.releaseDate' | translate }}</span>
+                    <div *ngIf="!exercise.releaseDate" style="display: block">
+                        <div class="calender-icon-container">
+                            <fa-icon class="calender-icon" [icon]="'calendar-minus'"></fa-icon>
+                        </div>
+                    </div>
+                    <div *ngIf="exercise.releaseDate" style="display: block">
+                        <div class="calender-icon-container">
+                            <fa-icon class="calender-icon" [icon]="'calendar-check'"></fa-icon>
+                        </div>
+                    </div>
+                    <div *ngIf="exercise.releaseDate">
+                        <span>{{ exercise.releaseDate! | amTimeAgo }}</span>
+                    </div>
+                    <div *ngIf="!exercise.releaseDate">{{ 'artemisApp.programmingExercise.timeline.notSet' | translate }}</div>
                 </div>
-                <div class="exercise-date" *ngIf="(rowType == exerciseRowType.CURRENT || (rowType == exerciseRowType.PAST && !exercise.assessmentDueDate)) && exercise.dueDate">
-                    <span class="bold">{{ 'artemisApp.exercise.dueDate' | translate }}: </span>
-                    <span>{{ exercise.dueDate | amTimeAgo }}</span>
+
+                <div class="exercise-date">
+                    <div class="exercise-date-timeline"></div>
+                    <span class="bold">{{ 'artemisApp.course.dueDate' | translate }}</span>
+                    <div *ngIf="!exercise.dueDate">
+                        <div class="calender-icon-container" style="display: block">
+                            <fa-icon class="calender-icon" [icon]="'calendar-minus'"></fa-icon>
+                        </div>
+                    </div>
+                    <div *ngIf="exercise.dueDate">
+                        <div class="calender-icon-container" style="display: block">
+                            <fa-icon class="calender-icon" [icon]="'calendar-check'"></fa-icon>
+                        </div>
+                    </div>
+                    <div *ngIf="exercise.dueDate">
+                        <span>{{ exercise.dueDate! | amTimeAgo }}</span>
+                    </div>
+                    <div *ngIf="!exercise.dueDate">{{ 'artemisApp.programmingExercise.timeline.notSet' | translate }}</div>
                 </div>
-                <div class="exercise-date" *ngIf="rowType == exerciseRowType.PAST && exercise.assessmentDueDate">
-                    <span class="bold">{{ 'artemisApp.exercise.assessmentDueDate' | translate }}: </span>
-                    <span>{{ exercise.assessmentDueDate | amTimeAgo }}</span>
+
+                <div class="exercise-date">
+                    <div class="exercise-date-timeline"></div>
+                    <span class="bold">{{ 'artemisApp.course.assessmentDueDate' | translate }}</span>
+                    <div *ngIf="!exercise.assessmentDueDate">
+                        <div class="calender-icon-container" style="display: block">
+                            <fa-icon class="calender-icon" [icon]="'calendar-minus'"></fa-icon>
+                        </div>
+                    </div>
+                    <div *ngIf="exercise.assessmentDueDate">
+                        <div class="calender-icon-container" style="display: block">
+                            <fa-icon class="calender-icon" [icon]="'calendar-check'"></fa-icon>
+                        </div>
+                    </div>
+                    <div *ngIf="exercise.assessmentDueDate">
+                        <span>{{ exercise.assessmentDueDate! | amTimeAgo }}</span>
+                    </div>
+                    <div *ngIf="!exercise.assessmentDueDate">{{ 'artemisApp.programmingExercise.timeline.notSet' | translate }}</div>
                 </div>
             </div>
 

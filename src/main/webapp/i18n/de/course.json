@@ -117,14 +117,16 @@
                     "modalQuestion": "Soll der Nutzer mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Kurs-Gruppe entfernt werden?"
                 }
             },
-            "statistics": "Statistiken",
             "averageScore": "Punkte im Schnitt",
             "releasedSoon": "Bald veröffentlicht",
             "currentWorking": "Derzeitig in Bearbeitung",
             "inAssessment": "Derzeitig in Bewertung",
             "pastExercises": "Vergangene Übungen",
             "noExercises": "Keine Übungen vorhanden",
-            "assessmentProgress": "Bewertungsfortschritt"
+            "assessmentProgress": "Bewertungsfortschritt",
+            "releaseDate": "Veröffentlichung",
+            "dueDate": "Einreichungsfrist",
+            "assessmentDueDate": "Bewertungsfrist"
         }
     }
 }

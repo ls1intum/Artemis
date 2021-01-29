@@ -117,14 +117,16 @@
                     "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this course group?"
                 }
             },
-            "statistics": "Statistics",
             "averageScore": "Average Score",
             "releasedSoon": "Released Soon",
             "currentWorking": "Current Working",
             "inAssessment": "In Assessment",
             "pastExercises": "Past Exercises",
             "noExercises": "No exercises to display",
-            "assessmentProgress": "Assessment progress"
+            "assessmentProgress": "Assessment progress",
+            "releaseDate": "Release",
+            "dueDate": "Due",
+            "assessmentDueDate": "Assessment Due"
         }
     }
 }
