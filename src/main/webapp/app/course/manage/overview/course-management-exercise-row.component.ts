@@ -2,6 +2,7 @@ import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CourseExerciseStatisticsDTO } from 'app/exercises/shared/exercise/exercise-statistics-dto.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 export enum ExerciseRowType {
     FUTURE = 'future',
@@ -33,7 +34,7 @@ export class CourseManagementExerciseRowComponent implements OnInit, OnChanges {
     // TODO:
     JSON = JSON;
 
-    getIcon(type: ExerciseType | undefined) {
+    getIcon(type: ExerciseType | undefined): IconProp {
         switch (type) {
             case ExerciseType.PROGRAMMING:
                 return 'keyboard';

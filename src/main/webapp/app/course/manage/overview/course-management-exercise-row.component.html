@@ -63,6 +63,7 @@
 
             <div class="row-flex button-row">
                 <button
+                    *ngIf="course.isAtLeastInstructor"
                     type="button"
                     [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'edit']"
                     class="btn btn-warning mr-1 mb-1"
@@ -71,7 +72,7 @@
                     <fa-icon [icon]="'wrench'"></fa-icon>
                 </button>
                 <button
-                    *ngIf="course.isAtLeastInstructor"
+                    *ngIf="course.isAtLeastTutor"
                     type="submit"
                     [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'scores']"
                     class="btn btn-info mr-1 mb-1"
