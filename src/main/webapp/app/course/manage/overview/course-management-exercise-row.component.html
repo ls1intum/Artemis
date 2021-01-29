@@ -1,7 +1,7 @@
 <div class="course-item">
     <div class="container">
-        <div class="row justify-content-around">
-            <div class="col-lg-4 col-md-5 col-6 row-flex pointer-row">
+        <div class="row justify-content-around" style="align-items: center">
+            <div class="col-4 row-flex pointer-row">
                 <div class="exercise-icon ml-2 mr-1" *ngIf="hasLeftoverAssessments">
                     <fa-icon
                         [icon]="'exclamation-triangle'"
@@ -15,7 +15,7 @@
                     <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | translate" container="body"></fa-icon>
                 </div>
                 <p class="item-title" [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id]">{{ exercise.title }}</p>
-                <div class="item-category d-none d-xl-block" *ngIf="exercise.categories?.length > 0">
+                <div class="item-category d-flex hide-1600" *ngIf="exercise.categories?.length > 0">
                     <!-- We only support two categories -->
                     <h4 *ngFor="let category of exercise.categories">
                         <span class="badge text-white mr-1" [ngStyle]="{ backgroundColor: JSON.parse(category).color }">{{ JSON.parse(category).category }}</span>
@@ -23,7 +23,7 @@
                 </div>
             </div>
 
-            <div class="col-3 d-none d-md-flex row-flex">
+            <div class="col-3 row-flex hide-1200" style="min-width: 340px">
                 <div class="exercise-date">
                     <div class="exercise-date-timeline"></div>
                     <span class="bold">{{ 'artemisApp.course.releaseDate' | translate }}</span>
@@ -32,12 +32,10 @@
                             <fa-icon class="calender-icon" [icon]="'calendar-minus'"></fa-icon>
                         </div>
                     </div>
-                    <div *ngIf="exercise.releaseDate" style="display: block">
+                    <div *ngIf="exercise.releaseDate" style="display: block" [ngbTooltip]="exercise.releaseDate">
                         <div class="calender-icon-container">
                             <fa-icon class="calender-icon" [icon]="'calendar-check'"></fa-icon>
                         </div>
-                    </div>
-                    <div *ngIf="exercise.releaseDate">
                         <span>{{ exercise.releaseDate! | amTimeAgo }}</span>
                     </div>
                     <div *ngIf="!exercise.releaseDate">{{ 'artemisApp.programmingExercise.timeline.notSet' | translate }}</div>
@@ -51,12 +49,10 @@
                             <fa-icon class="calender-icon" [icon]="'calendar-minus'"></fa-icon>
                         </div>
                     </div>
-                    <div *ngIf="exercise.dueDate">
+                    <div *ngIf="exercise.dueDate" [ngbTooltip]="exercise.dueDate">
                         <div class="calender-icon-container" style="display: block">
                             <fa-icon class="calender-icon" [icon]="'calendar-check'"></fa-icon>
                         </div>
-                    </div>
-                    <div *ngIf="exercise.dueDate">
                         <span>{{ exercise.dueDate! | amTimeAgo }}</span>
                     </div>
                     <div *ngIf="!exercise.dueDate">{{ 'artemisApp.programmingExercise.timeline.notSet' | translate }}</div>
@@ -70,19 +66,17 @@
                             <fa-icon class="calender-icon" [icon]="'calendar-minus'"></fa-icon>
                         </div>
                     </div>
-                    <div *ngIf="exercise.assessmentDueDate">
+                    <div *ngIf="exercise.assessmentDueDate" [ngbTooltip]="exercise.assessmentDueDate">
                         <div class="calender-icon-container" style="display: block">
                             <fa-icon class="calender-icon" [icon]="'calendar-check'"></fa-icon>
                         </div>
-                    </div>
-                    <div *ngIf="exercise.assessmentDueDate">
                         <span>{{ exercise.assessmentDueDate! | amTimeAgo }}</span>
                     </div>
                     <div *ngIf="!exercise.assessmentDueDate">{{ 'artemisApp.programmingExercise.timeline.notSet' | translate }}</div>
                 </div>
             </div>
 
-            <div class="col-lg-3 col-md-5 d-none d-lg-flex row-flex">
+            <div class="col-2 row-flex hide-1600">
                 <div class="exercise-score" *ngIf="statistic && rowType == exerciseRowType.CURRENT">
                     <span class="bold">{{ 'artemisApp.course.students' | translate }}</span>
                     <jhi-progress-bar
@@ -103,7 +97,7 @@
                     >
                     </jhi-progress-bar>
                 </div>
-                <div class="exercise-score hide-1200" *ngIf="statistic && rowType == exerciseRowType.PAST">
+                <div class="exercise-score" *ngIf="statistic && rowType == exerciseRowType.PAST">
                     <span class="bold">{{ 'artemisApp.course.averageScore' | translate }}</span>
                     <jhi-progress-bar
                         [tooltip]="'artemisApp.course.averageScore' | translate"

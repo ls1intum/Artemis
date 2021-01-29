@@ -51,7 +51,7 @@ export class CourseManagementExerciseRowComponent implements OnInit, OnChanges {
         }
     }
 
-    getIconTooltip(type: ExerciseType | undefined) {
+    getIconTooltip(type: ExerciseType | undefined): string {
         switch (type) {
             case ExerciseType.PROGRAMMING:
                 return 'artemisApp.exercise.isProgramming';
