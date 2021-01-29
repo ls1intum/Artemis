@@ -22,9 +22,18 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     @Query("select organization from Organization organization left join fetch organization.users ou where organization.id = :#{#organizationId}")
     Optional<Organization> findByIdWithEagerUsers(@Param("organizationId") long organizationId);
 
+    @Query("select organization from Organization organization left join fetch organization.users ou left join fetch organization.courses oc where organization.id = :#{#organizationId}")
+    Optional<Organization> findByIdWithEagerUsersAndCourses(@Param("organizationId") long organizationId);
+
     @Query("select distinct organization from Organization organization join organization.users ou where ou.id = :#{#userId}")
     Set<Organization> findAllOrganizationsByUserId(@Param("userId") long userId);
 
     @Query("select distinct organization from Organization organization join organization.courses oc where oc.id = :#{#courseId}")
     Set<Organization> findAllOrganizationsByCourseId(@Param("courseId") long courseId);
+
+    @Query("select count(users.id) as num_user from Organization organization left join organization.users users where organization.id = :#{#organizationId} group by organization.id")
+    Long getNumberOfUsersByOrganizationId(@Param("organizationId") long organizationId);
+
+    @Query("select count(courses.id) as num_courses from Organization organization left join organization.courses courses where organization.id = :#{#organizationId} group by organization.id")
+    Long getNumberOfCoursesByOrganizationId(@Param("organizationId") long organizationId);
 }

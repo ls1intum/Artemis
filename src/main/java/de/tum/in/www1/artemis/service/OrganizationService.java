@@ -71,6 +71,16 @@ public class OrganizationService {
     }
 
     /**
+     * Get an organization containing the eagerly loaded list of users and courses
+     * @param organizationId the id of the organization to retrieve
+     * @return the organization with the given Id containing eagerly loaded list of users and courses
+     */
+    public Organization findOneWithEagerUsersAndCourses(long organizationId) {
+        log.debug("Request to get Organization : {}", organizationId);
+        return organizationRepository.findByIdWithEagerUsersAndCourses(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization with id: \"" + organizationId + "\" does not exist"));
+    }
+
+    /**
      * Get all organizations
      * @return all organizations
      */
@@ -94,6 +104,24 @@ public class OrganizationService {
      */
     public Set<Organization> getAllOrganizationsByCourse(long courseId) {
         return organizationRepository.findAllOrganizationsByCourseId(courseId);
+    }
+
+    /**
+     * Get the number of users currently mapped to the given organization
+     * @param organizationId the id of the organization where the users are in
+     * @return the number of users contained in the organization
+     */
+    public long getNumberOfUsersByOrganization(long organizationId) {
+        return organizationRepository.getNumberOfUsersByOrganizationId(organizationId);
+    }
+
+    /**
+     * Get the number of courses currently mapped to the given organization
+     * @param organizationId the id of the organization where the courses are in
+     * @return the number of courses contained in the organization
+     */
+    public long getNumberOfCoursesByOrganization(long organizationId) {
+        return organizationRepository.getNumberOfCoursesByOrganizationId(organizationId);
     }
 
     /**

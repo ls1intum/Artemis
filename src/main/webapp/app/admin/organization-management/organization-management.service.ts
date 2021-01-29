@@ -17,11 +17,28 @@ export class OrganizationManagementService {
     }
 
     /**
+     * Send GET request to retrieve all organizations with their number of
+     * users and courses
+     */
+    getNumberOfUsersAndCoursesOfOrganizations(): Observable<any> {
+        return this.http.get(this.resourceUrl + '/allCount');
+    }
+
+    /**
      * Send GET request to retrieve an organization by its Id
      * @param organizationId
      */
     getOrganizationById(organizationId: number): Observable<any> {
         return this.http.get(`${this.resourceUrl}/${organizationId}`);
+    }
+
+    /**
+     * Send GET request to retrieve an organization by Id with
+     * its list of users and courses
+     * @param organizationId
+     */
+    getOrganizationByIdWithUsersAndCourses(organizationId: number): Observable<any> {
+        return this.http.get(`${this.resourceUrl}/${organizationId}/full`);
     }
 
     /**

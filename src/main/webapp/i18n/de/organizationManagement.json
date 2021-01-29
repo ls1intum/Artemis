@@ -13,6 +13,9 @@
             "question": "Soll die Organisation <strong>{{ title }}</strong> wirklich gelöscht werden?"
         },
         "addLabel": "Organisation hinzufügen",
-        "editLabel": "Organisation bearbeiten"
+        "editLabel": "Organisation bearbeiten",
+        "detail": {
+            "title": "Organisation"
+        }
     }
 }

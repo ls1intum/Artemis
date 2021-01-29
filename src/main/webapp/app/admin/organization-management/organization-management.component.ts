@@ -17,6 +17,13 @@ export class OrganizationManagementComponent implements OnInit {
     ngOnInit(): void {
         this.organizationService.getOrganizations().subscribe((organizations) => {
             this.organizations = organizations;
+            this.organizationService.getNumberOfUsersAndCoursesOfOrganizations().subscribe((data) => {
+                data = Object.values(data);
+                for (let i = 0; i < data.length; i++) {
+                    this.organizations[i].numberOfUsers = data[i].users;
+                    this.organizations[i].numberOfCourses = data[i].courses;
+                }
+            });
         });
     }
 

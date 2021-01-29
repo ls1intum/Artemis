@@ -13,6 +13,9 @@
             "question": "Are you sure you want to delete the <strong>{{ title }}</strong> organization?"
         },
         "addLabel": "Add organization",
-        "editLabel": "Edit organization"
+        "editLabel": "Edit organization",
+        "detail": {
+            "title": "Organization"
+        }
     }
 }

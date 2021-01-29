@@ -73,6 +73,12 @@
                         </a>
                     </li>
                     <li>
+                        <a class="dropdown-item" routerLink="admin/organization-management" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="'university'" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.organizationManagement">Organization management</span>
+                        </a>
+                    </li>
+                    <li>
                         <a class="dropdown-item" routerLink="admin/system-notification-management" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="'bell'" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.systemNotifications">System notifications</span>

@@ -55,7 +55,7 @@ export const organizationMgmtRoute: Route[] = [
                 },
                 data: {
                     pageTitle: 'organizationManagement.title',
-                    breadcrumbLabelVariable: '',
+                    breadcrumbLabelVariable: 'organization.id',
                 },
             },
             {
@@ -64,7 +64,7 @@ export const organizationMgmtRoute: Route[] = [
                     user: UserMgmtResolve,
                 },
                 data: {
-                    breadcrumbLabelVariable: '',
+                    breadcrumbLabelVariable: 'organization.id',
                 },
                 children: [
                     {
@@ -72,7 +72,7 @@ export const organizationMgmtRoute: Route[] = [
                         component: OrganizationManagementUpdateComponent,
                         data: {
                             pageTitle: 'organizationManagement.editLabel',
-                            breadcrumbLabelVariable: '',
+                            breadcrumbLabelVariable: 'organization.id',
                         },
                     },
                 ],

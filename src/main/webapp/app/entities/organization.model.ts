@@ -12,4 +12,6 @@ export class Organization implements BaseEntity {
     emailPattern?: string;
     users?: User[];
     courses?: Course[];
+    numberOfUsers?: number;
+    numberOfCourses?: number;
 }

@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -128,10 +130,42 @@ public class OrganizationResource {
         return new ResponseEntity<>(organizations, HttpStatus.OK);
     }
 
+    @GetMapping("/organizations/allCount")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Map<Long, Map<String, Long>>> getAllOrganizationsWithNumberOfUsersAndCourses() {
+        Map<Long, Map<String, Long>> result = new HashMap<>();
+
+        List<Organization> organizations = organizationService.getAllOrganizations();
+        for (Organization organization : organizations) {
+            Map<String, Long> numberOfUsersAndCourses = new HashMap<>();
+            numberOfUsersAndCourses.put("users", organizationService.getNumberOfUsersByOrganization(organization.getId()));
+            numberOfUsersAndCourses.put("courses", organizationService.getNumberOfCoursesByOrganization(organization.getId()));
+            result.put(organization.getId(), numberOfUsersAndCourses);
+        }
+
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
     @GetMapping("/organizations/{organizationId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Organization> getOrganizationById(@PathVariable long organizationId) {
         Organization organization = organizationService.findOne(organizationId);
         return new ResponseEntity<>(organization, HttpStatus.OK);
+    }
+
+    @GetMapping("/organizations/{organizationId}/full")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Organization> getOrganizationByIdWithUsersAndCourses(@PathVariable long organizationId) {
+        Organization organization = organizationService.findOneWithEagerUsersAndCourses(organizationId);
+        return new ResponseEntity<>(organization, HttpStatus.OK);
+    }
+
+    @GetMapping("/organizations/{organizationId}/count")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Map<String, Long>> getNumberOfUsersAndCoursesByOrganization(@PathVariable long organizationId) {
+        Map<String, Long> numberOfUsersAndCourses = new HashMap<>();
+        numberOfUsersAndCourses.put("users", organizationService.getNumberOfUsersByOrganization(organizationId));
+        numberOfUsersAndCourses.put("courses", organizationService.getNumberOfCoursesByOrganization(organizationId));
+        return new ResponseEntity<>(numberOfUsersAndCourses, HttpStatus.OK);
     }
 }
