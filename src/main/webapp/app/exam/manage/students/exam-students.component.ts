@@ -238,10 +238,12 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      */
     registerAllStudentsFromCourse() {
         if (this.exam && this.exam.id) {
-            this.examManagementService
-                .addAllStudentsOfCourseToExam(this.courseId, this.exam.id)
-                .subscribe((error) => this.onError(`artemisApp.exam.${error.headers.get('x-null-error')}`));
-            this.reloadExamWithRegisteredUsers();
+            this.examManagementService.addAllStudentsOfCourseToExam(this.courseId, this.exam.id).subscribe(
+                () => {
+                    this.reloadExamWithRegisteredUsers();
+                },
+                (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+            );
         }
     }
 }
