@@ -1,23 +1,5 @@
 package de.tum.in.www1.artemis;
 
-import static java.time.ZonedDateTime.now;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
-
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
-
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
@@ -37,6 +19,23 @@ import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.time.ZonedDateTime.now;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -905,6 +904,41 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         StudentExam response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/conduction", HttpStatus.OK, StudentExam.class);
         assertThat(response.getExam()).isEqualTo(exam);
         verify(examAccessService, times(1)).checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam.getId());
+    }
+
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testAddAllRegisteredUsersToExam() throws Exception {
+        Course course = database.addEmptyCourse();
+        Exam exam = database.addExam(course);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, false);
+        exam = examRepository.save(exam);
+        course.addExam(exam);
+        course = courseRepo.save(course);
+
+        var instructor = database.getUserByLogin("instructor1");
+        instructor.setGroups(Collections.singleton("instructor"));
+        userRepo.save(instructor);
+
+        var student99 = ModelFactory.generateActivatedUser("student99");     // not registered for the course
+        student99.setRegistrationNumber("1234");
+        userRepo.save(student99);
+        student99 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student99").get();
+        student99.setGroups(Collections.singleton("tumuser"));
+        userRepo.save(student99);
+        assertThat(student99.getGroups()).contains(course.getStudentGroupName());
+
+
+        assertThat(exam.getRegisteredUsers()).doesNotContain(student99);
+        var response = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/addAllStudentsOfCourse", Optional.empty(), List.class, HttpStatus.OK);
+
+        exam = examRepository.findWithRegisteredUsersById(exam.getId()).get();
+
+        assertThat(exam.getRegisteredUsers().size()).isEqualTo(1);
+        assertThat(exam.getRegisteredUsers()).contains(student99);
+        assertThat(response.size()).isEqualTo(10);
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course.getId(), exam.getId());
     }
 
     @Test
