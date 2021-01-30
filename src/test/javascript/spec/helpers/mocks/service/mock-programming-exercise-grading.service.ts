@@ -31,7 +31,11 @@ export class MockProgrammingExerciseGradingService implements IProgrammingExerci
         this.testCaseSubject.next(testCases);
     }
 
-    reset(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
+    resetTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
+        return of();
+    }
+
+    resetCategories(exerciseId: number): Observable<StaticCodeAnalysisCategory[]> {
         return of();
     }
 

@@ -49,6 +49,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     answer: string;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
+    private examMode = false;
 
     // indicates, that it is an exam exercise and the publishResults date is in the past
     isAfterPublishDate: boolean;
@@ -87,6 +88,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private updateParticipation(participation: StudentParticipation) {
         this.participation = participation;
         this.textExercise = this.participation.exercise as TextExercise;
+        this.examMode = !!this.textExercise.exerciseGroup;
         this.textExercise.studentParticipations = [this.participation];
         this.textExercise.participationStatus = participationStatus(this.textExercise);
         this.checkIfSubmitAlwaysEnabled();
@@ -145,7 +147,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * True, if the deadline is after the current date, or there is no deadline, or the exercise is always active
      */
     get isActive(): boolean {
-        const isActive = !this.result && (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && moment(this.textExercise.dueDate).isSameOrAfter(moment())));
+        const isActive =
+            !this.examMode &&
+            !this.result &&
+            (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && moment(this.textExercise.dueDate).isSameOrAfter(moment())));
         return !!isActive;
     }
 

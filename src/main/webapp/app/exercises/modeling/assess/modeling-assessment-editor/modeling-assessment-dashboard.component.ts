@@ -36,6 +36,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
     nextOptimalSubmissionIds: number[] = [];
+    numberOfCorrectionrounds = 1;
 
     private cancelConfirmationText: string;
 
@@ -90,6 +91,8 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                 if (res.body!.type === ExerciseType.MODELING) {
                     this.modelingExercise = res.body as ModelingExercise;
                     this.getSubmissions(true);
+                    this.numberOfCorrectionrounds = this.modelingExercise.exerciseGroup ? this.modelingExercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
+                    this.setPermissions();
                 } else {
                     // TODO: error message if this is not a modeling exercise
                 }
@@ -131,7 +134,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                 this.assessedSubmissions = this.submissions.filter((submission) => {
                     const result = getLatestSubmissionResult(submission);
                     setLatestSubmissionResult(submission, result);
-                    return result && result!.completionDate && result!.score;
+                    return !!result;
                 }).length;
             });
     }
@@ -244,6 +247,14 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         ]);
     }
 
+    private setPermissions() {
+        if (this.modelingExercise.course) {
+            this.modelingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course!);
+        } else {
+            this.modelingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.exerciseGroup?.exam?.course!);
+        }
+    }
+
     /**
      * Cancel the current assessment and reload the submissions to reflect the change.
      */
@@ -263,5 +274,25 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     public sortRows() {
         this.sortService.sortByProperty(this.otherSubmissions, this.predicate, this.reverse);
+    }
+
+    /**
+     * get the link for the assessment of a specific submission of the current exercise
+     * @param submissionId
+     */
+    getAssessmentLink(submissionId: number) {
+        if (this.modelingExercise.exerciseGroup) {
+            return [
+                '/course-management',
+                this.modelingExercise.exerciseGroup.exam?.course?.id,
+                'modeling-exercises',
+                this.modelingExercise.id,
+                'submissions',
+                submissionId,
+                'assessment',
+            ];
+        } else {
+            return ['/course-management', this.modelingExercise.course?.id, 'modeling-exercises', this.modelingExercise.id, 'submissions', submissionId, 'assessment'];
+        }
     }
 }

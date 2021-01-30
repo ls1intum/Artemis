@@ -509,7 +509,7 @@ public class ParticipationResource {
 
         checkAccessPermissionAtLeastInstructor(participation, user);
 
-        String name = participation.getParticipant().getName();
+        String name = participation.getParticipantName();
         var logMessage = "Delete Participation " + participationId + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
                 + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + principal.getName();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
@@ -552,7 +552,7 @@ public class ParticipationResource {
             return forbidden();
         }
 
-        String name = participation.getParticipant().getName();
+        String name = participation.getParticipantName();
         var logMessage = "Delete Participation " + participationId + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
                 + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + principal.getName();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);

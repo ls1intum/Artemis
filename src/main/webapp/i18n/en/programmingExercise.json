@@ -148,7 +148,9 @@
                     "notGraded": "Not graded.",
                     "noFeedback": "No visible feedback.",
                     "updated": "The categories were updated successfully.",
-                    "couldNotBeUpdated": "The following categories could not be updated: {{categories}}."
+                    "couldNotBeUpdated": "The following categories could not be updated: {{categories}}.",
+                    "resetSuccessful": "The categories were reset successfully.",
+                    "resetFailed": "The categories could not be reset."
                 },
                 "charts": {
                     "title": "Charts",
@@ -183,6 +185,7 @@
                 "notReleasedTooltip": "The programming exercise is not yet released or is relased but does not yet have student results. Therefore you can change the grading without having to trigger existing student submissions with the updated settings."
             },
             "export": {
+                "downloadRepo": "Download Repo",
                 "downloadAllStudents": "Or download the repositories of all students",
                 "downloadAllTeams": "Or download the repositories of all teams",
                 "filterLateSubmissions": "Filter late submissions",

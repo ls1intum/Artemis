@@ -419,7 +419,7 @@ public class TextExerciseResource {
                 }
             }
 
-            participation.addSubmissions(textSubmission);
+            participation.addSubmission(textSubmission);
         }
 
         if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {

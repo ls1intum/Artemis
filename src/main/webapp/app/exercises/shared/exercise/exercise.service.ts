@@ -356,6 +356,10 @@ export class ExerciseService {
                 return this.translateService.instant('artemisApp.exercise.no');
         }
     }
+
+    toggleSecondCorrection(exerciseId: number): Observable<Boolean> {
+        return this.http.put<boolean>(`${this.resourceUrl}/${exerciseId}/toggle-second-correction`, { observe: 'response' });
+    }
 }
 
 @Injectable({ providedIn: 'root' })
