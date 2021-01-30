@@ -27,7 +27,7 @@ public class FlowchartTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityFlowchartDifferentModels() {
-        compareSubmissions(modelingSubmission(FLOWCHART_MODEL_1A), modelingSubmission(FLOWCHART_MODEL_2), 0.0, 45.0);
+        compareSubmissions(modelingSubmission(FLOWCHART_MODEL_1A), modelingSubmission(FLOWCHART_MODEL_2), 0.0, 47.0);
     }
 
     @Test
@@ -40,7 +40,8 @@ public class FlowchartTest extends AbstractUMLDiagramTest {
         assertThat(flowchart.getInputOutputs()).hasSize(2);
         assertThat(flowchart.getDecisions()).hasSize(2);
         assertThat(flowchart.getProcesses()).hasSize(2);
-        assertThat(flowchart.getFlowlines()).hasSize(9);
+        assertThat(flowchart.getFlowlines()).hasSize(10);
+        assertThat(flowchart.getFunctionCalls()).hasSize(1);
 
         assertThat(flowchart.getElementByJSONID("129c296b-1927-49e4-b021-5d496d33f5f6")).asInstanceOf(type(FlowchartTerminal.class)).satisfies(terminal -> {
             assertThat(terminal.getName()).isEqualTo("Start");
@@ -53,6 +54,9 @@ public class FlowchartTest extends AbstractUMLDiagramTest {
         });
         assertThat(flowchart.getElementByJSONID("74d972c6-efb6-4a6e-bd10-2e5b1fd8c3b8")).asInstanceOf(type(FlowchartProcess.class)).satisfies(process -> {
             assertThat(process.getName()).isEqualTo("y = y - x;");
+        });
+        assertThat(flowchart.getElementByJSONID("8b86b06b-baf8-48d0-a8f0-925a11fd552d")).asInstanceOf(type(FlowchartFunctionCall.class)).satisfies(functionCall -> {
+            assertThat(functionCall.getName()).isEqualTo("x = max();");
         });
         assertThat(flowchart.getElementByJSONID("5c178df3-686e-435c-88bc-1fca2d20d090")).asInstanceOf(type(FlowchartFlowline.class)).satisfies(flowline -> {
             assertThat(flowline.getSource()).isNotNull().isSameAs(flowchart.getElementByJSONID("129c296b-1927-49e4-b021-5d496d33f5f6"));
