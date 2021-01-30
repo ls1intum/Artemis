@@ -177,7 +177,7 @@
                             <span *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && modelingExercise.course">
                                 <a
                                     *ngIf="!submission.latestResult"
-                                    [disabled]="busy"
+                                    [class.disabled]="busy"
                                     [queryParams]="{ optimal: false, hideBackButton: true }"
                                     [routerLink]="getAssessmentLink(submission.id)"
                                     class="btn btn-success btn-sm mb-1"
@@ -186,7 +186,7 @@
                                 </a>
                                 <a
                                     *ngIf="submission.latestResult"
-                                    [disabled]="busy"
+                                    [class.disabled]="busy"
                                     [queryParams]="{ optimal: false, hideBackButton: true }"
                                     [routerLink]="getAssessmentLink(submission.id)"
                                     class="btn btn-primary btn-sm mb-1"
@@ -201,7 +201,7 @@
                                     <!-- button for existing result without lock-->
                                     <a
                                         *ngIf="submission.results[correctionRound].completionDate"
-                                        [disabled]="busy"
+                                        [class.disabled]="busy"
                                         [queryParams]="{ optimal: false, hideBackButton: true, 'correction-round': correctionRound }"
                                         [routerLink]="getAssessmentLink(submission.id)"
                                         class="btn btn-primary btn-sm mb-1"
@@ -214,7 +214,7 @@
                                     <!-- button for existing result with lock-->
                                     <span *ngIf="!submission.results[correctionRound].completionDate">
                                         <a
-                                            [disabled]="busy"
+                                            [class.disabled]="busy"
                                             [queryParams]="{ 'correction-round': correctionRound }"
                                             [routerLink]="getAssessmentLink(submission.id)"
                                             class="btn btn-warning btn-sm mb-1"
@@ -243,7 +243,7 @@
                                         correctionRound == (submission.results ? submission.results.length : 0) &&
                                         (!submission.latestResult || submission.latestResult!.completionDate)
                                     "
-                                    [disabled]="busy"
+                                    [class.disabled]="busy"
                                     [queryParams]="{ 'correction-round': submission.results ? submission.results.length : 0 }"
                                     [routerLink]="getAssessmentLink(submission.id)"
                                     class="btn btn-success btn-sm mb-1"
