@@ -696,6 +696,33 @@ public class ProgrammingExerciseService {
     }
 
     /**
+     * Updates the timeline attributes of the given programming exercise
+     * @param updatedProgrammingExercise containing the changes that have to be saved
+     * @param notificationText optional text for a notification to all students about the update
+     * @return the updated ProgrammingExercise object.
+     */
+    public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
+
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(updatedProgrammingExercise.getId());
+        if (programmingExercise.isPresent()) {
+            programmingExercise.get().setReleaseDate(updatedProgrammingExercise.getReleaseDate());
+            programmingExercise.get().setDueDate(updatedProgrammingExercise.getDueDate());
+            programmingExercise.get().setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+            programmingExercise.get().setAssessmentType(updatedProgrammingExercise.getAssessmentType());
+            programmingExercise.get().setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
+        }
+        else {
+            throw new EntityNotFoundException("Programming exercise not found with id: " + updatedProgrammingExercise.getId());
+        }
+
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise.get());
+        if (notificationText != null) {
+            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
+        }
+        return savedProgrammingExercise;
+    }
+
+    /**
      * Updates the problem statement of the given programming exercise.
      *
      * @param programmingExerciseId ProgrammingExercise Id.
