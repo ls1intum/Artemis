@@ -16,7 +16,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { MockFeatureToggleService } from '../../../helpers/mocks/service/mock-feature-toggle.service';
 import { ExerciseMode, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
-import { ExerciseActionButtonComponent } from 'app/overview/exercise-details/exercise-action-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisTestModule } from '../../../test.module';
 import { JhiAlertService } from 'ng-jhipster';
@@ -33,9 +33,9 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
 import { LocalStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -48,11 +48,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     let profileService: ProfileService;
     let startExerciseStub: SinonStub;
     let getProfileInfoSub: SinonStub;
-
-    let localStorageUseSshRetrieveStub: SinonStub;
-    let localStorageUseSshObserveStub: SinonStub;
-    let localStorageUseSshObserveStubSubject: Subject<boolean | undefined>;
-    let localStorageUseSshStoreStub: SinonStub;
 
     const team = { id: 1, students: [{ id: 99 } as User] } as Team;
     const teamExerciseWithoutTeamAssigned = ({
@@ -68,7 +63,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisSharedModule, FeatureToggleModule, RouterModule, ClipboardModule],
-            declarations: [ExerciseDetailsStudentActionsComponent, MockComponent(ExerciseActionButtonComponent)],
+            declarations: [ExerciseDetailsStudentActionsComponent, MockComponent(ExerciseActionButtonComponent), MockComponent(CloneRepoButtonComponent)],
             providers: [
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: JhiAlertService, useClass: MockAlertService },
@@ -90,13 +85,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 getProfileInfoSub = stub(profileService, 'getProfileInfo');
                 getProfileInfoSub.returns(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
                 startExerciseStub = stub(courseExerciseService, 'startExercise');
-
-                const localStorageMock = fixture.debugElement.injector.get(LocalStorageService);
-                localStorageUseSshRetrieveStub = stub(localStorageMock, 'retrieve');
-                localStorageUseSshObserveStub = stub(localStorageMock, 'observe');
-                localStorageUseSshStoreStub = stub(localStorageMock, 'store');
-                localStorageUseSshObserveStubSubject = new Subject();
-                localStorageUseSshObserveStub.returns(localStorageUseSshObserveStubSubject);
             });
     });
 
@@ -152,20 +140,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startExerciseButton).to.exist;
     }));
 
-    it('should generate the correct clone urls for https and ssh', fakeAsync(() => {
-        comp.ngOnInit();
-
-        const participation = ({
-            repositoryUrl: 'https://testserver.com/scm/exercise/repository.git',
-        } as unknown) as ProgrammingExerciseStudentParticipation;
-
-        comp.useSsh = true;
-        expect(comp.repositoryUrl(participation)).to.be.equal('ssh://git@testserver.com:1234/exercise/repository.git');
-
-        comp.useSsh = false;
-        expect(comp.repositoryUrl(participation)).to.be.equal(participation.repositoryUrl);
-    }));
-
     it('should reflect the correct participation state when team exercise was started', fakeAsync(() => {
         const inactivePart = { id: 2, initializationState: InitializationState.UNINITIALIZED } as StudentParticipation;
         const initPart = { id: 2, initializationState: InitializationState.INITIALIZED } as StudentParticipation;
@@ -193,42 +167,10 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startExerciseButton).to.not.exist;
 
         // Check that button "Clone repository" is shown
-        const cloneRepositoryButton = fixture.debugElement.query(By.css('.clone-repository'));
+        const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
         expect(cloneRepositoryButton).to.exist;
 
         fixture.destroy();
         flush();
-    }));
-
-    it('should fetch and store ssh preference', fakeAsync(() => {
-        comp.exercise = teamExerciseWithTeamAssigned;
-        comp.sshEnabled = true;
-
-        fixture.detectChanges();
-        tick();
-
-        expect(localStorageUseSshRetrieveStub).to.have.been.calledOnceWithExactly('useSsh');
-        expect(localStorageUseSshObserveStub).to.have.been.calledOnceWithExactly('useSsh');
-        expect(comp.useSsh).to.be.false;
-
-        fixture.debugElement.query(By.css('.clone-repository')).nativeElement.click();
-        tick();
-        fixture.debugElement.query(By.css('.use-ssh')).nativeElement.click();
-        tick();
-        expect(localStorageUseSshStoreStub).to.have.been.calledOnceWithExactly('useSsh', true);
-        expect(comp.useSsh).to.be.true;
-
-        fixture.debugElement.query(By.css('.use-ssh')).nativeElement.click();
-        tick();
-        expect(localStorageUseSshStoreStub).to.have.been.calledWithExactly('useSsh', false);
-        expect(comp.useSsh).to.be.false;
-
-        localStorageUseSshObserveStubSubject.next(true);
-        tick();
-        expect(comp.useSsh).to.be.true;
-
-        localStorageUseSshObserveStubSubject.next(false);
-        tick();
-        expect(comp.useSsh).to.be.false;
     }));
 });

@@ -44,7 +44,6 @@
                             <jhi-programming-exercise-grading-table-actions
                                 [exercise]="exercise"
                                 [hasUnsavedChanges]="!!changedTestCaseIds.length"
-                                [disableReset]="false"
                                 [isSaving]="isSaving"
                                 (onReset)="resetTestCases()"
                                 (onSave)="saveTestCases()"
@@ -219,7 +218,6 @@
                             <jhi-programming-exercise-grading-table-actions
                                 [exercise]="exercise"
                                 [hasUnsavedChanges]="!!changedCategoryIds.length"
-                                [disableReset]="true"
                                 [isSaving]="isSaving"
                                 (onReset)="resetCategories()"
                                 (onSave)="saveCategories()"

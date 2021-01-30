@@ -3,12 +3,19 @@ package de.tum.in.www1.artemis.service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.TestCaseVisibility;
+import de.tum.in.www1.artemis.repository.CustomAuditEventRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -17,17 +24,22 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ProgrammingExerciseTestCaseService {
 
+    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestCaseService.class);
+
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
+    private final CustomAuditEventRepository auditEventRepository;
+
     public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingSubmissionService programmingSubmissionService) {
+            ProgrammingSubmissionService programmingSubmissionService, CustomAuditEventRepository auditEventRepository) {
         this.testCaseRepository = testCaseRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingSubmissionService = programmingSubmissionService;
+        this.auditEventRepository = auditEventRepository;
     }
 
     /**
@@ -146,6 +158,12 @@ public class ProgrammingExerciseTestCaseService {
             return true;
         }
         return false;
+    }
+
+    public void logTestCaseReset(User user, ProgrammingExercise exercise, Course course) {
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_GRADING, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
+        auditEventRepository.add(auditEvent);
+        log.info("User " + user.getLogin() + " requested to reset the grading configuration for exercise {} with id {}", exercise.getTitle(), exercise.getId());
     }
 
 }

@@ -7,6 +7,7 @@ export class StudentParticipation extends Participation {
     public team?: Team;
     public participantIdentifier?: string;
     public participantName?: string;
+    public testRun?: boolean;
 
     constructor(type?: ParticipationType) {
         super(type ? type : ParticipationType.STUDENT);

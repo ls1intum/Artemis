@@ -25,6 +25,8 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     buildAndTestStudentSubmissionsAfterDueDate?: Moment;
 };
 
+export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION' | 'TESTS';
+
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
@@ -124,6 +126,19 @@ export class ProgrammingExerciseService {
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
             .put<ProgrammingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    /**
+     * Updates the timeline of a programming exercise
+     * @param programmingExercise to update
+     * @param req optional request options
+     */
+    updateTimeline(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
+        const options = createRequestOption(req);
+        const copy = this.convertDataFromClient(programmingExercise);
+        return this.http
+            .put<ProgrammingExercise>(`${this.resourceUrl}/timeline`, copy, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
@@ -259,5 +274,17 @@ export class ProgrammingExerciseService {
      */
     lockAllRepositories(exerciseId: number): Observable<HttpResponse<{}>> {
         return this.http.put<any>(`${this.resourceUrl}/${exerciseId}/lock-all-repositories`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Exports the solution, template or test repository for a given exercise.
+     * @param exerciseId
+     * @param repositoryType
+     */
+    exportInstructorRepository(exerciseId: number, repositoryType: ProgrammingExerciseInstructorRepositoryType): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-repository/${repositoryType}`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
     }
 }

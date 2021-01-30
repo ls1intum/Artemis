@@ -93,6 +93,9 @@ public class TextSubmissionService extends SubmissionService {
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
         textSubmission.setParticipation(participation);
+
+        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+        textSubmission.setResults(new ArrayList<>());
         textSubmission = textSubmissionRepository.save(textSubmission);
 
         // versioning of submission
@@ -222,24 +225,19 @@ public class TextSubmissionService extends SubmissionService {
      * Given an exerciseId, returns all the submissions for that exercise, including their results. Submissions can be filtered to include only already submitted submissions
      *
      * @param exerciseId    - the id of the exercise we are interested into
-     * @param correctionRound - the correction round we want our submission to have results for
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
      * @param examMode - set flag to ignore test run submissions
      * @return a list of text submissions for the given exercise id
      */
-    public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly, boolean examMode, int correctionRound) {
-        // TODO Nicolas Rauscher and Simon Entholzer: the following query for the exam mode does not work. Instructors assume to see all submissions on the submissions
-        // page independent whether they already have results or not.
-        // List<StudentParticipation> participations;
-        // if (examMode) {
-        // participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(exerciseId,
-        // (long) correctionRound);
-        // }
-        // else {
-        // participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
-        // }
-        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
-        ;
+    public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly, boolean examMode) {
+        // Instructors assume to see all submissions on the submissions page independent whether they already have results or not.
+        List<StudentParticipation> participations;
+        if (examMode) {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+        }
+        else {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+        }
 
         List<TextSubmission> textSubmissions = new ArrayList<>();
 
@@ -283,6 +281,18 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmission findAndLockTextSubmissionToBeAssessed(TextExercise textExercise, boolean ignoreTestRunParticipations, int correctionRound) {
         TextSubmission textSubmission = getRandomTextSubmissionEligibleForNewAssessment(textExercise, ignoreTestRunParticipations, correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission for exercise " + textExercise.getId() + " could not be found"));
+        lockSubmission(textSubmission, correctionRound);
+        return textSubmission;
+    }
+
+    /**
+     * Lock a given text submission that still needs to be assessed to prevent other tutors from receiving and assessing it.
+     *
+     * @param textSubmission textSubmission to be locked
+     * @param correctionRound get submission with results in the correction round
+     * @return a locked modeling submission that needs an assessment
+     */
+    public TextSubmission lockTextSubmissionToBeAssessed(TextSubmission textSubmission, int correctionRound) {
         lockSubmission(textSubmission, correctionRound);
         return textSubmission;
     }
