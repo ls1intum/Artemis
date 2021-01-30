@@ -1,5 +1,23 @@
 package de.tum.in.www1.artemis;
 
+import static java.time.ZonedDateTime.now;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
@@ -19,23 +37,6 @@ import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
-
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static java.time.ZonedDateTime.now;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
