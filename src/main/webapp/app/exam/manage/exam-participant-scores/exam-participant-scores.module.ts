@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { CourseParticipantScoresComponent } from './course-participant-scores.component';
 import { ArtemisParticipantScoresModule } from 'app/shared/participant-scores/participant-scores.module';
+import { ExamParticipantScoresComponent } from './exam-participant-scores.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisParticipantScoresModule],
-    declarations: [CourseParticipantScoresComponent],
+    declarations: [ExamParticipantScoresComponent],
 })
-export class ArtemisCourseParticipantScoresModule {}
+export class ArtemisExamParticipantScoresModule {}

@@ -55,4 +55,26 @@ export class ParticipantScoresService {
             params,
         });
     }
+
+    findAllOfExamPaged(examId: number, sortingParameters: SortingParameter[], page: number, size: number): Observable<HttpResponse<ParticipantScoreDTO[]>> {
+        let params = new HttpParams();
+        for (const sortParameter of sortingParameters) {
+            params = params.append('sort', `${sortParameter.sortProperty},${sortParameter.sortDirection}`);
+        }
+        params = params.set('page', page + '');
+        params = params.set('size', size + '');
+        return this.http.get<ParticipantScoreDTO[]>(`${this.resourceUrl}/courses/${examId}/participant-scores`, {
+            observe: 'response',
+            params,
+        });
+    }
+
+    findAllOfExam(examId: number): Observable<HttpResponse<ParticipantScoreDTO[]>> {
+        let params = new HttpParams();
+        params = params.set('getUnpaged', 'true');
+        return this.http.get<ParticipantScoreDTO[]>(`${this.resourceUrl}/exams/${examId}/participant-scores`, {
+            observe: 'response',
+            params,
+        });
+    }
 }

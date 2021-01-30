@@ -7,11 +7,12 @@ import { JhiAlertService } from 'ng-jhipster';
 import { finalize } from 'rxjs/operators';
 
 @Component({
-    selector: 'jhi-course-participant-scores',
-    templateUrl: './course-participant-scores.component.html',
+    selector: 'jhi-exam-participant-scores',
+    templateUrl: './exam-participant-scores.component.html',
+    styles: [],
 })
-export class CourseParticipantScoresComponent implements OnInit {
-    courseId: number;
+export class ExamParticipantScoresComponent implements OnInit {
+    examId: number;
     isLoading: boolean;
     participantScores: ParticipantScoreDTO[] = [];
 
@@ -19,8 +20,8 @@ export class CourseParticipantScoresComponent implements OnInit {
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
-            this.courseId = +params['courseId'];
-            if (this.courseId) {
+            this.examId = +params['examId'];
+            if (this.examId) {
                 this.loadData();
             }
         });
@@ -29,7 +30,7 @@ export class CourseParticipantScoresComponent implements OnInit {
     loadData() {
         this.isLoading = true;
         this.participantScoreService
-            .findAllOfCourse(this.courseId)
+            .findAllOfExam(this.examId)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

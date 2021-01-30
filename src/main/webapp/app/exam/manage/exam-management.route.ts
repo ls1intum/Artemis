@@ -33,6 +33,7 @@ import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-m
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { ExamParticipantScoresComponent } from 'app/exam/manage/exam-participant-scores/exam-participant-scores.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -150,6 +151,15 @@ export const examManagementRoute: Routes = [
             requestOptions: {
                 withStudents: true,
             },
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/participant-scores',
+        component: ExamParticipantScoresComponent,
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.participantScores.pageTitle',
         },
         canActivate: [UserRouteAccessService],
     },
