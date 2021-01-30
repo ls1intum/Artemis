@@ -162,7 +162,6 @@ server:
     forward-headers-strategy: native
 
 sentry:
-    dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029
     send-default-pii: true
     logging:
         enabled: true
