@@ -906,7 +906,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         verify(examAccessService, times(1)).checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam.getId());
     }
 
-
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testAddAllRegisteredUsersToExam() throws Exception {
@@ -929,9 +928,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         userRepo.save(student99);
         assertThat(student99.getGroups()).contains(course.getStudentGroupName());
 
-
         assertThat(exam.getRegisteredUsers()).doesNotContain(student99);
-        var response = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/addAllStudentsOfCourse", Optional.empty(), List.class, HttpStatus.OK);
+        var response = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/addAllStudentsOfCourse", Optional.empty(), List.class,
+                HttpStatus.OK);
 
         exam = examRepository.findWithRegisteredUsersById(exam.getId()).get();
 
