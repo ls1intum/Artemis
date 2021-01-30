@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UserService } from 'app/core/user/user.service';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
+import { navigateBack } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-system-notification-management-update',
@@ -39,10 +40,11 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
      * Returns to the overview page if there is no previous state and we created a new notification
      */
     previousState() {
-        if (window.history.length > 1) {
-            window.history.back();
+        // Newly created notifications don't have an id yet
+        if (!this.notification.id) {
+            navigateBack(this.router, ['admin', 'system-notification-management']);
         } else {
-            this.router.navigate(['../'], { relativeTo: this.route });
+            navigateBack(this.router, ['admin', 'system-notification-management', this.notification.id!.toString()]);
         }
     }
 
