@@ -1,4 +1,4 @@
-<form id="studentsImportDialogForm" name="importForm" role="form" novalidate (ngSubmit)="importStudents()">
+<form id="studentsImportDialogForm" name="importForm" role="form" novalidate>
     <div class="modal-header">
         <h4 class="modal-title">
             <span [jhiTranslate]="'artemisApp.examManagement.examStudents.importStudents.dialogTitle'"> Import students into: </span>
@@ -76,7 +76,7 @@
             <button *ngIf="!hasImported" type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
                 <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
-            <button *ngIf="!hasImported; else buttonAfterImport" type="submit" class="btn btn-primary" [disabled]="isSubmitDisabled">
+            <button *ngIf="!hasImported; else buttonAfterImport" type="submit" class="btn btn-primary" [disabled]="isSubmitDisabled" (click)="importStudents()">
                 <fa-icon [icon]="'upload'" class="mr-2"></fa-icon>
                 <span jhiTranslate="entity.action.to-import">Import</span>
                 <fa-icon class="ml-1" [hidden]="!isImporting" [spin]="true" [icon]="'circle-notch'"></fa-icon>
