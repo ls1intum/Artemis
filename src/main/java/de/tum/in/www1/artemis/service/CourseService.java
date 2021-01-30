@@ -541,13 +541,6 @@ public class CourseService {
     public void cleanupCourse(Long courseId) {
         // Get the course with all exercises
         var course = findOneWithExercisesAndLectures(courseId);
-
-        // Forbid cleaning the course if no archive has been created
-        if (!course.hasCourseArchive()) {
-            log.info("Failed to clean up course {} because it needs to be archived first.", courseId);
-            return;
-        }
-
         // TODO: extend exerciseService.cleanup to clean up all exercise types
         course.getExercises().forEach(exercise -> exerciseService.cleanup(exercise.getId(), true));
 

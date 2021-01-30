@@ -40,14 +40,28 @@
                 <button type="button" [routerLink]="['/course-management', course.id, 'tutor-dashboard']" class="btn btn-info mr-1 mb-1">
                     <fa-icon [icon]="'th-list'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
                 </button>
-                <button *ngIf="canArchiveCourse()" type="button" class="btn btn-warning mr-1 mb-1" (click)="archiveCourse()">
+                <button *ngIf="canArchiveCourse()" [disabled]="courseIsBeingArchived" type="button" class="btn btn-warning mr-1 mb-1" (click)="archiveCourse()">
                     <fa-icon [hidden]="!courseIsBeingArchived" [spin]="true" [icon]="'circle-notch'"></fa-icon>
                     <fa-icon [hidden]="courseIsBeingArchived" [icon]="'archive'"></fa-icon>&nbsp;
-                    <span jhiTranslate="artemisApp.course.archive.archiveCourse">Archive Course</span>
+                    <span>{{ archiveCourseButtonText }}</span>
                 </button>
                 <button *ngIf="canDownloadArchive()" [disabled]="courseIsBeingArchived" type="button" class="btn btn-primary mr-1 mb-1" (click)="downloadCourseArchive()">
                     <fa-icon [icon]="'download'"></fa-icon>&nbsp;
                     <span jhiTranslate="artemisApp.course.archive.downloadCourseArchive">Download Course Archive</span>
+                </button>
+                <button
+                    *ngIf="canCleanupCourse()"
+                    [disabled]="courseIsBeingArchived"
+                    jhiDeleteButton
+                    [buttonSize]="ButtonSize.MEDIUM"
+                    [actionType]="ActionType.Cleanup"
+                    [entityTitle]="course.title"
+                    deleteQuestion="artemisApp.course.cleanup.question"
+                    (delete)="cleanupCourse()"
+                    [dialogError]="dialogError$"
+                    deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
+                >
+                    <fa-icon [icon]="'eraser'"></fa-icon>
                 </button>
             </div>
             <hr />

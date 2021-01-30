@@ -9,6 +9,17 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { tap } from 'rxjs/operators';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { Subject } from 'rxjs';
+import { ButtonSize } from 'app/shared/components/button.component';
+import { TranslateService } from '@ngx-translate/core';
+
+type CourseArchiveState = {
+    archiveState: 'COMPLETED' | 'RUNNING';
+    progress: string;
+};
 
 @Component({
     selector: 'jhi-course-detail',
@@ -16,10 +27,17 @@ import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
     styleUrls: ['./course-detail.component.scss'],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
+    ButtonSize = ButtonSize;
+    ActionType = ActionType;
     CachingStrategy = CachingStrategy;
     course: Course;
-    courseIsBeingArchived = false;
     private eventSubscriber: Subscription;
+
+    courseIsBeingArchived = false;
+    archiveCourseButtonText = this.getArchiveCourseText();
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(
         private eventManager: JhiEventManager,
@@ -27,6 +45,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private router: Router,
         private jhiAlertService: JhiAlertService,
+        private websocketService: JhiWebsocketService,
+        private translateService: TranslateService,
     ) {}
 
     /**
@@ -35,8 +55,51 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.route.data.subscribe(({ course }) => {
             this.course = course;
+
+            this.registerChangeInCourses();
+            this.registerCourseArchiveWebsocket();
         });
-        this.registerChangeInCourses();
+
+        // update the span title on each language change
+        this.translateService.onLangChange.subscribe(() => {
+            if (!this.courseIsBeingArchived) {
+                this.archiveCourseButtonText = this.getArchiveCourseText();
+            }
+        });
+    }
+
+    /**
+     * Subscribe to changes in courses and reload the course after a change.
+     */
+    registerChangeInCourses() {
+        this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => {
+            this.courseService.find(this.course.id!).subscribe((courseResponse: HttpResponse<Course>) => {
+                this.course = courseResponse.body!;
+            });
+        });
+    }
+
+    private registerCourseArchiveWebsocket() {
+        const topic = CourseDetailComponent.getCourseArchiveStateTopic(this.course.id!);
+        this.websocketService.subscribe(topic);
+        this.websocketService
+            .receive(topic)
+            .pipe(tap((courseArchiveState: CourseArchiveState) => this.handleCourseArchiveStateChanges(courseArchiveState)))
+            .subscribe();
+    }
+
+    private handleCourseArchiveStateChanges(courseArchiveState: CourseArchiveState) {
+        const { archiveState, progress } = courseArchiveState;
+        this.courseIsBeingArchived = archiveState === 'RUNNING';
+        this.archiveCourseButtonText = archiveState === 'RUNNING' ? progress : this.getArchiveCourseText();
+
+        if (archiveState === 'COMPLETED') {
+            this.eventManager.broadcast('courseListModification');
+        }
+    }
+
+    private getArchiveCourseText() {
+        return this.translateService.instant('artemisApp.course.archive.archiveCourse');
     }
 
     /**
@@ -65,17 +128,12 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy() {
         this.eventManager.destroy(this.eventSubscriber);
+        this.dialogErrorSource.unsubscribe();
+        this.websocketService.unsubscribe(CourseDetailComponent.getCourseArchiveStateTopic(this.course.id!));
     }
 
-    /**
-     * Subscribe to changes in courses and reload the course after a change.
-     */
-    registerChangeInCourses() {
-        this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => {
-            this.courseService.find(this.course.id!).subscribe((courseResponse: HttpResponse<Course>) => {
-                this.course = courseResponse.body!;
-            });
-        });
+    private static getCourseArchiveStateTopic(courseId: number) {
+        return '/topic/courses/' + courseId + '/archive-course';
     }
 
     canArchiveCourse() {
@@ -85,18 +143,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
 
     archiveCourse() {
-        this.courseIsBeingArchived = true;
-        this.courseService.archiveCourse(this.course.id!).subscribe(
-            () => {
-                // We don't update the course here because registerChangeInCourses does that already
-                this.eventManager.broadcast('courseListModification');
-                this.courseIsBeingArchived = false;
-            },
-            () => {
-                this.jhiAlertService.error('artemisApp.course.archive.archiveCourseError');
-                this.courseIsBeingArchived = false;
-            },
-        );
+        this.courseService.archiveCourse(this.course.id!).subscribe();
     }
 
     downloadCourseArchive() {
@@ -110,5 +157,23 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         const hasArchive = !!this.course.courseArchivePath && this.course.courseArchivePath.length > 0;
         // You can only download one if the path to the archive is present
         return this.course.isAtLeastInstructor && hasArchive;
+    }
+
+    canCleanupCourse() {
+        // A course can only be cleaned up if the course has been archived.
+        const canCleanup = !!this.course.courseArchivePath && this.course.courseArchivePath.length > 0;
+        return this.course.isAtLeastInstructor && canCleanup;
+    }
+
+    cleanupCourse() {
+        this.courseService.cleanupCourse(this.course.id!).subscribe(
+            () => {
+                this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessage');
+                this.dialogErrorSource.next('');
+            },
+            (error) => {
+                this.dialogErrorSource.next(error.error.title);
+            },
+        );
     }
 }

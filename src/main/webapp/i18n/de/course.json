@@ -121,6 +121,10 @@
                 "archiveCourseError": "Der Kurs konnte nicht archiviert werden",
                 "archiveDownloadError": "Beim Herunterladen des Archivs ist ein Problem aufgetreten",
                 "downloadCourseArchive": "Kursarchiv herunterladen"
+            },
+            "cleanup": {
+                "title": "Aufräumen",
+                "question": "Möchten Sie wirklich ALLE Studentenbeiträge für den Kurs <strong> {{title}} </ strong> löschen? Diese Aktion kann nicht rückgängig gemacht werden!"
             }
         }
     }

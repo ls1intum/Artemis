@@ -910,6 +910,11 @@ public class CourseResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
+        // Forbid cleaning the course if no archive has been created
+        if (!course.hasCourseArchive()) {
+            throw new BadRequestAlertException("Failed to clean up course " + courseId + " because it needs to be archived first.", ENTITY_NAME, "archivenonexistant");
+        }
+
         courseService.cleanupCourse(courseId);
         return ResponseEntity.ok().build();
     }

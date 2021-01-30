@@ -269,6 +269,10 @@ export class CourseManagementService {
         return this.http.put(`${this.resourceUrl}/${courseId}/archive`, {}, { observe: 'response' });
     }
 
+    cleanupCourse(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/cleanup`, { observe: 'response' });
+    }
+
     /**
      * Find all locked submissions of a given course for user
      * @param {number} courseId - The id of the course to be searched for
