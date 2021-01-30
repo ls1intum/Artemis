@@ -68,6 +68,7 @@ describe('ExamStudentsComponent', () => {
 
     afterEach(function () {
         sinon.restore();
+        fixture.destroy();
     });
 
     it('should initialize', () => {
@@ -139,6 +140,7 @@ describe('ExamStudentsComponent', () => {
     it('should remove users from the exam', () => {
         const examServiceStub = sinon.stub(examManagementService, 'removeStudentFromExam').returns(of(new HttpResponse()));
         fixture.detectChanges();
+        component.allRegisteredUsers = [user1, user2];
 
         component.removeFromExam(user2, { deleteParticipationsAndSubmission: false });
         fixture.detectChanges();
