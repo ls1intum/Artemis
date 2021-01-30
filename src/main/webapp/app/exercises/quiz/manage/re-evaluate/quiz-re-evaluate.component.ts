@@ -129,7 +129,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * Returns to the overview page if there is no previous state
      */
     back(): void {
-		navigateBack(this.router, ['course-management', this.quizExercise.course!.id!.toString(), 'quiz-exercises']);
+        navigateBack(this.router, ['course-management', this.quizExercise.course!.id!.toString(), 'quiz-exercises']);
     }
 
     /**

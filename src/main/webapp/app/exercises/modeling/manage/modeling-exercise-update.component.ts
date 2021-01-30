@@ -191,7 +191,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * Returns to the exercise groups page if we are in exam mode
      */
     previousState() {
-		navigateBackFromExerciseUpdate(this.router, this.modelingExercise);
+        navigateBackFromExerciseUpdate(this.router, this.modelingExercise);
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>): void {

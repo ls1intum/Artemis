@@ -10,6 +10,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { Exercise, ExerciseCategory, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
+import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -72,18 +73,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      * Returns to the exercise group page if we are in exam mode
      */
     previousState() {
-        if (window.history.length > 1) {
-            window.history.back();
-        } else if (this.isExamMode) {
-            // If we're editing we need to go an extra step back since there is no detail page for exercise groups
-            if (this.fileUploadExercise.id) {
-                this.router.navigate(['../../../../'], { relativeTo: this.activatedRoute });
-            } else {
-                this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
-            }
-        } else {
-            this.router.navigate(['../'], { relativeTo: this.activatedRoute });
-        }
+        navigateBackFromExerciseUpdate(this.router, this.fileUploadExercise);
     }
 
     /**

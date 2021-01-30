@@ -285,7 +285,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * Returns to the exercise groups page if we are in exam mode
      */
     previousState() {
-		navigateBackFromExerciseUpdate(this.router, this.programmingExercise);
+        navigateBackFromExerciseUpdate(this.router, this.programmingExercise);
     }
 
     /**

@@ -132,7 +132,7 @@ export class TextExerciseUpdateComponent implements OnInit {
      * Returns to the exercise group page if we are in exam mode
      */
     previousState() {
-		navigateBackFromExerciseUpdate(this.router, this.textExercise);
+        navigateBackFromExerciseUpdate(this.router, this.textExercise);
     }
 
     /**

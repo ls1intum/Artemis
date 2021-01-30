@@ -20,6 +20,7 @@ import { navigateBack } from 'app/utils/navigation.utils';
 export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     MarkdownEditorHeight = MarkdownEditorHeight;
 
+    courseId: number;
     exerciseId: number;
     exerciseHint = new ExerciseHint();
 
@@ -45,6 +46,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.isLoading = true;
         this.paramSub = this.route.params.subscribe((params) => {
+            this.courseId = params['courseId'];
             this.exerciseId = params['exerciseId'];
             this.isSaving = false;
             this.exerciseNotFound = false;
@@ -98,8 +100,24 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
      * Returns to the overview page if there is no previous state and we created a new hint
      */
     previousState() {
-        // TODO: Get IDs from the route params
-		// navigateBack(this.router, ['../']);
+        if (this.exerciseHint.id) {
+            navigateBack(this.router, [
+                'course-management',
+                this.courseId.toString(),
+                'exercises',
+                this.exerciseId.toString(),
+                'hints',
+                this.exerciseHint.id!.toString(),
+            ]);
+        } else {
+            navigateBack(this.router, [
+                'course-management',
+                this.courseId.toString(),
+                'exercises',
+                this.exerciseId.toString(),
+                'hints',
+            ]);
+        }
     }
 
     /**

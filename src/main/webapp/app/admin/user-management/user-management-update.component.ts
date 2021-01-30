@@ -49,9 +49,9 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     previousState() {
         if (this.user.id) {
-			navigateBack(this.router, ['admin', 'user-management', this.user.login!.toString()]);
+            navigateBack(this.router, ['admin', 'user-management', this.user.login!.toString()]);
         } else {
-			navigateBack(this.router, ['admin', 'user-management']);
+            navigateBack(this.router, ['admin', 'user-management']);
         }
     }
 
