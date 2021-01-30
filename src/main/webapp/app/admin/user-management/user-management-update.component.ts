@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { navigateBack } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -47,10 +48,10 @@ export class UserManagementUpdateComponent implements OnInit {
      * Returns to the overview page if there is no previous state and we created a new user
      */
     previousState() {
-        if (window.history.length > 1) {
-            window.history.back();
+        if (this.user.id) {
+			navigateBack(this.router, ['admin', 'user-management', this.user.login!.toString()]);
         } else {
-            this.router.navigate(['../'], { relativeTo: this.route });
+			navigateBack(this.router, ['admin', 'user-management']);
         }
     }
 

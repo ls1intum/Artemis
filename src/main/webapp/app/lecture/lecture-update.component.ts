@@ -9,6 +9,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { Course } from 'app/entities/course.model';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
+import { navigateBack } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -57,10 +58,10 @@ export class LectureUpdateComponent implements OnInit {
      * Returns to the overview page if there is no previous state and we created a new lecture
      */
     previousState() {
-        if (window.history.length > 1) {
-            window.history.back();
+        if (this.lecture.id) {
+			navigateBack(this.router, ['course-management', this.lecture.course!.id!.toString(), 'lectures', this.lecture.id.toString()])
         } else {
-            this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+			navigateBack(this.router, ['course-management', this.lecture.course!.id!.toString(), 'lectures'])
         }
     }
 

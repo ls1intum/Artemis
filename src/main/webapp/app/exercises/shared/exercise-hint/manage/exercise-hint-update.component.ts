@@ -10,6 +10,7 @@ import { EditorMode, MarkdownEditorHeight } from 'app/shared/markdown-editor/mar
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
+import { navigateBack } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
@@ -97,11 +98,8 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
      * Returns to the overview page if there is no previous state and we created a new hint
      */
     previousState() {
-        if (window.history.length > 1) {
-            window.history.back();
-        } else {
-            this.router.navigate(['../'], { relativeTo: this.route });
-        }
+        // TODO: Get IDs from the route params
+		// navigateBack(this.router, ['../']);
     }
 
     /**

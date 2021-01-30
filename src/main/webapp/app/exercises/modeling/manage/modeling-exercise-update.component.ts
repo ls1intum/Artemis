@@ -14,6 +14,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -186,21 +187,11 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     /**
      * Revert to the previous state, equivalent with pressing the back button on your browser
      * Returns to the detail page if there is no previous state
-     * Returns to the exercise group page if we are in exam mode
+     * Returns to the overview page if there is no previous state and we created a new exercise
+     * Returns to the exercise groups page if we are in exam mode
      */
     previousState() {
-        if (window.history.length > 1) {
-            window.history.back();
-        } else if (this.isExamMode) {
-            // If we're editing we need to go an extra step back since there is no detail page for exercise groups
-            if (this.modelingExercise.id) {
-                this.router.navigate(['../../../../'], { relativeTo: this.activatedRoute });
-            } else {
-                this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
-            }
-        } else {
-            this.router.navigate(['../'], { relativeTo: this.activatedRoute });
-        }
+		navigateBackFromExerciseUpdate(this.router, this.modelingExercise);
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>): void {

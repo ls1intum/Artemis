@@ -15,6 +15,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { NgForm } from '@angular/forms';
+import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -131,18 +132,7 @@ export class TextExerciseUpdateComponent implements OnInit {
      * Returns to the exercise group page if we are in exam mode
      */
     previousState() {
-        if (window.history.length > 1) {
-            window.history.back();
-        } else if (this.isExamMode) {
-            // If we're editing we need to go an extra step back since there is no detail page for exercise groups
-            if (this.textExercise.id) {
-                this.router.navigate(['../../../../'], { relativeTo: this.activatedRoute });
-            } else {
-                this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
-            }
-        } else {
-            this.router.navigate(['../'], { relativeTo: this.activatedRoute });
-        }
+		navigateBackFromExerciseUpdate(this.router, this.textExercise);
     }
 
     /**

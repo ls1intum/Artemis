@@ -15,6 +15,7 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import * as moment from 'moment';
+import { navigateBack } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-course-update',
@@ -145,10 +146,10 @@ export class CourseUpdateComponent implements OnInit {
      * Returns to the overview page if there is no previous state and we created a new course
      */
     previousState() {
-        if (window.history.length > 1) {
-            window.history.back();
+        if (this.course.id) {
+            navigateBack(this.router, ['course-management', this.course.id!.toString()]);
         } else {
-            this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+            navigateBack(this.router, ['course-management']);
         }
     }
 

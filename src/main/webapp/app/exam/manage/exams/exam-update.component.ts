@@ -8,6 +8,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import * as moment from 'moment';
+import { navigateBack } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -51,10 +52,10 @@ export class ExamUpdateComponent implements OnInit {
      * Returns to the overview page if there is no previous state and we created a new exam
      */
     previousState() {
-        if (window.history.length > 1) {
-            window.history.back();
+        if (this.exam.id) {
+            navigateBack(this.router, ['course-management', this.course.id!.toString(), 'exams', this.exam.id!.toString()]);
         } else {
-            this.router.navigate(['../'], { relativeTo: this.route });
+            navigateBack(this.router, ['course-management', this.course.id!.toString(), 'exams']);
         }
     }
 

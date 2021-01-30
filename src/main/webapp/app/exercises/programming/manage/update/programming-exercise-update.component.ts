@@ -19,6 +19,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
+import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -281,21 +282,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * Revert to the previous state, equivalent with pressing the back button on your browser
      * Returns to the detail page if there is no previous state and we edited an existing exercise
      * Returns to the overview page if there is no previous state and we created a new exercise
-     * Returns to the exercise group page if we are in exam mode
+     * Returns to the exercise groups page if we are in exam mode
      */
     previousState() {
-        if (window.history.length > 1) {
-            window.history.back();
-        } else if (this.isExamMode) {
-            // If we're editing we need to go an extra step back since there is no detail page for exercise groups
-            if (this.programmingExercise.id) {
-                this.router.navigate(['../../../../'], { relativeTo: this.activatedRoute });
-            } else {
-                this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
-            }
-        } else {
-            this.router.navigate(['../'], { relativeTo: this.activatedRoute });
-        }
+		navigateBackFromExerciseUpdate(this.router, this.programmingExercise);
     }
 
     /**

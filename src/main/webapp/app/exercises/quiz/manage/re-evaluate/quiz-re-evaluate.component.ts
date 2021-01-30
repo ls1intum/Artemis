@@ -12,6 +12,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExercisePopupService } from 'app/exercises/quiz/manage/quiz-exercise-popup.service';
 import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 import { cloneDeep } from 'lodash';
+import { navigateBack } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
@@ -128,11 +129,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * Returns to the overview page if there is no previous state
      */
     back(): void {
-        if (window.history.length > 1) {
-            window.history.back();
-        } else {
-            this.router.navigate(['../../'], { relativeTo: this.route });
-        }
+		navigateBack(this.router, ['course-management', this.quizExercise.course!.id!.toString(), 'quiz-exercises']);
     }
 
     /**
