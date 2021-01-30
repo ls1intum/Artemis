@@ -59,7 +59,7 @@ public class ParticipantScoreResource {
     @GetMapping("/courses/{courseId}/participant-scores")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ParticipantScoreDTO>> getParticipantScoresOfCourse(@PathVariable Long courseId, Pageable pageable,
-            @RequestParam(value = "getUnpaged", required = false, defaultValue = "false") Boolean getUnpaged) {
+            @RequestParam(value = "getUnpaged", required = false, defaultValue = "false") boolean getUnpaged) {
         log.debug("REST request to get participant scores for course : {}", courseId);
         Course course = courseRepository.findWithEagerExercisesById(courseId);
         if (course == null) {
@@ -89,7 +89,7 @@ public class ParticipantScoreResource {
     @GetMapping("/exams/{examId}/participant-scores")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ParticipantScoreDTO>> getParticipantScoresOfExam(@PathVariable Long examId, Pageable pageable,
-            @RequestParam(value = "getUnpaged", required = false, defaultValue = "false") Boolean getUnpaged) {
+            @RequestParam(value = "getUnpaged", required = false, defaultValue = "false") boolean getUnpaged) {
         log.debug("REST request to get participant scores for course : {}", examId);
         Optional<Exam> examOptional = examRepository.findWithExerciseGroupsAndExercisesById(examId);
         if (examOptional.isEmpty()) {
