@@ -79,7 +79,7 @@ public class CourseService {
 
     private final FileService fileService;
 
-    private WebsocketMessagingService websocketMessagingService;
+    private final WebsocketMessagingService websocketMessagingService;
 
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
@@ -414,17 +414,18 @@ public class CourseService {
             return;
         }
 
-        // Create a zip file for each exercise.
-        var exportedExercises = archiveExercisesOfCourse(course, courseTempDirPath.toString());
-        if (exportedExercises.size() == 0) {
-            log.info("Cannot archive course {} there are no exercises to export.", course.getId());
-        }
+        // Archive course exercises and exams.
+        List<Path> archivedCourseMaterials = new ArrayList<>();
+        archivedCourseMaterials.add(archiveCourseExercises(course, courseTempDirPath.toString()));
+        archivedCourseMaterials.addAll(archiveCourseExams(course, courseTempDirPath.toString()));
+        archivedCourseMaterials = archivedCourseMaterials.stream().filter(Objects::nonNull).collect(Collectors.toList());
 
-        // Create a zip file for the course which contains all exercise zip files.
-        var courseArchivePath = createCourseZipFile(course, exportedExercises);
+        // Create a zip file for the course which contains all of the archived materials.
+        var courseArchivePath = createCourseZipFile(course, archivedCourseMaterials);
         if (courseArchivePath == null) {
             // Delete the temporary directory of the course and all its files because the process failed.
             fileService.scheduleForDeletion(courseTempDirPath, 5);
+            return;
         }
 
         // Attach the path to the archive to the course and save it in the database
@@ -432,34 +433,100 @@ public class CourseService {
         courseRepository.save(course);
 
         notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.COMPLETED, "Archiving course finished!");
-
         log.info("Successfully archived course {}. The archive is located at: {}", course.getId(), courseArchivePath);
     }
 
     /**
-     * Archives the exercises of the given course by creating a zip file for
-     * each exercise.
+     * Archives all exercises that belongs to the course by creating a zip file of all student submissions.
      *
-     * @param course              The course that contains the exercises to archive
-     * @param pathToStoreZipFiles The path to a directory that will be used to store the zipped files.
+     * @param course       The course to archive Note: the course must have exercises loaded in it
+     * @param zipOutputDir The directory where the zip file will be created
+     * @return The path to the zip file
+     */
+    private Path archiveCourseExercises(Course course, String zipOutputDir) {
+        var exportedExercises = archiveExercises(course.getExercises(), zipOutputDir.toString());
+        if (exportedExercises.size() == 0) {
+            log.info("Cannot archive the exercises of course {} because there are no exercises to export.", course.getId());
+            return null;
+        }
+
+        try {
+            var pathToZippedExercises = Path.of(zipOutputDir, "exercises.zip");
+            zipFileService.createZipFile(pathToZippedExercises, exportedExercises, false);
+            return pathToZippedExercises;
+        }
+        catch (IOException e) {
+            log.info("Failed to archive course exercises {}: {}", course.getId(), e.getMessage());
+            return null;
+        }
+        finally {
+            // Delete the zipped repo files since we don't need those anymore.
+            exportedExercises.forEach(zipFilePath -> fileService.scheduleForDeletion(zipFilePath, 1));
+        }
+    }
+
+    /**
+     * Archives all exams that belong to the course by creating a zip file for each exam.
+     *
+     * @param course       The course to archive Note: the course must have exercises loaded in it
+     * @param zipOutputDir The directory where the zip file will be created
+     * @return The paths to the zip files
+     */
+    private List<Path> archiveCourseExams(Course course, String zipOutputDir) {
+        var exams = findOneWithLecturesAndExams(course.getId()).getExams();
+        return exams.stream().map(exam -> archiveExam(exam.getId(), zipOutputDir)).collect(Collectors.toList());
+    }
+
+    /**
+     * Archives the exam by creating a zip file for each exercise.
+     *
+     * @param examId       The id of the exam to archive
+     * @param zipOutputDir The directory where the zip file will be created
+     * @return The path to the zip file
+     */
+    private Path archiveExam(long examId, String zipOutputDir) {
+        var exam = examService.findOneWithExerciseGroupsAndExercises(examId);
+        var exercises = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
+        var exportedExercises = archiveExercises(exercises, zipOutputDir);
+
+        try {
+            var filename = exam.getTitle() + "-" + exam.getId() + ".zip";
+            var pathToZippedExamise = Path.of(zipOutputDir, filename);
+            zipFileService.createZipFile(pathToZippedExamise, exportedExercises, false);
+            return pathToZippedExamise;
+        }
+        catch (IOException e) {
+            log.info("Failed to export exam {}: {}", exam.getId(), e.getMessage());
+            return null;
+        }
+        finally {
+            // Delete the zipped repo files since we don't need those anymore.
+            exportedExercises.forEach(zipFilePath -> fileService.scheduleForDeletion(zipFilePath, 1));
+        }
+    }
+
+    /**
+     * Archives the exercises by creating a zip file for each exercise.
+     *
+     * @param exercises              The exercises to archive
+     * @param dirPathToStoreZipFiles The path to a directory that will be used to store the zipped files.
      * @return Path to the exercise zip files,
      */
-    private List<Path> archiveExercisesOfCourse(Course course, String pathToStoreZipFiles) {
+    private List<Path> archiveExercises(Set<Exercise> exercises, String dirPathToStoreZipFiles) {
         ArrayList<Path> exportedExercises = new ArrayList<>();
         ArrayList<Long> exercisesThatFailedToExport = new ArrayList<>();
 
         // Used to send websocket message with the progress
-        var totalExercises = course.getExercises().size();
         AtomicInteger currentExerciseIndex = new AtomicInteger(1);
 
-        course.getExercises().forEach(exercise -> {
-
+        exercises.forEach(exercise -> {
             // We need this call because we need to lazy load the student participations.
             var participations = exerciseService.findOneWithStudentParticipations(exercise.getId()).getStudentParticipations();
 
             if (exercise instanceof ProgrammingExercise) {
                 var programmingParticipations = participations.stream().map(participation -> (ProgrammingExerciseStudentParticipation) participation).collect(Collectors.toList());
-                var exportedExercise = programmingExerciseExportService.archiveProgrammingExercise((ProgrammingExercise) exercise, programmingParticipations, pathToStoreZipFiles);
+                var exportedExercise = programmingExerciseExportService.archiveProgrammingExercise((ProgrammingExercise) exercise, programmingParticipations,
+                        dirPathToStoreZipFiles);
 
                 if (exportedExercise == null) {
                     exercisesThatFailedToExport.add(exercise.getId());
@@ -470,12 +537,12 @@ public class CourseService {
             }
 
             // TODO: Handle archiving for other exercise types
+            log.info("Skipping export of exercise: {} because it's not supported yet.", exercise.getTitle());
 
             // Notify the client about the progress.
-            notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.RUNNING, currentExerciseIndex + "/" + totalExercises + " done");
+            notifyUserAboutCourseArchiveState(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), CourseArchiveState.RUNNING,
+                    currentExerciseIndex + "/" + exercises.size() + " done");
             currentExerciseIndex.addAndGet(1);
-
-            log.info("Skipping export of exercise: {} because it's not supported yet.", exercise.getTitle());
         });
 
         // Notify that we couldn't export every exercise
