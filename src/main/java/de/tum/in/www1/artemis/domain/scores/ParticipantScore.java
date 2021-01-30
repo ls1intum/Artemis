@@ -25,21 +25,21 @@ import de.tum.in.www1.artemis.domain.Result;
 @JsonSubTypes({ @JsonSubTypes.Type(value = StudentScore.class, name = "studentScore"), @JsonSubTypes.Type(value = TeamScore.class, name = "teamScore") })
 public abstract class ParticipantScore extends DomainObject {
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_id")
     private Exercise exercise;
 
     /**
      * Last result of the participant for the exercise no matter if the result is rated or not
      */
-    @OneToOne(fetch = FetchType.EAGER)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "last_result_id")
     private Result lastResult;
 
     /**
      * Last rated result of the participant for the exercise
      */
-    @OneToOne(fetch = FetchType.EAGER)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "last_rated_result_id")
     private Result lastRatedResult;
 

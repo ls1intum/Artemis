@@ -433,7 +433,9 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     public ParticipantScore setupTestScenarioWithOneResultSaved(boolean isRatedResult, boolean isTeam) {
-        List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAll();
+        SecurityUtils.setAuthorizationObject();
+        List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllEagerly();
+        SecurityContextHolder.getContext().setAuthentication(null);
         assertThat(savedParticipantScores).isEmpty();
 
         Long idOfExercise;
@@ -448,7 +450,9 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         }
 
         Result persistedResult = createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
-        savedParticipantScores = participantScoreRepository.findAll();
+        SecurityUtils.setAuthorizationObject();
+        savedParticipantScores = participantScoreRepository.findAllEagerly();
+        SecurityContextHolder.getContext().setAuthentication(null);
         assertThat(savedParticipantScores).isNotEmpty();
         assertThat(savedParticipantScores).size().isEqualTo(1);
         ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
@@ -476,8 +480,9 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
             participant = userRepository.findOneByLogin("student1").get();
             idOfExercise = idOfIndividualTextExercise;
         }
-
-        List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAll();
+        SecurityUtils.setAuthorizationObject();
+        List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllEagerly();
+        SecurityContextHolder.getContext().setAuthentication(null);
         assertThat(savedParticipantScore).isNotEmpty();
         assertThat(savedParticipantScore).size().isEqualTo(1);
         ParticipantScore updatedParticipantScore = savedParticipantScore.get(0);

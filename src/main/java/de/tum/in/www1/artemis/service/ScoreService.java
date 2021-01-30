@@ -64,20 +64,20 @@ public class ScoreService {
             SecurityUtils.setAuthorizationObject();
         }
 
-        Optional<ParticipantScore> associatedStudentScoreOptional;
+        Optional<ParticipantScore> associatedParticipantScoreOptional;
         if (resultToBeDeleted.isRated() != null && resultToBeDeleted.isRated()) {
-            associatedStudentScoreOptional = participantScoreRepository.findParticipantScoreByLastRatedResult(resultToBeDeleted);
+            associatedParticipantScoreOptional = participantScoreRepository.findParticipantScoreByLastRatedResult(resultToBeDeleted);
         }
         else {
-            associatedStudentScoreOptional = participantScoreRepository.findParticipantScoresByLastResult(resultToBeDeleted);
+            associatedParticipantScoreOptional = participantScoreRepository.findParticipantScoresByLastResult(resultToBeDeleted);
         }
 
-        if (associatedStudentScoreOptional.isEmpty()) {
+        if (associatedParticipantScoreOptional.isEmpty()) {
             return;
         }
 
         // There is a participant score connected to the result that will be deleted
-        ParticipantScore associatedParticipantScore = associatedStudentScoreOptional.get();
+        ParticipantScore associatedParticipantScore = associatedParticipantScoreOptional.get();
         String originalParticipantScoreStructure = associatedParticipantScore.toString();
 
         // There are two possibilities now:
@@ -239,21 +239,18 @@ public class ScoreService {
         // update the last result and last score if either it has not been set previously or new result is either the old one (=) or newer (>)
         if (participantScoreToSave.getLastResult() == null || updatedOrNewlyCreatedResult.getId() >= participantScoreToSave.getLastResult().getId()) {
             setLastResultAttributes(participantScoreToSave, updatedOrNewlyCreatedResult);
-            participantScoreToSave = participantScoreRepository.saveAndFlush(participantScoreToSave);
         }
         // update the last rated result and last rated score if either it has not been set previously or new rated result is either the old one (=) or newer (>)
         if ((updatedOrNewlyCreatedResult.isRated() != null && updatedOrNewlyCreatedResult.isRated())
                 && (participantScoreToSave.getLastRatedResult() == null || updatedOrNewlyCreatedResult.getId() >= participantScoreToSave.getLastRatedResult().getId())) {
             setLastRatedResultAttributes(participantScoreToSave, updatedOrNewlyCreatedResult);
-            participantScoreToSave = participantScoreRepository.saveAndFlush(participantScoreToSave);
         }
-
         // Edge Case: if the result is now unrated but is equal to the current last rated result we have to set these to null (result was switched from rated to unrated)
         if ((updatedOrNewlyCreatedResult.isRated() == null || !updatedOrNewlyCreatedResult.isRated())
                 && updatedOrNewlyCreatedResult.equals(participantScoreToSave.getLastRatedResult())) {
             setLastRatedResultAttributes(participantScoreToSave, null);
-            participantScoreToSave = participantScoreRepository.saveAndFlush(participantScoreToSave);
         }
+        participantScoreRepository.saveAndFlush(participantScoreToSave);
         logger.info("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + participantScoreToSave.toString());
     }
 

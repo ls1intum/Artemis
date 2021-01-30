@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,11 +19,13 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.StudentScoreRepository;
+import de.tum.in.www1.artemis.repository.TeamScoreRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
 
@@ -32,7 +35,9 @@ public class ParticipantScoreResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipantScoreResource.class);
 
-    private final ParticipantScoreRepository participantScoreRepository;
+    private final StudentScoreRepository studentScoreRepository;
+
+    private final TeamScoreRepository teamScoreRepository;
 
     private final CourseRepository courseRepository;
 
@@ -40,12 +45,13 @@ public class ParticipantScoreResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public ParticipantScoreResource(ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository,
-            ExamRepository examRepository) {
-        this.participantScoreRepository = participantScoreRepository;
+    public ParticipantScoreResource(StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, AuthorizationCheckService authorizationCheckService,
+            CourseRepository courseRepository, ExamRepository examRepository) {
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
         this.examRepository = examRepository;
+        this.studentScoreRepository = studentScoreRepository;
+        this.teamScoreRepository = teamScoreRepository;
     }
 
     /**
@@ -68,14 +74,21 @@ public class ParticipantScoreResource {
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
-        Set<Exercise> exercisesOfCourse = course.getExercises();
+        Set<Exercise> exercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise).collect(Collectors.toSet());
         if (getUnpaged) {
             pageable = Pageable.unpaged();
         }
 
-        List<ParticipantScoreDTO> results = participantScoreRepository.findAllByExerciseIn(exercisesOfCourse, pageable).stream()
-                .map(participantScore -> ParticipantScoreDTO.generateFromParticipantScore(participantScore)).collect(Collectors.toList());
-        return ResponseEntity.ok().body(results);
+        Set<Exercise> individualExercisesOfCourse = exercisesOfCourse.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.INDIVIDUAL)).collect(Collectors.toSet());
+        Set<Exercise> teamExercisesOfCourse = exercisesOfCourse.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.TEAM)).collect(Collectors.toSet());
+
+        List<ParticipantScoreDTO> resultsIndividualExercises = studentScoreRepository.findAllByExerciseIn(individualExercisesOfCourse, pageable).stream()
+                .map(ParticipantScoreDTO::generateFromParticipantScore).collect(Collectors.toList());
+        List<ParticipantScoreDTO> resultsTeamExercises = teamScoreRepository.findAllByExerciseIn(teamExercisesOfCourse, pageable).stream()
+                .map(ParticipantScoreDTO::generateFromParticipantScore).collect(Collectors.toList());
+        List<ParticipantScoreDTO> resultsOfAllExercises = Stream.concat(resultsIndividualExercises.stream(), resultsTeamExercises.stream()).collect(Collectors.toList());
+
+        return ResponseEntity.ok().body(resultsOfAllExercises);
     }
 
     /**
@@ -106,9 +119,17 @@ public class ParticipantScoreResource {
         if (getUnpaged) {
             pageable = Pageable.unpaged();
         }
-        List<ParticipantScoreDTO> results = participantScoreRepository.findAllByExerciseIn(exercisesOfExam, pageable).stream()
-                .map(participantScore -> ParticipantScoreDTO.generateFromParticipantScore(participantScore)).collect(Collectors.toList());
-        return ResponseEntity.ok().body(results);
+
+        Set<Exercise> individualExercisesOfExam = exercisesOfExam.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.INDIVIDUAL)).collect(Collectors.toSet());
+        Set<Exercise> teamExercisesOfExam = exercisesOfExam.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.TEAM)).collect(Collectors.toSet());
+
+        List<ParticipantScoreDTO> resultsIndividualExercises = studentScoreRepository.findAllByExerciseIn(individualExercisesOfExam, pageable).stream()
+                .map(ParticipantScoreDTO::generateFromParticipantScore).collect(Collectors.toList());
+        List<ParticipantScoreDTO> resultsTeamExercises = teamScoreRepository.findAllByExerciseIn(teamExercisesOfExam, pageable).stream()
+                .map(ParticipantScoreDTO::generateFromParticipantScore).collect(Collectors.toList());
+        List<ParticipantScoreDTO> resultsOfAllExercises = Stream.concat(resultsIndividualExercises.stream(), resultsTeamExercises.stream()).collect(Collectors.toList());
+
+        return ResponseEntity.ok().body(resultsOfAllExercises);
     }
 
 }

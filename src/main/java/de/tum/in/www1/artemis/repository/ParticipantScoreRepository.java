@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import org.springframework.data.domain.Pageable;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -17,9 +20,19 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
 
     void removeAllByExercise(Exercise exercise);
 
+    @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     Optional<ParticipantScore> findParticipantScoreByLastRatedResult(Result result);
 
+    @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     Optional<ParticipantScore> findParticipantScoresByLastResult(Result result);
 
-    List<ParticipantScore> findAllByExerciseIn(Set<Exercise> exercises, Pageable pageable);
+    @NotNull
+    @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
+    List<ParticipantScore> findAll();
+
+    @Query("""
+            SELECT p
+            FROM ParticipantScore p LEFT JOIN FETCH p.exercise LEFT JOIN FETCH p.lastResult LEFT JOIN FETCH p.lastRatedResult
+            """)
+    List<ParticipantScore> findAllEagerly();
 }

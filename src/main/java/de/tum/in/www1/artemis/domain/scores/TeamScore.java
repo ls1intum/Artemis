@@ -8,7 +8,7 @@ import de.tum.in.www1.artemis.domain.Team;
 @DiscriminatorValue("TS")
 public class TeamScore extends ParticipantScore {
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "team_id")
     private Team team;
 
