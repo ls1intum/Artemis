@@ -1,10 +1,9 @@
 import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
-import { JhiEventManager } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, of, Subject } from 'rxjs';
-import { JhiAlertService } from 'ng-jhipster';
 import { User } from 'app/core/user/user.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -235,7 +234,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * registers all students who are enrolled in the course for the exam
+     * Registers all students who are enrolled in the course for the exam
      */
     registerAllStudentsFromCourse() {
         if (this.exam && this.exam.id) {
