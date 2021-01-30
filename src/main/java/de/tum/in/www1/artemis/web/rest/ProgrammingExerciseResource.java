@@ -689,6 +689,33 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * PUT /programming-exercises/timeline : Updates the timeline attributes of a given exercise
+     * @param updatedProgrammingExercise containing the changes that have to be saved
+     * @param notificationText an optional text to notify the student group about the update on the programming exercise
+     * @return the ResponseEntity with status 200 (OK) with the updated ProgrammingExercise, or with status 403 (Forbidden)
+     * if the user is not allowed to update the exercise or with 404 (Not Found) if the updated ProgrammingExercise couldn't be found in the database
+     */
+    @PutMapping(Endpoints.TIMELINE)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<ProgrammingExercise> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExercise updatedProgrammingExercise,
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
+        log.debug("REST request to update the timeline of ProgrammingExercise : {}", updatedProgrammingExercise);
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember();
+
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            return forbidden();
+        }
+
+        updatedProgrammingExercise = programmingExerciseService.updateTimeline(updatedProgrammingExercise, notificationText);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
+                .body(updatedProgrammingExercise);
+
+    }
+
+    /**
      * PATCH /programming-exercises-problem: Updates the problem statement of the exercise.
      *
      * @param exerciseId              The ID of the exercise for which to change the problem statement
@@ -1320,6 +1347,8 @@ public class ProgrammingExerciseResource {
         public static final String PROGRAMMING_EXERCISE = PROGRAMMING_EXERCISES + "/{exerciseId}";
 
         public static final String PROBLEM = PROGRAMMING_EXERCISE + "/problem-statement";
+
+        public static final String TIMELINE = PROGRAMMING_EXERCISES + "/timeline";
 
         public static final String PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS = PROGRAMMING_EXERCISE + "/with-participations";
 
