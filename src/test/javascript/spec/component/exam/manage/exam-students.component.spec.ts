@@ -20,26 +20,28 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { User } from 'app/core/user/user.model';
 import { HttpResponse } from '@angular/common/http';
 import { UserService } from 'app/core/user/user.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('ExamStudentsComponent', () => {
-    const examCourse = { id: 1 } as Course;
+    const course = { id: 1 } as Course;
     const user1 = { id: 1 } as User;
     const user2 = { id: 2, login: 'user2' } as User;
+    const examWithCourse: Exam = { course, id: 2, registeredUsers: [user1, user2] } as Exam;
 
     const route = ({
-        snapshot: { paramMap: convertToParamMap({ courseId: examCourse.id }) },
+        snapshot: { paramMap: convertToParamMap({ courseId: course.id }) },
         url: new Observable<UrlSegment[]>(),
-        data: { subscribe: (fn: (value: any) => void) => fn({ exam }) },
+        data: { subscribe: (fn: (value: any) => void) => fn({ exam: examWithCourse }) },
     } as any) as ActivatedRoute;
 
     let component: ExamStudentsComponent;
     let fixture: ComponentFixture<ExamStudentsComponent>;
     let examManagementService: ExamManagementService;
     let userService: UserService;
-    let exam: Exam;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -52,15 +54,16 @@ describe('ExamStudentsComponent', () => {
                 MockDirective(JhiTranslateDirective),
                 MockDirective(DeleteButtonDirective),
             ],
-            providers: [{ provide: ActivatedRoute, useValue: route }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: route },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamStudentsComponent);
         component = fixture.componentInstance;
         examManagementService = TestBed.inject(ExamManagementService);
         userService = TestBed.inject(UserService);
-
-        exam = { course: examCourse, id: 2, registeredUsers: [user1, user2] } as Exam;
     });
 
     afterEach(function () {
@@ -70,8 +73,8 @@ describe('ExamStudentsComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(component).to.be.ok;
-        expect(component.courseId).to.equal(examCourse.id);
-        expect(component.exam).to.deep.equal(exam);
+        expect(component.courseId).to.equal(course.id);
+        expect(component.exam).to.deep.equal(examWithCourse);
         expect(component.isLoading).to.be.false;
     });
 
@@ -95,7 +98,7 @@ describe('ExamStudentsComponent', () => {
         component.onAutocompleteSelect(user3, callbackSpy);
         fixture.detectChanges();
 
-        expect(examServiceStub).to.have.been.calledOnceWith(examCourse.id, exam.id, user3.login);
+        expect(examServiceStub).to.have.been.calledOnceWith(course.id, examWithCourse.id, user3.login);
         expect(component.allRegisteredUsers).to.deep.equal([user1, user2, user3]);
         expect(callbackSpy).to.have.been.calledOnceWith(user3);
         expect(flashSpy).to.have.been.calledOnce;
@@ -121,14 +124,14 @@ describe('ExamStudentsComponent', () => {
 
     it('should reload with only registered users', () => {
         // Same id is intentional: Simulate one user got removed
-        const examWithOneUser = { course: examCourse, id: 2, registeredUsers: [user2] };
+        const examWithOneUser = { course, id: 2, registeredUsers: [user2] };
         const examServiceStub = sinon.stub(examManagementService, 'find').returns(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();
 
         component.reloadExamWithRegisteredUsers();
         fixture.detectChanges();
 
-        expect(examServiceStub).to.have.been.calledOnceWith(examCourse.id, exam.id, true);
+        expect(examServiceStub).to.have.been.calledOnceWith(course.id, examWithCourse.id, true);
         expect(component.exam).to.deep.equal(examWithOneUser);
         expect(component.allRegisteredUsers).to.deep.equal([user2]);
     });
@@ -140,7 +143,21 @@ describe('ExamStudentsComponent', () => {
         component.removeFromExam(user2, { deleteParticipationsAndSubmission: false });
         fixture.detectChanges();
 
-        expect(examServiceStub).to.have.been.calledOnceWith(examCourse.id, exam.id, user2.login, false);
+        expect(examServiceStub).to.have.been.calledOnceWith(course.id, examWithCourse.id, user2.login, false);
         expect(component.allRegisteredUsers).to.deep.equal([user1]);
+    });
+
+    it('should register all enrolled students of the course to the exam', () => {
+        const examServiceStubAddAll = sinon.stub(examManagementService, 'addAllStudentsOfCourseToExam').returns(of(new HttpResponse()));
+        const examWithOneUser = { course, id: 2, registeredUsers: [user2] };
+        const examServiceStub = sinon.stub(examManagementService, 'find').returns(of(new HttpResponse({ body: examWithOneUser })));
+        fixture.detectChanges();
+
+        component.exam = examWithCourse;
+        component.registerAllStudentsFromCourse();
+
+        expect(examServiceStub).to.have.been.calledOnceWith(course.id, examWithCourse.id, true);
+        expect(examServiceStubAddAll).to.have.been.calledOnceWith(course.id, examWithCourse.id);
+        expect(component.allRegisteredUsers).to.deep.equal([user2]);
     });
 });
