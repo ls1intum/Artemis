@@ -1,8 +1,8 @@
 import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
-import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/router';
-import { of, Subscription } from 'rxjs';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { of } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
@@ -15,37 +15,58 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { HttpResponse } from '@angular/common/http';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SortService } from 'app/shared/service/sort.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { stub } from 'sinon';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 const route = { params: of({ courseId: 3, exerciseId: 22 }) };
 const course = { id: 1 };
-let fileUploadExercise: FileUploadExercise;
-fileUploadExercise = {
+const fileUploadExercise1 = {
     id: 22,
     type: ExerciseType.FILE_UPLOAD,
+    course: { id: 91 },
 } as FileUploadExercise;
+const fileUploadExercise2 = {
+    id: 22,
+    type: ExerciseType.FILE_UPLOAD,
+    exerciseGroup: { id: 94, exam: { id: 777, course: { id: 92 } } },
+} as FileUploadExercise;
+const modelingExercise: ModelingExercise = {
+    id: 33,
+    type: ExerciseType.MODELING,
+    numberOfAssessmentsOfCorrectionRounds: [],
+    studentAssignedTeamIdComputed: false,
+    secondCorrectionEnabled: false,
+};
 
-const fileUploadSubmission1 = { id: 1, submitted: true, results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [] } }] };
-const fileUploadSubmission2 = { id: 2, submitted: true, results: [{ id: 20, assessor: { id: 30, guidedTourSettings: [] } }] };
-const userId = 30;
+const fileUploadSubmission1 = {
+    id: 1,
+    submitted: true,
+    results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [] } }],
+    participation: { id: 41, exercise: fileUploadExercise1 },
+};
+const fileUploadSubmission2 = {
+    id: 2,
+    submitted: true,
+    results: [{ id: 20, assessor: { id: 30, guidedTourSettings: [] } }],
+    participation: { id: 41, exercise: fileUploadExercise2 },
+};
+const modelingSubmission = { id: 2, submitted: true, results: [{ id: 20, assessor: { id: 30, guidedTourSettings: [] } }], participation: { id: 42, exercise: modelingExercise } };
 
-describe('ModelingAssessmentDashboardComponent', () => {
+describe('FileUploadAssessmentDashboardComponent', () => {
     let component: FileUploadAssessmentDashboardComponent;
     let fixture: ComponentFixture<FileUploadAssessmentDashboardComponent>;
     let exerciseService: ExerciseService;
     let courseService: CourseManagementService;
     let fileUploadSubmissionService: FileUploadSubmissionService;
     let fileUploadAssessmentsService: FileUploadAssessmentsService;
+    let accountService: AccountService;
     let sortService: SortService;
     let router: Router;
-    let exerciseFindSpy: jasmine.Spy;
-    let courseFindSpy: jasmine.Spy;
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
@@ -64,7 +85,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
                     useValue: {
                         snapshot: {
                             paramMap: convertToParamMap({
-                                exerciseId: fileUploadExercise.id,
+                                exerciseId: fileUploadExercise2.id,
                             }),
                         },
                     },
@@ -81,9 +102,8 @@ describe('ModelingAssessmentDashboardComponent', () => {
                 courseService = fixture.debugElement.injector.get(CourseManagementService);
                 fileUploadSubmissionService = fixture.debugElement.injector.get(FileUploadSubmissionService);
                 fileUploadAssessmentsService = fixture.debugElement.injector.get(FileUploadAssessmentsService);
+                accountService = fixture.debugElement.injector.get(AccountService);
                 sortService = fixture.debugElement.injector.get(SortService);
-                exerciseFindSpy = spyOn(exerciseService, 'find').and.returnValue(of(new HttpResponse({ body: fileUploadExercise })));
-                courseFindSpy = spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
                 // fixture.detectChanges();
             });
     }));
@@ -92,11 +112,11 @@ describe('ModelingAssessmentDashboardComponent', () => {
     //     component.ngOnDestroy();
     // });
 
-    it('should set parameters and call functions on init', () => {
+    it('should set parameters and call functions on init', fakeAsync(() => {
         // setup
-        const getSubmissionsSpy = spyOn<any>(component, 'getSubmissions');
+        const getFileUploadSubmissionStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+        getFileUploadSubmissionStub.returns(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
         spyOn<any>(component, 'setPermissions');
-
         // test for init values
         expect(component).toBeTruthy();
         expect(component.submissions).toEqual([]);
@@ -106,30 +126,53 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
         // call
         component.ngOnInit();
-        tick();
+        tick(500);
 
         // check
-        expect(component['getSubmissions']).toHaveBeenCalledWith(fileUploadExercise.id);
+        expect(getFileUploadSubmissionStub).toHaveBeenCalledWith(fileUploadExercise1.id);
         expect(component['setPermissions']).toHaveBeenCalled();
-        expect(courseFindSpy).toHaveBeenCalled();
-        expect(exerciseFindSpy).toHaveBeenCalled();
-        expect(component.exercise).toEqual(fileUploadExercise as FileUploadExercise);
-    });
+        expect(component.exercise).toEqual(fileUploadExercise1 as FileUploadExercise);
+    }));
 
-    it('should get Submissions', () => {
+    it('should get Submissions', fakeAsync(() => {
         // test getSubmissions
-        const fileUploadSubmissionServiceSpy = spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound').and.returnValue(
-            of(new HttpResponse({ body: [fileUploadSubmission1] })),
-        );
+        const getFileUploadSubmissionStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+        getFileUploadSubmissionStub.returns(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
+        const isAtLeastInstructorInCourseStub = stub(accountService, 'isAtLeastInstructorInCourse');
+        isAtLeastInstructorInCourseStub.returns(true);
+        spyOn<any>(component, 'setPermissions');
 
         // call
         component.ngOnInit();
-
+        tick(100);
         // check
-        expect(fileUploadSubmissionServiceSpy).toHaveBeenCalledWith(fileUploadExercise.id, { submittedOnly: true });
+        expect(component['setPermissions']).toHaveBeenCalled();
+        expect(getFileUploadSubmissionStub).toHaveBeenCalledWith(fileUploadExercise1.id, { submittedOnly: true });
         expect(component.submissions).toEqual([fileUploadSubmission1]);
         expect(component.filteredSubmissions).toEqual([fileUploadSubmission1]);
-    });
+    }));
+
+    it('should not get Submissions', fakeAsync(() => {
+        const getFileUploadSubmissionStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+        getFileUploadSubmissionStub.returns(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
+        const isAtLeastInstructorInCourseStub = stub(accountService, 'isAtLeastInstructorInCourse');
+        isAtLeastInstructorInCourseStub.returns(true);
+        const findExerciseStub = stub(exerciseService, 'find');
+        // findExerciseStub.returns(of(new HttpResponse({ body: fileUploadExercise, headers: new HttpHeaders() })));
+        findExerciseStub.returns(of(new HttpResponse({ body: fileUploadExercise2, headers: new HttpHeaders() })));
+        const spy = spyOn<any>(component, 'getExercise');
+        spy.and.callThrough();
+        component.exercise = fileUploadExercise2;
+        // call
+        component.ngOnInit();
+
+        tick(100);
+        // check
+        expect(component['getExercise']).toHaveBeenCalled();
+        expect(getFileUploadSubmissionStub).toHaveBeenCalledWith(fileUploadExercise2.id, { submittedOnly: true });
+        expect(component.submissions).toEqual([]);
+        expect(component.filteredSubmissions).toEqual([]);
+    }));
 
     it('should update filtered submissions', () => {
         // test updateFilteredSubmissions
@@ -137,7 +180,6 @@ describe('ModelingAssessmentDashboardComponent', () => {
         // setup
         component.ngOnInit();
         component.updateFilteredSubmissions([fileUploadSubmission1]);
-
         // check
         expect(component.filteredSubmissions).toEqual([fileUploadSubmission1]);
     });
@@ -145,17 +187,15 @@ describe('ModelingAssessmentDashboardComponent', () => {
     it('should cancelAssessment', fakeAsync(() => {
         // test cancelAssessment
         const windowSpy = spyOn(window, 'confirm').and.returnValue(true);
-        spyOn<any>(component, 'getSubmissions');
         const modelAssServiceCancelAssSpy = spyOn(fileUploadAssessmentsService, 'cancelAssessment').and.returnValue(of(1));
-
+        component.exercise = fileUploadExercise2;
         // call
-        component.cancelAssessment(fileUploadSubmission1);
+        component.cancelAssessment(fileUploadSubmission2);
         tick();
 
         // check
-        expect(modelAssServiceCancelAssSpy).toHaveBeenCalledWith(fileUploadSubmission1.id);
+        expect(modelAssServiceCancelAssSpy).toHaveBeenCalledWith(fileUploadSubmission2.id);
         expect(windowSpy).toHaveBeenCalled();
-        expect(component['getSubmissions']).toHaveBeenCalled();
     }));
 
     it('should sortRows', () => {
@@ -163,9 +203,9 @@ describe('ModelingAssessmentDashboardComponent', () => {
         const sortServiceSpy = spyOn(sortService, 'sortByProperty');
         component.predicate = 'predicate';
         component.reverse = false;
-
+        component.submissions = [fileUploadSubmission2];
         component.sortRows();
 
-        expect(sortServiceSpy).toHaveBeenCalledWith([fileUploadSubmission1], 'predicate', false);
+        expect(sortServiceSpy).toHaveBeenCalledWith([fileUploadSubmission2], 'predicate', false);
     });
 });
