@@ -886,10 +886,32 @@ public class CourseResource {
             return notFound();
         }
 
-        // the path is stored in the course table
+        // The path is stored in the course table
         File zipFile = new File(course.getCourseArchivePath());
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+    }
+
+    /**
+     * DELETE /courses/:course/cleanup : Cleans up a course by deleting all student submissions.
+     *
+     * @param courseId Id of the course to clean up
+     * @return ResponseEntity with status
+     */
+    @DeleteMapping(value = "/courses/{courseId}/cleanup")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Resource> cleanup(@PathVariable Long courseId) {
+        log.info("REST request to cleanup the Course : {}", courseId);
+
+        final Course course = courseService.findOne(courseId);
+
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        courseService.cleanupCourse(courseId);
+        return ResponseEntity.ok().build();
     }
 
     /**

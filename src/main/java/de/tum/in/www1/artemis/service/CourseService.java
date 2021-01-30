@@ -7,13 +7,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,10 +79,13 @@ public class CourseService {
 
     private final FileService fileService;
 
+    private WebsocketMessagingService websocketMessagingService;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
             ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository,
-            ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService) {
+            ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
+            WebsocketMessagingService websocketMessagingService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -97,6 +100,7 @@ public class CourseService {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
         this.fileService = fileService;
+        this.websocketMessagingService = websocketMessagingService;
     }
 
     @Autowired
@@ -397,11 +401,13 @@ public class CourseService {
             return;
         }
 
+        notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.RUNNING, "Archiving course...");
+
         // Used to store temporary created zip files for this course.
         String pathToExportsFolder = "./exports";
-        var courseTempDirectlyPath = Path.of(pathToExportsFolder, course.getShortName());
+        var courseTempDirPath = Path.of(pathToExportsFolder, course.getShortName());
         try {
-            Files.createDirectories(courseTempDirectlyPath);
+            Files.createDirectories(courseTempDirPath);
         }
         catch (IOException e) {
             log.info("Cannot archive course {} because the temporary directories cannot be created: {}", course.getId(), e.getMessage());
@@ -409,7 +415,7 @@ public class CourseService {
         }
 
         // Create a zip file for each exercise.
-        var exportedExercises = archiveExercisesOfCourse(course, courseTempDirectlyPath.toString());
+        var exportedExercises = archiveExercisesOfCourse(course, courseTempDirPath.toString());
         if (exportedExercises.size() == 0) {
             log.info("Cannot archive course {} there are no exercises to export.", course.getId());
         }
@@ -418,12 +424,14 @@ public class CourseService {
         var courseArchivePath = createCourseZipFile(course, exportedExercises);
         if (courseArchivePath == null) {
             // Delete the temporary directory of the course and all its files because the process failed.
-            fileService.scheduleForDeletion(courseTempDirectlyPath, 5);
+            fileService.scheduleForDeletion(courseTempDirPath, 5);
         }
 
         // Attach the path to the archive to the course and save it in the database
         course.setCourseArchivePath(courseArchivePath.toString());
         courseRepository.save(course);
+
+        notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.COMPLETED, "Archiving course finished!");
 
         log.info("Successfully archived course {}. The archive is located at: {}", course.getId(), courseArchivePath);
     }
@@ -440,7 +448,12 @@ public class CourseService {
         ArrayList<Path> exportedExercises = new ArrayList<>();
         ArrayList<Long> exercisesThatFailedToExport = new ArrayList<>();
 
+        // Used to send websocket message with the progress
+        var totalExercises = course.getExercises().size();
+        AtomicInteger currentExerciseIndex = new AtomicInteger(1);
+
         course.getExercises().forEach(exercise -> {
+
             // We need this call because we need to lazy load the student participations.
             var participations = exerciseService.findOneWithStudentParticipations(exercise.getId()).getStudentParticipations();
 
@@ -457,6 +470,11 @@ public class CourseService {
             }
 
             // TODO: Handle archiving for other exercise types
+
+            // Notify the client about the progress.
+            notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.RUNNING, currentExerciseIndex + "/" + totalExercises + " done");
+            currentExerciseIndex.addAndGet(1);
+
             log.info("Skipping export of exercise: {} because it's not supported yet.", exercise.getTitle());
         });
 
@@ -498,4 +516,41 @@ public class CourseService {
         }
     }
 
+    private void notifyUserAboutCourseArchiveState(long courseId, CourseArchiveState archiveState, String progress) {
+        var topic = "/topic/courses/" + courseId + "/archive-course";
+
+        Map<String, String> message = new HashMap<>();
+        message.put("archiveState", archiveState.toString());
+        message.put("progress", progress);
+
+        var mapper = new ObjectMapper();
+        try {
+            websocketMessagingService.sendMessage(topic, mapper.writeValueAsString(message));
+        }
+        catch (IOException e) {
+            // I guess we can ignore this ?
+        }
+    }
+
+    /**
+     * Cleans up a course by cleaning up all exercises from that course. This deletes all student
+     * submissions. Note that a course has to be archived first before being cleaned up.
+     *
+     * @param courseId The id of the course to clean up
+     */
+    public void cleanupCourse(Long courseId) {
+        // Get the course with all exercises
+        var course = findOneWithExercisesAndLectures(courseId);
+
+        // Forbid cleaning the course if no archive has been created
+        if (!course.hasCourseArchive()) {
+            log.info("Failed to clean up course {} because it needs to be archived first.", courseId);
+            return;
+        }
+
+        // TODO: extend exerciseService.cleanup to clean up all exercise types
+        course.getExercises().forEach(exercise -> exerciseService.cleanup(exercise.getId(), true));
+
+        log.info("The course {} has been cleaned up!", courseId);
+    }
 }

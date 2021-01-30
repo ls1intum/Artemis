@@ -106,23 +106,30 @@ public class ProgrammingExerciseExportService {
      * @return the path to the zip file
      */
     public Path archiveProgrammingExercise(ProgrammingExercise exercise, List<ProgrammingExerciseStudentParticipation> studentParticipations, String pathToStoreZipFile) {
+        // Will contains the zipped files. Note that there can be null elements
+        // because e.g exportStudentRepositories returns null if student repositories don't
+        // exist.
+        var zipFiles = new ArrayList<File>();
+
         // Export student repositories
         var exportOptions = new RepositoryExportOptionsDTO();
         exportOptions.setHideStudentNameInZippedFolder(false);
-        var zippedStudentRepos = exportStudentRepositories(exercise.getId(), studentParticipations, exportOptions);
+        zipFiles.add(exportStudentRepositories(exercise.getId(), studentParticipations, exportOptions));
 
         // Export the template, solution, and tests repositories
-        var zippedTemplateRepo = exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TEMPLATE);
-        var zippedSolutionRepo = exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.SOLUTION);
-        var zippedTestsRepo = exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TESTS);
-        var zipFilePaths = List.of(zippedStudentRepos.toPath(), zippedTemplateRepo.toPath(), zippedSolutionRepo.toPath(), zippedTestsRepo.toPath());
+        zipFiles.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TEMPLATE));
+        zipFiles.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.SOLUTION));
+        zipFiles.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TESTS));
+
+        // Remove null elements and get the file path of each zip file.
+        var zipFilePathsNonNull = zipFiles.stream().filter(Objects::nonNull).map(File::toPath).collect(Collectors.toList());
 
         try {
             // Zip the student and instructor repos together.
             // The filename of the zip is: {Exercise_Short_Name}-{Exercise_Title}.zip
             var filename = exercise.getShortName() + "-" + exercise.getTitle() + ".zip";
             var pathToZippedExercise = Path.of(pathToStoreZipFile, filename);
-            zipFileService.createZipFile(pathToZippedExercise, zipFilePaths, false);
+            zipFileService.createZipFile(pathToZippedExercise, zipFilePathsNonNull, false);
             return pathToZippedExercise;
         }
         catch (IOException e) {
@@ -131,7 +138,7 @@ public class ProgrammingExerciseExportService {
         }
         finally {
             // Delete the zipped repo files since we don't need those anymore.
-            zipFilePaths.forEach(zipFilePath -> fileService.scheduleForDeletion(zipFilePath, 5));
+            zipFilePathsNonNull.forEach(zipFilePath -> fileService.scheduleForDeletion(zipFilePath, 1));
         }
     }
 
