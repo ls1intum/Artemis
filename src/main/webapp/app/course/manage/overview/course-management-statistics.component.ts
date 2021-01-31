@@ -68,15 +68,6 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
     }
 
     private createLabels() {
-        /*const prefix = this.translateService.instant('calendar_week');
-        let currentWeek;
-        for (let i = 0; i < 4; i++) {
-            currentWeek = moment()
-                .subtract(3 - i, 'weeks')
-                .isoWeekday(1)
-                .isoWeek();
-            this.barChartLabels[i] = prefix + ' ' + currentWeek;
-        }*/
         for (let i = 0; i < 4; i++) {
             this.barChartLabels[i] = this.translateService.instant(`overview.${3 - i}_weeks_ago`);
         }

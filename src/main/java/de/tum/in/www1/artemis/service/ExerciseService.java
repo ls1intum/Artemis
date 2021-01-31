@@ -610,11 +610,10 @@ public class ExerciseService {
         courseExerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxScore());
         courseExerciseStatisticsDTO.setExerciseMode(exercise.getMode().toString());
 
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        long numberOfRatedAssessments = resultService.countNumberOfRatedAssessments(course.getId());
+        long numberOfRatedAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), false).getInTime();
         courseExerciseStatisticsDTO.setNoOfRatedAssessments(numberOfRatedAssessments);
 
-        long noOfSubmissionsInTime = submissionRepository.countByCourseIdSubmittedBeforeDueDate(course.getId());
+        long noOfSubmissionsInTime = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
         courseExerciseStatisticsDTO.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
 
         if (exercise.isTeamMode()) {
@@ -622,6 +621,7 @@ public class ExerciseService {
             courseExerciseStatisticsDTO.setNoOfTeamsInCourse(numberOfTeamsInCourse);
         }
         else {
+            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
             long numberOfStudentsInCourse = userService.countUserInGroup(course.getStudentGroupName());
             courseExerciseStatisticsDTO.setNoOfStudentsInCourse(Math.toIntExact(numberOfStudentsInCourse));
         }
