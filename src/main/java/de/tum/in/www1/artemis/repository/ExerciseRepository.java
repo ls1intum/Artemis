@@ -172,8 +172,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
             WHERE e.course.id = :courseId
                 AND e.course.studentGroupName member of p.student.groups
-                AND e.course.teachingAssistantGroupName not member of p.student.groups
-                AND e.course.instructorGroupName not member of p.student.groups
                 AND r.score IS NOT NULL
                 AND s.id = (
                     SELECT max(s2.id)

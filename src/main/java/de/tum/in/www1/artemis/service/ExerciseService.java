@@ -557,7 +557,7 @@ public class ExerciseService {
     }
 
     /**
-     * Get the exercise statistics
+     * Get specific exercise information
      *
      * @param courseId the id of the course
      * @return An Integer array containing active students for each index
