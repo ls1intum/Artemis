@@ -1,7 +1,7 @@
 {
     "courseStatistics": {
         "amountOfStudents": "# an Studenten",
-        "active_students": "Aktive Studenten"
+        "activeStudents": "Aktive Studenten"
     },
     "calendar_week": "KW",
     "weekdays": {

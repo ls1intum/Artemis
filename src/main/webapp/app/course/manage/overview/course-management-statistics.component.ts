@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { Graphs } from 'app/entities/statistics.model';
 import { ChartDataSets, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
@@ -9,7 +9,7 @@ import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/qui
     selector: 'jhi-course-management-statistics',
     templateUrl: './course-management-statistics.component.html',
 })
-export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
+export class CourseManagementStatisticsComponent implements OnChanges {
     @Input()
     courseId: number;
 
@@ -37,10 +37,6 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
     dataForSpanType: number[];
 
     constructor(private translateService: TranslateService) {}
-
-    ngOnInit(): void {
-        this.chartName = this.translateService.instant(`courseStatistics.${this.graphType.toString().toLowerCase()}`);
-    }
 
     ngOnChanges() {
         this.amountOfStudents = this.translateService.instant('courseStatistics.amountOfStudents');

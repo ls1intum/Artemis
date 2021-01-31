@@ -236,7 +236,6 @@ export class CourseManagementService {
     /**
      * returns the stats of the course with the provided unique identifier for the courses management dashboard
      * @param courseIds - the id of the course
-     * @param periodIndex - index of the period to get the active user stats for
      */
     getExercisesForManagementOverview(courseIds: number[]): Observable<HttpResponse<CourseManagementOverviewCourseDto[]>> {
         let httpParams = new HttpParams();
@@ -249,7 +248,6 @@ export class CourseManagementService {
     /**
      * returns the stats of the course with the provided unique identifier for the courses management dashboard
      * @param courseIds - the id of the course
-     * @param periodIndex - index of the period to get the active user stats for
      */
     getStatsForManagementOverview(courseIds: number[]): Observable<HttpResponse<CourseManagementOverviewStatisticsDto[]>> {
         let httpParams = new HttpParams();
