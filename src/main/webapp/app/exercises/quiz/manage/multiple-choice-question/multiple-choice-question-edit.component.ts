@@ -15,7 +15,6 @@ import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.i
     selector: 'jhi-multiple-choice-question-edit',
     templateUrl: './multiple-choice-question-edit.component.html',
     styleUrls: ['../../shared/quiz.scss'],
-    providers: [ArtemisMarkdownService],
 })
 export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestionEdit {
     @ViewChild('markdownEditor', { static: false })
