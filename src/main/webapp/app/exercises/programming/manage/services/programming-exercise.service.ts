@@ -130,6 +130,19 @@ export class ProgrammingExerciseService {
     }
 
     /**
+     * Updates the timeline of a programming exercise
+     * @param programmingExercise to update
+     * @param req optional request options
+     */
+    updateTimeline(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
+        const options = createRequestOption(req);
+        const copy = this.convertDataFromClient(programmingExercise);
+        return this.http
+            .put<ProgrammingExercise>(`${this.resourceUrl}/timeline`, copy, { params: options, observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    /**
      * Updates the problem statement
      * @param programmingExerciseId of the programming exercise for which to change the problem statement
      * @param problemStatement the new problem statement

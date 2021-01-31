@@ -56,7 +56,6 @@ const getAceMode = (mode: EditorMode) => {
 
 @Component({
     selector: 'jhi-markdown-editor',
-    providers: [ArtemisMarkdownService],
     templateUrl: './markdown-editor.component.html',
     styleUrls: ['./markdown-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,

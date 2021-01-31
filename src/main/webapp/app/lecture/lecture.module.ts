@@ -11,6 +11,7 @@ import { LectureDetailComponent } from 'app/lecture/lecture-detail.component';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { lectureRoute } from 'app/lecture/lecture.route';
 import { ArtemisLectureUnitManagementModule } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.module';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 const ENTITY_STATES = [...lectureRoute];
 
@@ -21,6 +22,7 @@ const ENTITY_STATES = [...lectureRoute];
         ArtemisLectureUnitManagementModule,
         FormDateTimePickerModule,
         ArtemisSharedComponentModule,
+        ArtemisMarkdownModule,
         ArtemisMarkdownEditorModule,
     ],
     declarations: [LectureComponent, LectureDetailComponent, LectureUpdateComponent, LectureAttachmentsComponent],
