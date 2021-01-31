@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
@@ -477,7 +478,7 @@ public class CourseService {
         try {
             Files.createDirectory(examDir);
             // We retrieve every exercise from each exercise group and flatten the list.
-            var exercises = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
+            var exercises = examService.getAllExercisesOfExam(examId);
             archiveExercises(exercises, examDir.toString());
         }
         catch (IOException e) {
@@ -586,7 +587,13 @@ public class CourseService {
     public void cleanupCourse(Long courseId) {
         // Get the course with all exercises
         var course = findOneWithExercisesAndLectures(courseId);
-        course.getExercises().forEach(exercise -> {
+
+        // Clean up exams
+        var exams = findOneWithLecturesAndExams(course.getId()).getExams();
+        var examExercises = exams.stream().map(exam -> examService.getAllExercisesOfExam(exam.getId())).flatMap(Collection::stream).collect(Collectors.toSet());
+
+        var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());
+        exercisesToCleanup.forEach(exercise -> {
             if (exercise instanceof ProgrammingExercise) {
                 exerciseService.cleanup(exercise.getId(), true);
             }
