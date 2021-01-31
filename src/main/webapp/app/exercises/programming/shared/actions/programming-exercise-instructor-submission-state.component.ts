@@ -29,7 +29,6 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     hasBuildingSubmissions = false;
     buildingSummary: { [submissionState: string]: number };
     isBuildingFailedSubmissions = false;
-    isTriggeringBuildAll = false;
 
     resultEtaInMs: number;
 

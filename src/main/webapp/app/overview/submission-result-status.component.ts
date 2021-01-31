@@ -23,7 +23,7 @@ export class SubmissionResultStatusComponent {
     @Input() short = false;
 
     /**
-     * If a student participation is supplied explicitly (even if null), use that one.
+     * If a student participation is supplied explicitly, use that one.
      * Otherwise, use the first student participation on the exercise.
      */
     get participation() {
