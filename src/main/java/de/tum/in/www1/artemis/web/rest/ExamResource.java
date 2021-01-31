@@ -610,8 +610,8 @@ public class ExamResource {
     */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/register-course-students")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> addAllStudentsOfCourseToExam(@PathVariable Long courseId, @PathVariable Long examId) {
-        // get all students enrolled in teh course
+    public ResponseEntity<Void> registerCourseStudents(@PathVariable Long courseId, @PathVariable Long examId) {
+        // get all students enrolled in the course
         log.debug("REST request to add all students to exam {} with courseId {}", examId, courseId);
 
         Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
