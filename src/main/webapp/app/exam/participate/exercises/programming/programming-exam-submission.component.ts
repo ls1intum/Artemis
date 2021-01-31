@@ -1,4 +1,6 @@
 import { ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -17,6 +19,8 @@ import {
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { Result } from 'app/entities/result.model';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
@@ -64,7 +68,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
-    constructor(private domainService: DomainService, changeDetectorReference: ChangeDetectorRef) {
+    constructor(private domainService: DomainService, changeDetectorReference: ChangeDetectorRef, private participationService: ProgrammingExerciseParticipationService) {
         super(changeDetectorReference);
     }
 
@@ -79,6 +83,21 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
         const participation = { ...this.studentParticipation, exercise: this.exercise } as StudentParticipation;
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
+
+        this.fetchLatestResult();
+    }
+
+    /**
+     * Fetch the latest result as it is not present in the participation returned by the studentExam request.
+     * Otherwise the last result will not be shown to the student after a page reload.
+     */
+    private fetchLatestResult() {
+        this.participationService
+            .getLatestResultWithFeedback(this.studentParticipation.id!)
+            .pipe(catchError(() => of(undefined)))
+            .subscribe((result: Result | undefined) => {
+                this.studentParticipation.results = result ? [result] : [];
+            });
     }
 
     onActivate() {
