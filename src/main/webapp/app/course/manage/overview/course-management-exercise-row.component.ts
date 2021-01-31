@@ -3,6 +3,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/entities/course-management-overview-exercise-statistics-dto.model';
+import { CourseManagementOverviewExerciseDetailsDTO } from 'app/entities/course-management-overview-exercise-details-dto.model';
 
 export enum ExerciseRowType {
     FUTURE = 'future',
@@ -18,7 +19,7 @@ export enum ExerciseRowType {
 })
 export class CourseManagementExerciseRowComponent implements OnChanges {
     @Input() course: Course;
-    @Input() details: CourseManagementOverviewExerciseStatisticsDTO;
+    @Input() details: CourseManagementOverviewExerciseDetailsDTO;
     @Input() statistic: CourseManagementOverviewExerciseStatisticsDTO;
     @Input() rowType: ExerciseRowType;
 

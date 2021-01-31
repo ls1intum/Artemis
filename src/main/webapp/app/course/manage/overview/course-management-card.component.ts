@@ -23,10 +23,10 @@ export class CourseManagementCardComponent implements OnChanges {
 
     statisticsPerExercise = new Map<number, CourseManagementOverviewExerciseStatisticsDTO>();
 
-    futureExercises: CourseManagementOverviewExerciseStatisticsDTO[];
-    currentExercises: CourseManagementOverviewExerciseStatisticsDTO[];
-    exercisesInAssessment: CourseManagementOverviewExerciseStatisticsDTO[];
-    pastExercises: CourseManagementOverviewExerciseStatisticsDTO[];
+    futureExercises: CourseManagementOverviewExerciseDetailsDTO[];
+    currentExercises: CourseManagementOverviewExerciseDetailsDTO[];
+    exercisesInAssessment: CourseManagementOverviewExerciseDetailsDTO[];
+    pastExercises: CourseManagementOverviewExerciseDetailsDTO[];
 
     showFutureExercises = false;
     showCurrentExercises = true;
