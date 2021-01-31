@@ -698,7 +698,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             existingResult = submission.getLatestResult();
         }
         else if (correctionRound == 0 && submission.getLatestResult() == null) {
-            // if the student did not participate in the exam, and therefore has no result for the automatically generated submission
+            // if the student did not participate in the exam, and therefore has no result
             existingResult = null;
         }
         else {
