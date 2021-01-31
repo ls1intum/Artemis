@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
 public class CourseManagementOverviewExerciseStatisticsDTO {
+
     private Long exerciseId;
 
     private Double exerciseMaxPoints;

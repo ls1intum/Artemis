@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 
 public class CourseManagementOverviewExerciseDetailsDTO {
+
     private Long exerciseId;
 
     private String exerciseTitle;
