@@ -1,11 +1,9 @@
-import { Exercise } from 'app/entities/exercise.model';
-import { CourseExerciseStatisticsDTO } from 'app/exercises/shared/exercise/exercise-statistics-dto.model';
+import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/entities/course-management-overview-exercise-statistics-dto.model';
 
 export class CourseManagementOverviewCourseDto {
     public courseId: number;
-    public activeStudents: number[];
-    public exercises: Exercise[];
-    public exerciseDTOS: CourseExerciseStatisticsDTO[];
+    public exerciseDetails: CourseManagementOverviewExerciseStatisticsDTO[];
+    public exerciseDTOS: CourseManagementOverviewExerciseStatisticsDTO[];
 
     constructor() {}
 }

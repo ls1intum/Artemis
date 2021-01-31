@@ -305,6 +305,10 @@ public class CourseService {
         }
     }
 
+    public String findStudentGroupName(Long courseId) {
+        return courseRepository.findStudentGroupName(courseId);
+    }
+
     /**
      * Given a Course object, it returns the number of users enrolled in the course
      *
@@ -365,19 +369,16 @@ public class CourseService {
      * Get the active students for this particular course
      *
      * @param courseId the id of the course
-     * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
      * @return An Integer array containing active students for each index
      */
-    public Integer[] getCourseStatistics(Long courseId, Integer periodIndex) {
+    public Integer[] getActiveStudents(Long courseId) {
         ZonedDateTime now = ZonedDateTime.now();
-
         LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
         LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
         ZoneId zone = now.getZone();
-        ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks(3 + (4 * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
-        ZonedDateTime endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(4 * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
-                : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
-        List<Map<String, Object>> outcome = courseRepository.getCourseStatistics(courseId, startDate, endDate);
+        ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks(3).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        ZonedDateTime endDate = localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
+        List<Map<String, Object>> outcome = courseRepository.getActiveStudents(courseId, startDate, endDate);
         List<Map<String, Object>> distinctOutcome = removeDuplicatesFromMapList(outcome, startDate);
         return createResultArray(distinctOutcome, endDate);
     }

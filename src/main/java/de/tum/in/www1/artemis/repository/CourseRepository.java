@@ -72,10 +72,26 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findById(long courseId);
 
     @Query("""
+            select c.studentGroupName
+            from Course c
+            where c.id = :courseId
+    """)
+    String findStudentGroupName(@Param("courseId") long courseId);
+
+    @Query("""
             select s.submissionDate as day, u.login as username
             from User u, Submission s, StudentParticipation p
             where s.participation.exercise.course.id = :#{#courseId} and s.participation.id = p.id and p.student.id = u.id and s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate} and u.login not like '%test%'
             order by s.submissionDate asc
             """)
-    List<Map<String, Object>> getCourseStatistics(@Param("courseId") Long courseId, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+    List<Map<String, Object>> getActiveStudents(@Param("courseId") Long courseId, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+
+    @Query("""
+            select substring(s.submissionDate, 1, 10) as date, count(DISTINCT u.id) as users
+            from User u, Submission s, StudentParticipation p
+            where s.participation.exercise.course.id = :#{#courseId} and s.participation.id = p.id and p.student.id = u.id and s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate} and u.login not like '%test%'
+            group by substring(s.submissionDate, 1, 10)
+            order by substring(s.submissionDate, 1, 10) asc
+            """)
+    List<Map<String, Object>> getActiveStudents2(@Param("courseId") Long courseId, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 }

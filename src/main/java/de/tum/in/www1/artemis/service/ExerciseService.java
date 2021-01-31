@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -554,6 +556,94 @@ public class ExerciseService {
     }
 
     /**
+     * Get the exercise statistics
+     *
+     * @param courseId the id of the course
+     * @return An Integer array containing active students for each index
+     */
+    public List<CourseManagementOverviewExerciseStatisticsDTO> getExercisesForCourseManagementOverview(Long courseId) {
+        List<CourseManagementOverviewExerciseStatisticsDTO> statisticsDTOS = new ArrayList<>();
+        for (var listElement : exerciseRepository.getExercisesForCourseManagementOverview(courseId)) {
+            var exerciseId = (Long) listElement.get("id");
+            var exerciseType = listElement.get("type");
+            if (exerciseId == null || exerciseId == 0 || exerciseType == null) {
+                continue;
+            }
+
+            var dto = new CourseManagementOverviewExerciseStatisticsDTO();
+            dto.setExerciseId(exerciseId);
+            dto.setExerciseTitle((String) listElement.get("title"));
+
+            if (exerciseType == QuizExercise.class) {
+                dto.setExerciseType("quiz");
+            } else if (exerciseType == ProgrammingExercise.class) {
+                dto.setExerciseType("programming");
+            } else if (exerciseType == TextExercise.class) {
+                dto.setExerciseType("text");
+            } else if (exerciseType == ModelingExercise.class) {
+                dto.setExerciseType("modeling");
+            } else if (exerciseType == FileUploadExercise.class) {
+                dto.setExerciseType("file-upload");
+            }
+
+            dto.setReleaseDate((ZonedDateTime) listElement.get("releaseDate"));
+            dto.setDueDate((ZonedDateTime) listElement.get("dueDate"));
+            dto.setAssessmentDueDate((ZonedDateTime) listElement.get("assessmentDueDate"));
+
+            statisticsDTOS.add(dto);
+        }
+
+        return statisticsDTOS;
+    }
+
+    /**
+     * Get the exercise statistics
+     *
+     * @param courseId the id of the course
+     * @return An Integer array containing active students for each index
+     */
+    public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse) {
+        List<CourseManagementOverviewExerciseStatisticsDTO> statisticsDTOS = new ArrayList<>();
+        var noStudentsInCourse = amountOfStudentsInCourse == null || amountOfStudentsInCourse == 0;
+        for (var listElement : exerciseRepository.getStatisticsForCourseManagementOverview(courseId)) {
+            var exerciseId = (Long) listElement.get("id");
+            if (exerciseId == null || exerciseId == 0) {
+                continue;
+            }
+
+            var dto = new CourseManagementOverviewExerciseStatisticsDTO();
+            dto.setNoOfStudentsInCourse(amountOfStudentsInCourse);
+            dto.setExerciseId(exerciseId);
+
+            dto.setExerciseMaxPoints((Double) listElement.get("maxPoints"));
+            dto.setAverageScoreInPercent((Double) listElement.get("averageScore"));
+
+            var rawParticipations = listElement.get("participations");
+            var participations = rawParticipations == null ? 0 : (int) rawParticipations;
+            dto.setNoOfParticipatingStudentsOrTeams(participations);
+
+            if (listElement.get("mode") == ExerciseMode.TEAM) {
+                Integer teams = teamService.getAmountByExerciseId(exerciseId);
+                dto.setNoOfTeamsInCourse(teams);
+
+                dto.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : ((double) participations) * 100 / teams);
+            } else {
+                dto.setParticipationRateInPercent(noStudentsInCourse ? 0.0 : ((double) participations) * 100 / amountOfStudentsInCourse);
+            }
+
+            long numberOfRatedAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId, false).getInTime();
+            long noOfSubmissionsInTime = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+            dto.setNoOfRatedAssessments(numberOfRatedAssessments);
+            dto.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
+            dto.setNoOfAssessmentsDoneInPercent(noOfSubmissionsInTime == 0 ? 0 : ((double) numberOfRatedAssessments) * 100 / noOfSubmissionsInTime);
+
+            statisticsDTOS.add(dto);
+        }
+
+        return statisticsDTOS;
+    }
+
+    /**
      * Gets the {@link CourseExerciseStatisticsDTO} for each exercise proved in <code>exerciseIds</code>.
      *
      * calculates the average score and the participation rate of students for each given course exercise (team or individual)
@@ -609,22 +699,6 @@ public class ExerciseService {
         courseExerciseStatisticsDTO.setExerciseTitle(exercise.getTitle());
         courseExerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxScore());
         courseExerciseStatisticsDTO.setExerciseMode(exercise.getMode().toString());
-
-        long numberOfRatedAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), false).getInTime();
-        courseExerciseStatisticsDTO.setNoOfRatedAssessments(numberOfRatedAssessments);
-
-        long noOfSubmissionsInTime = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
-        courseExerciseStatisticsDTO.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
-
-        if (exercise.isTeamMode()) {
-            int numberOfTeamsInCourse = teamService.getAmountByExerciseId(exercise);
-            courseExerciseStatisticsDTO.setNoOfTeamsInCourse(numberOfTeamsInCourse);
-        }
-        else {
-            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            long numberOfStudentsInCourse = userService.countUserInGroup(course.getStudentGroupName());
-            courseExerciseStatisticsDTO.setNoOfStudentsInCourse(Math.toIntExact(numberOfStudentsInCourse));
-        }
 
         if (exerciseIdToRawStatisticQueryData.containsKey(exercise.getId())) {
             Object[] exerciseStatistics = exerciseIdToRawStatisticQueryData.get(exercise.getId());

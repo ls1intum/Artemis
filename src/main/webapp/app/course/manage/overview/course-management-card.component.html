@@ -35,7 +35,7 @@
     <div class="container flex-container">
         <div class="row">
             <div class="col-md-8 section-card">
-                <div class="section-content" *ngIf="!!courseStatistic">
+                <div class="section-content" *ngIf="courseDetails">
                     <div *ngIf="futureExercises?.length > 0">
                         <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
                             <fa-icon class="control-icon" [icon]="showFutureExercises ? 'angle-down' : 'angle-up'"></fa-icon>
@@ -45,9 +45,9 @@
                             <jhi-course-management-exercise-row
                                 *ngFor="let exercise of futureExercises"
                                 [course]="course"
-                                [exercise]="exercise"
                                 [rowType]="exerciseRowType.FUTURE"
-                                [statistic]="getStatisticForExercise(exercise)"
+                                [details]="exercise"
+                                [statistic]="statisticsPerExercise[exercise.id]"
                             ></jhi-course-management-exercise-row>
                         </div>
                         <div *ngIf="!showFutureExercises" class="collapsed"></div>
@@ -61,9 +61,9 @@
                             <jhi-course-management-exercise-row
                                 *ngFor="let exercise of currentExercises"
                                 [course]="course"
-                                [exercise]="exercise"
                                 [rowType]="exerciseRowType.CURRENT"
-                                [statistic]="getStatisticForExercise(exercise)"
+                                [details]="exercise"
+                                [statistic]="statisticsPerExercise[exercise.id]"
                             ></jhi-course-management-exercise-row>
                         </div>
                         <div *ngIf="!showCurrentExercises" class="collapsed"></div>
@@ -77,9 +77,9 @@
                             <jhi-course-management-exercise-row
                                 *ngFor="let exercise of exercisesInAssessment"
                                 [course]="course"
-                                [exercise]="exercise"
                                 [rowType]="exerciseRowType.ASSESSING"
-                                [statistic]="getStatisticForExercise(exercise)"
+                                [details]="exercise"
+                                [statistic]="statisticsPerExercise[exercise.id]"
                             ></jhi-course-management-exercise-row>
                         </div>
                         <div *ngIf="!showExercisesInAssessment" class="collapsed"></div>
@@ -93,9 +93,9 @@
                             <jhi-course-management-exercise-row
                                 *ngFor="let exercise of pastExercises"
                                 [course]="course"
-                                [exercise]="exercise"
                                 [rowType]="exerciseRowType.PAST"
-                                [statistic]="getStatisticForExercise(exercise)"
+                                [details]="exercise"
+                                [statistic]="statisticsPerExercise[exercise.id]"
                             ></jhi-course-management-exercise-row>
                         </div>
                         <div *ngIf="!showPastExercises" class="collapsed"></div>
@@ -106,8 +106,8 @@
                 </div>
             </div>
             <div class="col-4 section-card">
-                <div class="section-content" *ngIf="courseStatistic">
-                    <jhi-course-management-statistics [courseId]="course.id" [initialStats]="courseStatistic.activeStudents" [amountOfStudentsInCourse]="course.numberOfStudents">
+                <div class="section-content" *ngIf="courseStatistics">
+                    <jhi-course-management-statistics [courseId]="course.id" [initialStats]="courseStatistics.activeStudents" [amountOfStudentsInCourse]="course.numberOfStudents">
                     </jhi-course-management-statistics>
                 </div>
             </div>

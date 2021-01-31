@@ -13,6 +13,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { CourseManagementOverviewCourseDto } from 'app/course/manage/course-management-overview-course-dto.model';
+import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/course-management-overview-statistics-dto.model';
 
 @Component({
     selector: 'jhi-course',
@@ -26,7 +27,8 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     showOnlyActive = true;
 
     courses: Course[];
-    statistics = new Map<number, CourseManagementOverviewCourseDto>();
+    details = new Map<number, CourseManagementOverviewCourseDto>();
+    statistics = new Map<number, CourseManagementOverviewStatisticsDto>();
     courseSemesters: string[];
     semesterCollapsed: { [key: string]: boolean };
     coursesBySemester: { [key: string]: Course[] };
@@ -99,14 +101,18 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                 }
 
                 // once the important part is loaded we can fetch the statistics
-                this.courseManagementService
-                    .getStatsForManagementOverview(this.courses.map((c) => c.id!))
-                    .subscribe(
-                        (result: HttpResponse<CourseManagementOverviewCourseDto[]>) => {
-                            result.body!.forEach((dto) => (this.statistics[dto.courseId] = dto));
-                        },
-                        (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
-                    );
+                this.courseManagementService.getExercisesForManagementOverview(this.courses.map((c) => c.id!)).subscribe(
+                    (result: HttpResponse<CourseManagementOverviewCourseDto[]>) => {
+                        result.body!.forEach((dto) => (this.details[dto.courseId] = dto));
+                    },
+                    (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
+                );
+                this.courseManagementService.getStatsForManagementOverview(this.courses.map((c) => c.id!)).subscribe(
+                    (result: HttpResponse<CourseManagementOverviewStatisticsDto[]>) => {
+                        result.body!.forEach((dto) => (this.statistics[dto.courseId] = dto));
+                    },
+                    (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
+                );
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res, false),
         );

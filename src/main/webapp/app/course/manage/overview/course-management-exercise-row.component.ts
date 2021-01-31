@@ -1,8 +1,8 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Component, Input, OnChanges } from '@angular/core';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
-import { CourseExerciseStatisticsDTO } from 'app/exercises/shared/exercise/exercise-statistics-dto.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/entities/course-management-overview-exercise-statistics-dto.model';
 
 export enum ExerciseRowType {
     FUTURE = 'future',
@@ -16,10 +16,10 @@ export enum ExerciseRowType {
     templateUrl: './course-management-exercise-row.component.html',
     styleUrls: ['course-management-exercise-row.scss'],
 })
-export class CourseManagementExerciseRowComponent implements OnInit, OnChanges {
+export class CourseManagementExerciseRowComponent implements OnChanges {
     @Input() course: Course;
-    @Input() exercise: Exercise;
-    @Input() statistic: CourseExerciseStatisticsDTO;
+    @Input() details: CourseManagementOverviewExerciseStatisticsDTO;
+    @Input() statistic: CourseManagementOverviewExerciseStatisticsDTO;
     @Input() rowType: ExerciseRowType;
 
     // Expose enums to the template
@@ -69,19 +69,16 @@ export class CourseManagementExerciseRowComponent implements OnInit, OnChanges {
 
     constructor() {}
 
-    ngOnInit() {
-        this.displayTitle = this.exercise.title ?? '';
-        this.isTeamExercise = this.exercise.teamMode ?? false;
-    }
-
     ngOnChanges() {
+        if (this.details) {
+            this.displayTitle = this.details.exerciseTitle ?? '';
+        }
+
         if (!this.statistic) {
             return;
         }
-        this.noOfAssessmentsDoneInPercent =
-            this.statistic.noOfRatedAssessments && this.statistic.noOfRatedAssessments >= 0 && this.statistic.noOfSubmissionsInTime && this.statistic.noOfSubmissionsInTime > 0
-                ? Math.round(((this.statistic.noOfRatedAssessments / this.statistic.noOfSubmissionsInTime) * 1000) / 10)
-                : 0;
+
+        this.isTeamExercise = !!this.statistic.noOfTeamsInCourse;
         this.averageScoreNumerator = Math.round((this.statistic.averageScoreInPercent! * this.statistic.exerciseMaxPoints!) / 100);
     }
 }

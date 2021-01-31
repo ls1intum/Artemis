@@ -788,27 +788,51 @@ public class CourseResource {
      * GET /courses/stats-for-management-overview :
      *
      * @param courseIds course Ids to get the stats for
-     * @param periodIndex period index for the user activity stats
      * @return ResponseEntity with status
      */
-    @GetMapping("/courses/stats-for-management-overview")
+    @GetMapping("/courses/exercises-for-management-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<CourseManagementOverviewCourseDTO>> getExerciseStatsForCourseOverview(@RequestParam("courseIds[]") Long[] courseIds,
-            @RequestParam Integer periodIndex) {
+    public ResponseEntity<List<CourseManagementOverviewCourseDTO>> getExercisesForCourseOverview(@RequestParam("courseIds[]") Long[] courseIds) {
         final User user = userService.getUserWithGroupsAndAuthorities();
         final List<CourseManagementOverviewCourseDTO> courseDTOS = new ArrayList<>();
         for (final var courseId : courseIds) {
-            final Course course = courseService.findOneWithExercises(courseId);
+            final Course course = courseService.findOne(courseId);
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 continue;
             }
 
             final var courseDTO = new CourseManagementOverviewCourseDTO();
             courseDTO.setCourseId(courseId);
-            courseDTO.setExercises(course.getExercises());
-            final List<Long> exerciseIds = course.getExercises().stream().map(Exercise::getId).distinct().collect(Collectors.toList());
-            courseDTO.setExerciseDTOS(exerciseService.calculateExerciseStatistics(exerciseIds));
-            courseDTO.setActiveStudents(courseService.getCourseStatistics(courseId, periodIndex));
+            courseDTO.setExerciseDTOS(exerciseService.getExercisesForCourseManagementOverview(courseId));
+            courseDTOS.add(courseDTO);
+        }
+
+        return ResponseEntity.ok(courseDTOS);
+    }
+
+    /**
+     * GET /courses/stats-for-management-overview :
+     *
+     * @param courseIds course Ids to get the stats for
+     * @return ResponseEntity with status
+     */
+    @GetMapping("/courses/stats-for-management-overview")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<CourseManagementOverviewStatisticsDTO>> getExerciseStatsForCourseOverview(@RequestParam("courseIds[]") Long[] courseIds) {
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        final List<CourseManagementOverviewStatisticsDTO> courseDTOS = new ArrayList<>();
+        for (final var courseId : courseIds) {
+            final Course course = courseService.findOne(courseId);
+            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+                continue;
+            }
+
+            final var courseDTO = new CourseManagementOverviewStatisticsDTO();
+            courseDTO.setCourseId(courseId);
+            var studentsGroup = courseService.findStudentGroupName(courseId);
+            var amountOfStudentsInCourse = Math.toIntExact(userService.countUserInGroup(studentsGroup));
+            courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
+            courseDTO.setActiveStudents(courseService.getActiveStudents(courseId));
             courseDTOS.add(courseDTO);
         }
 

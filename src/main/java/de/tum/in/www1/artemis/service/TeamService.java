@@ -95,8 +95,8 @@ public class TeamService {
      * @param exercise Exercise for which to return the team amount
      * @return The amount of teams as Integer
      */
-    public Integer getAmountByExerciseId(Exercise exercise) {
-        return teamRepository.getAmountByExerciseId(exercise.getId());
+    public Integer getAmountByExerciseId(Long exerciseId) {
+        return teamRepository.getAmountByExerciseId(exerciseId);
     }
 
     /**

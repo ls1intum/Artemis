@@ -22,6 +22,7 @@ import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { CourseManagementOverviewCourseDto } from './course-management-overview-course-dto.model';
+import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/course-management-overview-statistics-dto.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -237,21 +238,25 @@ export class CourseManagementService {
      * @param courseIds - the id of the course
      * @param periodIndex - index of the period to get the active user stats for
      */
-    getStatsForManagementOverview(courseIds: number[]): Observable<HttpResponse<CourseManagementOverviewCourseDto[]>> {
+    getExercisesForManagementOverview(courseIds: number[]): Observable<HttpResponse<CourseManagementOverviewCourseDto[]>> {
         let httpParams = new HttpParams();
         courseIds.forEach((id) => {
             httpParams = httpParams.append('courseIds[]', id.toString());
         });
-        return this.http
-            .get<CourseManagementOverviewCourseDto[]>(`${this.resourceUrl}/stats-for-management-overview`, { params: httpParams, observe: 'response' })
-            .pipe(map((res: HttpResponse<CourseManagementOverviewCourseDto[]>) => {
-                if (res.body) {
-                    res.body.forEach((b) => {
-                        this.exerciseService.convertExercisesDateFromServer(b.exercises);
-                    });
-                }
-                return res;
-            }));
+        return this.http.get<CourseManagementOverviewCourseDto[]>(`${this.resourceUrl}/exercises-for-management-overview`, { params: httpParams, observe: 'response' });
+    }
+
+    /**
+     * returns the stats of the course with the provided unique identifier for the courses management dashboard
+     * @param courseIds - the id of the course
+     * @param periodIndex - index of the period to get the active user stats for
+     */
+    getStatsForManagementOverview(courseIds: number[]): Observable<HttpResponse<CourseManagementOverviewStatisticsDto[]>> {
+        let httpParams = new HttpParams();
+        courseIds.forEach((id) => {
+            httpParams = httpParams.append('courseIds[]', id.toString());
+        });
+        return this.http.get<CourseManagementOverviewStatisticsDto[]>(`${this.resourceUrl}/stats-for-management-overview`, { params: httpParams, observe: 'response' });
     }
 
     /**

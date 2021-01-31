@@ -16,14 +16,6 @@ public class CourseExerciseStatisticsDTO {
 
     private Double participationRateInPercent;
 
-    private Integer noOfStudentsInCourse;
-
-    private Integer noOfTeamsInCourse;
-
-    private Long noOfRatedAssessments;
-
-    private Long noOfSubmissionsInTime;
-
     public Long getExerciseId() {
         return exerciseId;
     }
@@ -78,37 +70,5 @@ public class CourseExerciseStatisticsDTO {
 
     public void setParticipationRateInPercent(Double participationRateInPercent) {
         this.participationRateInPercent = participationRateInPercent;
-    }
-
-    public Integer getNoOfStudentsInCourse() {
-        return noOfStudentsInCourse;
-    }
-
-    public void setNoOfStudentsInCourse(Integer noOfStudentsInCourse) {
-        this.noOfStudentsInCourse = noOfStudentsInCourse;
-    }
-
-    public Integer getNoOfTeamsInCourse() {
-        return noOfTeamsInCourse;
-    }
-
-    public void setNoOfTeamsInCourse(Integer noOfTeamsInCourse) {
-        this.noOfTeamsInCourse = noOfTeamsInCourse;
-    }
-
-    public Long getNoOfRatedAssessments() {
-        return noOfRatedAssessments;
-    }
-
-    public void setNoOfRatedAssessments(Long noOfRatedAssessmentsInTime) {
-        this.noOfRatedAssessments = noOfRatedAssessmentsInTime;
-    }
-
-    public Long getNoOfSubmissionsInTime() {
-        return noOfSubmissionsInTime;
-    }
-
-    public void setNoOfSubmissionsInTime(Long noOfSubmissionsInTime) {
-        this.noOfSubmissionsInTime = noOfSubmissionsInTime;
     }
 }

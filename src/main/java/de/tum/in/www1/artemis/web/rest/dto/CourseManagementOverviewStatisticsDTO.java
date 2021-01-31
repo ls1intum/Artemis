@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
 import java.util.List;
-import java.util.Set;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-
-public class CourseManagementOverviewCourseDTO {
+public class CourseManagementOverviewStatisticsDTO {
     private Long courseId;
+
+    private Integer[] activeStudents;
 
     private List<CourseManagementOverviewExerciseStatisticsDTO> exerciseDTOS;
 
@@ -16,6 +15,14 @@ public class CourseManagementOverviewCourseDTO {
 
     public void setCourseId(Long courseId) {
         this.courseId = courseId;
+    }
+
+    public Integer[] getActiveStudents() {
+        return activeStudents;
+    }
+
+    public void setActiveStudents(Integer[] activeStudents) {
+        this.activeStudents = activeStudents;
     }
 
     public List<CourseManagementOverviewExerciseStatisticsDTO> getExerciseDTOS() {

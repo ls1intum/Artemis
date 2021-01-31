@@ -4,6 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -137,4 +138,49 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
+
+    /**
+     * TODO
+     * @param courseId - course to get the statistics for
+     * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to the exercise and so on)
+     */
+    @Query("""
+            SELECT
+            e.id as id,
+            e.title as title,
+            TYPE(e) as type,
+            e.releaseDate as releaseDate,
+            e.dueDate as dueDate,
+            e.assessmentDueDate as assessmentDueDate,
+            e.mode as mode
+            FROM Exercise e
+            WHERE e.course.id = :courseId
+            """)
+    List<Map<String, Object>> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId);
+
+    /**
+     * TODO
+     * @param courseId - course to get the statistics for
+     * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to the exercise and so on)
+     */
+    @Query("""
+            SELECT
+            e.id as id,
+            e.maxScore as maxPoints,
+            AVG(r.score) as averageScore,
+            COUNT(DISTINCT p.student.id) as participants
+            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            WHERE e.course.id = :courseId
+                AND e.course.studentGroupName member of p.student.groups
+                AND e.course.teachingAssistantGroupName not member of p.student.groups
+                AND e.course.instructorGroupName not member of p.student.groups
+                AND r.score IS NOT NULL
+                AND s.id = (
+                    SELECT max(s2.id)
+                    FROM Submission s2 JOIN s2.results r2
+                    WHERE s2.participation.id = s.participation.id
+                    AND r2.score IS NOT NULL
+                )
+            """)
+    List<Map<String, Object>> getStatisticsForCourseManagementOverview(@Param("courseId") Long courseId);
 }
