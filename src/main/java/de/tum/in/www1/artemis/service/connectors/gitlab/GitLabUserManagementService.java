@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import static org.gitlab4j.api.models.AccessLevel.GUEST;
+import static org.gitlab4j.api.models.AccessLevel.MAINTAINER;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.AccessLevel;
@@ -16,14 +18,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import static org.gitlab4j.api.models.AccessLevel.GUEST;
-import static org.gitlab4j.api.models.AccessLevel.MAINTAINER;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 
 @Service
 @Profile("gitlab")

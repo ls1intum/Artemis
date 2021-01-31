@@ -1,5 +1,32 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
+import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
+
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import javax.validation.constraints.NotNull;
+
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.cache.CacheManager;
+import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.lang.Nullable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
@@ -26,31 +53,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InvalidPasswordException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import io.github.jhipster.security.RandomUtil;
-import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.cache.CacheManager;
-import org.springframework.context.event.EventListener;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-
-import javax.validation.constraints.NotNull;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
 
 /**
  * Service class for managing users.
