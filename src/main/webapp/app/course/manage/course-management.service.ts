@@ -242,7 +242,25 @@ export class CourseManagementService {
         courseIds.forEach((id) => {
             httpParams = httpParams.append('courseIds[]', id.toString());
         });
-        return this.http.get<CourseManagementOverviewCourseDto[]>(`${this.resourceUrl}/exercises-for-management-overview`, { params: httpParams, observe: 'response' });
+        return this.http
+            .get<CourseManagementOverviewCourseDto[]>(`${this.resourceUrl}/exercises-for-management-overview`, { params: httpParams, observe: 'response' })
+            .pipe(
+                map((res: HttpResponse<CourseManagementOverviewCourseDto[]>) => {
+                    if (res.body) {
+                        res.body.forEach((b) => {
+                            if (b.exerciseDetails && b.exerciseDetails.length > 0) {
+                                b.exerciseDetails.forEach((details) => {
+                                    details.assessmentDueDate = details.assessmentDueDate ? moment(details.assessmentDueDate) : undefined;
+                                    details.releaseDate = details.releaseDate ? moment(details.releaseDate) : undefined;
+                                    details.dueDate = details.dueDate ? moment(details.dueDate) : undefined;
+                                });
+                            }
+                        });
+                    }
+
+                    return res;
+                }),
+            );
     }
 
     /**

@@ -7,6 +7,7 @@ import { CourseManagementOverviewCourseDto } from 'app/course/manage/course-mana
 import { ExerciseRowType } from 'app/course/manage/overview/course-management-exercise-row.component';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/entities/course-management-overview-exercise-statistics-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/course-management-overview-statistics-dto.model';
+import { CourseManagementOverviewExerciseDetailsDTO } from 'app/entities/course-management-overview-exercise-details-dto.model';
 
 @Component({
     selector: 'jhi-course-management-card',
@@ -40,27 +41,28 @@ export class CourseManagementCardComponent implements OnChanges {
     ngOnChanges() {
         // Only display once loaded
         if (this.courseStatistics && this.courseStatistics.exerciseStatisticsDTOs) {
+            console.log(this.courseStatistics);
             this.courseStatistics.exerciseStatisticsDTOs.forEach((dto) => (this.statisticsPerExercise[dto.exerciseId!] = dto));
         }
 
         // Only display once loaded
-        if (!this.courseDetails || !this.courseDetails.exerciseDTOS) {
+        if (!this.courseDetails || !this.courseDetails.exerciseDetails) {
             return;
         }
 
-        const exercises = this.courseDetails.exerciseDTOS;
+        const exercises = this.courseDetails.exerciseDetails;
         this.futureExercises = exercises
-            .filter((e) => e.releaseDate && moment(e.releaseDate) > moment() && !(moment(e.releaseDate) > moment().add(7, 'days').endOf('day')))
+            .filter((e) => e.releaseDate && e.releaseDate > moment() && !(e.releaseDate > moment().add(7, 'days').endOf('day')))
             .sort((a, b) => {
-                return moment(a.releaseDate).valueOf() - moment(b.releaseDate).valueOf();
+                return a.releaseDate!.valueOf() - b.releaseDate!.valueOf();
             })
             .slice(0, 5);
-        this.currentExercises = exercises.filter((e) => (!e.releaseDate || moment(e.releaseDate) <= moment()) && (!e.dueDate || moment(e.dueDate) > moment()));
-        this.exercisesInAssessment = exercises.filter((e) => (!e.dueDate || moment(e.dueDate) <= moment()) && e.assessmentDueDate && moment(e.assessmentDueDate) > moment());
+        this.currentExercises = exercises.filter((e) => (!e.releaseDate || e.releaseDate <= moment()) && (!e.dueDate || e.dueDate > moment()));
+        this.exercisesInAssessment = exercises.filter((e) => (!e.dueDate || e.dueDate <= moment()) && e.assessmentDueDate && e.assessmentDueDate > moment());
         this.pastExercises = exercises.filter(
             (e) =>
-                (!e.assessmentDueDate && e.dueDate && moment(e.dueDate) <= moment() && !(moment(e.dueDate) < moment().subtract(7, 'days').startOf('day'))) ||
-                (e.assessmentDueDate && moment(e.assessmentDueDate) <= moment() && !(moment(e.assessmentDueDate) < moment().subtract(7, 'days').startOf('day'))),
+                (!e.assessmentDueDate && e.dueDate && e.dueDate <= moment() && !(e.dueDate < moment().subtract(7, 'days').startOf('day'))) ||
+                (e.assessmentDueDate && e.assessmentDueDate <= moment() && !(e.assessmentDueDate < moment().subtract(7, 'days').startOf('day'))),
         );
     }
 }

@@ -803,7 +803,7 @@ public class CourseResource {
 
             final var courseDTO = new CourseManagementOverviewCourseDTO();
             courseDTO.setCourseId(courseId);
-            courseDTO.setExerciseDTOS(exerciseService.getExercisesForCourseManagementOverview(courseId));
+            courseDTO.setExerciseDetails(exerciseService.getExercisesForCourseManagementOverview(courseId));
             courseDTOS.add(courseDTO);
         }
 

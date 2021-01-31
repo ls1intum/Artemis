@@ -6,7 +6,7 @@ public class CourseManagementOverviewCourseDTO {
 
     private Long courseId;
 
-    private List<CourseManagementOverviewExerciseDetailsDTO> exerciseDTOS;
+    private List<CourseManagementOverviewExerciseDetailsDTO> exerciseDetails;
 
     public Long getCourseId() {
         return courseId;
@@ -16,11 +16,11 @@ public class CourseManagementOverviewCourseDTO {
         this.courseId = courseId;
     }
 
-    public List<CourseManagementOverviewExerciseDetailsDTO> getExerciseDTOS() {
-        return exerciseDTOS;
+    public List<CourseManagementOverviewExerciseDetailsDTO> getExerciseDetails() {
+        return exerciseDetails;
     }
 
-    public void setExerciseDTOS(List<CourseManagementOverviewExerciseDetailsDTO> exerciseDTOS) {
-        this.exerciseDTOS = exerciseDTOS;
+    public void setExerciseDetails(List<CourseManagementOverviewExerciseDetailsDTO> exerciseDetails) {
+        this.exerciseDetails = exerciseDetails;
     }
 }

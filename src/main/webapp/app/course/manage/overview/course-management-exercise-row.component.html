@@ -35,7 +35,7 @@
                             <fa-icon class="calender-icon" [icon]="'calendar-minus'"></fa-icon>
                         </div>
                     </div>
-                    <div *ngIf="details.releaseDate" style="display: block" [ngbTooltip]="details.releaseDate">
+                    <div *ngIf="details.releaseDate" style="display: block" [ngbTooltip]="details.releaseDate | artemisDate">
                         <div class="calender-icon-container">
                             <fa-icon class="calender-icon" [icon]="'calendar-check'"></fa-icon>
                         </div>
@@ -52,7 +52,7 @@
                             <fa-icon class="calender-icon" [icon]="'calendar-minus'"></fa-icon>
                         </div>
                     </div>
-                    <div *ngIf="details.dueDate" [ngbTooltip]="details.dueDate">
+                    <div *ngIf="details.dueDate" [ngbTooltip]="details.dueDate | artemisDate">
                         <div class="calender-icon-container" style="display: block">
                             <fa-icon class="calender-icon" [icon]="'calendar-check'"></fa-icon>
                         </div>
@@ -69,7 +69,7 @@
                             <fa-icon class="calender-icon" [icon]="'calendar-minus'"></fa-icon>
                         </div>
                     </div>
-                    <div *ngIf="details.assessmentDueDate" [ngbTooltip]="details.assessmentDueDate">
+                    <div *ngIf="details.assessmentDueDate" [ngbTooltip]="details.assessmentDueDate | artemisDate">
                         <div class="calender-icon-container" style="display: block">
                             <fa-icon class="calender-icon" [icon]="'calendar-check'"></fa-icon>
                         </div>
