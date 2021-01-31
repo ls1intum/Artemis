@@ -627,8 +627,13 @@ public class CourseService {
     public void cleanupCourse(Long courseId) {
         // Get the course with all exercises
         var course = findOneWithExercisesAndLectures(courseId);
-        // TODO: extend exerciseService.cleanup to clean up all exercise types
-        course.getExercises().forEach(exercise -> exerciseService.cleanup(exercise.getId(), true));
+        course.getExercises().forEach(exercise -> {
+            if (exercise instanceof ProgrammingExercise) {
+                exerciseService.cleanup(exercise.getId(), true);
+            }
+
+            // TODO: extend exerciseService.cleanup to clean up all exercise types
+        });
 
         log.info("The course {} has been cleaned up!", courseId);
     }

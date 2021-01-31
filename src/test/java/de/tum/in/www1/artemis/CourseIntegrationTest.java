@@ -4,6 +4,8 @@ import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREF
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -22,12 +25,15 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UserService;
@@ -36,6 +42,9 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 
 public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @Value("${artemis.course-archives-path}")
+    private String courseArchivesDirPath;
 
     @Autowired
     CourseRepository courseRepo;
@@ -88,6 +97,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Autowired
     ExamRepository examRepo;
 
+    @Autowired
+    ProgrammingExerciseRepository programmingExerciseRepository;
+
     private final int numberOfStudents = 4;
 
     private final int numberOfTutors = 5;
@@ -101,6 +113,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         // Add users that are not in the course
         userRepo.save(ModelFactory.generateActivatedUser("tutor6"));
         userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
+
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
@@ -984,5 +999,113 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     public void testGetLockedSubmissionsForCourseAsStudent() throws Exception {
         List<Submission> lockedSubmissions = request.get("/api/courses/1/lockedSubmissions", HttpStatus.FORBIDDEN, List.class);
         assertThat(lockedSubmissions).as("Locked Submissions is null").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testArchiveCourseAsStudent_forbidden() throws Exception {
+        request.put("/api/courses/" + 1 + "/archive", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testArchiveCourseAsTutor_forbidden() throws Exception {
+        request.put("/api/courses/" + 1 + "/archive", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testDownloadCourseArchiveAsStudent_forbidden() throws Exception {
+        request.get("/api/courses/" + 1 + "/download-archive", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDownloadCourseArchiveAsTutor_forbidden() throws Exception {
+        request.get("/api/courses/" + 1 + "/download-archive", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDownloadCourseArchiveAsInstructor_not_found() throws Exception {
+        // Generate a course that has no archive and assert that an 404 status is thrown
+        Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        course = courseRepo.save(course);
+
+        var downloadedArchive = request.get("/api/courses/" + course.getId() + "/download-archive", HttpStatus.NOT_FOUND, String.class);
+        assertThat(downloadedArchive).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDownloadCourseArchiveAsInstructor() throws Exception {
+
+        // Dummy course archive
+        Path courseArchivePath = Path.of(courseArchivesDirPath, "some-course-archive.zip");
+        if (!Files.exists(courseArchivePath)) {
+            Files.createFile(courseArchivePath);
+        }
+
+        // Generate a course that has an archive
+        Course course = database.createCourse();
+        course.setCourseArchivePath(courseArchivePath.toString());
+        course = courseRepo.save(course);
+
+        var downloadedArchive = request.get("/api/courses/" + course.getId() + "/download-archive", HttpStatus.OK, String.class);
+        assertThat(downloadedArchive).isNotNull();
+
+        Files.delete(courseArchivePath);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCleanupCourseAsStudent_forbidden() throws Exception {
+        request.delete("/api/courses/" + 1 + "/cleanup", HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testCleanupCourseAsTutor_forbidden() throws Exception {
+        request.delete("/api/courses/" + 1 + "/cleanup", HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCleanupCourseAsInstructor_no_Archive() throws Exception {
+        // Generate a course that has an archive
+        Course course = database.createCourse();
+        course.setId(1L);
+        course = courseRepo.save(course);
+
+        request.delete("/api/courses/" + course.getId() + "/cleanup", HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCleanupCourseAsInstructor() throws Exception {
+        // Generate a course that has an archive
+        var course = database.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
+        course.setCourseArchivePath("some-archive-path");
+        courseRepo.save(course);
+
+        var programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+
+        bitbucketRequestMockProvider.mockDeleteRepository(programmingExercise.getProjectKey(), (programmingExercise.getProjectKey()).toLowerCase() + "-student1");
+        bambooRequestMockProvider.mockDeleteBambooBuildPlan((programmingExercise.getProjectKey() + "-student1").toUpperCase());
+        request.delete("/api/courses/" + course.getId() + "/cleanup", HttpStatus.OK);
+
+        course.getExercises().forEach(exercise -> {
+            var exerciseWithParticipations = exerciseRepo.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).get();
+            if (exercise instanceof ProgrammingExercise) {
+                for (StudentParticipation participation : exerciseWithParticipations.getStudentParticipations()) {
+                    ProgrammingExerciseStudentParticipation programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) participation;
+                    assertThat(programmingExerciseParticipation.getBuildPlanId()).as("Build plan id has been removed").isNull();
+                }
+            }
+
+            // TODO: Assert the other exercises after it's implemented
+        });
     }
 }
