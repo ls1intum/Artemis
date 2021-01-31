@@ -1043,7 +1043,7 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
 
-        File zipFile = programmingExerciseExportService.exportStudentRepositories(programmingExercise.getId(), exportedStudentParticipations, repositoryExportOptions);
+        File zipFile = programmingExerciseExportService.exportStudentRepositoriesToZipFile(programmingExercise.getId(), exportedStudentParticipations, repositoryExportOptions);
         if (zipFile == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);

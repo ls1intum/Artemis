@@ -114,7 +114,9 @@ public class ProgrammingExerciseExportService {
         // Export student repositories
         var exportOptions = new RepositoryExportOptionsDTO();
         exportOptions.setHideStudentNameInZippedFolder(false);
-        zipFiles.add(exportStudentRepositories(exercise.getId(), studentParticipations, exportOptions));
+        var studentZipFilePaths = exportStudentRepositories(exercise, studentParticipations, exportOptions).stream().filter(Objects::nonNull).map(Path::toFile)
+                .collect(Collectors.toList());
+        zipFiles.addAll(studentZipFilePaths);
 
         // Export the template, solution, and tests repositories
         zipFiles.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TEMPLATE));
@@ -190,11 +192,32 @@ public class ProgrammingExerciseExportService {
      * @param repositoryExportOptions the options that should be used for the export
      * @return a zip file containing all requested participations
      */
-    public File exportStudentRepositories(long programmingExerciseId, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
+    public File exportStudentRepositoriesToZipFile(long programmingExerciseId, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
             RepositoryExportOptionsDTO repositoryExportOptions) {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .get();
 
+        var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions);
+
+        // delete project root folder
+        final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
+        deleteReposDownloadProjectRootDirectory(programmingExercise, targetPath);
+
+        // Create a zip folder containing the zipped repositories.
+        return createZipWithAllRepositories(programmingExercise, zippedRepos);
+    }
+
+    /**
+     * Zip the participations of programming exercises of a requested list of students separately.
+     *
+     * @param programmingExercise     the programming exercise
+     * @param participations          participations that should be exported
+     * @param repositoryExportOptions the options that should be used for the export
+     * @return List of zip file paths
+     */
+    public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
+            RepositoryExportOptionsDTO repositoryExportOptions) {
+        var programmingExerciseId = programmingExercise.getId();
         if (repositoryExportOptions.isExportAllParticipants()) {
             log.info("Request to export all student or team repositories of programming exercise {} with title '{}'", programmingExerciseId, programmingExercise.getTitle());
         }
@@ -210,13 +233,7 @@ public class ProgrammingExerciseExportService {
                 zippedRepos.add(zippedRepo);
             }
         });
-
-        // delete project root folder
-        final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
-        deleteReposDownloadProjectRootDirectory(programmingExercise, targetPath);
-
-        // Create a zip folder containing the zipped repositories.
-        return createZipWithAllRepositories(programmingExercise, zippedRepos);
+        return zippedRepos;
     }
 
     private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename) {
