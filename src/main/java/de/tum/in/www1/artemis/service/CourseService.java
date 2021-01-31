@@ -77,6 +77,8 @@ public class CourseService {
 
     private final ZipFileService zipFileService;
 
+    private final FileService fileService;
+
     private final WebsocketMessagingService websocketMessagingService;
 
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
@@ -98,6 +100,7 @@ public class CourseService {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
         this.websocketMessagingService = websocketMessagingService;
+        this.fileService = fileService;
     }
 
     @Autowired
@@ -545,6 +548,9 @@ public class CourseService {
         catch (IOException e) {
             log.info("Failed to created a zip file at {}: {}", courseArchivePath, e.getMessage());
             return null;
+        }
+        finally {
+            fileService.scheduleForDirectoryDeletion(courseDirPath, 1);
         }
     }
 
