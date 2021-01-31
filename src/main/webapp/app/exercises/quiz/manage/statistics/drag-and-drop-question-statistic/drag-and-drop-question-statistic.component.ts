@@ -16,7 +16,7 @@ import { blueColor, greenColor, QuestionStatisticComponent } from 'app/exercises
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
     templateUrl: './drag-and-drop-question-statistic.component.html',
-    providers: [QuizStatisticUtil, DragAndDropQuestionUtil, ArtemisMarkdownService],
+    providers: [QuizStatisticUtil, DragAndDropQuestionUtil],
     styleUrls: ['./drag-and-drop-question-statistic.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
