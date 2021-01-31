@@ -51,7 +51,11 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
         }
 
         this.initialStatsReceived = true;
-        this.createLabels();
+
+        for (let i = 0; i < 4; i++) {
+            this.barChartLabels[i] = this.translateService.instant(`overview.${3 - i}_weeks_ago`);
+        }
+
         this.dataForSpanType = this.initialStats;
         this.chartData = [
             {
@@ -64,16 +68,7 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
                 pointHoverBorderColor: 'rgba(53,61,71,1)',
             },
         ];
-        this.createChart();
-    }
 
-    private createLabels() {
-        for (let i = 0; i < 4; i++) {
-            this.barChartLabels[i] = this.translateService.instant(`overview.${3 - i}_weeks_ago`);
-        }
-    }
-
-    private createChart() {
         this.barChartOptions = {
             layout: {
                 padding: {

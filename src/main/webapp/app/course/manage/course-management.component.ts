@@ -100,10 +100,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
 
                 // once the important part is loaded we can fetch the statistics
                 this.courseManagementService
-                    .getStatsForManagementOverview(
-                        this.courses.map((c) => c.id!),
-                        0,
-                    )
+                    .getStatsForManagementOverview(this.courses.map((c) => c.id!))
                     .subscribe(
                         (result: HttpResponse<CourseManagementOverviewCourseDto[]>) => {
                             result.body!.forEach((dto) => (this.statistics[dto.courseId] = dto));

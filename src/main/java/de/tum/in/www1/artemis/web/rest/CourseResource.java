@@ -791,16 +791,16 @@ public class CourseResource {
      * @param periodIndex period index for the user activity stats
      * @return ResponseEntity with status
      */
-    @GetMapping(value = "/courses/stats-for-management-overview")
+    @GetMapping("/courses/stats-for-management-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<CourseManagementOverviewCourseDTO>> getExerciseStatsForCourseOverview(@RequestParam(value = "courseIds[]") Long[] courseIds,
+    public ResponseEntity<List<CourseManagementOverviewCourseDTO>> getExerciseStatsForCourseOverview(@RequestParam("courseIds[]") Long[] courseIds,
             @RequestParam Integer periodIndex) {
         final User user = userService.getUserWithGroupsAndAuthorities();
         final List<CourseManagementOverviewCourseDTO> courseDTOS = new ArrayList<>();
         for (final var courseId : courseIds) {
             final Course course = courseService.findOneWithExercises(courseId);
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-                throw new AccessForbiddenException("You are not allowed to access this resource");
+                continue;
             }
 
             final var courseDTO = new CourseManagementOverviewCourseDTO();

@@ -237,13 +237,21 @@ export class CourseManagementService {
      * @param courseIds - the id of the course
      * @param periodIndex - index of the period to get the active user stats for
      */
-    getStatsForManagementOverview(courseIds: number[], periodIndex: number): Observable<HttpResponse<CourseManagementOverviewCourseDto[]>> {
+    getStatsForManagementOverview(courseIds: number[]): Observable<HttpResponse<CourseManagementOverviewCourseDto[]>> {
         let httpParams = new HttpParams();
-        httpParams = httpParams.append('periodIndex', periodIndex.toString());
         courseIds.forEach((id) => {
             httpParams = httpParams.append('courseIds[]', id.toString());
         });
-        return this.http.get<CourseManagementOverviewCourseDto[]>(`${this.resourceUrl}/stats-for-management-overview`, { params: httpParams, observe: 'response' });
+        return this.http
+            .get<CourseManagementOverviewCourseDto[]>(`${this.resourceUrl}/stats-for-management-overview`, { params: httpParams, observe: 'response' })
+            .pipe(map((res: HttpResponse<CourseManagementOverviewCourseDto[]>) => {
+                if (res.body) {
+                    res.body.forEach((b) => {
+                        this.exerciseService.convertExercisesDateFromServer(b.exercises);
+                    });
+                }
+                return res;
+            }));
     }
 
     /**

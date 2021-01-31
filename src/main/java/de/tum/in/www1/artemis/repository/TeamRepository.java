@@ -20,7 +20,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
 
     List<Team> findAllByExerciseCourseIdAndShortName(@Param("courseId") Long courseId, @Param("shortName") String shortName);
 
-    @Query(value = "select count(distinct team) from Team team where team.exercise.id = :#{#exerciseId}")
+    @Query("select count(distinct team) from Team team where team.exercise.id = :#{#exerciseId}")
     Integer getAmountByExerciseId(@Param("exerciseId") Long exerciseId);
 
     @Query(value = "select distinct team from Team team left join team.students student where team.exercise.course.id = :#{#courseId} and student.id = :#{#userId} order by team.id desc")

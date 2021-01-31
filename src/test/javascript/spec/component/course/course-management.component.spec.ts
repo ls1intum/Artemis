@@ -44,7 +44,7 @@ describe('CourseManagementComponent', () => {
                 MockDirective(JhiSortDirective),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
-                MockDirective(CourseManagementCardComponent),
+                MockComponent(CourseManagementCardComponent),
             ],
             providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
         })
