@@ -9,6 +9,7 @@ import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
+import { ActivatedRoute } from '@angular/router';
 
 describe('ExerciseHint Management Update Component', () => {
     let comp: ExerciseHintUpdateComponent;
@@ -36,6 +37,8 @@ describe('ExerciseHint Management Update Component', () => {
             entity.id = 123;
             spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.exerciseHint = entity;
+            comp.courseId = 1;
+            comp.exerciseId = 2;
             // WHEN
             comp.save();
             tick(); // simulate async
@@ -50,6 +53,8 @@ describe('ExerciseHint Management Update Component', () => {
             const entity = new ExerciseHint();
             spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.exerciseHint = entity;
+            comp.courseId = 1;
+            comp.exerciseId = 2;
             // WHEN
             comp.save();
             tick(); // simulate async

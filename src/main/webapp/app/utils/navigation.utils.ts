@@ -17,13 +17,7 @@ export const navigateBackFromExerciseUpdate = (router: Router, exercise: Exercis
 
     // If an exercise group is set we are in exam mode
     if (exercise.exerciseGroup) {
-        router.navigate([
-            'course-management',
-            exercise.exerciseGroup!.exam!.course!.id!.toString(),
-            'exams',
-            exercise.exerciseGroup!.exam!.id!.toString(),
-            'exercise-groups',
-        ]);
+        router.navigate(['course-management', exercise.exerciseGroup!.exam!.course!.id!.toString(), 'exams', exercise.exerciseGroup!.exam!.id!.toString(), 'exercise-groups']);
         return;
     }
 

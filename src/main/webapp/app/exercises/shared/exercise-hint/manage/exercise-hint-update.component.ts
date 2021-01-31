@@ -101,22 +101,9 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
      */
     previousState() {
         if (this.exerciseHint.id) {
-            navigateBack(this.router, [
-                'course-management',
-                this.courseId.toString(),
-                'exercises',
-                this.exerciseId.toString(),
-                'hints',
-                this.exerciseHint.id!.toString(),
-            ]);
+            navigateBack(this.router, ['course-management', this.courseId.toString(), 'exercises', this.exerciseId.toString(), 'hints', this.exerciseHint.id!.toString()]);
         } else {
-            navigateBack(this.router, [
-                'course-management',
-                this.courseId.toString(),
-                'exercises',
-                this.exerciseId.toString(),
-                'hints',
-            ]);
+            navigateBack(this.router, ['course-management', this.courseId.toString(), 'exercises', this.exerciseId.toString(), 'hints']);
         }
     }
 

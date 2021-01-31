@@ -59,9 +59,9 @@ export class LectureUpdateComponent implements OnInit {
      */
     previousState() {
         if (this.lecture.id) {
-            navigateBack(this.router, ['course-management', this.lecture.course!.id!.toString(), 'lectures', this.lecture.id.toString()])
+            navigateBack(this.router, ['course-management', this.lecture.course!.id!.toString(), 'lectures', this.lecture.id.toString()]);
         } else {
-            navigateBack(this.router, ['course-management', this.lecture.course!.id!.toString(), 'lectures'])
+            navigateBack(this.router, ['course-management', this.lecture.course!.id!.toString(), 'lectures']);
         }
     }
 
