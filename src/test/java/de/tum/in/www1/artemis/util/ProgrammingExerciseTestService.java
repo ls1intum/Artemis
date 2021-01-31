@@ -1,41 +1,5 @@
 package de.tum.in.www1.artemis.util;
 
-import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
-import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.*;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.doReturn;
-
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.diff.DiffEntry;
-import org.eclipse.jgit.lib.ObjectReader;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.treewalk.CanonicalTreeParser;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -59,6 +23,38 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUrl;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.lib.ObjectReader;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
+import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
@@ -816,7 +812,7 @@ public class ProgrammingExerciseTestService {
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamService.save(exercise, team);
 
@@ -849,7 +845,7 @@ public class ProgrammingExerciseTestService {
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamService.save(exercise, team);
 
@@ -903,7 +899,7 @@ public class ProgrammingExerciseTestService {
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamService.save(exercise, team);
 
@@ -941,7 +937,7 @@ public class ProgrammingExerciseTestService {
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamService.save(exercise, team);
 
@@ -962,7 +958,7 @@ public class ProgrammingExerciseTestService {
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamService.save(exercise, team);
 

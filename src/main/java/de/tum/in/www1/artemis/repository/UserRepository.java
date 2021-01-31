@@ -1,12 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
+import de.tum.in.www1.artemis.domain.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -16,7 +10,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.User;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 /**
  * Spring Data JPA repository for the User entity.
@@ -54,9 +53,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select count(*) from User user where :#{#groupName} member of user.groups")
     Long countByGroupsIsContaining(@Param("groupName") String groupName);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     @Query("select user from User user where :#{#groupName} member of user.groups")
-    List<User> findAllInGroup(@Param("groupName") String groupName);
+    List<User> findAllInGroupWithAuthorities(@Param("groupName") String groupName);
 
     /**
      * Searches for users in a group by their login or full name.

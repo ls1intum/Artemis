@@ -1,26 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.security.SecureRandom;
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.validation.constraints.NotNull;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
@@ -43,6 +23,25 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.stereotype.Service;
+
+import javax.validation.constraints.NotNull;
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 
 /**
  * Service Implementation for managing Course.
@@ -1055,14 +1054,17 @@ public class ExamService {
      */
     public void addAllStudentsOfCourseToExam(Long courseId, Long examId) {
         Course course = courseService.findOne(courseId);
-        var users = userService.findAllUsersInGroup(course.getStudentGroupName());
+        var students = userService.getStudents(course);
         var examOpt = examRepository.findWithRegisteredUsersById(examId);
 
         if (examOpt.isPresent()) {
             Exam exam = examOpt.get();
-            users.forEach(user -> {
-                if (!exam.getRegisteredUsers().contains(user)) {
-                    exam.addRegisteredUser(user);
+            students.forEach(student -> {
+                if (!exam.getRegisteredUsers().contains(student) &&
+                    !student.getAuthorities().contains(ADMIN_AUTHORITY) &&
+                    !student.getGroups().contains(course.getInstructorGroupName())
+                ) {
+                    exam.addRegisteredUser(student);
                 }
             });
             examRepository.save(exam);

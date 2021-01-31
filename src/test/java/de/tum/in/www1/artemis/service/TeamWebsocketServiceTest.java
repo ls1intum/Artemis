@@ -1,17 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-
-import java.util.*;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
-
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -22,6 +10,19 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.websocket.dto.TeamAssignmentPayload;
 import de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 
 class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -68,7 +69,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         }
         assertThat(modelingExercise).isNotNull();
         assertThat(textExercise).isNotNull();
-        students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
     }
 
     @AfterEach
