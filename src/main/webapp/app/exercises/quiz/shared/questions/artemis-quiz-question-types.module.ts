@@ -8,9 +8,10 @@ import { DeviceDetectorService } from 'ngx-device-detector';
 import { AngularFittextModule } from 'angular-fittext';
 import { DndModule } from 'ng2-dnd';
 import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, AngularFittextModule, DndModule.forRoot()],
+    imports: [ArtemisSharedModule, AngularFittextModule, DndModule.forRoot(), ArtemisMarkdownModule],
     declarations: [DragItemComponent, DragAndDropQuestionComponent, MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, QuizScoringInfoStudentModalComponent],
     providers: [DeviceDetectorService],
     exports: [DragItemComponent, DragAndDropQuestionComponent, MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent],

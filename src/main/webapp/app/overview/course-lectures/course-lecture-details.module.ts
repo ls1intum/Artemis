@@ -9,6 +9,7 @@ import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-g
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { RouterModule, Routes } from '@angular/router';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 const routes: Routes = [
     {
@@ -37,6 +38,7 @@ const routes: Routes = [
         ArtemisSharedPipesModule,
         ArtemisLectureUnitsModule,
         ArtemisLearningGoalsModule,
+        ArtemisMarkdownModule,
     ],
     declarations: [CourseLectureDetailsComponent],
     exports: [CourseLectureDetailsComponent],
