@@ -77,8 +77,6 @@ public class CourseService {
 
     private final ZipFileService zipFileService;
 
-    private final FileService fileService;
-
     private final WebsocketMessagingService websocketMessagingService;
 
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
@@ -99,7 +97,6 @@ public class CourseService {
         this.learningGoalRepository = learningGoalRepository;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
-        this.fileService = fileService;
         this.websocketMessagingService = websocketMessagingService;
     }
 
@@ -396,6 +393,7 @@ public class CourseService {
     @Async
     public void archiveCourse(Course course) {
         SecurityUtils.setAuthorizationObject();
+
         // Archiving a course is only possible after the course is over
         if (ZonedDateTime.now().isBefore(course.getEndDate())) {
             return;
@@ -403,30 +401,21 @@ public class CourseService {
 
         notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.RUNNING, "Archiving course...");
 
-        // Used to store temporary created zip files for this course.
-        String pathToExportsFolder = "./exports";
-        var courseTempDirPath = Path.of(pathToExportsFolder, course.getShortName());
+        var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        var courseDirPath = Path.of("./exports", courseDirName);
         try {
-            Files.createDirectories(courseTempDirPath);
+            Files.createDirectories(courseDirPath);
         }
         catch (IOException e) {
             log.info("Cannot archive course {} because the temporary directories cannot be created: {}", course.getId(), e.getMessage());
             return;
         }
 
-        // Archive course exercises and exams.
-        List<Path> archivedCourseMaterials = new ArrayList<>();
-        archivedCourseMaterials.add(archiveCourseExercises(course, courseTempDirPath.toString()));
-        archivedCourseMaterials.add(archiveCourseExams(course, courseTempDirPath.toString()));
-        archivedCourseMaterials = archivedCourseMaterials.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        // Archive course exercises and exams
+        archiveCourseExercises(course, courseDirPath.toString());
+        archiveCourseExams(course, courseDirPath.toString());
 
-        // Create a zip file for the course which contains all of the archived materials.
-        var courseArchivePath = createCourseZipFile(course, archivedCourseMaterials);
-        if (courseArchivePath == null) {
-            // Delete the temporary directory of the course and all its files because the process failed.
-            fileService.scheduleForDeletion(courseTempDirPath, 5);
-            return;
-        }
+        var courseArchivePath = createCourseZipFile(courseDirPath);
 
         // Attach the path to the archive to the course and save it in the database
         course.setCourseArchivePath(courseArchivePath.toString());
@@ -437,102 +426,69 @@ public class CourseService {
     }
 
     /**
-     * Archives all exercises that belongs to the course by creating a zip file of all student submissions.
+     * Archives all exercises of the course and adds them into the directory
+     * outputDir/exercises/
      *
-     * @param course       The course to archive Note: the course must have exercises loaded in it
-     * @param zipOutputDir The directory where the zip file will be created
-     * @return The path to the zip file
+     * @param course    The course where the exercises are located
+     * @param outputDir The directory that will be used to store the exercises subdirectory
      */
-    private Path archiveCourseExercises(Course course, String zipOutputDir) {
-        var exportedExercises = archiveExercises(course.getExercises(), zipOutputDir.toString());
-        if (exportedExercises.size() == 0) {
-            log.info("Cannot archive the exercises of course {} because there are no exercises to export.", course.getId());
-            return null;
-        }
-
+    private void archiveCourseExercises(Course course, String outputDir) {
+        Path exercisesDir = Path.of(outputDir, "exercises");
         try {
-            var pathToZippedExercises = Path.of(zipOutputDir, "exercises.zip");
-            zipFileService.createZipFile(pathToZippedExercises, exportedExercises, false);
-            return pathToZippedExercises;
+            Files.createDirectory(exercisesDir);
+            archiveExercises(course.getExercises(), exercisesDir.toString());
         }
         catch (IOException e) {
-            log.info("Failed to archive course exercises {}: {}", course.getId(), e.getMessage());
-            return null;
-        }
-        finally {
-            // Delete the zipped repo files since we don't need those anymore.
-            exportedExercises.forEach(zipFilePath -> fileService.scheduleForDeletion(zipFilePath, 1));
+            log.info("Failed to create course exercise directory {}: {}", exercisesDir, e.getMessage());
         }
     }
 
     /**
-     * Archives all exams that belong to the course by creating a zip file for each exam.
+     * Archives all exams of the course and adds them into the directory
+     * outputDir/exams/
      *
-     * @param course       The course to archive Note: the course must have exercises loaded in it
-     * @param zipOutputDir The directory where the zip file will be created
-     * @return The paths to the zip files
+     * @param course    The course where the exercises are located
+     * @param outputDir The directory that will be used to store the exams
      */
-    private Path archiveCourseExams(Course course, String zipOutputDir) {
-        var exams = findOneWithLecturesAndExams(course.getId()).getExams();
-        var exportedExams = exams.stream().map(exam -> archiveExam(course, exam.getId(), zipOutputDir)).collect(Collectors.toList());
-        if (exportedExams.size() == 0) {
-            log.info("Cannot archive the exams of course {} because there are no exams to export.", course.getId());
-            return null;
-        }
-
+    private void archiveCourseExams(Course course, String outputDir) {
+        Path examsDir = Path.of(outputDir, "exams");
         try {
-            var pathToZippedExams = Path.of(zipOutputDir, "exams.zip");
-            zipFileService.createZipFile(pathToZippedExams, exportedExams, false);
-            return pathToZippedExams;
+            Files.createDirectory(examsDir);
+            var exams = findOneWithLecturesAndExams(course.getId()).getExams();
+            exams.forEach(exam -> archiveExam(exam.getId(), examsDir.toString()));
         }
         catch (IOException e) {
-            log.info("Failed to archive course exercises {}: {}", course.getId(), e.getMessage());
-            return null;
-        }
-        finally {
-            // Delete the zipped repo files since we don't need those anymore.
-            exportedExams.forEach(zipFilePath -> fileService.scheduleForDeletion(zipFilePath, 1));
+            log.info("Failed to create course exams directory {}: {}", examsDir, e.getMessage());
         }
     }
 
     /**
-     * Archives the exam by creating a zip file for each exercise.
+     * Archives an exams adds it into the directory outputDir/examId-examTitle
      *
-     * @param course       The course where the exam belongs to
-     * @param examId       The id of the exam to archive
-     * @param zipOutputDir The directory where the zip file will be created
-     * @return The path to the zip file
+     * @param examId    The id of the exam to archive
+     * @param outputDir The directory that will be used to store the exam
      */
-    private Path archiveExam(Course course, long examId, String zipOutputDir) {
+    private void archiveExam(long examId, String outputDir) {
         var exam = examService.findOneWithExerciseGroupsAndExercises(examId);
-        var exercises = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
-        var exportedExercises = archiveExercises(exercises, zipOutputDir);
-
+        Path examDir = Path.of(outputDir, exam.getId() + "-" + exam.getTitle());
         try {
-            var filename = course.getShortName() + "-" + course.getTitle() + "-" + exam.getTitle() + "-" + exam.getId() + ".zip";
-            var pathToZippedExamise = Path.of(zipOutputDir, filename);
-            zipFileService.createZipFile(pathToZippedExamise, exportedExercises, false);
-            return pathToZippedExamise;
+            Files.createDirectory(examDir);
+            // We retrieve every exercise from each exercise group and flatten the list.
+            var exercises = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
+            archiveExercises(exercises, examDir.toString());
         }
         catch (IOException e) {
-            log.info("Failed to export exam {}: {}", exam.getId(), e.getMessage());
-            return null;
-        }
-        finally {
-            // Delete the zipped repo files since we don't need those anymore.
-            exportedExercises.forEach(zipFilePath -> fileService.scheduleForDeletion(zipFilePath, 1));
+            log.info("Failed to create exam directory {}: {}", examDir, e.getMessage());
         }
     }
 
     /**
      * Archives the exercises by creating a zip file for each exercise.
      *
-     * @param exercises              The exercises to archive
-     * @param dirPathToStoreZipFiles The path to a directory that will be used to store the zipped files.
-     * @return Path to the exercise zip files,
+     * @param exercises The exercises to archive
+     * @param outputDir The path to a directory that will be used to store the zipped files.
      */
-    private List<Path> archiveExercises(Set<Exercise> exercises, String dirPathToStoreZipFiles) {
-        ArrayList<Path> exportedExercises = new ArrayList<>();
+    private void archiveExercises(Set<Exercise> exercises, String outputDir) {
         ArrayList<Long> exercisesThatFailedToExport = new ArrayList<>();
 
         // Used to send websocket message with the progress
@@ -544,14 +500,10 @@ public class CourseService {
 
             if (exercise instanceof ProgrammingExercise) {
                 var programmingParticipations = participations.stream().map(participation -> (ProgrammingExerciseStudentParticipation) participation).collect(Collectors.toList());
-                var exportedExercise = programmingExerciseExportService.archiveProgrammingExercise((ProgrammingExercise) exercise, programmingParticipations,
-                        dirPathToStoreZipFiles);
+                var exportedExercise = programmingExerciseExportService.archiveProgrammingExercise((ProgrammingExercise) exercise, programmingParticipations, outputDir);
 
                 if (exportedExercise == null) {
                     exercisesThatFailedToExport.add(exercise.getId());
-                }
-                else {
-                    exportedExercises.add(exportedExercise);
                 }
             }
 
@@ -570,38 +522,39 @@ public class CourseService {
             log.info("The following exercises couldn't be exported {}", failedExerciseIds);
         }
 
-        return exportedExercises;
     }
 
     /**
-     * Creates the zip file used as the course archive. The zip file zips all files provided
-     * in pathsOfFilesToZip.
+     * Creates a zip file out of all the files and directories inside courseDirPath and saves it to the
+     * course archives directory.
      *
-     * @param course            The course (used for the zip file name)
-     * @param pathsOfFilesToZip The paths to the files that will be zipped
-     * @return The path of the newly created zip file.
+     * @param courseDirPath Directory of the contents to zip
+     * @return The path to the course zip file
      */
-    private Path createCourseZipFile(Course course, List<Path> pathsOfFilesToZip) {
+    private Path createCourseZipFile(Path courseDirPath) {
+        var courseArchivePath = Path.of(courseArchivesDirPath, courseDirPath.getFileName() + ".zip");
         try {
             // Create course archives directory if it doesn't exist
             Files.createDirectories(Path.of(courseArchivesDirPath));
             log.info("Created the course archives directory at {} because it didn't exist.", courseArchivesDirPath);
 
-            // The course archive is stored at /exports/courses/
-            // The filename is : {Course_Short_Name}-{Course_Title}-{Current_Date}-archive.zip
-            var zipFilename = course.getShortName() + "-" + course.getTitle() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "-archive.zip";
-            var pathToCourseZipFile = Path.of(courseArchivesDirPath, zipFilename);
-
-            zipFileService.createZipFile(pathToCourseZipFile, pathsOfFilesToZip, false);
-            log.info("Successfully created a zip file for course {}. The file is located at: {}", course.getId(), pathToCourseZipFile);
-            return pathToCourseZipFile;
+            zipFileService.createZipFileWithFolderContent(courseArchivePath, courseDirPath);
+            log.info("Successfully created a zip file at: {}", courseArchivePath);
+            return courseArchivePath;
         }
         catch (IOException e) {
-            log.info("Failed to created a zip file for course {}: {}", course.getId(), e.getMessage());
+            log.info("Failed to created a zip file at {}: {}", courseArchivePath, e.getMessage());
             return null;
         }
     }
 
+    /***
+     * Sends a message to the archive-course topic notifying the user about the current archiving state
+     *
+     * @param courseId The id of the course that is being archived
+     * @param archiveState The archive state
+     * @param progress Some optional message e.g "50%"
+     */
     private void notifyUserAboutCourseArchiveState(long courseId, CourseArchiveState archiveState, String progress) {
         var topic = "/topic/courses/" + courseId + "/archive-course";
 
