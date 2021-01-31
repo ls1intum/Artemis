@@ -4,9 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseDetailsDTO;
-import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -31,6 +29,8 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseDetailsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -577,13 +577,17 @@ public class ExerciseService {
 
             if (exerciseType == QuizExercise.class) {
                 dto.setExerciseType("quiz");
-            } else if (exerciseType == ProgrammingExercise.class) {
+            }
+            else if (exerciseType == ProgrammingExercise.class) {
                 dto.setExerciseType("programming");
-            } else if (exerciseType == TextExercise.class) {
+            }
+            else if (exerciseType == TextExercise.class) {
                 dto.setExerciseType("text");
-            } else if (exerciseType == ModelingExercise.class) {
+            }
+            else if (exerciseType == ModelingExercise.class) {
                 dto.setExerciseType("modeling");
-            } else if (exerciseType == FileUploadExercise.class) {
+            }
+            else if (exerciseType == FileUploadExercise.class) {
                 dto.setExerciseType("file-upload");
             }
 
@@ -629,7 +633,8 @@ public class ExerciseService {
                 dto.setNoOfTeamsInCourse(teams);
 
                 dto.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : ((double) participations) * 100 / teams);
-            } else {
+            }
+            else {
                 dto.setParticipationRateInPercent(noStudentsInCourse ? 0.0 : ((double) participations) * 100 / amountOfStudentsInCourse);
             }
 
