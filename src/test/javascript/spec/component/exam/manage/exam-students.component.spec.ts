@@ -3,6 +3,7 @@ import { Observable, of } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
+import { MockPipe } from 'ng-mocks/dist/lib/mock-pipe/mock-pipe';
 import { ArtemisTestModule } from '../../../test.module';
 import { ActivatedRoute, convertToParamMap, UrlSegment } from '@angular/router';
 import { Course } from 'app/entities/course.model';
@@ -21,7 +22,7 @@ import { User } from 'app/core/user/user.model';
 import { HttpResponse } from '@angular/common/http';
 import { UserService } from 'app/core/user/user.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -53,6 +54,7 @@ describe('ExamStudentsComponent', () => {
                 MockComponent(AlertComponent),
                 MockDirective(JhiTranslateDirective),
                 MockDirective(DeleteButtonDirective),
+                MockPipe(TranslatePipe),
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },

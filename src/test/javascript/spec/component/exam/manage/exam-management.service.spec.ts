@@ -402,6 +402,6 @@ describe('Exam Management Service Tests', () => {
 
         service.addAllStudentsOfCourseToExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.eq(mockStudents));
 
-        httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/addAllStudentsOfCourse` });
+        httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/register-course-students` });
     });
 });
