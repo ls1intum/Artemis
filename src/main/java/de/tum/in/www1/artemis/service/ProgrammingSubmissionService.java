@@ -657,10 +657,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param submissionId the id of the programming submission
      * @return the locked programming submission
      */
-    public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId) {
+    public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId, int correctionRound) {
         ProgrammingSubmission programmingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
-        var manualResult = lockSubmission(programmingSubmission, 0);
+        var manualResult = lockSubmission(programmingSubmission, correctionRound);
         programmingSubmission = (ProgrammingSubmission) manualResult.getSubmission();
 
         return programmingSubmission;
@@ -697,11 +697,17 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC.equals(submission.getLatestResult().getAssessmentType())) {
             existingResult = submission.getLatestResult();
         }
+        else if (correctionRound == 0 && submission.getLatestResult() == null) {
+            // if the student did not participate in the exam, and therefore has no result for the automatically generated submission
+            existingResult = null;
+        }
         else {
             existingResult = submission.getResultForCorrectionRound(correctionRound - 1);
         }
-
-        List<Feedback> automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+        List<Feedback> automaticFeedbacks = new ArrayList<>();
+        if (existingResult != null) {
+            automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+        }
         // Create a new result (manual result) and try to reuse the existing submission with the latest commit hash
         ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);
@@ -714,7 +720,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
             feedback.setResult(newResult);
         }
         newResult.setFeedbacks(automaticFeedbacks);
-        newResult.setResultString(existingResult.getResultString());
+        if (existingResult != null) {
+            newResult.setResultString(existingResult.getResultString());
+        }
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = newResult.getAssessor();
         newResult = resultRepository.save(newResult);
