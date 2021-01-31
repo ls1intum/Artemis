@@ -417,7 +417,7 @@ public class CourseService {
         // Archive course exercises and exams.
         List<Path> archivedCourseMaterials = new ArrayList<>();
         archivedCourseMaterials.add(archiveCourseExercises(course, courseTempDirPath.toString()));
-        archivedCourseMaterials.addAll(archiveCourseExams(course, courseTempDirPath.toString()));
+        archivedCourseMaterials.add(archiveCourseExams(course, courseTempDirPath.toString()));
         archivedCourseMaterials = archivedCourseMaterials.stream().filter(Objects::nonNull).collect(Collectors.toList());
 
         // Create a zip file for the course which contains all of the archived materials.
@@ -472,25 +472,44 @@ public class CourseService {
      * @param zipOutputDir The directory where the zip file will be created
      * @return The paths to the zip files
      */
-    private List<Path> archiveCourseExams(Course course, String zipOutputDir) {
+    private Path archiveCourseExams(Course course, String zipOutputDir) {
         var exams = findOneWithLecturesAndExams(course.getId()).getExams();
-        return exams.stream().map(exam -> archiveExam(exam.getId(), zipOutputDir)).collect(Collectors.toList());
+        var exportedExams = exams.stream().map(exam -> archiveExam(course, exam.getId(), zipOutputDir)).collect(Collectors.toList());
+        if (exportedExams.size() == 0) {
+            log.info("Cannot archive the exams of course {} because there are no exams to export.", course.getId());
+            return null;
+        }
+
+        try {
+            var pathToZippedExams = Path.of(zipOutputDir, "exams.zip");
+            zipFileService.createZipFile(pathToZippedExams, exportedExams, false);
+            return pathToZippedExams;
+        }
+        catch (IOException e) {
+            log.info("Failed to archive course exercises {}: {}", course.getId(), e.getMessage());
+            return null;
+        }
+        finally {
+            // Delete the zipped repo files since we don't need those anymore.
+            exportedExams.forEach(zipFilePath -> fileService.scheduleForDeletion(zipFilePath, 1));
+        }
     }
 
     /**
      * Archives the exam by creating a zip file for each exercise.
      *
+     * @param course       The course where the exam belongs to
      * @param examId       The id of the exam to archive
      * @param zipOutputDir The directory where the zip file will be created
      * @return The path to the zip file
      */
-    private Path archiveExam(long examId, String zipOutputDir) {
+    private Path archiveExam(Course course, long examId, String zipOutputDir) {
         var exam = examService.findOneWithExerciseGroupsAndExercises(examId);
         var exercises = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
         var exportedExercises = archiveExercises(exercises, zipOutputDir);
 
         try {
-            var filename = exam.getTitle() + "-" + exam.getId() + ".zip";
+            var filename = course.getShortName() + "-" + course.getTitle() + "-" + exam.getTitle() + "-" + exam.getId() + ".zip";
             var pathToZippedExamise = Path.of(zipOutputDir, filename);
             zipFileService.createZipFile(pathToZippedExamise, exportedExercises, false);
             return pathToZippedExamise;

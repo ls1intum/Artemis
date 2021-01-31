@@ -3,6 +3,7 @@
 # ===================================================================
 
 artemis:
+    course-archives-path: ./exports/courses         # a folder in which archived courses are stored.
     repo-clone-path: ./repos/server-integration-test
     repo-download-clone-path: ./repos-download/server-integration-test
     encryption-password: fake-password
