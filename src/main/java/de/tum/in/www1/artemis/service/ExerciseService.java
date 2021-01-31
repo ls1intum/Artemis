@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseDetailsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -561,8 +562,8 @@ public class ExerciseService {
      * @param courseId the id of the course
      * @return An Integer array containing active students for each index
      */
-    public List<CourseManagementOverviewExerciseStatisticsDTO> getExercisesForCourseManagementOverview(Long courseId) {
-        List<CourseManagementOverviewExerciseStatisticsDTO> statisticsDTOS = new ArrayList<>();
+    public List<CourseManagementOverviewExerciseDetailsDTO> getExercisesForCourseManagementOverview(Long courseId) {
+        List<CourseManagementOverviewExerciseDetailsDTO> statisticsDTOS = new ArrayList<>();
         for (var listElement : exerciseRepository.getExercisesForCourseManagementOverview(courseId)) {
             var exerciseId = (Long) listElement.get("id");
             var exerciseType = listElement.get("type");
@@ -570,7 +571,7 @@ public class ExerciseService {
                 continue;
             }
 
-            var dto = new CourseManagementOverviewExerciseStatisticsDTO();
+            var dto = new CourseManagementOverviewExerciseDetailsDTO();
             dto.setExerciseId(exerciseId);
             dto.setExerciseTitle((String) listElement.get("title"));
 
@@ -589,6 +590,7 @@ public class ExerciseService {
             dto.setReleaseDate((ZonedDateTime) listElement.get("releaseDate"));
             dto.setDueDate((ZonedDateTime) listElement.get("dueDate"));
             dto.setAssessmentDueDate((ZonedDateTime) listElement.get("assessmentDueDate"));
+            // TODO: categories
 
             statisticsDTOS.add(dto);
         }
