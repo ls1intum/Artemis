@@ -3,11 +3,11 @@ import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
-import { CourseManagementOverviewCourseDto } from 'app/course/manage/course-management-overview-course-dto.model';
 import { ExerciseRowType } from 'app/course/manage/overview/course-management-exercise-row.component';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/entities/course-management-overview-exercise-statistics-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseDetailsDTO } from 'app/entities/course-management-overview-exercise-details-dto.model';
+import { CourseManagementOverviewCourseDto } from 'app/course/manage/course-management-overview-course-dto.model';
 
 @Component({
     selector: 'jhi-course-management-card',
@@ -40,9 +40,8 @@ export class CourseManagementCardComponent implements OnChanges {
 
     ngOnChanges() {
         // Only display once loaded
-        if (this.courseStatistics && this.courseStatistics.exerciseStatisticsDTOs) {
-            console.log(this.courseStatistics);
-            this.courseStatistics.exerciseStatisticsDTOs.forEach((dto) => (this.statisticsPerExercise[dto.exerciseId!] = dto));
+        if (this.courseStatistics && this.courseStatistics.exerciseDTOS?.length > 0) {
+            this.courseStatistics.exerciseDTOS.forEach((dto) => (this.statisticsPerExercise[dto.exerciseId!] = dto));
         }
 
         // Only display once loaded

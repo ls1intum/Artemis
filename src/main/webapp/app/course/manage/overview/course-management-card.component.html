@@ -35,7 +35,7 @@
     <div class="container flex-container">
         <div class="row">
             <div class="col-md-8 section-card">
-                <div class="section-content" *ngIf="courseDetails">
+                <div class="section-content" *ngIf="courseDetails && courseStatistics">
                     <div *ngIf="futureExercises?.length > 0">
                         <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
                             <fa-icon class="control-icon" [icon]="showFutureExercises ? 'angle-down' : 'angle-up'"></fa-icon>
@@ -47,7 +47,7 @@
                                 [course]="course"
                                 [rowType]="exerciseRowType.FUTURE"
                                 [details]="exercise"
-                                [statistic]="statisticsPerExercise[exercise.id]"
+                                [statistic]="statisticsPerExercise[exercise.exerciseId]"
                             ></jhi-course-management-exercise-row>
                         </div>
                         <div *ngIf="!showFutureExercises" class="collapsed"></div>
@@ -63,7 +63,7 @@
                                 [course]="course"
                                 [rowType]="exerciseRowType.CURRENT"
                                 [details]="exercise"
-                                [statistic]="statisticsPerExercise[exercise.id]"
+                                [statistic]="statisticsPerExercise[exercise.exerciseId]"
                             ></jhi-course-management-exercise-row>
                         </div>
                         <div *ngIf="!showCurrentExercises" class="collapsed"></div>
@@ -79,7 +79,7 @@
                                 [course]="course"
                                 [rowType]="exerciseRowType.ASSESSING"
                                 [details]="exercise"
-                                [statistic]="statisticsPerExercise[exercise.id]"
+                                [statistic]="statisticsPerExercise[exercise.exerciseId]"
                             ></jhi-course-management-exercise-row>
                         </div>
                         <div *ngIf="!showExercisesInAssessment" class="collapsed"></div>
@@ -95,7 +95,7 @@
                                 [course]="course"
                                 [rowType]="exerciseRowType.PAST"
                                 [details]="exercise"
-                                [statistic]="statisticsPerExercise[exercise.id]"
+                                [statistic]="statisticsPerExercise[exercise.exerciseId]"
                             ></jhi-course-management-exercise-row>
                         </div>
                         <div *ngIf="!showPastExercises" class="collapsed"></div>
