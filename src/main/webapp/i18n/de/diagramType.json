@@ -11,7 +11,8 @@
             "ComponentDiagram": "Komponentendiagram",
             "DeploymentDiagram": "Verteilungsdiagram",
             "PetriNet": "Petri-Netz",
-            "SyntaxTree": "Syntaxbaum"
+            "SyntaxTree": "Syntaxbaum",
+            "Flowchart": "Flussdiagramm"
         }
     }
 }
