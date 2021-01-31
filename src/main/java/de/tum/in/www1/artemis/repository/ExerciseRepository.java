@@ -181,6 +181,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                     WHERE s2.participation.id = s.participation.id
                     AND r2.score IS NOT NULL
                 )
+            GROUP BY e.id
             """)
     List<Map<String, Object>> getStatisticsForCourseManagementOverview(@Param("courseId") Long courseId);
 }

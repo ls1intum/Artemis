@@ -38,11 +38,6 @@ export class CourseManagementCardComponent implements OnChanges {
     exerciseRowType = ExerciseRowType;
 
     ngOnChanges() {
-        console.log('details');
-        console.log(this.courseDetails);
-        console.log('stats');
-        console.log(this.courseStatistics);
-
         // Only display once loaded
         if (this.courseStatistics && this.courseStatistics.exerciseStatisticsDTOs) {
             this.courseStatistics.exerciseStatisticsDTOs.forEach((dto) => (this.statisticsPerExercise[dto.exerciseId!] = dto));
