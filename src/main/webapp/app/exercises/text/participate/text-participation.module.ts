@@ -12,6 +12,7 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 const ENTITY_STATES = [...textEditorRoute];
 
@@ -27,6 +28,7 @@ const ENTITY_STATES = [...textEditorRoute];
         ArtemisTeamModule,
         ArtemisTeamSubmissionSyncModule,
         RatingModule,
+        ArtemisMarkdownModule,
     ],
     declarations: [TextEditorComponent, TextResultComponent],
 })
