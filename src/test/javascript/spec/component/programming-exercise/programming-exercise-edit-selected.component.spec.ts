@@ -57,16 +57,17 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             selectedProgrammingExercises.push(entityTwo);
             comp.selectedProgrammingExercises = selectedProgrammingExercises;
             comp.newProgrammingExercise = newProgrammingExercise;
+            comp.notificationText = 'A Notification Text';
 
-            spyOn(programmingExerciseService, 'update').and.returnValue(of(new HttpResponse({ body: entityOne })));
+            spyOn(programmingExerciseService, 'updateTimeline').and.returnValue(of(new HttpResponse({ body: entityOne })));
 
             // WHEN
             comp.saveAll();
             tick(); // simulate async
 
             // THEN
-            expect(programmingExerciseService.update).toHaveBeenCalledWith(entityOne, {});
-            expect(programmingExerciseService.update).toHaveBeenCalledWith(entityTwo, {});
+            expect(programmingExerciseService.updateTimeline).toHaveBeenCalledWith(entityOne, { notificationText: comp.notificationText });
+            expect(programmingExerciseService.updateTimeline).toHaveBeenCalledWith(entityTwo, { notificationText: comp.notificationText });
             expect(comp.selectedProgrammingExercises[0].dueDate).toEqual(newProgrammingExercise.dueDate);
             expect(comp.selectedProgrammingExercises[1].dueDate).toEqual(newProgrammingExercise.dueDate);
             expect(comp.selectedProgrammingExercises[0].releaseDate).toEqual(newProgrammingExercise.releaseDate);
@@ -87,14 +88,14 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             comp.selectedProgrammingExercises = selectedProgrammingExercises;
             comp.newProgrammingExercise = newProgrammingExercise;
 
-            spyOn(programmingExerciseService, 'update').and.returnValue(Observable.throwError(new HttpErrorResponse({ status: 500 })));
+            spyOn(programmingExerciseService, 'updateTimeline').and.returnValue(Observable.throwError(new HttpErrorResponse({ status: 500 })));
             spyOn(comp, 'closeModal');
             // WHEN
             comp.saveAll();
             tick(); // simulate async
 
             // THEN
-            expect(programmingExerciseService.update).toHaveBeenCalledWith(entityOne, {});
+            expect(programmingExerciseService.updateTimeline).toHaveBeenCalledWith(entityOne, {});
             expect(comp.failureOccurred).toEqual(true);
             expect(comp.isSaving).toEqual(false);
             expect(comp.closeModal).toHaveBeenCalledTimes(0);
