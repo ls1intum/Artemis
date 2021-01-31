@@ -155,7 +155,7 @@ export class ExamManagementService {
      * @return studentDtos of students that were not found in the system
      */
     addAllStudentsOfCourseToExam(courseId: number, examId: number): Observable<HttpResponse<StudentDTO[]>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/addAllStudentsOfCourse`, { observe: 'response' });
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, { observe: 'response' });
     }
     /**
      * Remove a student to the registered users for an exam
