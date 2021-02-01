@@ -72,17 +72,17 @@ public class TextAssessmentQueueService {
      */
     private double calculateInformationGain(TextSubmission textSubmission, Map<TextBlock, Double> smallerClusterMap) {
         var textBlocks = textSubmission.getBlocks();
-        double totalScore = 0.0;
+        double totalPoints = 0.0;
         for (TextBlock textBlock : textBlocks) {
             if (textBlock.isAssessable() || textBlock.getCluster() == null || textBlock.getAddedDistance() == null) {
                 continue;
             }
-            double textBlockScore = textBlock.getAddedDistance();
-            textBlockScore /= textBlock.getCluster().size();
-            textBlockScore += smallerClusterMap.get(textBlock);
-            totalScore += textBlockScore;
+            double textBlockPoints = textBlock.getAddedDistance();
+            textBlockPoints /= textBlock.getCluster().size();
+            textBlockPoints += smallerClusterMap.get(textBlock);
+            totalPoints += textBlockPoints;
         }
-        return totalScore;
+        return totalPoints;
     }
 
     /**

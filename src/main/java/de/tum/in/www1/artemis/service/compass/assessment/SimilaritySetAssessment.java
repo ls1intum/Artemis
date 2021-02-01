@@ -48,7 +48,7 @@ public class SimilaritySetAssessment {
     public void addFeedback(Feedback feedback) {
         feedbackItems.removeIf(existingFeedback -> existingFeedback.getId().equals(feedback.getId()));
         feedbackItems.add(feedback);
-        score = calculateTotalScore(feedbackItems);
+        score = calculateTotalPoints(feedbackItems);
     }
 
     /**
@@ -59,7 +59,7 @@ public class SimilaritySetAssessment {
      * @param feedbackItems the list of feedback elements for which the new score should be calculated
      * @return the score containing points, a collection of feedback text and the confidence
      */
-    private Score calculateTotalScore(Set<Feedback> feedbackItems) {
+    private Score calculateTotalPoints(Set<Feedback> feedbackItems) {
         // counts the amount of feedback elements that have the same credits assigned, i.e. maps "credits -> amount" for every unique credit number
         Map<Double, Integer> creditCount = new HashMap<>();
         // collects the feedback texts of the feedback elements that have the same credits assigned, i.e. maps "credits -> set of feedback text" for every unique credit number

@@ -82,11 +82,12 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
     /**
      * Calculates the total score for programming exercises.
+     *
      * @param result with information about feedback and exercise
-     * @return calculated totalScore
+     * @return calculated totalPoints
      */
-    public Double calculateTotalScore(Result result) {
-        double totalScore = 0.0;
+    public Double calculateTotalPoints(Result result) {
+        double totalPoints = 0.0;
         double scoreAutomaticTests = 0.0;
         ProgrammingExercise programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
         List<Feedback> assessments = result.getFeedbacks();
@@ -94,7 +95,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
         for (Feedback feedback : assessments) {
             if (feedback.getGradingInstruction() != null) {
-                totalScore = gradingCriterionService.computeTotalScore(feedback, totalScore, gradingInstructions);
+                totalPoints = gradingCriterionService.computeTotalPoints(feedback, totalPoints, gradingInstructions);
             }
             else {
                 /*
@@ -105,25 +106,25 @@ public class ProgrammingAssessmentService extends AssessmentService {
                     scoreAutomaticTests += feedback.getCredits();
                 }
                 else {
-                    totalScore += feedback.getCredits();
+                    totalPoints += feedback.getCredits();
                 }
             }
         }
-        /** Calculated score from automatic test feedbacks, is capped to max points + bonus points,
-        * see also see {@link ProgrammingExerciseGradingService#updateScore} */
+        /** Calculated points from automatic test feedbacks, is capped to max points + bonus points,
+         * see also see {@link ProgrammingExerciseGradingService#updateScore} */
         double maxPoints = programmingExercise.getMaxPoints() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
         if (scoreAutomaticTests > maxPoints) {
             scoreAutomaticTests = maxPoints;
         }
-        totalScore += scoreAutomaticTests;
+        totalPoints += scoreAutomaticTests;
         // Make sure to not give negative points
-        if (totalScore < 0) {
-            totalScore = 0;
+        if (totalPoints < 0) {
+            totalPoints = 0;
         }
         // Make sure to not give more than maxPoints
-        if (totalScore > maxPoints) {
-            totalScore = maxPoints;
+        if (totalPoints > maxPoints) {
+            totalPoints = maxPoints;
         }
-        return totalScore;
+        return totalPoints;
     }
 }

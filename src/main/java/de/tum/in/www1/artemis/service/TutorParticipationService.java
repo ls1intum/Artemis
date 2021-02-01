@@ -169,11 +169,11 @@ public class TutorParticipationService {
 
             // Check if the result is the same
             // TODO: at the moment we check only the score +/10%, maybe we want to do something smarter?
-            float instructorScore = calculateTotalScore(existingFeedback);
+            float instructorScore = calculateTotalPoints(existingFeedback);
             float lowerInstructorScore = instructorScore - instructorScore / scoreRangePercentage;
             float higherInstructorScore = instructorScore + instructorScore / scoreRangePercentage;
 
-            float tutorScore = calculateTotalScore(exampleSubmission.getSubmission().getLatestResult().getFeedbacks());
+            float tutorScore = calculateTotalPoints(exampleSubmission.getSubmission().getLatestResult().getFeedbacks());
 
             if (lowerInstructorScore > tutorScore) {
                 throw new BadRequestAlertException("tooLow", ENTITY_NAME, "tooLow");
@@ -243,7 +243,7 @@ public class TutorParticipationService {
         }
     }
 
-    private float calculateTotalScore(List<Feedback> feedbacks) {
+    private float calculateTotalPoints(List<Feedback> feedbacks) {
         return (float) feedbacks.stream().mapToDouble(Feedback::getCredits).sum();
     }
 }

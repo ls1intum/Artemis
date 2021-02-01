@@ -123,23 +123,23 @@ public class Result extends DomainObject {
     /**
      * Sets the resultString attribute
      *
-     * @param totalScore total amount of scored points between 0 and maxPoints
-     * @param maxPoints  maximum score reachable at corresponding exercise
+     * @param totalPoints total amount of scored points between 0 and maxPoints
+     * @param maxPoints   maximum score reachable at corresponding exercise
      */
-    public void setResultString(Double totalScore, Double maxPoints) {
-        resultString = createResultString(totalScore, maxPoints);
+    public void setResultString(Double totalPoints, Double maxPoints) {
+        resultString = createResultString(totalPoints, maxPoints);
     }
 
     /**
      * Builds the resultString attribute
      *
-     * @param totalScore total amount of scored points
-     * @param maxPoints  maximum score reachable at corresponding exercise
+     * @param totalPoints total amount of scored points
+     * @param maxPoints   maximum score reachable at corresponding exercise
      * @return String with result string in this format "2 of 13 points"
      */
-    public String createResultString(Double totalScore, Double maxPoints) {
+    public String createResultString(Double totalPoints, Double maxPoints) {
         DecimalFormat formatter = new DecimalFormat("#.##");
-        return formatter.format(totalScore) + " of " + formatter.format(maxPoints) + " points";
+        return formatter.format(totalPoints) + " of " + formatter.format(maxPoints) + " points";
     }
 
     public ZonedDateTime getCompletionDate() {

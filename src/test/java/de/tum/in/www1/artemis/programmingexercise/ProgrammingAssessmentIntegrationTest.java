@@ -100,7 +100,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         manualResult.rated(true);
 
-        double points = programmingAssessmentService.calculateTotalScore(manualResult);
+        double points = programmingAssessmentService.calculateTotalPoints(manualResult);
         manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxPoints()));
 
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
@@ -385,7 +385,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     private void addAssessmentFeedbackAndCheckScore(List<Feedback> feedbacks, Double pointsAwarded, Long expectedScore) throws Exception {
         feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
         manualResult.setFeedbacks(feedbacks);
-        double points = programmingAssessmentService.calculateTotalScore(manualResult);
+        double points = programmingAssessmentService.calculateTotalPoints(manualResult);
         long score = (long) ((points / programmingExercise.getMaxPoints()) * 100.0);
         manualResult.resultString(manualResult.createResultString(points, programmingExercise.getMaxPoints()));
         manualResult.score(score);
@@ -405,7 +405,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
         manualResult.setFeedbacks(feedbacks);
-        double points = programmingAssessmentService.calculateTotalScore(manualResult);
+        double points = programmingAssessmentService.calculateTotalPoints(manualResult);
         manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxPoints()));
         // As maxScore is 100 points, 1 point is 1%
         manualResult.score((long) points);
@@ -419,7 +419,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         // Check that result is capped to maximum of maxScore + bonus points -> 110
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
-        points = programmingAssessmentService.calculateTotalScore(manualResult);
+        points = programmingAssessmentService.calculateTotalPoints(manualResult);
         manualResult.score((long) points);
         manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxPoints()));
 
@@ -440,7 +440,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.MANUAL).detailText("nice submission 1").text("manual feedback"));
 
         manualResult.setFeedbacks(feedbacks);
-        double points = programmingAssessmentService.calculateTotalScore(manualResult);
+        double points = programmingAssessmentService.calculateTotalPoints(manualResult);
         // As maxScore is 100 points, 1 point is 1%
         manualResult.score((long) points);
         manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxPoints()));
@@ -525,7 +525,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         // Remove feedbacks, change text and score.
         manualResult.setFeedbacks(manualResult.getFeedbacks().subList(0, 1));
-        double points = programmingAssessmentService.calculateTotalScore(manualResult);
+        double points = programmingAssessmentService.calculateTotalPoints(manualResult);
         manualResult.setScore((long) points);
         manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxPoints()));
         manualResult = resultRepository.save(manualResult);

@@ -49,14 +49,15 @@ public class GradingCriterionService {
     }
 
     /**
-     * Calculates the score over all feedback elements that were set using structured grading instructions (SGI)
-     * @param feedback feedback element that was set by SGI
-     * @param inputScore totalScore which is summed up.
+     * Calculates the points over all feedback elements that were set using structured grading instructions (SGI)
+     *
+     * @param feedback            feedback element that was set by SGI
+     * @param inputPoints         totalPoints which is summed up.
      * @param gradingInstructions empty grading instruction Map to collect the used gradingInstructions
      * @return calculated total score from feedback elements set by SGI
      */
-    public double computeTotalScore(Feedback feedback, double inputScore, Map<Long, Integer> gradingInstructions) {
-        double totalScore = inputScore;
+    public double computeTotalPoints(Feedback feedback, double inputPoints, Map<Long, Integer> gradingInstructions) {
+        double totalPoints = inputPoints;
         if (gradingInstructions.get(feedback.getGradingInstruction().getId()) != null) {
             // We Encountered this grading instruction before
             var maxCount = feedback.getGradingInstruction().getUsageCount();
@@ -69,19 +70,19 @@ public class GradingCriterionService {
                 else {
                     // the usageCount limit was not exceeded yet so we add the credit and increase the nrOfEncounters counter
                     gradingInstructions.put(feedback.getGradingInstruction().getId(), encounters + 1);
-                    totalScore += feedback.getGradingInstruction().getCredits();
+                    totalPoints += feedback.getGradingInstruction().getCredits();
                 }
             }
             else {
-                totalScore += feedback.getCredits();
+                totalPoints += feedback.getCredits();
             }
         }
         else {
             // First time encountering the grading instruction
             gradingInstructions.put(feedback.getGradingInstruction().getId(), 1);
-            totalScore += feedback.getCredits();
+            totalPoints += feedback.getCredits();
         }
-        return totalScore;
+        return totalPoints;
     }
 
 }

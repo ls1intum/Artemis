@@ -84,10 +84,10 @@ public class AssessmentService {
 
         result.setCompletionDate(ZonedDateTime.now());
         // Take bonus points into account to achieve a result score > 100%
-        double totalScore = calculateTotalPoints(calculatedScore, maxPoints + bonusPoints);
+        double totalPoints = calculateTotalPoints(calculatedScore, maxPoints + bonusPoints);
         // Set score and resultString according to maxPoints, to establish results with score > 100%
-        result.setScore(totalScore, maxPoints);
-        result.setResultString(totalScore, maxPoints);
+        result.setScore(totalPoints, maxPoints);
+        result.setResultString(totalPoints, maxPoints);
 
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = result.getAssessor();
@@ -126,7 +126,7 @@ public class AssessmentService {
         // Update the result that was complained about with the new feedback
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks(), exercise instanceof ProgrammingExercise);
         if (exercise instanceof ProgrammingExercise) {
-            double points = ((ProgrammingAssessmentService) this).calculateTotalScore(originalResult);
+            double points = ((ProgrammingAssessmentService) this).calculateTotalPoints(originalResult);
             originalResult.setScore(points, exercise.getMaxPoints());
             /*
              * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
@@ -258,8 +258,8 @@ public class AssessmentService {
     }
 
     public double calculateTotalPoints(Double calculatedScore, Double maxPoints) {
-        double totalScore = Math.max(0, calculatedScore);
-        return (maxPoints == null) ? totalScore : Math.min(totalScore, maxPoints);
+        double totalPoints = Math.max(0, calculatedScore);
+        return (maxPoints == null) ? totalPoints : Math.min(totalPoints, maxPoints);
     }
 
     /**
@@ -276,7 +276,7 @@ public class AssessmentService {
 
         for (Feedback feedback : assessments) {
             if (feedback.getGradingInstruction() != null) {
-                totalPoints = gradingCriterionService.computeTotalScore(feedback, totalPoints, gradingInstructions);
+                totalPoints = gradingCriterionService.computeTotalPoints(feedback, totalPoints, gradingInstructions);
             }
             else {
                 // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit
