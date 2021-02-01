@@ -54,8 +54,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     relativeScores = {};
 
     // max score
-    totalMaxScore = 0;
-    totalMaxScores = {};
+    totalMaxPoint = 0;
+    totalMaxPoints = {};
 
     // current max score
     reachableScore = 0;
@@ -285,7 +285,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 }
 
                 groupedExercises[index].relativeScore = this.relativeScores[exercise.type!];
-                groupedExercises[index].totalMaxScore = this.totalMaxScores[exercise.type!];
+                groupedExercises[index].totalMaxScore = this.totalMaxPoints[exercise.type!];
                 groupedExercises[index].currentRelativeScore = this.currentRelativeScores[exercise.type!];
                 groupedExercises[index].reachableScore = this.reachableScores[exercise.type!];
                 groupedExercises[index].absoluteScore = this.absoluteScores[exercise.type!];
@@ -462,8 +462,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         totalMaxScores[ExerciseType.MODELING] = modelingExerciseTotalMaxScore;
         totalMaxScores[ExerciseType.TEXT] = textExerciseTotalMaxScore;
         totalMaxScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalMaxScore;
-        this.totalMaxScores = totalMaxScores;
-        this.totalMaxScore = this.calculateTotalScoreForTheCourse('maxScore');
+        this.totalMaxPoints = totalMaxScores;
+        this.totalMaxPoint = this.calculateTotalScoreForTheCourse('maxScore');
     }
 
     calculateRelativeScores(): void {

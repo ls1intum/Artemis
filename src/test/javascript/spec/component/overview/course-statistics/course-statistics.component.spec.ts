@@ -332,7 +332,7 @@ describe('CourseStatisticsComponent', () => {
         // check that overall course score is adapted accordingly
         expect(comp.totalScore).to.equal(25.5);
         expect(comp.reachableScore).to.equal(46);
-        expect(comp.totalMaxScore).to.equal(70);
+        expect(comp.totalMaxPoint).to.equal(70);
 
         // check that html file displays the correct elements
         let debugElement = fixture.debugElement.query(By.css('#absolute-course-score'));
