@@ -11,7 +11,6 @@ import { cloneDeep } from 'lodash';
     selector: 'jhi-re-evaluate-multiple-choice-question',
     templateUrl: './re-evaluate-multiple-choice-question.component.html',
     styleUrls: ['./re-evaluate-multiple-choice-question.component.scss', '../../../shared/quiz.scss'],
-    providers: [ArtemisMarkdownService],
 })
 export class ReEvaluateMultipleChoiceQuestionComponent {
     @Input()

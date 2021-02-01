@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,11 +34,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.GradingCriterion;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -189,8 +185,9 @@ public class ProgrammingExerciseResource {
      * 2. Check presence and length of course short name
      * 3. Find forbidden patterns in exercise short name
      * 4. Check that the short name doesn't already exist withing course or exam exercises
+     *
      * @param programmingExercise Programming exercise to be validated
-     * @param course Course of the programming exercise
+     * @param course              Course of the programming exercise
      * @return Optional validation error response
      */
     private Optional<ResponseEntity<ProgrammingExercise>> validateCourseAndExerciseShortName(ProgrammingExercise programmingExercise, Course course) {
@@ -225,10 +222,36 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * Validate the general course settings.
+     * 1. Validate the title
+     * 2. Validate the course and programming exercise short name.
+     *
+     * @param programmingExercise Programming exercise to be validated
+     * @param course              Course of the programming exercise
+     * @return Optional validation error response
+     */
+    private Optional<ResponseEntity<ProgrammingExercise>> validateCourseSettings(ProgrammingExercise programmingExercise, Course course) {
+        // Validate exercise title
+        Optional<ResponseEntity<ProgrammingExercise>> optionalTitleValidationError = validateTitle(programmingExercise, course);
+        if (optionalTitleValidationError.isPresent()) {
+            return optionalTitleValidationError;
+        }
+
+        // Validate course and exercise short name
+        Optional<ResponseEntity<ProgrammingExercise>> optionalShortNameValidationError = validateCourseAndExerciseShortName(programmingExercise, course);
+        if (optionalShortNameValidationError.isPresent()) {
+            return optionalShortNameValidationError;
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Validate the programming exercise title.
      * 1. Check presence and length of exercise title
      * 2. Find forbidden patterns in exercise title
+     *
      * @param programmingExercise Programming exercise to be validated
+     * @param course              Course of the programming exercise
      * @return Optional validation error response
      */
     private Optional<ResponseEntity<ProgrammingExercise>> validateTitle(ProgrammingExercise programmingExercise, Course course) {
@@ -253,6 +276,36 @@ public class ProgrammingExerciseResource {
                     .body(null));
         }
 
+        return Optional.empty();
+    }
+
+    /**
+     * Validates general programming exercise settings
+     * 1. Validate score settings
+     * 2. Validates the participation mode
+     * 3. Validates the programming language
+     *
+     * @param programmingExercise exercise to validate
+     * @return Optional validation error response
+     */
+    private Optional<ResponseEntity<ProgrammingExercise>> validateGeneralSettings(ProgrammingExercise programmingExercise) {
+        // Validate score settings
+        Optional<ResponseEntity<ProgrammingExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(programmingExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError;
+        }
+
+        // Check if a participation mode was selected
+        if (!Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(programmingExercise.isAllowOfflineIde())) {
+            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
+                    "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null));
+        }
+
+        // Check if programming language is set
+        if (programmingExercise.getProgrammingLanguage() == null) {
+            return Optional.of(
+                    ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "No programming language was specified", "programmingLanguageNotSet")).body(null));
+        }
         return Optional.empty();
     }
 
@@ -329,25 +382,10 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
 
-        // Check if max score is set
-        if (programmingExercise.getMaxScore() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
-        }
-
-        if (programmingExercise.getBonusPoints() == null) {
-            // make sure the default value is set properly
-            programmingExercise.setBonusPoints(0.0);
-        }
-
-        // Check if a participation mode was selected
-        if (!Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(programmingExercise.isAllowOfflineIde())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                    "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
-        }
-
-        // Check if programming language is set
-        if (programmingExercise.getProgrammingLanguage() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "No programming language was specified", "programmingLanguageNotSet")).body(null);
+        // Validate general programming exercise settings
+        Optional<ResponseEntity<ProgrammingExercise>> optionalGeneralError = validateGeneralSettings(programmingExercise);
+        if (optionalGeneralError.isPresent()) {
+            return optionalGeneralError.get();
         }
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
@@ -395,16 +433,10 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
 
-        // Validate exercise title
-        Optional<ResponseEntity<ProgrammingExercise>> optionalTitleValidationError = validateTitle(programmingExercise, course);
-        if (optionalTitleValidationError.isPresent()) {
-            return optionalTitleValidationError.get();
-        }
-
-        // Validate course and exercise short name
-        Optional<ResponseEntity<ProgrammingExercise>> optionalShortNameValidationError = validateCourseAndExerciseShortName(programmingExercise, course);
-        if (optionalShortNameValidationError.isPresent()) {
-            return optionalShortNameValidationError.get();
+        // Validate course settings
+        Optional<ResponseEntity<ProgrammingExercise>> optionalCourseError = validateCourseSettings(programmingExercise, course);
+        if (optionalCourseError.isPresent()) {
+            return optionalCourseError.get();
         }
 
         // Validate static code analysis settings
@@ -442,7 +474,6 @@ public class ProgrammingExerciseResource {
      * This prevents errors then the actual projects will be generated later on.
      * An error response is returned in case the project does already exist. This will then e.g. stop the generation (or import) of the programming exercise.
      *
-     *
      * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
      * @return an error response in case the project already exists or an empty optional in case it does not exist yet (which means the setup can continue as usual)
      */
@@ -467,21 +498,21 @@ public class ProgrammingExerciseResource {
 
     /**
      * POST /programming-exercises/import: Imports an existing programming exercise into an existing course
-     *
+     * <p>
      * This will import the whole exercise, including all base build plans (template, solution) and repositories
      * (template, solution, test). Referenced entities, s.a. the test cases or the hints will get cloned and assigned
      * a new id. For a concrete list of what gets copied and what not have a look
      * at {@link ProgrammingExerciseImportService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)}
      *
+     * @param sourceExerciseId   The ID of the original exercise which should get imported
+     * @param newExercise        The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @param recreateBuildPlans Option determining whether the build plans should be copied or re-created from scratch
+     * @param updateTemplate     Option determining whether the template files should be updated with the most recent template version
+     * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
+     * (403) if the user is not at least an instructor in the target course.
      * @see ProgrammingExerciseImportService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)
      * @see ProgrammingExerciseImportService#importBuildPlans(ProgrammingExercise, ProgrammingExercise)
      * @see ProgrammingExerciseImportService#importRepositories(ProgrammingExercise, ProgrammingExercise)
-     * @param sourceExerciseId The ID of the original exercise which should get imported
-     * @param newExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
-     * @param recreateBuildPlans Option determining whether the build plans should be copied or re-created from scratch
-     * @param updateTemplate Option determining whether the template files should be updated with the most recent template version
-     * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
-     *         (403) if the user is not at least an instructor in the target course.
      */
     @PostMapping(Endpoints.IMPORT)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -497,25 +528,10 @@ public class ProgrammingExerciseResource {
 
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
-        // Check if max score is set
-        if (newExercise.getMaxScore() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
-        }
-
-        if (newExercise.getBonusPoints() == null) {
-            // make sure the default value is set properly
-            newExercise.setBonusPoints(0.0);
-        }
-
-        // Check if a participation mode is set
-        if (!Boolean.TRUE.equals(newExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(newExercise.isAllowOfflineIde())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                    "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
-        }
-
-        // Check if programming language is set
-        if (newExercise.getProgrammingLanguage() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "No programming language was specified", "programmingLanguageNotSet")).body(null);
+        // Validate general programming exercise settings
+        Optional<ResponseEntity<ProgrammingExercise>> optionalGeneralError = validateGeneralSettings(newExercise);
+        if (optionalGeneralError.isPresent()) {
+            return optionalGeneralError.get();
         }
 
         // Validate static code analysis settings
@@ -531,16 +547,10 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
 
-        // Validate exercise title
-        Optional<ResponseEntity<ProgrammingExercise>> optionalTitleValidationError = validateTitle(newExercise, course);
-        if (optionalTitleValidationError.isPresent()) {
-            return optionalTitleValidationError.get();
-        }
-
-        // Validate course and exercise short name
-        Optional<ResponseEntity<ProgrammingExercise>> optionalShortNameValidationError = validateCourseAndExerciseShortName(newExercise, course);
-        if (optionalShortNameValidationError.isPresent()) {
-            return optionalShortNameValidationError.get();
+        // Validate course settings
+        Optional<ResponseEntity<ProgrammingExercise>> optionalCourseError = validateCourseSettings(newExercise, course);
+        if (optionalCourseError.isPresent()) {
+            return optionalCourseError.get();
         }
 
         final var optionalOriginalProgrammingExercise = programmingExerciseRepository
@@ -613,7 +623,7 @@ public class ProgrammingExerciseResource {
      * PUT /programming-exercises : Updates an existing updatedProgrammingExercise.
      *
      * @param updatedProgrammingExercise the programmingExercise that has been updated on the client
-     * @param notificationText to notify the student group about the update on the programming exercise
+     * @param notificationText           to notify the student group about the update on the programming exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the updated ProgrammingExercise
      * is not valid, or with status 500 (Internal Server Error) if the updated ProgrammingExercise couldn't be saved to the database
      */
@@ -683,11 +693,38 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * PUT /programming-exercises/timeline : Updates the timeline attributes of a given exercise
+     * @param updatedProgrammingExercise containing the changes that have to be saved
+     * @param notificationText an optional text to notify the student group about the update on the programming exercise
+     * @return the ResponseEntity with status 200 (OK) with the updated ProgrammingExercise, or with status 403 (Forbidden)
+     * if the user is not allowed to update the exercise or with 404 (Not Found) if the updated ProgrammingExercise couldn't be found in the database
+     */
+    @PutMapping(Endpoints.TIMELINE)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<ProgrammingExercise> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExercise updatedProgrammingExercise,
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
+        log.debug("REST request to update the timeline of ProgrammingExercise : {}", updatedProgrammingExercise);
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember();
+
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            return forbidden();
+        }
+
+        updatedProgrammingExercise = programmingExerciseService.updateTimeline(updatedProgrammingExercise, notificationText);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
+                .body(updatedProgrammingExercise);
+
+    }
+
+    /**
      * PATCH /programming-exercises-problem: Updates the problem statement of the exercise.
      *
-     * @param exerciseId The ID of the exercise for which to change the problem statement
+     * @param exerciseId              The ID of the exercise for which to change the problem statement
      * @param updatedProblemStatement The new problemStatement
-     * @param notificationText to notify the student group about the updated problemStatement on the programming exercise
+     * @param notificationText        to notify the student group about the updated problemStatement on the programming exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the user does not have permissions to access the programming exercise.
      */
     @PatchMapping(value = Endpoints.PROBLEM)
@@ -834,9 +871,9 @@ public class ProgrammingExerciseResource {
     /**
      * DELETE /programming-exercises/:id : delete the "id" programmingExercise.
      *
-     * @param exerciseId the id of the programmingExercise to delete
+     * @param exerciseId                   the id of the programmingExercise to delete
      * @param deleteStudentReposBuildPlans boolean which states whether the corresponding build plan should be deleted as well
-     * @param deleteBaseReposBuildPlans the ResponseEntity with status 200 (OK)
+     * @param deleteBaseReposBuildPlans    the ResponseEntity with status 200 (OK)
      * @return the ResponseEntity with status 200 (OK) when programming exercise has been successfully deleted or with status 404 (Not Found)
      */
     @DeleteMapping(Endpoints.PROGRAMMING_EXERCISE)
@@ -875,9 +912,9 @@ public class ProgrammingExerciseResource {
      *
      * @param exerciseId of the exercise
      * @return the ResponseEntity with status
-     *              200 (OK) if combine has been successfully executed
-     *              403 (Forbidden) if the user is not admin and course instructor or
-     *              500 (Internal Server Error)
+     * 200 (OK) if combine has been successfully executed
+     * 403 (Forbidden) if the user is not admin and course instructor or
+     * 500 (Internal Server Error)
      */
     @PutMapping(value = Endpoints.COMBINE_COMMITS, produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -909,10 +946,44 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * POST /programming-exercises/:exerciseId/export-instructor-respository/:repositoryType : sends a test, solution or template repository as a zip file
+     * @param exerciseId The id of the programming exercise
+     * @param repositoryType The type of repository to zip and send
+     * @return ResponseEntity with status
+     * @throws IOException if something during the zip process went wrong
+     */
+    @GetMapping(Endpoints.EXPORT_INSTRUCTOR_REPOSITORY)
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<Resource> exportInstructorRepositoryForProgrammingExercise(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType)
+            throws IOException {
+        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
+            return forbidden();
+        }
+
+        long start = System.nanoTime();
+        File zipFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise, repositoryType);
+        if (zipFile == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "There was an error on the server and the zip file could not be created.")).body(null);
+        }
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+
+        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryType.getName(), programmingExercise.getId(),
+                programmingExercise.getTitle(), formatDurationFrom(start));
+
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+    }
+
+    /**
      * POST /programming-exercises/:exerciseId/export-repos-by-participant-identifiers/:participantIdentifiers : sends all submissions from participantIdentifiers as zip
      *
-     * @param exerciseId the id of the exercise to get the repos from
-     * @param participantIdentifiers the identifiers of the participants (student logins or team short names) for whom to zip the submissions, separated by commas
+     * @param exerciseId              the id of the exercise to get the repos from
+     * @param participantIdentifiers  the identifiers of the participants (student logins or team short names) for whom to zip the submissions, separated by commas
      * @param repositoryExportOptions the options that should be used for the export
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
@@ -961,8 +1032,8 @@ public class ProgrammingExerciseResource {
     /**
      * POST /programming-exercises/:exerciseId/export-repos-by-participation-ids/:participationIds : sends all submissions from participation ids as zip
      *
-     * @param exerciseId the id of the exercise to get the repos from
-     * @param participationIds the participationIds seperated via semicolon to get their submissions (used for double blind assessment)
+     * @param exerciseId              the id of the exercise to get the repos from
+     * @param participationIds        the participationIds seperated via semicolon to get their submissions (used for double blind assessment)
      * @param repositoryExportOptions the options that should be used for the export. Export all students is not supported here!
      * @return ResponseEntity with status
      * @throws IOException if submissions can't be zippedRequestBody
@@ -1206,10 +1277,10 @@ public class ProgrammingExerciseResource {
      * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism
      * and returns the generated output as zip file
      *
-     * @param exerciseId The ID of the programming exercise for which the plagiarism check should be
-     *                   executed
+     * @param exerciseId          The ID of the programming exercise for which the plagiarism check should be
+     *                            executed
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
-     * @param minimumScore consider only submissions whose score is greater or equal to this value
+     * @param minimumScore        consider only submissions whose score is greater or equal to this value
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the
      * parameters are invalid
      * @throws ExitException is thrown if JPlag exits unexpectedly
@@ -1323,6 +1394,8 @@ public class ProgrammingExerciseResource {
 
         public static final String PROBLEM = PROGRAMMING_EXERCISE + "/problem-statement";
 
+        public static final String TIMELINE = PROGRAMMING_EXERCISES + "/timeline";
+
         public static final String PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS = PROGRAMMING_EXERCISE + "/with-participations";
 
         public static final String PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION = PROGRAMMING_EXERCISE + "/with-template-and-solution-participation";
@@ -1332,6 +1405,8 @@ public class ProgrammingExerciseResource {
         public static final String EXPORT_SUBMISSIONS_BY_PARTICIPANTS = PROGRAMMING_EXERCISE + "/export-repos-by-participant-identifiers/{participantIdentifiers}";
 
         public static final String EXPORT_SUBMISSIONS_BY_PARTICIPATIONS = PROGRAMMING_EXERCISE + "/export-repos-by-participation-ids/{participationIds}";
+
+        public static final String EXPORT_INSTRUCTOR_REPOSITORY = PROGRAMMING_EXERCISE + "/export-instructor-repository/{repositoryType}";
 
         public static final String GENERATE_TESTS = PROGRAMMING_EXERCISE + "/generate-tests";
 

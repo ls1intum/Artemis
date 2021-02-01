@@ -1,19 +1,27 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ActivatedRoute } from '@angular/router';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Params } from '@angular/router';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
 import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { of } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
+import * as moment from 'moment';
+import { User } from 'app/core/user/user.model';
+import { Team } from 'app/entities/team.model';
+import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -21,16 +29,23 @@ const expect = chai.expect;
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
     let componentFixture: ComponentFixture<ParticipationComponent>;
-    let service: ParticipationService;
+    let participationService: ParticipationService;
+    let exerciseService: ExerciseService;
+    let submissionService: ProgrammingSubmissionService;
+
+    const exercise: Exercise = { numberOfAssessmentsOfCorrectionRounds: [], studentAssignedTeamIdComputed: false, id: 1, secondCorrectionEnabled: true };
+
+    const route = { params: of({ exerciseId: 1 } as Params) } as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule],
             declarations: [ParticipationComponent],
             providers: [
-                { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
+                { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                MockProvider(TranslateService),
             ],
         })
             .overrideTemplate(ParticipationComponent, '')
@@ -38,15 +53,133 @@ describe('ParticipationComponent', () => {
             .then(() => {
                 componentFixture = TestBed.createComponent(ParticipationComponent);
                 component = componentFixture.componentInstance;
-                service = TestBed.inject(ParticipationService);
+                participationService = TestBed.inject(ParticipationService);
+                exerciseService = TestBed.inject(ExerciseService);
+                submissionService = TestBed.inject(ProgrammingSubmissionService);
+                component.exercise = exercise;
             });
+    });
+
+    afterEach(function () {
+        // completely restore all fakes created through the sandbox
+        sinon.restore();
+    });
+
+    it('should initialize for non programming exercise', fakeAsync(() => {
+        const theExercise = { ...exercise, type: ExerciseType.FILE_UPLOAD };
+        sinon.replace(exerciseService, 'find', sinon.fake.returns(of({ body: theExercise })));
+
+        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max' };
+        const participation: StudentParticipation = { id: 1, student };
+        sinon.replace(participationService, 'findAllParticipationsByExercise', sinon.fake.returns(of({ body: [participation] })));
+
+        component.ngOnInit();
+        tick();
+
+        expect(component.isLoading).to.be.false;
+        expect(component.participations.length).to.equal(1);
+        expect(component.participations[0].id).to.equal(participation.id);
+        expect(component.newManualResultAllowed).to.be.false;
+        expect(component.presentationScoreEnabled).to.be.false;
+    }));
+
+    it('should initialize for programming exercise', fakeAsync(() => {
+        const theExercise = { ...exercise, type: ExerciseType.PROGRAMMING };
+        sinon.replace(exerciseService, 'find', sinon.fake.returns(of({ body: theExercise })));
+
+        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max' };
+        const participation: StudentParticipation = { id: 1, student };
+        sinon.replace(participationService, 'findAllParticipationsByExercise', sinon.fake.returns(of({ body: [participation] })));
+
+        const submissionState: ProgrammingSubmissionStateObj = { participationId: participation.id!, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION };
+        sinon.replace(submissionService, 'getSubmissionStateOfExercise', sinon.fake.returns(of(submissionState)));
+
+        component.ngOnInit();
+        tick();
+
+        expect(component.isLoading).to.be.false;
+        expect(component.participations.length).to.equal(1);
+        expect(component.participations[0].id).to.equal(participation.id);
+        expect(component.newManualResultAllowed).to.be.false;
+        expect(component.presentationScoreEnabled).to.be.false;
+        expect(component.exerciseSubmissionState).to.equal(submissionState);
+    }));
+
+    it('should format a dates correctly', () => {
+        expect(component.formatDate(undefined)).to.equal('');
+
+        const momentDate = moment();
+        expect(component.formatDate(momentDate)).to.equal(momentDate.format('MMM DD YYYY, HH:mm:ss'));
+
+        const date = new Date();
+        const momentFromDate = moment(date);
+        expect(component.formatDate(date)).to.equal(momentFromDate.format('MMM DD YYYY, HH:mm:ss'));
+    });
+
+    it('should format student login or team name from participation', () => {
+        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max' };
+        const participation: StudentParticipation = { student };
+        expect(component.searchResultFormatter(participation)).to.equal(`${student.login} (${student.name})`);
+
+        const team: Team = { name: 'Team', shortName: 'T', students: [student] };
+        participation.student = undefined;
+        participation.team = team;
+        expect(component.searchResultFormatter(participation)).to.equal(formatTeamAsSearchResult(team));
+
+        // Returns undefined for no student and no team
+        participation.student = undefined;
+        participation.team = undefined;
+        expect(component.searchResultFormatter(participation)).to.be.undefined;
+    });
+
+    it('should return student login, team short name, or empty from participation', () => {
+        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max' };
+        const team: Team = { name: 'Team', shortName: 'T', students: [student] };
+        const participation: StudentParticipation = { student, team };
+
+        expect(component.searchTextFromParticipation(participation)).to.be.equal(student.login);
+
+        participation.student = undefined;
+        expect(component.searchTextFromParticipation(participation)).to.be.equal(team.shortName);
+
+        participation.team = undefined;
+        expect(component.searchTextFromParticipation(participation)).to.be.empty;
+    });
+
+    it('should filter participation by prop', () => {
+        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max' };
+        const team: Team = { name: 'Team', shortName: 'T', students: [student] };
+        const participation: StudentParticipation = { id: 1, student, team };
+
+        component.participationCriteria.filterProp = component.FilterProp.ALL;
+        expect(component.filterParticipationByProp(participation)).to.be.true;
+
+        // Returns true only if submission count is 0
+        component.participationCriteria.filterProp = component.FilterProp.NO_SUBMISSIONS;
+        expect(component.filterParticipationByProp(participation)).to.be.false;
+        participation.submissionCount = 0;
+        expect(component.filterParticipationByProp(participation)).to.be.true;
+        participation.submissionCount = 1;
+        expect(component.filterParticipationByProp(participation)).to.be.false;
+
+        component.exerciseSubmissionState = {};
+        component.participationCriteria.filterProp = component.FilterProp.FAILED;
+        expect(component.filterParticipationByProp(participation)).to.be.false;
+
+        // Test different submission states
+        Object.values(ProgrammingSubmissionState).forEach((programmingSubmissionState) => {
+            const submissionState: ProgrammingSubmissionStateObj = { participationId: participation.id!, submissionState: programmingSubmissionState };
+            component.exerciseSubmissionState = { 1: submissionState };
+            const expectedBoolean = programmingSubmissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION;
+            expect(component.filterParticipationByProp(participation)).to.equal(expectedBoolean);
+        });
     });
 
     describe('Presentation Score', () => {
         let updateSpy: SinonStub;
 
         beforeEach(() => {
-            updateSpy = stub(service, 'update').returns(of());
+            updateSpy = stub(participationService, 'update').returns(of());
         });
 
         const courseWithPresentationScore = {

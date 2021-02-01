@@ -231,26 +231,26 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void copyRepository_testInternalServerError() throws Exception {
-        programmingExerciseTestService.copyRepository_testInternalServerError();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void copyRepository_testNotCreatedError() throws Exception {
         programmingExerciseTestService.copyRepository_testNotCreatedError();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void copyRepository_testBadRequestError() throws Exception {
-        programmingExerciseTestService.copyRepository_testBadRequestError();
+    public void configureRepository_testBadRequestError() throws Exception {
+        programmingExerciseTestService.configureRepository_testBadRequestError();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void configureRepository_testBadRequestError() throws Exception {
-        programmingExerciseTestService.configureRepository_testBadRequestError();
+    public void exportInstructorRepositories() throws Exception {
+        programmingExerciseTestService.exportInstructorRepositories_shouldReturnFile();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void exportInstructorRepositories_forbidden() throws Exception {
+        programmingExerciseTestService.exportInstructorRepositories_forbidden();
     }
 
     // TODO: add startProgrammingExerciseStudentSubmissionFailedWithBuildlog & copyRepository_testConflictError

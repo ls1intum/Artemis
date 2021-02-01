@@ -7,8 +7,9 @@ import { StudentQuestionRowComponent } from 'app/overview/student-questions/stud
 import { StudentQuestionComponent } from 'app/overview/student-questions/student-question/student-question.component';
 import { StudentQuestionAnswerComponent } from 'app/overview/student-questions/student-question-answer/student-question-answer.component';
 import { StudentVotesComponent } from 'app/overview/student-questions/student-votes/student-votes.component';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { RouterModule, Routes } from '@angular/router';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 const routes: Routes = [
     {
@@ -19,7 +20,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [RouterModule.forChild(routes), ArtemisSharedModule, ArtemisSidePanelModule, ArtemisConfirmIconModule, ArtemisMarkdownEditorModule],
+    imports: [RouterModule.forChild(routes), ArtemisSharedModule, ArtemisSidePanelModule, ArtemisConfirmIconModule, ArtemisMarkdownModule, ArtemisMarkdownEditorModule],
     declarations: [StudentQuestionsComponent, StudentQuestionRowComponent, StudentQuestionComponent, StudentQuestionAnswerComponent, StudentVotesComponent],
     exports: [StudentQuestionsComponent],
 })

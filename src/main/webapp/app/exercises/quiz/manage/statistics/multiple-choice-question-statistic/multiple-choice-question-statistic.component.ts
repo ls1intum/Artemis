@@ -15,7 +15,7 @@ import { blueColor, greenColor, QuestionStatisticComponent, redColor } from 'app
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',
     templateUrl: './multiple-choice-question-statistic.component.html',
-    providers: [QuizStatisticUtil, ArtemisMarkdownService],
+    providers: [QuizStatisticUtil],
 })
 export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticComponent {
     question: MultipleChoiceQuestion;

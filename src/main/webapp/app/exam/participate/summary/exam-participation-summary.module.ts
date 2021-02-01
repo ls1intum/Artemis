@@ -18,6 +18,8 @@ import { ExamInformationComponent } from 'app/exam/participate/information/exam-
 import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
+import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
     imports: [
@@ -31,6 +33,8 @@ import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbo
         ArtemisCoursesModule,
         ArtemisComplaintsModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
+        ArtemisHeaderExercisePageWithDetailsModule,
+        ArtemisMarkdownModule,
     ],
     declarations: [
         ExamParticipationSummaryComponent,

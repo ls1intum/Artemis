@@ -57,10 +57,12 @@ public class StudentExamService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
@@ -70,6 +72,7 @@ public class StudentExamService {
         this.submissionVersionService = submissionVersionService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     @Autowired
@@ -103,11 +106,9 @@ public class StudentExamService {
      * @param userId the id of the user
      * @return the student exam with exercises
      */
-    @NotNull
-    public StudentExam findOneWithExercisesByUserIdAndExamId(Long userId, Long examId) {
+    public Optional<StudentExam> findOneWithExercisesByUserIdAndExamId(Long userId, Long examId) {
         log.debug("Request to get student exam by userId {} and examId {}", userId, examId);
-        return studentExamRepository.findWithExercisesByUserIdAndExamId(userId, examId)
-                .orElseThrow(() -> new EntityNotFoundException("Student exam with for userId \"" + userId + "\" and examId \"" + examId + "\" does not exist"));
+        return studentExamRepository.findWithExercisesByUserIdAndExamId(userId, examId);
     }
 
     /**
@@ -173,6 +174,9 @@ public class StudentExamService {
             // we do not apply the following checks for programming exercises or file upload exercises
             try {
                 saveSubmission(currentUser, existingParticipations, exercise);
+                if (studentExam.isTestRun()) {
+                    participationService.markSubmissionsOfTestRunParticipations(existingParticipations);
+                }
             }
             catch (Exception e) {
                 log.error("saveSubmission threw an exception", e);
@@ -278,9 +282,12 @@ public class StudentExamService {
             final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
-                    // required so that the submission is counted in the assessment dashboard
-                    studentParticipation.findLatestSubmission().get().submitted(true);
-                    submissionService.addResultWithFeedback(studentParticipation, assessor, 0L, "You did not submit your exam");
+                    for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
+                        // required so that the submission is counted in the assessment dashboard
+                        studentParticipation.findLatestSubmission().get().submitted(true);
+                        submissionService.addResultWithFeedbackByCorrectionRound(studentParticipation, assessor, 0L, "You did not submit your exam", correctionRound);
+                    }
+
                 }
             }
         }
@@ -305,9 +312,11 @@ public class StudentExamService {
             final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent() && studentParticipation.findLatestSubmission().get().isEmpty()) {
-                    // required so that the submission is counted in the assessment dashboard
-                    studentParticipation.findLatestSubmission().get().submitted(true);
-                    submissionService.addResultWithFeedback(studentParticipation, assessor, 0L, "Empty submission");
+                    for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
+                        // required so that the submission is counted in the assessment dashboard
+                        studentParticipation.findLatestSubmission().get().submitted(true);
+                        submissionService.addResultWithFeedbackByCorrectionRound(studentParticipation, assessor, 0L, "Empty submission", correctionRound);
+                    }
                 }
             }
         }
@@ -420,12 +429,12 @@ public class StudentExamService {
 
     /**
      * Generates a Student Exam marked as a testRun for the instructor to test the exam as a student would experience it.
-     * Calls {@link StudentExamService#createTestRun and {@link ExamService#setUpTestRunExerciseParticipationsAndSubmissions}}
+     * Calls {@link StudentExamService#generateTestRun and {@link ExamService#setUpTestRunExerciseParticipationsAndSubmissions}}
      * @param testRunConfiguration the configured studentExam
      * @return the created testRun studentExam
      */
-    public StudentExam generateTestRun(StudentExam testRunConfiguration) {
-        StudentExam testRun = createTestRun(testRunConfiguration);
+    public StudentExam createTestRun(StudentExam testRunConfiguration) {
+        StudentExam testRun = generateTestRun(testRunConfiguration);
         setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId());
         return testRun;
     }
@@ -436,7 +445,7 @@ public class StudentExamService {
      * @param testRunConfiguration Contains the exercises and working time for this test run
      * @return The created test run
      */
-    private StudentExam createTestRun(StudentExam testRunConfiguration) {
+    private StudentExam generateTestRun(StudentExam testRunConfiguration) {
         StudentExam testRun = new StudentExam();
         testRun.setExercises(testRunConfiguration.getExercises());
         testRun.setExam(testRunConfiguration.getExam());
@@ -450,17 +459,17 @@ public class StudentExamService {
 
     /**
      * Sets up the participations and submissions for all the exercises of the test run.
-     * Calls {@link ExamService#setUpExerciseParticipationsAndSubmissions} to set up the exercise participations
-     * and {@link ParticipationService#markSubmissionsOfTestRunParticipations} to mark them as test run participations
+     * Calls {@link ExamService#setUpExerciseParticipationsAndSubmissions} to set up the exercise participations.
      *
-     * @param testRunId the id of the TestRun
      */
     private void setUpTestRunExerciseParticipationsAndSubmissions(Long testRunId) {
         StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true)
-                .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist"));
+                .orElseThrow(() -> new EntityNotFoundException("StudentExam with id:" + testRunId + "does not exist"));
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         examService.setUpExerciseParticipationsAndSubmissions(generatedParticipations, testRun);
-        participationService.markSubmissionsOfTestRunParticipations(generatedParticipations);
+        // use the flag test run for all participations of the created test run
+        generatedParticipations.forEach(studentParticipation -> studentParticipation.setTestRun(true));
+        studentParticipationRepository.saveAll(generatedParticipations);
     }
 
     /**
@@ -474,7 +483,7 @@ public class StudentExamService {
 
     /**
      * Deletes a test run.
-     * In case the participation is  not referenced by other test runs, the participation, submission, buildplans and repositories are deleted as well.
+     * In case the participation is not referenced by other test runs, the participation, submission, build plans and repositories are deleted as well.
      * @param testRunId the id of the test run
      * @return the deleted test run
      */
