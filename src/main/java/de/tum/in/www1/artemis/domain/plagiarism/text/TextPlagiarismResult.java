@@ -24,10 +24,10 @@ public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement
     }
 
     public TextPlagiarismResult(JPlagResult result) {
-        this.duration = result.getDuration();
-        this.similarityDistribution = result.getSimilarityDistribution();
-
         this.comparisons = result.getComparisons().stream().map(PlagiarismComparison::fromJPlagComparison).collect(Collectors.toList());
+        this.duration = result.getDuration();
+
+        this.setSimilarityDistribution(result.getSimilarityDistribution());
     }
 
 }
