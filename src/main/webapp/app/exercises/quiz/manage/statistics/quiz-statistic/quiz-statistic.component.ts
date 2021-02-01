@@ -244,7 +244,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
                 result = result + question.points!;
             });
         } else {
-            result = this.quizExercise.maxScore!;
+            result = this.quizExercise.maxPoints!;
         }
         return result;
     }

@@ -298,7 +298,7 @@ export class ResultDetailComponent implements OnInit {
         const exercise = this.result.participation.exercise;
 
         // cap test points
-        const maxPoints = exercise.maxScore!;
+        const maxPoints = exercise.maxPoints!;
         const maxPointsWithBonus = maxPoints + (exercise.bonusPoints || 0);
 
         if (testCaseCredits > maxPointsWithBonus) {

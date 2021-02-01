@@ -166,7 +166,7 @@ describe('QuizExercise Statistic Component', () => {
         it('should return MaxScore be using quizExercise.maxScore', () => {
             // setup
             quizExercise.quizQuestions = undefined;
-            quizExercise.maxScore = 42;
+            quizExercise.maxPoints = 42;
             comp.quizExercise = quizExercise;
 
             // call

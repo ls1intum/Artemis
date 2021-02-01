@@ -59,7 +59,11 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
-    comp.unreferencedFeedback.push({ type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'unreferenced feedback', credits: pointsAwarded });
+    comp.unreferencedFeedback.push({
+        type: FeedbackType.MANUAL_UNREFERENCED,
+        detailText: 'unreferenced feedback',
+        credits: pointsAwarded,
+    });
     comp.validateFeedback();
     expect(comp.manualResult?.score).to.equal(scoreExpected);
 }
@@ -236,7 +240,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         tick(100);
 
-        comp.exercise.maxScore = 10;
+        comp.exercise.maxPoints = 10;
         comp.exercise.bonusPoints = 10;
         comp.automaticFeedback = [];
         comp.referencedFeedback = [];
@@ -255,7 +259,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         tick(100);
 
-        comp.exercise.maxScore = 10;
+        comp.exercise.maxPoints = 10;
         comp.exercise.bonusPoints = 0;
         comp.automaticFeedback = [];
         comp.referencedFeedback = [];
@@ -272,7 +276,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         tick(100);
 
-        comp.exercise.maxScore = 10;
+        comp.exercise.maxPoints = 10;
         comp.exercise.bonusPoints = 0;
         comp.automaticFeedback = [];
         comp.referencedFeedback = [];
@@ -289,7 +293,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         tick(100);
 
-        comp.exercise.maxScore = 10;
+        comp.exercise.maxPoints = 10;
         comp.exercise.bonusPoints = 0;
         comp.automaticFeedback = [];
         comp.referencedFeedback = [];
