@@ -143,7 +143,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         // All users that we already updated
 
         // Update the old instructors of the course
-        final var oldInstructors = userRepository.findAllInGroup(oldInstructorGroup);
+        final var oldInstructors = userRepository.findAllInGroupWithAuthorities(oldInstructorGroup);
         // doUpgrade=false, because these users already are instructors.
         updateOldGroupMembers(exercises, oldInstructors, updatedCourse.getInstructorGroupName(), updatedCourse.getTeachingAssistantGroupName(), GUEST, false);
         final var processedUsers = new HashSet<>(oldInstructors);
