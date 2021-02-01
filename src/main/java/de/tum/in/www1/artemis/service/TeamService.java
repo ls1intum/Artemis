@@ -92,7 +92,7 @@ public class TeamService {
 
     /**
      * Returns the amount of teams for an exercise
-     * @param exercise Exercise for which to return the team amount
+     * @param exerciseId ExerciseId for which to return the team amount
      * @return The amount of teams as Integer
      */
     public Integer getAmountByExerciseId(Long exerciseId) {
