@@ -26,7 +26,7 @@
                 "noAssessment": "Es liegt noch keine Bewertung vor.",
                 "instructions": "Wähle im Editor Elemente aus, um die Bewertung zu filtern.",
                 "element": "Element",
-                "score": "Punkte"
+                "points": "Punkte"
             }
         }
     }

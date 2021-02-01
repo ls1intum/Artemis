@@ -26,7 +26,7 @@
                 "noAssessment": "There is no assessment available yet.",
                 "instructions": "Select elements in the editor to filter the assessment.",
                 "element": "Element",
-                "score": "Score"
+                "points": "Points"
             }
         }
     }
