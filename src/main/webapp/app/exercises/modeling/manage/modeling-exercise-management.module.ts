@@ -7,6 +7,7 @@ import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/m
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
     imports: [
@@ -17,6 +18,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
         ArtemisSharedCommonModule,
         ArtemisSharedComponentModule,
         ArtemisSharedPipesModule,
+        ArtemisMarkdownModule,
     ],
     declarations: [ModelingExerciseImportComponent],
 })

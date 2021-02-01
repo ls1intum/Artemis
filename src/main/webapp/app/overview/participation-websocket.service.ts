@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, of } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
-import { Participation } from '../entities/participation/participation.model';
+import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -29,7 +29,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | undefined>> = new Map<number, BehaviorSubject<Result>>();
     participationObservable?: BehaviorSubject<Participation | undefined>;
     subscribedExercises: Map<number /* ID of exercise */, Set<number> /* IDs of the participations of this exercise */> = new Map<number, Set<number>>();
-    participationSubscriptionTypes: Map<number /* ID of participation */, boolean /* Whether the particiation was subscribed in personal mode */> = new Map<number, boolean>();
+    participationSubscriptionTypes: Map<number /* ID of participation */, boolean /* Whether the participation was subscribed in personal mode */> = new Map<number, boolean>();
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private participationService: ParticipationService) {}
 
@@ -120,9 +120,9 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * Returns the student participation for the given exercise. The participation objects include the exercise data and all results.
      *
      * @param exerciseId ID of the exercise that the participations belong to.
-     * @return the cached student participation for the exercise or null
+     * @return the cached student participation for the exercise or undefined
      */
-    public getParticipationForExercise(exerciseId: number): StudentParticipation | undefined {
+    public getParticipationForExercise(exerciseId: number) {
         const participationsForExercise = [...this.cachedParticipations.values()].filter((participation) => {
             return participation.exercise?.id === exerciseId;
         });
@@ -146,7 +146,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         this.participationSubscriptionTypes.delete(participationId);
 
         // We are only interested if there is a value
-        if (subscriptionTypePersonal !== undefined && subscriptionTypePersonal !== null) {
+        if (subscriptionTypePersonal != undefined) {
             if (subscriptionTypePersonal) {
                 // The subscription was a personal subscription, so it should only be removed if it was the last of it kind
                 const openPersonalSubscriptions = [...this.participationSubscriptionTypes.values()].filter((personal: boolean) => personal).length;
