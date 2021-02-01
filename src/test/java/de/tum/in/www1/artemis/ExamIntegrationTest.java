@@ -1323,7 +1323,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 assertThat(originalExercise.getExerciseGroup().getId()).isEqualTo(entry.getKey());
 
                 assertThat(exerciseResult.title).isEqualTo(originalExercise.getTitle());
-                assertThat(exerciseResult.maxScore).isEqualTo(originalExercise.getMaxPoints());
+                assertThat(exerciseResult.maxPoints).isEqualTo(originalExercise.getMaxPoints());
                 assertThat(exerciseResult.achievedScore).isEqualTo(resultScore);
                 assertEquals(exerciseResult.achievedPoints, originalExercise.getMaxPoints() * resultScore / 100, EPSILON);
             }

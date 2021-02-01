@@ -119,7 +119,7 @@ public class QuizPointStatistic extends QuizStatistic {
      */
     private void changeStatisticBasedOnResult(double score, Boolean rated, int countChange) {
 
-        Double points = (double) Math.round(quiz.getMaxTotalScore() * (score / 100));
+        Double points = (double) Math.round(quiz.getMaxTotalPoints() * (score / 100));
 
         if (Boolean.TRUE.equals(rated)) {
             // change rated participants

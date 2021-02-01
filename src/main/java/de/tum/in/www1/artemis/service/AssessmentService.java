@@ -71,7 +71,7 @@ public class AssessmentService {
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
-        double maxScore = exercise.getMaxPoints();
+        double maxPoints = exercise.getMaxPoints();
         double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
 
         // Exam results and manual results of programming exercises are always to rated
@@ -84,10 +84,10 @@ public class AssessmentService {
 
         result.setCompletionDate(ZonedDateTime.now());
         // Take bonus points into account to achieve a result score > 100%
-        double totalScore = calculateTotalScore(calculatedScore, maxScore + bonusPoints);
+        double totalScore = calculateTotalScore(calculatedScore, maxPoints + bonusPoints);
         // Set score and resultString according to maxScore, to establish results with score > 100%
-        result.setScore(totalScore, maxScore);
-        result.setResultString(totalScore, maxScore);
+        result.setScore(totalScore, maxPoints);
+        result.setResultString(totalScore, maxPoints);
 
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = result.getAssessor();

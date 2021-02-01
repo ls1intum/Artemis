@@ -338,9 +338,9 @@ public class QuizExercise extends Exercise {
      */
     public Long getScoreForSubmission(QuizSubmission quizSubmission) {
         double score = getScoreInPointsForSubmission(quizSubmission);
-        double maxScore = getMaxTotalScore();
+        double maxPoints = getMaxTotalPoints();
         // map the resulting score to the 0 to 100 scale
-        return Math.round(100.0 * score / maxScore);
+        return Math.round(100.0 * score / maxPoints);
     }
 
     /**
@@ -524,26 +524,26 @@ public class QuizExercise extends Exercise {
      * @return the sum of all the quizQuestions' maximum scores
      */
     @JsonIgnore
-    public Double getMaxTotalScore() {
-        double maxScore = 0.0;
+    public Double getMaxTotalPoints() {
+        double maxPoints = 0.0;
         // iterate through all quizQuestions of this quiz and add up the score
         if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
             for (QuizQuestion quizQuestion : getQuizQuestions()) {
-                maxScore += quizQuestion.getScore();
+                maxPoints += quizQuestion.getScore();
             }
         }
-        return maxScore;
+        return maxPoints;
     }
 
     @Override
-    public Double getMaxScore() {
-        // this is a temporary solution for legacy exercises where maxScore was not set
+    public Double getMaxPoints() {
+        // this is a temporary solution for legacy exercises where maxPoints was not set
         Double score = super.getMaxPoints();
         if (score != null) {
             return score;
         }
         else if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
-            return getMaxTotalScore();
+            return getMaxTotalPoints();
         }
         return null;
     }
@@ -558,7 +558,7 @@ public class QuizExercise extends Exercise {
             return;
         }
 
-        double quizScore = getMaxTotalScore();
+        double quizScore = getMaxTotalPoints();
 
         // add new PointCounter
         for (double i = 0.0; i <= quizScore; i++) {  // for variable ScoreSteps change: i++ into: i= i + scoreStep
