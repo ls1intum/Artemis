@@ -41,8 +41,8 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         double maxScore = 7.0;
         result.setFeedbacks(feedbackList);
 
-        Double calculatedScore = assessmentService.calculateTotalScore(feedbackList);
-        double totalScore = assessmentService.calculateTotalScore(calculatedScore, maxScore);
+        Double calculatedScore = assessmentService.calculateTotalPoints(feedbackList);
+        double totalScore = assessmentService.calculateTotalPoints(calculatedScore, maxScore);
         result.setScore(totalScore, maxScore);
         result.setResultString(totalScore, maxScore);
 
@@ -54,8 +54,8 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     public void evaluateFeedback_totalScoreGreaterMaxScore() {
         result.setFeedbacks(feedbackList);
 
-        Double calculatedScore = assessmentService.calculateTotalScore(feedbackList);
-        double totalScore = assessmentService.calculateTotalScore(calculatedScore, 4.0);
+        Double calculatedScore = assessmentService.calculateTotalPoints(feedbackList);
+        double totalScore = assessmentService.calculateTotalPoints(calculatedScore, 4.0);
         result.setScore(totalScore, 4.0);
         result.setResultString(totalScore, 4.0);
 
@@ -74,8 +74,8 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         feedbackList = Arrays.asList(feedback1, feedback2, feedback3);
         result.setFeedbacks(feedbackList);
 
-        Double calculatedScore = assessmentService.calculateTotalScore(feedbackList);
-        double totalScore = assessmentService.calculateTotalScore(calculatedScore, 7.0);
+        Double calculatedScore = assessmentService.calculateTotalPoints(feedbackList);
+        double totalScore = assessmentService.calculateTotalPoints(calculatedScore, 7.0);
         result.setScore(totalScore, 7.0);
         result.setResultString(totalScore, 7.0);
 

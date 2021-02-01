@@ -123,7 +123,7 @@ public class Result extends DomainObject {
     /**
      * Sets the resultString attribute
      *
-     * @param totalScore total amount of scored points between 0 and maxScore
+     * @param totalScore total amount of scored points between 0 and maxPoints
      * @param maxPoints  maximum score reachable at corresponding exercise
      */
     public void setResultString(Double totalScore, Double maxPoints) {

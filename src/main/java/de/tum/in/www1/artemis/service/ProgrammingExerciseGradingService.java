@@ -482,9 +482,9 @@ public class ProgrammingExerciseGradingService {
         }
 
         /*
-         * Cap at the maximum allowed penalty for this exercise (maxStaticCodeAnalysisPenalty is in percent) The max penalty is applied to the maxScore. If no max penalty was
-         * supplied, the value defaults to 100 percent. If for example maxScore is 6, maxBonus is 4 and the penalty is 50 percent, then a student can only loose 3 (0.5 * maxScore)
-         * points due to static code analysis issues.
+         * Cap at the maximum allowed penalty for this exercise (maxStaticCodeAnalysisPenalty is in percent) The max penalty is applied to the maxPoints. If no max penalty was
+         * supplied, the value defaults to 100 percent. If for example maxPoints is 6, maxBonus is 4 and the penalty is 50 percent, then a student can only loose 3 (0.5 *
+         * maxPoints) points due to static code analysis issues.
          */
         final var maxExercisePenaltyPoints = (double) Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(100) / 100.0
                 * programmingExercise.getMaxPoints();
@@ -527,11 +527,11 @@ public class ProgrammingExerciseGradingService {
      * @return The updated result string
      */
     private String updateManualResultString(String resultString, Result result, ProgrammingExercise exercise) {
-        // Calculate different scores for totalScore calculation and add points and maxScore to result string
-        double maxScore = exercise.getMaxPoints();
+        // Calculate different scores for totalScore calculation and add points and maxPoints to result string
+        double maxPoints = exercise.getMaxPoints();
         double points = programmingAssessmentService.calculateTotalScore(result);
-        result.setScore(points, maxScore);
-        return resultString + ", " + result.createResultString(points, maxScore);
+        result.setScore(points, maxPoints);
+        return resultString + ", " + result.createResultString(points, maxPoints);
     }
 
     /**

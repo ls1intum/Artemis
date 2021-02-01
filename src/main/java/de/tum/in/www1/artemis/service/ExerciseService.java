@@ -653,7 +653,7 @@ public class ExerciseService {
 
     /**
      * Validates score settings
-     * 1. The maxScore needs to be greater than 0
+     * 1. The maxPoints needs to be greater than 0
      * 2. If the IncludedInOverallScore enum is either INCLUDED_AS_BONUS or NOT_INCLUDED, no bonus points are allowed
      *
      * @param exercise exercise to validate
@@ -661,10 +661,10 @@ public class ExerciseService {
      * @return Optional validation error response
      */
     public <T extends Exercise> Optional<ResponseEntity<T>> validateScoreSettings(T exercise) {
-        // Check if max score is set
+        // Check if max points is set
         if (exercise.getMaxPoints() == null || exercise.getMaxPoints() == 0) {
             return Optional
-                    .of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score needs to be greater than 0", "maxscoreInvalid")).body(null));
+                    .of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max points needs to be greater than 0", "maxPointsInvalid")).body(null));
         }
 
         // Check IncludedInOverallScore

@@ -84,8 +84,8 @@ public class AssessmentService {
 
         result.setCompletionDate(ZonedDateTime.now());
         // Take bonus points into account to achieve a result score > 100%
-        double totalScore = calculateTotalScore(calculatedScore, maxPoints + bonusPoints);
-        // Set score and resultString according to maxScore, to establish results with score > 100%
+        double totalScore = calculateTotalPoints(calculatedScore, maxPoints + bonusPoints);
+        // Set score and resultString according to maxPoints, to establish results with score > 100%
         result.setScore(totalScore, maxPoints);
         result.setResultString(totalScore, maxPoints);
 
@@ -139,7 +139,7 @@ public class AssessmentService {
             return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).get(); // to eagerly load assessor
         }
         else {
-            Double calculatedScore = calculateTotalScore(originalResult.getFeedbacks());
+            Double calculatedScore = calculateTotalPoints(originalResult.getFeedbacks());
             return submitResult(originalResult, exercise, calculatedScore);
         }
     }
@@ -257,33 +257,33 @@ public class AssessmentService {
         }
     }
 
-    public double calculateTotalScore(Double calculatedScore, Double maxScore) {
+    public double calculateTotalPoints(Double calculatedScore, Double maxPoints) {
         double totalScore = Math.max(0, calculatedScore);
-        return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
+        return (maxPoints == null) ? totalScore : Math.min(totalScore, maxPoints);
     }
 
     /**
-     * Helper function to calculate the total score of a feedback list. It loops through all assessed model elements and sums the credits up.
+     * Helper function to calculate the total points of a feedback list. It loops through all assessed model elements and sums the credits up.
      * The score of an assessment model is not summed up only in the case the usageCount limit is exceeded
      * meaning the structured grading instruction was applied on the assessment model more often than allowed
      *
      * @param assessments the List of Feedback
      * @return the total score
      */
-    public Double calculateTotalScore(List<Feedback> assessments) {
-        double totalScore = 0.0;
+    public Double calculateTotalPoints(List<Feedback> assessments) {
+        double totalPoints = 0.0;
         var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
 
         for (Feedback feedback : assessments) {
             if (feedback.getGradingInstruction() != null) {
-                totalScore = gradingCriterionService.computeTotalScore(feedback, totalScore, gradingInstructions);
+                totalPoints = gradingCriterionService.computeTotalScore(feedback, totalPoints, gradingInstructions);
             }
             else {
                 // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit
-                totalScore += feedback.getCredits();
+                totalPoints += feedback.getCredits();
             }
         }
-        return totalScore;
+        return totalPoints;
     }
 
     /**
@@ -315,7 +315,7 @@ public class AssessmentService {
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
         result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
-        Double calculatedScore = calculateTotalScore(result.getFeedbacks());
+        Double calculatedScore = calculateTotalPoints(result.getFeedbacks());
         result = submitResult(result, exercise, calculatedScore);
         // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system
         ltiService.onNewResult((StudentParticipation) result.getParticipation());

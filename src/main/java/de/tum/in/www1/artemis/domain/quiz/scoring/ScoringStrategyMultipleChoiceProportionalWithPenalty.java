@@ -4,7 +4,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 
 /**
  * Proportional with Penalty means that every correctly selected/unselected answer increases the score by x and every incorrectly selected/unselected answer the score by x where x
- * = maxScore / numberOfAnswerOptions if the result is negative, a score of 0 is given instead
+ * = maxPoints / numberOfAnswerOptions if the result is negative, a score of 0 is given instead
  */
 public class ScoringStrategyMultipleChoiceProportionalWithPenalty implements ScoringStrategy {
 
@@ -40,7 +40,7 @@ public class ScoringStrategyMultipleChoiceProportionalWithPenalty implements Sco
             // every incorrect selection decreases fraction by 1/totalOptions
             double fraction = ((correctSelections / totalOptions) - (incorrectSelections / totalOptions));
 
-            // end result is maxScore * fraction, but at least 0
+            // end result is maxPoints * fraction, but at least 0
             return Math.max(0, quizQuestion.getPoints() * fraction);
         }
         // the submitted answer's type doesn't fit the quizQuestion's type => it cannot be correct
