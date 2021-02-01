@@ -1,34 +1,8 @@
 <div class="card">
     <div class="card-heading text-white" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
         <div class="container container-padding" [routerLink]="['/course-management', course.id]">
-            <div class="row">
-                <div class="col">
-                    <div>
-                        <span>{{ 'artemisApp.course.semester' | translate }}: </span>
-                        <span *ngIf="course.semester">{{ course.semester }}</span>
-                        <span *ngIf="!course.semester">{{ 'global.generic.unset' | translate }}</span>
-                        <br />
-                        <span *ngIf="course.startDate">{{ 'artemisApp.course.startDate' | translate }}: {{ course.startDate | artemisDate }}</span>
-                        <br />
-                        <span *ngIf="course.endDate">{{ 'artemisApp.course.endDate' | translate }}: {{ course.endDate | artemisDate }}</span>
-                    </div>
-                </div>
-                <div class="col">
-                    <h5 class="card-title text-center">{{ course.title }}</h5>
-                    <div class="text-center">{{ course.shortName }}</div>
-                </div>
-                <div class="col">
-                    <div class="header-right">
-                        {{ 'artemisApp.course.onlineCourse.title' | translate }}:
-                        <span *ngIf="course.onlineCourse">{{ 'global.generic.yes' | translate }}</span>
-                        <span *ngIf="!course.onlineCourse">{{ 'global.generic.no' | translate }}</span>
-                        <br />
-                        {{ 'artemisApp.course.presentationScoreEnabled.title' | translate }}:
-                        <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | translate }}</span>
-                        <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | translate }}</span>
-                    </div>
-                </div>
-            </div>
+            <h5 class="card-title text-center">{{ course.title }}</h5>
+            <div class="text-center">{{ course.shortName }}</div>
         </div>
     </div>
 
@@ -100,13 +74,13 @@
                         </div>
                         <div *ngIf="!showPastExercises" class="collapsed"></div>
                     </div>
-                    <div *ngIf="futureExercises?.length + currentExercises?.length + pastExercises?.length == 0">
+                    <div *ngIf="futureExercises?.length + currentExercises?.length + exercisesInAssessment?.length + pastExercises?.length == 0">
                         <h4 class="text-center">{{ 'artemisApp.course.noExercises' | translate }}</h4>
                     </div>
                 </div>
             </div>
-            <div class="col-4 section-card">
-                <div class="section-content" *ngIf="courseStatistics?.activeStudents && course.numberOfStudents">
+            <div class="col-4 section-card align-center">
+                <div class="section-content align-center" *ngIf="courseStatistics?.activeStudents && course.numberOfStudents">
                     <jhi-course-management-statistics [courseId]="course.id" [initialStats]="courseStatistics.activeStudents" [amountOfStudentsInCourse]="course.numberOfStudents">
                     </jhi-course-management-statistics>
                 </div>

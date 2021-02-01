@@ -75,6 +75,11 @@
     .flex-container {
         flex: 1;
     }
+
+    .align-center {
+        display: flex;
+        align-items: center;
+    }
 }
 
 @media screen and (min-width: 2010px) {
