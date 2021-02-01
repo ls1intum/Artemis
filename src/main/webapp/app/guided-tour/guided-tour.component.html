@@ -34,13 +34,13 @@
             </div>
             <div class="tour-block__content">
                 <h5 jhiTranslate="{{ currentTourStep.subHeadlineTranslateKey }}" class="sub-headline" *ngIf="currentTourStep.subHeadlineTranslateKey"></h5>
-                <div [innerHTML]="currentTourStep.contentTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
+                <div [innerHTML]="currentTourStep.contentTranslateKey | translate"></div>
                 <div *ngIf="currentTourStep.hintTranslateKey" class="step-hint">
                     <div class="step-hint__icon">
                         <fa-icon [icon]="'info-circle'"></fa-icon>
                     </div>
                     <div class="step-hint__label">
-                        <div [innerHTML]="currentTourStep.hintTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
+                        <div [innerHTML]="currentTourStep.hintTranslateKey | translate"></div>
                     </div>
                 </div>
                 <div *ngIf="currentTourStep.alreadyExecutedTranslateKey" class="step-hint interaction alert alert-success">
@@ -48,7 +48,7 @@
                         <fa-icon [icon]="'check'"></fa-icon>
                     </div>
                     <div class="step-hint__label">
-                        <div [innerHTML]="currentTourStep.alreadyExecutedTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
+                        <div [innerHTML]="currentTourStep.alreadyExecutedTranslateKey | translate"></div>
                     </div>
                 </div>
                 <div
@@ -93,7 +93,7 @@
                         <fa-icon [icon]="'check'"></fa-icon>
                     </div>
                     <div class="step-hint__label">
-                        <div [innerHTML]="currentTourStep.modelingTask.taskTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
+                        <div [innerHTML]="currentTourStep.modelingTask.taskTranslateKey | translate"></div>
                     </div>
                 </div>
                 <div *ngIf="currentTourStep.imageUrl">

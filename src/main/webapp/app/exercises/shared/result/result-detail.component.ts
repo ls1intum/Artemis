@@ -15,6 +15,7 @@ import { ScoreChartPreset } from 'app/shared/chart/presets/scoreChartPreset';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export enum FeedbackItemType {
     Issue,
@@ -39,7 +40,8 @@ export class FeedbackItem {
     styleUrls: ['./result-detail.scss'],
 })
 export class ResultDetailComponent implements OnInit {
-    BuildLogType = BuildLogType;
+    readonly BuildLogType = BuildLogType;
+    readonly AssessmentType = AssessmentType;
 
     @Input() result: Result;
     // Specify the feedback.text values that should be shown, all other values will not be visible.

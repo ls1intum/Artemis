@@ -21,6 +21,13 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 @Repository
 public interface ResultRepository extends JpaRepository<Result, Long> {
 
+    @Query("""
+                    SELECT r
+                    FROM Result r LEFT JOIN FETCH r.assessor
+                    WHERE r.id = :resultId
+            """)
+    Optional<Result> findByIdWithEagerAssessor(Long resultId);
+
     List<Result> findByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "submission")

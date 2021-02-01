@@ -995,7 +995,7 @@ public class ParticipationService {
      * @return list of participations belonging to course
      */
     public List<StudentParticipation> findByExamIdWithSubmissionRelevantResult(Long examId) {
-        var participations = studentParticipationRepository.findByExamIdWithEagerSubmissionsRatedResults(examId);
+        var participations = studentParticipationRepository.findByExamIdWithEagerSubmissionsRatedResults(examId); // without test run participations
         // filter out the participations of test runs which can only be made by instructors
         participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).collect(Collectors.toList());
         return filterParticipationsWithRelevantResults(participations, true);

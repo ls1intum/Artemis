@@ -30,7 +30,6 @@ import { cloneDeep } from 'lodash';
     templateUrl: './short-answer-question-edit.component.html',
     styleUrls: ['./short-answer-question-edit.component.scss', '../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
-    providers: [ArtemisMarkdownService],
 })
 export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
     @ViewChild('questionEditor', { static: false })

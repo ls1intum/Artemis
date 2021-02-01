@@ -16,6 +16,7 @@ import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOr
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { Result } from 'app/entities/result.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -48,7 +49,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
     @Input() short = false;
-    @Input() result: Result | null;
+    @Input() result?: Result;
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge = false;
     @Input() showTestDetails = false;
@@ -60,7 +61,7 @@ export class ResultComponent implements OnInit, OnChanges {
     resultIconClass: string[];
     resultString: string;
     templateStatus: ResultTemplateStatus;
-    submission: Submission | undefined;
+    submission?: Submission;
 
     resultTooltip: string;
 
@@ -145,7 +146,7 @@ export class ResultComponent implements OnInit, OnChanges {
             this.resultTooltip = this.buildResultTooltip();
         } else {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
-            this.result = null;
+            this.result = undefined;
         }
     }
 
@@ -165,8 +166,8 @@ export class ResultComponent implements OnInit, OnChanges {
             // Based on its submission we test if the participation is in due time of the given exercise.
 
             const inDueTime = isParticipationInDueTime(this.participation, exercise);
-            const dueDate = this.dateAsMoment(exercise.dueDate);
-            const assessmentDueDate = this.dateAsMoment(exercise.assessmentDueDate);
+            const dueDate = ResultComponent.dateAsMoment(exercise.dueDate);
+            const assessmentDueDate = ResultComponent.dateAsMoment(exercise.assessmentDueDate);
 
             if (inDueTime && initializedResultWithScore(this.result)) {
                 // Submission is in due time of exercise and has a result with score
@@ -213,9 +214,9 @@ export class ResultComponent implements OnInit, OnChanges {
         return ResultTemplateStatus.NO_RESULT;
     }
 
-    private dateAsMoment(date: any) {
+    private static dateAsMoment(date: any) {
         if (date == undefined) {
-            return null;
+            return undefined;
         }
         return moment.isMoment(date) ? date : moment(date);
     }
@@ -225,7 +226,8 @@ export class ResultComponent implements OnInit, OnChanges {
      */
     buildResultString() {
         if (this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (this.submission as ProgrammingSubmission).buildFailed) {
-            return this.translate.instant('artemisApp.editor.buildFailed');
+            const isManualResult = this.result?.assessmentType !== AssessmentType.AUTOMATIC;
+            return isManualResult ? this.result!.resultString : this.translate.instant('artemisApp.editor.buildFailed');
             // Only show the 'preliminary' string for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         } else if (
             this.participation &&
@@ -242,11 +244,11 @@ export class ResultComponent implements OnInit, OnChanges {
      * Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
      */
     buildResultTooltip() {
-        if (
-            this.participation &&
-            isProgrammingExerciseStudentParticipation(this.participation) &&
-            isResultPreliminary(this.result!, getExercise(this.participation) as ProgrammingExercise)
-        ) {
+        const programmingExercise = getExercise(this.participation) as ProgrammingExercise;
+        if (this.participation && isProgrammingExerciseStudentParticipation(this.participation) && isResultPreliminary(this.result!, programmingExercise)) {
+            if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC) {
+                return this.translate.instant('artemisApp.result.preliminaryTooltipSemiAutomatic');
+            }
             return this.translate.instant('artemisApp.result.preliminaryTooltip');
         }
     }
@@ -257,10 +259,10 @@ export class ResultComponent implements OnInit, OnChanges {
     getHasFeedback(): boolean {
         if (this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (this.submission as ProgrammingSubmission).buildFailed) {
             return true;
-        } else if (this.result!.hasFeedback === null) {
+        } else if (this.result?.hasFeedback === undefined) {
             return false;
         }
-        return this.result!.hasFeedback === true;
+        return this.result.hasFeedback;
     }
 
     /**

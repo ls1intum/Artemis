@@ -8,6 +8,7 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
+import { ArtemisExerciseAssessmentDashboardModule } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.module';
 
 const ENTITY_STATES = [...assessmentDashboardRoute];
 
@@ -20,6 +21,7 @@ const ENTITY_STATES = [...assessmentDashboardRoute];
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTutorLeaderboardModule,
         ArtemisTutorParticipationGraphModule,
+        ArtemisExerciseAssessmentDashboardModule,
     ],
     declarations: [AssessmentDashboardComponent],
 })

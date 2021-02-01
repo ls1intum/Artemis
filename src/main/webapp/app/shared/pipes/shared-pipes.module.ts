@@ -1,10 +1,8 @@
 import { NgModule } from '@angular/core';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
-import { HtmlForGuidedTourMarkdownPipe } from 'app/shared/pipes/html-for-guided-tour-markdown.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { TypeCheckPipe } from 'app/shared/pipes/type-check.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { AverageByPipe } from 'app/shared/pipes/average-by.pipe';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
@@ -23,8 +21,6 @@ import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.
         ExerciseTypePipe,
         KeysPipe,
         TypeCheckPipe,
-        HtmlForMarkdownPipe,
-        HtmlForGuidedTourMarkdownPipe,
         TruncatePipe,
         SanitizeHtmlPipe,
         AverageByPipe,
@@ -37,8 +33,6 @@ import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.
         ExerciseTypePipe,
         KeysPipe,
         TypeCheckPipe,
-        HtmlForMarkdownPipe,
-        HtmlForGuidedTourMarkdownPipe,
         TruncatePipe,
         SanitizeHtmlPipe,
         SafeResourceUrlPipe,

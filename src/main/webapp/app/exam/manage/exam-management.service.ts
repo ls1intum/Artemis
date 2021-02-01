@@ -150,7 +150,7 @@ export class ExamManagementService {
 
     /**
      * Remove a student to the registered users for an exam
-     * @param courseId The course id.
+     * @param courseId The course id
      * @param examId The id of the exam from which to remove the student
      * @param studentLogin Login of the student
      * @param withParticipationsAndSubmission

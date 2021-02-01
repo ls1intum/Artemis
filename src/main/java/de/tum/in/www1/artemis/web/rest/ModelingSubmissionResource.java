@@ -226,10 +226,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         final var isExamMode = modelingExercise.isExamExercise();
 
         // Check if tutors can start assessing the students submission
-        boolean startAssessingSubmissions = this.modelingSubmissionService.checkIfExerciseDueDateIsReached(exercise);
-        if (!startAssessingSubmissions) {
-            return forbidden();
-        }
+        this.modelingSubmissionService.checkIfExerciseDueDateIsReached(exercise);
 
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());

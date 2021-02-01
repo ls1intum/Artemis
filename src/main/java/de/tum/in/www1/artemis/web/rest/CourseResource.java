@@ -878,7 +878,7 @@ public class CourseResource {
      * @return list of users
      */
     @NotNull
-    public ResponseEntity<List<User>> getAllUsersInGroup(Course course, @PathVariable String groupName) {
+    public ResponseEntity<List<User>> getAllUsersInGroup(Course course, String groupName) {
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();

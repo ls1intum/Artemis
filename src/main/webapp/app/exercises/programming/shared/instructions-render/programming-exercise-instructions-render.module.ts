@@ -5,9 +5,10 @@ import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programmi
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 // tslint:disable-next-line:max-line-length
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisResultModule],
+    imports: [ArtemisSharedModule, ArtemisResultModule, ArtemisMarkdownModule],
     declarations: [ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionStepWizardComponent, ProgrammingExerciseInstructionTaskStatusComponent],
     exports: [ProgrammingExerciseInstructionComponent],
     entryComponents: [ProgrammingExerciseInstructionTaskStatusComponent],
