@@ -111,11 +111,11 @@ public class QuizSubmission extends Submission {
             // search for submitted answer for this quizQuestion
             SubmittedAnswer submittedAnswer = getSubmittedAnswerForQuestion(quizQuestion);
             if (submittedAnswer != null) {
-                submittedAnswer.setScoreInPoints(quizQuestion.scoreForAnswer(submittedAnswer));
+                submittedAnswer.setScoreInPoints(quizQuestion.pointsForAnswer(submittedAnswer));
             }
         }
         // set total score
-        setScoreInPoints(quizExercise.getScoreInPointsForSubmission(this));
+        setScoreInPoints(quizExercise.getPointsForSubmission(this));
     }
 
     @Override

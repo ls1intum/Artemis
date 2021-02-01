@@ -35,7 +35,7 @@ public class ScoringStrategyMultipleChoiceProportionalWithPenalty implements Sco
                     incorrectSelections++;
                 }
             }
-            // calculate the fraction of the total score this submission should get
+            // calculate the fraction of the total points this submission should get
             // every correct selection increases fraction by 1/totalOptions,
             // every incorrect selection decreases fraction by 1/totalOptions
             double fraction = ((correctSelections / totalOptions) - (incorrectSelections / totalOptions));

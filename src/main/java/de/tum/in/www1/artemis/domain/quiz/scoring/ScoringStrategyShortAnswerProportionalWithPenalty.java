@@ -27,7 +27,7 @@ public class ScoringStrategyShortAnswerProportionalWithPenalty implements Scorin
             double correctSolutionsCount = values[0];
             double incorrectSolutionsCount = values[1];
 
-            // calculate the fraction of the total score the user should get
+            // calculate the fraction of the total points the user should get
             // every correct mapping increases fraction by 1/mapped spots,
             // every incorrect mapping decreases fraction by 1/mapped spots
             double fraction = ((correctSolutionsCount / totalSolutionsCount) - (incorrectSolutionsCount / totalSolutionsCount));

@@ -70,7 +70,7 @@ public class AssessmentService {
         this.ltiService = ltiService;
     }
 
-    Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
+    Result submitResult(Result result, Exercise exercise, Double calculatedPoints) {
         double maxPoints = exercise.getMaxPoints();
         double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
 
@@ -84,7 +84,7 @@ public class AssessmentService {
 
         result.setCompletionDate(ZonedDateTime.now());
         // Take bonus points into account to achieve a result score > 100%
-        double totalPoints = calculateTotalPoints(calculatedScore, maxPoints + bonusPoints);
+        double totalPoints = calculateTotalPoints(calculatedPoints, maxPoints + bonusPoints);
         // Set score and resultString according to maxPoints, to establish results with score > 100%
         result.setScore(totalPoints, maxPoints);
         result.setResultString(totalPoints, maxPoints);
@@ -139,8 +139,8 @@ public class AssessmentService {
             return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).get(); // to eagerly load assessor
         }
         else {
-            Double calculatedScore = calculateTotalPoints(originalResult.getFeedbacks());
-            return submitResult(originalResult, exercise, calculatedScore);
+            Double calculatedPoints = calculateTotalPoints(originalResult.getFeedbacks());
+            return submitResult(originalResult, exercise, calculatedPoints);
         }
     }
 
@@ -257,8 +257,8 @@ public class AssessmentService {
         }
     }
 
-    public double calculateTotalPoints(Double calculatedScore, Double maxPoints) {
-        double totalPoints = Math.max(0, calculatedScore);
+    public double calculateTotalPoints(Double calculatedPoints, Double maxPoints) {
+        double totalPoints = Math.max(0, calculatedPoints);
         return (maxPoints == null) ? totalPoints : Math.min(totalPoints, maxPoints);
     }
 
@@ -315,8 +315,8 @@ public class AssessmentService {
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
         result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
-        Double calculatedScore = calculateTotalPoints(result.getFeedbacks());
-        result = submitResult(result, exercise, calculatedScore);
+        Double calculatedPoints = calculateTotalPoints(result.getFeedbacks());
+        result = submitResult(result, exercise, calculatedPoints);
         // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system
         ltiService.onNewResult((StudentParticipation) result.getParticipation());
         return result;

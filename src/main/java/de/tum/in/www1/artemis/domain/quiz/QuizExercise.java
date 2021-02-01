@@ -337,29 +337,29 @@ public class QuizExercise extends Exercise {
      * @return the resulting score
      */
     public Long getScoreForSubmission(QuizSubmission quizSubmission) {
-        double score = getScoreInPointsForSubmission(quizSubmission);
+        double points = getPointsForSubmission(quizSubmission);
         double maxPoints = getMaxTotalPoints();
         // map the resulting score to the 0 to 100 scale
-        return Math.round(100.0 * score / maxPoints);
+        return Math.round(100.0 * points / maxPoints);
     }
 
     /**
-     * Get the score for this submission as the number of points
+     * Get the points for this submission
      *
      * @param quizSubmission the submission that should be evaluated
-     * @return the resulting score
+     * @return the resulting points
      */
-    public Double getScoreInPointsForSubmission(QuizSubmission quizSubmission) {
-        double score = 0.0;
+    public Double getPointsForSubmission(QuizSubmission quizSubmission) {
+        double points = 0.0;
         // iterate through all quizQuestions of this quiz
         for (QuizQuestion quizQuestion : getQuizQuestions()) {
             // search for submitted answer for this quizQuestion
             SubmittedAnswer submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(quizQuestion);
             if (submittedAnswer != null) {
-                score += quizQuestion.scoreForAnswer(submittedAnswer);
+                points += quizQuestion.pointsForAnswer(submittedAnswer);
             }
         }
-        return score;
+        return points;
     }
 
     /**
@@ -462,7 +462,7 @@ public class QuizExercise extends Exercise {
             if (originalQuizExercise.getQuizQuestions().contains(quizQuestion)) {
                 // find original unchanged quizQuestion
                 QuizQuestion originalQuizQuestion = originalQuizExercise.findQuestionById(quizQuestion.getId());
-                // reset score (not allowed to change)
+                // reset points (not allowed to change)
                 quizQuestion.setPoints(originalQuizQuestion.getPoints());
                 // correct invalid = null to invalid = false
                 if (quizQuestion.isInvalid() == null) {
@@ -519,9 +519,9 @@ public class QuizExercise extends Exercise {
     }
 
     /**
-     * Get the maximum total score for this quiz
+     * Get the maximum total points for this quiz
      *
-     * @return the sum of all the quizQuestions' maximum scores
+     * @return the sum of all the quizQuestions' maximum points
      */
     @JsonIgnore
     public Double getMaxTotalPoints() {
@@ -558,17 +558,17 @@ public class QuizExercise extends Exercise {
             return;
         }
 
-        double quizScore = getMaxTotalPoints();
+        double quizPoints = getMaxTotalPoints();
 
         // add new PointCounter
-        for (double i = 0.0; i <= quizScore; i++) {  // for variable ScoreSteps change: i++ into: i= i + scoreStep
+        for (double i = 0.0; i <= quizPoints; i++) {  // for variable ScoreSteps change: i++ into: i= i + scoreStep
             quizPointStatistic.addScore(i);
         }
         // delete old PointCounter
         Set<PointCounter> pointCounterToDelete = new HashSet<>();
         for (PointCounter pointCounter : quizPointStatistic.getPointCounters()) {
             if (pointCounter.getId() != null) {                                                                                        // for variable ScoreSteps add:
-                if (pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 || quizQuestions == null
+                if (pointCounter.getPoints() > quizPoints || pointCounter.getPoints() < 0 || quizQuestions == null
                         || quizQuestions.isEmpty()/* || (pointCounter.getPoints()% scoreStep) != 0 */) {
                     pointCounterToDelete.add(pointCounter);
                     pointCounter.setQuizPointStatistic(null);

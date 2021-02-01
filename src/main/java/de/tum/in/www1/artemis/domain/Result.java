@@ -459,7 +459,7 @@ public class Result extends DomainObject {
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission));
             // update result string
-            setResultString(quizExercise.getScoreInPointsForSubmission(quizSubmission), quizExercise.getMaxTotalPoints().doubleValue());
+            setResultString(quizExercise.getPointsForSubmission(quizSubmission), quizExercise.getMaxTotalPoints().doubleValue());
         }
     }
 

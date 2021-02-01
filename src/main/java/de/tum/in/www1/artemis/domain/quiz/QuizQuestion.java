@@ -167,12 +167,12 @@ public abstract class QuizQuestion extends DomainObject {
     }
 
     /**
-     * Calculate the score for the given answer
+     * Calculate the points for the given answer
      *
      * @param submittedAnswer The answer given for this question
-     * @return the resulting score
+     * @return the resulting points
      */
-    public double scoreForAnswer(SubmittedAnswer submittedAnswer) {
+    public double pointsForAnswer(SubmittedAnswer submittedAnswer) {
         return ScoringStrategyFactory.makeScoringStrategy(this).calculateScore(this, submittedAnswer);
     }
 
