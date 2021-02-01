@@ -95,6 +95,7 @@
 
     .pointer-row {
         cursor: pointer;
+        overflow: hidden;
     }
 
     .container {
@@ -111,13 +112,14 @@
     }
 }
 
-@media screen and (max-width: 1200px) {
-    .hide-1200 {
+@media screen and (max-width: 1350px) {
+    .hide-1300 {
         display: none !important;
     }
 
     .pointer-row {
-        max-width: 70% !important;
+        min-width: 100% !important;
+        overflow: visible !important;
     }
 }
 
