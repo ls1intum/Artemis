@@ -1029,7 +1029,7 @@ public class ExamService {
 
             // Optionally delete participations and submissions
             if (withParticipationsAndSubmission) {
-                List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student.getId(),
+                List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student.getId(),
                         studentExam.getExercises());
                 for (var participation : participations) {
                     participationService.delete(participation.getId(), true, true);

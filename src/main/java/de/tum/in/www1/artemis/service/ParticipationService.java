@@ -1296,24 +1296,19 @@ public class ParticipationService {
      * @param exercises the individual-mode exercises for which participations should be found
      * @return student's participations
      */
-    public List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(Long studentId, List<Exercise> exercises) {
-        return studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentId, exercises);
+    public List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(Long studentId, List<Exercise> exercises) {
+        return studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentId, exercises);
     }
 
     /**
      * Loads the test run participation for the given user id (which typically belongs to an instructor or admin)
-     * See {@link StudentParticipation#isTestRun()}
      * @param userId the id of the user
      * @param exercise the exercise id
      * @return the optional test run participation with submissions and results loaded
      */
-    public Optional<StudentParticipation> findTestRunParticipationForExercise(Long userId, Exercise exercise) {
-        var studentParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(userId, List.of(exercise));
-        if (studentParticipations.isEmpty() || !studentParticipations.get(0).isTestRun()) {
-            return Optional.empty();
-        }
-
-        return Optional.of(studentParticipations.get(0));
+    public StudentParticipation findTestRunParticipationForExerciseWithEagerSubmissionsResult(Long userId, Exercise exercise) {
+        return studentParticipationRepository.findOneTestRunParticipationByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(userId, List.of(exercise))
+                .orElseThrow(() -> new EntityNotFoundException("No Test Run participation found for user: " + userId + " in exercise: " + exercise.getId() + "!"));
     }
 
     /**
