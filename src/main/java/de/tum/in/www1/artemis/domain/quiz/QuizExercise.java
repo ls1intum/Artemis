@@ -463,7 +463,7 @@ public class QuizExercise extends Exercise {
                 // find original unchanged quizQuestion
                 QuizQuestion originalQuizQuestion = originalQuizExercise.findQuestionById(quizQuestion.getId());
                 // reset score (not allowed to change)
-                quizQuestion.setScore(originalQuizQuestion.getScore());
+                quizQuestion.setPoints(originalQuizQuestion.getPoints());
                 // correct invalid = null to invalid = false
                 if (quizQuestion.isInvalid() == null) {
                     quizQuestion.setInvalid(false);
@@ -529,7 +529,7 @@ public class QuizExercise extends Exercise {
         // iterate through all quizQuestions of this quiz and add up the score
         if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
             for (QuizQuestion quizQuestion : getQuizQuestions()) {
-                maxPoints += quizQuestion.getScore();
+                maxPoints += quizQuestion.getPoints();
             }
         }
         return maxPoints;

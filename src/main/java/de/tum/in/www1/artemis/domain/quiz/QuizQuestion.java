@@ -48,7 +48,7 @@ public abstract class QuizQuestion extends DomainObject {
     // Todo: Rename to points
     @Column(name = "score")
     @JsonView(QuizView.Before.class)
-    private Integer score;
+    private Integer points;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "scoring_type")
@@ -113,17 +113,17 @@ public abstract class QuizQuestion extends DomainObject {
         this.explanation = explanation;
     }
 
-    public Integer getScore() {
-        return score;
+    public Integer getPoints() {
+        return points;
     }
 
     public QuizQuestion score(Integer score) {
-        this.score = score;
+        this.points = score;
         return this;
     }
 
-    public void setScore(Integer score) {
-        this.score = score;
+    public void setPoints(Integer score) {
+        this.points = score;
     }
 
     public ScoringType getScoringType() {
@@ -183,7 +183,7 @@ public abstract class QuizQuestion extends DomainObject {
      * @return true, if the answer is 100% correct, false otherwise
      */
     public boolean isAnswerCorrect(SubmittedAnswer submittedAnswer) {
-        return ScoringStrategyFactory.makeScoringStrategy(this).calculateScore(this, submittedAnswer) == getScore();
+        return ScoringStrategyFactory.makeScoringStrategy(this).calculateScore(this, submittedAnswer) == getPoints();
     }
 
     /**
@@ -209,7 +209,7 @@ public abstract class QuizQuestion extends DomainObject {
     @JsonIgnore
     public Boolean isValid() {
         // check title and score
-        return getTitle() != null && !getTitle().equals("") && getScore() >= 0;
+        return getTitle() != null && !getTitle().equals("") && getPoints() >= 0;
     }
 
     /**
