@@ -388,7 +388,7 @@ describe('Exam Management Service Tests', () => {
         // THEN
         httpMock.expectOne({
             method: 'PUT',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/exerciseGroupsOrder`,
+            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/exercise-groups-order`,
         });
     });
 });
