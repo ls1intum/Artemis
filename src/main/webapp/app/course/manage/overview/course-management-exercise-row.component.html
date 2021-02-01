@@ -11,7 +11,7 @@
                         container="body"
                     ></fa-icon>
                 </div>
-                <div class="exercise-icon ml-2 mr-1" *ngIf="isTeamExercise">
+                <div class="exercise-icon ml-2" *ngIf="details.isTeamMode">
                     <fa-icon [icon]="'users'" placement="right" [ngbTooltip]="'artemisApp.exercise.isTeamExercise' | translate" container="body"></fa-icon>
                 </div>
                 <div class="exercise-icon ml-2">
@@ -83,10 +83,10 @@
                 <div class="exercise-score" *ngIf="statistic && rowType == exerciseRowType.CURRENT">
                     <span class="bold">{{ 'artemisApp.course.participations' | translate }}</span>
                     <jhi-progress-bar
-                        [tooltip]="'artemisApp.course.students' | translate"
+                        [tooltip]="'artemisApp.course.participations' | translate"
                         [percentage]="statistic.participationRateInPercent"
                         [numerator]="statistic.noOfParticipatingStudentsOrTeams"
-                        [denominator]="isTeamExercise ? statistic.noOfTeamsInCourse : statistic.noOfStudentsInCourse"
+                        [denominator]="details.isTeamMode ? statistic.noOfTeamsInCourse : statistic.noOfStudentsInCourse"
                     >
                     </jhi-progress-bar>
                 </div>

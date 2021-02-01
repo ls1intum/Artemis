@@ -18,6 +18,8 @@ public class CourseManagementOverviewExerciseDetailsDTO {
 
     private Set<String> categories;
 
+    private boolean isTeamMode;
+
     public Long getExerciseId() {
         return exerciseId;
     }
@@ -72,5 +74,13 @@ public class CourseManagementOverviewExerciseDetailsDTO {
 
     public void setAssessmentDueDate(ZonedDateTime assessmentDueDate) {
         this.assessmentDueDate = assessmentDueDate;
+    }
+
+    public boolean isTeamMode() {
+        return isTeamMode;
+    }
+
+    public void setTeamMode(boolean teamMode) {
+        isTeamMode = teamMode;
     }
 }

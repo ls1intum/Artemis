@@ -563,7 +563,7 @@ public class ExerciseService {
      * @return An Integer array containing active students for each index
      */
     public List<CourseManagementOverviewExerciseDetailsDTO> getExercisesForCourseManagementOverview(Long courseId) {
-        List<CourseManagementOverviewExerciseDetailsDTO> statisticsDTOS = new ArrayList<>();
+        List<CourseManagementOverviewExerciseDetailsDTO> detailsDTOS = new ArrayList<>();
         for (var listElement : exerciseRepository.getExercisesForCourseManagementOverview(courseId)) {
             var exerciseId = (Long) listElement.get("id");
             var exerciseType = listElement.get("type");
@@ -594,12 +594,16 @@ public class ExerciseService {
             dto.setReleaseDate((ZonedDateTime) listElement.get("releaseDate"));
             dto.setDueDate((ZonedDateTime) listElement.get("dueDate"));
             dto.setAssessmentDueDate((ZonedDateTime) listElement.get("assessmentDueDate"));
-            // TODO: categories
 
-            statisticsDTOS.add(dto);
+            var mode = listElement.get("mode");
+            dto.setTeamMode(mode == ExerciseMode.TEAM);
+
+            dto.setCategories(exerciseRepository.findAllCategories(exerciseId));
+
+            detailsDTOS.add(dto);
         }
 
-        return statisticsDTOS;
+        return detailsDTOS;
     }
 
     /**

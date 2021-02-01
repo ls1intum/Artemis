@@ -28,7 +28,6 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
     exerciseRowType = ExerciseRowType;
 
     hasLeftoverAssessments = false;
-    isTeamExercise: boolean;
     displayTitle: string;
     averageScoreNumerator: number;
     noOfAssessmentsDoneInPercent: number;
@@ -79,7 +78,6 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
             return;
         }
 
-        this.isTeamExercise = !!this.statistic.noOfTeamsInCourse;
         this.averageScoreNumerator = Math.round((this.statistic.averageScoreInPercent! * this.statistic.exerciseMaxPoints!) / 100);
     }
 }

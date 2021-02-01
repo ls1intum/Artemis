@@ -56,6 +56,9 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("select distinct exercise from Exercise exercise left join fetch exercise.exerciseHints left join fetch exercise.studentQuestions left join fetch exercise.categories where exercise.id = :#{#exerciseId}")
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
 
+    @Query("select distinct c from Exercise e join e.categories c where e.id = :#{#exerciseId}")
+    Set<String> findAllCategories(@Param("exerciseId") Long exerciseId);
+
     /**
      * calculates the average score and the participation rate of students for each given individual course exercise
      * by using the last result (rated or not)
@@ -167,6 +170,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             SELECT
             e.id as id,
             e.maxScore as maxPoints,
+            e.mode as mode,
             (SELECT AVG(r.score)
             FROM e.studentParticipations p JOIN p.submissions s JOIN s.results r
             WHERE e.course.id = :courseId
