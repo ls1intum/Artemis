@@ -137,14 +137,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 exercisesOfType.map((exercise) => exercise.title!),
             );
 
-            const maxPointsOfAllExercisesOfType = exercisesOfType.map((exercise) => exercise.maxScore!);
+            const maxPointsOfAllExercisesOfType = exercisesOfType.map((exercise) => exercise.maxPoints!);
 
             this.exerciseMaxPointsPerType.set(exerciseType, maxPointsOfAllExercisesOfType);
 
             const maxPointsOfAllIncludedExercisesOfType = exercisesOfType
                 // only exercises marked as included_completely increase the maximum reachable number of points
                 .filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY)
-                .map((exercise) => exercise.maxScore!);
+                .map((exercise) => exercise.maxPoints!);
 
             this.maxNumberOfPointsPerExerciseType.set(exerciseType, sum(maxPointsOfAllIncludedExercisesOfType));
         }
@@ -193,7 +193,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.students.push(student);
 
             for (const exercise of this.exercisesOfCourseThatAreIncludedInScoreCalculation) {
-                const relevantMaxPoints = exercise.maxScore!;
+                const relevantMaxPoints = exercise.maxPoints!;
                 const participation = student.participations.find((part) => part.exercise!.id === exercise.id);
                 if (participation && participation.results && participation.results.length > 0) {
                     // we found a result, there should only be one

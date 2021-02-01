@@ -85,7 +85,7 @@
     <jhi-score-display
         left-header
         *ngIf="state.ui === UIStates.ASSESSMENT"
-        [maxPoints]="exercise?.maxScore"
+        [maxPoints]="exercise?.maxPoints"
         [score]="totalScore"
         [maxBonusPoints]="exercise?.bonusPoints"
     ></jhi-score-display>
