@@ -241,7 +241,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
 
         if (this.quizExercise.quizQuestions) {
             this.quizExercise.quizQuestions.forEach(function (question) {
-                result = result + question.score!;
+                result = result + question.points!;
             });
         } else {
             result = this.quizExercise.maxScore!;
@@ -271,8 +271,8 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             this.backgroundColor.push('#5bc0de');
             this.ratedData.push(ratedCounter);
             this.unratedData.push(unratedCounter);
-            this.ratedAverage = this.ratedAverage + ratedCounter * question.score!;
-            this.unratedAverage = this.unratedAverage + unratedCounter * question.score!;
+            this.ratedAverage = this.ratedAverage + ratedCounter * question.points!;
+            this.unratedAverage = this.unratedAverage + unratedCounter * question.points!;
         }
 
         // set Background for invalid questions = grey

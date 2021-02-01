@@ -317,7 +317,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         mcQuestion.hint = 'Add a hint here (visible during the quiz via ?-Button)';
         mcQuestion.scoringType = ScoringType.ALL_OR_NOTHING; // explicit default value for multiple questions
         mcQuestion.randomizeOrder = true;
-        mcQuestion.score = 1;
+        mcQuestion.points = 1;
 
         const correctSampleAnswerOption = new AnswerOption();
         correctSampleAnswerOption.isCorrect = true;
@@ -348,7 +348,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         dndQuestion.hint = 'Add a hint here (visible during the quiz via ?-Button)';
         dndQuestion.scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY; // explicit default value for drag and drop questions
         dndQuestion.randomizeOrder = true;
-        dndQuestion.score = 1;
+        dndQuestion.points = 1;
         dndQuestion.dropLocations = [];
         dndQuestion.dragItems = [];
         dndQuestion.correctMappings = [];
@@ -376,7 +376,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             '[-option 1,2] correctInBothFields';
         shortAnswerQuestion.scoringType = ScoringType.ALL_OR_NOTHING; // explicit default value for short answer questions
         shortAnswerQuestion.randomizeOrder = true;
-        shortAnswerQuestion.score = 1;
+        shortAnswerQuestion.points = 1;
         shortAnswerQuestion.spots = [];
         shortAnswerQuestion.solutions = [];
         shortAnswerQuestion.correctMappings = [];
@@ -389,7 +389,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     calculateMaxExerciseScore(): number {
         let scoreSum = 0;
-        this.quizExercise.quizQuestions!.forEach((question) => (scoreSum += question.score!));
+        this.quizExercise.quizQuestions!.forEach((question) => (scoreSum += question.points!));
         return scoreSum;
     }
 
@@ -666,7 +666,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             }
         }, this);
 
-        const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.score ?? 0).reduce((a, b) => a + b, 0);
+        const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0).reduce((a, b) => a + b, 0);
 
         return (
             isGenerallyValid &&
@@ -808,7 +808,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 translateValues: {},
             });
         }
-        const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.score ?? 0).reduce((a, b) => a + b, 0);
+        const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0).reduce((a, b) => a + b, 0);
 
         if (!maxPointsReachableInQuiz) {
             invalidReasons.push({
@@ -842,7 +842,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     translateValues: { index: index + 1 },
                 });
             }
-            if (question.score === undefined || question.score === null || question.score < 0) {
+            if (question.points === undefined || question.points === null || question.points < 0) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionScore',
                     translateValues: { index: index + 1 },
