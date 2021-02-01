@@ -284,7 +284,7 @@ public class ExamService {
         // Adding exercise group information to DTO
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             // Find the maximum points for this exercise group
-            OptionalDouble optionalMaxPointsGroup = exerciseGroup.getExercises().stream().mapToDouble(Exercise::getMaxScore).max();
+            OptionalDouble optionalMaxPointsGroup = exerciseGroup.getExercises().stream().mapToDouble(Exercise::getMaxPoints).max();
             Double maxPointsGroup = optionalMaxPointsGroup.orElse(0);
 
             // Counter for exerciseGroup participations. Is calculated by summing up the number of exercise participations
@@ -299,7 +299,7 @@ public class ExamService {
                 }
                 numberOfExerciseGroupParticipants += participantsForExercise;
                 exerciseGroupDTO.containedExercises
-                        .add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), participantsForExercise));
+                        .add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), participantsForExercise));
             }
             exerciseGroupDTO.numberOfParticipants = numberOfExerciseGroupParticipants;
             scores.exerciseGroups.add(exerciseGroupDTO);
@@ -325,7 +325,7 @@ public class ExamService {
                 // Relevant Result is already calculated
                 if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                     Result relevantResult = studentParticipation.getResults().iterator().next();
-                    double achievedPoints = relevantResult.getScore() / 100.0 * exercise.getMaxScore();
+                    double achievedPoints = relevantResult.getScore() / 100.0 * exercise.getMaxPoints();
 
                     // points earned in NOT_INCLUDED exercises do not count towards the students result in the exam
                     if (!exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
@@ -335,7 +335,7 @@ public class ExamService {
                     // Check whether the student attempted to solve the exercise
                     boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise, objectMapper);
                     studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(), new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(),
-                            exercise.getMaxScore(), relevantResult.getScore(), achievedPoints, hasNonEmptySubmission));
+                            exercise.getMaxPoints(), relevantResult.getScore(), achievedPoints, hasNonEmptySubmission));
                 }
 
             }
@@ -497,7 +497,7 @@ public class ExamService {
 
         // Ensure that all exercises in an exercise group have the same amount of max points and max bonus points
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            Set<Double> allMaxPoints = exerciseGroup.getExercises().stream().map(Exercise::getMaxScore).collect(Collectors.toSet());
+            Set<Double> allMaxPoints = exerciseGroup.getExercises().stream().map(Exercise::getMaxPoints).collect(Collectors.toSet());
             Set<Double> allBonusPoints = exerciseGroup.getExercises().stream().map(Exercise::getBonusPoints).collect(Collectors.toSet());
 
             if (allMaxPoints.size() > 1 || allBonusPoints.size() > 1) {
@@ -514,7 +514,7 @@ public class ExamService {
         for (ExerciseGroup exerciseGroup : mandatoryExerciseGroups) {
             Exercise groupRepresentativeExercise = exerciseGroup.getExercises().stream().findAny().get();
             if (groupRepresentativeExercise.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_COMPLETELY)) {
-                pointsReachableByMandatoryExercises += groupRepresentativeExercise.getMaxScore();
+                pointsReachableByMandatoryExercises += groupRepresentativeExercise.getMaxPoints();
             }
         }
         if (pointsReachableByMandatoryExercises > exam.getMaxPoints()) {
@@ -527,7 +527,7 @@ public class ExamService {
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             Exercise groupRepresentativeExercise = exerciseGroup.getExercises().stream().findAny().get();
             if (groupRepresentativeExercise.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_COMPLETELY)) {
-                pointsReachable += groupRepresentativeExercise.getMaxScore();
+                pointsReachable += groupRepresentativeExercise.getMaxPoints();
             }
         }
         if (pointsReachable < exam.getMaxPoints()) {
