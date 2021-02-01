@@ -18,10 +18,11 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ExamQuizService {
@@ -32,9 +33,7 @@ public class ExamQuizService {
 
     private final ResultRepository resultRepository;
 
-    private final SubmissionService submissionService;
-
-    private final QuizSubmissionRepository quizSubmissionRepository;
+    private final SubmissionRepository submissionRepository;
 
     private final QuizExerciseService quizExerciseService;
 
@@ -42,15 +41,14 @@ public class ExamQuizService {
 
     private final ResultService resultService;
 
-    public ExamQuizService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
-            QuizExerciseService quizExerciseService, QuizStatisticService quizStatisticService, ResultService resultService, SubmissionService submissionService) {
+    public ExamQuizService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
+            QuizExerciseService quizExerciseService, QuizStatisticService quizStatisticService, ResultService resultService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
-        this.quizSubmissionRepository = quizSubmissionRepository;
+        this.submissionRepository = submissionRepository;
         this.quizExerciseService = quizExerciseService;
         this.quizStatisticService = quizStatisticService;
         this.resultService = resultService;
-        this.submissionService = submissionService;
     }
 
     /**
@@ -81,7 +79,8 @@ public class ExamQuizService {
         for (final var participation : participations) {
             final var optionalExistingSubmission = participation.findLatestSubmission();
             if (optionalExistingSubmission.isPresent()) {
-                QuizSubmission submission = (QuizSubmission) submissionService.findOneWithEagerResultAndFeedback(optionalExistingSubmission.get().getId());
+                QuizSubmission submission = (QuizSubmission) submissionRepository.findWithEagerResultAndFeedbackById(optionalExistingSubmission.get().getId())
+                        .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + optionalExistingSubmission.get().getId() + "\" does not exist"));
                 participation.setExercise(quizExerciseService.findOneWithQuestions(participation.getExercise().getId()));
                 Result result;
                 if (submission.getLatestResult() == null) {
@@ -110,7 +109,7 @@ public class ExamQuizService {
                     result.evaluateSubmission();
                     resultRepository.save(result);
                 }
-                quizSubmissionRepository.save(submission);
+                submissionRepository.save(submission);
             }
         }
     }
@@ -189,7 +188,7 @@ public class ExamQuizService {
                     result.setSubmission(null);
 
                     // NOTE: we save participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
-                    quizSubmissionRepository.save(quizSubmission);
+                    submissionRepository.save(quizSubmission);
                     result = resultRepository.save(result);
 
                     // add result to participation
@@ -200,7 +199,7 @@ public class ExamQuizService {
                     // quizSubmission.replaceLatestOrIfEmptyAddResult(result);
                     result.setSubmission(quizSubmission);
                     quizSubmission.addResult(result);
-                    quizSubmissionRepository.save(quizSubmission);
+                    submissionRepository.save(quizSubmission);
 
                     // Add result so that it can be returned (and processed later)
                     if (!resultExisting) {
