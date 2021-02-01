@@ -280,7 +280,7 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/:courseId/exams/:examId:exam-for-test-run-assessment-dashboard
+     * GET /courses/:courseId/exams/:examId/exam-for-test-run-assessment-dashboard
      *
      * @param courseId the id of the course to retrieve
      * @param examId the id of the exam that contains the exercises

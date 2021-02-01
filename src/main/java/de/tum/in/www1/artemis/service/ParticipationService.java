@@ -1301,14 +1301,13 @@ public class ParticipationService {
     }
 
     /**
-     * Loads the test run participation for the given user id (which typically belongs to an instructor or admin)
+     * Loads the test run participatiosn for the given user id (which typically belongs to an instructor or admin)
      * @param userId the id of the user
-     * @param exercise the exercise id
-     * @return the optional test run participation with submissions and results loaded
+     * @param exercises the exercises for which we want the participations
+     * @return the test run participations with submissions and results loaded
      */
-    public StudentParticipation findTestRunParticipationForExerciseWithEagerSubmissionsResult(Long userId, Exercise exercise) {
-        return studentParticipationRepository.findOneTestRunParticipationByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(userId, List.of(exercise))
-                .orElseThrow(() -> new EntityNotFoundException("No Test Run participation found for user: " + userId + " in exercise: " + exercise.getId() + "!"));
+    public List<StudentParticipation> findTestRunParticipationForExerciseWithEagerSubmissionsResult(Long userId, List<Exercise> exercises) {
+        return studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(userId, exercises);
     }
 
     /**

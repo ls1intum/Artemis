@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -87,7 +86,7 @@ public class SubmissionResource {
      * GET /test-run-submissions : get all the test run submissions for an exercise.
      *
      * @param exerciseId exerciseID  for which all submissions should be returned
-     * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
+     * @return the ResponseEntity with status 200 (OK) and the list of the latest test run submission in body
      */
     @GetMapping("/exercises/{exerciseId}/test-run-submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -102,13 +101,14 @@ public class SubmissionResource {
         }
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        var testRunParticipation = participationService.findTestRunParticipationForExercise(user.getId(), exercise);
-        if (testRunParticipation.isPresent()) {
-            var latestSubmission = testRunParticipation.get().findLatestSubmission().get();
-            latestSubmission.removeAutomaticResults();
+        var testRunParticipations = participationService.findTestRunParticipationForExerciseWithEagerSubmissionsResult(user.getId(), List.of(exercise));
+        if (!testRunParticipations.isEmpty() && testRunParticipations.get(0).findLatestSubmission().isPresent()) {
+            var latestSubmission = testRunParticipations.get(0).findLatestSubmission().get();
             return ResponseEntity.ok().body(List.of(latestSubmission));
         }
-        throw new EntityNotFoundException("There is no test run participation for exercise: " + exerciseId);
+        else {
+            return ResponseEntity.ok(List.of());
+        }
     }
 
     private void checkAccessPermissionAtInstructor(Submission submission) {

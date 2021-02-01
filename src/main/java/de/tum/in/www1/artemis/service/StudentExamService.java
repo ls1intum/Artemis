@@ -496,7 +496,7 @@ public class StudentExamService {
     public StudentExam deleteTestRun(Long testRunId) {
         var testRun = findOneWithExercises(testRunId);
         User instructor = testRun.getUser();
-        var participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(instructor.getId(), testRun.getExercises());
+        var participations = participationService.findTestRunParticipationForExerciseWithEagerSubmissionsResult(instructor.getId(), testRun.getExercises());
         testRun.getExercises().forEach(exercise -> exercise.setStudentParticipations(Set.of(exercise.findRelevantParticipation(participations))));
 
         List<StudentExam> otherTestRunsOfInstructor = findAllTestRunsWithExercisesForUser(testRun.getExam().getId(), instructor.getId()).stream()

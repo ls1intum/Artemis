@@ -256,7 +256,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             @Param("exercises") List<Exercise> exercises);
 
     @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r where p.testRun = true and p.student.id = :#{#studentId} and p.exercise in :#{#exercises}")
-    Optional<StudentParticipation> findOneTestRunParticipationByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId,
+    List<StudentParticipation> findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises);
 
     @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch p.team t left join fetch t.students teamStudent where teamStudent.id = :#{#studentId} and p.exercise in :#{#exercises}")
