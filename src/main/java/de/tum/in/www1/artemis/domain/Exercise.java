@@ -61,7 +61,7 @@ public abstract class Exercise extends DomainObject {
     @JsonView(QuizView.Before.class)
     private ZonedDateTime assessmentDueDate;
 
-    @Column(name = "max_score")
+    @Column(name = "max_points")
     private Double maxPoints;
 
     @Column(name = "bonus_points")

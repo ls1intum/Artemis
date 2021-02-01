@@ -45,7 +45,7 @@ public abstract class QuizQuestion extends DomainObject {
     @JsonView(QuizView.After.class)
     private String explanation;
 
-    @Column(name = "score")
+    @Column(name = "points")
     @JsonView(QuizView.Before.class)
     private Integer points;
 
