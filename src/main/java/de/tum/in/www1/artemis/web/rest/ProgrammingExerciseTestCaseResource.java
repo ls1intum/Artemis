@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
+import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -112,6 +113,29 @@ public class ProgrammingExerciseTestCaseResource {
         }
     }
 
+    /**
+     * Use with care: Set the weight of all test cases of an exercise to 1.
+     *
+     * @param exerciseId the id of the exercise to reset the test case weights of.
+     * @return the updated set of test cases for the programming exercise.
+     */
+    @PatchMapping(Endpoints.RESET)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<ProgrammingExerciseTestCase>> resetTestCases(@PathVariable Long exerciseId) {
+        log.debug("REST request to reset the test case weights of exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            return forbidden();
+        }
+
+        programmingExerciseTestCaseService.logTestCaseReset(user, programmingExercise, course);
+        List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(exerciseId);
+        return ResponseEntity.ok(testCases);
+    }
+
     public static final class Endpoints {
 
         private static final String PROGRAMMING_EXERCISE = "/programming-exercise/{exerciseId}";
@@ -119,6 +143,8 @@ public class ProgrammingExerciseTestCaseResource {
         public static final String TEST_CASES = PROGRAMMING_EXERCISE + "/test-cases";
 
         public static final String UPDATE_TEST_CASES = PROGRAMMING_EXERCISE + "/update-test-cases";
+
+        public static final String RESET = PROGRAMMING_EXERCISE + "/test-cases/reset";
 
         private Endpoints() {
         }

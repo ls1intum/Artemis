@@ -21,10 +21,10 @@
                 style="flex: 1"
                 [ngStyle]="sshEnabled ? { borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' } : {}"
                 ngxClipboard
-                [cbContent]="repositoryUrl"
+                [cbContent]="getHttpOrSshRepositoryUrl()"
                 (cbOnSuccess)="onCopySuccess()"
                 (cbOnError)="onCopyFailure()"
-                >{{ repositoryUrl }}</pre
+                >{{ getHttpOrSshRepositoryUrl() }}</pre
             >
             <pre
                 *ngIf="sshEnabled"
@@ -40,17 +40,19 @@
         </p>
         <button
             ngxClipboard
-            [cbContent]="repositoryUrl"
+            [cbContent]="getHttpOrSshRepositoryUrl()"
             (cbOnSuccess)="onCopySuccess()"
             (cbOnError)="onCopyFailure()"
             [class.btn-success]="wasCopied"
             class="btn btn-primary btn-sm mr-2"
             type="button"
-            style="min-width: 90px"
+            style="min-width: 100px"
         >
             {{ wasCopied ? ('artemisApp.exerciseActions.copiedUrl' | translate) : ('artemisApp.exerciseActions.copyUrl' | translate) }}
         </button>
-        <a class="btn btn-primary btn-sm mr-2" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl">{{ 'artemisApp.exerciseActions.cloneSourceTree' | translate }} </a>
+        <a class="btn btn-primary btn-sm mr-2" style="min-width: 150px" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl"
+            >{{ 'artemisApp.exerciseActions.cloneSourceTree' | translate }}
+        </a>
         <iframe name="hidden-iframe" style="visibility: hidden; position: absolute"></iframe>
         <span [innerHTML]="'artemisApp.exerciseActions.sourceTreeDescription' | translate"></span>
     </ng-template>
