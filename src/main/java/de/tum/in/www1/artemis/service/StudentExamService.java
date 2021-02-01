@@ -174,8 +174,7 @@ public class StudentExamService {
     }
 
     private void saveSubmissions(StudentExam studentExam, User currentUser) {
-        List<StudentParticipation> existingParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(currentUser.getId(),
-                studentExam.getExercises());
+        List<StudentParticipation> existingParticipations = participationService.findByStudentExamWithEagerSubmissionsResult(studentExam);
 
         for (Exercise exercise : studentExam.getExercises()) {
             // we do not apply the following checks for programming exercises or file upload exercises

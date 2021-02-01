@@ -1301,6 +1301,24 @@ public class ParticipationService {
     }
 
     /**
+     * Get all participations for the given studentExam and exercises combined with their submissions with a result.
+     * Distinguishes between student exams and test runs and only loads the respective participations
+     *
+     * @param studentExam studentExam with exercises loaded
+     * @return student's participations with submissions and results
+     */
+    public List<StudentParticipation> findByStudentExamWithEagerSubmissionsResult(StudentExam studentExam) {
+        if (studentExam.isTestRun()) {
+            return studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(),
+                    studentExam.getExercises());
+        }
+        else {
+            return studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(),
+                    studentExam.getExercises());
+        }
+    }
+
+    /**
      * Loads the test run participatiosn for the given user id (which typically belongs to an instructor or admin)
      * @param userId the id of the user
      * @param exercises the exercises for which we want the participations
