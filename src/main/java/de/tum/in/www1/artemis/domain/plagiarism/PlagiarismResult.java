@@ -8,12 +8,17 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import org.hibernate.annotations.DiscriminatorOptions;
 
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.Exercise;
 
 /**
  * Base result of any automatic plagiarism detection.
@@ -41,7 +46,10 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
     /**
      * ID of the exercise for which plagiarism was detected.
      */
-    protected long exerciseId;
+    @JsonIdentityReference(alwaysAsId = true)
+    @JsonProperty("exercise_id")
+    @ManyToOne
+    protected Exercise exercise;
 
     /**
      * TODO: Remove the @Transient annotation and store the similarity distribution in the database.
@@ -71,12 +79,12 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
         this.duration = duration;
     }
 
-    public long getExerciseId() {
-        return exerciseId;
+    public Exercise getExercise() {
+        return exercise;
     }
 
-    public void setExerciseId(long exerciseId) {
-        this.exerciseId = exerciseId;
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
     }
 
     public int[] getSimilarityDistribution() {

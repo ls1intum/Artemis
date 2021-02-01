@@ -50,7 +50,7 @@ public class ModelingPlagiarismDetectionService {
 
         ModelingPlagiarismResult result = compareSubmissions(modelingSubmissions, minimumSimilarity, minimumModelSize, minimumScore);
 
-        result.setExerciseId(exerciseWithParticipationsSubmissionsResults.getId());
+        result.setExercise(exerciseWithParticipationsSubmissionsResults);
 
         return result;
     }

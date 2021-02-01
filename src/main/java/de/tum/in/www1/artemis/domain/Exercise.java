@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 @DiscriminatorValue(value = "E")
 @DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming"), @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling"),

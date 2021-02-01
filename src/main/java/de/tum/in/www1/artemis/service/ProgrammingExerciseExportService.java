@@ -362,7 +362,7 @@ public class ProgrammingExerciseExportService {
         cleanupResourcesAsync(programmingExercise, repositories, targetPath);
 
         TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(result);
-        textPlagiarismResult.setExerciseId(programmingExercise.getId());
+        textPlagiarismResult.setExercise(programmingExercise);
 
         log.info("JPlag programming comparison for " + numberOfParticipations + " participations done in " + TimeLogUtil.formatDurationFrom(start));
 

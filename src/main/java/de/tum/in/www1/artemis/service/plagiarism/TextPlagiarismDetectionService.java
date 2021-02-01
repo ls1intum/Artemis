@@ -122,7 +122,7 @@ public class TextPlagiarismDetectionService {
         }
 
         TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(jPlagResult);
-        textPlagiarismResult.setExerciseId(textExercise.getId());
+        textPlagiarismResult.setExercise(textExercise);
 
         log.info("JPlag text comparison for " + submissionsSize + " submissions done in " + TimeLogUtil.formatDurationFrom(start));
 
