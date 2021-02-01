@@ -114,7 +114,7 @@ public class StudentExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/studentExams : Get all student exams for the given exam
+     * GET /courses/{courseId}/exams/{examId}/student-exams : Get all student exams for the given exam
      *
      * @param courseId the course to which the student exams belong to
      * @param examId   the exam to which the student exams belong to

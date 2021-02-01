@@ -504,7 +504,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
         exam1 = examRepository.save(exam1);
         StudentExam result = request.patchWithResponseBody(
-                "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/workingTime", newWorkingTime, StudentExam.class,
+                "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime, StudentExam.class,
                 HttpStatus.OK);
         assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
         assertThat(studentExamRepository.findById(studentExam1.getId()).get().getWorkingTime()).isEqualTo(newWorkingTime);

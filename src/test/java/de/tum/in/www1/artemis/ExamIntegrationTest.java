@@ -475,14 +475,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(missingStudentExams).hasSize(2);
 
         // Fetch student exams
-        List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/studentExams", HttpStatus.OK, StudentExam.class);
+        List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamsDB).hasSize(exam.getRegisteredUsers().size());
 
         // Another request should not create any exams
         missingStudentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-missing-student-exams", Optional.empty(),
                 StudentExam.class, HttpStatus.OK);
         assertThat(missingStudentExams).hasSize(0);
-        studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/studentExams", HttpStatus.OK, StudentExam.class);
+        studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamsDB).hasSize(exam.getRegisteredUsers().size());
 
         // Make sure delete also works if so many objects have been created before
@@ -752,7 +752,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(storedExam.getRegisteredUsers()).hasSize(2);
 
         // Ensure that the student exam of student2 was deleted
-        List<StudentExam> studentExams = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/studentExams", HttpStatus.OK, StudentExam.class);
+        List<StudentExam> studentExams = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         assertThat(studentExams).hasSize(storedExam.getRegisteredUsers().size());
         assertThat(studentExams).doesNotContain(studentExam2);
 
@@ -845,7 +845,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(storedExam.getRegisteredUsers()).hasSize(3);
 
         // Ensure that the student exam of student1 was deleted
-        List<StudentExam> studentExams = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/studentExams", HttpStatus.OK, StudentExam.class);
+        List<StudentExam> studentExams = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         assertThat(studentExams).hasSize(storedExam.getRegisteredUsers().size());
         assertThat(studentExams).doesNotContain(studentExam1);
 
@@ -1299,7 +1299,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             // Calculate overall points achieved
 
             var calculatedOverallPoints = studentExamOfUser.getExercises().stream()
-                    .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).map(exercise -> exercise.getMaxScore())
+                    .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).map(Exercise::getMaxScore)
                     .reduce(0.0, (total, maxScore) -> (Math.round((total + maxScore * resultScore / 100) * 10) / 10.0));
 
             assertEquals(studentResult.overallPointsAchieved, calculatedOverallPoints, EPSILON);
