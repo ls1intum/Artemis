@@ -9,7 +9,7 @@ export class CourseManagementOverviewExerciseDetailsDTO {
     public releaseDate?: Moment;
     public dueDate?: Moment;
     public assessmentDueDate?: Moment;
-    public isTeamMode?: boolean;
+    public teamMode?: boolean;
 
     constructor() {}
 }
