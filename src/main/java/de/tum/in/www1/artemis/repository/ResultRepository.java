@@ -93,7 +93,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             SELECT COUNT(DISTINCT p) FROM StudentParticipation p
             left join p.results r
             WHERE p.exercise.id = :exerciseId
-            AND p.testRun = FALSE
+            AND (p.testRun = FALSE OR p.testRun IS NULL)
             AND r.assessor IS NOT NULL
             AND r.rated = TRUE
             AND r.submission.submitted = TRUE
@@ -111,7 +111,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query("""
             SELECT COUNT(DISTINCT p)
             FROM StudentParticipation p WHERE p.exercise.id = :exerciseId
-            AND p.testRun = FALSE
+            AND (p.testRun = FALSE OR p.testRun IS NULL)
             AND (SELECT COUNT(r)
                 FROM Result r
                 WHERE r.assessor IS NOT NULL

@@ -224,7 +224,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p LEFT JOIN FETCH p.submissions s LEFT JOIN FETCH s.results r LEFT JOIN FETCH r.assessor a
             WHERE p.exercise.id = :#{#exerciseId} AND 0L = :#{#correctionRound}
-            AND p.testRun = FALSE
+            AND (p.testRun = FALSE OR p.testRun IS NULL)
             """)
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(@Param("exerciseId") long exerciseId,
             @Param("correctionRound") long correctionRound);
@@ -232,7 +232,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p LEFT JOIN FETCH p.submissions s LEFT JOIN FETCH s.results r LEFT JOIN FETCH r.assessor a
             WHERE p.exercise.id = :#{#exerciseId}
-            AND p.testRun = FALSE
+            AND (p.testRun = FALSE OR p.testRun IS NULL)
             """)
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
@@ -251,8 +251,13 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select distinct p from StudentParticipation p where p.student.id = :#{#studentId} and p.exercise in :#{#exercises}")
     List<StudentParticipation> findByStudentIdAndIndividualExercises(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises);
 
-    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r where p.student.id = :#{#studentId} and p.exercise in :#{#exercises}")
-    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises);
+    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r where (p.testRun = false or p.testRun is null) and p.student.id = :#{#studentId} and p.exercise in :#{#exercises}")
+    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentId") Long studentId,
+            @Param("exercises") List<Exercise> exercises);
+
+    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r where p.testRun = true and p.student.id = :#{#studentId} and p.exercise in :#{#exercises}")
+    Optional<StudentParticipation> findOneTestRunParticipationByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId,
+            @Param("exercises") List<Exercise> exercises);
 
     @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch p.team t left join fetch t.students teamStudent where teamStudent.id = :#{#studentId} and p.exercise in :#{#exercises}")
     List<StudentParticipation> findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises);
@@ -267,7 +272,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r
             where p.exercise.id = :#{#exerciseId}
-            and p.testRun = false
+            and (p.testRun = FALSE OR p.testRun IS NULL)
             and (r.assessor.id = :#{#assessorId}
             and s.id = (select max(id) from p.submissions) or s.id = null)
             and 0L = :#{#correctionRound}
@@ -297,7 +302,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT distinct p FROM StudentParticipation p LEFT JOIN FETCH p.submissions s LEFT JOIN FETCH s.results r
                 WHERE p.exercise.id = :#{#exerciseId}
-                AND p.testRun = false
+                AND (p.testRun = FALSE OR p.testRun IS NULL)
                 AND s.id = (SELECT max(id) FROM p.submissions)
                 AND EXISTS (SELECT s FROM Submission s
                     WHERE s.participation.id = p.id
