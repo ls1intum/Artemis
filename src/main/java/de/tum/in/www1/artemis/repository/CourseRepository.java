@@ -72,9 +72,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findById(long courseId);
 
     @Query("""
-                    select c.studentGroupName
-                    from Course c
-                    where c.id = :courseId
+            select c.studentGroupName
+            from Course c
+            where c.id = :courseId
             """)
     String findStudentGroupName(@Param("courseId") long courseId);
 

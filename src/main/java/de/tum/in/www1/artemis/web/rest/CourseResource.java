@@ -785,9 +785,9 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/stats-for-management-overview :
+     * GET /courses/exercises-for-management-overview :
      *
-     * @param courseIds course Ids to get the stats for
+     * @param courseIds course Ids to get the exercise details for
      * @return ResponseEntity with status
      */
     @GetMapping("/courses/exercises-for-management-overview")

@@ -234,8 +234,8 @@ export class CourseManagementService {
     }
 
     /**
-     * returns the stats of the course with the provided unique identifier for the courses management dashboard
-     * @param courseIds - the id of the course
+     * returns the exercise details of the courses for the courses management dashboard
+     * @param courseIds - the ids of the courses
      */
     getExercisesForManagementOverview(courseIds: number[]): Observable<HttpResponse<CourseManagementOverviewCourseDto[]>> {
         let httpParams = new HttpParams();
@@ -264,8 +264,8 @@ export class CourseManagementService {
     }
 
     /**
-     * returns the stats of the course with the provided unique identifier for the courses management dashboard
-     * @param courseIds - the id of the course
+     * returns the stats of the courses for the courses management dashboard
+     * @param courseIds - the ids of the courses
      */
     getStatsForManagementOverview(courseIds: number[]): Observable<HttpResponse<CourseManagementOverviewStatisticsDto[]>> {
         let httpParams = new HttpParams();
