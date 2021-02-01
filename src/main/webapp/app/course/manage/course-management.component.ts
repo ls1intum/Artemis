@@ -93,14 +93,14 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                     firstUncollapsed = true;
                     this.coursesBySemester[semester] = this.courses.filter((c) => !c.testCourse && (c.semester ?? '') === semester);
                 }
-                // add an extra category for test courses
+                // Add an extra category for test courses
                 if (this.courses.find((c) => c.testCourse) !== null) {
                     this.courseSemesters[this.courseSemesters.length] = 'test';
                     this.semesterCollapsed['test'] = false;
                     this.coursesBySemester['test'] = this.courses.filter((c) => c.testCourse);
                 }
 
-                // once the important part is loaded we can fetch the statistics
+                // First fetch important data like title for each course
                 this.courseManagementService.getExercisesForManagementOverview(this.courses.map((c) => c.id!)).subscribe(
                     (result: HttpResponse<CourseManagementOverviewCourseDto[]>) => {
                         result.body!.forEach((dto) => {
@@ -112,6 +112,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                     },
                     (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
                 );
+                // Once the important part is loaded we can fetch the statistics
                 this.courseManagementService.getStatsForManagementOverview(this.courses.map((c) => c.id!)).subscribe(
                     (result: HttpResponse<CourseManagementOverviewStatisticsDto[]>) => {
                         result.body!.forEach((dto) => (this.statistics[dto.courseId] = dto));

@@ -621,11 +621,14 @@ public class ExerciseService {
             dto.setNoOfStudentsInCourse(amountOfStudentsInCourse);
             dto.setExerciseId(exerciseId);
 
-            dto.setExerciseMaxPoints((Double) listElement.get("maxPoints"));
-            dto.setAverageScoreInPercent((Double) listElement.get("averageScore"));
+            var maxPoints = (Double) listElement.get("maxPoints");
+            dto.setExerciseMaxPoints(maxPoints == null ? 0 : maxPoints);
 
-            var rawParticipations = listElement.get("participations");
-            var participations = rawParticipations == null ? 0 : (int) rawParticipations;
+            var averagePoints = (Double) listElement.get("averageScore");
+            dto.setAverageScoreInPercent(averagePoints == null ? 0 : averagePoints);
+
+            Long rawParticipations = (Long) listElement.get("participations");
+            var participations = rawParticipations == null ? 0 : Math.toIntExact(rawParticipations);
             dto.setNoOfParticipatingStudentsOrTeams(participations);
 
             if (listElement.get("mode") == ExerciseMode.TEAM) {
