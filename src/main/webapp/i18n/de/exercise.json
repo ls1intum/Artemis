@@ -111,7 +111,7 @@
             "completionDate": "Abgabedatum",
             "lastResult": "Letztes Ergebnis",
             "submissionCount": "Abgaben",
-            "score": "Punktzahl",
+            "points": "Punkte",
             "duration": "Dauer",
             "showBuildFailed": "Nur fehlgeschlagene Builds anzeigen",
             "showFailed": "Nur die letzten Einreichungen ohne Ergebnis anzeigen",
