@@ -140,7 +140,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.isTestRun = this.route.snapshot.url[3]?.toString() === 'test-run-tutor-dashboard';
+        this.isTestRun = this.route.snapshot.url[3]?.toString() === 'test-run-exercise-assessment-dashboard';
         this.unassessedSubmissionByCorrectionRound = new Map<number, Submission>();
 
         this.loadAll();
@@ -212,6 +212,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
                 // 1. We don't want to assess submissions before the exercise due date
                 // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
+                // 3. Don't handle test run submissions here
                 if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode && !this.isTestRun) {
                     this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
                 }

@@ -132,7 +132,7 @@ describe('Exam Management Service Tests', () => {
         service.getExamWithInterestingExercisesForAssessmentDashboard(course.id!, mockExam.id!, true).subscribe((res) => expect(res.body).to.equal([]));
 
         // THEN
-        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/for-exam-tutor-test-run-dashboard` });
+        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/exam-for-test-run-assessment-dashboard` });
     });
 
     it('should get latest individual end date of exam', () => {
