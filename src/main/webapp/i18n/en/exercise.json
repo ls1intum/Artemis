@@ -111,7 +111,7 @@
             "completionDate": "Completion Date",
             "lastResult": "Last Result",
             "submissionCount": "Submissions",
-            "points": "Points",
+            "score": "Score",
             "duration": "Duration",
             "showBuildFailed": "Show Build Failed",
             "showFailed": "Show Latest Submission without Result",
