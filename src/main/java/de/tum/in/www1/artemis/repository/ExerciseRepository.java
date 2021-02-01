@@ -143,7 +143,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
     /**
-     * TODO
+     * Fetches the details of the exercises for a course
+     *
      * @param courseId - course to get the statistics for
      * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to the exercise and so on)
      */
@@ -162,7 +163,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     List<Map<String, Object>> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId);
 
     /**
-     * TODO
+     * Fetches the statistics of the exercises for a course
+     *
      * @param courseId - course to get the statistics for
      * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to the exercise and so on)
      */

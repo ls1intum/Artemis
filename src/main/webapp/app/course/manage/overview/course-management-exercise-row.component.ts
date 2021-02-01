@@ -27,13 +27,13 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
     exerciseType = ExerciseType;
     exerciseRowType = ExerciseRowType;
 
+    JSON = JSON;
+
     hasLeftoverAssessments = false;
     displayTitle: string;
     averageScoreNumerator: number;
     noOfAssessmentsDoneInPercent: number;
 
-    // TODO:
-    JSON = JSON;
 
     getIcon(type: ExerciseType | undefined): IconProp {
         switch (type) {
