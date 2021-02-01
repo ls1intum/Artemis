@@ -317,7 +317,7 @@ public class StudentExamResource {
         loadExercisesForStudentExam(studentExam);
 
         // 3rd fetch participations, submissions and results and connect them to the studentExam
-        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, user, false);
+        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, user);
 
         // not needed
         studentExam.getExam().setCourse(null);
@@ -457,7 +457,7 @@ public class StudentExamResource {
         studentExamRepository.save(studentExam);
 
         // 3rd fetch participations, submissions and results and connect them to the studentExam
-        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser, true);
+        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser);
 
         // 4th create new exam session
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
@@ -478,7 +478,7 @@ public class StudentExamResource {
      * @param studentExam the student exam in question
      * @param currentUser logged in user with groups and authorities
      */
-    private void fetchParticipationsSubmissionsAndResultsForStudentExam(StudentExam studentExam, User currentUser, boolean forConduction) {
+    private void fetchParticipationsSubmissionsAndResultsForStudentExam(StudentExam studentExam, User currentUser) {
         // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
         List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(currentUser.getId(),
