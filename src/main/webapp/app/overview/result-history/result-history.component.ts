@@ -10,7 +10,7 @@ import { Result } from 'app/entities/result.model';
 })
 export class ResultHistoryComponent {
     @Input() results: Result[];
-    @Input() maxScore: number;
+    @Input() maxPoints: number;
     @Input() showPreviousDivider = false;
 
     /**
