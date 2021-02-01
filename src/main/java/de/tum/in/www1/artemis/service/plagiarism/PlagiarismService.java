@@ -61,6 +61,7 @@ public class PlagiarismService {
      */
     public void savePlagiarismResult(TextPlagiarismResult result) {
         // TODO: Use `plagiarismResultRepository` to save the given result.
+        plagiarismResultRepository.save(result);
     }
 
     /**
@@ -70,6 +71,7 @@ public class PlagiarismService {
      */
     public void savePlagiarismResult(ModelingPlagiarismResult result) {
         // TODO: Use `plagiarismResultRepository` to save the given result.
+        plagiarismResultRepository.save(result);
     }
 
 }

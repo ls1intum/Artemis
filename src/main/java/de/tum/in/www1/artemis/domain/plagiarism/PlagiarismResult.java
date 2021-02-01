@@ -2,9 +2,16 @@ package de.tum.in.www1.artemis.domain.plagiarism;
 
 import java.util.List;
 
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+
+import org.hibernate.annotations.DiscriminatorOptions;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 
@@ -12,6 +19,10 @@ import de.tum.in.www1.artemis.domain.DomainObject;
  * Base result of any automatic plagiarism detection.
  */
 @Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
+@DiscriminatorValue(value = "PR")
+@DiscriminatorOptions(force = true)
 @Table(name = "plagiarism_result")
 public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> extends DomainObject {
 
