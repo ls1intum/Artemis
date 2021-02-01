@@ -639,17 +639,17 @@ public class ExerciseService {
                 Integer teams = teamService.getAmountByExerciseId(exerciseId);
                 dto.setNoOfTeamsInCourse(teams);
 
-                dto.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : ((double) participations) * 100 / teams);
+                dto.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : Math.round(participations * 1000.0 / teams) / 10.0);
             }
             else {
-                dto.setParticipationRateInPercent(noStudentsInCourse ? 0.0 : ((double) participations) * 100 / amountOfStudentsInCourse);
+                dto.setParticipationRateInPercent(noStudentsInCourse ? 0.0 : Math.round(participations * 1000.0 / amountOfStudentsInCourse) / 10.0);
             }
 
             long numberOfRatedAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId, false).getInTime();
             long noOfSubmissionsInTime = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
             dto.setNoOfRatedAssessments(numberOfRatedAssessments);
             dto.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
-            dto.setNoOfAssessmentsDoneInPercent(noOfSubmissionsInTime == 0 ? 0 : ((double) numberOfRatedAssessments) * 100 / noOfSubmissionsInTime);
+            dto.setNoOfAssessmentsDoneInPercent(noOfSubmissionsInTime == 0 ? 0 : Math.round(numberOfRatedAssessments * 1000.0 / noOfSubmissionsInTime) / 10.0);
 
             statisticsDTOS.add(dto);
         }

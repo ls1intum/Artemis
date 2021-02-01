@@ -35,7 +35,7 @@
     <div class="container flex-container">
         <div class="row">
             <div class="col-md-8 section-card">
-                <div class="section-content" *ngIf="courseDetails && courseStatistics">
+                <div class="section-content" *ngIf="courseDetails">
                     <div *ngIf="futureExercises?.length > 0">
                         <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
                             <fa-icon class="control-icon" [icon]="showFutureExercises ? 'angle-down' : 'angle-up'"></fa-icon>
@@ -106,7 +106,7 @@
                 </div>
             </div>
             <div class="col-4 section-card">
-                <div class="section-content" *ngIf="courseStatistics">
+                <div class="section-content" *ngIf="courseStatistics?.activeStudents && course.numberOfStudents">
                     <jhi-course-management-statistics [courseId]="course.id" [initialStats]="courseStatistics.activeStudents" [amountOfStudentsInCourse]="course.numberOfStudents">
                     </jhi-course-management-statistics>
                 </div>
