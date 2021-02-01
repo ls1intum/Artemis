@@ -538,7 +538,7 @@ public class QuizExercise extends Exercise {
     @Override
     public Double getMaxScore() {
         // this is a temporary solution for legacy exercises where maxScore was not set
-        Double score = super.getMaxScore();
+        Double score = super.getMaxPoints();
         if (score != null) {
             return score;
         }
