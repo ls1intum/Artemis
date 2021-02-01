@@ -107,7 +107,7 @@
             class="btn btn-info mr-1 mb-1"
             [ngbTooltip]="'entity.action.scores' | translate"
         >
-            <fa-icon [icon]="'eye'"></fa-icon>
+            <fa-icon [icon]="'table'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.scores' | translate }}</span>
         </button>
         <button
@@ -117,7 +117,7 @@
             class="btn btn-info mr-1 mb-1"
             [ngbTooltip]="'entity.action.lecture' | translate"
         >
-            <fa-icon [icon]="'list-alt'"></fa-icon>
+            <fa-icon [icon]="'file-pdf'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.lecture' | translate }}</span>
         </button>
         <button
@@ -127,18 +127,8 @@
             class="btn btn-info mr-1 mb-1"
             [ngbTooltip]="'entity.action.exams' | translate"
         >
-            <fa-icon [icon]="'list-alt'"></fa-icon>
+            <fa-icon [icon]="'graduation-cap'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.exams' | translate }}</span>
-        </button>
-        <button
-            type="submit"
-            *ngIf="course.isAtLeastTutor"
-            [routerLink]="['/course-management', course.id]"
-            class="btn btn-info mr-1 mb-1"
-            [ngbTooltip]="'artemisApp.course.courseDashboard' | translate"
-        >
-            <fa-icon [icon]="'th-list'"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'artemisApp.course.courseDashboard' | translate }}</span>
         </button>
         <button
             type="submit"
@@ -148,7 +138,7 @@
             [ngbTooltip]="'entity.action.assessmentDashboard' | translate"
             [class.guided-tour]="isGuidedTour"
         >
-            <fa-icon [icon]="'th-list'"></fa-icon>
+            <fa-icon [icon]="'user-check'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.assessmentDashboard' | translate }}</span>
         </button>
         <button
@@ -158,7 +148,7 @@
             class="btn btn-info mr-1 mb-1"
             [ngbTooltip]="'artemisApp.course.instructorDashboard' | translate"
         >
-            <fa-icon [icon]="'th-list'"></fa-icon>
+            <fa-icon [icon]="'chess-king'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'artemisApp.course.instructorDashboard' | translate }}</span>
         </button>
         <div *ngIf="course.isAtLeastInstructor" class="float-right">
