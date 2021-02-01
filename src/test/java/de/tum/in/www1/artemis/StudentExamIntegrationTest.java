@@ -421,15 +421,16 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetAllTestRunSubmissionsForExercise_notFound() throws Exception {
+    public void testGetAllTestRunSubmissionsForExercise_noTestRunSubmissions() throws Exception {
         course2 = database.addEmptyCourse();
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
         var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false);
-        request.getList("/api/exercises/" + exam.getExerciseGroups().get(0).getExercises().iterator().next().getId() + "/test-run-submissions", HttpStatus.NOT_FOUND,
-                Submission.class);
+        final var latestSubmissions = request.getList("/api/exercises/" + exam.getExerciseGroups().get(0).getExercises().iterator().next().getId() + "/test-run-submissions",
+                HttpStatus.OK, Submission.class);
+        assertThat(latestSubmissions).isEmpty();
     }
 
     @Test

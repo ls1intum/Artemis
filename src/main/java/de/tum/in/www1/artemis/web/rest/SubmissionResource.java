@@ -33,6 +33,8 @@ public class SubmissionResource {
 
     private final SubmissionRepository submissionRepository;
 
+    private final SubmissionService submissionService;
+
     private final ResultService resultService;
 
     private final ParticipationService participationService;
@@ -43,8 +45,9 @@ public class SubmissionResource {
 
     private final ExerciseService exerciseService;
 
-    public SubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ParticipationService participationService,
-            AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService) {
+    public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, ResultService resultService,
+            ParticipationService participationService, AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService) {
+        this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.resultService = resultService;
         this.exerciseService = exerciseService;
@@ -104,6 +107,10 @@ public class SubmissionResource {
         var testRunParticipations = participationService.findTestRunParticipationForExerciseWithEagerSubmissionsResult(user.getId(), List.of(exercise));
         if (!testRunParticipations.isEmpty() && testRunParticipations.get(0).findLatestSubmission().isPresent()) {
             var latestSubmission = testRunParticipations.get(0).findLatestSubmission().get();
+            if (latestSubmission.getManualResults().isEmpty()) {
+                var lockedResult = submissionService.lockSubmission(latestSubmission, 1);
+                latestSubmission.addResult(lockedResult);
+            }
             return ResponseEntity.ok().body(List.of(latestSubmission));
         }
         else {
