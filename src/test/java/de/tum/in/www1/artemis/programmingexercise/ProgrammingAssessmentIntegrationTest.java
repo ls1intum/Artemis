@@ -77,7 +77,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
-        database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
+        database.addMaxPointsAndBonusPointsToExercise(programmingExercise);
         programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
         programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1",
                 AssessmentType.SEMI_AUTOMATIC, true);

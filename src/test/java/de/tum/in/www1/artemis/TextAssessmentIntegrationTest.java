@@ -668,7 +668,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testSubmitAssessment_withResultOver100Percent() throws Exception {
-        textExercise = (TextExercise) database.addMaxScoreAndBonusPointsToExercise(textExercise);
+        textExercise = (TextExercise) database.addMaxPointsAndBonusPointsToExercise(textExercise);
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission, "student1");
         exerciseDueDatePassed();

@@ -203,7 +203,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testSubmitFileUploadAssessment_withResultOver100Percent() throws Exception {
-        afterReleaseFileUploadExercise = (FileUploadExercise) database.addMaxScoreAndBonusPointsToExercise(afterReleaseFileUploadExercise);
+        afterReleaseFileUploadExercise = (FileUploadExercise) database.addMaxPointsAndBonusPointsToExercise(afterReleaseFileUploadExercise);
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, fileUploadSubmission, "student1");
 

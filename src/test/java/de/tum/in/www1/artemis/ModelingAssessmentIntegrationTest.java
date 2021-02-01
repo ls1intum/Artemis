@@ -385,7 +385,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testManualAssessmentSubmit_withResultOver100Percent() throws Exception {
-        useCaseExercise = (ModelingExercise) database.addMaxScoreAndBonusPointsToExercise(useCaseExercise);
+        useCaseExercise = (ModelingExercise) database.addMaxPointsAndBonusPointsToExercise(useCaseExercise);
         ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
 
         List<Feedback> feedbacks = new ArrayList<>();

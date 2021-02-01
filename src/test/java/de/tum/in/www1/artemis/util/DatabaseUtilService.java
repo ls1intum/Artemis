@@ -1207,7 +1207,7 @@ public class DatabaseUtilService {
         return addResultToSubmission(submission, assessmentType, user, "x of y passed", score, rated, ZonedDateTime.now());
     }
 
-    public Exercise addMaxScoreAndBonusPointsToExercise(Exercise exercise) {
+    public Exercise addMaxPointsAndBonusPointsToExercise(Exercise exercise) {
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(10.0);

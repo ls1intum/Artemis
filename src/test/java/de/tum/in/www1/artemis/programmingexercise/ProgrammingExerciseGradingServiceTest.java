@@ -389,7 +389,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldReEvaluateScoreOfTheCorrectResults() throws Exception {
 
-        programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
+        programmingExercise = (ProgrammingExercise) database.addMaxPointsAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());
