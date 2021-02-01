@@ -32,7 +32,6 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
     hasLeftoverAssessments = false;
     displayTitle: string;
     averageScoreNumerator: number;
-    noOfAssessmentsDoneInPercent: number;
 
     getIcon(type: ExerciseType | undefined): IconProp {
         switch (type) {

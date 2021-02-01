@@ -94,7 +94,7 @@
                     <span class="bold">{{ 'artemisApp.course.assessmentProgress' | translate }}</span>
                     <jhi-progress-bar
                         [tooltip]="'artemisApp.course.assessmentProgress' | translate"
-                        [percentage]="noOfAssessmentsDoneInPercent"
+                        [percentage]="statistic.noOfAssessmentsDoneInPercent"
                         [numerator]="statistic.noOfRatedAssessments"
                         [denominator]="statistic.noOfSubmissionsInTime"
                     >
