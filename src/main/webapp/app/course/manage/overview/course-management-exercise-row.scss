@@ -14,6 +14,7 @@
     }
 
     .item-title {
+        font-weight: bold;
         margin-top: 10px;
         margin-left: 15px;
         white-space: nowrap;
@@ -131,4 +132,8 @@
     .pointer-row {
         max-width: 30%;
     }
+}
+
+.small {
+    font-size: small;
 }
