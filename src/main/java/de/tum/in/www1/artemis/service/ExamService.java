@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
+
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -1051,5 +1053,29 @@ public class ExamService {
         auditEventRepository.add(auditEvent);
         log.info("User " + currentUser.getLogin() + " has removed user " + student.getLogin() + " from the exam " + exam.getTitle() + " with id " + exam.getId()
                 + ". This also deleted a potentially existing student exam with all its participations and submissions.");
+    }
+
+    /**
+     * Adds all students registered in the course to the given exam
+     *
+     * @param courseId Id of the course
+     * @param examId Id of the exam
+     */
+    public void addAllStudentsOfCourseToExam(Long courseId, Long examId) {
+        Course course = courseService.findOne(courseId);
+        var students = userService.getStudents(course);
+        var examOpt = examRepository.findWithRegisteredUsersById(examId);
+
+        if (examOpt.isPresent()) {
+            Exam exam = examOpt.get();
+            students.forEach(student -> {
+                if (!exam.getRegisteredUsers().contains(student) && !student.getAuthorities().contains(ADMIN_AUTHORITY)
+                        && !student.getGroups().contains(course.getInstructorGroupName())) {
+                    exam.addRegisteredUser(student);
+                }
+            });
+            examRepository.save(exam);
+        }
+
     }
 }

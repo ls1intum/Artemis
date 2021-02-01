@@ -92,9 +92,11 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private Exam exam2;
 
+    private int numberOfStudents = 10;
+
     @BeforeEach
     public void initTestCase() {
-        users = database.addUsers(10, 5, 1);
+        users = database.addUsers(numberOfStudents, 5, 1);
         course1 = database.addEmptyCourse();
         course2 = database.addEmptyCourse();
         exam1 = database.addExam(course1);
@@ -117,10 +119,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         jiraRequestMockProvider.enableMockingOfRequests();
         jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
 
-        List<User> studentsInCourseBefore = userRepo.findAllInGroup(course1.getStudentGroupName());
+        List<User> studentsInCourseBefore = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student42", null, HttpStatus.OK, null);
         SecurityUtils.setAuthorizationObject(); // TODO: Why do we need this
-        List<User> studentsInCourseAfter = userRepo.findAllInGroup(course1.getStudentGroupName());
+        List<User> studentsInCourseAfter = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
         User student42 = database.getUserByLogin("student42");
         studentsInCourseBefore.add(student42);
         assertThat(studentsInCourseBefore).containsExactlyInAnyOrderElementsOf(studentsInCourseAfter);
@@ -905,6 +907,39 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         StudentExam response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/start", HttpStatus.OK, StudentExam.class);
         assertThat(response.getExam()).isEqualTo(exam);
         verify(examAccessService, times(1)).checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testAddAllRegisteredUsersToExam() throws Exception {
+        Course course = database.addEmptyCourse();
+        Exam exam = database.addExam(course);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, false);
+        exam = examRepository.save(exam);
+        course.addExam(exam);
+        course = courseRepo.save(course);
+
+        var instructor = database.getUserByLogin("instructor1");
+        instructor.setGroups(Collections.singleton("instructor"));
+        userRepo.save(instructor);
+
+        var student99 = ModelFactory.generateActivatedUser("student99");     // not registered for the course
+        student99.setRegistrationNumber("1234");
+        userRepo.save(student99);
+        student99 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student99").get();
+        student99.setGroups(Collections.singleton("tumuser"));
+        userRepo.save(student99);
+        assertThat(student99.getGroups()).contains(course.getStudentGroupName());
+        assertThat(exam.getRegisteredUsers()).doesNotContain(student99);
+
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/register-course-students", null, HttpStatus.OK, null);
+
+        exam = examRepository.findWithRegisteredUsersById(exam.getId()).get();
+
+        // 10 normal students + our custom student99
+        assertThat(exam.getRegisteredUsers().size()).isEqualTo(this.numberOfStudents + 1);
+        assertThat(exam.getRegisteredUsers()).contains(student99);
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course.getId(), exam.getId());
     }
 
     @Test

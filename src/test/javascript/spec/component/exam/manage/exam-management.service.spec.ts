@@ -391,4 +391,17 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/exercise-groups-order`,
         });
     });
+
+    it('should enroll all registered students to exam', () => {
+        // GIVEN
+        const mockExam: Exam = { id: 1 };
+        const mockStudents: StudentDTO[] = [
+            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1' },
+            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2' },
+        ];
+
+        service.addAllStudentsOfCourseToExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.eq(mockStudents));
+
+        httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/register-course-students` });
+    });
 });
