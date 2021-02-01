@@ -237,7 +237,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      * Registers all students who are enrolled in the course for the exam
      */
     registerAllStudentsFromCourse() {
-        if (this.exam && this.exam.id) {
+        if (this.exam?.id) {
             this.examManagementService.addAllStudentsOfCourseToExam(this.courseId, this.exam.id).subscribe(
                 () => {
                     this.reloadExamWithRegisteredUsers();
