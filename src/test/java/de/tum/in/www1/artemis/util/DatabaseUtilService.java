@@ -2316,7 +2316,7 @@ public class DatabaseUtilService {
 
     @NotNull
     public ShortAnswerQuestion createShortAnswerQuestion() {
-        ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(2).text("This is a long answer text");
+        ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").points(2).text("This is a long answer text");
         sa.setScoringType(ScoringType.ALL_OR_NOTHING);
         // TODO: we should test different values here
         sa.setMatchLetterCase(true);
@@ -2369,7 +2369,7 @@ public class DatabaseUtilService {
 
     @NotNull
     public DragAndDropQuestion createDragAndDropQuestion() {
-        DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(3).text("Q2");
+        DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").points(3).text("Q2");
         dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
 
         var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
@@ -2419,7 +2419,7 @@ public class DatabaseUtilService {
 
     @NotNull
     public MultipleChoiceQuestion createMultipleChoiceQuestion() {
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").points(4).text("Q1");
         mc.setScoringType(ScoringType.ALL_OR_NOTHING);
         mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
         mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));

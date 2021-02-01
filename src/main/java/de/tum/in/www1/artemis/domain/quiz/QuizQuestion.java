@@ -117,13 +117,13 @@ public abstract class QuizQuestion extends DomainObject {
         return points;
     }
 
-    public QuizQuestion score(Integer score) {
-        this.points = score;
+    public QuizQuestion points(Integer points) {
+        this.points = points;
         return this;
     }
 
-    public void setPoints(Integer score) {
-        this.points = score;
+    public void setPoints(Integer points) {
+        this.points = points;
     }
 
     public ScoringType getScoringType() {
