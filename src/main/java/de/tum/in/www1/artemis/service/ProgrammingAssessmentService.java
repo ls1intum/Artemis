@@ -8,7 +8,10 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.*;
@@ -108,7 +111,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
         }
         /** Calculated score from automatic test feedbacks, is capped to max points + bonus points,
         * see also see {@link ProgrammingExerciseGradingService#updateScore} */
-        double maxPoints = programmingExercise.getMaxScore() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
+        double maxPoints = programmingExercise.getMaxPoints() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
         if (scoreAutomaticTests > maxPoints) {
             scoreAutomaticTests = maxPoints;
         }

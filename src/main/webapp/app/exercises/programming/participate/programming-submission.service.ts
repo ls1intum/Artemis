@@ -243,6 +243,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         // If the timer runs out, we will emit an error as we assume the result is lost.
         const timerObservable = this.resultTimerSubjects.get(participationId)!.pipe(
             tap(() => {
+                // TODO: we should ask the server to get the latest result in case this happens because the websocket message might not have been received
                 this.emitFailedSubmission(participationId, exerciseId);
             }),
         );

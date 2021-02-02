@@ -412,6 +412,7 @@ public class ExamResource {
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/generate-student-exams")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<StudentExam>> generateStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
+        long start = System.nanoTime();
         log.info("REST request to generate student exams for exam {}", examId);
 
         final var exam = examService.findOneWithRegisteredUsersAndExerciseGroupsAndExercises(examId);
@@ -432,8 +433,7 @@ public class ExamResource {
             studentExam.getExam().setExerciseGroups(null);
             studentExam.getExam().setStudentExams(null);
         }
-
-        log.info("Generated {} student exams for exam {}", studentExams.size(), examId);
+        log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
         return ResponseEntity.ok().body(studentExams);
     }
 
@@ -492,7 +492,7 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
-        Integer numberOfGeneratedParticipations = examService.startExercises(examId);
+        int numberOfGeneratedParticipations = examService.startExercises(examId);
 
         log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
 
@@ -564,9 +564,9 @@ public class ExamResource {
         log.info("REST request to lock all repositories of exam {}", examId);
 
         Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
-        if (courseAndExamAccessFailure.isPresent())
+        if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
-
+        }
         Integer numOfLockedExercises = examService.lockAllRepositories(examId);
 
         log.info("Locked {} programming exercises of exam {}", numOfLockedExercises, examId);
@@ -599,6 +599,27 @@ public class ExamResource {
 
         List<StudentDTO> notFoundStudentsDtos = examService.registerStudentsForExam(courseId, examId, studentDtos);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
+    }
+
+    /**
+     * POST /courses/:courseId/exams/:examId/register-course-students : Add all users which are enrolled in the course to the exam so that the student can access the exam
+     *
+     * @param courseId     the id of the course
+     * @param examId       the id of the exam
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+    */
+    @PostMapping(value = "/courses/{courseId}/exams/{examId}/register-course-students")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> registerCourseStudents(@PathVariable Long courseId, @PathVariable Long examId) {
+        // get all students enrolled in the course
+        log.debug("REST request to add all students to exam {} with courseId {}", examId, courseId);
+
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent())
+            return courseAndExamAccessFailure.get();
+
+        examService.addAllStudentsOfCourseToExam(courseId, examId);
+        return ResponseEntity.ok().body(null);
     }
 
     /**

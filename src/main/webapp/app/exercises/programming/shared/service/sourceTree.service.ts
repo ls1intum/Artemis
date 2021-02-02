@@ -2,16 +2,17 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+
 @Injectable({ providedIn: 'root' })
 export class SourceTreeService {
-    constructor(private httpClient: HttpClient, private participationService: ParticipationService) {}
+    constructor(private httpClient: HttpClient) {}
 
     /**
      * Build source tree url.
+     * @param baseUrl - the base url of the version control system (e.g. Bitbucket or Bamboo)
      * @param cloneUrl - url of the target.
      */
-    buildSourceTreeUrl(baseUrl: string, cloneUrl?: string) {
+    buildSourceTreeUrl(baseUrl: string, cloneUrl: string | undefined) {
         return cloneUrl ? 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=' + baseUrl : undefined;
     }
 

@@ -129,11 +129,11 @@ describe('JhiCloneRepoButtonComponent', () => {
         component.useSsh = true;
 
         component.isTeamParticipation = true;
-        let url = component.getHtmlOrSshRepositoryUrl();
+        let url = component.getHttpOrSshRepositoryUrl();
         expect(url).to.equal('ssh://git@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
 
         component.isTeamParticipation = false;
-        url = component.getHtmlOrSshRepositoryUrl();
+        url = component.getHttpOrSshRepositoryUrl();
         expect(url).to.equal('ssh://git@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
     });
 
@@ -144,11 +144,11 @@ describe('JhiCloneRepoButtonComponent', () => {
 
         component.user = { login: 'user1', guidedTourSettings: [] };
         component.isTeamParticipation = true;
-        let url = component.getHtmlOrSshRepositoryUrl();
+        let url = component.getHttpOrSshRepositoryUrl();
         expect(url).to.equal(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         component.isTeamParticipation = false;
-        url = component.getHtmlOrSshRepositoryUrl();
+        url = component.getHttpOrSshRepositoryUrl();
         expect(url).to.equal(info.versionControlUrl!);
     });
 
@@ -158,11 +158,11 @@ describe('JhiCloneRepoButtonComponent', () => {
 
         component.user = { login: 'user1', guidedTourSettings: [] };
         component.isTeamParticipation = true;
-        let url = component.getHtmlOrSshRepositoryUrl();
+        let url = component.getHttpOrSshRepositoryUrl();
         expect(url).to.equal(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         component.isTeamParticipation = false;
-        url = component.getHtmlOrSshRepositoryUrl();
+        url = component.getHttpOrSshRepositoryUrl();
         expect(url).to.equal(info.versionControlUrl!);
     });
 

@@ -62,7 +62,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     public TextExercise createTextExerciseWithSGI(Course course) {
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
-        textExercise.setMaxScore(7.0);
+        textExercise.setMaxPoints(7.0);
         database.addGradingInstructionsToExercise(textExercise);
         exerciseRepository.save(textExercise);
         textExercise.getCategories().add("Text");
@@ -72,7 +72,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     public ModelingExercise createModelingExerciseWithSGI(Course course) {
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
-        modelingExercise.setMaxScore(7.0);
+        modelingExercise.setMaxPoints(7.0);
         database.addGradingInstructionsToExercise(modelingExercise);
         exerciseRepository.save(modelingExercise);
         modelingExercise.getCategories().add("Modeling");
@@ -82,7 +82,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     public FileUploadExercise createFileuploadExerciseWithSGI(Course course) {
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course);
-        fileUploadExercise.setMaxScore(7.0);
+        fileUploadExercise.setMaxPoints(7.0);
         database.addGradingInstructionsToExercise(fileUploadExercise);
         fileUploadExercise.getCategories().add("File");
         exerciseRepository.save(fileUploadExercise);

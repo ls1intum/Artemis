@@ -16,7 +16,7 @@
             "resultDismissed": "Deine Bewertung wurde nicht übernommen, da ein anderer Tutor bereits bewertet hat.",
             "error": {
                 "invalidAssessments": "Deine Bewertung ist nicht gültig!",
-                "invalidScoreMustBeNumber": "Das Score-Feld muss eine Zahl sein und darf nicht leer sein!",
+                "invalidScoreMustBeNumber": "Das Punkte-Feld muss eine Zahl sein und darf nicht leer sein!",
                 "invalidNeedScoreOrFeedback": "Jedes Feedback-Element muss mindestens eine Punktzahl oder ein Feedback enthalten.",
                 "feedbackReferenceTooLong": "Wähle bitte einen Textabschnitt mit weniger als 2000 Zeichen aus."
             },
