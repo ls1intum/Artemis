@@ -2,7 +2,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { ComponentFixture, TestBed, tick, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
@@ -153,7 +153,7 @@ describe('QuizExercise Statistic Component', () => {
     describe('calculateMaxScore', function () {
         it('should return MaxScore by looping over scores', () => {
             // setup
-            quizExercise.quizQuestions = [{ score: 1 }, { score: 2 }];
+            quizExercise.quizQuestions = [{ points: 1 }, { points: 2 }];
             comp.quizExercise = quizExercise;
 
             // call
@@ -166,7 +166,7 @@ describe('QuizExercise Statistic Component', () => {
         it('should return MaxScore be using quizExercise.maxScore', () => {
             // setup
             quizExercise.quizQuestions = undefined;
-            quizExercise.maxScore = 42;
+            quizExercise.maxPoints = 42;
             comp.quizExercise = quizExercise;
 
             // call
@@ -180,8 +180,8 @@ describe('QuizExercise Statistic Component', () => {
     describe('loadData', function () {
         beforeEach(() => {
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, score: 5 },
-                { quizQuestionStatistic: quizQuestionStatTwo, score: 6 },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5 },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6 },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
             comp.quizExercise = quizExercise;

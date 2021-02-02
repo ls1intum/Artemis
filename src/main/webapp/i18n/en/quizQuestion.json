@@ -19,7 +19,7 @@
             "text": "Text",
             "hint": "Hint",
             "explanation": "Explanation",
-            "score": "Score",
+            "score": "Points",
             "scoringType": "Scoring Type",
             "randomizeOrder": "Randomize Order",
             "questionStatistic": "Question Statistic",

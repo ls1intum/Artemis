@@ -293,7 +293,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     public void testManualAssessmentSubmit_IncludedCompletelyWithBonusPointsExercise() throws Exception {
         // setting up exercise
         useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
-        useCaseExercise.setMaxScore(10.0);
+        useCaseExercise.setMaxPoints(10.0);
         useCaseExercise.setBonusPoints(10.0);
         exerciseRepo.save(useCaseExercise);
 
@@ -316,7 +316,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     public void testManualAssessmentSubmit_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
         // setting up exercise
         useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
-        useCaseExercise.setMaxScore(10.0);
+        useCaseExercise.setMaxPoints(10.0);
         useCaseExercise.setBonusPoints(0.0);
         exerciseRepo.save(useCaseExercise);
 
@@ -337,7 +337,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     public void testManualAssessmentSubmit_IncludedAsBonusExercise() throws Exception {
         // setting up exercise
         useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
-        useCaseExercise.setMaxScore(10.0);
+        useCaseExercise.setMaxPoints(10.0);
         useCaseExercise.setBonusPoints(0.0);
         exerciseRepo.save(useCaseExercise);
 
@@ -358,7 +358,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     public void testManualAssessmentSubmit_NotIncludedExercise() throws Exception {
         // setting up exercise
         useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        useCaseExercise.setMaxScore(10.0);
+        useCaseExercise.setMaxPoints(10.0);
         useCaseExercise.setBonusPoints(0.0);
         exerciseRepo.save(useCaseExercise);
 

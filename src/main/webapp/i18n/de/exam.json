@@ -247,6 +247,8 @@
                 "lastName": "Nachname",
                 "email": "E-Mail",
                 "registrationNumber": "Matrikelnummer",
+                "registerAllFromCourse": "Registriere Kurs Studierende",
+                "registerAllFromCourseTooltip": "Registriere alle zu diesem Kurs angemeldeten Studierende",
                 "removeFromExam": {
                     "modalQuestion": "Soll der Student mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Seine individuelle Klausur wird dabei gelöscht.",
                     "deleteParticipationsAndSubmission": "Participations und submissions des Studenten in der zugehörigen Klausur löschen?"
