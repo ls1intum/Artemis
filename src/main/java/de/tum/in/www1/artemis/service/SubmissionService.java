@@ -424,13 +424,33 @@ public class SubmissionService {
         }
     }
 
+    public Result prepareTestRunSubmissionForAssessment(Submission submission) {
+        Optional<Result> existingAutomaticResult = Optional.empty();
+        if (submission.getLatestResult() != null && AssessmentType.AUTOMATIC.equals(submission.getLatestResult().getAssessmentType())) {
+            existingAutomaticResult = Optional.of(submission.getLatestResult());
+        }
+
+        // we only support one correction round for test runs
+        var draftAssessment = lockSubmission(submission, 0);
+
+        // copy feedback from automatic result
+        if (existingAutomaticResult.isPresent()) {
+            draftAssessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+            draftAssessment.setResultString(existingAutomaticResult.get().getResultString());
+            // also saves the draft assessment
+            draftAssessment.setFeedbacks(copyFeedbackToNewResult(draftAssessment, existingAutomaticResult.get()));
+        }
+
+        return draftAssessment;
+    }
+
     /**
-     * Soft the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
+     * Soft locks the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
      * tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
      *
      * @param submission the submission to lock
      */
-    public Result lockSubmission(Submission submission, int correctionRound) {
+    protected Result lockSubmission(Submission submission, int correctionRound) {
         Result result = submission.getResultForCorrectionRound(correctionRound);
         if (result == null && correctionRound > 0L) {
             // copy the result of the previous correction round

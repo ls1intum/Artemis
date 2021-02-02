@@ -692,7 +692,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     @Override
     // TODO: why do we override this method and why do we not try to reuse the method in the super class?
-    public Result lockSubmission(Submission submission, int correctionRound) {
+    protected Result lockSubmission(Submission submission, int correctionRound) {
         Result existingResult;
         if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC.equals(submission.getLatestResult().getAssessmentType())) {
             existingResult = submission.getLatestResult();

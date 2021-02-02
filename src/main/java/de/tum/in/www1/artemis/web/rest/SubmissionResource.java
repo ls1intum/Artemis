@@ -86,14 +86,16 @@ public class SubmissionResource {
     }
 
     /**
-     * GET /test-run-submissions : get all the test run submissions for an exercise.
+     * GET /test-run-submissions : get test run submission for an exercise.
+     *
+     * Only returns the users test run submission for a specific exercise
      *
      * @param exerciseId exerciseID  for which all submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of the latest test run submission in body
      */
     @GetMapping("/exercises/{exerciseId}/test-run-submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Submission>> getAllTestRunSubmissions(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<Submission>> getTestRunSubmissionsForAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (!exercise.isExamExercise()) {
@@ -108,8 +110,7 @@ public class SubmissionResource {
         if (!testRunParticipations.isEmpty() && testRunParticipations.get(0).findLatestSubmission().isPresent()) {
             var latestSubmission = testRunParticipations.get(0).findLatestSubmission().get();
             if (latestSubmission.getManualResults().isEmpty()) {
-                var lockedResult = submissionService.lockSubmission(latestSubmission, 1);
-                latestSubmission.addResult(lockedResult);
+                latestSubmission.addResult(submissionService.prepareTestRunSubmissionForAssessment(latestSubmission));
             }
             return ResponseEntity.ok().body(List.of(latestSubmission));
         }
