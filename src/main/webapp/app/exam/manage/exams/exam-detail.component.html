@@ -6,11 +6,11 @@
 
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
-            <button id="editButton" type="button" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="getEditRoute()" class="btn btn-primary">
+            <button id="editButton" type="button" *ngIf="isAtLeastInstructor" [routerLink]="getEditRoute()" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
 
-            <button id="studentExamsButton" type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="getStudentExamRoute()" class="btn btn-info">
+            <button id="studentExamsButton" type="submit" *ngIf="isAtLeastInstructor" [routerLink]="getStudentExamRoute()" class="btn btn-info">
                 <fa-icon [icon]="'eye'"></fa-icon>
                 <span>{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
             </button>
