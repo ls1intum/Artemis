@@ -17,7 +17,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { TextResultComponent } from 'app/exercises/text/participate/text-result/text-result.component';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
@@ -40,6 +40,7 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -87,6 +88,7 @@ describe('TextEditorComponent', () => {
                 MockComponent(TextResultComponent),
                 MockComponent(ComplaintsComponent),
                 MockComponent(ComplaintInteractionsComponent),
+                MockPipe(HtmlForMarkdownPipe),
             ],
             providers: [
                 JhiAlertService,

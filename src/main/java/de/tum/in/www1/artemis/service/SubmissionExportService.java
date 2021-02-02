@@ -48,7 +48,7 @@ public abstract class SubmissionExportService {
     /**
      * Exports student submissions to a zip file for an exercise
      * @param exerciseId the id of the exercise to be exported
-     * @param submissionExportOptions the options for the expot
+     * @param submissionExportOptions the options for the export
      * @return a reference to the zipped file
      * @throws IOException if an error occurred while zipping
      */

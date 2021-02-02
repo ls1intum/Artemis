@@ -106,7 +106,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     public void testManualAssessmentSubmit_IncludedCompletelyWithBonusPointsExercise() throws Exception {
         // setting up exercise
         afterReleaseFileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
-        afterReleaseFileUploadExercise.setMaxScore(10.0);
+        afterReleaseFileUploadExercise.setMaxPoints(10.0);
         afterReleaseFileUploadExercise.setBonusPoints(10.0);
         exerciseRepository.save(afterReleaseFileUploadExercise);
 
@@ -130,7 +130,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     public void testManualAssessmentSubmit_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
         // setting up exercise
         afterReleaseFileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
-        afterReleaseFileUploadExercise.setMaxScore(10.0);
+        afterReleaseFileUploadExercise.setMaxPoints(10.0);
         afterReleaseFileUploadExercise.setBonusPoints(0.0);
         exerciseRepository.save(afterReleaseFileUploadExercise);
 
@@ -152,7 +152,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     public void testManualAssessmentSubmit_IncludedAsBonusExercise() throws Exception {
         // setting up exercise
         afterReleaseFileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
-        afterReleaseFileUploadExercise.setMaxScore(10.0);
+        afterReleaseFileUploadExercise.setMaxPoints(10.0);
         afterReleaseFileUploadExercise.setBonusPoints(0.0);
         exerciseRepository.save(afterReleaseFileUploadExercise);
 
@@ -174,7 +174,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     public void testManualAssessmentSubmit_NotIncludedExercise() throws Exception {
         // setting up exercise
         afterReleaseFileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        afterReleaseFileUploadExercise.setMaxScore(10.0);
+        afterReleaseFileUploadExercise.setMaxPoints(10.0);
         afterReleaseFileUploadExercise.setBonusPoints(0.0);
         exerciseRepository.save(afterReleaseFileUploadExercise);
 

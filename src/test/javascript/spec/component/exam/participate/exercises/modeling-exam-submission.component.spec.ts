@@ -81,7 +81,7 @@ describe('ModelingExamSubmissionComponent', () => {
 
         it('should show exercise max score if any', () => {
             const maxScore = 30;
-            comp.exercise.maxScore = maxScore;
+            comp.exercise.maxPoints = maxScore;
             fixture.detectChanges();
             const el = fixture.debugElement.query((de) => de.nativeElement.textContent.includes(`[${maxScore} artemisApp.examParticipation.points]`));
             expect(el).to.exist;
@@ -89,7 +89,7 @@ describe('ModelingExamSubmissionComponent', () => {
 
         it('should show exercise bonus score if any', () => {
             const maxScore = 40;
-            comp.exercise.maxScore = maxScore;
+            comp.exercise.maxPoints = maxScore;
             const bonusPoints = 55;
             comp.exercise.bonusPoints = bonusPoints;
             fixture.detectChanges();

@@ -85,7 +85,7 @@ export class CloneRepoButtonComponent implements OnInit {
         });
     }
 
-    getHtmlOrSshRepositoryUrl() {
+    getHttpOrSshRepositoryUrl() {
         if (this.useSsh) {
             return this.getSshCloneUrl(this.repositoryUrl);
         }
@@ -141,6 +141,6 @@ export class CloneRepoButtonComponent implements OnInit {
      * @return sourceTreeUrl
      */
     buildSourceTreeUrl() {
-        return this.sourceTreeService.buildSourceTreeUrl(this.versionControlUrl, this.repositoryUrl);
+        return this.sourceTreeService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUrl());
     }
 }

@@ -1,0 +1,279 @@
+{
+    "version": "2.0.0",
+    "type": "Flowchart",
+    "size": { "width": 880, "height": 730 },
+    "interactive": { "elements": [], "relationships": [] },
+    "elements": [
+      {
+        "id": "eac1c0ea-2d48-4057-9d4c-33b14643a8ff",
+        "name": "Start",
+        "type": "FlowchartTerminal",
+        "owner": null,
+        "bounds": { "x": 230, "y": 0, "width": 70, "height": 35 }
+      },
+      {
+        "id": "a8c99462-137b-45f0-ae7a-dae393a892de",
+        "name": "x=readInt(); y=readInt();",
+        "type": "FlowchartInputOutput",
+        "owner": null,
+        "bounds": { "x": 200, "y": 70, "width": 130, "height": 55 }
+      },
+      {
+        "id": "b1b7a48c-cc4f-4286-8836-44ccb7e1a50b",
+        "name": "x != y",
+        "type": "FlowchartDecision",
+        "owner": null,
+        "bounds": { "x": 200, "y": 220, "width": 130, "height": 55 }
+      },
+      {
+        "id": "800a171c-bf1a-4846-a53c-b2a46453565c",
+        "name": "x < y",
+        "type": "FlowchartDecision",
+        "owner": null,
+        "bounds": { "x": 520, "y": 320, "width": 130, "height": 55 }
+      },
+      {
+        "id": "6f2eb0e0-034a-477b-a156-8862ced4812f",
+        "name": "write(x);",
+        "type": "FlowchartInputOutput",
+        "owner": null,
+        "bounds": { "x": 40, "y": 310, "width": 110, "height": 35 }
+      },
+      {
+        "id": "b9c38b0f-1147-415f-b118-f6223594af45",
+        "name": "Stop",
+        "type": "FlowchartTerminal",
+        "owner": null,
+        "bounds": { "x": 60, "y": 390, "width": 70, "height": 35 }
+      },
+      {
+        "id": "5cf7eb9d-39e2-4d71-9023-24402b138b18",
+        "name": "x = x - y;",
+        "type": "FlowchartProcess",
+        "owner": null,
+        "bounds": { "x": 430, "y": 430, "width": 90, "height": 35 }
+      },
+      {
+        "id": "af282d9e-aff7-487b-8da7-46d631d6fe88",
+        "name": "y = y - x;",
+        "type": "FlowchartProcess",
+        "owner": null,
+        "bounds": { "x": 660, "y": 430, "width": 90, "height": 35 }
+      },
+      {
+        "id": "808580ed-f7fe-49b4-80d9-9b986e87839b",
+        "name": "x = max();",
+        "type": "FlowchartFunctionCall",
+        "owner": null,
+        "bounds": { "x": 40, "y": 530, "width": 150, "height": 75 }
+      }
+    ],
+    "relationships": [
+      {
+        "id": "3f73aa3d-a20f-4065-8c22-650429d14423",
+        "name": "",
+        "type": "FlowchartFlowline",
+        "owner": null,
+        "bounds": { "x": 265, "y": 125, "width": 1, "height": 95 },
+        "path": [
+          { "x": 0, "y": 0 },
+          { "x": 0, "y": 95 }
+        ],
+        "source": {
+          "direction": "Down",
+          "element": "a8c99462-137b-45f0-ae7a-dae393a892de"
+        },
+        "target": {
+          "direction": "Up",
+          "element": "b1b7a48c-cc4f-4286-8836-44ccb7e1a50b"
+        }
+      },
+      {
+        "id": "a4e47acd-6f58-41f5-b530-73e5228f9ced",
+        "name": "",
+        "type": "FlowchartFlowline",
+        "owner": null,
+        "bounds": { "x": 265, "y": 35, "width": 1, "height": 35 },
+        "path": [
+          { "x": 0, "y": 0 },
+          { "x": 0, "y": 35 }
+        ],
+        "source": {
+          "direction": "Down",
+          "element": "eac1c0ea-2d48-4057-9d4c-33b14643a8ff"
+        },
+        "target": {
+          "direction": "Up",
+          "element": "a8c99462-137b-45f0-ae7a-dae393a892de"
+        }
+      },
+      {
+        "id": "73325be3-c0d4-49eb-b897-4a2a1470053d",
+        "name": "yes",
+        "type": "FlowchartFlowline",
+        "owner": null,
+        "bounds": { "x": 330, "y": 247.5, "width": 255, "height": 72.5 },
+        "path": [
+          { "x": 0, "y": 0 },
+          { "x": 255, "y": 0 },
+          { "x": 255, "y": 72.5 }
+        ],
+        "source": {
+          "direction": "Right",
+          "element": "b1b7a48c-cc4f-4286-8836-44ccb7e1a50b"
+        },
+        "target": {
+          "direction": "Up",
+          "element": "800a171c-bf1a-4846-a53c-b2a46453565c"
+        }
+      },
+      {
+        "id": "a727a321-090f-482c-a69d-9a61ad4976d1",
+        "name": "no",
+        "type": "FlowchartFlowline",
+        "owner": null,
+        "bounds": { "x": 95, "y": 247.5, "width": 105, "height": 62.5 },
+        "path": [
+          { "x": 105, "y": 0 },
+          { "x": 0, "y": 0 },
+          { "x": 0, "y": 62.5 }
+        ],
+        "source": {
+          "direction": "Left",
+          "element": "b1b7a48c-cc4f-4286-8836-44ccb7e1a50b"
+        },
+        "target": {
+          "direction": "Up",
+          "element": "6f2eb0e0-034a-477b-a156-8862ced4812f"
+        }
+      },
+      {
+        "id": "ab15cced-3d15-45b7-9bfc-9cd88e676c78",
+        "name": "",
+        "type": "FlowchartFlowline",
+        "owner": null,
+        "bounds": { "x": 95, "y": 345, "width": 1, "height": 45 },
+        "path": [
+          { "x": 0, "y": 0 },
+          { "x": 0, "y": 45 }
+        ],
+        "source": {
+          "direction": "Down",
+          "element": "6f2eb0e0-034a-477b-a156-8862ced4812f"
+        },
+        "target": {
+          "direction": "Up",
+          "element": "b9c38b0f-1147-415f-b118-f6223594af45"
+        }
+      },
+      {
+        "id": "6012a349-fdaf-4a5b-a403-99b561c4f948",
+        "name": "no",
+        "type": "FlowchartFlowline",
+        "owner": null,
+        "bounds": { "x": 475, "y": 347.5, "width": 45, "height": 82.5 },
+        "path": [
+          { "x": 45, "y": 0 },
+          { "x": 0, "y": 0 },
+          { "x": 0, "y": 82.5 }
+        ],
+        "source": {
+          "direction": "Left",
+          "element": "800a171c-bf1a-4846-a53c-b2a46453565c"
+        },
+        "target": {
+          "direction": "Up",
+          "element": "5cf7eb9d-39e2-4d71-9023-24402b138b18"
+        }
+      },
+      {
+        "id": "7e0e411b-186e-4d76-8bbe-53ed73e269f2",
+        "name": "yes",
+        "type": "FlowchartFlowline",
+        "owner": null,
+        "bounds": { "x": 650, "y": 347.5, "width": 55, "height": 82.5 },
+        "path": [
+          { "x": 0, "y": 0 },
+          { "x": 55, "y": 0 },
+          { "x": 55, "y": 82.5 }
+        ],
+        "source": {
+          "direction": "Right",
+          "element": "800a171c-bf1a-4846-a53c-b2a46453565c"
+        },
+        "target": {
+          "direction": "Up",
+          "element": "af282d9e-aff7-487b-8da7-46d631d6fe88"
+        }
+      },
+      {
+        "id": "01b825c4-e628-45e9-b11f-3ff9a510621e",
+        "name": "",
+        "type": "FlowchartFlowline",
+        "owner": null,
+        "bounds": { "x": 265, "y": 180, "width": 525, "height": 267.5 },
+        "path": [
+          { "x": 485, "y": 267.5 },
+          { "x": 525, "y": 267.5 },
+          { "x": 525, "y": 0 },
+          { "x": 0, "y": 0 },
+          { "x": 0, "y": 40 }
+        ],
+        "source": {
+          "direction": "Right",
+          "element": "af282d9e-aff7-487b-8da7-46d631d6fe88"
+        },
+        "target": {
+          "direction": "Up",
+          "element": "b1b7a48c-cc4f-4286-8836-44ccb7e1a50b"
+        }
+      },
+      {
+        "id": "fcaa56f9-f6d1-4170-bd29-fdeff69119ff",
+        "name": "",
+        "type": "FlowchartFlowline",
+        "owner": null,
+        "bounds": { "x": 265, "y": 180, "width": 210, "height": 325 },
+        "path": [
+          { "x": 210, "y": 285 },
+          { "x": 210, "y": 325 },
+          { "x": 125, "y": 325 },
+          { "x": 125, "y": 0 },
+          { "x": 0, "y": 0 },
+          { "x": 0, "y": 40 }
+        ],
+        "source": {
+          "direction": "Down",
+          "element": "5cf7eb9d-39e2-4d71-9023-24402b138b18"
+        },
+        "target": {
+          "direction": "Up",
+          "element": "b1b7a48c-cc4f-4286-8836-44ccb7e1a50b"
+        }
+      },
+      {
+        "id": "f58bc75e-91e0-45b7-9f83-12a746c003b7",
+        "name": "",
+        "type": "FlowchartFlowline",
+        "owner": null,
+        "bounds": { "x": 0, "y": 425, "width": 95, "height": 142.5 },
+        "path": [
+          { "x": 95, "y": 0 },
+          { "x": 95, "y": 40 },
+          { "x": 0, "y": 40 },
+          { "x": 0, "y": 142.5 },
+          { "x": 40, "y": 142.5 }
+        ],
+        "source": {
+          "direction": "Down",
+          "element": "b9c38b0f-1147-415f-b118-f6223594af45"
+        },
+        "target": {
+          "direction": "Left",
+          "element": "808580ed-f7fe-49b4-80d9-9b986e87839b"
+        }
+      }
+    ],
+    "assessments": []
+}
+  

@@ -157,7 +157,7 @@ describe('ResultDetailComponent', () => {
                 debugElement = fixture.debugElement;
 
                 exercise = {
-                    maxScore: 100,
+                    maxPoints: 100,
                     bonusPoints: 0,
                     type: ExerciseType.PROGRAMMING,
                     staticCodeAnalysisEnabled: true,
