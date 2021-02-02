@@ -424,6 +424,14 @@ public class SubmissionService {
         }
     }
 
+    /**
+     * Serves as a wrapper method to {@link SubmissionService#lockSubmission} for exam test runs
+     * Creates an empty draft assessment with the user as an assessor and copies the automatic feedback (if present) into the new result.
+     * NOTE: We only support one correction round for test runs.
+     *
+     * @param submission the submission
+     * @return the draft assessment
+     */
     public Result prepareTestRunSubmissionForAssessment(Submission submission) {
         Optional<Result> existingAutomaticResult = Optional.empty();
         if (submission.getLatestResult() != null && AssessmentType.AUTOMATIC.equals(submission.getLatestResult().getAssessmentType())) {
