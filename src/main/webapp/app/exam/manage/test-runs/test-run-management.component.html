@@ -38,7 +38,9 @@
     <div style="padding-bottom: 10px">
         <span jhiTranslate="artemisApp.examManagement.testRun.text"></span>
     </div>
-    <div class="alert alert-warning" jhiTranslate="artemisApp.examManagement.testRun.reminderToDelete">Make sure to delete all Test Runs before the exam conduction!</div>
+    <div class="alert alert-warning" jhiTranslate="artemisApp.examManagement.testRun.reminderToDelete">
+        Make sure to delete all Test Runs before the exam conduction. All test runs are automatically deleted if you assess the unsubmitted student exams and empty submissions.
+    </div>
     <div class="table-responsive" *ngIf="testRuns">
         <table class="table table-striped">
             <thead>
