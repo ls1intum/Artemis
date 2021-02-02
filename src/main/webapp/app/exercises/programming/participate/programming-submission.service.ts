@@ -13,6 +13,7 @@ import { getLatestSubmissionResult, setLatestSubmissionResult, SubmissionType } 
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { Participation } from 'app/entities/participation/participation.model';
+import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -75,7 +76,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private exerciseBuildStateValue: { [exerciseId: number]: ExerciseSubmissionState } = {};
     private currentExpectedResultETA = this.DEFAULT_EXPECTED_RESULT_ETA;
 
-    constructor(private websocketService: JhiWebsocketService, private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
+    constructor(
+        private websocketService: JhiWebsocketService,
+        private http: HttpClient,
+        private participationWebsocketService: ParticipationWebsocketService,
+        private participationService: ProgrammingExerciseParticipationService,
+    ) {}
 
     ngOnDestroy(): void {
         Object.values(this.resultSubscriptions).forEach((sub) => sub.unsubscribe());
@@ -226,13 +232,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         }
         const resultObservable = this.participationWebsocketService.subscribeForLatestResultOfParticipation(participationId, personal, exerciseId).pipe(
             // Make sure that the incoming result belongs the latest submission!
-            filter((result: Result | undefined) => {
-                if (!result || !result.submission) {
-                    return false;
-                }
-                const { submission } = this.exerciseBuildState[exerciseId][participationId];
-                return !!submission && result.submission.id === submission.id;
-            }),
+            filter((result: Result | undefined) => this.isResultOfLatestSubmission(result, exerciseId, participationId)),
             distinctUntilChanged(),
             tap(() => {
                 // This is the normal case - the last pending submission received a result, so we emit undefined as the message that there is no pending submission anymore.
@@ -242,10 +242,18 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
         // If the timer runs out, we will emit an error as we assume the result is lost.
         const timerObservable = this.resultTimerSubjects.get(participationId)!.pipe(
-            tap(() => {
-                // TODO: we should ask the server to get the latest result in case this happens because the websocket message might not have been received
-                this.emitFailedSubmission(participationId, exerciseId);
+            // When the timer runs out try to fetch the latest submission from the server as the websocket connection might have failed
+            switchMap(() => this.participationService.getLatestResultWithFeedback(participationId)),
+            tap((result: Result) => {
+                if (this.isResultOfLatestSubmission(result, exerciseId, participationId)) {
+                    // Notify all result subscribers with the latest result if it belongs to the latest submission
+                    this.participationWebsocketService.notifyAllResultSubscribers({ ...result, participation: { id: participationId } });
+                } else {
+                    // Otherwise notify that submission subscribers that the result could not be retrieved
+                    this.emitFailedSubmission(participationId, exerciseId);
+                }
             }),
+            catchError(() => of(this.emitFailedSubmission(participationId, exerciseId))),
         );
 
         this.resultSubscriptions[participationId] = merge(timerObservable, resultObservable)
@@ -257,6 +265,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 }),
             )
             .subscribe();
+    };
+
+    private isResultOfLatestSubmission = (result: Result | undefined, exerciseId: number, participationId: number): boolean => {
+        if (!result || !result.submission) {
+            return false;
+        }
+        const { submission } = this.exerciseBuildState[exerciseId][participationId];
+        return !!submission && result.submission.id === submission.id;
     };
 
     private emitNoPendingSubmission = (participationId: number, exerciseId: number) => {

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, pipe } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
@@ -32,6 +32,10 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     participationSubscriptionTypes: Map<number /* ID of participation */, boolean /* Whether the participation was subscribed in personal mode */> = new Map<number, boolean>();
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private participationService: ParticipationService) {}
+
+    private getNotifyAllSubscribersPipe = () => {
+        return pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers));
+    };
 
     /**
      * remove all local participations
@@ -198,12 +202,19 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             subscribedParticipations!.add(participationId);
 
             this.jhiWebsocketService.subscribe(participationResultTopic);
-            this.jhiWebsocketService
-                .receive(participationResultTopic)
-                .pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers))
-                .subscribe();
+            this.jhiWebsocketService.receive(participationResultTopic).pipe(this.getNotifyAllSubscribersPipe()).subscribe();
         }
     }
+
+    /**
+     * Notifies the result and participation subscribers with the newest result.
+     * Note: the result must contain the participation id
+     *
+     * @param result The result with which the subscribers get notified
+     */
+    public notifyAllResultSubscribers = (result: Result) => {
+        of(result).pipe(this.getNotifyAllSubscribersPipe()).subscribe();
+    };
 
     /**
      * Subscribing for general changes in a participation object. This will triggered if a new result is received by the service.
