@@ -54,25 +54,43 @@
             <hr />
 
             <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                <h3>Checklist:</h3>
+                <h3>
+                    <span>{{ 'artemisApp.examManagement.checklist.title' | translate }}</span>
+                </h3>
                 <p>
-                    Read more about this checklist here:
-                    <a href="https://artemis-platform.readthedocs.io/en/latest/user/exams/instructors_guide/">Instructors guide for exams in Artemis</a>
+                    <span>{{ 'artemisApp.examManagement.checklist.introduction' | translate }}</span>
+                    <a href="https://artemis-platform.readthedocs.io/en/latest/user/exams/instructors_guide/">
+                        <span>{{ 'artemisApp.examManagement.checklist.linkDescription' | translate }}</span></a
+                    >
                     <br />
                 </p>
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>Checklist item</th>
-                            <th>Description</th>
-                            <th>Go To</th>
+                            <th>
+                                <span>{{ 'global.field.id' | translate }}</span>
+                            </th>
+                            <th>
+                                <span>{{ 'artemisApp.examManagement.checklist.checklistItem' | translate }}</span>
+                            </th>
+                            <th>
+                                <span>{{ 'artemisApp.examManagement.checklist.description' | translate }}</span>
+                            </th>
+                            <th>
+                                <span>{{ 'artemisApp.examManagement.checklist.goTo' | translate }}</span>
+                            </th>
                         </tr>
                     </thead>
 
                     <tbody>
                         <tr>
-                            <td class="d-none d-md-table-cell">Register students to the exam</td>
-                            <td class="d-none d-md-table-cell">At least one student needs to be registered to the exam</td>
+                            <td class="d-none d-md-table-cell">1</td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.register' | translate }}</span>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.register' | translate }}</span>
+                            </td>
                             <td class="d-none d-md-table-cell">
                                 <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['students']" class="btn btn-info">
                                     <fa-icon [icon]="'user'"></fa-icon>
@@ -81,10 +99,12 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="d-none d-md-table-cell">Create exercise group with exercises</td>
+                            <td class="d-none d-md-table-cell">2</td>
                             <td class="d-none d-md-table-cell">
-                                The Points in all exercises within a given exercise group must be identical, and the number of exercise groups must equal the exams number of
-                                exercises.
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.exerciseGroups' | translate }}</span>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.exerciseGroups' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
                                 <button
@@ -100,8 +120,13 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="d-none d-md-table-cell">Optional: Conduct a test run</td>
-                            <td class="d-none d-md-table-cell">If conduction a test run, make sure to delete is before starting the exam.</td>
+                            <td class="d-none d-md-table-cell">3</td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.testRun' | translate }}</span>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.testRun' | translate }}</span>
+                            </td>
                             <td class="d-none d-md-table-cell">
                                 <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['test-runs']" class="btn btn-info">
                                     <fa-icon [icon]="'user'"></fa-icon>
@@ -110,8 +135,13 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="d-none d-md-table-cell">Generate all student exams</td>
-                            <td class="d-none d-md-table-cell">Student exams must be generated for all registered students before starting the exam.</td>
+                            <td class="d-none d-md-table-cell">4</td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.generateStudentExams' | translate }}</span>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.generateStudentExams' | translate }}</span>
+                            </td>
                             <td class="d-none d-md-table-cell">
                                 <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['student-exams']" class="btn btn-primary">
                                     <fa-icon [icon]="'eye'"></fa-icon>
@@ -120,8 +150,13 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="d-none d-md-table-cell">Prepare exercise start</td>
-                            <td class="d-none d-md-table-cell"></td>
+                            <td class="d-none d-md-table-cell">5</td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.prepareExerciseStart' | translate }}</span>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.prepareExerciseStart' | translate }}</span>
+                            </td>
                             <td class="d-none d-md-table-cell">
                                 <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['student-exams']" class="btn btn-primary">
                                     <fa-icon [icon]="'eye'"></fa-icon>
@@ -130,8 +165,13 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="d-none d-md-table-cell">File out all exam details</td>
-                            <td class="d-none d-md-table-cell">Before conducting an exam, please make sure to have filled out all exam details (Start text, dates etc)</td>
+                            <td class="d-none d-md-table-cell">6</td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.examDetails' | translate }}</span>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examDetails' | translate }}</span>
+                            </td>
                             <td class="d-none d-md-table-cell">
                                 <button
                                     id="editButton_table"
@@ -145,13 +185,28 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="d-none d-md-table-cell">Conduct the exam</td>
-                            <td class="d-none d-md-table-cell"></td>
-                            <td class="d-none d-md-table-cell"></td>
+                            <td class="d-none d-md-table-cell">7</td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.conductExam' | translate }}</span>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.conductExam' | translate }}</span>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['student-exams']" class="btn btn-primary">
+                                    <fa-icon [icon]="'eye'"></fa-icon>
+                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
+                                </button>
+                            </td>
                         </tr>
                         <tr>
-                            <td class="d-none d-md-table-cell">Assess all submissions</td>
-                            <td class="d-none d-md-table-cell">The number of correction rounds per exercise depends on the exams number of correction rounds.</td>
+                            <td class="d-none d-md-table-cell">8</td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.assessAllSubmissions' | translate }}</span>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.assessAllSubmissions' | translate }}</span>
+                            </td>
                             <td class="d-none d-md-table-cell">
                                 <button
                                     *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
@@ -166,20 +221,53 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="d-none d-md-table-cell">Publish the exam results</td>
+                            <td class="d-none d-md-table-cell">9</td>
                             <td class="d-none d-md-table-cell">
-                                Publishing the results makes them available to students. Student exams are published on the publishing date for results within the exam
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.publishResults' | translate }}</span>
                             </td>
-                            <td class="d-none d-md-table-cell"></td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.publishResults' | translate }}</span>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <button
+                                    id="editButton_publish"
+                                    type="button"
+                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    [routerLink]="getEditRoute()"
+                                    class="btn btn-primary"
+                                >
+                                    <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+                                </button>
+                            </td>
                         </tr>
                         <tr>
-                            <td class="d-none d-md-table-cell">Plan the exam review</td>
-                            <td class="d-none d-md-table-cell">Make sure to have all dates specified correctly</td>
-                            <td class="d-none d-md-table-cell"></td>
+                            <td class="d-none d-md-table-cell">10</td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.examReview' | translate }}</span>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examReview' | translate }}</span>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <button
+                                    id="editButton_review"
+                                    type="button"
+                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    [routerLink]="getEditRoute()"
+                                    class="btn btn-primary"
+                                >
+                                    <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+                                </button>
+                            </td>
                         </tr>
                         <tr>
-                            <td class="d-none d-md-table-cell">Resolve all complaints</td>
-                            <td class="d-none d-md-table-cell"></td>
+                            <td class="d-none d-md-table-cell">11</td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.resolveComplaints' | translate }}</span>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.resolveComplaints' | translate }}</span>
+                            </td>
                             <td class="d-none d-md-table-cell">
                                 <button
                                     *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
@@ -194,8 +282,13 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="d-none d-md-table-cell">Optional: Export the exam results</td>
-                            <td class="d-none d-md-table-cell"></td>
+                            <td class="d-none d-md-table-cell">12</td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.exportResults' | translate }}</span>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.exportResults' | translate }}</span>
+                            </td>
                             <td class="d-none d-md-table-cell">
                                 <button
                                     type="submit"
