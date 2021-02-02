@@ -60,7 +60,7 @@ describe('FileUploadAssessmentComponent', () => {
     let router: Router;
     const activatedRouteMock: MockActivatedRoute = new MockActivatedRoute();
 
-    const exercise = { id: 20, type: ExerciseType.FILE_UPLOAD, maxScore: 100, bonusPoints: 0 } as FileUploadExercise;
+    const exercise = { id: 20, type: ExerciseType.FILE_UPLOAD, maxPoints: 100, bonusPoints: 0 } as FileUploadExercise;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({

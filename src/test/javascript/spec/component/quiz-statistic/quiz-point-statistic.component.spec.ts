@@ -2,7 +2,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { ComponentFixture, TestBed, tick, fakeAsync, discardPeriodicTasks } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,7 +26,13 @@ const pointCounters = [
     { points: 1, ratedCounter: 2, unRatedCounter: 3 },
     { points: 4, ratedCounter: 5, unRatedCounter: 6 },
 ];
-let quizExercise = { id: 42, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
+let quizExercise = {
+    id: 42,
+    started: true,
+    course,
+    quizQuestions: [question],
+    adjustedDueDate: undefined,
+} as QuizExercise;
 
 describe('QuizExercise Point Statistic Component', () => {
     let comp: QuizPointStatisticComponent;
@@ -187,7 +193,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
     it('should calculate the MaxScore', () => {
         // setup
-        quizExercise.quizQuestions = [{ score: 1 }, { score: 2 }];
+        quizExercise.quizQuestions = [{ points: 1 }, { points: 2 }];
         comp.quizExercise = quizExercise;
 
         // call

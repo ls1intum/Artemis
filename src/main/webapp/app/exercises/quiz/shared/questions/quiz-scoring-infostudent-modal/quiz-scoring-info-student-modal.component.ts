@@ -216,7 +216,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      */
     private checkForSingleOrPluralPoints() {
         const translationBasePath = 'artemisApp.quizExercise.explanationText.';
-        if (this.question.score === 1) {
+        if (this.question.points === 1) {
             this.questionPoint = this.translateService.instant(translationBasePath + 'point');
         } else {
             this.questionPoint = this.translateService.instant(translationBasePath + 'points');

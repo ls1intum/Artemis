@@ -56,7 +56,7 @@
                     <td>{{ modelingExercise.releaseDate | artemisDate }}</td>
                     <td>{{ modelingExercise.dueDate | artemisDate }}</td>
                     <td>{{ modelingExercise.assessmentDueDate | artemisDate }}</td>
-                    <td>{{ modelingExercise.maxScore }}</td>
+                    <td>{{ modelingExercise.maxPoints }}</td>
                     <td>{{ modelingExercise.bonusPoints }}</td>
                     <td>{{ exerciseService.isIncludedInScore(modelingExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ modelingExercise.presentationScoreEnabled }}</td>
