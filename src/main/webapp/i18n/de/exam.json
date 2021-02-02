@@ -215,6 +215,7 @@
             "confirmationStartText": "Klausurbeginn Bestätigungstext",
             "confirmationEndText": "Klausurende Bestätigungstext",
             "assessmentDashboard": "Bewertungs-Dashboard",
+            "examChecklist": "Exam Checkliste",
             "studentExams": "Klausuren der Studenten",
             "students": "Studenten",
             "testRun": {

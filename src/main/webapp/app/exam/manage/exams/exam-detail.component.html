@@ -3,8 +3,218 @@
         <div *ngIf="exam">
             <h2><span jhiTranslate="artemisApp.exam.title">Exam</span> {{ exam.id }}</h2>
             <hr />
+
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
+            <button id="editButton" type="button" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="getEditRoute()" class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+
+            <button id="studentExamsButton" type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="getStudentExamRoute()" class="btn btn-info">
+                <fa-icon [icon]="'eye'"></fa-icon>
+                <span>{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
+            </button>
+
+            <button
+                *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                type="submit"
+                [routerLink]="['tutor-exam-dashboard']"
+                class="btn btn-primary"
+                id="tutor-exam-dashboard-button"
+            >
+                <fa-icon [icon]="'th-list'"></fa-icon>
+                <span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
+            </button>
+
+            <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']" [routerLink]="['scores']" class="btn btn-info" id="scores-button">
+                <fa-icon [icon]="'eye'"></fa-icon>
+                <span>{{ 'entity.action.scores' | translate }}</span>
+            </button>
+
+            <button *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" type="submit" [routerLink]="['exercise-groups']" class="btn btn-primary" id="exercises-button-groups">
+                <fa-icon [icon]="'list-alt'"></fa-icon>
+                <span>{{ 'artemisApp.examManagement.exerciseGroups' | translate }}</span>
+            </button>
+
+            <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['test-runs']" class="btn btn-info">
+                <fa-icon [icon]="'user'"></fa-icon>
+                <span>{{ 'artemisApp.examManagement.testRun.testRun' | translate }}</span>
+            </button>
+
+            <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['student-exams']" class="btn btn-primary">
+                <fa-icon [icon]="'eye'"></fa-icon>
+                <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
+            </button>
+
+            <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['students']" class="btn btn-info">
+                <fa-icon [icon]="'user'"></fa-icon>
+                <span>{{ 'artemisApp.examManagement.students' | translate }}</span>
+            </button>
+
+            <hr />
+
+            <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                <h3>Checklist:</h3>
+                <p>
+                    Read more about this checklist here:
+                    <a href="https://artemis-platform.readthedocs.io/en/latest/user/exams/instructors_guide/">Instructors guide for exams in Artemis</a>
+                    <br />
+                </p>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Checklist item</th>
+                            <th>Beschreibung</th>
+                            <th>Go To</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td class="d-none d-md-table-cell">Registre students to the exam</td>
+                            <td class="d-none d-md-table-cell">At least one student needs to be registered to the exam</td>
+                            <td class="d-none d-md-table-cell">
+                                <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['students']" class="btn btn-info">
+                                    <fa-icon [icon]="'user'"></fa-icon>
+                                    <span>{{ 'artemisApp.examManagement.students' | translate }}</span>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="d-none d-md-table-cell">Create exercise group with exercises</td>
+                            <td class="d-none d-md-table-cell">
+                                The Points in all exercises within a given exercise group must be identical, and the number of exercise groups must equal the exams number of
+                                exercises.
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <button
+                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    type="submit"
+                                    [routerLink]="['exercise-groups']"
+                                    class="btn btn-primary"
+                                    id="exercises-button-groups_table"
+                                >
+                                    <fa-icon [icon]="'list-alt'"></fa-icon>
+                                    <span>{{ 'artemisApp.examManagement.exerciseGroups' | translate }}</span>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="d-none d-md-table-cell">Optional: Conduct a test run</td>
+                            <td class="d-none d-md-table-cell">If conduction a test run, make sure to delete is before starting the exam.</td>
+                            <td class="d-none d-md-table-cell">
+                                <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['test-runs']" class="btn btn-info">
+                                    <fa-icon [icon]="'user'"></fa-icon>
+                                    <span>{{ 'artemisApp.examManagement.testRun.testRun' | translate }}</span>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="d-none d-md-table-cell">Generate all student exams</td>
+                            <td class="d-none d-md-table-cell">Student exams must be generated for all registered students before starting the exam.</td>
+                            <td class="d-none d-md-table-cell">
+                                <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['student-exams']" class="btn btn-primary">
+                                    <fa-icon [icon]="'eye'"></fa-icon>
+                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="d-none d-md-table-cell">Prepare exercise start</td>
+                            <td class="d-none d-md-table-cell"></td>
+                            <td class="d-none d-md-table-cell">
+                                <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['student-exams']" class="btn btn-primary">
+                                    <fa-icon [icon]="'eye'"></fa-icon>
+                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="d-none d-md-table-cell">File out all exam details</td>
+                            <td class="d-none d-md-table-cell">Before conducting an exam, please make sure to have filled out all exam details (Start text, dates etc)</td>
+                            <td class="d-none d-md-table-cell">
+                                <button
+                                    id="editButton_table"
+                                    type="button"
+                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    [routerLink]="getEditRoute()"
+                                    class="btn btn-primary"
+                                >
+                                    <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="d-none d-md-table-cell">Conduct the exam</td>
+                            <td class="d-none d-md-table-cell"></td>
+                            <td class="d-none d-md-table-cell"></td>
+                        </tr>
+                        <tr>
+                            <td class="d-none d-md-table-cell">Assess all submissions</td>
+                            <td class="d-none d-md-table-cell">The number of correction rounds per exercise depends on the exams number of correction rounds.</td>
+                            <td class="d-none d-md-table-cell">
+                                <button
+                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    type="submit"
+                                    [routerLink]="['tutor-exam-dashboard']"
+                                    class="btn btn-primary"
+                                    id="tutor-exam-dashboard-button_table"
+                                >
+                                    <fa-icon [icon]="'th-list'"></fa-icon>
+                                    <span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="d-none d-md-table-cell">Publish the exam results</td>
+                            <td class="d-none d-md-table-cell">
+                                Publishing the results makes them available to students. Student exams are published on the publishing date for results within the exam
+                            </td>
+                            <td class="d-none d-md-table-cell"></td>
+                        </tr>
+                        <tr>
+                            <td class="d-none d-md-table-cell">Plan the exam review</td>
+                            <td class="d-none d-md-table-cell">Make sure to have all dates specified correctly</td>
+                            <td class="d-none d-md-table-cell"></td>
+                        </tr>
+                        <tr>
+                            <td class="d-none d-md-table-cell">Resolve all complaints</td>
+                            <td class="d-none d-md-table-cell"></td>
+                            <td class="d-none d-md-table-cell">
+                                <button
+                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    type="submit"
+                                    [routerLink]="['tutor-exam-dashboard']"
+                                    class="btn btn-primary"
+                                    id="tutor-exam-dashboard-button_table_complaints"
+                                >
+                                    <fa-icon [icon]="'th-list'"></fa-icon>
+                                    <span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="d-none d-md-table-cell">Optional: Export the exam results</td>
+                            <td class="d-none d-md-table-cell"></td>
+                            <td class="d-none d-md-table-cell">
+                                <button
+                                    type="submit"
+                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']"
+                                    [routerLink]="['scores']"
+                                    class="btn btn-info"
+                                    id="scores-button_publish_result"
+                                >
+                                    <fa-icon [icon]="'eye'"></fa-icon>
+                                    <span>{{ 'entity.action.scores' | translate }}</span>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Exam Details:</h3>
+
             <dl class="row-md jh-entity-details markdown-preview">
                 <dt *ngIf="exam.course"><span jhiTranslate="artemisApp.exam.course">Course</span></dt>
                 <dd *ngIf="exam.course">
@@ -100,15 +310,6 @@
                 <dd *ngIf="formattedConfirmationEndText" class="editor-outline-background" [innerHTML]="formattedConfirmationEndText"></dd>
                 <span *ngIf="!formattedConfirmationEndText" jhiTranslate="artemisApp.exam.notSet"></span>
             </dl>
-
-            <button id="editButton" type="button" [routerLink]="getEditRoute()" class="btn btn-primary">
-                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-            </button>
-
-            <button id="studentExamsButton" type="submit" *ngIf="isAtLeastInstructor" [routerLink]="getStudentExamRoute()" class="btn btn-primary">
-                <fa-icon [icon]="'eye'"></fa-icon>
-                <span>{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
-            </button>
         </div>
     </div>
 </div>

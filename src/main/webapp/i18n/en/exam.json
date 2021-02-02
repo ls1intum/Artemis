@@ -216,6 +216,7 @@
             "confirmationStartText": "Exam start confirmation text",
             "confirmationEndText": "Exam end confirmation text",
             "assessmentDashboard": "Assessment Dashboard",
+            "examChecklist": "Exam Checklist",
             "studentExams": "Student Exams",
             "students": "Students",
             "testRun": {
