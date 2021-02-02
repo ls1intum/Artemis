@@ -79,7 +79,7 @@
                         customMax="9999"
                         name="points"
                         id="field_points"
-                        [(ngModel)]="modelingExercise.maxScore"
+                        [(ngModel)]="modelingExercise.maxPoints"
                         #points="ngModel"
                     />
                     <div *ngIf="points?.invalid && (points?.dirty || points?.touched) && points?.errors" class="alert alert-danger">

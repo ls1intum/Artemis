@@ -246,7 +246,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         // creating text exercise with Result
         course = courseRepository.findWithEagerExercisesById(idOfCourse);
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
-        textExercise.setMaxScore(10.0);
+        textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise = exerciseRepository.save(textExercise);
         idOfTextExercise = textExercise.getId();
@@ -257,7 +257,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         // creating text exercise with Result
         course = courseRepository.findWithEagerExercisesById(idOfCourse);
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
-        modelingExercise.setMaxScore(10.0);
+        modelingExercise.setMaxPoints(10.0);
         modelingExercise.setBonusPoints(0.0);
         modelingExercise = exerciseRepository.save(modelingExercise);
         idOfModelingExercise = modelingExercise.getId();
@@ -269,7 +269,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         course = courseRepository.findWithEagerExercisesById(idOfCourse);
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setMode(ExerciseMode.TEAM);
-        textExercise.setMaxScore(10.0);
+        textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise = exerciseRepository.save(textExercise);
         idOfTeamTextExercise = textExercise.getId();
@@ -279,8 +279,8 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
             boolean rated) {
         Exercise exercise = exerciseRepository.findById(idOfExercise).get();
 
-        if (!exercise.getMaxScore().equals(pointsOfExercise)) {
-            exercise.setMaxScore(pointsOfExercise);
+        if (!exercise.getMaxPoints().equals(pointsOfExercise)) {
+            exercise.setMaxPoints(pointsOfExercise);
         }
         if (!exercise.getBonusPoints().equals(bonusPointsOfExercise)) {
             exercise.setBonusPoints(bonusPointsOfExercise);

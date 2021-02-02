@@ -388,7 +388,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createModelingExercise_InvalidMaxScore() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        modelingExercise.setMaxScore(0.0);
+        modelingExercise.setMaxPoints(0.0);
         request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -396,7 +396,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createModelingExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        modelingExercise.setMaxScore(10.0);
+        modelingExercise.setMaxPoints(10.0);
         modelingExercise.setBonusPoints(1.0);
         modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
         request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
@@ -406,7 +406,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createModelingExercise_NotIncludedInvalidBonusPoints() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        modelingExercise.setMaxScore(10.0);
+        modelingExercise.setMaxPoints(10.0);
         modelingExercise.setBonusPoints(1.0);
         modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);

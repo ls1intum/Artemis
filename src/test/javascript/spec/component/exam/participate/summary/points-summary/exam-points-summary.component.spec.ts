@@ -67,21 +67,21 @@ const textExercise = {
     title: 'Text Exercise',
     type: ExerciseType.TEXT,
     studentParticipations: [textParticipation],
-    maxScore: 10,
+    maxPoints: 10,
     bonusPoints: 10,
 } as TextExercise;
 const notIncludedTextExercise = {
     id: 99,
     includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED,
     type: ExerciseType.TEXT,
-    maxScore: 10,
+    maxPoints: 10,
     studentParticipations: [notIncludedTextParticipation],
 } as TextExercise;
 const bonusTextExercise = {
     id: 100,
     includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS,
     type: ExerciseType.TEXT,
-    maxScore: 10,
+    maxPoints: 10,
     studentParticipations: [bonusTextParticipation],
 } as TextExercise;
 const quizExercise = {
@@ -90,7 +90,7 @@ const quizExercise = {
     title: 'Quiz Exercise',
     type: ExerciseType.QUIZ,
     studentParticipations: [quizParticipation],
-    maxScore: 10,
+    maxPoints: 10,
 } as QuizExercise;
 const modelingExercise = {
     id: 3,
@@ -98,7 +98,7 @@ const modelingExercise = {
     title: 'Modeling Exercise',
     type: ExerciseType.MODELING,
     studentParticipations: [modelingParticipation],
-    maxScore: 10,
+    maxPoints: 10,
 } as ModelingExercise;
 const programmingExercise = {
     id: 4,
@@ -106,7 +106,7 @@ const programmingExercise = {
     title: 'Programming Exercise',
     type: ExerciseType.PROGRAMMING,
     studentParticipations: [programmingParticipation],
-    maxScore: 10,
+    maxPoints: 10,
 } as ProgrammingExercise;
 const programmingExerciseTwo = {
     id: 5,

@@ -47,7 +47,7 @@ public abstract class ExerciseImportService {
         }
 
         newExercise.setTitle(importedExercise.getTitle());
-        newExercise.setMaxScore(importedExercise.getMaxScore());
+        newExercise.setMaxPoints(importedExercise.getMaxPoints());
         newExercise.setBonusPoints(importedExercise.getBonusPoints());
         newExercise.setIncludedInOverallScore(importedExercise.getIncludedInOverallScore());
         newExercise.setAssessmentType(importedExercise.getAssessmentType());

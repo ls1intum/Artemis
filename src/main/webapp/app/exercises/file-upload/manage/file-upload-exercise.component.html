@@ -47,7 +47,7 @@
                     <td>{{ fileUploadExercise.releaseDate | artemisDate }}</td>
                     <td>{{ fileUploadExercise.dueDate | artemisDate }}</td>
                     <td>{{ fileUploadExercise.assessmentDueDate | artemisDate }}</td>
-                    <td>{{ fileUploadExercise.maxScore }}</td>
+                    <td>{{ fileUploadExercise.maxPoints }}</td>
                     <td>{{ fileUploadExercise.bonusPoints }}</td>
                     <td>{{ exerciseService.isIncludedInScore(fileUploadExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ fileUploadExercise.presentationScoreEnabled }}</td>

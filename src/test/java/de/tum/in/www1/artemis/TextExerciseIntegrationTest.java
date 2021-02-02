@@ -174,7 +174,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void createTextExercise_InvalidMaxScore() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
-        textExercise.setMaxScore(0.0);
+        textExercise.setMaxPoints(0.0);
         request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -183,7 +183,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void createTextExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
-        textExercise.setMaxScore(10.0);
+        textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(1.0);
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
         request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
@@ -194,7 +194,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void createTextExercise_NotIncludedInvalidBonusPoints() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
-        textExercise.setMaxScore(10.0);
+        textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(1.0);
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
