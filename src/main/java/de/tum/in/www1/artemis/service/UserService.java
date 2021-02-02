@@ -849,7 +849,7 @@ public class UserService {
      * @return list of students for given course
      */
     public List<User> getStudents(Course course) {
-        return findAllUsersInGroup(course.getStudentGroupName());
+        return findAllUsersInGroupWithAuthorities(course.getStudentGroupName());
     }
 
     /**
@@ -858,7 +858,7 @@ public class UserService {
      * @return list of tutors for given course
      */
     public List<User> getTutors(Course course) {
-        return findAllUsersInGroup(course.getTeachingAssistantGroupName());
+        return findAllUsersInGroupWithAuthorities(course.getTeachingAssistantGroupName());
     }
 
     /**
@@ -868,7 +868,7 @@ public class UserService {
      * @return A list of all users that have the role of instructor in the course
      */
     public List<User> getInstructors(Course course) {
-        return findAllUsersInGroup(course.getInstructorGroupName());
+        return findAllUsersInGroupWithAuthorities(course.getInstructorGroupName());
     }
 
     /**
@@ -877,8 +877,8 @@ public class UserService {
      * @param groupName The group name for which to return all members
      * @return A list of all users that belong to the group
      */
-    public List<User> findAllUsersInGroup(String groupName) {
-        return userRepository.findAllInGroup(groupName);
+    public List<User> findAllUsersInGroupWithAuthorities(String groupName) {
+        return userRepository.findAllInGroupWithAuthorities(groupName);
     }
 
     /**
@@ -937,7 +937,7 @@ public class UserService {
         if (!excludedUsers.isEmpty()) {
             return userRepository.findAllInGroupContainingAndNotIn(groupName, new HashSet<>(excludedUsers));
         }
-        return userRepository.findAllInGroup(groupName);
+        return userRepository.findAllInGroupWithAuthorities(groupName);
     }
 
     /**
@@ -947,7 +947,7 @@ public class UserService {
      */
     public void removeGroupFromUsers(String groupName) {
         log.info("Remove group " + groupName + " from users");
-        List<User> users = userRepository.findAllInGroup(groupName);
+        List<User> users = userRepository.findAllInGroupWithAuthorities(groupName);
         log.info("Found " + users.size() + " users with group " + groupName);
         for (User user : users) {
             user.getGroups().remove(groupName);

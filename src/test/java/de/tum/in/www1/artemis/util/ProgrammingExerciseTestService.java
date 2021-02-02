@@ -8,10 +8,7 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -810,7 +807,7 @@ public class ProgrammingExerciseTestService {
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamService.save(exercise, team);
 
@@ -843,7 +840,7 @@ public class ProgrammingExerciseTestService {
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamService.save(exercise, team);
 
@@ -897,7 +894,7 @@ public class ProgrammingExerciseTestService {
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamService.save(exercise, team);
 
@@ -935,7 +932,7 @@ public class ProgrammingExerciseTestService {
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamService.save(exercise, team);
 
@@ -956,7 +953,7 @@ public class ProgrammingExerciseTestService {
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamService.save(exercise, team);
 

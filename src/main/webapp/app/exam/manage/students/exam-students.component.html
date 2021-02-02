@@ -16,6 +16,14 @@
                 [buttonSize]="ButtonSize.MEDIUM"
                 (finish)="reloadExamWithRegisteredUsers()"
             ></jhi-students-exam-import-button>
+            <button
+                class="btn btn btn-primary ml-auto"
+                (click)="registerAllStudentsFromCourse()"
+                title="{{ 'artemisApp.examManagement.examStudents.registerAllFromCourseTooltip' | translate }}"
+            >
+                <fa-icon [icon]="'plus'" [fixedWidth]="true"></fa-icon>&nbsp;
+                <span jhiTranslate="artemisApp.examManagement.examStudents.registerAllFromCourse"></span>
+            </button>
         </div>
     </div>
     <jhi-alert></jhi-alert>
