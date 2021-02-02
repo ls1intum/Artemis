@@ -23,7 +23,7 @@ describe('ModelingSubmission Service', () => {
     });
 
     it('should find an element', async () => {
-        const returnedFromService = Object.assign({}, elemDefault);
+        const returnedFromService = { ...elemDefault };
         service
             .getSubmission(123)
             .pipe(take(1))
@@ -34,12 +34,7 @@ describe('ModelingSubmission Service', () => {
     });
 
     it('should create a ModelingSubmission', async () => {
-        const returnedFromService = Object.assign(
-            {
-                id: 0,
-            },
-            elemDefault,
-        );
+        const returnedFromService = { ...elemDefault, id: 0 };
         const expected = Object.assign({}, returnedFromService);
         service
             .create(new ModelingSubmission(), 1)
@@ -50,15 +45,8 @@ describe('ModelingSubmission Service', () => {
     });
 
     it('should update a ModelingSubmission', async () => {
-        const returnedFromService = Object.assign(
-            {
-                model: 'BBBBBB',
-                explanationText: 'BBBBBB',
-            },
-            elemDefault,
-        );
-
-        const expected = Object.assign({}, returnedFromService);
+        const returnedFromService = { ...elemDefault, model: 'BBBBBB', explanationText: 'BBBBBB' };
+        const expected = { ...returnedFromService };
         service
             .update(expected, 1)
             .pipe(take(1))
@@ -68,39 +56,46 @@ describe('ModelingSubmission Service', () => {
     });
 
     it('should getModelingSubmissionsForExerciseByCorrectionRound without correction round', async () => {
-        const returnedFromService = Object.assign(
-            {
-                id: 5,
-            },
-            elemDefault,
-        );
-        const expected = Object.assign({}, returnedFromService);
+        const exerciseId = 5;
+        const returnedFromService = { ...elemDefault, id: exerciseId };
+        const expected = { ...returnedFromService };
         const requestOption = { test: 'Test' };
         service
-            .getModelingSubmissionsForExerciseByCorrectionRound(5, requestOption)
+            .getModelingSubmissionsForExerciseByCorrectionRound(exerciseId, requestOption)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/exercises/${5}/modeling-submissions?test=Test` });
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/exercises/${exerciseId}/modeling-submissions?test=Test` });
         expect(req.request.params.get('test')).toBe('Test');
         req.flush(JSON.stringify(returnedFromService));
     });
 
     it('should getModelingSubmissionsForExerciseByCorrectionRound without correction round', async () => {
-        const returnedFromService = Object.assign(
-            {
-                id: 5,
-            },
-            elemDefault,
-        );
-        const expected = Object.assign({}, returnedFromService);
+        const exerciseId = 5;
+        const returnedFromService = { ...elemDefault, id: exerciseId };
+        const expected = { ...returnedFromService };
         const requestOption = { test: 'Test' };
         const correctionRound = 6;
         service
             .getModelingSubmissionsForExerciseByCorrectionRound(5, requestOption, correctionRound)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/exercises/${5}/modeling-submissions?test=Test&correction-round=${correctionRound}` });
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/exercises/${exerciseId}/modeling-submissions?test=Test&correction-round=${correctionRound}` });
         expect(req.request.params.get('test')).toBe('Test');
+        expect(req.request.params.get('correction-round')).toBe(`${correctionRound}`);
+        req.flush(JSON.stringify(returnedFromService));
+    });
+
+    it('should getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment', () => {
+        const exerciseId = 5;
+        const returnedFromService = { ...elemDefault, id: exerciseId };
+        const correctionRound = 7;
+        const expected = { ...returnedFromService };
+        service
+            .getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, correctionRound)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+        const req = httpMock.expectOne({ method: 'GET', url: `api/exercises/${exerciseId}/modeling-submission-without-assessment?correction-round=${correctionRound}&lock=true` });
+        expect(req.request.params.get('lock')).toBe('true');
         expect(req.request.params.get('correction-round')).toBe(`${correctionRound}`);
         req.flush(JSON.stringify(returnedFromService));
     });

@@ -26,7 +26,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import * as moment from 'moment';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockModule } from 'ng-mocks';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
@@ -45,6 +45,7 @@ import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { update } from 'lodash';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -71,16 +72,16 @@ describe('Component Tests', () => {
                 imports: [
                     ArtemisTestModule,
                     TranslateModule.forRoot(),
-                    ArtemisSharedModule,
-                    ArtemisResultModule,
-                    ArtemisSharedComponentModule,
+                    MockModule(ArtemisSharedModule),
+                    MockModule(ArtemisResultModule),
+                    MockModule(ArtemisSharedComponentModule),
                     ModelingAssessmentModule,
-                    ArtemisComplaintsModule,
-                    ArtemisTeamModule,
-                    ArtemisFullscreenModule,
-                    ArtemisTeamSubmissionSyncModule,
-                    ArtemisHeaderExercisePageWithDetailsModule,
-                    RatingModule,
+                    MockModule(ArtemisComplaintsModule),
+                    MockModule(ArtemisTeamModule),
+                    MockModule(ArtemisFullscreenModule),
+                    MockModule(ArtemisTeamSubmissionSyncModule),
+                    MockModule(ArtemisHeaderExercisePageWithDetailsModule),
+                    MockModule(RatingModule),
                     RouterTestingModule.withRoutes([routes[0]]),
                 ],
                 declarations: [ModelingSubmissionComponent, MockComponent(ModelingEditorComponent)],
@@ -285,6 +286,14 @@ describe('Component Tests', () => {
             comp.submit();
             expect(fake).to.have.been.calledOnce;
             expect(comp.submission).to.be.deep.equal(submission);
+        });
+
+        it('should calculate number of elements from model', () => {
+            const elements = [{ id: 1 }, { id: 2 }, { id: 3 }];
+            const relationships = [{ id: 4 }, { id: 5 }];
+            submission.model = JSON.stringify({ elements, relationships });
+            comp.submission = submission;
+            expect(comp.calculateNumberOfModelElements()).to.equal(elements.length + relationships.length);
         });
     });
 });
