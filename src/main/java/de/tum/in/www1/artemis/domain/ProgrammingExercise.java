@@ -559,7 +559,7 @@ public class ProgrammingExercise extends Exercise {
 
     @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
-        return participation.getResults().stream().filter(result -> checkForRatedAndAssessedResult(result)).collect(Collectors.toSet());
+        return participation.getResults().stream().filter(result -> checkForAssessedResult(result)).collect(Collectors.toSet());
     }
 
     /**
@@ -573,9 +573,12 @@ public class ProgrammingExercise extends Exercise {
     }
 
     private boolean checkForRatedAndAssessedResult(Result result) {
+        return Boolean.TRUE.equals(result.isRated()) && checkForAssessedResult(result);
+    }
+
+    private boolean checkForAssessedResult(Result result) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-        return Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null
-                && ((result.isManual() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC));
+        return result.getCompletionDate() != null && ((result.isManual() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC));
     }
 
     @Override
