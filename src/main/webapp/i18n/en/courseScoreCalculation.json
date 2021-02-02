@@ -2,16 +2,16 @@
     "artemisApp": {
         "courseScoreCalculation": {
             "scoreAggregation": "Score Aggregation",
-            "myScore": "My Score",
+            "myScore": "My Points",
             "myRelativeScore": "My Relative Score (%)",
-            "maxScore": "Max Score",
-            "forQuizzes": "Score for quizzes",
-            "forProgramming": "Score for programming exercises",
-            "forModeling": "Score for modeling exercises",
-            "total": "Total score for this course",
+            "maxScore": "Max Points",
+            "forQuizzes": "Points for quizzes",
+            "forProgramming": "Points for programming exercises",
+            "forModeling": "Points for modeling exercises",
+            "total": "Total points for this course",
             "eist": {
-                "forHomework": "Score for homework",
-                "forInClass": "Score for in-class exercises"
+                "forHomework": "Points for homework",
+                "forInClass": "Points for in-class exercises"
             }
         }
     }

@@ -27,7 +27,7 @@
                         ></span>
                     </ng-template>
                 </div>
-                <jhi-score-display [maxPoints]="exercise?.maxScore" [score]="leftTotalScore" [maxBonusPoints]="exercise?.bonusPoints"></jhi-score-display>
+                <jhi-score-display [maxPoints]="exercise?.maxPoints" [score]="leftTotalScore" [maxBonusPoints]="exercise?.bonusPoints"></jhi-score-display>
             </div>
             <div class="left-body card-body">
                 <jhi-text-assessment-area
@@ -58,7 +58,7 @@
                             ></span>
                         </ng-template>
                     </div>
-                    <jhi-score-display [maxPoints]="exercise?.maxScore" [maxBonusPoints]="exercise?.bonusPoints" [score]="rightTotalScore"></jhi-score-display>
+                    <jhi-score-display [maxPoints]="exercise?.maxPoints" [maxBonusPoints]="exercise?.bonusPoints" [score]="rightTotalScore"></jhi-score-display>
                 </div>
                 <div class="right-body card-body">
                     <jhi-text-assessment-area

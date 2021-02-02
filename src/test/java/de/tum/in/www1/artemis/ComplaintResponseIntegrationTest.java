@@ -65,7 +65,7 @@ public class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationB
         Course course = this.database.createCourse();
         // creating text exercise
         TextExercise textExercise = ModelFactory.generateTextExercise(null, null, null, course);
-        textExercise.setMaxScore(10.0);
+        textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise = exerciseRepository.saveAndFlush(textExercise);
         // creating participation of student1 by starting the exercise

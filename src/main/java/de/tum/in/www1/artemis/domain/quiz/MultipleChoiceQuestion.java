@@ -193,7 +193,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     @Override
     public String toString() {
         return "MultipleChoiceQuestion{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", text='" + getText() + "'" + ", hint='" + getHint() + "'" + ", explanation='"
-                + getExplanation() + "'" + ", score='" + getScore() + "'" + ", scoringType='" + getScoringType() + "'" + ", randomizeOrder='" + isRandomizeOrder() + "'"
+                + getExplanation() + "'" + ", score='" + getPoints() + "'" + ", scoringType='" + getScoringType() + "'" + ", randomizeOrder='" + isRandomizeOrder() + "'"
                 + ", exerciseTitle='" + ((getExercise() == null) ? null : getExercise().getTitle()) + "'" + "}";
     }
 

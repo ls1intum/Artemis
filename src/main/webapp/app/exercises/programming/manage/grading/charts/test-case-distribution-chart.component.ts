@@ -44,7 +44,7 @@ export class TestCaseDistributionChartComponent implements OnChanges {
         // sum of all weights
         const totalWeight = this.testCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
         // max points for the exercise
-        const maxPoints = this.exercise.maxScore!;
+        const maxPoints = this.exercise.maxPoints!;
         // exercise max score with bonus in percent
         const maxScoreInPercent = (maxPoints + (this.exercise.bonusPoints || 0)) / maxPoints;
 
