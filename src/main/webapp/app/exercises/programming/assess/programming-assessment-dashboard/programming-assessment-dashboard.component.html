@@ -45,7 +45,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let submission of filteredSubmissions; let i = index" [ngStyle]="submission.optimal && { 'font-weight': 'bold' }">
+                <tr *ngFor="let submission of filteredSubmissions; let i = index">
                     <td>{{ i + 1 }}</td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>
                     <td>
