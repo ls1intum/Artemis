@@ -3,24 +3,24 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { Result } from 'app/entities/result.model';
-import { TextAssessmentsService } from '../text-assessments.service';
-import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { ProgrammingAssessmentManualResultService } from '../manual-result/programming-assessment-manual-result.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
-    templateUrl: './text-assessment-dashboard.component.html',
+    templateUrl: './programming-assessment-dashboard.component.html',
 })
-export class TextAssessmentDashboardComponent implements OnInit {
+export class ProgrammingAssessmentDashboardComponent implements OnInit {
     ExerciseType = ExerciseType;
-    exercise: TextExercise;
-    submissions: TextSubmission[] = [];
-    filteredSubmissions: TextSubmission[] = [];
+    exercise: ProgrammingExercise;
+    submissions: ProgrammingSubmission[] = [];
+    filteredSubmissions: ProgrammingSubmission[] = [];
     busy = false;
     predicate = 'id';
     reverse = false;
@@ -32,12 +32,12 @@ export class TextAssessmentDashboardComponent implements OnInit {
         private route: ActivatedRoute,
         private exerciseService: ExerciseService,
         private accountService: AccountService,
-        private textSubmissionService: TextSubmissionService,
-        private assessmentsService: TextAssessmentsService,
+        private programmingSubmissionService: ProgrammingSubmissionService,
+        private programmingAssessmentManualResultService: ProgrammingAssessmentManualResultService,
         private translateService: TranslateService,
         private sortService: SortService,
     ) {
-        translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
+        translateService.get('artemisApp.programmingAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
     /**
@@ -49,11 +49,10 @@ export class TextAssessmentDashboardComponent implements OnInit {
         this.exerciseService
             .find(exerciseId)
             .map((exerciseResponse) => {
-                if (exerciseResponse.body!.type !== ExerciseType.TEXT) {
-                    throw new Error('Cannot use Text Assessment Dashboard with non-text Exercise type.');
+                if (exerciseResponse.body!.type !== ExerciseType.PROGRAMMING) {
+                    throw new Error('Cannot use Programming Assessment Dashboard with non-programming Exercise type.');
                 }
-
-                return <TextExercise>exerciseResponse.body!;
+                return <ProgrammingExercise>exerciseResponse.body!;
             })
             .subscribe((exercise) => {
                 this.exercise = exercise;
@@ -68,10 +67,10 @@ export class TextAssessmentDashboardComponent implements OnInit {
     }
 
     private getSubmissions(): void {
-        this.textSubmissionService
-            .getTextSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
-            .map((response: HttpResponse<TextSubmission[]>) =>
-                response.body!.map((submission: TextSubmission) => {
+        this.programmingSubmissionService
+            .getProgrammingSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
+            .map((response: HttpResponse<ProgrammingSubmission[]>) =>
+                response.body!.map((submission: ProgrammingSubmission) => {
                     const tmpResult = getLatestSubmissionResult(submission);
                     if (tmpResult) {
                         // reconnect some associations
@@ -83,7 +82,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
                     return submission;
                 }),
             )
-            .subscribe((submissions: TextSubmission[]) => {
+            .subscribe((submissions: ProgrammingSubmission[]) => {
                 this.submissions = submissions;
                 this.filteredSubmissions = submissions;
                 this.busy = false;
@@ -95,7 +94,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
      * @param {Submission[]} filteredSubmissions - Submissions to be filtered for
      */
     updateFilteredSubmissions(filteredSubmissions: Submission[]) {
-        this.filteredSubmissions = filteredSubmissions as TextSubmission[];
+        this.filteredSubmissions = filteredSubmissions as ProgrammingSubmission[];
     }
 
     /**
@@ -122,7 +121,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
     cancelAssessment(submission: Submission) {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.assessmentsService.cancelAssessment(this.exercise.id!, submission.id!).subscribe(() => {
+            this.programmingAssessmentManualResultService.cancelAssessment(submission.id!).subscribe(() => {
                 this.getSubmissions();
             });
         }
@@ -131,11 +130,12 @@ export class TextAssessmentDashboardComponent implements OnInit {
      * get the link for the assessment of a specific submission of the current exercise
      * @param submissionId
      */
-    getAssessmentLink(submissionId: number) {
+    getAssessmentLink(submission: Submission) {
+        const participationId = submission.participation?.id;
         if (this.exercise.exerciseGroup) {
-            return ['/course-management', this.exercise.exerciseGroup.exam?.course?.id, 'text-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
+            return ['/course-management', this.exercise.exerciseGroup.exam?.course?.id, 'programming-exercises', this.exercise.id, 'code-editor', participationId, 'assessment'];
         } else {
-            return ['/course-management', this.exercise.course?.id, 'text-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
+            return ['/course-management', this.exercise.course?.id, 'programming-exercises', this.exercise.id, 'code-editor', participationId, 'assessment'];
         }
     }
 }
