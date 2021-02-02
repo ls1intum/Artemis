@@ -1,6 +1,6 @@
 <div
     class="sa-question"
-    [ngClass]="{ disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score! && !forceSampleSolution }"
+    [ngClass]="{ disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.points! && !forceSampleSolution }"
 >
     <h4 class="question-title-display">
         <span>{{ questionIndex }})</span> {{ question.title }}
@@ -90,11 +90,11 @@
     </div>
     <div class="question-score" *ngIf="!showResult || forceSampleSolution">
         <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-        <span>{{ question.score }}</span>
+        <span>{{ question.points }}</span>
     </div>
-    <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{ incorrect: (score || 0) < question.score! }">
+    <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{ incorrect: (score || 0) < question.points! }">
         <span jhiTranslate="artemisApp.quizQuestion.yourScore" class="colon-suffix"></span>
-        <span class="show-explanation">{{ score || 0 }}/{{ question.score }}</span>
+        <span class="show-explanation">{{ score || 0 }}/{{ question.points }}</span>
         <span class="show-explanation">
             <jhi-quiz-scoring-infostudent-modal
                 [score]="score"
