@@ -7,6 +7,11 @@
 </div>
 
 <div *ngIf="!isLoading && participantScores">
-    <button class="btn btn-info mb-2" (click)="loadData()">Refresh</button>
-    <jhi-participant-scores [isLoading]="isLoading" [participantScores]="participantScores"></jhi-participant-scores>
+    <jhi-participant-scores
+        [isLoading]="isLoading"
+        [participantScores]="participantScores"
+        [avgScore]="avgScore"
+        [avgRatedScore]="avgRatedScore"
+        (reload)="loadData()"
+    ></jhi-participant-scores>
 </div>

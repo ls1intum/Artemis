@@ -15,7 +15,10 @@
                 "lastRatedResultId": "Id letztes bewertetes Ergebnis",
                 "lastRatedResultScore": "Letztes bewertetes Ergebnis (%)"
             },
-            "searchForStudentsOrTeam": "Suche nach Student oder Team"
+            "searchForStudentsOrTeam": "Suche nach Student oder Team",
+            "averageScore": "Durchschnittliches Ergebnis: {{avg}}%",
+            "averageRatedScore": "Durchschnittliches bewertetes Ergebnis: {{avg}}%",
+            "notIncluded": "Optionale Aufgaben nicht miteingerechnet!"
         }
     }
 }

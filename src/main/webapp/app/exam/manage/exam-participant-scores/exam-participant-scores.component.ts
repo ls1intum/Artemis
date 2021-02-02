@@ -5,6 +5,7 @@ import { ParticipantScoreDTO, ParticipantScoresService } from 'app/shared/partic
 import { onError } from 'app/shared/util/global.utils';
 import { JhiAlertService } from 'ng-jhipster';
 import { finalize } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
 
 @Component({
     selector: 'jhi-exam-participant-scores',
@@ -15,6 +16,8 @@ export class ExamParticipantScoresComponent implements OnInit {
     examId: number;
     isLoading: boolean;
     participantScores: ParticipantScoreDTO[] = [];
+    avgScore = 0;
+    avgRatedScore = 0;
 
     constructor(private participantScoreService: ParticipantScoresService, private activatedRoute: ActivatedRoute, private alertService: JhiAlertService) {}
 
@@ -29,16 +32,22 @@ export class ExamParticipantScoresComponent implements OnInit {
 
     loadData() {
         this.isLoading = true;
-        this.participantScoreService
-            .findAllOfExam(this.examId)
+
+        const scoresObservable = this.participantScoreService.findAllOfExam(this.examId);
+        const avgScoreObservable = this.participantScoreService.findAverageOfExam(this.examId, false);
+        const avgRatedScoreObservable = this.participantScoreService.findAverageOfExam(this.examId, true);
+
+        forkJoin([scoresObservable, avgScoreObservable, avgRatedScoreObservable])
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
                 }),
             )
             .subscribe(
-                (participantScoresResponse) => {
-                    this.participantScores = participantScoresResponse.body!;
+                ([scoresResult, avgScoreResult, avgRatedScoreResult]) => {
+                    this.participantScores = scoresResult.body!;
+                    this.avgScore = avgScoreResult.body!;
+                    this.avgRatedScore = avgRatedScoreResult.body!;
                 },
                 (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             );

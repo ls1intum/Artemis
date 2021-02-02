@@ -56,6 +56,15 @@ export class ParticipantScoresService {
         });
     }
 
+    findAverageOfCourse(courseId: number, onlyConsiderRatedScores = true): Observable<HttpResponse<number>> {
+        let params = new HttpParams();
+        params = params.set('onlyConsiderRatedScores', onlyConsiderRatedScores + '');
+        return this.http.get<number>(`${this.resourceUrl}/courses/${courseId}/participant-scores/average`, {
+            observe: 'response',
+            params,
+        });
+    }
+
     findAllOfExamPaged(examId: number, sortingParameters: SortingParameter[], page: number, size: number): Observable<HttpResponse<ParticipantScoreDTO[]>> {
         let params = new HttpParams();
         for (const sortParameter of sortingParameters) {
@@ -73,6 +82,15 @@ export class ParticipantScoresService {
         let params = new HttpParams();
         params = params.set('getUnpaged', 'true');
         return this.http.get<ParticipantScoreDTO[]>(`${this.resourceUrl}/exams/${examId}/participant-scores`, {
+            observe: 'response',
+            params,
+        });
+    }
+
+    findAverageOfExam(examId: number, onlyConsiderRatedScores = true): Observable<HttpResponse<number>> {
+        let params = new HttpParams();
+        params = params.set('onlyConsiderRatedScores', onlyConsiderRatedScores + '');
+        return this.http.get<number>(`${this.resourceUrl}/exams/${examId}/participant-scores/average`, {
             observe: 'response',
             params,
         });

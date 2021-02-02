@@ -5,6 +5,7 @@ import { ParticipantScoreDTO, ParticipantScoresService } from 'app/shared/partic
 import { onError } from 'app/shared/util/global.utils';
 import { JhiAlertService } from 'ng-jhipster';
 import { finalize } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-participant-scores',
@@ -14,6 +15,8 @@ export class CourseParticipantScoresComponent implements OnInit {
     courseId: number;
     isLoading: boolean;
     participantScores: ParticipantScoreDTO[] = [];
+    avgScore = 0;
+    avgRatedScore = 0;
 
     constructor(private participantScoreService: ParticipantScoresService, private activatedRoute: ActivatedRoute, private alertService: JhiAlertService) {}
 
@@ -28,16 +31,22 @@ export class CourseParticipantScoresComponent implements OnInit {
 
     loadData() {
         this.isLoading = true;
-        this.participantScoreService
-            .findAllOfCourse(this.courseId)
+
+        const scoresObservable = this.participantScoreService.findAllOfCourse(this.courseId);
+        const avgScoreObservable = this.participantScoreService.findAverageOfCourse(this.courseId, false);
+        const avgRatedScoreObservable = this.participantScoreService.findAverageOfCourse(this.courseId, true);
+
+        forkJoin([scoresObservable, avgScoreObservable, avgRatedScoreObservable])
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
                 }),
             )
             .subscribe(
-                (participantScoresResponse) => {
-                    this.participantScores = participantScoresResponse.body!;
+                ([scoresResult, avgScoreResult, avgRatedScoreResult]) => {
+                    this.participantScores = scoresResult.body!;
+                    this.avgScore = avgScoreResult.body!;
+                    this.avgRatedScore = avgRatedScoreResult.body!;
                 },
                 (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             );

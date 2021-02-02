@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ParticipantScoreDTO } from 'app/shared/participant-scores/participant-scores.service';
 
 @Component({
@@ -7,8 +7,16 @@ import { ParticipantScoreDTO } from 'app/shared/participant-scores/participant-s
     styles: [],
 })
 export class ParticipantScoresComponent {
+    @Output()
+    reload = new EventEmitter<void>();
+
     @Input()
     participantScores: ParticipantScoreDTO[] = [];
+    @Input()
+    avgScore = 0;
+    @Input()
+    avgRatedScore = 0;
+
     @Input()
     isLoading = false;
     extractParticipantName = (participantScoreDTO: ParticipantScoreDTO) => {
