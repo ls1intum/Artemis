@@ -38,6 +38,14 @@
 </div>
 
 <jhi-alert></jhi-alert>
+<div
+    *ngIf="isTestRun && exam?.numberOfCorrectionRoundsInExam > 1"
+    style="margin-top: 1em"
+    class="alert alert-warning"
+    jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint"
+>
+    Hint: The second correction is not applicable to test runs.
+</div>
 
 <div *ngIf="course">
     <!-- TODO: also support this for the exam mode -->
@@ -195,10 +203,7 @@
                             </button>
                         </ng-template>
 
-                        <span
-                            class="col-lg-3 col-md-6 col-sm-6 align-self-center"
-                            *ngIf="isExamMode && exam && exam!.numberOfCorrectionRoundsInExam && exam.numberOfCorrectionRoundsInExam > 1"
-                        >
+                        <span class="col-lg-3 col-md-6 col-sm-6 align-self-center" *ngIf="isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam > 1">
                             <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                 <jhi-second-correction-enable-button
                                     (ngModelChange)="toggleSecondCorrection(exercise.id)"
