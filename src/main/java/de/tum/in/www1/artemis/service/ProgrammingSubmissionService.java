@@ -695,19 +695,23 @@ public class ProgrammingSubmissionService extends SubmissionService {
     // TODO: why do we override this method and why do we not try to reuse the method in the super class?
     protected Result lockSubmission(Submission submission, int correctionRound) {
         Result existingResult;
+        Optional<Result> optionalExistingResult;
         if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC.equals(submission.getLatestResult().getAssessmentType())) {
-            existingResult = submission.getLatestResult();
+            optionalExistingResult = Optional.of(submission.getLatestResult());
         }
         else if (correctionRound == 0 && submission.getLatestResult() == null) {
-            // if the student did not participate in the exam, and therefore has no result
-            existingResult = null;
+            // Older programming Exercises have only one result in each submission. One submission for the automatic result, another one for the manual one.
+            // When the assessment of such an submission is cancelled, this leaves behind a programming-submission without any results.
+            // We still want to be able to assess the result-less submission again, so we need to avoid the below else branch, and the following out of bounds Exception.
+            // New automatic results can be easily created by using the "trigger all" feature
+            optionalExistingResult = Optional.empty();
         }
         else {
-            existingResult = submission.getResultForCorrectionRound(correctionRound - 1);
+            optionalExistingResult = Optional.of(submission.getResultForCorrectionRound(correctionRound - 1));
         }
         List<Feedback> automaticFeedbacks = new ArrayList<>();
-        if (existingResult != null) {
-            automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+        if (optionalExistingResult.isPresent()) {
+            automaticFeedbacks = optionalExistingResult.get().getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
         }
         // Create a new result (manual result) and try to reuse the existing submission with the latest commit hash
         ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
@@ -721,8 +725,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             feedback.setResult(newResult);
         }
         newResult.setFeedbacks(automaticFeedbacks);
-        if (existingResult != null) {
-            newResult.setResultString(existingResult.getResultString());
+        if (optionalExistingResult.isPresent()) {
+            newResult.setResultString(optionalExistingResult.get().getResultString());
         }
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = newResult.getAssessor();
