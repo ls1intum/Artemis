@@ -18,14 +18,14 @@
         </div>
         <div class="col-12 col-sm-auto flex-sm-shrink-0 col-lg-4 mt-4 mt-lg-0 d-flex flex-column justify-content-center align-items-start">
             <table class="exercise-details-table">
-                <tr *ngIf="exercise.maxScore != undefined">
+                <tr *ngIf="exercise.maxPoints != undefined">
                     <td>
                         <h6>{{ 'artemisApp.courseOverview.exerciseDetails.points' | translate }}</h6>
                     </td>
                     <td>
                         <span
-                            >{{ exercise.maxScore }}
-                            <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | translate }} {{ exercise.bonusPoints }})</span>
+                            >{{ exercise.maxPoints }}
+                            <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | translate }} {{ exercise.bonusPoints }} )</span>
                         </span>
                         <jhi-difficulty-badge *ngIf="exercise.difficulty" class="ml-1" [exercise]="exercise"></jhi-difficulty-badge>
                         <jhi-included-in-score-badge

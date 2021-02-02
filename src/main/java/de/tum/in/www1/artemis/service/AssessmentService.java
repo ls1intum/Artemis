@@ -71,7 +71,7 @@ public class AssessmentService {
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
-        double maxScore = exercise.getMaxScore();
+        double maxScore = exercise.getMaxPoints();
         double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
 
         // Exam results and manual results of programming exercises are always to rated
@@ -127,13 +127,13 @@ public class AssessmentService {
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks(), exercise instanceof ProgrammingExercise);
         if (exercise instanceof ProgrammingExercise) {
             double points = ((ProgrammingAssessmentService) this).calculateTotalScore(originalResult);
-            originalResult.setScore(points, exercise.getMaxScore());
+            originalResult.setScore(points, exercise.getMaxPoints());
             /*
              * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
              * student has achieved have changed
              */
             String[] resultStringParts = originalResult.getResultString().split(", ");
-            resultStringParts[resultStringParts.length - 1] = originalResult.createResultString(points, exercise.getMaxScore());
+            resultStringParts[resultStringParts.length - 1] = originalResult.createResultString(points, exercise.getMaxPoints());
             originalResult.setResultString(String.join(", ", resultStringParts));
             Result savedResult = resultRepository.save(originalResult);
             return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).get(); // to eagerly load assessor
