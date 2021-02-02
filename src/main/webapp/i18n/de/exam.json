@@ -300,7 +300,7 @@
             },
             "checklist": {
                 "title": "Checkliste",
-                "introduction": "Unter folgendem Link können sie mehr über den Ablauf einer Artemis Klausur informieren:",
+                "introduction": "Unter folgendem Link können Sie sich mehr über den Ablauf einer Artemis Klausur informieren:",
                 "linkDescription": "Instructors guide for exams in Artemis",
                 "checklistItem": "Checkliste",
                 "description": "Beschreibung",
@@ -326,7 +326,7 @@
                     "prepareExerciseStart": "Vorbereiten der Aufgaben kann die Serverlast während der Klausur reduzieren.",
                     "examDetails": "Alle relevanten Details der Klausur müssen vor dem Start der Korrektur eingetragen sein.",
                     "conductExam": "In der Studierenden-Klausurübersicht sieht man, welche Studierende ihre Klausur bereits abgegeben haben.",
-                    "assessAllSubmissions": "Die Anzahl der Korrekturrunden der Aufgaben entspricht der in der Klausur angegebenen Anzahl von Korrekturrunden.",
+                    "assessAllSubmissions": "Die Anzahl der Korrektur Runden der Aufgaben entspricht der in der Klausur angegebenen Anzahl von Korrekturrunden.",
                     "publishResults": "Das Veröffentlichen der Ergebnisse macht diese zugänglich für die Klausurteilnehmer.",
                     "examReview": "Alle relevanten Daten müssen in der Klausur spezifiziert sein.",
                     "resolveComplaints": "Beschwerden können im Bewertungs Dashboard bearbeitet werden.",
