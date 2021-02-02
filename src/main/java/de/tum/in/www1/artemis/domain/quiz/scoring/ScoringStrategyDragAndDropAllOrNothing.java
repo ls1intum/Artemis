@@ -11,7 +11,7 @@ public class ScoringStrategyDragAndDropAllOrNothing implements ScoringStrategy {
     public double calculateScore(QuizQuestion quizQuestion, SubmittedAnswer submittedAnswer) {
         // return maximal Score if the quizQuestion is invalid
         if (quizQuestion.isInvalid()) {
-            return quizQuestion.getScore();
+            return quizQuestion.getPoints();
         }
         if (submittedAnswer instanceof DragAndDropSubmittedAnswer && quizQuestion instanceof DragAndDropQuestion) {
             DragAndDropSubmittedAnswer dndAnswer = (DragAndDropSubmittedAnswer) submittedAnswer;
@@ -25,7 +25,7 @@ public class ScoringStrategyDragAndDropAllOrNothing implements ScoringStrategy {
                 }
             }
             // the user wasn't wrong about a single drop location => the answer is 100% correct
-            return dndQuestion.getScore();
+            return dndQuestion.getPoints();
         }
         // the submitted answer's type doesn't fit the quizQuestion's type => it cannot be correct
         return 0.0;

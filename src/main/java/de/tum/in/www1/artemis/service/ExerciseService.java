@@ -712,7 +712,7 @@ public class ExerciseService {
         CourseExerciseStatisticsDTO courseExerciseStatisticsDTO = new CourseExerciseStatisticsDTO();
         courseExerciseStatisticsDTO.setExerciseId(exercise.getId());
         courseExerciseStatisticsDTO.setExerciseTitle(exercise.getTitle());
-        courseExerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxScore());
+        courseExerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxPoints());
         courseExerciseStatisticsDTO.setExerciseMode(exercise.getMode().toString());
 
         if (exerciseIdToRawStatisticQueryData.containsKey(exercise.getId())) {
@@ -774,7 +774,7 @@ public class ExerciseService {
      */
     public <T extends Exercise> Optional<ResponseEntity<T>> validateScoreSettings(T exercise) {
         // Check if max score is set
-        if (exercise.getMaxScore() == null || exercise.getMaxScore() == 0) {
+        if (exercise.getMaxPoints() == null || exercise.getMaxPoints() == 0) {
             return Optional
                     .of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score needs to be greater than 0", "maxscoreInvalid")).body(null));
         }

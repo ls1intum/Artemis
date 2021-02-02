@@ -399,7 +399,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         const course = new Course();
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-        component.modelingExercise.maxScore = 5;
+        component.modelingExercise.maxPoints = 5;
         component.modelingExercise.bonusPoints = 5;
 
         component.onFeedbackChanged(feedbacks);

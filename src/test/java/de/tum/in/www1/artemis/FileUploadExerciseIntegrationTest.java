@@ -65,7 +65,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     public void createFileUploadExercise_InvalidMaxScore() throws Exception {
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(creationFilePattern);
-        fileUploadExercise.setMaxScore(0.0);
+        fileUploadExercise.setMaxPoints(0.0);
         request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -74,7 +74,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     public void createFileUploadExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(creationFilePattern);
-        fileUploadExercise.setMaxScore(10.0);
+        fileUploadExercise.setMaxPoints(10.0);
         fileUploadExercise.setBonusPoints(1.0);
         fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
         request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
@@ -85,7 +85,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     public void createFileUploadExercise_NotIncludedInvalidBonusPoints() throws Exception {
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(creationFilePattern);
-        fileUploadExercise.setMaxScore(10.0);
+        fileUploadExercise.setMaxPoints(10.0);
         fileUploadExercise.setBonusPoints(1.0);
         fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);

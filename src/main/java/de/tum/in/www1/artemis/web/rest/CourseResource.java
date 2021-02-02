@@ -939,7 +939,7 @@ public class CourseResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-        return ResponseEntity.ok().body(userService.findAllUsersInGroup(groupName));
+        return ResponseEntity.ok().body(userService.findAllUsersInGroupWithAuthorities(groupName));
     }
 
     /**
