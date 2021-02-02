@@ -42,6 +42,7 @@ public class SentryConfiguration {
 
         Sentry.init(options -> {
             options.setDsn(dsn);
+            options.setSendDefaultPii(true);
             options.setEnvironment(getEnvironment());
             options.setRelease(VERSION);
         });
