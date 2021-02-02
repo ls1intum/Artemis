@@ -110,7 +110,7 @@ public class SubmissionResource {
         if (!testRunParticipations.isEmpty() && testRunParticipations.get(0).findLatestSubmission().isPresent()) {
             var latestSubmission = testRunParticipations.get(0).findLatestSubmission().get();
             if (latestSubmission.getManualResults().isEmpty()) {
-                latestSubmission.setResults(List.of(submissionService.prepareTestRunSubmissionForAssessment(latestSubmission)));
+                latestSubmission.addResult(submissionService.prepareTestRunSubmissionForAssessment(latestSubmission));
             }
             return ResponseEntity.ok().body(List.of(latestSubmission));
         }
