@@ -127,7 +127,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 // Test that certain properties were set correctly
                 assertThat(exerciseServer.getReleaseDate()).as("Release date is present").isNotNull();
                 assertThat(exerciseServer.getDueDate()).as("Due date is present").isNotNull();
-                assertThat(exerciseServer.getMaxScore()).as("Max score was set correctly").isEqualTo(5.0);
+                assertThat(exerciseServer.getMaxPoints()).as("Max score was set correctly").isEqualTo(5.0);
                 assertThat(exerciseServer.getDifficulty()).as("Difficulty was set correctly").isEqualTo(DifficultyLevel.MEDIUM);
 
                 // Test that certain properties were filtered out as the test user is a student
@@ -415,7 +415,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 // Test that certain properties were set correctly
                 assertThat(exerciseForAssessmentDashboard.getReleaseDate()).as("Release date is present").isNotNull();
                 assertThat(exerciseForAssessmentDashboard.getDueDate()).as("Due date is present").isNotNull();
-                assertThat(exerciseForAssessmentDashboard.getMaxScore()).as("Max score was set correctly").isEqualTo(5.0);
+                assertThat(exerciseForAssessmentDashboard.getMaxPoints()).as("Max score was set correctly").isEqualTo(5.0);
                 assertThat(exerciseForAssessmentDashboard.getDifficulty()).as("Difficulty was set correctly").isEqualTo(DifficultyLevel.MEDIUM);
 
                 // Test presence of exercise type specific properties

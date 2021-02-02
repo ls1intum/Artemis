@@ -33,7 +33,7 @@ export class ExamPointsSummaryComponent {
      */
     calculateAchievedPoints(exercise: Exercise): number {
         if (ExamPointsSummaryComponent.hasResultScore(exercise)) {
-            return round(exercise.maxScore! * (exercise.studentParticipations![0].results![0].score! / 100), 1);
+            return round(exercise.maxPoints! * (exercise.studentParticipations![0].results![0].score! / 100), 1);
         }
         return 0;
     }
@@ -97,7 +97,7 @@ export class ExamPointsSummaryComponent {
     private static hasResultScore(exercise: Exercise): boolean {
         return !!(
             exercise &&
-            exercise.maxScore &&
+            exercise.maxPoints &&
             exercise.studentParticipations &&
             exercise.studentParticipations.length > 0 &&
             exercise.studentParticipations[0].results &&
@@ -107,15 +107,15 @@ export class ExamPointsSummaryComponent {
     }
 
     private static getMaxScore(exercise: Exercise): number {
-        if (exercise && exercise.maxScore) {
-            return exercise.maxScore;
+        if (exercise && exercise.maxPoints) {
+            return exercise.maxPoints;
         }
         return 0;
     }
 
     private static getBonusPoints(exercise: Exercise): number {
-        if (exercise && exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS && exercise.maxScore) {
-            return exercise.maxScore;
+        if (exercise && exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS && exercise.maxPoints) {
+            return exercise.maxPoints;
         } else if (exercise && exercise.bonusPoints) {
             return exercise.bonusPoints;
         } else {

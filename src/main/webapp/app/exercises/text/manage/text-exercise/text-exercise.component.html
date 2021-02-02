@@ -56,7 +56,7 @@
                     <td>{{ textExercise.releaseDate | artemisDate }}</td>
                     <td>{{ textExercise.dueDate | artemisDate }}</td>
                     <td>{{ textExercise.assessmentDueDate | artemisDate }}</td>
-                    <td>{{ textExercise.maxScore }}</td>
+                    <td>{{ textExercise.maxPoints }}</td>
                     <td>{{ textExercise.bonusPoints }}</td>
                     <td>{{ exerciseService.isIncludedInScore(textExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ textExercise.presentationScoreEnabled }}</td>

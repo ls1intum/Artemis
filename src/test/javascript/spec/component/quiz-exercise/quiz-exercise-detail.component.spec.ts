@@ -70,7 +70,7 @@ describe('QuizExercise Management Detail Component', () => {
         quizExercise.duration = 600;
         answerOption.isCorrect = true;
         mcQuestion.title = 'test';
-        mcQuestion.score = 10;
+        mcQuestion.points = 10;
         mcQuestion.answerOptions = [answerOption];
         quizExercise.quizQuestions = [mcQuestion];
         quizExercise.isPlannedToStart = false;
@@ -94,7 +94,7 @@ describe('QuizExercise Management Detail Component', () => {
         answerOption1.explanation = 'right explanation';
         answerOption1.isCorrect = true;
         question.answerOptions = [answerOption1, answerOption2];
-        question.score = 10;
+        question.points = 10;
         return { question, answerOption1, answerOption2 };
     };
 
@@ -115,7 +115,7 @@ describe('QuizExercise Management Detail Component', () => {
         question.dropLocations = [dropLocation];
         const correctDragAndDropMapping = new DragAndDropMapping(dragItem1, dropLocation);
         question.correctMappings = [correctDragAndDropMapping];
-        question.score = 10;
+        question.points = 10;
         return { question, dragItem1, dragItem2, dropLocation, correctDragAndDropMapping };
     };
 
@@ -139,7 +139,7 @@ describe('QuizExercise Management Detail Component', () => {
         const shortAnswerMapping1 = new ShortAnswerMapping(spot1, shortAnswerSolution1);
         const shortAnswerMapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
         question.correctMappings = [shortAnswerMapping1, shortAnswerMapping2];
-        question.score = 10;
+        question.points = 10;
         return { question, shortAnswerMapping1, shortAnswerMapping2, spot1, spot2, shortAnswerSolution1, shortAnswerSolution2 };
     };
 
@@ -566,15 +566,15 @@ describe('QuizExercise Management Detail Component', () => {
                 resetQuizExercise();
                 comp.quizExercise = quizExercise;
                 const { question: multiQuestion } = createValidMCQuestion();
-                multiQuestion.score = 1;
+                multiQuestion.points = 1;
                 comp.quizExercise.quizQuestions = [multiQuestion];
                 expect(comp.calculateMaxExerciseScore()).to.equal(1);
                 const { question: dndQuestion } = createValidDnDQuestion();
-                dndQuestion.score = 2;
+                dndQuestion.points = 2;
                 comp.quizExercise.quizQuestions = [multiQuestion, dndQuestion];
                 expect(comp.calculateMaxExerciseScore()).to.equal(3);
                 const { question: saQuestion } = createValidSAQuestion();
-                saQuestion.score = 3;
+                saQuestion.points = 3;
                 comp.quizExercise.quizQuestions = [multiQuestion, dndQuestion, saQuestion];
                 expect(comp.calculateMaxExerciseScore()).to.equal(6);
             });
@@ -862,7 +862,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should not be valid if a question has negative score', () => {
                 const { question } = createValidMCQuestion();
-                question.score = -1;
+                question.points = -1;
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).to.equal(false);
@@ -1305,7 +1305,7 @@ describe('QuizExercise Management Detail Component', () => {
                     comp.quizExercise.quizQuestions = [question];
                 });
                 it('should put reason for negative score ', () => {
-                    question.score = -1;
+                    question.points = -1;
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionScore');
                 });
                 it('should put reason for no title', () => {

@@ -84,7 +84,7 @@
                     <td class="d-none d-md-table-cell">{{ programmingExercise.shortName }}</td>
                     <td>{{ programmingExercise.releaseDate | artemisDate }}</td>
                     <td>{{ programmingExercise.dueDate | artemisDate }}</td>
-                    <td class="d-none d-md-table-cell">{{ programmingExercise.maxScore }}</td>
+                    <td class="d-none d-md-table-cell">{{ programmingExercise.maxPoints }}</td>
                     <td>{{ programmingExercise.bonusPoints }}</td>
                     <td>{{ exerciseService.isIncludedInScore(programmingExercise) }}</td>
                     <td *ngIf="!isOrion" class="d-flex flex-column">
