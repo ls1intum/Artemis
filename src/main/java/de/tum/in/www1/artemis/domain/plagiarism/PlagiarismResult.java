@@ -22,7 +22,7 @@ import org.hibernate.annotations.DiscriminatorOptions;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.Exercise;
 
 /**
@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 @DiscriminatorValue(value = "PR")
 @DiscriminatorOptions(force = true)
 @Table(name = "plagiarism_result")
-public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> extends DomainObject {
+public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> extends AbstractAuditingEntity {
 
     /**
      * TODO: Remove the @Transient annotation and store the comparisons in the database. List of
@@ -98,8 +98,8 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
     }
 
     /**
-     * Because @ElementCollection requires us to use List<Integer> instead of int[],
-     * we map the given similarityDistribution argument to a list.
+     * Because @ElementCollection requires us to use List<Integer> instead of int[], we map the
+     * given similarityDistribution argument to a list.
      *
      * @param similarityDistribution 10-element integer array
      */
