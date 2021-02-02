@@ -12,7 +12,7 @@ import {
     ABSOLUTE_SCORE,
     CourseScoreCalculationService,
     CURRENT_RELATIVE_SCORE,
-    MAX_SCORE,
+    MAX_POINTS,
     PRESENTATION_SCORE,
     REACHABLE_SCORE,
     RELATIVE_SCORE,
@@ -53,9 +53,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     totalRelativeScore = 0;
     relativeScores = {};
 
-    // max score
-    totalMaxScore = 0;
-    totalMaxScores = {};
+    // max points
+    overallMaxPoints = 0;
+    overallMaxPointsPerExercise = {};
 
     // current max score
     reachableScore = 0;
@@ -210,7 +210,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
     private onCourseLoad() {
         this.courseExercises = this.course!.exercises!;
-        this.calculateMaxScores();
+        this.calculateMaxPoints();
         this.calculateReachableScores();
         this.calculateAbsoluteScores();
         this.calculateRelativeScores();
@@ -236,7 +236,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     groupedExercises[index] = {
                         type: exercise.type,
                         relativeScore: 0,
-                        totalMaxScore: 0,
+                        overallMaxPoints: 0,
                         absoluteScore: 0,
                         presentationScore: 0,
                         presentationScoreEnabled: exercise.presentationScoreEnabled,
@@ -285,7 +285,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 }
 
                 groupedExercises[index].relativeScore = this.relativeScores[exercise.type!];
-                groupedExercises[index].totalMaxScore = this.totalMaxScores[exercise.type!];
+                groupedExercises[index].overallMaxPoints = this.overallMaxPointsPerExercise[exercise.type!];
                 groupedExercises[index].currentRelativeScore = this.currentRelativeScores[exercise.type!];
                 groupedExercises[index].reachableScore = this.reachableScores[exercise.type!];
                 groupedExercises[index].absoluteScore = this.absoluteScores[exercise.type!];
@@ -450,20 +450,20 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         ];
     }
 
-    calculateMaxScores() {
-        const quizzesTotalMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, MAX_SCORE);
-        const programmingExerciseTotalMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, MAX_SCORE);
-        const modelingExerciseTotalMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, MAX_SCORE);
-        const textExerciseTotalMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, MAX_SCORE);
-        const fileUploadExerciseTotalMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, MAX_SCORE);
-        const totalMaxScores = {};
-        totalMaxScores[ExerciseType.QUIZ] = quizzesTotalMaxScore;
-        totalMaxScores[ExerciseType.PROGRAMMING] = programmingExerciseTotalMaxScore;
-        totalMaxScores[ExerciseType.MODELING] = modelingExerciseTotalMaxScore;
-        totalMaxScores[ExerciseType.TEXT] = textExerciseTotalMaxScore;
-        totalMaxScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalMaxScore;
-        this.totalMaxScores = totalMaxScores;
-        this.totalMaxScore = this.calculateTotalScoreForTheCourse('maxScore');
+    calculateMaxPoints() {
+        const quizzesTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, MAX_POINTS);
+        const programmingExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, MAX_POINTS);
+        const modelingExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, MAX_POINTS);
+        const textExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, MAX_POINTS);
+        const fileUploadExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, MAX_POINTS);
+        const overallMaxPoints = {};
+        overallMaxPoints[ExerciseType.QUIZ] = quizzesTotalMaxPoints;
+        overallMaxPoints[ExerciseType.PROGRAMMING] = programmingExerciseTotalMaxPoints;
+        overallMaxPoints[ExerciseType.MODELING] = modelingExerciseTotalMaxPoints;
+        overallMaxPoints[ExerciseType.TEXT] = textExerciseTotalMaxPoints;
+        overallMaxPoints[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalMaxPoints;
+        this.overallMaxPointsPerExercise = overallMaxPoints;
+        this.overallMaxPoints = this.calculateTotalScoreForTheCourse('maxScore');
     }
 
     calculateRelativeScores(): void {
@@ -538,7 +538,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     calculateScoreTypeForExerciseType(exerciseType: ExerciseType, scoreType: string): number {
-        if (exerciseType !== undefined && scoreType !== undefined) {
+        if (exerciseType != undefined && scoreType != undefined) {
             const filterFunction = (courseExercise: Exercise) => courseExercise.type === exerciseType;
             const scores = this.calculateScores(filterFunction);
             return scores.get(scoreType)!;

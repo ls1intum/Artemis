@@ -63,7 +63,7 @@ public class ModelingExercise extends Exercise {
 
     @Override
     public String toString() {
-        return "ModelingExercise{" + "id=" + getId() + ", maxScore='" + getMaxPoints() + "'" + ", diagramType='" + getDiagramType() + "'" + ", sampleSolutionModel='"
+        return "ModelingExercise{" + "id=" + getId() + ", maxPoints='" + getMaxPoints() + "'" + ", diagramType='" + getDiagramType() + "'" + ", sampleSolutionModel='"
                 + getSampleSolutionModel() + "'" + ", sampleSolutionExplanation='" + getSampleSolutionExplanation() + "'" + "}";
     }
 
