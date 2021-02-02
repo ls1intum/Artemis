@@ -10,7 +10,6 @@ import { forkJoin } from 'rxjs';
 @Component({
     selector: 'jhi-exam-participant-scores',
     templateUrl: './exam-participant-scores.component.html',
-    styles: [],
 })
 export class ExamParticipantScoresComponent implements OnInit {
     examId: number;
@@ -19,7 +18,6 @@ export class ExamParticipantScoresComponent implements OnInit {
     participantScoresAverage: ParticipantScoreAverageDTO[] = [];
     avgScore = 0;
     avgRatedScore = 0;
-    mode: 'individual' | 'average' = 'individual';
 
     constructor(private participantScoreService: ParticipantScoresService, private activatedRoute: ActivatedRoute, private alertService: JhiAlertService) {}
 

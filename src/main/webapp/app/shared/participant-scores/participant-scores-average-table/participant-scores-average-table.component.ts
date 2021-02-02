@@ -4,7 +4,6 @@ import { ParticipantScoreAverageDTO } from 'app/shared/participant-scores/partic
 @Component({
     selector: 'jhi-participant-scores-average-table',
     templateUrl: './participant-scores-average-table.component.html',
-    styles: [],
 })
 export class ParticipantScoresAverageTableComponent {
     @Input()

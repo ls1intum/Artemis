@@ -4,7 +4,6 @@ import { ParticipantScoreDTO } from 'app/shared/participant-scores/participant-s
 @Component({
     selector: 'jhi-participant-scores-table',
     templateUrl: './participant-scores-table.component.html',
-    styles: [],
 })
 export class ParticipantScoresTableComponent {
     @Input()

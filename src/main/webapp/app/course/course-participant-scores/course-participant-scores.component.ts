@@ -18,7 +18,6 @@ export class CourseParticipantScoresComponent implements OnInit {
     participantScoresAverage: ParticipantScoreAverageDTO[] = [];
     avgScore = 0;
     avgRatedScore = 0;
-    mode: 'individual' | 'average' = 'individual';
 
     constructor(private participantScoreService: ParticipantScoresService, private activatedRoute: ActivatedRoute, private alertService: JhiAlertService) {}
 

@@ -46,12 +46,7 @@ export class ParticipantScoresService {
     constructor(private http: HttpClient) {}
 
     findAllOfCoursePaged(courseId: number, sortingParameters: SortingParameter[], page: number, size: number): Observable<HttpResponse<ParticipantScoreDTO[]>> {
-        let params = new HttpParams();
-        for (const sortParameter of sortingParameters) {
-            params = params.append('sort', `${sortParameter.sortProperty},${sortParameter.sortDirection}`);
-        }
-        params = params.set('page', page + '');
-        params = params.set('size', size + '');
+        const params = this.createPageParameters(sortingParameters, page, size);
         return this.http.get<ParticipantScoreDTO[]>(`${this.resourceUrl}/courses/${courseId}/participant-scores`, {
             observe: 'response',
             params,
@@ -83,12 +78,7 @@ export class ParticipantScoresService {
     }
 
     findAllOfExamPaged(examId: number, sortingParameters: SortingParameter[], page: number, size: number): Observable<HttpResponse<ParticipantScoreDTO[]>> {
-        let params = new HttpParams();
-        for (const sortParameter of sortingParameters) {
-            params = params.append('sort', `${sortParameter.sortProperty},${sortParameter.sortDirection}`);
-        }
-        params = params.set('page', page + '');
-        params = params.set('size', size + '');
+        const params = this.createPageParameters(sortingParameters, page, size);
         return this.http.get<ParticipantScoreDTO[]>(`${this.resourceUrl}/courses/${examId}/participant-scores`, {
             observe: 'response',
             params,
@@ -117,5 +107,14 @@ export class ParticipantScoresService {
         return this.http.get<ParticipantScoreAverageDTO[]>(`${this.resourceUrl}/exams/${examId}/participant-scores/average-participant`, {
             observe: 'response',
         });
+    }
+
+    private createPageParameters(sortingParameters: SortingParameter[], page: number, size: number) {
+        let params = new HttpParams();
+        for (const sortParameter of sortingParameters) {
+            params = params.append('sort', `${sortParameter.sortProperty},${sortParameter.sortDirection}`);
+        }
+        params = params.set('page', page + '');
+        return params.set('size', size + '');
     }
 }
