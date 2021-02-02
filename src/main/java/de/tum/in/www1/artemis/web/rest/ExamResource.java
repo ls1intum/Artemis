@@ -654,21 +654,21 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/conduction : Get an exam for conduction.
+     * GET /courses/{courseId}/exams/{examId}/start : Get an exam for the exam start.
      *
      * @param courseId  the id of the course
      * @param examId    the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found student exam (without exercises) as body
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/conduction")
+    @GetMapping("/courses/{courseId}/exams/{examId}/start")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<StudentExam> getStudentExamForStart(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam {} for conduction", examId);
         return examAccessService.checkAndGetCourseAndExamAccessForConduction(courseId, examId);
     }
 
     /**
-     * PUT /courses/:courseId/exams/:examId/exerciseGroupsOrder : Update the order of exercise groups. If the received
+     * PUT /courses/:courseId/exams/:examId/exercise-groups-order : Update the order of exercise groups. If the received
      * exercise groups do not belong to the exam the operation is aborted.
      *
      * @param courseId              the id of the course
@@ -676,7 +676,7 @@ public class ExamResource {
      * @param orderedExerciseGroups the exercise groups of the exam in the desired order.
      * @return the list of exercise groups
      */
-    @PutMapping("/courses/{courseId}/exams/{examId}/exerciseGroupsOrder")
+    @PutMapping("/courses/{courseId}/exams/{examId}/exercise-groups-order")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<List<ExerciseGroup>> updateOrderOfExerciseGroups(@PathVariable Long courseId, @PathVariable Long examId,
             @RequestBody List<ExerciseGroup> orderedExerciseGroups) {
