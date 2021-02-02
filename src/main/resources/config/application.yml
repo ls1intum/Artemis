@@ -172,7 +172,7 @@ info:
     # Comma separated list of profiles that will trigger the ribbon to show
     display-ribbon-on-profiles: "dev"
     sentry:
-        dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029 # Leave empty to disable Sentry
+        dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029 # Leave empty to disable Sentry, must be a valid URI
     # Allowed Orion version range. Should only be changed on major version releases
     allowed-minimum-orion-version: 1.0.0
 
