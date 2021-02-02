@@ -41,7 +41,7 @@
                 "loading": "Laden..",
                 "columns": {
                     "submissionDate": "Einreichungsdatum",
-                    "result": "Ergebnis",
+                    "result": "Letztes Ergebnis",
                     "submissionCount": "Anzahl der Einreichungen",
                     "score": "Punkte",
                     "duration": "Dauer",
