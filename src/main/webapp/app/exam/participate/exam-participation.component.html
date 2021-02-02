@@ -112,7 +112,7 @@
             </div>
         </ng-container>
         <jhi-exam-participation-cover
-            *ngIf="isOver() && !studentExam.submitted && examStartConfirmed"
+            *ngIf="!studentExam.submitted && ((isOver() && examStartConfirmed) || isGracePeriodOver())"
             [startView]="false"
             [exam]="exam"
             [studentExam]="studentExam"
