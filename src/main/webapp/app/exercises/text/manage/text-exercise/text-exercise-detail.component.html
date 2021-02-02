@@ -18,9 +18,7 @@
                 <dd class="editor-outline-background" [innerHTML]="formattedSampleSolution"></dd>
             </dl>
 
-            <a type="button" [routerLink]="getEditRoute()" class="btn btn-primary">
-                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-            </a>
+            <a [routerLink]="getEditRoute()" class="btn btn-primary"> <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span> </a>
 
             <a class="btn btn-outline-primary" id="check-plagiarism-download" routerLink="plagiarism">
                 <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>

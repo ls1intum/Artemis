@@ -212,7 +212,6 @@
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <a
-                                    type="submit"
                                     *ngIf="programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'scores']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
@@ -221,7 +220,6 @@
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                                 </a>
                                 <a
-                                    type="submit"
                                     *ngIf="programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'participations']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
@@ -230,7 +228,6 @@
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                                 </a>
                                 <a
-                                    type="submit"
                                     *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'teams']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
@@ -272,7 +269,6 @@
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <a
-                                    type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id]"
                                     class="btn btn-info btn-sm mr-1 mb-1"
@@ -281,7 +277,6 @@
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                                 </a>
                                 <a
-                                    type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'edit']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"

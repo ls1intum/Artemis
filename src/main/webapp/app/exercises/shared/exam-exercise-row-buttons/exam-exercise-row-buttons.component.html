@@ -1,11 +1,10 @@
 <div class="btn-group flex-btn-group-container">
-    <a *ngIf="course.isAtLeastInstructor" type="submit" [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'scores']" class="btn btn-info btn-sm mr-1">
+    <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'scores']" class="btn btn-info btn-sm mr-1">
         <fa-icon [icon]="'eye'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
     </a>
 
     <a
-        type="submit"
         *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.PROGRAMMING && exercise.type !== exerciseType.QUIZ"
         [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'assessment']"
         class="btn btn-primary btn-sm mr-1"
@@ -14,19 +13,13 @@
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
     </a>
 
-    <a
-        *ngIf="course.isAtLeastInstructor"
-        type="submit"
-        [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'participations']"
-        class="btn btn-primary btn-sm mr-1"
-    >
+    <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'participations']" class="btn btn-primary btn-sm mr-1">
         <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
     </a>
 
     <a
         *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ"
-        type="submit"
         [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 'quiz-point-statistic']"
         class="btn btn-info btn-sm mr-1"
     >
@@ -35,7 +28,6 @@
     </a>
 
     <a
-        type="submit"
         *ngIf="course.isAtLeastInstructor && exercise.teamMode"
         [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'teams']"
         class="btn btn-primary btn-sm mr-1"
@@ -45,7 +37,6 @@
     </a>
 
     <a
-        type="submit"
         *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.PROGRAMMING"
         [routerLink]="['/course-management', course.id, 'programming-exercises', exercise.id, 'grading', 'test-cases']"
         class="btn btn-info btn-sm mr-1"
@@ -58,7 +49,6 @@
     participations, we pass a hardcoded number. The code editor component will load the proper ProgrammingExercise, choose
     a participation and update the url displayed in the browser -->
     <a
-        type="submit"
         *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.PROGRAMMING"
         [routerLink]="['/course-management', course.id, 'programming-exercises', exercise.id, 'code-editor', -1]"
         class="btn btn-info btn-sm mr-1"
@@ -69,7 +59,6 @@
 
     <a
         *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.QUIZ"
-        type="submit"
         [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id]"
         class="btn btn-info btn-sm mr-1"
     >
@@ -79,7 +68,6 @@
 
     <a
         *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ"
-        type="submit"
         [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 'preview']"
         class="btn btn-success btn-sm mr-1"
     >
@@ -89,7 +77,6 @@
 
     <a
         *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ"
-        type="submit"
         [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 'solution']"
         class="btn btn-success btn-sm mr-1"
     >
@@ -100,7 +87,7 @@
     <!-- Edit or re-evaluate for quizzes -->
     <ng-container *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ">
         <!-- Only show the re-evaluate button after the exam has ended -->
-        <a *ngIf="isExamOver()" type="submit" [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 're-evaluate']" class="btn btn-primary btn-sm mr-1">
+        <a *ngIf="isExamOver()" [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 're-evaluate']" class="btn btn-primary btn-sm mr-1">
             <fa-icon [icon]="'pencil-alt'"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
         </a>
@@ -108,7 +95,6 @@
         <a
             *ngIf="!isExamOver()"
             [class.disabled]="hasExamStarted()"
-            type="submit"
             [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"
             class="btn btn-primary btn-sm mr-1"
         >
@@ -119,7 +105,6 @@
 
     <a
         *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.QUIZ"
-        type="submit"
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"
         class="btn btn-primary btn-sm mr-1"
     >

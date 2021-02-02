@@ -27,15 +27,15 @@
                 </dd>
             </dl>
 
-            <a type="button" [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'edit']" class="btn btn-primary">
+            <a [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'edit']" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                 <span jhiTranslate="entity.action.edit"> Edit</span>
             </a>
-            <a type="submit" [routerLink]="['attachments']" class="btn btn-primary">
+            <a [routerLink]="['attachments']" class="btn btn-primary">
                 <fa-icon [icon]="'file'"></fa-icon>
                 <span jhiTranslate="entity.action.attachments">Attachment</span>
             </a>
-            <a type="submit" [routerLink]="['unit-management']" class="btn btn-primary">
+            <a [routerLink]="['unit-management']" class="btn btn-primary">
                 <fa-icon [icon]="'puzzle-piece'"></fa-icon>
                 <span jhiTranslate="entity.action.units">Units</span>
             </a>

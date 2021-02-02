@@ -9,7 +9,6 @@ import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
-import { ActivatedRoute } from '@angular/router';
 
 describe('ExerciseHint Management Update Component', () => {
     let comp: ExerciseHintUpdateComponent;

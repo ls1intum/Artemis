@@ -40,18 +40,18 @@
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1">
-                                <a type="submit" *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'attachments']" class="btn btn-primary mb-1 btn-sm">
+                                <a *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'attachments']" class="btn btn-primary mb-1 btn-sm">
                                     <fa-icon [icon]="'file'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.attachments">Attachment</span>
                                 </a>
-                                <a type="submit" *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm">
+                                <a *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm">
                                     <fa-icon [icon]="'puzzle-piece'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.units">Units</span>
                                 </a>
                             </div>
 
                             <div class="btn-group-vertical mr-1 mb-1">
-                                <a type="submit" *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'edit']" class="btn btn-primary mb-1 btn-sm">
+                                <a *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'edit']" class="btn btn-primary mb-1 btn-sm">
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                 </a>

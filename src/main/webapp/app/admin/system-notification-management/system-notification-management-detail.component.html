@@ -17,7 +17,7 @@
         <dt><span jhiTranslate="artemisApp.systemNotification.expireDate">Expire Date</span></dt>
         <dd>{{ notification.expireDate | artemisDate }}</dd>
     </dl>
-    <a id="editButton" type="submit" [routerLink]="['edit']" class="btn btn-warning">
+    <a id="editButton" [routerLink]="['edit']" class="btn btn-warning">
         <fa-icon [icon]="'wrench'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
     </a>

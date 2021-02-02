@@ -2,18 +2,17 @@
     <div class="col-8">
         <div *ngIf="course">
             <div>
-                <a *ngIf="course.isAtLeastInstructor" type="button" [routerLink]="['/course-management', course.id, 'edit']" class="btn btn-warning mr-1 mb-1">
+                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'edit']" class="btn btn-warning mr-1 mb-1">
                     <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
                 </a>
 
-                <a *ngIf="course.isAtLeastInstructor" type="submit" [routerLink]="['/course-management', course.id, 'goal-management']" class="btn btn-primary mr-1 mb-1">
+                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'goal-management']" class="btn btn-primary mr-1 mb-1">
                     <fa-icon [icon]="'flag'"></fa-icon>
                     <span class="d-none d-md-inline" [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | translate"></span>
                 </a>
 
                 <a
                     *ngIf="course?.studentQuestionsEnabled && course?.isAtLeastTutor"
-                    type="submit"
                     [routerLink]="['/course-management', course?.id, 'questions']"
                     class="btn btn-primary mr-1 mb-1"
                 >
@@ -25,22 +24,20 @@
                     <fa-icon [icon]="'user-plus'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.registerForCourse">Register</span>
                 </button>
 
-                <a type="button" [routerLink]="['/course-management', course.id, 'exercises']" class="btn btn-primary mr-1 mb-1">
+                <a [routerLink]="['/course-management', course.id, 'exercises']" class="btn btn-primary mr-1 mb-1">
                     <fa-icon [icon]="'list-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.exercise">Exercises</span>
                 </a>
-                <a *ngIf="course.isAtLeastInstructor" type="button" [routerLink]="['/course-management', course.id, 'lectures']" class="btn btn-primary mr-1 mb-1">
+                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'lectures']" class="btn btn-primary mr-1 mb-1">
                     <fa-icon [icon]="'list-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.lecture">Lectures</span>
                 </a>
-                <a *ngIf="course.isAtLeastInstructor" type="button" [routerLink]="['/course-management', course.id, 'scores']" class="btn btn-info mr-1 mb-1">
+                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="btn btn-info mr-1 mb-1">
                     <fa-icon [icon]="'eye'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.scores">Scores</span>
                 </a>
-                <a type="button" [routerLink]="['/course-management', course.id, 'exams']" class="btn btn-info mr-1 mb-1">
-                    <fa-icon [icon]="'list-alt'"></fa-icon>&nbsp;<span>Exams</span>
-                </a>
-                <a type="button" [routerLink]="['/course-management', course.id, 'tutor-dashboard']" class="btn btn-info mr-1 mb-1">
+                <a [routerLink]="['/course-management', course.id, 'exams']" class="btn btn-info mr-1 mb-1"> <fa-icon [icon]="'list-alt'"></fa-icon>&nbsp;<span>Exams</span> </a>
+                <a [routerLink]="['/course-management', course.id, 'tutor-dashboard']" class="btn btn-info mr-1 mb-1">
                     <fa-icon [icon]="'th-list'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
                 </a>
-                <a *ngIf="course.isAtLeastInstructor" type="button" [routerLink]="['/course-management', course.id, 'instructor-dashboard']" class="btn btn-info mr-1 mb-1">
+                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'instructor-dashboard']" class="btn btn-info mr-1 mb-1">
                     <fa-icon [icon]="'th-list'"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.course.instructorDashboard">Instructor Dashboard</span>
                 </a>
             </div>

@@ -131,7 +131,6 @@
                             <td jhiOrionFilter [showInOrionWindow]="true">
                                 <a
                                     *ngIf="course.isAtLeastTutor"
-                                    type="submit"
                                     [routerLink]="['/course-management', course.id, 'exercises']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                     id="exercises-ide-button-{{ course.id }}"
@@ -145,7 +144,6 @@
                                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                         <a
                                             *ngIf="course.isAtLeastTutor"
-                                            type="submit"
                                             [routerLink]="['/course-management', course.id, 'exercises']"
                                             class="btn btn-primary btn-sm mr-1 mb-1 exercise-button"
                                             [class.guided-tour]="course === courseForGuidedTour"
@@ -154,29 +152,18 @@
                                             <fa-icon [icon]="'list-alt'"></fa-icon>
                                             <span class="d-none d-md-inline">{{ 'entity.action.exercise' | translate }}</span>
                                         </a>
-                                        <a
-                                            *ngIf="course.isAtLeastInstructor"
-                                            type="submit"
-                                            [routerLink]="['/course-management', course.id, 'lectures']"
-                                            class="btn btn-primary btn-sm mr-1 mb-1"
-                                        >
+                                        <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'lectures']" class="btn btn-primary btn-sm mr-1 mb-1">
                                             <fa-icon [icon]="'list-alt'"></fa-icon>
                                             <span class="d-none d-md-inline">{{ 'entity.action.lecture' | translate }}</span>
                                         </a>
                                     </div>
                                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                        <a
-                                            type="submit"
-                                            *ngIf="course.isAtLeastInstructor"
-                                            [routerLink]="['/course-management', course.id, 'scores']"
-                                            class="btn btn-info btn-sm mr-1 mb-1"
-                                        >
+                                        <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="btn btn-info btn-sm mr-1 mb-1">
                                             <fa-icon [icon]="'eye'"></fa-icon>
                                             <span class="d-none d-md-inline">{{ 'entity.action.scores' | translate }}</span>
                                         </a>
                                         <a
                                             *ngIf="showExamButton && course.isAtLeastTutor"
-                                            type="submit"
                                             [routerLink]="['/course-management', course.id, 'exams']"
                                             class="btn btn-info btn-sm mr-1 mb-1"
                                         >
@@ -186,7 +173,6 @@
                                     </div>
                                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                         <a
-                                            type="submit"
                                             *ngIf="course.isAtLeastTutor"
                                             [routerLink]="['/course-management', course.id, 'tutor-dashboard']"
                                             class="btn btn-info btn-sm mr-1 mb-1 tutor-dashboard"
@@ -196,7 +182,6 @@
                                             <span class="d-none d-md-inline">{{ 'entity.action.assessmentDashboard' | translate }}</span>
                                         </a>
                                         <a
-                                            type="submit"
                                             *ngIf="course.isAtLeastInstructor"
                                             [routerLink]="['/course-management', course.id, 'instructor-dashboard']"
                                             class="btn btn-info btn-sm mr-1 mb-1 instructor-dashboard"
@@ -206,12 +191,7 @@
                                         </a>
                                     </div>
                                     <div class="d-flex flex-column mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                        <a
-                                            type="submit"
-                                            *ngIf="course.isAtLeastInstructor"
-                                            [routerLink]="['/course-management', course.id, 'edit']"
-                                            class="btn btn-primary btn-sm mr-1 mb-1"
-                                        >
+                                        <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'edit']" class="btn btn-primary btn-sm mr-1 mb-1">
                                             <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                             <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
                                         </a>

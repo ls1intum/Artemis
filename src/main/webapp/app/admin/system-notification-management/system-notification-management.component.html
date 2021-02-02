@@ -36,11 +36,11 @@
                     <td>{{ notification.expireDate | artemisDate }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
-                            <a id="viewButton" type="submit" [routerLink]="['./', notification.id]" class="btn btn-info btn-sm">
+                            <a id="viewButton" [routerLink]="['./', notification.id]" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="'eye'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                             </a>
-                            <a id="editButton" type="submit" [routerLink]="['./', notification.id, 'edit']" queryParamsHandling="merge" class="btn btn-primary btn-sm">
+                            <a id="editButton" [routerLink]="['./', notification.id, 'edit']" queryParamsHandling="merge" class="btn btn-primary btn-sm">
                                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </a>
