@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import java.util.Optional;
+
 import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
@@ -23,19 +25,20 @@ public class SentryConfiguration {
     private String VERSION;
 
     @Value("${info.sentry.dsn}")
-    private String SENTRY_DSN;
+    private Optional<String> SENTRY_DSN;
 
     /**
      * init sentry with the correct package name and Artemis version
      */
     @PostConstruct
     public void init() {
-        final String dsn = SENTRY_DSN + "?stacktrace.app.packages=de.tum.in.www1.artemis";
-        log.info("Sentry DSN: " + dsn);
-
-        if (SENTRY_DSN == null) {
+        if (SENTRY_DSN.isEmpty() || SENTRY_DSN.get().isEmpty()) {
+            log.info("Sentry is disabled: Provide a DSN to enable Sentry.");
             return;
         }
+
+        final String dsn = SENTRY_DSN + "?stacktrace.app.packages=de.tum.in.www1.artemis";
+        log.info("Sentry DSN: " + dsn);
 
         Sentry.init(options -> {
             options.setDsn(dsn);
