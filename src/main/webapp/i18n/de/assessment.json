@@ -2,6 +2,7 @@
     "artemisApp": {
         "assessment": {
             "assessment": "Bewertung",
+            "testRunAssessment": "Testlauf Assessment",
             "generalFeedback": "Allgemeines Feedback",
             "unreferencedFeedback": "Feedback für fehlende Elemente",
             "automaticGenerated": "Automatisch erstelltes Feedback",
