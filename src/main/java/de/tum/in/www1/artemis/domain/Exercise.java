@@ -62,8 +62,8 @@ public abstract class Exercise extends DomainObject {
     @JsonView(QuizView.Before.class)
     private ZonedDateTime assessmentDueDate;
 
-    @Column(name = "max_score")
-    private Double maxScore;
+    @Column(name = "max_points")
+    private Double maxPoints;
 
     @Column(name = "bonus_points")
     private Double bonusPoints;
@@ -260,12 +260,12 @@ public abstract class Exercise extends DomainObject {
         return this.assessmentDueDate == null || ZonedDateTime.now().isAfter(this.assessmentDueDate);
     }
 
-    public Double getMaxScore() {
-        return maxScore;
+    public Double getMaxPoints() {
+        return maxPoints;
     }
 
-    public void setMaxScore(Double maxScore) {
-        this.maxScore = maxScore;
+    public void setMaxPoints(Double maxScore) {
+        this.maxPoints = maxScore;
     }
 
     public Double getBonusPoints() {

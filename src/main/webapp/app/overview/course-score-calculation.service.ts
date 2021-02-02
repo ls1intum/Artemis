@@ -32,7 +32,7 @@ export class CourseScoreCalculationService {
             const isExerciseFinished = !exercise.dueDate || exercise.dueDate.isBefore(moment());
             const isExerciseIncluded = exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED;
             if (isExerciseFinished && isExerciseIncluded) {
-                const maxPointsReachableInExercise = exercise.maxScore!;
+                const maxPointsReachableInExercise = exercise.maxPoints!;
                 if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                     maxPointsInCourse += maxPointsReachableInExercise;
                 }

@@ -92,7 +92,7 @@ public class QuizExerciseService {
      */
     public QuizExercise save(QuizExercise quizExercise) {
 
-        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.setMaxPoints(quizExercise.getMaxTotalScore().doubleValue());
 
         // create a quizPointStatistic if it does not yet exist
         if (quizExercise.getQuizPointStatistic() == null) {
@@ -548,7 +548,7 @@ public class QuizExerciseService {
         boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
 
         // update QuizExercise
-        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.setMaxPoints(quizExercise.getMaxTotalScore().doubleValue());
         quizExercise.reconnectJSONIgnoreAttributes();
 
         // adjust existing results if an answer or a question was deleted and recalculate them

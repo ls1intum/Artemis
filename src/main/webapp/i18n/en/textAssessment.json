@@ -16,8 +16,8 @@
             "resultDismissed": "Your assessment was dismissed because another tutor already rated this submission.",
             "error": {
                 "invalidAssessments": "Your assessments are not valid!",
-                "invalidScoreMustBeNumber": "The score field must be a number and can not be empty!",
-                "invalidNeedScoreOrFeedback": "Each Feedback item must have at least a score or feedback text.",
+                "invalidScoreMustBeNumber": "The points field must be a number and can not be empty!",
+                "invalidNeedScoreOrFeedback": "Each Feedback item must have at least points or feedback text.",
                 "feedbackReferenceTooLong": "Please select a text block shorter than 2000 characters."
             },
             "assessInstruction": "Please highlight the text block you want to assess and click the \"Assess\" button.",
@@ -61,7 +61,7 @@
                 "solveFeedbackConflictSuccessful": "Feedback conflict solved successfully.",
                 "type": {
                     "INCONSISTENT_COMMENT": "INCONSISTENT COMMENT",
-                    "INCONSISTENT_SCORE": "INCONSISTENT SCORE",
+                    "INCONSISTENT_SCORE": "INCONSISTENT POINTS",
                     "INCONSISTENT_FEEDBACK": "INCONSISTENT FEEDBACK"
                 }
             }

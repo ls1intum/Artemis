@@ -248,6 +248,8 @@
                 "lastName": "Last name",
                 "email": "Email",
                 "registrationNumber": "Matriculation number",
+                "registerAllFromCourse": "Register course students",
+                "registerAllFromCourseTooltip": "Register all students enrolled in this course",
                 "removeFromExam": {
                     "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?",
                     "deleteParticipationsAndSubmission": "Delete participations and submissions of this student in the associated exam?"

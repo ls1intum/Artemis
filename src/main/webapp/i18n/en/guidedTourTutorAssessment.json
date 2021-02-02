@@ -61,7 +61,7 @@
             },
             "reviewAssessment": {
                 "headline": "Review Example Assessment",
-                "content": "This is an example assessment of the submission. Each text block is graded with the score 1."
+                "content": "This is an example assessment of the submission. Each text block is graded with the point 1."
             },
             "confirm": {
                 "headline": "Confirm",
@@ -75,7 +75,7 @@
                 "task": "Mark the text of one software pattern and click on the <tt>Assess</tt> button. Do the same for the remaining two patterns. In the end you should have three highlighted text blocks."
             },
             "addScore": {
-                "headline": "Add Score",
+                "headline": "Add Points",
                 "content": "Here you can add points and additional feedback for each assessment element.",
                 "task": "Add '1' point for each assessment element."
             },

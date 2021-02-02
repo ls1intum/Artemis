@@ -59,7 +59,7 @@
                         <span jhiTranslate="global.menu.admin.main">Server Administration</span>
                     </span>
                 </a>
-                <ul class="dropdown-menu" ngbDropdownMenu>
+                <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
                     <li>
                         <a class="dropdown-item" routerLink="admin/upcoming-exams-and-exercises" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="'book-open'" [fixedWidth]="true"></fa-icon>
@@ -168,7 +168,7 @@
                         <img [src]="getImageUrl()" class="profile-image img-circle" alt="Avatar" />
                     </span>
                 </a>
-                <ul class="dropdown-menu" ngbDropdownMenu>
+                <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
                     <li>
                         <h6 class="dropdown-header" jhiTranslate="global.menu.language">Language</h6>
                     </li>
