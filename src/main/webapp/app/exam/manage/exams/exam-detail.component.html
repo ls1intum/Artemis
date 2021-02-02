@@ -64,14 +64,14 @@
                     <thead>
                         <tr>
                             <th>Checklist item</th>
-                            <th>Beschreibung</th>
+                            <th>Description</th>
                             <th>Go To</th>
                         </tr>
                     </thead>
 
                     <tbody>
                         <tr>
-                            <td class="d-none d-md-table-cell">Registre students to the exam</td>
+                            <td class="d-none d-md-table-cell">Register students to the exam</td>
                             <td class="d-none d-md-table-cell">At least one student needs to be registered to the exam</td>
                             <td class="d-none d-md-table-cell">
                                 <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['students']" class="btn btn-info">
