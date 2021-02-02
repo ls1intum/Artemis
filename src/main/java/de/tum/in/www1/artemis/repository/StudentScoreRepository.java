@@ -9,11 +9,14 @@ import java.util.Set;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
+import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 
 @Repository
 public interface StudentScoreRepository extends JpaRepository<StudentScore, Long> {
@@ -25,5 +28,14 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
 
     @EntityGraph(type = LOAD, attributePaths = { "user", "exercise", "lastResult", "lastRatedResult" })
     List<StudentScore> findAllByExerciseIn(Set<Exercise> exercises, Pageable pageable);
+
+    @Query("""
+                    SELECT new de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO(s.user, AVG(s.lastScore), AVG(s.lastRatedScore))
+                    FROM StudentScore s
+                    WHERE s.exercise IN :exercises
+                    GROUP BY s.user
+
+            """)
+    List<ParticipantScoreAverageDTO> getAvgScoreOfStudentsInExercises(@Param("exercises") Set<Exercise> exercises);
 
 }

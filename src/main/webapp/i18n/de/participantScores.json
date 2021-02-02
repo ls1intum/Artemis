@@ -15,6 +15,14 @@
                 "lastRatedResultId": "Id letztes bewertetes Ergebnis",
                 "lastRatedResultScore": "Letztes bewertetes Ergebnis (%)"
             },
+            "participantScoreAverageDTO": {
+                "userName": "Nutzername",
+                "teamName": "Team Name",
+                "averageScore": "Durchschnittliches Ergebnis",
+                "averageRatedScore": "Durchschnittliches bewertetes Ergebnis"
+            },
+            "average": "Durchschnittswerte",
+            "individual": "Individuelle Werte",
             "searchForStudentsOrTeam": "Suche nach Student oder Team",
             "averageScore": "Durchschnittliches Ergebnis: {{avg}}%",
             "averageRatedScore": "Durchschnittliches bewertetes Ergebnis: {{avg}}%",

@@ -21,6 +21,17 @@ export class ParticipantScoreDTO {
     public lastRatedResultScore: number | null;
 }
 
+/**
+ * Normally the use of null in the client is discouraged but in this case it is fine as the server will always send all
+ * the properties but will give them the value null (a property will never be undefined here).
+ */
+export class ParticipantScoreAverageDTO {
+    public userName: string | null;
+    public teamName: string | null;
+    public averageScore: number | null;
+    public averageRatedScore: number | null;
+}
+
 export type SortDirection = 'asc' | 'desc';
 export type SortProperty = keyof ParticipantScoreDTO;
 export type SortingParameter = {
@@ -65,6 +76,12 @@ export class ParticipantScoresService {
         });
     }
 
+    findAverageOfCoursePerParticipant(courseId: number): Observable<HttpResponse<ParticipantScoreAverageDTO[]>> {
+        return this.http.get<ParticipantScoreAverageDTO[]>(`${this.resourceUrl}/courses/${courseId}/participant-scores/average-participant`, {
+            observe: 'response',
+        });
+    }
+
     findAllOfExamPaged(examId: number, sortingParameters: SortingParameter[], page: number, size: number): Observable<HttpResponse<ParticipantScoreDTO[]>> {
         let params = new HttpParams();
         for (const sortParameter of sortingParameters) {
@@ -93,6 +110,12 @@ export class ParticipantScoresService {
         return this.http.get<number>(`${this.resourceUrl}/exams/${examId}/participant-scores/average`, {
             observe: 'response',
             params,
+        });
+    }
+
+    findAverageOfExamPerParticipant(examId: number): Observable<HttpResponse<ParticipantScoreAverageDTO[]>> {
+        return this.http.get<ParticipantScoreAverageDTO[]>(`${this.resourceUrl}/exams/${examId}/participant-scores/average-participant`, {
+            observe: 'response',
         });
     }
 }

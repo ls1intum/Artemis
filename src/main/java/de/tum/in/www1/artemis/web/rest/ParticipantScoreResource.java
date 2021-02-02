@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
 
 @RestController
@@ -86,6 +87,34 @@ public class ParticipantScoreResource {
     }
 
     /**
+     * GET /courses/:courseId/participant-scores/average-participant  gets the average scores of the participants in the course
+     * <p>
+     * Important: Exercises with {@link de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore#NOT_INCLUDED} will be not taken into account!
+     *
+     * @param courseId the id of the course for which to get the average scores of the participants
+     * @return the ResponseEntity with status 200 (OK) and with the average scores in the body
+     */
+    @GetMapping("/courses/{courseId}/participant-scores/average-participant")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<ParticipantScoreAverageDTO>> getAverageScoreOfParticipantInCourse(@PathVariable Long courseId) {
+        long start = System.currentTimeMillis();
+        log.debug("REST request to get average participant scores of participants for course : {}", courseId);
+        Course course = courseRepository.findWithEagerExercisesById(courseId);
+        if (course == null) {
+            return notFound();
+        }
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+            return forbidden();
+        }
+        Set<Exercise> exercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise)
+                .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
+
+        List<ParticipantScoreAverageDTO> resultsOfAllExercises = getParticipantScoreAverageDTOs(exercisesOfCourse);
+        log.debug("getAverageScoreOfStudentInCourse took " + (System.currentTimeMillis() - start) + "ms");
+        return ResponseEntity.ok().body(resultsOfAllExercises);
+    }
+
+    /**
      * GET /courses/:courseId/participant-scores/average  gets the average score of the course
      * <p>
      * Important: Exercises with {@link de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore#NOT_INCLUDED} will be not taken into account!
@@ -115,7 +144,7 @@ public class ParticipantScoreResource {
         Set<Exercise> includedExercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
 
-        Long averageScore = gerAverageScore(onlyConsiderRatedScores, includedExercisesOfCourse);
+        Long averageScore = getAverageScore(onlyConsiderRatedScores, includedExercisesOfCourse);
 
         log.debug("getAverageScoreOfCourse took " + (System.currentTimeMillis() - start) + "ms");
 
@@ -134,7 +163,8 @@ public class ParticipantScoreResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ParticipantScoreDTO>> getParticipantScoresOfExam(@PathVariable Long examId, Pageable pageable,
             @RequestParam(value = "getUnpaged", required = false, defaultValue = "false") boolean getUnpaged) {
-        log.debug("REST request to get participant scores for course : {}", examId);
+        long start = System.currentTimeMillis();
+        log.debug("REST request to get participant scores for exam : {}", examId);
         Optional<Exam> examOptional = examRepository.findWithExerciseGroupsAndExercisesById(examId);
         if (examOptional.isEmpty()) {
             return notFound();
@@ -152,12 +182,12 @@ public class ParticipantScoreResource {
         }
 
         List<ParticipantScoreDTO> resultsOfAllExercises = gertParticipantScoreDTOs(pageable, exercisesOfExam);
-
+        log.debug("getParticipantScoresOfExam took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok().body(resultsOfAllExercises);
     }
 
     /**
-     * GET /exams/:examId/participant-scores/average  gets the average score of the course
+     * GET /exams/:examId/participant-scores/average gets the average score of the exam
      * <p>
      * Important: Exercises with {@link de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore#NOT_INCLUDED} will be not taken into account!
      *
@@ -191,10 +221,43 @@ public class ParticipantScoreResource {
         Set<Exercise> includedExercisesOfExam = exercisesOfExam.stream().filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED))
                 .collect(Collectors.toSet());
 
-        Long averageScore = gerAverageScore(onlyConsiderRatedScores, includedExercisesOfExam);
+        Long averageScore = getAverageScore(onlyConsiderRatedScores, includedExercisesOfExam);
 
         log.debug("getAverageScoreOfExam took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok().body(averageScore);
+    }
+
+    /**
+     * GET /exams/:examId/participant-scores/average-participant  gets the average scores of the participants in the exam
+     * <p>
+     * Important: Exercises with {@link de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore#NOT_INCLUDED} will be not taken into account!
+     *
+     * @param examId the id of the exam for which to get the average scores of the participants
+     * @return the ResponseEntity with status 200 (OK) and with the average scores in the body
+     */
+    @GetMapping("/exams/{examId}/participant-scores/average-participant")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<ParticipantScoreAverageDTO>> getAverageScoreOfParticipantInExam(@PathVariable Long examId) {
+        long start = System.currentTimeMillis();
+        log.debug("REST request to get average participant scores of participants for exam : {}", examId);
+        Optional<Exam> examOptional = examRepository.findWithExerciseGroupsAndExercisesById(examId);
+        if (examOptional.isEmpty()) {
+            return notFound();
+        }
+        Exam exam = examOptional.get();
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(exam.getCourse(), null)) {
+            return forbidden();
+        }
+        Set<Exercise> exercisesOfExam = new HashSet<>();
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            exercisesOfExam.addAll(exerciseGroup.getExercises());
+        }
+        Set<Exercise> includedExercisesOfExam = exercisesOfExam.stream().filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED))
+                .collect(Collectors.toSet());
+
+        List<ParticipantScoreAverageDTO> resultsOfAllExercises = getParticipantScoreAverageDTOs(includedExercisesOfExam);
+        log.debug("getAverageScoreOfParticipantInExam took " + (System.currentTimeMillis() - start) + "ms");
+        return ResponseEntity.ok().body(resultsOfAllExercises);
     }
 
     private List<ParticipantScoreDTO> gertParticipantScoreDTOs(Pageable pageable, Set<Exercise> exercises) {
@@ -208,7 +271,17 @@ public class ParticipantScoreResource {
         return Stream.concat(resultsIndividualExercises.stream(), resultsTeamExercises.stream()).collect(Collectors.toList());
     }
 
-    private Long gerAverageScore(@RequestParam(defaultValue = "true", required = false) boolean onlyConsiderRatedScores, Set<Exercise> includedExercises) {
+    private List<ParticipantScoreAverageDTO> getParticipantScoreAverageDTOs(Set<Exercise> exercises) {
+        Set<Exercise> individualExercises = exercises.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.INDIVIDUAL)).collect(Collectors.toSet());
+        Set<Exercise> teamExercises = exercises.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.TEAM)).collect(Collectors.toSet());
+
+        List<ParticipantScoreAverageDTO> resultsIndividualExercises = studentScoreRepository.getAvgScoreOfStudentsInExercises(individualExercises);
+        List<ParticipantScoreAverageDTO> resultsTeamExercises = teamScoreRepository.getAvgScoreOfTeamInExercises(teamExercises);
+
+        return Stream.concat(resultsIndividualExercises.stream(), resultsTeamExercises.stream()).collect(Collectors.toList());
+    }
+
+    private Long getAverageScore(@RequestParam(defaultValue = "true", required = false) boolean onlyConsiderRatedScores, Set<Exercise> includedExercises) {
         Long averageScore;
         if (onlyConsiderRatedScores) {
             averageScore = participantScoreRepository.findAvgRatedScore(includedExercises);
