@@ -352,7 +352,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         // creating text exercise with Result
         course = courseRepository.findWithEagerExercisesById(idOfCourse);
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
-        textExercise.setMaxScore(10.0);
+        textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise = exerciseRepository.save(textExercise);
 
@@ -364,7 +364,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         // creating text exercise with Result
         course = courseRepository.findWithEagerExercisesById(idOfCourse);
         TextExercise teamTextExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
-        teamTextExercise.setMaxScore(10.0);
+        teamTextExercise.setMaxPoints(10.0);
         teamTextExercise.setBonusPoints(0.0);
         teamTextExercise.setMode(ExerciseMode.TEAM);
         teamTextExercise = exerciseRepository.save(teamTextExercise);
@@ -386,8 +386,8 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
             boolean rated) {
         Exercise exercise = exerciseRepository.findById(idOfExercise).get();
 
-        if (!exercise.getMaxScore().equals(pointsOfExercise)) {
-            exercise.setMaxScore(pointsOfExercise);
+        if (!exercise.getMaxPoints().equals(pointsOfExercise)) {
+            exercise.setMaxPoints(pointsOfExercise);
         }
         if (!exercise.getBonusPoints().equals(bonusPointsOfExercise)) {
             exercise.setBonusPoints(bonusPointsOfExercise);
