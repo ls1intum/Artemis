@@ -179,7 +179,13 @@
                 <tbody>
                     <tr *ngFor="let exercise of exerciseGroup.exercises">
                         <td class="align-middle">
-                            {{ exercise.id }}
+                            <a
+                                *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.QUIZ"
+                                [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id]"
+                            >
+                                <span>{{ exercise.id }}</span>
+                            </a>
+                            <span *ngIf="!course.isAtLeastInstructor || exercise.type === exerciseType.QUIZ">{{ exercise.id }}</span>
                         </td>
                         <td class="align-middle" style="font-size: 1.35rem">
                             <fa-icon [icon]="exerciseIcon(exercise)"></fa-icon>
@@ -190,15 +196,15 @@
                         <td class="align-middle">
                             {{ exercise.maxPoints }}
                         </td>
-                        <td>{{ exercise.bonusPoints }}</td>
-                        <td>{{ exerciseService.isIncludedInScore(exercise) }}</td>
+                        <td class="align-middle">{{ exercise.bonusPoints }}</td>
+                        <td class="align-middle">{{ exerciseService.isIncludedInScore(exercise) }}</td>
                         <!-- Programming exercise specific cells -->
                         <ng-container *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)">
                             <ng-container *ngIf="exercise.type === exerciseType.PROGRAMMING; else emptyProgrammingCells">
                                 <td class="align-middle">
                                     {{ exercise.shortName }}
                                 </td>
-                                <td>
+                                <td class="align-middle">
                                     <div>
                                         <span *ngIf="exercise.templateParticipation?.repositoryUrl">
                                             <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
@@ -256,7 +262,7 @@
                                         <ng-template #noVersionControlAndContinuousIntegrationAvailableTest>Test</ng-template>
                                     </div>
                                 </td>
-                                <td>
+                                <td class="align-middle">
                                     <span *ngIf="exercise.templateParticipation?.buildPlanId"
                                         ><a
                                             *ngIf="
@@ -284,7 +290,7 @@
                                     >
                                     <ng-template #noVersionControlAndContinuousIntegrationAvailableSolution>Solution</ng-template><br />
                                 </td>
-                                <td class="d-none d-md-table-cell">
+                                <td class="align-middle d-none d-md-table-cell">
                                     <div class="d-flex justify-content-between">{{ 'artemisApp.programmingExercise.offlineIde' | translate }}: {{ exercise.allowOfflineIde }}</div>
                                     <div class="d-flex justify-content-between">
                                         {{ 'artemisApp.programmingExercise.onlineEditor' | translate }}: {{ exercise.allowOnlineEditor }}
@@ -319,7 +325,7 @@
                                 </div>
                             </td>
                         </ng-container>
-                        <td class="d-flex justify-content-end">
+                        <td class="align-middle d-flex justify-content-end">
                             <jhi-exam-exercise-row-buttons
                                 [course]="course"
                                 [exam]="exam"
