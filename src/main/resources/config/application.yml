@@ -162,7 +162,6 @@ server:
     forward-headers-strategy: native
 
 sentry:
-    send-default-pii: true
     logging:
         enabled: true
         minimum-breadcrumb-level: error
