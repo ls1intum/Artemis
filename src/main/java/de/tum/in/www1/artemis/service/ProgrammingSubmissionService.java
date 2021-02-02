@@ -526,11 +526,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
         if (submission.getParticipation() instanceof StudentParticipation) {
             StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+            // no need to send all exercise details here
+            submission.getParticipation().setExercise(null);
             studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission));
         }
 
         if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-            messagingTemplate.convertAndSend(getExerciseTopicForTAAndAbove(submission.getParticipation().getExercise().getId()), submission);
+            var topicDestination = getExerciseTopicForTAAndAbove(submission.getParticipation().getExercise().getId());
+            messagingTemplate.convertAndSend(topicDestination, submission);
         }
     }
 

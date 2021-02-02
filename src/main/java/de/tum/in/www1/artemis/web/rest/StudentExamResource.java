@@ -556,15 +556,18 @@ public class StudentExamResource {
         Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
         if ((isStudentAllowedToSeeResult || isAtLeastInstructor) && latestSubmission.isPresent()) {
-            var submission = latestSubmission.get();
+            var lastSubmission = latestSubmission.get();
             // Also set the latest result into the participation as the client expects it there for programming exercises
-            Result result = submission.getLatestResult();
-            if (result != null) {
-                result.setParticipation(null);
-                result.setSubmission(null);
-                participation.setResults(Set.of(result));
-                submission.setResults(List.of(result));
+            Result latestResult = lastSubmission.getLatestResult();
+            if (latestResult != null) {
+                latestResult.setParticipation(null);
+                latestResult.setSubmission(lastSubmission);
+                // to avoid cycles and support certain use cases on the client, only the last result + submission inside the participation are relevant, i.e. participation ->
+                // lastResult -> lastSubmission
+                participation.setResults(Set.of(latestResult));
             }
+            lastSubmission.setResults(null);
+            participation.setSubmissions(Set.of(lastSubmission));
         }
     }
 
