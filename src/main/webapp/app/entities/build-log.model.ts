@@ -20,7 +20,7 @@ type ParsedLogEntry = [string, string, string, string, string, string];
  * Wrapper class for build log output.
  */
 export class BuildLogEntryArray extends Array<BuildLogEntry> {
-    private errorLogRegex = /\[(ERROR)\].*\/(src\/.+):\[(\d+),(\d+)\]\s(.*$)/;
+    private errorLogRegex = /\[?(ERROR)?\]?.*\/?(src\/.+):\[(\d+),(\d+)\]\s(.*$)/;
 
     /**
      * Factory method for creating an instance of the class. Prefer this method over the default constructor.
