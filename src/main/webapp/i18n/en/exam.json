@@ -326,7 +326,7 @@
                     "generateStudentExams": "Student exams must be generated for all registered students before starting the exam.",
                     "prepareExerciseStart": "Preparing the exercises can reduce load on the server during the exam.",
                     "examDetails": "Before conducting an exam, please make sure to have filled out all exam details. (Start text, dates etc)",
-                    "conductExam": "On the student exam page it can be seen with students did already submit their exam.",
+                    "conductExam": "On the student exam page it can be seen which students did already submit their exam.",
                     "assessAllSubmissions": "The number of correction rounds per exercise depends on the exams number of correction rounds.",
                     "publishResults": "Publishing the results makes them available to students. Student exams are published on the publishing date for results within the exam.",
                     "examReview": "Make sure to have all dates specified correctly.",
