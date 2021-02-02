@@ -132,7 +132,7 @@ describe('CourseScoreCalculationService', () => {
     function addTextExerciseToCourse(course: Course, maxScore: number, bonusPoints: number, includedInOverallScore: IncludedInOverallScore, isFinished: boolean) {
         const exercise = new TextExercise(course, undefined);
         exercise.includedInOverallScore = includedInOverallScore;
-        exercise.maxScore = maxScore;
+        exercise.maxPoints = maxScore;
         exercise.bonusPoints = bonusPoints;
         exercise.studentParticipations = [];
         if (isFinished) {

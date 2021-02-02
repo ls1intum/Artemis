@@ -92,9 +92,11 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private Exam exam2;
 
+    private int numberOfStudents = 10;
+
     @BeforeEach
     public void initTestCase() {
-        users = database.addUsers(10, 5, 1);
+        users = database.addUsers(numberOfStudents, 5, 1);
         course1 = database.addEmptyCourse();
         course2 = database.addEmptyCourse();
         exam1 = database.addExam(course1);
@@ -117,10 +119,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         jiraRequestMockProvider.enableMockingOfRequests();
         jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
 
-        List<User> studentsInCourseBefore = userRepo.findAllInGroup(course1.getStudentGroupName());
+        List<User> studentsInCourseBefore = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student42", null, HttpStatus.OK, null);
         SecurityUtils.setAuthorizationObject(); // TODO: Why do we need this
-        List<User> studentsInCourseAfter = userRepo.findAllInGroup(course1.getStudentGroupName());
+        List<User> studentsInCourseAfter = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
         User student42 = database.getUserByLogin("student42");
         studentsInCourseBefore.add(student42);
         assertThat(studentsInCourseBefore).containsExactlyInAnyOrderElementsOf(studentsInCourseAfter);
@@ -910,6 +912,39 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testAddAllRegisteredUsersToExam() throws Exception {
+        Course course = database.addEmptyCourse();
+        Exam exam = database.addExam(course);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, false);
+        exam = examRepository.save(exam);
+        course.addExam(exam);
+        course = courseRepo.save(course);
+
+        var instructor = database.getUserByLogin("instructor1");
+        instructor.setGroups(Collections.singleton("instructor"));
+        userRepo.save(instructor);
+
+        var student99 = ModelFactory.generateActivatedUser("student99");     // not registered for the course
+        student99.setRegistrationNumber("1234");
+        userRepo.save(student99);
+        student99 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student99").get();
+        student99.setGroups(Collections.singleton("tumuser"));
+        userRepo.save(student99);
+        assertThat(student99.getGroups()).contains(course.getStudentGroupName());
+        assertThat(exam.getRegisteredUsers()).doesNotContain(student99);
+
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/register-course-students", null, HttpStatus.OK, null);
+
+        exam = examRepository.findWithRegisteredUsersById(exam.getId()).get();
+
+        // 10 normal students + our custom student99
+        assertThat(exam.getRegisteredUsers().size()).isEqualTo(this.numberOfStudents + 1);
+        assertThat(exam.getRegisteredUsers()).contains(student99);
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course.getId(), exam.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateOrderOfExerciseGroups() throws Exception {
         ExerciseGroup exerciseGroup1 = new ExerciseGroup();
         exerciseGroup1.setTitle("first");
@@ -1243,7 +1278,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             if (exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
                 continue;
             }
-            calculatedAverageScore += Math.round(exercise.getMaxScore() * resultScore / 100.00 * 10) / 10.0;
+            calculatedAverageScore += Math.round(exercise.getMaxPoints() * resultScore / 100.00 * 10) / 10.0;
         }
 
         assertThat(response.averagePointsAchieved).isEqualTo(calculatedAverageScore);
@@ -1263,8 +1298,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             ExerciseGroup originalExerciseGroup = exam.getExerciseGroups().stream().filter(exerciseGroup -> exerciseGroup.getId().equals(exerciseGroupDTO.id)).findFirst().get();
 
             // Assume that all exercises in a group have the same max score
-            Double groupMaxScoreFromExam = originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore();
-            assertThat(exerciseGroupDTO.maxPoints).isEqualTo(originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore());
+            Double groupMaxScoreFromExam = originalExerciseGroup.getExercises().stream().findAny().get().getMaxPoints();
+            assertThat(exerciseGroupDTO.maxPoints).isEqualTo(originalExerciseGroup.getExercises().stream().findAny().get().getMaxPoints());
             assertEquals(exerciseGroupDTO.maxPoints, groupMaxScoreFromExam, EPSILON);
 
             // Compare exercise information
@@ -1275,7 +1310,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 // Check the exercise title
                 assertThat(originalExercise.getTitle()).isEqualTo(exerciseDTO.title);
                 // Check the max points of the exercise
-                assertThat(originalExercise.getMaxScore()).isEqualTo(exerciseDTO.maxPoints);
+                assertThat(originalExercise.getMaxPoints()).isEqualTo(exerciseDTO.maxPoints);
                 // Check the number of exercise participants and update the group participant counter
                 var noOfExerciseParticipations = originalExercise.getStudentParticipations().size();
                 noOfExerciseGroupParticipations += noOfExerciseParticipations;
@@ -1303,7 +1338,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             // Calculate overall points achieved
 
             var calculatedOverallPoints = studentExamOfUser.getExercises().stream()
-                    .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).map(exercise -> exercise.getMaxScore())
+                    .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).map(exercise -> exercise.getMaxPoints())
                     .reduce(0.0, (total, maxScore) -> (Math.round((total + maxScore * resultScore / 100) * 10) / 10.0));
 
             assertEquals(studentResult.overallPointsAchieved, calculatedOverallPoints, EPSILON);
@@ -1327,9 +1362,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 assertThat(originalExercise.getExerciseGroup().getId()).isEqualTo(entry.getKey());
 
                 assertThat(exerciseResult.title).isEqualTo(originalExercise.getTitle());
-                assertThat(exerciseResult.maxScore).isEqualTo(originalExercise.getMaxScore());
+                assertThat(exerciseResult.maxScore).isEqualTo(originalExercise.getMaxPoints());
                 assertThat(exerciseResult.achievedScore).isEqualTo(resultScore);
-                assertEquals(exerciseResult.achievedPoints, originalExercise.getMaxScore() * resultScore / 100, EPSILON);
+                assertEquals(exerciseResult.achievedPoints, originalExercise.getMaxPoints() * resultScore / 100, EPSILON);
             }
         }
 

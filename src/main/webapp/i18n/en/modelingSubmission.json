@@ -20,13 +20,13 @@
             "explanationText": "Explanation",
             "modelingEditor": "Modeling Editor",
             "problemStatement": "<strong>Problem statement:</strong>",
-            "maxScore": "<strong>Max. Score: {{maxScore}}</strong>",
+            "maxScore": "<strong>Max. Points: {{maxScore}}</strong>",
             "assessment": {
                 "title": "Assessment",
                 "noAssessment": "There is no assessment available yet.",
                 "instructions": "Select elements in the editor to filter the assessment.",
                 "element": "Element",
-                "score": "Score"
+                "score": "Points"
             }
         }
     }

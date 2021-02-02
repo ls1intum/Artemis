@@ -13,6 +13,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 // Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
 const MAX_SIZE_UNIT = 200;
+
 /**
  * Generates a new Drag and Drop Quiz Exercise based on a UML model.
  *
@@ -110,7 +111,7 @@ function createDragAndDropQuestion(
     dragAndDropQuestion.title = title;
     dragAndDropQuestion.text = 'Fill the empty spaces in the UML diagram by dragging and dropping the elements below the diagram into the correct places.';
     dragAndDropQuestion.scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY;
-    dragAndDropQuestion.score = 1;
+    dragAndDropQuestion.points = 1;
     dragAndDropQuestion.backgroundFilePath = backgroundFilePath;
     dragAndDropQuestion.dropLocations = dropLocations;
     dragAndDropQuestion.dragItems = dragItems;

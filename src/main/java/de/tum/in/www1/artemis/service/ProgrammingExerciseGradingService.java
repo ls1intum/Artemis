@@ -20,7 +20,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -399,7 +402,7 @@ public class ProgrammingExerciseGradingService {
             // calculate the achieved points from the passed test cases
             double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {
                 double testWeight = test.getWeight() * test.getBonusMultiplier();
-                double testPoints = testWeight / weightSum * programmingExercise.getMaxScore();
+                double testPoints = testWeight / weightSum * programmingExercise.getMaxPoints();
                 double testPointsWithBonus = testPoints + test.getBonusPoints();
                 // update credits of related feedback
                 result.getFeedbacks().stream().filter(fb -> fb.getType() == FeedbackType.AUTOMATIC && fb.getText().equals(test.getTestName())).findFirst()
@@ -414,7 +417,7 @@ public class ProgrammingExerciseGradingService {
              * receive the full 20 points, if the points are not capped before the penalty is subtracted. With the implemented order in place
              * successfulTestPoints will be capped to 20 points first, then the penalty is subtracted resulting in 10 points.
              */
-            double maxPoints = programmingExercise.getMaxScore() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
+            double maxPoints = programmingExercise.getMaxPoints() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
 
             if (successfulTestPoints > maxPoints) {
                 successfulTestPoints = maxPoints;
@@ -431,7 +434,7 @@ public class ProgrammingExerciseGradingService {
             }
 
             // The score is calculated as a percentage of the maximum points
-            long score = Math.round(successfulTestPoints / programmingExercise.getMaxScore() * 100.0);
+            long score = Math.round(successfulTestPoints / programmingExercise.getMaxPoints() * 100.0);
 
             result.setScore(score);
         }
@@ -484,7 +487,7 @@ public class ProgrammingExerciseGradingService {
          * points due to static code analysis issues.
          */
         final var maxExercisePenaltyPoints = (double) Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(100) / 100.0
-                * programmingExercise.getMaxScore();
+                * programmingExercise.getMaxPoints();
         if (codeAnalysisPenaltyPoints > maxExercisePenaltyPoints) {
             codeAnalysisPenaltyPoints = maxExercisePenaltyPoints;
         }
@@ -525,7 +528,7 @@ public class ProgrammingExerciseGradingService {
      */
     private String updateManualResultString(String resultString, Result result, ProgrammingExercise exercise) {
         // Calculate different scores for totalScore calculation and add points and maxScore to result string
-        double maxScore = exercise.getMaxScore();
+        double maxScore = exercise.getMaxPoints();
         double points = programmingAssessmentService.calculateTotalScore(result);
         result.setScore(points, maxScore);
         return resultString + ", " + result.createResultString(points, maxScore);
