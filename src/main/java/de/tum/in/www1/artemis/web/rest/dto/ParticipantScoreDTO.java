@@ -43,6 +43,12 @@ public class ParticipantScoreDTO {
         this.lastRatedResultScore = lastRatedResultScore;
     }
 
+    /**
+     * Generates a {@link ParticipantScoreDTO} from a {@link ParticipantScore}
+     *
+     * @param participantScore ParticipantScore input
+     * @return {@link ParticipantScoreDTO}
+     */
     public static ParticipantScoreDTO generateFromParticipantScore(ParticipantScore participantScore) {
         String userName = null;
         Long userId = null;
