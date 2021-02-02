@@ -177,7 +177,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
             IncludedInOverallScore includedInOverallScore) {
         TextExercise includedTextExercise = new TextExercise();
         includedTextExercise.setId(id);
-        includedTextExercise.setMaxScore(maxPoints);
+        includedTextExercise.setMaxPoints(maxPoints);
         includedTextExercise.setBonusPoints(maxBonusPoints);
         includedTextExercise.setIncludedInOverallScore(includedInOverallScore);
         includedTextExercise.setExerciseGroup(exerciseGroup);
