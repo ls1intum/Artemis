@@ -202,7 +202,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         let result = 0;
 
         this.quizExercise.quizQuestions!.forEach((question) => {
-            result = result + question.score!;
+            result = result + question.points!;
         });
         return result;
     }

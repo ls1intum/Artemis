@@ -103,14 +103,14 @@ export class StudentExamDetailComponent implements OnInit {
         this.studentExam = studentExam;
         this.initWorkingTimeForm();
         studentExam.exercises!.forEach((exercise) => {
-            this.maxTotalScore += exercise.maxScore!;
+            this.maxTotalScore += exercise.maxPoints!;
             if (
                 exercise.studentParticipations?.length &&
                 exercise.studentParticipations.length > 0 &&
                 exercise.studentParticipations[0].results?.length &&
                 exercise.studentParticipations[0].results.length > 0
             ) {
-                this.achievedTotalScore += (exercise.studentParticipations[0].results[0].score! * exercise.maxScore!) / 100;
+                this.achievedTotalScore += (exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100;
                 this.achievedTotalScore = this.rounding(this.achievedTotalScore);
             }
         });

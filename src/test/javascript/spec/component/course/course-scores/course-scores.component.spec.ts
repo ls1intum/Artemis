@@ -51,7 +51,7 @@ describe('CourseScoresComponent', () => {
         dueDate: moment().add(5, 'minutes'),
         type: ExerciseType.TEXT,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-        maxScore: 10,
+        maxPoints: 10,
         bonusPoints: 10,
     } as Exercise;
     const sharedDueDate = moment().add(4, 'minutes');
@@ -61,7 +61,7 @@ describe('CourseScoresComponent', () => {
         dueDate: sharedDueDate,
         type: ExerciseType.QUIZ,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-        maxScore: 10,
+        maxPoints: 10,
         bonusPoints: 0,
     } as Exercise;
     const fileBonusWith10Points0BonusPoints = {
@@ -70,7 +70,7 @@ describe('CourseScoresComponent', () => {
         dueDate: sharedDueDate,
         type: ExerciseType.FILE_UPLOAD,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS,
-        maxScore: 10,
+        maxPoints: 10,
         bonusPoints: 0,
     } as Exercise;
     const modelingIncludedWith10Points0BonusPoints = {
@@ -79,7 +79,7 @@ describe('CourseScoresComponent', () => {
         dueDate: moment().add(2, 'minutes'),
         type: ExerciseType.MODELING,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-        maxScore: 10,
+        maxPoints: 10,
         bonusPoints: 0,
     } as Exercise;
     const quizNotIncludedWith10Points0BonusPoints = {
@@ -88,7 +88,7 @@ describe('CourseScoresComponent', () => {
         dueDate: sharedDueDate,
         type: ExerciseType.QUIZ,
         includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED,
-        maxScore: 10,
+        maxPoints: 10,
         bonusPoints: 0,
     } as Exercise;
 
