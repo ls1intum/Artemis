@@ -112,6 +112,7 @@ public class SubmissionResource {
             if (latestSubmission.getManualResults().isEmpty()) {
                 latestSubmission.addResult(submissionService.prepareTestRunSubmissionForAssessment(latestSubmission));
             }
+            latestSubmission.removeAutomaticResults();
             return ResponseEntity.ok().body(List.of(latestSubmission));
         }
         else {
