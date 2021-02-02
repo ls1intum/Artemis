@@ -235,52 +235,53 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
                 (error: HttpErrorResponse) => this.onError(error.message),
             );
+
+            this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
+                (res: HttpResponse<StatsForDashboard>) => {
+                    this.statsForDashboard = StatsForDashboard.from(res.body!);
+                    this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
+                    this.totalNumberOfAssessments = this.statsForDashboard.totalNumberOfAssessments;
+                    this.numberOfAssessmentsOfCorrectionRounds = this.statsForDashboard.numberOfAssessmentsOfCorrectionRounds;
+                    this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
+                    this.numberOfOpenComplaints = this.statsForDashboard.numberOfOpenComplaints;
+                    this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
+                    this.numberOfOpenMoreFeedbackRequests = this.statsForDashboard.numberOfOpenMoreFeedbackRequests;
+                    const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor!.id);
+
+                    if (tutorLeaderboardEntry) {
+                        this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
+                        this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
+                        this.numberOfTutorMoreFeedbackRequests = tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests;
+                    } else {
+                        this.numberOfTutorAssessments = 0;
+                        this.numberOfTutorComplaints = 0;
+                        this.numberOfTutorMoreFeedbackRequests = 0;
+                    }
+
+                    if (this.numberOfSubmissions.inTime > 0) {
+                        this.totalAssessmentPercentage.inTime = Math.floor((this.totalNumberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
+                    } else {
+                        this.totalAssessmentPercentage.inTime = 100;
+                    }
+                    if (this.numberOfSubmissions.late > 0) {
+                        this.totalAssessmentPercentage.late = Math.floor((this.totalNumberOfAssessments.late / this.numberOfSubmissions.late) * 100);
+                    } else {
+                        this.totalAssessmentPercentage.late = 100;
+                    }
+                    if (this.numberOfSubmissions.total > 0) {
+                        this.tutorAssessmentPercentage = Math.floor((this.numberOfTutorAssessments / this.numberOfSubmissions.total) * 100);
+                    } else {
+                        this.tutorAssessmentPercentage = 100;
+                    }
+                },
+                (response: string) => this.onError(response),
+            );
         } else {
             this.complaintService.getComplaintsForTestRun(this.exerciseId).subscribe(
                 (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
                 (error: HttpErrorResponse) => this.onError(error.message),
             );
         }
-
-        this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
-            (res: HttpResponse<StatsForDashboard>) => {
-                this.statsForDashboard = StatsForDashboard.from(res.body!);
-                this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
-                this.totalNumberOfAssessments = this.statsForDashboard.totalNumberOfAssessments;
-                this.numberOfAssessmentsOfCorrectionRounds = this.statsForDashboard.numberOfAssessmentsOfCorrectionRounds;
-                this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
-                this.numberOfOpenComplaints = this.statsForDashboard.numberOfOpenComplaints;
-                this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
-                this.numberOfOpenMoreFeedbackRequests = this.statsForDashboard.numberOfOpenMoreFeedbackRequests;
-                const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor!.id);
-                if (tutorLeaderboardEntry) {
-                    this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
-                    this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
-                    this.numberOfTutorMoreFeedbackRequests = tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests;
-                } else {
-                    this.numberOfTutorAssessments = 0;
-                    this.numberOfTutorComplaints = 0;
-                    this.numberOfTutorMoreFeedbackRequests = 0;
-                }
-
-                if (this.numberOfSubmissions.inTime > 0) {
-                    this.totalAssessmentPercentage.inTime = Math.floor((this.totalNumberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
-                } else {
-                    this.totalAssessmentPercentage.inTime = 100;
-                }
-                if (this.numberOfSubmissions.late > 0) {
-                    this.totalAssessmentPercentage.late = Math.floor((this.totalNumberOfAssessments.late / this.numberOfSubmissions.late) * 100);
-                } else {
-                    this.totalAssessmentPercentage.late = 100;
-                }
-                if (this.numberOfSubmissions.total > 0) {
-                    this.tutorAssessmentPercentage = Math.floor((this.numberOfTutorAssessments / this.numberOfSubmissions.total) * 100);
-                } else {
-                    this.tutorAssessmentPercentage = 100;
-                }
-            },
-            (response: string) => this.onError(response),
-        );
     }
 
     language(submission: Submission): string {
