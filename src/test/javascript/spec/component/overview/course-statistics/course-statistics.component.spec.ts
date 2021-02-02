@@ -39,7 +39,7 @@ describe('CourseStatisticsComponent', () => {
             dueDate: moment('2019-06-17T09:47:12+02:00'),
             assessmentDueDate: moment('2019-06-17T09:55:17+02:00'),
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-            maxScore: 12.0,
+            maxPoints: 12.0,
             studentParticipations: [
                 {
                     id: 248,
@@ -69,7 +69,7 @@ describe('CourseStatisticsComponent', () => {
             dueDate: moment('2019-06-17T17:50:08+02:00'),
             assessmentDueDate: moment('2019-06-17T17:51:13+02:00'),
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-            maxScore: 12.0,
+            maxPoints: 12.0,
             studentParticipations: [
                 {
                     id: 249,
@@ -96,7 +96,7 @@ describe('CourseStatisticsComponent', () => {
             title: 'test 18.06. 1',
             dueDate: moment('2019-06-18T07:56:41+02:00'),
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-            maxScore: 12.0,
+            maxPoints: 12.0,
             studentParticipations: [],
             diagramType: 'ClassDiagram',
             numberOfSubmissions: new DueDateStat(),
@@ -110,7 +110,7 @@ describe('CourseStatisticsComponent', () => {
             dueDate: moment('2019-06-16T18:15:03+02:00'),
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
             assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
-            maxScore: 12.0,
+            maxPoints: 12.0,
             studentParticipations: [
                 {
                     id: 246,
@@ -151,7 +151,7 @@ describe('CourseStatisticsComponent', () => {
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
             dueDate: moment('2019-06-16T18:15:03+02:00'),
             assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
-            maxScore: 12.0,
+            maxPoints: 12.0,
             studentParticipations: [
                 {
                     id: 249,
@@ -282,7 +282,7 @@ describe('CourseStatisticsComponent', () => {
                 title: 'Until 18:20 too',
                 dueDate: moment('2019-06-16T18:15:03+02:00'),
                 assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
-                maxScore: 10.0,
+                maxPoints: 10.0,
                 includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
                 studentParticipations: [
                     {

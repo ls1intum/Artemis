@@ -444,7 +444,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // calculate score
         this.totalScore = this.quizExercise.quizQuestions
             ? this.quizExercise.quizQuestions.reduce((score, question) => {
-                  return score + question.score!;
+                  return score + question.points!;
               }, 0)
             : 0;
 

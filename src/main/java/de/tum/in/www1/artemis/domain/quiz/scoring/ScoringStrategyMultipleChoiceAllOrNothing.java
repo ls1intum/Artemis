@@ -11,7 +11,7 @@ public class ScoringStrategyMultipleChoiceAllOrNothing implements ScoringStrateg
     public double calculateScore(QuizQuestion quizQuestion, SubmittedAnswer submittedAnswer) {
         // check if the quizQuestion is invalid: if true: -> return with full points
         if (quizQuestion.isInvalid()) {
-            return quizQuestion.getScore();
+            return quizQuestion.getPoints();
         }
 
         if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer && quizQuestion instanceof MultipleChoiceQuestion) {
@@ -30,7 +30,7 @@ public class ScoringStrategyMultipleChoiceAllOrNothing implements ScoringStrateg
                 }
             }
             // the user wasn't wrong about a single answer option => the answer is 100% correct
-            return mcQuestion.getScore();
+            return mcQuestion.getPoints();
         }
         // the submitted answer's type doesn't fit the quizQuestion's type => it cannot be correct
         return 0.0;

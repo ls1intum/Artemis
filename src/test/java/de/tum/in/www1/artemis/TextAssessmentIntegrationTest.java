@@ -544,7 +544,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     public void testSubmitAssessment_IncludedCompletelyWithBonusPointsExercise() throws Exception {
         // setting up exercise
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
-        textExercise.setMaxScore(10.0);
+        textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(10.0);
         exerciseRepo.save(textExercise);
 
@@ -577,7 +577,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     public void testSubmitAssessment_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
         // setting up exercise
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
-        textExercise.setMaxScore(10.0);
+        textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         exerciseRepo.save(textExercise);
 
@@ -608,7 +608,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     public void testSubmitAssessment_IncludedAsBonusExercise() throws Exception {
         // setting up exercise
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
-        textExercise.setMaxScore(10.0);
+        textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         exerciseRepo.save(textExercise);
 
@@ -639,7 +639,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     public void testSubmitAssessment_NotIncludedExercise() throws Exception {
         // setting up exercise
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        textExercise.setMaxScore(10.0);
+        textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         exerciseRepo.save(textExercise);
 

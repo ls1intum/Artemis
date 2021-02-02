@@ -14,7 +14,7 @@ public class ScoringStrategyShortAnswerAllOrNothing implements ScoringStrategy {
     public double calculateScore(QuizQuestion quizQuestion, SubmittedAnswer submittedAnswer) {
         // return maximal Score if the quizQuestion is invalid
         if (quizQuestion.isInvalid()) {
-            return quizQuestion.getScore();
+            return quizQuestion.getPoints();
         }
         if (submittedAnswer instanceof ShortAnswerSubmittedAnswer && quizQuestion instanceof ShortAnswerQuestion) {
             ShortAnswerSubmittedAnswer shortAnswerAnswer = (ShortAnswerSubmittedAnswer) submittedAnswer;
@@ -24,7 +24,7 @@ public class ScoringStrategyShortAnswerAllOrNothing implements ScoringStrategy {
             int correctSolutionsCount = values[0];
 
             if (correctSolutionsCount == shortAnswerQuestion.getSpots().size()) {
-                return shortAnswerQuestion.getScore();
+                return shortAnswerQuestion.getPoints();
             }
             else {
                 return 0.0;

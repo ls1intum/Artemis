@@ -8,6 +8,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 @Component({
     selector: 'jhi-assessment-instructions',
@@ -23,6 +24,8 @@ export class AssessmentInstructionsComponent {
     sampleSolutionDiagramType?: UMLDiagramType;
     criteria: GradingCriterion[];
     @Input() readOnly: boolean;
+    // For programming exercises we hand over the participation or use the template participation
+    @Input() programmingParticipation?: ProgrammingExerciseStudentParticipation;
 
     readonly ExerciseType = ExerciseType;
 

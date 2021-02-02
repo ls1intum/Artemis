@@ -1274,7 +1274,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             if (exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
                 continue;
             }
-            calculatedAverageScore += Math.round(exercise.getMaxScore() * resultScore / 100.00 * 10) / 10.0;
+            calculatedAverageScore += Math.round(exercise.getMaxPoints() * resultScore / 100.00 * 10) / 10.0;
         }
 
         assertThat(response.averagePointsAchieved).isEqualTo(calculatedAverageScore);
@@ -1294,8 +1294,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             ExerciseGroup originalExerciseGroup = exam.getExerciseGroups().stream().filter(exerciseGroup -> exerciseGroup.getId().equals(exerciseGroupDTO.id)).findFirst().get();
 
             // Assume that all exercises in a group have the same max score
-            Double groupMaxScoreFromExam = originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore();
-            assertThat(exerciseGroupDTO.maxPoints).isEqualTo(originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore());
+            Double groupMaxScoreFromExam = originalExerciseGroup.getExercises().stream().findAny().get().getMaxPoints();
+            assertThat(exerciseGroupDTO.maxPoints).isEqualTo(originalExerciseGroup.getExercises().stream().findAny().get().getMaxPoints());
             assertEquals(exerciseGroupDTO.maxPoints, groupMaxScoreFromExam, EPSILON);
 
             // Compare exercise information
@@ -1306,7 +1306,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 // Check the exercise title
                 assertThat(originalExercise.getTitle()).isEqualTo(exerciseDTO.title);
                 // Check the max points of the exercise
-                assertThat(originalExercise.getMaxScore()).isEqualTo(exerciseDTO.maxPoints);
+                assertThat(originalExercise.getMaxPoints()).isEqualTo(exerciseDTO.maxPoints);
                 // Check the number of exercise participants and update the group participant counter
                 var noOfExerciseParticipations = originalExercise.getStudentParticipations().size();
                 noOfExerciseGroupParticipations += noOfExerciseParticipations;
@@ -1334,7 +1334,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             // Calculate overall points achieved
 
             var calculatedOverallPoints = studentExamOfUser.getExercises().stream()
-                    .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).map(Exercise::getMaxScore)
+                    .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).map(exercise -> exercise.getMaxPoints())
                     .reduce(0.0, (total, maxScore) -> (Math.round((total + maxScore * resultScore / 100) * 10) / 10.0));
 
             assertEquals(studentResult.overallPointsAchieved, calculatedOverallPoints, EPSILON);
@@ -1358,9 +1358,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 assertThat(originalExercise.getExerciseGroup().getId()).isEqualTo(entry.getKey());
 
                 assertThat(exerciseResult.title).isEqualTo(originalExercise.getTitle());
-                assertThat(exerciseResult.maxScore).isEqualTo(originalExercise.getMaxScore());
+                assertThat(exerciseResult.maxScore).isEqualTo(originalExercise.getMaxPoints());
                 assertThat(exerciseResult.achievedScore).isEqualTo(resultScore);
-                assertEquals(exerciseResult.achievedPoints, originalExercise.getMaxScore() * resultScore / 100, EPSILON);
+                assertEquals(exerciseResult.achievedPoints, originalExercise.getMaxPoints() * resultScore / 100, EPSILON);
             }
         }
 
