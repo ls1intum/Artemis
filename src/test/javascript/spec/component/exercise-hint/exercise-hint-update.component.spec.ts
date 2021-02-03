@@ -36,6 +36,8 @@ describe('ExerciseHint Management Update Component', () => {
             entity.id = 123;
             spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.exerciseHint = entity;
+            comp.courseId = 1;
+            comp.exerciseId = 2;
             // WHEN
             comp.save();
             tick(); // simulate async
@@ -50,6 +52,8 @@ describe('ExerciseHint Management Update Component', () => {
             const entity = new ExerciseHint();
             spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.exerciseHint = entity;
+            comp.courseId = 1;
+            comp.exerciseId = 2;
             // WHEN
             comp.save();
             tick(); // simulate async
