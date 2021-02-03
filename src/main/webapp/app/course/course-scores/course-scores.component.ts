@@ -81,6 +81,26 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.paramSub = this.route.params.subscribe((params) => {
             this.courseService.findWithExercises(params['courseId']).subscribe((res) => {
                 this.course = res.body!;
+
+                const titleMap = new Map();
+                if (this.course.exercises) {
+                    for (const exercise of this.course.exercises) {
+                        if (titleMap.has(exercise.title)) {
+                            const currentValue = titleMap.get(exercise.title);
+                            titleMap.set(exercise.title, currentValue + 1);
+                        } else {
+                            titleMap.set(exercise.title, 1);
+                        }
+                    }
+
+                    // this workaround is necessary if the course has exercises with the same title (we add the id to make it unique)
+                    for (const exercise of this.course.exercises) {
+                        if (titleMap.has(exercise.title) && titleMap.get(exercise.title) > 1) {
+                            exercise.title = `${exercise.title} (id=${exercise.id})`;
+                        }
+                    }
+                }
+
                 this.exercisesOfCourseThatAreIncludedInScoreCalculation = this.course
                     .exercises!.filter((exercise) => {
                         const isReleasedExercise = !exercise.releaseDate || exercise.releaseDate.isBefore(moment());
