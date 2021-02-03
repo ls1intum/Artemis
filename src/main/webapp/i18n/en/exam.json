@@ -300,7 +300,7 @@
                 "typeNameToConfirm": "Please type in the name of the Exam to confirm."
             },
             "checklist": {
-                "title": "Checkliste für die Durchführung von Prüfungen",
+                "title": "Exam Conduction Checklist",
                 "introduction": "You can find a detailed documentation with screenshots about the exam mode in the",
                 "linkDescription": "Instructors Guide",
                 "checklistItem": "Task",
