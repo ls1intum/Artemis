@@ -61,15 +61,17 @@
                 <div *ngIf="course.isAtLeastInstructor">
                     <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
                     <dd>
-                        <a [routerLink]="['/course-management', course.id, 'groups', 'students']"> {{ course.studentGroupName }} </a>
+                        <a [routerLink]="['/course-management', course.id, 'groups', 'students']"> {{ course.studentGroupName }} ({{ course.numberOfStudents }})</a>
                     </dd>
                     <dt><span jhiTranslate="artemisApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></dt>
                     <dd>
-                        <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']"> {{ course.teachingAssistantGroupName }}</a>
+                        <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']">
+                            {{ course.teachingAssistantGroupName }} ({{ course.numberOfTeachingAssistants }})</a
+                        >
                     </dd>
                     <dt><span jhiTranslate="artemisApp.course.instructorGroupName">Instructor Group Name</span></dt>
                     <dd>
-                        <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']"> {{ course.instructorGroupName }}</a>
+                        <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']"> {{ course.instructorGroupName }} ({{ course.numberOfInstructors }})</a>
                     </dd>
                 </div>
                 <div *ngIf="!course.isAtLeastInstructor">
