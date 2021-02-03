@@ -521,7 +521,7 @@ public class CourseService {
         });
 
         // Notify that we couldn't export every exercise
-        if (exercisesThatFailedToExport.size() > 0) {
+        if (!exercisesThatFailedToExport.isEmpty()) {
             var failedExerciseIds = exercisesThatFailedToExport.stream().map(String::valueOf).collect(Collectors.joining(","));
             log.info("The following exercises couldn't be exported {}", failedExerciseIds);
         }
