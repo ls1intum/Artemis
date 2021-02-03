@@ -14,12 +14,7 @@
                 <fa-icon [icon]="'eye'"></fa-icon><span>{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
             </a>
 
-            <a
-                *ngIf="isAtLeastInstructor"
-                [routerLink]="['tutor-exam-dashboard']"
-                class="btn btn-primary"
-                id="tutor-exam-dashboard-button"
-            >
+            <a *ngIf="isAtLeastInstructor" [routerLink]="['tutor-exam-dashboard']" class="btn btn-primary" id="tutor-exam-dashboard-button">
                 <fa-icon [icon]="'th-list'"></fa-icon><span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
             </a>
 
@@ -104,12 +99,7 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.exerciseGroups' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a
-                                    *ngIf="isAtLeastInstructor"
-                                    [routerLink]="['exercise-groups']"
-                                    class="btn btn-primary"
-                                    id="exercises-button-groups_table"
-                                >
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="['exercise-groups']" class="btn btn-primary" id="exercises-button-groups_table">
                                     <fa-icon [icon]="'list-alt'"></fa-icon><span>{{ 'artemisApp.examManagement.exerciseGroups' | translate }}</span>
                                 </a>
                             </td>
@@ -168,14 +158,9 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examDetails' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a
-                                    id="editButton_table"
-                                    *ngIf="isAtLeastInstructor"
-                                    [routerLink]="getEditRoute()"
-                                    class="btn btn-primary"
-                                >
+                                <a id="editButton_table" *ngIf="isAtLeastInstructor" [routerLink]="getEditRoute()" class="btn btn-primary">
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-                                </button>
+                                </a>
                             </td>
                         </tr>
                         <tr>
@@ -202,12 +187,7 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.assessAllSubmissions' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a
-                                    *ngIf="isAtLeastInstructor"
-                                    [routerLink]="['tutor-exam-dashboard']"
-                                    class="btn btn-primary"
-                                    id="tutor-exam-dashboard-button_table"
-                                >
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="['tutor-exam-dashboard']" class="btn btn-primary" id="tutor-exam-dashboard-button_table">
                                     <fa-icon [icon]="'th-list'"></fa-icon><span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
                                 </a>
                             </td>
@@ -221,12 +201,7 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.publishResults' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a
-                                    id="editButton_publish"
-                                    *ngIf="isAtLeastInstructor"
-                                    [routerLink]="getEditRoute()"
-                                    class="btn btn-primary"
-                                >
+                                <a id="editButton_publish" *ngIf="isAtLeastInstructor" [routerLink]="getEditRoute()" class="btn btn-primary">
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
                                 </a>
                             </td>
@@ -240,12 +215,7 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examReview' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a
-                                    id="editButton_review"
-                                    *ngIf="isAtLeastInstructor"
-                                    [routerLink]="getEditRoute()"
-                                    class="btn btn-primary"
-                                >
+                                <a id="editButton_review" *ngIf="isAtLeastInstructor" [routerLink]="getEditRoute()" class="btn btn-primary">
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
                                 </a>
                             </td>
@@ -259,12 +229,7 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.resolveComplaints' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a
-                                    *ngIf="isAtLeastInstructor"
-                                    [routerLink]="['tutor-exam-dashboard']"
-                                    class="btn btn-primary"
-                                    id="tutor-exam-dashboard-button_table_complaints"
-                                >
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="['tutor-exam-dashboard']" class="btn btn-primary" id="tutor-exam-dashboard-button_table_complaints">
                                     <fa-icon [icon]="'th-list'"></fa-icon>
                                     <span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
                                 </a>
@@ -279,12 +244,7 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.exportResults' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a
-                                    *ngIf="isAtLeastInstructor"
-                                    [routerLink]="['scores']"
-                                    class="btn btn-info"
-                                    id="scores-button_publish_result"
-                                >
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="['scores']" class="btn btn-info" id="scores-button_publish_result">
                                     <fa-icon [icon]="'eye'"></fa-icon>
                                     <span>{{ 'entity.action.scores' | translate }}</span>
                                 </a>
