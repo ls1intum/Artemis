@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -29,27 +30,32 @@ public class ExamAccessService {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final CourseService courseService;
+    private CourseService courseService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
     private final UserService userService;
 
     public ExamAccessService(ExamRepository examRepository, ExerciseGroupRepository exerciseGroupRepository, StudentExamRepository studentExamRepository,
-            CourseService courseService, AuthorizationCheckService authorizationCheckService, UserService userService) {
+            AuthorizationCheckService authorizationCheckService, UserService userService) {
         this.examRepository = examRepository;
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.studentExamRepository = studentExamRepository;
-        this.courseService = courseService;
         this.authorizationCheckService = authorizationCheckService;
         this.userService = userService;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setCourseService(CourseService courseService) {
+        this.courseService = courseService;
     }
 
     /**
      * Checks if the current user is allowed to see the requested exam. If he is allowed the exam will be returned.
      *
-     * @param courseId  The id of the course
-     * @param examId    The id of the exam
+     * @param courseId The id of the course
+     * @param examId   The id of the exam
      * @return a ResponseEntity with the exam
      */
     public ResponseEntity<StudentExam> checkAndGetCourseAndExamAccessForConduction(Long courseId, Long examId) {
@@ -90,8 +96,8 @@ public class ExamAccessService {
     /**
      * Checks if the current user is allowed to manage exams of the given course.
      *
-     * @param courseId  The id of the course
-     * @param <T>       The type of the return type of the requesting route so that the response can be returned there
+     * @param courseId The id of the course
+     * @param <T>      The type of the return type of the requesting route so that the response can be returned there
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <T> Optional<ResponseEntity<T>> checkCourseAccessForInstructor(Long courseId) {
@@ -105,8 +111,8 @@ public class ExamAccessService {
     /**
      * Checks if the current user is allowed to access the exam as teaching assistant.
      *
-     * @param courseId  The id of the course
-     * @param <T>       The type of the return type of the requesting route so that the response can be returned there
+     * @param courseId The id of the course
+     * @param <T>      The type of the return type of the requesting route so that the response can be returned there
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <T> Optional<ResponseEntity<T>> checkCourseAccessForTeachingAssistant(Long courseId) {
@@ -121,9 +127,9 @@ public class ExamAccessService {
      * Checks if the current user is allowed to manage exams of the given course, that the exam exists and that the exam
      * belongs to the given course.
      *
-     * @param courseId  The id of the course
-     * @param examId    The id of the exam
-     * @param <X>       The type of the return type of the requesting route so that the response can be returned there
+     * @param courseId The id of the course
+     * @param examId   The id of the exam
+     * @param <X>      The type of the return type of the requesting route so that the response can be returned there
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <X> Optional<ResponseEntity<X>> checkCourseAndExamAccessForInstructor(Long courseId, Long examId) {
@@ -138,9 +144,9 @@ public class ExamAccessService {
      * Checks if the current user is allowed to manage exams of the given course, that the exam exists and that the exam
      * belongs to the given course.
      *
-     * @param courseId  The id of the course
-     * @param exam    The exam
-     * @param <X>       The type of the return type of the requesting route so that the response can be returned there
+     * @param courseId The id of the course
+     * @param exam     The exam
+     * @param <X>      The type of the return type of the requesting route so that the response can be returned there
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <X> Optional<ResponseEntity<X>> checkCourseAndExamAccessForInstructor(Long courseId, Exam exam) {
@@ -155,9 +161,9 @@ public class ExamAccessService {
      * Checks if the current user is allowed to manage exams of the given course, that the exam exists and that the exam
      * belongs to the given course.
      *
-     * @param courseId  The id of the course
-     * @param examId    The id of the exam
-     * @param <X>       The type of the return type of the requesting route so that the response can be returned there
+     * @param courseId The id of the course
+     * @param examId   The id of the exam
+     * @param <X>      The type of the return type of the requesting route so that the response can be returned there
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <X> Optional<ResponseEntity<X>> checkCourseAndExamAccessForTeachingAssistant(Long courseId, Long examId) {
@@ -190,11 +196,11 @@ public class ExamAccessService {
      * Checks if the current user is allowed to manage exams of the given course, that the exam exists,
      * that the exam belongs to the given course and the exercise group belongs to the given exam.
      *
-     * @param courseId          The id of the course
-     * @param examId            The id of the exam
-     * @param exerciseGroupId   The id of the exercise group
-     * @param <X>               The type of the return type of the requesting route so that the
-     *                          response can be returned there
+     * @param courseId        The id of the course
+     * @param examId          The id of the exam
+     * @param exerciseGroupId The id of the exercise group
+     * @param <X>             The type of the return type of the requesting route so that the
+     *                        response can be returned there
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <X> Optional<ResponseEntity<X>> checkCourseAndExamAndExerciseGroupAccess(Long courseId, Long examId, Long exerciseGroupId) {
@@ -220,7 +226,7 @@ public class ExamAccessService {
      * @param examId        The id of the exam
      * @param studentExamId The if of the student exam
      * @param <X>           The type of the return type of the requesting route so that the
-     *      *               response can be returned there
+     *                      *               response can be returned there
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <X> Optional<ResponseEntity<X>> checkCourseAndExamAndStudentExamAccess(Long courseId, Long examId, Long studentExamId) {
