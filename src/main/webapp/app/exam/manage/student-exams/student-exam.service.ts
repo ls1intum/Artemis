@@ -21,7 +21,7 @@ export class StudentExamService {
      * @param studentExamId The id of the student exam to get.
      */
     find(courseId: number, examId: number, studentExamId: number): Observable<EntityResponseType> {
-        return this.http.get<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/studentExams/${studentExamId}`, { observe: 'response' });
+        return this.http.get<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}`, { observe: 'response' });
     }
 
     /**
@@ -30,7 +30,7 @@ export class StudentExamService {
      * @param examId The exam id.
      */
     findAllForExam(courseId: number, examId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/studentExams`, { observe: 'response' });
+        return this.http.get<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams`, { observe: 'response' });
     }
 
     /**
@@ -41,6 +41,6 @@ export class StudentExamService {
      * @param workingTime The working time in seconds.
      */
     updateWorkingTime(courseId: number, examId: number, studentExamId: number, workingTime: number): Observable<EntityResponseType> {
-        return this.http.patch<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/studentExams/${studentExamId}/workingTime`, workingTime, { observe: 'response' });
+        return this.http.patch<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}/working-time`, workingTime, { observe: 'response' });
     }
 }
