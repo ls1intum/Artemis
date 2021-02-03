@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain.plagiarism;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
@@ -14,8 +15,8 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 import org.hibernate.annotations.DiscriminatorOptions;
 
@@ -37,10 +38,9 @@ import de.tum.in.www1.artemis.domain.Exercise;
 public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> extends AbstractAuditingEntity {
 
     /**
-     * TODO: Remove the @Transient annotation and store the comparisons in the database. List of
-     * detected comparisons whose similarity is above the specified threshold.
+     * List of detected comparisons whose similarity is above the specified threshold.
      */
-    @Transient
+    @OneToMany(mappedBy = "result", cascade = CascadeType.REMOVE, orphanRemoval = true, targetEntity = PlagiarismComparison.class)
     protected List<PlagiarismComparison<E>> comparisons;
 
     /**

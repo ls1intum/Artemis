@@ -3,27 +3,44 @@ package de.tum.in.www1.artemis.domain.plagiarism;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
 import jplag.JPlagComparison;
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 
 /**
  * Pair of compared student submissions whose similarity is above a certain threshold.
  */
-public class PlagiarismComparison<E extends PlagiarismSubmissionElement> {
+@Entity
+@Table(name = "plagiarism_comparison")
+public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends DomainObject {
+
+    /**
+     * The result this comparison belongs to.
+     */
+    @ManyToOne(targetEntity = PlagiarismResult.class)
+    private PlagiarismResult<E> result;
 
     /**
      * First submission involved in this comparison.
      */
+    @Transient
     private PlagiarismSubmission<E> submissionA;
 
     /**
      * Second submission involved in this comparison.
      */
+    @Transient
     private PlagiarismSubmission<E> submissionB;
 
     /**
      * List of matches between both submissions involved in this comparison.
      */
+    @Transient
     private List<PlagiarismMatch> matches;
 
     /**
@@ -68,6 +85,14 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> {
 
     public void setSubmissionB(PlagiarismSubmission<E> submissionB) {
         this.submissionB = submissionB;
+    }
+
+    public PlagiarismResult<E> getResult() {
+        return result;
+    }
+
+    public void setResult(PlagiarismResult<E> result) {
+        this.result = result;
     }
 
     public List<PlagiarismMatch> getMatches() {
