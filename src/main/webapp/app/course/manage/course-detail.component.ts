@@ -139,7 +139,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     canArchiveCourse() {
         // A course can only be archived if it's over.
         const isCourseOver = this.course.endDate?.isBefore(moment()) ?? false;
-        return this.course.isAtLeastInstructor && isCourseOver;
+        return !!this.course.isAtLeastInstructor && isCourseOver;
     }
 
     archiveCourse() {
@@ -156,13 +156,13 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     canDownloadArchive() {
         const hasArchive = !!this.course.courseArchivePath && this.course.courseArchivePath.length > 0;
         // You can only download one if the path to the archive is present
-        return this.course.isAtLeastInstructor && hasArchive;
+        return !!this.course.isAtLeastInstructor && hasArchive;
     }
 
     canCleanupCourse() {
         // A course can only be cleaned up if the course has been archived.
         const canCleanup = !!this.course.courseArchivePath && this.course.courseArchivePath.length > 0;
-        return this.course.isAtLeastInstructor && canCleanup;
+        return !!this.course.isAtLeastInstructor && canCleanup;
     }
 
     cleanupCourse() {
