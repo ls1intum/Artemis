@@ -273,7 +273,7 @@ describe('CourseStatisticsComponent', () => {
         let exercise: any = comp.groupedExercises[0];
         expect(exercise.absoluteScore).to.equal(20);
         expect(exercise.reachableScore).to.equal(36);
-        expect(exercise.totalMaxScore).to.equal(60);
+        expect(exercise.overallMaxPoints).to.equal(60);
 
         const newExercise = [
             ({
@@ -327,12 +327,12 @@ describe('CourseStatisticsComponent', () => {
         exercise = comp.groupedExercises[0];
         expect(exercise.absoluteScore).to.equal(20);
         expect(exercise.reachableScore).to.equal(36);
-        expect(exercise.totalMaxScore).to.equal(60);
+        expect(exercise.overallMaxPoints).to.equal(60);
 
         // check that overall course score is adapted accordingly
-        expect(comp.totalScore).to.equal(25.5);
-        expect(comp.reachableScore).to.equal(46);
-        expect(comp.totalMaxScore).to.equal(70);
+        expect(comp.overallPoints).to.equal(25.5);
+        expect(comp.reachablePoints).to.equal(46);
+        expect(comp.overallMaxPoints).to.equal(70);
 
         // check that html file displays the correct elements
         let debugElement = fixture.debugElement.query(By.css('#absolute-course-score'));

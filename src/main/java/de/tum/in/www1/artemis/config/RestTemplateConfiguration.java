@@ -28,9 +28,9 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInt
 @Configuration
 public class RestTemplateConfiguration {
 
-    private static final int SHORT_CONNECTION_TIMEOUT = 5 * 1000;
+    private static final int SHORT_CONNECTION_TIMEOUT = 10 * 1000;
 
-    private static final int SHORT_READ_TIMEOUT = 5 * 1000;
+    private static final int SHORT_READ_TIMEOUT = 10 * 1000;
 
     @Bean
     @Profile("gitlab")
