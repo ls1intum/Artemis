@@ -108,7 +108,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Query("""
             SELECT COUNT (DISTINCT p) FROM StudentParticipation p
             WHERE p.exercise.id = :#{#exerciseId}
-            AND (p.testRun = FALSE OR p.testRun IS NULL)
+            AND p.testRun = FALSE
             AND EXISTS (SELECT s
                 FROM Submission s
                 WHERE s.participation.id = p.id

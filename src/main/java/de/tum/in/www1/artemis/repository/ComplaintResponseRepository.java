@@ -46,7 +46,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
     @Query("""
             SELECT COUNT (DISTINCT p) FROM StudentParticipation p
             WHERE p.exercise.id = :#{#exerciseId}
-            AND (p.testRun = FALSE OR p.testRun IS NULL)
+            AND p.testRun = FALSE
             AND EXISTS (Select s FROM p.submissions s
                         WHERE s.results IS NOT EMPTY
                         AND EXISTS (SELECT c FROM Complaint c

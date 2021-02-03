@@ -137,7 +137,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
             WHERE p.exercise.id = :#{#exerciseId}
-            AND (p.testRun = FALSE OR p.testRun IS NULL)
+            AND p.testRun = FALSE
             AND EXISTS (SELECT s FROM ProgrammingSubmission s
                 WHERE s.participation.id = p.id
                 AND s.submitted = TRUE)
@@ -174,7 +174,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
             WHERE p.exercise.id = :#{#exerciseId}
-            AND (p.testRun = FALSE OR p.testRun IS NULL)
+            AND p.testRun = FALSE
             AND EXISTS (SELECT s FROM ProgrammingSubmission s
                 WHERE s.participation.id = p.id
                 AND s.submitted = TRUE
@@ -188,7 +188,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             SELECT COUNT(DISTINCT p)
             FROM ProgrammingExerciseStudentParticipation p
             WHERE p.exercise.id = :exerciseId
-            AND (p.testRun = FALSE OR p.testRun IS NULL)
+            AND p.testRun = FALSE
             AND (SELECT COUNT(r)
                  FROM Result r
                  WHERE r.assessor IS NOT NULL
