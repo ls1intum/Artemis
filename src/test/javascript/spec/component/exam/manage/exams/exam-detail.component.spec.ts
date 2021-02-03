@@ -69,6 +69,7 @@ describe('ExamDetailComponent', () => {
                                     exam,
                                 }),
                         },
+                        snapshot: {},
                     },
                 },
                 MockProvider(AccountService, {
