@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -82,7 +85,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exercise.setMode(ExerciseMode.TEAM);
         exercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         exercise = exerciseRepo.save(exercise);
-        students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         tutor = userRepo.findOneByLogin("tutor1").orElseThrow();
     }
 

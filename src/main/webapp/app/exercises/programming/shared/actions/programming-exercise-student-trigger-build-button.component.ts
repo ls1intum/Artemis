@@ -19,7 +19,6 @@ export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends Progr
         this.personalParticipation = true;
     }
 
-    // TODO: this should not be allowed after the build and test deadline if manual grading is enabled for the exercise otherwise students could override the manual results
     triggerBuild = (event: any) => {
         // The button might be placed in other elements that have a click listener, so catch the click here.
         event.stopPropagation();
@@ -28,7 +27,7 @@ export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends Progr
             .pipe(
                 catchError(() => {
                     this.alertService.error('artemisApp.programmingExercise.resubmitUnsuccessful');
-                    return of(null);
+                    return of(undefined);
                 }),
             )
             .subscribe();

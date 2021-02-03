@@ -37,7 +37,7 @@ export class ExamParticipationService {
      * @param examId the id of the exam
      */
     public loadStudentExamWithExercisesForConduction(courseId: number, examId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/studentExams/conduction';
+        const url = this.getResourceURL(courseId, examId) + '/student-exams/conduction';
         return this.getStudentExamFromServer(url, courseId, examId);
     }
 
@@ -47,7 +47,7 @@ export class ExamParticipationService {
      * @param examId the id of the exam
      */
     public loadStudentExamWithExercisesForSummary(courseId: number, examId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/studentExams/summary';
+        const url = this.getResourceURL(courseId, examId) + '/student-exams/summary';
         return this.getStudentExamFromServer(url, courseId, examId);
     }
 
@@ -76,7 +76,7 @@ export class ExamParticipationService {
      * @param examId the id of the exam
      */
     public loadStudentExam(courseId: number, examId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/conduction';
+        const url = this.getResourceURL(courseId, examId) + '/start';
         return this.httpClient.get<StudentExam>(url).map((studentExam: StudentExam) => {
             const convertedStudentExam = this.convertStudentExamDateFromServer(studentExam);
             this.currentlyLoadedStudentExam.next(convertedStudentExam);
@@ -98,10 +98,10 @@ export class ExamParticipationService {
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      * @param studentExam: the student exam to submit
-     * @return returns the studentExam verison of the server
+     * @return returns the studentExam version of the server
      */
     public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/studentExams/submit';
+        const url = this.getResourceURL(courseId, examId) + '/student-exams/submit';
         ExamParticipationService.breakCircularDependency(studentExam);
 
         return this.httpClient.post<StudentExam>(url, studentExam).pipe(

@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -164,7 +163,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
         programmingSubmission.setType(SubmissionType.MANUAL);
 
-        programmingExerciseParticipation.addSubmissions(programmingSubmission);
+        programmingExerciseParticipation.addSubmission(programmingSubmission);
 
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
@@ -527,11 +526,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
         if (submission.getParticipation() instanceof StudentParticipation) {
             StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+            // no need to send all exercise details here
+            submission.getParticipation().setExercise(null);
             studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission));
         }
 
         if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-            messagingTemplate.convertAndSend(getExerciseTopicForTAAndAbove(submission.getParticipation().getExercise().getId()), submission);
+            var topicDestination = getExerciseTopicForTAAndAbove(submission.getParticipation().getExercise().getId());
+            messagingTemplate.convertAndSend(topicDestination, submission);
         }
     }
 
@@ -601,16 +603,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * submissions
      *
      * @param exerciseId    - the id of the exercise we are interested into
-     * @param correctionRound - the correction round we want our submission to have results for
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
      * @param examMode - set flag to ignore test run submissions for exam exercises
      * @return a list of programming submissions for the given exercise id
      */
-    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode, int correctionRound) {
+    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode) {
         List<StudentParticipation> participations;
         if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(exerciseId,
-                    (long) correctionRound);
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
         }
         else {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
@@ -658,12 +658,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * Get the programming submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it.
      *
      * @param submissionId the id of the programming submission
+     * @param correctionRound the correctionRound of the programming submission
      * @return the locked programming submission
      */
-    public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId) {
+    public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId, int correctionRound) {
         ProgrammingSubmission programmingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
-        var manualResult = lockSubmission(programmingSubmission, 0);
+        var manualResult = lockSubmission(programmingSubmission, correctionRound);
         programmingSubmission = (ProgrammingSubmission) manualResult.getSubmission();
 
         return programmingSubmission;
@@ -691,19 +692,30 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param submission the submission to lock
      * @param correctionRound the correction round for the assessment
-     * @return
+     * @return the result that is locked with the current user
      */
     @Override
+    // TODO: why do we override this method and why do we not try to reuse the method in the super class?
     protected Result lockSubmission(Submission submission, int correctionRound) {
         Result existingResult;
-        if (correctionRound == 0 && submission.getLatestResult().getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
-            existingResult = submission.getLatestResult();
+        Optional<Result> optionalExistingResult;
+        if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC.equals(submission.getLatestResult().getAssessmentType())) {
+            optionalExistingResult = Optional.of(submission.getLatestResult());
+        }
+        else if (correctionRound == 0 && submission.getLatestResult() == null) {
+            // Older programming Exercises have only one result in each submission. One submission for the automatic result, another one for the manual one.
+            // When the assessment of such an submission is cancelled, this leaves behind a programming-submission without any results.
+            // We still want to be able to assess the result-less submission again, so we need to avoid the below else branch, and the following out of bounds Exception.
+            // New automatic results can be easily created by using the "trigger all" feature
+            optionalExistingResult = Optional.empty();
         }
         else {
-            existingResult = submission.getResultForCorrectionRound(correctionRound - 1);
+            optionalExistingResult = Optional.of(submission.getResultForCorrectionRound(correctionRound - 1));
         }
-
-        List<Feedback> automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+        List<Feedback> automaticFeedbacks = new ArrayList<>();
+        if (optionalExistingResult.isPresent()) {
+            automaticFeedbacks = optionalExistingResult.get().getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+        }
         // Create a new result (manual result) and try to reuse the existing submission with the latest commit hash
         ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);
@@ -716,9 +728,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
             feedback.setResult(newResult);
         }
         newResult.setFeedbacks(automaticFeedbacks);
-        newResult.setResultString(existingResult.getResultString());
-        // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
+        if (optionalExistingResult.isPresent()) {
+            newResult.setResultString(optionalExistingResult.get().getResultString());
+        }
+        // Workaround to prevent the assessor turning into a proxy object after saving
+        var assessor = newResult.getAssessor();
         newResult = resultRepository.save(newResult);
+        newResult.setAssessor(assessor);
         log.debug("Assessment locked with result id: " + newResult.getId() + " for assessor: " + newResult.getAssessor().getName());
         // Make sure that submission is set back after saving
         newResult.setSubmission(existingSubmission);

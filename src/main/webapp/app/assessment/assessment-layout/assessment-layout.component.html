@@ -18,6 +18,7 @@
     (cancel)="cancel.emit()"
     (nextSubmission)="nextSubmission.emit()"
     [hasComplaint]="!!complaint"
+    [hasMoreFeedbackRequest]="complaint?.complaintType === MORE_FEEDBACK"
     [complaintHandled]="!!complaint ? complaint.accepted !== undefined : false"
 ></jhi-assessment-header>
 

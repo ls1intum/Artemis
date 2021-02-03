@@ -20,7 +20,7 @@ import { cloneDeep } from 'lodash';
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
     templateUrl: './drag-and-drop-question-edit.component.html',
-    providers: [ArtemisMarkdownService, DragAndDropQuestionUtil],
+    providers: [DragAndDropQuestionUtil],
     styleUrls: ['./drag-and-drop-question-edit.component.scss', '../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
 })
@@ -128,7 +128,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
         /** Check if previousValue wasn't null to avoid firing at component initialization **/
         if (changes.question && changes.question.previousValue) {
             this.questionUpdated.emit();
-            // this.changeDetector.detectChanges();
         }
         /** Update backupQuestion if the question changed **/
         if (changes.question && changes.question.currentValue) {

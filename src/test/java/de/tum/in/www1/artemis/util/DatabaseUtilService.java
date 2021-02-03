@@ -742,25 +742,27 @@ public class DatabaseUtilService {
     }
 
     public StudentExam generateTestRunForInstructor(Exam exam, User instructor, List<Exercise> exercises) {
-        var testRun = ModelFactory.generateStudentExam(exam);
-        testRun.setTestRun(true);
+        var testRun = ModelFactory.generateExamTestRun(exam);
         testRun.setUser(instructor);
         examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         for (final var exercise : exercises) {
             testRun.addExercise(exercise);
+            assertThat(exercise.isExamExercise()).isTrue();
             Submission submission;
             if (exercise instanceof ModelingExercise) {
-                submission = markModelingParticipationForTestRun((ModelingExercise) exercise, instructor.getLogin());
+                submission = addModelingSubmission((ModelingExercise) exercise, ModelFactory.generateModelingSubmission("", false), instructor.getLogin());
             }
             else if (exercise instanceof TextExercise) {
-                submission = markTextExerciseParticipationForTestRun((TextExercise) exercise, instructor.getLogin());
+                submission = saveTextSubmission((TextExercise) exercise, ModelFactory.generateTextSubmission("", null, false), instructor.getLogin());
             }
             else {
-                submission = markProgrammingParticipationForTestRun((ProgrammingExercise) exercise, instructor.getLogin());
+                submission = new ProgrammingSubmission().submitted(true);
+                addProgrammingSubmission((ProgrammingExercise) exercise, (ProgrammingSubmission) submission, instructor.getLogin());
+                submission = submissionRepository.save(submission);
             }
-            assertThat(exercise.isExamExercise()).isTrue();
-            assertThat(submission.getLatestResult().getAssessor().getLogin()).isEqualTo(instructor.getLogin());
-            assertThat(((StudentParticipation) submission.getParticipation()).getStudent().get().getLogin()).isEqualTo(instructor.getLogin());
+            var studentParticipation = (StudentParticipation) submission.getParticipation();
+            studentParticipation.setTestRun(true);
+            studentParticipationRepo.save(studentParticipation);
         }
         return testRun;
     }
@@ -1016,48 +1018,6 @@ public class DatabaseUtilService {
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
     }
 
-    public StudentParticipation saveStudentParticipation(StudentParticipation participation) {
-        return studentParticipationRepo.save(participation);
-    }
-
-    /**
-     * Stores test run participation of the user with the given login for the given modeling exercise
-     *
-     * @param exercise the exercise for which the participation will be created
-     * @param login    login of the user
-     * @return eagerly loaded representation of the participation object stored in the database
-     */
-    public ModelingSubmission markModelingParticipationForTestRun(ModelingExercise exercise, String login) {
-        var modelingSubmission = addModelingSubmissionWithEmptyResult(exercise, "", login);
-        modelingSubmission.getLatestResult().setAssessor(getUserByLogin(login));
-        resultRepo.save(modelingSubmission.getLatestResult());
-        return modelingSubmission;
-    }
-
-    /**
-     * Stores test run participation of the user with the given login for the given modeling exercise
-     *
-     * @param exercise the exercise for which the participation will be created
-     * @param login    login of the user
-     * @return eagerly loaded representation of the participation object stored in the database
-     */
-    public TextSubmission markTextExerciseParticipationForTestRun(TextExercise exercise, String login) {
-        var textSubmission = saveTextSubmissionWithResultAndAssessor(exercise, ModelFactory.generateTextSubmission("", null, false), login, login);
-        textSubmission.getLatestResult().setCompletionDate(null);
-        resultRepo.save(textSubmission.getLatestResult());
-        return textSubmission;
-    }
-
-    public ProgrammingSubmission markProgrammingParticipationForTestRun(ProgrammingExercise exercise, String login) {
-        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submitted(true);
-        submission = addProgrammingSubmissionWithResult(exercise, submission, login);
-        submission.getLatestResult().setAssessor(getUserByLogin(login));
-        submission.getLatestResult().setCompletionDate(null);
-        resultRepo.save(submission.getLatestResult());
-        submissionRepository.save(submission);
-        return submission;
-    }
-
     /**
      * Stores participation of the team with the given id for the given exercise
      *
@@ -1249,7 +1209,7 @@ public class DatabaseUtilService {
 
     public Exercise addMaxScoreAndBonusPointsToExercise(Exercise exercise) {
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
-        exercise.setMaxScore(100.0);
+        exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(10.0);
         return exerciseRepo.save(exercise);
     }
@@ -1575,7 +1535,7 @@ public class DatabaseUtilService {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
         programmingExercise.setBonusPoints(0D);
         programmingExercise.setPublishBuildPlanUrl(true);
-        programmingExercise.setMaxScore(42.0);
+        programmingExercise.setMaxPoints(42.0);
         programmingExercise.setDifficulty(DifficultyLevel.EASY);
         programmingExercise.setMode(ExerciseMode.INDIVIDUAL);
         programmingExercise.setProblemStatement("Lorem Ipsum");
@@ -1840,7 +1800,7 @@ public class DatabaseUtilService {
 
     public ModelingSubmission addModelingSubmission(ModelingExercise exercise, ModelingSubmission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         modelingSubmissionRepo.save(submission);
         studentParticipationRepo.save(participation);
@@ -1849,7 +1809,7 @@ public class DatabaseUtilService {
 
     public ModelingSubmission addModelingTeamSubmission(ModelingExercise exercise, ModelingSubmission submission, Team team) {
         StudentParticipation participation = addTeamParticipationForExercise(exercise, team.getId());
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         modelingSubmissionRepo.save(submission);
         studentParticipationRepo.save(participation);
@@ -1876,7 +1836,7 @@ public class DatabaseUtilService {
         StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
         submission = programmingSubmissionRepo.save(submission);
         Result result = resultRepo.save(new Result().participation(participation));
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         submission.addResult(result);
         submission = programmingSubmissionRepo.save(submission);
@@ -1922,14 +1882,14 @@ public class DatabaseUtilService {
         submission.setCommitHash(commitHash);
         resultRepo.save(result);
         result.setSubmission(submission);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         studentParticipationRepo.save(participation);
         return submissionRepository.save(submission);
     }
 
     public Submission addSubmission(Exercise exercise, Submission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
         studentParticipationRepo.save(participation);
@@ -1937,7 +1897,7 @@ public class DatabaseUtilService {
     }
 
     public Submission addSubmission(StudentParticipation participation, Submission submission) {
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
         studentParticipationRepo.save(participation);
@@ -1947,7 +1907,7 @@ public class DatabaseUtilService {
     public ModelingSubmission addModelingSubmissionWithResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
 
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission = modelingSubmissionRepo.save(submission);
 
         Result result = new Result();
@@ -1970,7 +1930,7 @@ public class DatabaseUtilService {
 
     public ModelingSubmission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission = modelingSubmissionRepo.save(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
@@ -1988,7 +1948,7 @@ public class DatabaseUtilService {
 
     public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(fileUploadExercise, login);
-        participation.addSubmissions(fileUploadSubmission);
+        participation.addSubmission(fileUploadSubmission);
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmissionRepo.save(fileUploadSubmission);
         studentParticipationRepo.save(participation);
@@ -2001,7 +1961,7 @@ public class DatabaseUtilService {
 
         submissionRepository.save(fileUploadSubmission);
 
-        participation.addSubmissions(fileUploadSubmission);
+        participation.addSubmission(fileUploadSubmission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100L);
@@ -2029,7 +1989,7 @@ public class DatabaseUtilService {
 
     public TextSubmission saveTextSubmission(TextExercise exercise, TextSubmission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         submission = textSubmissionRepo.save(submission);
         return submission;
@@ -2041,7 +2001,7 @@ public class DatabaseUtilService {
 
         submissionRepository.save(submission);
 
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100L);
@@ -2338,7 +2298,7 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
-        quizExercise.setMaxScore(quizExercise.getMaxTotalScore());
+        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.setGradingInstructions(null);
         return quizExercise;
     }
@@ -2349,7 +2309,7 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
-        quizExercise.setMaxScore(quizExercise.getMaxTotalScore());
+        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.setGradingInstructions(null);
         return quizExercise;
     }

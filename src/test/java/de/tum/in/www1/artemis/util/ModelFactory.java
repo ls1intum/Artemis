@@ -179,7 +179,7 @@ public class ModelFactory {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
         exercise.setProblemStatement("Problem Statement");
-        exercise.setMaxScore(5.0);
+        exercise.setMaxPoints(5.0);
         exercise.setBonusPoints(0.0);
         exercise.setReleaseDate(releaseDate);
         exercise.setDueDate(dueDate);
@@ -197,7 +197,7 @@ public class ModelFactory {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
         exercise.setProblemStatement("Exam Problem Statement");
-        exercise.setMaxScore(5.0);
+        exercise.setMaxPoints(5.0);
         exercise.setBonusPoints(0.0);
         // these values are set to null explicitly
         exercise.setReleaseDate(null);
@@ -536,6 +536,13 @@ public class ModelFactory {
         return studentExam;
     }
 
+    public static StudentExam generateExamTestRun(Exam exam) {
+        StudentExam studentExam = new StudentExam();
+        studentExam.setExam(exam);
+        studentExam.setTestRun(true);
+        return studentExam;
+    }
+
     public static GradingCriterion generateGradingCriterion(String title) {
         var criterion = new GradingCriterion();
         criterion.setTitle(title);
@@ -666,7 +673,7 @@ public class ModelFactory {
         toBeImported.setPublishBuildPlanUrl(template.isPublishBuildPlanUrl());
         toBeImported.setSequentialTestRuns(template.hasSequentialTestRuns());
         toBeImported.setProblemStatement(template.getProblemStatement());
-        toBeImported.setMaxScore(template.getMaxScore());
+        toBeImported.setMaxPoints(template.getMaxPoints());
         toBeImported.setBonusPoints(template.getBonusPoints());
         toBeImported.setGradingInstructions(template.getGradingInstructions());
         toBeImported.setDifficulty(template.getDifficulty());

@@ -70,8 +70,8 @@ public class AssessmentService {
         this.ltiService = ltiService;
     }
 
-    Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
-        double maxScore = exercise.getMaxScore();
+    Result submitResult(Result result, Exercise exercise, Double calculatedPoints) {
+        double maxPoints = exercise.getMaxPoints();
         double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
 
         // Exam results and manual results of programming exercises are always to rated
@@ -84,11 +84,16 @@ public class AssessmentService {
 
         result.setCompletionDate(ZonedDateTime.now());
         // Take bonus points into account to achieve a result score > 100%
-        double totalScore = calculateTotalScore(calculatedScore, maxScore + bonusPoints);
-        // Set score and resultString according to maxScore, to establish results with score > 100%
-        result.setScore(totalScore, maxScore);
-        result.setResultString(totalScore, maxScore);
-        return resultRepository.save(result);
+        double totalScore = calculateTotalPoints(calculatedPoints, maxPoints + bonusPoints);
+        // Set score and resultString according to maxPoints, to establish results with score > 100%
+        result.setScore(totalScore, maxPoints);
+        result.setResultString(totalScore, maxPoints);
+
+        // Workaround to prevent the assessor turning into a proxy object after saving
+        var assessor = result.getAssessor();
+        result = resultRepository.save(result);
+        result.setAssessor(assessor);
+        return result;
     }
 
     /**
@@ -122,19 +127,20 @@ public class AssessmentService {
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks(), exercise instanceof ProgrammingExercise);
         if (exercise instanceof ProgrammingExercise) {
             double points = ((ProgrammingAssessmentService) this).calculateTotalScore(originalResult);
-            originalResult.setScore(points, exercise.getMaxScore());
+            originalResult.setScore(points, exercise.getMaxPoints());
             /*
              * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
              * student has achieved have changed
              */
             String[] resultStringParts = originalResult.getResultString().split(", ");
-            resultStringParts[resultStringParts.length - 1] = originalResult.createResultString(points, exercise.getMaxScore());
+            resultStringParts[resultStringParts.length - 1] = originalResult.createResultString(points, exercise.getMaxPoints());
             originalResult.setResultString(String.join(", ", resultStringParts));
-            return resultRepository.save(originalResult);
+            Result savedResult = resultRepository.save(originalResult);
+            return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).get(); // to eagerly load assessor
         }
         else {
-            Double calculatedScore = calculateTotalScore(originalResult.getFeedbacks());
-            return submitResult(originalResult, exercise, calculatedScore);
+            Double calculatedPoints = calculateTotalPoints(originalResult.getFeedbacks());
+            return submitResult(originalResult, exercise, calculatedPoints);
         }
     }
 
@@ -208,7 +214,7 @@ public class AssessmentService {
          * {@link Result#feedbacks}.
          */
         if (participation instanceof ProgrammingExerciseStudentParticipation && submission.getResults().size() == 1) {
-            participation.removeSubmissions(submission);
+            participation.removeSubmission(submission);
             participation.removeResult(result);
             submissionRepository.deleteById(submission.getId());
         }
@@ -251,33 +257,33 @@ public class AssessmentService {
         }
     }
 
-    public double calculateTotalScore(Double calculatedScore, Double maxScore) {
+    public double calculateTotalPoints(Double calculatedScore, Double maxScore) {
         double totalScore = Math.max(0, calculatedScore);
         return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
     }
 
     /**
-     * Helper function to calculate the total score of a feedback list. It loops through all assessed model elements and sums the credits up.
-     * The score of an assessment model is not summed up only in the case the usageCount limit is exceeded
+     * Helper function to calculate the total points of a feedback list. It loops through all assessed model elements and sums the credits up.
+     * The points of an assessment model is not summed up only in the case the usageCount limit is exceeded
      * meaning the structured grading instruction was applied on the assessment model more often than allowed
      *
      * @param assessments the List of Feedback
-     * @return the total score
+     * @return the total points
      */
-    public Double calculateTotalScore(List<Feedback> assessments) {
-        double totalScore = 0.0;
+    public Double calculateTotalPoints(List<Feedback> assessments) {
+        double totalPoints = 0.0;
         var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
 
         for (Feedback feedback : assessments) {
             if (feedback.getGradingInstruction() != null) {
-                totalScore = gradingCriterionService.computeTotalScore(feedback, totalScore, gradingInstructions);
+                totalPoints = gradingCriterionService.computeTotalScore(feedback, totalPoints, gradingInstructions);
             }
             else {
                 // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit
-                totalScore += feedback.getCredits();
+                totalPoints += feedback.getCredits();
             }
         }
-        return totalScore;
+        return totalPoints;
     }
 
     /**
@@ -309,8 +315,8 @@ public class AssessmentService {
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
         result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
-        Double calculatedScore = calculateTotalScore(result.getFeedbacks());
-        result = submitResult(result, exercise, calculatedScore);
+        Double calculatedPoints = calculateTotalPoints(result.getFeedbacks());
+        result = submitResult(result, exercise, calculatedPoints);
         // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system
         ltiService.onNewResult((StudentParticipation) result.getParticipation());
         return result;
@@ -355,7 +361,11 @@ public class AssessmentService {
             submission.addResult(result);
             submissionRepository.save(submission);
         }
-        return resultRepository.save(result);
+        // Workaround to prevent the assessor turning into a proxy object after saving
+        var assessor = result.getAssessor();
+        result = resultRepository.save(result);
+        result.setAssessor(assessor);
+        return result;
     }
 
     private List<Feedback> saveFeedbacks(List<Feedback> feedbackList) {

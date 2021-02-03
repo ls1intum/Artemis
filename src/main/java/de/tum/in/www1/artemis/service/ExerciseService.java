@@ -600,7 +600,7 @@ public class ExerciseService {
         CourseExerciseStatisticsDTO courseExerciseStatisticsDTO = new CourseExerciseStatisticsDTO();
         courseExerciseStatisticsDTO.setExerciseId(exercise.getId());
         courseExerciseStatisticsDTO.setExerciseTitle(exercise.getTitle());
-        courseExerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxScore());
+        courseExerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxPoints());
         courseExerciseStatisticsDTO.setExerciseMode(exercise.getMode().toString());
 
         if (exerciseIdToRawStatisticQueryData.containsKey(exercise.getId())) {
@@ -662,7 +662,7 @@ public class ExerciseService {
      */
     public <T extends Exercise> Optional<ResponseEntity<T>> validateScoreSettings(T exercise) {
         // Check if max score is set
-        if (exercise.getMaxScore() == null || exercise.getMaxScore() == 0) {
+        if (exercise.getMaxPoints() == null || exercise.getMaxPoints() == 0) {
             return Optional
                     .of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score needs to be greater than 0", "maxscoreInvalid")).body(null));
         }
@@ -680,4 +680,14 @@ public class ExerciseService {
         return Optional.empty();
     }
 
+    /**
+     * Activates or deactivates the possiblility for tutors to assess within the correction round
+     *
+     * @param exercise - the exercise for which we want to toggle if the second correction round is enabled
+     * @return the new state of the second correction
+     */
+    public boolean toggleSecondCorrection(Exercise exercise) {
+        exercise.setSecondCorrectionEnabled(!exercise.getSecondCorrectionEnabled());
+        return exerciseRepository.save(exercise).getSecondCorrectionEnabled();
+    }
 }

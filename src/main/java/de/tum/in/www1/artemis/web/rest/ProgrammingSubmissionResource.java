@@ -5,7 +5,10 @@ import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BA
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
@@ -356,7 +359,7 @@ public class ProgrammingSubmissionResource {
                     correctionRound);
         }
         else {
-            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly, examMode, correctionRound);
+            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly, examMode);
         }
 
         if (!examMode) {
@@ -397,7 +400,7 @@ public class ProgrammingSubmissionResource {
             // As no manual result is present we need to lock the submission for assessment
             Result latestAutomaticResult = participation.findLatestResult();
             ProgrammingSubmission submission = programmingSubmissionService.findByResultId(latestAutomaticResult.getId());
-            submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId());
+            submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId(), correctionRound);
             return ResponseEntity.ok(submission.getParticipation());
         }
     }
@@ -422,10 +425,7 @@ public class ProgrammingSubmissionResource {
         }
 
         // Check if tutors can start assessing the students submission
-        boolean startAssessingSubmissions = this.programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
-        if (!startAssessingSubmissions) {
-            return forbidden();
-        }
+        this.programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
 
         // Check if the limit of simultaneously locked submissions has been reached
         programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());

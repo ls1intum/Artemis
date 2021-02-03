@@ -101,7 +101,7 @@ public class TextExerciseUtilService {
             submission.setSubmissionDate(ZonedDateTime.now());
             textBlocks.subList(i * submissionSize, (i + 1) * submissionSize).forEach(textBlock -> textBlock.setSubmission(submission));
 
-            studentParticipation.addSubmissions(submission);
+            studentParticipation.addSubmission(submission);
             textSubmissionRepository.save(submission);
         }
         return textExercise;

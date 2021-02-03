@@ -50,7 +50,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     courseId: number;
     examId: number;
     testRunId: number;
-    testRunStartTime: Moment | null;
+    testRunStartTime?: Moment;
 
     // determines if component was once drawn visited
     submissionComponentVisited: boolean[];
@@ -61,6 +61,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     studentExam: StudentExam;
 
     individualStudentEndDate: Moment;
+    individualStudentEndDateWithGracePeriod: Moment;
 
     activeExercise: Exercise;
     unsavedChanges = false;
@@ -84,7 +85,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     examStartConfirmed = false;
-    examEndConfirmed = false;
 
     /**
      * Websocket channels
@@ -140,9 +140,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam.exam!.course.id = this.courseId;
                         this.exam = studentExam.exam!;
                         this.testRunStartTime = moment();
-                        this.individualStudentEndDate = moment(this.testRunStartTime).add(this.studentExam.workingTime, 'seconds');
+                        this.initIndividualEndDates(this.testRunStartTime);
                         this.loadingExam = false;
                     },
+                    // if error occurs
                     () => (this.loadingExam = false),
                 );
             } else {
@@ -150,7 +151,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     (studentExam) => {
                         this.studentExam = studentExam;
                         this.exam = studentExam.exam!;
-                        this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
+                        this.initIndividualEndDates(this.exam.startDate!);
                         // only show the summary if the student was able to submit on time.
                         if (this.isOver() && this.studentExam.submitted) {
                             this.examParticipationService
@@ -223,7 +224,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         });
                     } else if (exercise.type === ExerciseType.PROGRAMMING) {
                         // We need to provide a submission to update the navigation bar status indicator
-                        if (participation.submissions && participation.submissions.length === 0) {
+                        if (!participation.submissions || participation.submissions.length === 0) {
+                            participation.submissions = [];
                             participation.submissions.push(ProgrammingSubmission.createInitialCleanSubmissionForExam());
                         }
                     }
@@ -330,6 +332,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
+     * check if the grace period has already passed
+     */
+    isGracePeriodOver() {
+        return this.individualStudentEndDateWithGracePeriod && this.individualStudentEndDateWithGracePeriod.isBefore(this.serverDateService.now());
+    }
+
+    /**
      * check if exam is visible
      */
     isVisible(): boolean {
@@ -360,6 +369,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             subscription.unsubscribe();
         });
         window.clearInterval(this.autoSaveInterval);
+    }
+
+    initIndividualEndDates(startDate: Moment) {
+        this.individualStudentEndDate = moment(startDate).add(this.studentExam.workingTime, 'seconds');
+        this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod, 'seconds');
     }
 
     initLiveMode() {

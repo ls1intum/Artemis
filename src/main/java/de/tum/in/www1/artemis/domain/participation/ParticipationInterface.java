@@ -23,7 +23,7 @@ public interface ParticipationInterface {
 
     Set<Submission> getSubmissions();
 
-    void addSubmissions(Submission submission);
+    void addSubmission(Submission submission);
 
     Participation copyParticipationId();
 }

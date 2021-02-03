@@ -11,7 +11,6 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
     templateUrl: './multiple-choice-question.component.html',
     styleUrls: ['./multiple-choice-question.component.scss', '../../../participate/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
-    providers: [ArtemisMarkdownService],
 })
 export class MultipleChoiceQuestionComponent {
     _question: MultipleChoiceQuestion;

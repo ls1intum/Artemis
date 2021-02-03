@@ -19,6 +19,7 @@ import { AssessmentInstructionsModule } from 'app/assessment/assessment-instruct
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
+import { ProgrammingExerciseInstructorRepoDownloadComponent } from '../shared/actions/programming-exercise-instructor-repo-download.component';
 
 @NgModule({
     imports: [
@@ -40,6 +41,11 @@ import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiar
         AssessmentInstructionsModule,
         OrionModule,
     ],
-    declarations: [ProgrammingExerciseDetailComponent, ProgrammingExerciseImportComponent, ProgrammingExerciseEditSelectedComponent],
+    declarations: [
+        ProgrammingExerciseDetailComponent,
+        ProgrammingExerciseImportComponent,
+        ProgrammingExerciseEditSelectedComponent,
+        ProgrammingExerciseInstructorRepoDownloadComponent,
+    ],
 })
 export class ArtemisProgrammingExerciseManagementModule {}

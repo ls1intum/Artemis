@@ -91,8 +91,13 @@ export class ModelingSubmissionService {
      * Get a submission with given Id
      * @param {number} submissionId - Id of the submission
      */
-    getSubmission(submissionId: number): Observable<ModelingSubmission> {
-        return this.http.get<ModelingSubmission>(`api/modeling-submissions/${submissionId}`);
+    getSubmission(submissionId: number, correctionRound = 0): Observable<ModelingSubmission> {
+        const url = `api/modeling-submissions/${submissionId}`;
+        let params = new HttpParams();
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
+        }
+        return this.http.get<ModelingSubmission>(url, { params });
     }
 
     /**

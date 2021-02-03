@@ -31,6 +31,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                         pageTitle: 'aboutUs',
                     },
                 },
+                {
+                    path: 'courses/:courseId/lectures/:lectureId',
+                    loadChildren: () => import('./overview/course-lectures/course-lecture-details.module').then((m) => m.ArtemisCourseLectureDetailsModule),
+                },
                 // ===== COURSE MANAGEMENT =====
                 {
                     path: 'course-management',
@@ -74,6 +78,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'courses/:courseId/file-upload-exercises/:exerciseId',
                     loadChildren: () => import('./exercises/file-upload/participate/file-upload-participation.module').then((m) => m.ArtemisFileUploadParticipationModule),
+                },
+                {
+                    path: 'courses/:courseId/exercises/:exerciseId',
+                    loadChildren: () => import('app/overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
                 },
                 // ===== EXAM =====
                 {

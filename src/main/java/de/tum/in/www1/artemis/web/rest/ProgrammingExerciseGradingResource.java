@@ -23,8 +23,6 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsD
 @RequestMapping("/api")
 public class ProgrammingExerciseGradingResource {
 
-    public static final String RESET = "/programming-exercise/{exerciseId}/grading/reset";
-
     public static final String RE_EVALUATE = "/programming-exercise/{exerciseId}/grading/re-evaluate";
 
     public static final String STATISTICS = "/programming-exercise/{exerciseId}/grading/statistics";
@@ -52,29 +50,6 @@ public class ProgrammingExerciseGradingResource {
         this.authCheckService = authCheckService;
         this.userService = userService;
         this.resultRepository = resultRepository;
-    }
-
-    /**
-     * Use with care: Set the weight of all test cases of an exercise to 1.
-     *
-     * @param exerciseId the id of the exercise to reset the test case weights of.
-     * @return the updated set of test cases for the programming exercise.
-     */
-    @PatchMapping(RESET)
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<ProgrammingExerciseTestCase>> resetGradingConfiguration(@PathVariable Long exerciseId) {
-        log.debug("REST request to reset the weights of exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
-        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
-
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            return forbidden();
-        }
-
-        programmingExerciseGradingService.logResetGrading(user, programmingExercise, course);
-        List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(exerciseId);
-        return ResponseEntity.ok(testCases);
     }
 
     /**

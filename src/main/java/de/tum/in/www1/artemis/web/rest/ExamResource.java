@@ -224,11 +224,11 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found ExamScoreDTO as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/scores")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<ExamScoresDTO> getExamScore(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get score for exam : {}", examId);
-        Optional<ResponseEntity<ExamScoresDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForTeachingAssistant(courseId, examId);
+        Optional<ResponseEntity<ExamScoresDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -412,6 +412,7 @@ public class ExamResource {
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/generate-student-exams")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<StudentExam>> generateStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
+        long start = System.nanoTime();
         log.info("REST request to generate student exams for exam {}", examId);
 
         final var exam = examService.findOneWithRegisteredUsersAndExerciseGroupsAndExercises(examId);
@@ -432,8 +433,7 @@ public class ExamResource {
             studentExam.getExam().setExerciseGroups(null);
             studentExam.getExam().setStudentExams(null);
         }
-
-        log.info("Generated {} student exams for exam {}", studentExams.size(), examId);
+        log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
         return ResponseEntity.ok().body(studentExams);
     }
 
@@ -492,7 +492,7 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
-        Integer numberOfGeneratedParticipations = examService.startExercises(examId);
+        int numberOfGeneratedParticipations = examService.startExercises(examId);
 
         log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
 
@@ -564,9 +564,9 @@ public class ExamResource {
         log.info("REST request to lock all repositories of exam {}", examId);
 
         Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
-        if (courseAndExamAccessFailure.isPresent())
+        if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
-
+        }
         Integer numOfLockedExercises = examService.lockAllRepositories(examId);
 
         log.info("Locked {} programming exercises of exam {}", numOfLockedExercises, examId);
@@ -602,6 +602,27 @@ public class ExamResource {
     }
 
     /**
+     * POST /courses/:courseId/exams/:examId/register-course-students : Add all users which are enrolled in the course to the exam so that the student can access the exam
+     *
+     * @param courseId     the id of the course
+     * @param examId       the id of the exam
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+    */
+    @PostMapping(value = "/courses/{courseId}/exams/{examId}/register-course-students")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> registerCourseStudents(@PathVariable Long courseId, @PathVariable Long examId) {
+        // get all students enrolled in the course
+        log.debug("REST request to add all students to exam {} with courseId {}", examId, courseId);
+
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent())
+            return courseAndExamAccessFailure.get();
+
+        examService.addAllStudentsOfCourseToExam(courseId, examId);
+        return ResponseEntity.ok().body(null);
+    }
+
+    /**
      * DELETE /courses/:courseId/exams/:examId/students/:studentLogin :
      * Remove one single given user (based on the login) from the students of the exam so that the student cannot access the exam any more.
      * Optionally, also deletes participations and submissions of the student in the student exam.
@@ -633,21 +654,21 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/conduction : Get an exam for conduction.
+     * GET /courses/{courseId}/exams/{examId}/start : Get an exam for the exam start.
      *
      * @param courseId  the id of the course
      * @param examId    the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found student exam (without exercises) as body
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/conduction")
+    @GetMapping("/courses/{courseId}/exams/{examId}/start")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<StudentExam> getStudentExamForStart(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam {} for conduction", examId);
         return examAccessService.checkAndGetCourseAndExamAccessForConduction(courseId, examId);
     }
 
     /**
-     * PUT /courses/:courseId/exams/:examId/exerciseGroupsOrder : Update the order of exercise groups. If the received
+     * PUT /courses/:courseId/exams/:examId/exercise-groups-order : Update the order of exercise groups. If the received
      * exercise groups do not belong to the exam the operation is aborted.
      *
      * @param courseId              the id of the course
@@ -655,7 +676,7 @@ public class ExamResource {
      * @param orderedExerciseGroups the exercise groups of the exam in the desired order.
      * @return the list of exercise groups
      */
-    @PutMapping("/courses/{courseId}/exams/{examId}/exerciseGroupsOrder")
+    @PutMapping("/courses/{courseId}/exams/{examId}/exercise-groups-order")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<List<ExerciseGroup>> updateOrderOfExerciseGroups(@PathVariable Long courseId, @PathVariable Long examId,
             @RequestBody List<ExerciseGroup> orderedExerciseGroups) {

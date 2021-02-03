@@ -1,5 +1,5 @@
-import { nextAlphanumeric, nextWSSubscriptionId, extractDestination } from '../util/utils.js';
-import { COMMIT, NEW_FILE, PARTICIPATION_WITH_RESULT, PARTICIPATIONS, PROGRAMMING_EXERCISE, SCA_CATEGORIES, PROGRAMMING_EXERCISES_SETUP, FILES } from './endpoints.js';
+import { extractDestination, nextAlphanumeric, nextWSSubscriptionId } from '../util/utils.js';
+import { COMMIT, FILES, NEW_FILE, PARTICIPATION_WITH_RESULT, PARTICIPATIONS, PROGRAMMING_EXERCISE, PROGRAMMING_EXERCISES_SETUP, SCA_CATEGORIES } from './endpoints.js';
 import { fail, sleep } from 'k6';
 import { programmingExerciseProblemStatementJava } from '../resource/constants_java.js';
 import { programmingExerciseProblemStatementPython } from '../resource/constants_python.js';
@@ -78,7 +78,7 @@ export function createProgrammingExercise(artemis, courseId, exerciseGroup = und
     const exercise = {
         title: 'TEST ' + nextAlphanumeric(10),
         shortName: 'TEST' + nextAlphanumeric(5).toUpperCase(),
-        maxScore: 42,
+        maxPoints: 42,
         assessmentType: 'AUTOMATIC',
         type: 'programming',
         programmingLanguage: programmingLanguage,
@@ -128,7 +128,7 @@ export function configureScaCategories(artemis, exerciseId, scaCategories, progr
     let patchedCategories;
     switch (programmingLanguage) {
         case 'JAVA':
-            let badPracticeCategory = scaCategories.find((category) => (category.name = 'Bad Practice'));
+            let badPracticeCategory = scaCategories.find((category) => category.name === 'Bad Practice');
             if (!badPracticeCategory) {
                 fail(`FAILTEST: Could not find SCA category "Bad Practice" for exercise: ${exerciseId}`);
             }

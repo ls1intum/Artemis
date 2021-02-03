@@ -86,9 +86,9 @@
             "startTime": "Start Time",
             "quizPointStatistic": "Quiz Point Statistic",
             "quiz": "Quiz",
-            "totalPoints": "Total Points",
+            "totalPoints": "Overall Points",
             "totalScore": "Result",
-            "maxScore": "Max. Score",
+            "maxScore": "Max. Points",
             "remainingTime": "Time left",
             "waitingForStart": "Waiting for Start",
             "numberOfQuestions": "Number of Questions",
@@ -144,7 +144,7 @@
                         "answer_invalid": "All participants receive the points for the invalid answer",
                         "question_deleted": "The question will be removed from all results",
                         "question_invalid": "All participants receive the points for the invalid question",
-                        "scoring_change": "The scores will be recalculated. A participant could also lose points"
+                        "scoring_change": "The points will be recalculated. A participant could also lose points"
                     },
                     "confirmtext": "Do you really want to perform these changes?",
                     "succesfully_confirm": "Changes successfully adopted!"
@@ -160,7 +160,7 @@
                 "startTimeInPast": "Quiz: The Start Time lies in the past.",
                 "quizZeroPoints": "Quiz: The total number of points is 0.",
                 "questionTitle": "Question {{index}}: The title is missing.",
-                "questionScore": "Question {{index}}: The score is invalid.",
+                "questionScore": "Question {{index}}: The points are invalid.",
                 "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
                 "questionCorrectMapping": "Question {{index}}: No correct mapping.",
                 "questionUnsolvable": "Question {{index}}: The question cannot be answered correctly without using a drag item twice.",

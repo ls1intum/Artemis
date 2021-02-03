@@ -48,7 +48,7 @@ public class ExamSubmissionService {
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <T> Optional<ResponseEntity<T>> checkSubmissionAllowance(Exercise exercise, User user) {
-        if (!isAllowedToSubmit(exercise, user)) {
+        if (!isAllowedToSubmitDuringExam(exercise, user)) {
             // TODO: improve the error message sent to the client
             return Optional.of(forbidden());
         }
@@ -57,30 +57,28 @@ public class ExamSubmissionService {
 
     /**
      * Check if the user is allowed to submit (submission is in time & user's student exam has the exercise or it is a test run).
+     * Note: if the exercise is not an exam, this method will return true
      *
      * @param exercise  the exercise for which a submission should be saved
      * @param user      the user that wants to submit
      * @return true if it is not an exam of if it is an exam and the submission is in time and the exercise is part of
      *         the user's student exam
      */
-    public boolean isAllowedToSubmit(Exercise exercise, User user) {
+    public boolean isAllowedToSubmitDuringExam(Exercise exercise, User user) {
         if (isExamSubmission(exercise)) {
             // Get the student exam if it was not passed to the function
             Exam exam = exercise.getExerciseGroup().getExam();
-            StudentExam studentExam;
-            try {
-                studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
-            }
-            catch (EntityNotFoundException entityNotFoundException) {
+            Optional<StudentExam> optionalStudentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
+            if (optionalStudentExam.isEmpty()) {
                 // We check for test exams here for performance issues as this will not be the case for all students who are participating in the exam
-                // isAllowedToSubmit is called everytime an exercise is saved (e.g. autosave every 30 seconds for every student) therefore it is best to limit unnecessary database
-                // calls
+                // isAllowedToSubmitDuringExam is called everytime an exercise is saved (e.g. autosave every 30 seconds for every student) therefore it is best to limit
+                // unnecessary database calls
                 if (!isExamTestRunSubmission(exercise, user, exam)) {
-                    throw entityNotFoundException;
+                    throw new EntityNotFoundException("Student exam with for userId \"" + user.getId() + "\" and examId \"" + exam.getId() + "\" does not exist");
                 }
                 return true;
             }
-
+            StudentExam studentExam = optionalStudentExam.get();
             // Check that the current user is allowed to submit to this exercise
             if (!studentExam.getExercises().contains(exercise)) {
                 return false;
@@ -133,7 +131,7 @@ public class ExamSubmissionService {
      */
     public Submission preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
         // Return immediately if it is not a exam submissions or if it is a programming exercise
-        if (!isExamSubmission(exercise) || exercise.getClass() == ProgrammingExercise.class) {
+        if (!isExamSubmission(exercise) || exercise instanceof ProgrammingExercise) {
             return submission;
         }
 
