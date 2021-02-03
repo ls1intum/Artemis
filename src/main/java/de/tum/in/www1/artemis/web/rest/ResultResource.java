@@ -321,7 +321,7 @@ public class ResultResource {
 
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         User user = userService.getUserWithGroupsAndAuthorities();
-        boolean filterForStudent = authCheckService.isOnlyStudentInCourse(course, user);
+        boolean filterForStudent = authCheckService.isStudentInCourse(course, user);
 
         if (filterForStudent) {
             result.filterSensitiveInformation();
