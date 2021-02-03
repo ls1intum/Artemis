@@ -1041,6 +1041,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     public void testDownloadCourseArchiveAsInstructor() throws Exception {
 
         // Dummy course archive
+        Files.createDirectories(Path.of(courseArchivesDirPath));
         Path courseArchivePath = Path.of(courseArchivesDirPath, "some-course-archive.zip");
         if (!Files.exists(courseArchivePath)) {
             Files.createFile(courseArchivePath);
