@@ -128,6 +128,12 @@
                         <span>{{ course.maxComplaints }}</span>
                     </dd>
                 </ng-container>
+                <ng-container *ngIf="course.maxTeamComplaints !== 0">
+                    <dt><span jhiTranslate="artemisApp.course.maxTeamComplaints.title">Maximum amount of complaints per team</span></dt>
+                    <dd>
+                        <span>{{ course.maxTeamComplaints }}</span>
+                    </dd>
+                </ng-container>
                 <ng-container *ngIf="course.maxComplaintTimeDays !== 0">
                     <dt><span jhiTranslate="artemisApp.course.maxComplaintTimeDays.title">Deadline for complaints in days after result date</span></dt>
                     <dd>
