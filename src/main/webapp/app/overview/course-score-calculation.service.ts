@@ -12,7 +12,7 @@ export const ABSOLUTE_SCORE = 'absoluteScore';
 export const RELATIVE_SCORE = 'relativeScore';
 export const MAX_POINTS = 'maxPoints';
 export const PRESENTATION_SCORE = 'presentationScore';
-export const REACHABLE_SCORE = 'reachableScore';
+export const REACHABLE_POINTS = 'reachableScore';
 export const CURRENT_RELATIVE_SCORE = 'currentRelativeScore';
 
 @Injectable({ providedIn: 'root' })
@@ -78,7 +78,7 @@ export class CourseScoreCalculationService {
         }
         scores.set(MAX_POINTS, maxPointsInCourse);
         scores.set(PRESENTATION_SCORE, presentationScore);
-        scores.set(REACHABLE_SCORE, reachableMaxPointsInCourse);
+        scores.set(REACHABLE_POINTS, reachableMaxPointsInCourse);
         return scores;
     }
 

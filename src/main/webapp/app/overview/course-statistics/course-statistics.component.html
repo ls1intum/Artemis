@@ -5,7 +5,7 @@
             <div class="chart-container" style="margin-bottom: 20px">
                 <div class="chart-text">
                     <h2 class="text-center">{{ currentRelativeScore }} %</h2>
-                    <h4 class="text-center">{{ totalScore }} / {{ reachableScore }} Pts</h4>
+                    <h4 class="text-center">{{ overallPoints }} / {{ reachablePoints }} Pts</h4>
                 </div>
                 <canvas
                     baseChart
@@ -20,10 +20,10 @@
                     [chartType]="doughnutChartType"
                 ></canvas>
             </div>
-            <h4 class="text-center" id="absolute-course-score">{{ 'artemisApp.courseOverview.statistics.yourPoints' | translate: { number: totalScore } }}</h4>
+            <h4 class="text-center" id="absolute-course-score">{{ 'artemisApp.courseOverview.statistics.yourPoints' | translate: { number: overallPoints } }}</h4>
             <h4 class="text-center" id="reachable-course-score">
                 <span>
-                    {{ 'artemisApp.courseOverview.statistics.reachablePoints' | translate: { number: reachableScore, relative: currentRelativeScore } }}
+                    {{ 'artemisApp.courseOverview.statistics.reachablePoints' | translate: { number: reachablePoints, relative: currentRelativeScore } }}
                 </span>
                 <fa-icon id="reachable-help" class="mr-1" [icon]="'question-circle'" ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelp' | translate }}"></fa-icon>
             </h4>
@@ -34,7 +34,7 @@
                 <fa-icon id="total-help" class="mr-1" [icon]="'question-circle'" ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelp' | translate }}"></fa-icon>
             </h4>
             <div *ngIf="course.presentationScore !== 0">
-                <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.totalPresentationScore' | translate: { number: this.totalPresentationScore } }}</h2>
+                <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.totalPresentationScore' | translate: { number: overallPresentationScore } }}</h2>
                 <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.presentationScoreBonus' | translate: { number: course.presentationScore } }}</h2>
             </div>
         </div>
