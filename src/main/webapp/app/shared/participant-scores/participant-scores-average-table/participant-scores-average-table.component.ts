@@ -14,6 +14,7 @@ export class ParticipantScoresAverageTableComponent {
     extractParticipantName = (participantScoreAverageDTO: ParticipantScoreAverageDTO) => {
         if (participantScoreAverageDTO.userName) {
             return `${participantScoreAverageDTO.userName}`;
+        }
         return `${participantScoreAverageDTO.teamName}`;
     };
 }
