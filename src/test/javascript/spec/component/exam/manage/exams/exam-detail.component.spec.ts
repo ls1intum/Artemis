@@ -63,7 +63,6 @@ describe('ExamDetailComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        snapshot: {},
                         data: {
                             subscribe: (fn: (value: Data) => void) =>
                                 fn({
