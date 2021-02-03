@@ -6,7 +6,6 @@ import { OrganizationManagementUpdateComponent } from 'app/admin/organization-ma
 import { OrganizationManagementDetailComponent } from 'app/admin/organization-management/organization-management-detail.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
-import { UserMgmtResolve } from 'app/admin/user-management/user-management.route';
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationMgmtResolve implements Resolve<any> {
@@ -61,7 +60,7 @@ export const organizationMgmtRoute: Route[] = [
             {
                 path: ':id',
                 resolve: {
-                    user: UserMgmtResolve,
+                    organization: OrganizationMgmtResolve,
                 },
                 data: {
                     breadcrumbLabelVariable: 'organization.id',

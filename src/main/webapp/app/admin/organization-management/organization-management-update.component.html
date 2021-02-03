@@ -1,1 +1,91 @@
-<p>organization-management-update works!</p>
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+            <h2 jhiTranslate="organizationManagement.addOrEditLabel">Add or edit a Organization</h2>
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" [hidden]="!organization.id">
+                    <label jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" name="id" [(ngModel)]="organization.id" readonly />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="organizationManagement.name">Name</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="name"
+                        #nameInput="ngModel"
+                        [(ngModel)]="organization.name"
+                        required
+                        minlength="1"
+                        maxlength="100"
+                        pattern="^[A-Za-z0-9]*$"
+                    />
+
+                    <div *ngIf="nameInput.dirty && nameInput.invalid">
+                        <small class="form-text text-danger" *ngIf="nameInput.errors?.required" jhiTranslate="entity.validation.required"> This field is required. </small>
+
+                        <small class="form-text text-danger" *ngIf="nameInput.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 100 }">
+                            This field cannot be longer than 50 characters.
+                        </small>
+
+                        <small class="form-text text-danger" *ngIf="nameInput.errors?.pattern" jhiTranslate="entity.validation.patternLogin">
+                            This field can only contain letters and digits.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="organizationManagement.shortName">Short Name</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="name"
+                        #shortNameInput="ngModel"
+                        [(ngModel)]="organization.shortName"
+                        required
+                        minlength="1"
+                        maxlength="50"
+                        pattern="^[A-Za-z0-9]*$"
+                    />
+
+                    <div *ngIf="shortNameInput.dirty && shortNameInput.invalid">
+                        <small class="form-text text-danger" *ngIf="shortNameInput.errors?.required" jhiTranslate="entity.validation.required"> This field is required. </small>
+
+                        <small class="form-text text-danger" *ngIf="shortNameInput.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 50 }">
+                            This field cannot be longer than 50 characters.
+                        </small>
+
+                        <small class="form-text text-danger" *ngIf="nameInput.errors?.pattern" jhiTranslate="entity.validation.patternLogin">
+                            This field can only contain letters and digits.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="organizationManagement.url">URL</label>
+                    <input type="text" class="form-control" name="url" #urlInput="ngModel" [(ngModel)]="organization.url" />
+                </div>
+                <div class="form-group">
+                    <label jhiTranslate="organizationManagement.description">Description</label>
+                    <input type="text" class="form-control" name="description" #descriptionInput="ngModel" [(ngModel)]="organization.description" />
+                </div>
+                <div class="form-group">
+                    <label jhiTranslate="organizationManagement.logoUrl">Logo Url</label>
+                    <input type="text" class="form-control" name="description" #logoUrlInput="ngModel" [(ngModel)]="organization.logoUrl" />
+                </div>
+                <div class="form-group">
+                    <label jhiTranslate="organizationManagement.emailPattern">Email Pattern</label>
+                    <input type="text" class="form-control" name="emailPattern" #logoUrlInput="ngModel" [(ngModel)]="organization.emailPattern" />
+                </div>
+            </div>
+            <div>
+                <button type="button" class="btn btn-secondary" (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

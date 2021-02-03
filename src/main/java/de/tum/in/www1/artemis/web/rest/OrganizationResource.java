@@ -85,7 +85,7 @@ public class OrganizationResource {
 
     @DeleteMapping("/organizations/user/{userLogin}/organization/{organizationId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Void> removeUserToOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
+    public ResponseEntity<Void> removeUserFromOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
         Optional<User> user = userService.getUserByLogin(userLogin);
         if (user.isPresent()) {
             organizationService.removeUserFromOrganization(user.get(), organizationId);
@@ -94,9 +94,9 @@ public class OrganizationResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, user.get().getLogin())).build();
     }
 
-    @PostMapping("/organizations/create")
+    @PostMapping("/organizations/add")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Organization> createOrganization(@RequestBody Organization organization) {
+    public ResponseEntity<Organization> addOrganization(@RequestBody Organization organization) {
         Organization created = organizationService.save(organization);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, created.getName())).body(created);
