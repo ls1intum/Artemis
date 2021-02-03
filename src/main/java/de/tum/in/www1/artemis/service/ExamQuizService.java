@@ -196,7 +196,6 @@ public class ExamQuizService {
                     studentParticipationRepository.save(participation);
 
                     // add result to submission
-                    // quizSubmission.replaceLatestOrIfEmptyAddResult(result);
                     result.setSubmission(quizSubmission);
                     quizSubmission.addResult(result);
                     submissionRepository.save(quizSubmission);
