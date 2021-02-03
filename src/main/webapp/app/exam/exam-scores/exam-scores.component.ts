@@ -80,6 +80,25 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     if (this.examScoreDTO) {
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
+
+                        const titleMap = new Map();
+                        if (this.exerciseGroups) {
+                            for (const exerciseGroup of this.exerciseGroups) {
+                                if (titleMap.has(exerciseGroup.title)) {
+                                    const currentValue = titleMap.get(exerciseGroup.title);
+                                    titleMap.set(exerciseGroup.title, currentValue + 1);
+                                } else {
+                                    titleMap.set(exerciseGroup.title, 1);
+                                }
+                            }
+
+                            // this workaround is necessary if the exam has exercise groups with the same title (we add the id to make it unique)
+                            for (const exerciseGroup of this.exerciseGroups) {
+                                if (titleMap.has(exerciseGroup.title) && titleMap.get(exerciseGroup.title) > 1) {
+                                    exerciseGroup.title = `${exerciseGroup.title} (id=${exerciseGroup.id})`;
+                                }
+                            }
+                        }
                     }
                     // Only try to calculate statistics if the exam has exercise groups and student results
                     if (this.studentResults && this.exerciseGroups) {
