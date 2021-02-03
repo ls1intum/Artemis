@@ -614,6 +614,9 @@ public class CourseResource {
     public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseService.findOne(courseId);
+        course.setNumberOfInstructors(userService.countUserInGroup(course.getInstructorGroupName()));
+        course.setNumberOfTeachingAssistants(userService.countUserInGroup(course.getTeachingAssistantGroupName()));
+        course.setNumberOfStudents(userService.countUserInGroup(course.getStudentGroupName()));
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
