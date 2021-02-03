@@ -299,7 +299,7 @@
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             },
             "checklist": {
-                "title": "Exam Conduction Checklist",
+                "title": "Checkliste für die Durchführung von Prüfungen",
                 "introduction": "Unter folgendem Link kannst du dich über den Ablauf einer Artemis Klausur informieren:",
                 "linkDescription": "Instructors Guide",
                 "checklistItem": "Aufgabe",
