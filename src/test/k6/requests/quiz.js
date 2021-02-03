@@ -64,7 +64,7 @@ export function generateQuizQuestions(amount) {
             title: 'question' + i,
             text: 'Some question',
             scoringType: 'ALL_OR_NOTHING',
-            score: 1,
+            points: 1,
             randomizeOrder: true,
             invalid: false,
             hint: 'Some question hint',
