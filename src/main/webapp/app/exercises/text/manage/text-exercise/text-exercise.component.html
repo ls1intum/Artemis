@@ -11,7 +11,7 @@
             <fa-icon [icon]="'plus'"></fa-icon>
             <span class="hidden-sm-down" jhiTranslate="artemisApp.textExercise.home.importLabel"> Import new programming exercise </span>
         </button>
-        <button
+        <a
             *ngIf="course && course.isAtLeastInstructor"
             id="jh-create-entity"
             class="btn btn-primary float-right jh-create-entity create-text-exercise mr-1"
@@ -19,7 +19,7 @@
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.textExercise.home.createLabel"> Create Text Exercise </span>
-        </button>
+        </a>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
     <div class="row"></div>

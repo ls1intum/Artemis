@@ -65,9 +65,9 @@
 
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.summary">Student Summary</span></h5>
-        <button *ngIf="course?.isAtLeastInstructor" class="btn btn-primary" [routerLink]="'./summary'">
+        <a *ngIf="course?.isAtLeastInstructor" class="btn btn-primary" [routerLink]="'./summary'">
             <span jhiTranslate="artemisApp.exam.summary">Summary</span>
-        </button>
+        </a>
     </div>
 
     <div class="mb-3">
