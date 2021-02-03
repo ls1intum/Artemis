@@ -74,6 +74,7 @@ describe('User Management Update Component', () => {
                     ),
                 );
                 comp.user = entity;
+                comp.user.login = 'test_user';
                 // WHEN
                 comp.save();
                 tick(); // simulate async

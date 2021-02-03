@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
@@ -9,6 +9,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { Course } from 'app/entities/course.model';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
+import { navigateBack } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -31,6 +32,7 @@ export class LectureUpdateComponent implements OnInit {
         protected lectureService: LectureService,
         protected courseService: CourseManagementService,
         protected activatedRoute: ActivatedRoute,
+        private router: Router,
     ) {}
 
     /**
@@ -52,9 +54,15 @@ export class LectureUpdateComponent implements OnInit {
 
     /**
      * Revert to the previous state, equivalent with pressing the back button on your browser
+     * Returns to the detail page if there is no previous state and we edited an existing lecture
+     * Returns to the overview page if there is no previous state and we created a new lecture
      */
     previousState() {
-        window.history.back();
+        if (this.lecture.id) {
+            navigateBack(this.router, ['course-management', this.lecture.course!.id!.toString(), 'lectures', this.lecture.id.toString()]);
+        } else {
+            navigateBack(this.router, ['course-management', this.lecture.course!.id!.toString(), 'lectures']);
+        }
     }
 
     /**

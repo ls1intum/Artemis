@@ -6,54 +6,51 @@
 
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
-            <button id="editButton" type="button" *ngIf="isAtLeastInstructor" [routerLink]="getEditRoute()" class="btn btn-primary">
+            <a id="editButton" *ngIf="isAtLeastInstructor" [routerLink]="getEditRoute()" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-            </button>
+            </a>
 
-            <button id="studentExamsButton" type="submit" *ngIf="isAtLeastInstructor" [routerLink]="getStudentExamRoute()" class="btn btn-info">
-                <fa-icon [icon]="'eye'"></fa-icon>
-                <span>{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
-            </button>
+            <a id="studentExamsButton" *ngIf="isAtLeastInstructor" [routerLink]="getStudentExamRoute()" class="btn btn-info">
+                <fa-icon [icon]="'eye'"></fa-icon><span>{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
+            </a>
 
-            <button
-                *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
-                type="submit"
+            <a
+                *ngIf="isAtLeastInstructor"
                 [routerLink]="['tutor-exam-dashboard']"
                 class="btn btn-primary"
                 id="tutor-exam-dashboard-button"
             >
-                <fa-icon [icon]="'th-list'"></fa-icon>
-                <span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
-            </button>
+                <fa-icon [icon]="'th-list'"></fa-icon><span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
+            </a>
 
-            <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']" [routerLink]="['scores']" class="btn btn-info" id="scores-button">
+            <a *ngIf="isAtLeastInstructor" [routerLink]="['scores']" class="btn btn-info" id="scores-button">
                 <fa-icon [icon]="'eye'"></fa-icon>
                 <span>{{ 'entity.action.scores' | translate }}</span>
-            </button>
+            </a>
 
-            <button *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" type="submit" [routerLink]="['exercise-groups']" class="btn btn-primary" id="exercises-button-groups">
+            <a *ngIf="isAtLeastInstructor" type="submit" [routerLink]="['exercise-groups']" class="btn btn-primary" id="exercises-button-groups">
                 <fa-icon [icon]="'list-alt'"></fa-icon>
                 <span>{{ 'artemisApp.examManagement.exerciseGroups' | translate }}</span>
-            </button>
+            </a>
 
-            <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['test-runs']" class="btn btn-info">
+            <a *ngIf="isAtLeastInstructor" [routerLink]="['test-runs']" class="btn btn-info">
                 <fa-icon [icon]="'user'"></fa-icon>
                 <span>{{ 'artemisApp.examManagement.testRun.testRun' | translate }}</span>
-            </button>
+            </a>
 
-            <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['student-exams']" class="btn btn-primary">
+            <a *ngIf="isAtLeastInstructor" [routerLink]="['student-exams']" class="btn btn-primary">
                 <fa-icon [icon]="'eye'"></fa-icon>
                 <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
-            </button>
+            </a>
 
-            <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['students']" class="btn btn-info">
+            <a *ngIf="isAtLeastInstructor" [routerLink]="['students']" class="btn btn-info">
                 <fa-icon [icon]="'user'"></fa-icon>
                 <span>{{ 'artemisApp.examManagement.students' | translate }}</span>
-            </button>
+            </a>
 
             <hr />
 
-            <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+            <div *ngIf="isAtLeastInstructor">
                 <h3>
                     <span>{{ 'artemisApp.examManagement.checklist.title' | translate }}</span>
                 </h3>
@@ -92,10 +89,10 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.register' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['students']" class="btn btn-info">
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="['students']" class="btn btn-info">
                                     <fa-icon [icon]="'user'"></fa-icon>
                                     <span>{{ 'artemisApp.examManagement.students' | translate }}</span>
-                                </button>
+                                </a>
                             </td>
                         </tr>
                         <tr>
@@ -107,16 +104,14 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.exerciseGroups' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <button
-                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
-                                    type="submit"
+                                <a
+                                    *ngIf="isAtLeastInstructor"
                                     [routerLink]="['exercise-groups']"
                                     class="btn btn-primary"
                                     id="exercises-button-groups_table"
                                 >
-                                    <fa-icon [icon]="'list-alt'"></fa-icon>
-                                    <span>{{ 'artemisApp.examManagement.exerciseGroups' | translate }}</span>
-                                </button>
+                                    <fa-icon [icon]="'list-alt'"></fa-icon><span>{{ 'artemisApp.examManagement.exerciseGroups' | translate }}</span>
+                                </a>
                             </td>
                         </tr>
                         <tr>
@@ -128,10 +123,10 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.testRun' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['test-runs']" class="btn btn-info">
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="['test-runs']" class="btn btn-info">
                                     <fa-icon [icon]="'user'"></fa-icon>
                                     <span>{{ 'artemisApp.examManagement.testRun.testRun' | translate }}</span>
-                                </button>
+                                </a>
                             </td>
                         </tr>
                         <tr>
@@ -143,10 +138,10 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.generateStudentExams' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['student-exams']" class="btn btn-primary">
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="['student-exams']" class="btn btn-primary">
                                     <fa-icon [icon]="'eye'"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
-                                </button>
+                                </a>
                             </td>
                         </tr>
                         <tr>
@@ -158,10 +153,10 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.prepareExerciseStart' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['student-exams']" class="btn btn-primary">
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="['student-exams']" class="btn btn-primary">
                                     <fa-icon [icon]="'eye'"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
-                                </button>
+                                </a>
                             </td>
                         </tr>
                         <tr>
@@ -173,10 +168,9 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examDetails' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <button
+                                <a
                                     id="editButton_table"
-                                    type="button"
-                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    *ngIf="isAtLeastInstructor"
                                     [routerLink]="getEditRoute()"
                                     class="btn btn-primary"
                                 >
@@ -193,10 +187,10 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.conductExam' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['student-exams']" class="btn btn-primary">
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="['student-exams']" class="btn btn-primary">
                                     <fa-icon [icon]="'eye'"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
-                                </button>
+                                </a>
                             </td>
                         </tr>
                         <tr>
@@ -208,16 +202,14 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.assessAllSubmissions' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <button
-                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
-                                    type="submit"
+                                <a
+                                    *ngIf="isAtLeastInstructor"
                                     [routerLink]="['tutor-exam-dashboard']"
                                     class="btn btn-primary"
                                     id="tutor-exam-dashboard-button_table"
                                 >
-                                    <fa-icon [icon]="'th-list'"></fa-icon>
-                                    <span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
-                                </button>
+                                    <fa-icon [icon]="'th-list'"></fa-icon><span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
+                                </a>
                             </td>
                         </tr>
                         <tr>
@@ -229,15 +221,14 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.publishResults' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <button
+                                <a
                                     id="editButton_publish"
-                                    type="button"
-                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    *ngIf="isAtLeastInstructor"
                                     [routerLink]="getEditRoute()"
                                     class="btn btn-primary"
                                 >
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-                                </button>
+                                </a>
                             </td>
                         </tr>
                         <tr>
@@ -249,15 +240,14 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examReview' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <button
+                                <a
                                     id="editButton_review"
-                                    type="button"
-                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    *ngIf="isAtLeastInstructor"
                                     [routerLink]="getEditRoute()"
                                     class="btn btn-primary"
                                 >
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-                                </button>
+                                </a>
                             </td>
                         </tr>
                         <tr>
@@ -269,16 +259,15 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.resolveComplaints' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <button
-                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
-                                    type="submit"
+                                <a
+                                    *ngIf="isAtLeastInstructor"
                                     [routerLink]="['tutor-exam-dashboard']"
                                     class="btn btn-primary"
                                     id="tutor-exam-dashboard-button_table_complaints"
                                 >
                                     <fa-icon [icon]="'th-list'"></fa-icon>
                                     <span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
-                                </button>
+                                </a>
                             </td>
                         </tr>
                         <tr>
@@ -290,16 +279,15 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.exportResults' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <button
-                                    type="submit"
-                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']"
+                                <a
+                                    *ngIf="isAtLeastInstructor"
                                     [routerLink]="['scores']"
                                     class="btn btn-info"
                                     id="scores-button_publish_result"
                                 >
                                     <fa-icon [icon]="'eye'"></fa-icon>
                                     <span>{{ 'entity.action.scores' | translate }}</span>
-                                </button>
+                                </a>
                             </td>
                         </tr>
                     </tbody>

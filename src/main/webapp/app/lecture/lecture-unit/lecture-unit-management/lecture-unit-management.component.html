@@ -50,22 +50,17 @@
             >
                 <fa-icon [icon]="'times'"></fa-icon>
             </button>
-            <button *ngIf="editButtonAvailable(lectureUnit)" class="btn mt-1 btn-sm btn-primary edit rounded-pill" (click)="editButtonClicked(lectureUnit)">
+            <a *ngIf="editButtonAvailable(lectureUnit)" class="btn mt-1 btn-sm btn-primary edit rounded-pill" [routerLink]="editButtonRouterLink(lectureUnit)">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                 <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
-            </button>
+            </a>
         </div>
     </div>
 
     <!-- Unit Creation Card Row-->
     <div class="row">
         <div class="col-10 col-md-8 offset-md-2 mx-auto">
-            <jhi-unit-creation-card
-                (createExerciseUnit)="createExerciseUnit()"
-                (createAttachmentUnit)="createAttachmentUnit()"
-                (createVideoUnit)="createVideoUnit()"
-                (createTextUnit)="createTextUnit()"
-            ></jhi-unit-creation-card>
+            <jhi-unit-creation-card></jhi-unit-creation-card>
         </div>
     </div>
 </div>

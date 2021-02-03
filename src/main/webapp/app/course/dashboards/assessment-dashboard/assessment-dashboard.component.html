@@ -165,34 +165,34 @@
                     <td>
                         <ng-container *ngIf="!exercise.teamMode; else teamsLink">
                             <ng-container *ngIf="!isTestRun; else testRun">
-                                <button
+                                <a
                                     [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'tutor-dashboard']"
                                     class="btn btn-info btn-sm mr-1"
                                     [class.guided-tour]="exercise === exerciseForGuidedTour"
                                 >
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
-                                </button>
+                                </a>
                             </ng-container>
                             <ng-template #testRun>
-                                <button
+                                <a
                                     [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'test-run-tutor-dashboard']"
                                     class="btn btn-info btn-sm mr-1"
                                     [class.guided-tour]="exercise === exerciseForGuidedTour"
                                 >
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
-                                </button>
+                                </a>
                             </ng-template>
                         </ng-container>
 
                         <ng-template #teamsLink>
-                            <button
+                            <a
                                 [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams']"
                                 [queryParams]="{ filter: TeamFilterProp.OWN }"
                                 class="btn btn-info btn-sm mr-1"
                                 [class.guided-tour]="exercise === exerciseForGuidedTour"
                             >
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams">Exercise Teams</span>
-                            </button>
+                            </a>
                         </ng-template>
 
                         <span

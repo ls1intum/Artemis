@@ -12,6 +12,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExercisePopupService } from 'app/exercises/quiz/manage/quiz-exercise-popup.service';
 import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 import { cloneDeep } from 'lodash';
+import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
@@ -124,11 +125,11 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * @function back
-     * @desc Navigate back to course
+     * Revert to the previous state, equivalent with pressing the back button on your browser
+     * Returns to the overview page if there is no previous state
      */
     back(): void {
-        this.location.back();
+        navigateBackFromExerciseUpdate(this.router, this.quizExercise);
     }
 
     /**
