@@ -299,10 +299,10 @@
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             },
             "checklist": {
-                "title": "Checkliste",
+                "title": "Exam Conduction Checklist",
                 "introduction": "Unter folgendem Link kannst du dich über den Ablauf einer Artemis Klausur informieren:",
-                "linkDescription": "Instructors guide for exams in Artemis",
-                "checklistItem": "Checkliste",
+                "linkDescription": "Instructors Guide",
+                "checklistItem": "Aufgabe",
                 "description": "Beschreibung",
                 "goTo": "Gehe zu",
                 "tableItem": {
@@ -321,7 +321,7 @@
                 },
                 "descriptionItem": {
                     "register": "Mindestens ein Studierender muss zur Klausur angemeldet sein.",
-                    "exerciseGroups": "Die Punkte aller Aufgaben einer Aufgabengruppe muss identisch sein. Die Anzahl an Aufgabengruppen muss der Anzahl der Aufgaben in der Klausur entsprechen.",
+                    "exerciseGroups": "Du kannst Übungsgruppen mit mehreren Übungsvarianten erstellen, um Unterschleif für Studierende zu erschweren. Die Punkte aller Aufgaben einer Aufgabengruppe müssen identisch sein. Die Anzahl an Aufgabengruppen muss der Anzahl der Aufgaben in der Klausur entsprechen.",
                     "generateStudentExams": "Die Klausuren der Studierenden müssen generiert worden sein, bevor die Klausur beginnt.",
                     "prepareExerciseStart": "Vorbereiten der Aufgaben kann die Serverlast während der Klausur reduzieren.",
                     "examDetails": "Alle relevanten Details der Klausur müssen vor dem Start der Korrektur eingetragen sein.",
@@ -330,7 +330,7 @@
                     "publishResults": "Das Veröffentlichen der Ergebnisse macht diese zugänglich für die Klausurteilnehmer.",
                     "examReview": "Alle relevanten Daten müssen in der Klausur spezifiziert sein.",
                     "resolveComplaints": "Beschwerden können im Bewertungs Dashboard bearbeitet werden.",
-                    "testRun": "Existierende Testdurchläufe müssen vor Beginn der Klausur gelöscht werden.",
+                    "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
                     "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden."
                 }
             }
