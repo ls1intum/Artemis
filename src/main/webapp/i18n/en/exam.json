@@ -332,7 +332,7 @@
                     "examReview": "Make sure to have all dates specified correctly.",
                     "resolveComplaints": "Complaints can be resolved within the Assessment Dashboard.",
                     "testRun": "Try out different combinations of exercise variants from the student perspective.",
-                    "exportResults": "Exports the exam results as a .csv file"
+                    "exportResults": "Exports the exam results as a .csv file."
                 }
             }
         },
