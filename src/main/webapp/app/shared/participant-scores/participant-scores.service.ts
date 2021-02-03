@@ -114,7 +114,7 @@ export class ParticipantScoresService {
         for (const sortParameter of sortingParameters) {
             params = params.append('sort', `${sortParameter.sortProperty},${sortParameter.sortDirection}`);
         }
-        params = params.set('page', page + '');
-        return params.set('size', size + '');
+        params = params.set('page', String(page));
+        return params.set('size', String(size));
     }
 }
