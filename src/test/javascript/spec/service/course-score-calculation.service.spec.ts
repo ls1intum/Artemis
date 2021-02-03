@@ -1,7 +1,7 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { ABSOLUTE_SCORE, CourseScoreCalculationService, MAX_POINTS, PRESENTATION_SCORE, REACHABLE_POINTS, RELATIVE_SCORE } from 'app/overview/course-score-calculation.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -129,10 +129,10 @@ describe('CourseScoreCalculationService', () => {
         participation.results.push(result);
     }
 
-    function addTextExerciseToCourse(course: Course, maxScore: number, bonusPoints: number, includedInOverallScore: IncludedInOverallScore, isFinished: boolean) {
+    function addTextExerciseToCourse(course: Course, maxPoints: number, bonusPoints: number, includedInOverallScore: IncludedInOverallScore, isFinished: boolean) {
         const exercise = new TextExercise(course, undefined);
         exercise.includedInOverallScore = includedInOverallScore;
-        exercise.maxPoints = maxScore;
+        exercise.maxPoints = maxPoints;
         exercise.bonusPoints = bonusPoints;
         exercise.studentParticipations = [];
         if (isFinished) {
@@ -149,24 +149,24 @@ describe('CourseScoreCalculationService', () => {
         expectedAbsoluteScore?: number,
         expectedRelativeScore?: number,
         expectedCurrentRelativeScore?: number,
-        expectedMaxScore?: number,
+        expectedMaxPoints?: number,
         expectedPresentationScore?: number,
         expectedReachableScore?: number,
     ) {
         if (expectedAbsoluteScore) {
-            expect(resultMap.get('absoluteScore')).to.equal(expectedAbsoluteScore);
+            expect(resultMap.get(ABSOLUTE_SCORE)).to.equal(expectedAbsoluteScore);
         }
         if (expectedRelativeScore) {
-            expect(resultMap.get('relativeScore')).to.equal(expectedRelativeScore);
+            expect(resultMap.get(RELATIVE_SCORE)).to.equal(expectedRelativeScore);
         }
         if (expectedCurrentRelativeScore) {
-            expect(resultMap.get('maxScore')).to.equal(expectedMaxScore);
+            expect(resultMap.get(MAX_POINTS)).to.equal(expectedMaxPoints);
         }
         if (expectedPresentationScore) {
-            expect(resultMap.get('presentationScore')).to.equal(expectedPresentationScore);
+            expect(resultMap.get(PRESENTATION_SCORE)).to.equal(expectedPresentationScore);
         }
         if (expectedReachableScore) {
-            expect(resultMap.get('reachableScore')).to.equal(expectedReachableScore);
+            expect(resultMap.get(REACHABLE_POINTS)).to.equal(expectedReachableScore);
         }
     }
 });

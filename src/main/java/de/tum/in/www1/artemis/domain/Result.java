@@ -123,23 +123,23 @@ public class Result extends DomainObject {
     /**
      * Sets the resultString attribute
      *
-     * @param totalScore total amount of scored points between 0 and maxScore
-     * @param maxScore   maximum score reachable at corresponding exercise
+     * @param totalPoints total amount of points between 0 and maxPoints
+     * @param maxPoints   maximum points reachable at corresponding exercise
      */
-    public void setResultString(Double totalScore, Double maxScore) {
-        resultString = createResultString(totalScore, maxScore);
+    public void setResultString(Double totalPoints, Double maxPoints) {
+        resultString = createResultString(totalPoints, maxPoints);
     }
 
     /**
      * Builds the resultString attribute
      *
-     * @param totalScore total amount of scored points
-     * @param maxScore   maximum score reachable at corresponding exercise
+     * @param totalPoints total amount of scored points
+     * @param maxPoints   maximum score reachable at corresponding exercise
      * @return String with result string in this format "2 of 13 points"
      */
-    public String createResultString(Double totalScore, Double maxScore) {
+    public String createResultString(Double totalPoints, Double maxPoints) {
         DecimalFormat formatter = new DecimalFormat("#.##");
-        return formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points";
+        return formatter.format(totalPoints) + " of " + formatter.format(maxPoints) + " points";
     }
 
     public ZonedDateTime getCompletionDate() {
@@ -227,11 +227,11 @@ public class Result extends DomainObject {
     /**
      * calculates and sets the score attribute and accordingly the successful flag
      *
-     * @param totalScore total amount of scored points between 0 and maxScore
-     * @param maxScore   maximum score reachable at corresponding exercise
+     * @param totalPoints total amount of points between 0 and maxPoints
+     * @param maxPoints   maximum points reachable at corresponding exercise
      */
-    public void setScore(Double totalScore, Double maxScore) {
-        Long score = Math.round(totalScore / maxScore * 100);
+    public void setScore(Double totalPoints, Double maxPoints) {
+        Long score = Math.round(totalPoints / maxPoints * 100);
         setScore(score);
     }
 
@@ -459,7 +459,7 @@ public class Result extends DomainObject {
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission));
             // update result string
-            setResultString(quizExercise.getScoreInPointsForSubmission(quizSubmission), quizExercise.getMaxTotalScore().doubleValue());
+            setResultString(quizExercise.getScoreInPointsForSubmission(quizSubmission), quizExercise.getOverallQuizPoints().doubleValue());
         }
     }
 
