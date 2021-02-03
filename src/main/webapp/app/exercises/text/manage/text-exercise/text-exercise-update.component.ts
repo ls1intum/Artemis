@@ -15,6 +15,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { NgForm } from '@angular/forms';
+import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -125,11 +126,15 @@ export class TextExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Returns to previous state, which is always exercise page
+     * Revert to the previous state, equivalent with pressing the back button on your browser
+     * Returns to the detail page if there is no previous state and we edited an existing exercise
+     * Returns to the overview page if there is no previous state and we created a new exercise
+     * Returns to the exercise group page if we are in exam mode
      */
     previousState() {
-        window.history.back();
+        navigateBackFromExerciseUpdate(this.router, this.textExercise);
     }
+
     /**
      * Validates if the date is correct
      */
