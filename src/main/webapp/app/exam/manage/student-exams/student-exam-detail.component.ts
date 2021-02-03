@@ -24,6 +24,7 @@ export class StudentExamDetailComponent implements OnInit {
     student: User;
     workingTimeForm: FormGroup;
     isSavingWorkingTime = false;
+    isTestRun = false;
     maxTotalScore = 0;
     achievedTotalScore = 0;
 
@@ -39,6 +40,7 @@ export class StudentExamDetailComponent implements OnInit {
      * Initialize the courseId and studentExam
      */
     ngOnInit(): void {
+        this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
         this.loadStudentExam();
     }
 
@@ -133,7 +135,10 @@ export class StudentExamDetailComponent implements OnInit {
     }
 
     examIsVisible(): boolean {
-        if (this.studentExam.exam) {
+        if (this.isTestRun) {
+            // for test runs we always want to be able to change the working time
+            return !!this.studentExam.submitted;
+        } else if (this.studentExam.exam) {
             // Disable the form to edit the working time if the exam is already visible
             return moment(this.studentExam.exam.visibleDate).isBefore(moment());
         }

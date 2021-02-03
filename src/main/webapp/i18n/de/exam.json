@@ -301,6 +301,7 @@
         },
         "studentExamDetail": {
             "studentExam": "Klausur ({{ examTitle }})",
+            "testRun": "Testlauf ({{ examTitle }})",
             "exercises": "Aufgaben",
             "downloadPDF": " PDF herunterladen",
             "student": "Student",
