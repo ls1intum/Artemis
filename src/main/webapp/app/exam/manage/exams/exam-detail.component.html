@@ -101,14 +101,13 @@
                 <span *ngIf="!formattedConfirmationEndText" jhiTranslate="artemisApp.exam.notSet"></span>
             </dl>
 
-            <button id="editButton" type="button" [routerLink]="getEditRoute()" class="btn btn-primary">
+            <a id="editButton" [routerLink]="getEditRoute()" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-            </button>
+            </a>
 
-            <button id="studentExamsButton" type="submit" *ngIf="isAtLeastInstructor" [routerLink]="getStudentExamRoute()" class="btn btn-primary">
-                <fa-icon [icon]="'eye'"></fa-icon>
-                <span>{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
-            </button>
+            <a id="studentExamsButton" *ngIf="isAtLeastInstructor" [routerLink]="getStudentExamRoute()" class="btn btn-primary">
+                <fa-icon [icon]="'eye'"></fa-icon> <span>{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
+            </a>
         </div>
     </div>
 </div>
