@@ -106,7 +106,7 @@ public class OrganizationResource {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Organization> updateOrganization(@RequestBody Organization organization) {
         if (organization.getId() != null && organizationService.findOne(organization.getId()) != null) {
-            Organization updated = organizationService.save(organization);
+            Organization updated = organizationService.update(organization);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updated.getName())).body(updated);
         }
         else {

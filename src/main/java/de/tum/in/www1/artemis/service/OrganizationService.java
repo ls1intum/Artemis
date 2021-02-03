@@ -40,6 +40,31 @@ public class OrganizationService {
     }
 
     /**
+     * Update an organization
+     * To avoid removing the currently mapped users and courses of the organization,
+     * these are loaded eagerly and the edited values changed within the loaded entity.
+     * @param organization the organization to update
+     * @return the updated organization
+     */
+    public Organization update(Organization organization) {
+        log.debug("Request to update Organization : {}", organization);
+        Optional<Organization> optionalOldOrganization = organizationRepository.findByIdWithEagerUsersAndCourses(organization.getId());
+        if (optionalOldOrganization.isPresent()) {
+            Organization oldOrganization = optionalOldOrganization.get();
+            oldOrganization.setName(organization.getName());
+            oldOrganization.setShortName(organization.getShortName());
+            oldOrganization.setUrl(organization.getUrl());
+            oldOrganization.setDescription(organization.getDescription());
+            oldOrganization.setLogoUrl(organization.getLogoUrl());
+            oldOrganization.setEmailPattern(organization.getEmailPattern());
+            return organizationRepository.save(oldOrganization);
+        }
+        else {
+            throw new EntityNotFoundException("Organization with id: \"" + organization.getId() + "\" does not exist");
+        }
+    }
+
+    /**
      *  Alias for saving an organization
      *
      * @param organization the entity to save

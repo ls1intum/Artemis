@@ -42,14 +42,14 @@ public class Organization extends DomainObject {
     @Column(name = "emailPattern")
     private String emailPattern;
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany(cascade = CascadeType.REMOVE)
     @JoinTable(name = "user_organization", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "organization_id", referencedColumnName = "id") })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @BatchSize(size = 20)
     private Set<User> users = new HashSet<User>();
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany(cascade = CascadeType.REMOVE)
     @JoinTable(name = "course_organization", joinColumns = { @JoinColumn(name = "course_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "organization_id", referencedColumnName = "id") })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
