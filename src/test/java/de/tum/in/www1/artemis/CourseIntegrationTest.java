@@ -1073,9 +1073,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCleanupCourseAsInstructor_no_Archive() throws Exception {
         // Generate a course that has an archive
-        Course course = database.createCourse();
-        course.setId(1L);
-        course = courseRepo.save(course);
+        Course course = courseRepo.save(database.createCourse());
 
         request.delete("/api/courses/" + course.getId() + "/cleanup", HttpStatus.BAD_REQUEST);
     }
