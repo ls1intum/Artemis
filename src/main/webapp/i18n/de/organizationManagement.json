@@ -13,9 +13,18 @@
             "question": "Soll die Organisation <strong>{{ title }}</strong> wirklich gelöscht werden?"
         },
         "addLabel": "Organisation hinzufügen",
-        "editLabel": "Organisation bearbeiten",
+        "addOrEditLabel": "Organisation hinzufügen oder bearbeiten",
         "detail": {
             "title": "Organisation"
+        },
+        "userSearch": {
+            "usersPerPage": "{{number}} Benutzer pro Seite",
+            "showAllUsers": "Alle Benutzer anzeigen",
+            "searchForUsers": "Benutzer zu dieser Organisation hinzufügen durch Suchen nach Login oder Namen",
+            "searchNoResults": "Keine Benutzer gefunden",
+            "removeFromOrganization": {
+                "modalQuestion": "Soll der Nutzer mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Organisation entfernt werden?"
+            }
         }
     }
 }

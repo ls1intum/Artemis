@@ -77,7 +77,8 @@ public class OrganizationService {
      */
     public Organization findOneWithEagerUsersAndCourses(long organizationId) {
         log.debug("Request to get Organization : {}", organizationId);
-        return organizationRepository.findByIdWithEagerUsersAndCourses(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization with id: \"" + organizationId + "\" does not exist"));
+        return organizationRepository.findByIdWithEagerUsersAndCourses(organizationId)
+                .orElseThrow(() -> new EntityNotFoundException("Organization with id: \"" + organizationId + "\" does not exist"));
     }
 
     /**

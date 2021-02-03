@@ -13,9 +13,18 @@
             "question": "Are you sure you want to delete the <strong>{{ title }}</strong> organization?"
         },
         "addLabel": "Add organization",
-        "editLabel": "Edit organization",
+        "addOrEditLabel": "Add or Edit organization",
         "detail": {
             "title": "Organization"
+        },
+        "userSearch": {
+            "usersPerPage": "{{number}} users per page",
+            "showAllUsers": "Show all users",
+            "searchForUsers": "Add a user to this organization by searching for login or name",
+            "searchNoResults": "No users found",
+            "removeFromOrganization": {
+                "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this organization?"
+            }
         }
     }
 }
