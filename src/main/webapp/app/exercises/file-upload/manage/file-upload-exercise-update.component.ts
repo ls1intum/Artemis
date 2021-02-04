@@ -10,6 +10,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { Exercise, ExerciseCategory, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
+import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -66,10 +67,13 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Returns to previous state, which should be always the page of selected course
+     * Revert to the previous state, equivalent with pressing the back button on your browser
+     * Returns to the detail page if there is no previous state and we edited an existing exercise
+     * Returns to the overview page if there is no previous state and we created a new exercise
+     * Returns to the exercise group page if we are in exam mode
      */
     previousState() {
-        window.history.back();
+        navigateBackFromExerciseUpdate(this.router, this.fileUploadExercise);
     }
 
     /**

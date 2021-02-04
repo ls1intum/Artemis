@@ -67,6 +67,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             entity.releaseDate = moment(); // We will get a warning if we do not set a release date
             spyOn(programmingExerciseService, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
+            comp.programmingExercise.course = course;
             // WHEN
             comp.save();
             tick(); // simulate async
@@ -82,6 +83,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             entity.releaseDate = moment(); // We will get a warning if we do not set a release date
             spyOn(programmingExerciseService, 'automaticSetup').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
+            comp.programmingExercise.course = course;
             // WHEN
             comp.save();
             tick(); // simulate async
@@ -98,6 +100,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             entity.title = 'My Exercise   ';
             spyOn(programmingExerciseService, 'automaticSetup').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
+            comp.programmingExercise.course = course;
 
             // WHEN
             comp.save();

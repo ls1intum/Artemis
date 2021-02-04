@@ -21,7 +21,7 @@ export function assessmentNavigateBack(location: Location, router: Router, exerc
         const course = getCourseFromExercise(exercise);
 
         if (isTestRun) {
-            router.navigateByUrl(`/course-management/${course?.id}/exercises/${exercise.id}/test-run-tutor-dashboard`);
+            router.navigateByUrl(`/course-management/${course?.id}/exercises/${exercise.id}/test-run-exercise-assessment-dashboard`);
         } else {
             if (exercise.teamMode && submission) {
                 const teamId = (submission.participation as StudentParticipation).team?.id;

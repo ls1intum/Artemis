@@ -420,15 +420,16 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetAllTestRunSubmissionsForExercise_notFound() throws Exception {
+    public void testGetAllTestRunSubmissionsForExercise_noTestRunSubmissions() throws Exception {
         course2 = database.addEmptyCourse();
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
         var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false);
-        request.getList("/api/exercises/" + exam.getExerciseGroups().get(0).getExercises().iterator().next().getId() + "/test-run-submissions", HttpStatus.NOT_FOUND,
-                Submission.class);
+        final var latestSubmissions = request.getList("/api/exercises/" + exam.getExerciseGroups().get(0).getExercises().iterator().next().getId() + "/test-run-submissions",
+                HttpStatus.OK, Submission.class);
+        assertThat(latestSubmissions).isEmpty();
     }
 
     @Test
@@ -605,7 +606,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
                 .stream().filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
@@ -640,7 +641,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
                 .stream().filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
@@ -682,7 +683,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         Map<User, List<Exercise>> exercisesOfUser = studentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises().stream()
                 .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
@@ -723,7 +724,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         Map<User, List<Exercise>> exercisesOfUser = studentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises().stream()
                 .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {

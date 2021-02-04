@@ -277,76 +277,6 @@ public class ParticipationService {
     }
 
     /**
-     * In order to distinguish test run submissions from student exam submissions we add a Test Run result to the test run submissions.
-     * We add draft assessments with the instructor as assessor to the empty submissions in order to hide them from tutors for correction.
-     * This way the submission appears to, and can only by assessed by, the instructor who created the test run.
-     * For quizzes, we also calculate the score.
-     * @param participations The test run participations
-     */
-    public void markSubmissionsOfTestRunParticipations(List<StudentParticipation> participations) {
-        for (final var participation : participations) {
-            final var optionalExistingSubmission = participation.findLatestSubmission();
-            if (optionalExistingSubmission.isPresent()) {
-                Submission submission = optionalExistingSubmission.get();
-
-                // We add a result for test runs with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
-                submission = submissionRepository.findWithEagerResultAndFeedbackById(submission.getId()).get();
-                var manualResults = submission.getManualResults();
-                if (manualResults.isEmpty()) {
-                    submission.setSubmissionDate(ZonedDateTime.now());
-                    Result result = new Result();
-                    result.setParticipation(participation);
-                    result.setAssessor(participation.getStudent().get());
-                    result.setAssessmentType(AssessmentType.TEST_RUN);
-
-                    if (submission instanceof ProgrammingSubmission) {
-                        var latestAutomaticResult = submission.getLatestResult();
-                        if (latestAutomaticResult != null) {
-                            List<Feedback> automaticFeedbacks = latestAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
-                            result = resultRepository.save(result);
-
-                            // Copy automatic feedbacks into the manual result
-                            for (Feedback feedback : automaticFeedbacks) {
-                                feedback = feedbackRepository.save(feedback);
-                                feedback.setResult(result);
-                            }
-                            result.setFeedbacks(automaticFeedbacks);
-                            result.setResultString(latestAutomaticResult.getResultString());
-                            resultRepository.save(result);
-                            result.setSubmission(submission);
-                            submission.addResult(result);
-                            submissionRepository.save(submission);
-                        }
-                    }
-                    else if (submission instanceof QuizSubmission) {
-                        participation.setExercise(quizExerciseRepository.findWithEagerQuestionsById(participation.getExercise().getId()).orElse(null));
-                        // set submission to calculate scores
-                        result.setSubmission(submission);
-                        // calculate scores and update result and submission accordingly
-                        ((QuizSubmission) submission).calculateAndUpdateScores((QuizExercise) participation.getExercise());
-                        result.evaluateSubmission();
-                        // remove submission to follow save order for ordered collections
-                        result.setSubmission(null);
-                        result = resultRepository.save(result);
-                        participation.setResults(Set.of(result));
-                        studentParticipationRepository.save(participation);
-                        result.setSubmission(submission);
-                        submission.addResult(result);
-                        submissionRepository.save(submission);
-                    }
-                    else {
-                        result = resultRepository.save(result);
-                        result.setSubmission(submission);
-                        submission.addResult(result);
-                        submissionRepository.save(submission);
-                    }
-                }
-                save(participation);
-            }
-        }
-    }
-
-    /**
      * This method checks whether a participation exists for a given exercise and user. If not, it creates such a participation with initialization state FINISHED.
      * If the participation had to be newly created or there were no submissions yet for the existing participation, a new submission is created with the given submission type.
      * For external submissions, the submission is assumed to be submitted immediately upon creation.
@@ -1044,7 +974,7 @@ public class ParticipationService {
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
     public List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(Long exerciseId, int correctionRound) {
-        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation(exerciseId, correctionRound);
+        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exerciseId, correctionRound);
     }
 
     /**
@@ -1366,24 +1296,36 @@ public class ParticipationService {
      * @param exercises the individual-mode exercises for which participations should be found
      * @return student's participations
      */
-    public List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(Long studentId, List<Exercise> exercises) {
-        return studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentId, exercises);
+    public List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(Long studentId, List<Exercise> exercises) {
+        return studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentId, exercises);
     }
 
     /**
-     * Loads the test run participation for the given user id (which typically belongs to an instructor or admin)
-     * See {@link StudentParticipation#isTestRun()}
-     * @param userId the id of the user
-     * @param exercise the exercise id
-     * @return the optional test run participation with submissions and results loaded
+     * Get all participations for the given studentExam and exercises combined with their submissions with a result.
+     * Distinguishes between student exams and test runs and only loads the respective participations
+     *
+     * @param studentExam studentExam with exercises loaded
+     * @return student's participations with submissions and results
      */
-    public Optional<StudentParticipation> findTestRunParticipationForExercise(Long userId, Exercise exercise) {
-        var studentParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(userId, List.of(exercise));
-        if (studentParticipations.isEmpty() || !studentParticipations.get(0).isTestRun()) {
-            return Optional.empty();
+    public List<StudentParticipation> findByStudentExamWithEagerSubmissionsResult(StudentExam studentExam) {
+        if (studentExam.isTestRun()) {
+            return studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(),
+                    studentExam.getExercises());
         }
+        else {
+            return studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(),
+                    studentExam.getExercises());
+        }
+    }
 
-        return Optional.of(studentParticipations.get(0));
+    /**
+     * Loads the test run participatiosn for the given user id (which typically belongs to an instructor or admin)
+     * @param userId the id of the user
+     * @param exercises the exercises for which we want the participations
+     * @return the test run participations with submissions and results loaded
+     */
+    public List<StudentParticipation> findTestRunParticipationForExerciseWithEagerSubmissionsResult(Long userId, List<Exercise> exercises) {
+        return studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(userId, exercises);
     }
 
     /**

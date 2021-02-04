@@ -363,6 +363,17 @@ public class UserService {
             if (ldapUserOptional.isPresent()) {
                 LdapUserDto ldapUser = ldapUserOptional.get();
                 log.info("Ldap User " + ldapUser.getUsername() + " has registration number: " + ldapUser.getRegistrationNumber());
+
+                // handle edge case, the user already exists in Artemis, but for some reason does not have a registration number or it is wrong
+                if (StringUtils.hasText(ldapUser.getUsername())) {
+                    var existingUser = userRepository.findOneByLogin(ldapUser.getUsername());
+                    if (existingUser.isPresent()) {
+                        existingUser.get().setRegistrationNumber(ldapUser.getRegistrationNumber());
+                        saveUser(existingUser.get());
+                        return existingUser;
+                    }
+                }
+
                 // Use empty password, so that we don't store the credentials of Jira users in the Artemis DB
                 User user = createUser(ldapUser.getUsername(), "", ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(), registrationNumber, null, "en");
                 if (useExternalUserManagement) {
@@ -723,15 +734,6 @@ public class UserService {
         Page<User> users = userRepository.searchAllByLoginOrName(pageable, loginOrName);
         users.forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
         return users.map(UserDTO::new);
-    }
-
-    /**
-     * Get user with groups by given login string
-     * @param login user login string
-     * @return existing user with given login string or null
-     */
-    public Optional<User> getUserWithGroupsByLogin(String login) {
-        return userRepository.findOneWithGroupsByLogin(login);
     }
 
     /**

@@ -480,7 +480,7 @@ public class Result extends DomainObject {
      */
     @JsonIgnore
     public boolean isManual() {
-        return AssessmentType.MANUAL.equals(assessmentType) || AssessmentType.SEMI_AUTOMATIC.equals(assessmentType) || AssessmentType.TEST_RUN.equals(assessmentType);
+        return AssessmentType.MANUAL.equals(assessmentType) || AssessmentType.SEMI_AUTOMATIC.equals(assessmentType);
     }
 
     /**
