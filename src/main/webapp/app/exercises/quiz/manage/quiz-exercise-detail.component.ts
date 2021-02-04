@@ -79,7 +79,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
     course: Course;
     quizExercise: QuizExercise;
-    exerciseGroup: ExerciseGroup;
+    exerciseGroup?: ExerciseGroup;
     courseRepository: CourseManagementService;
     notificationText?: string;
 
@@ -168,16 +168,18 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         const quizId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const groupId = Number(this.route.snapshot.paramMap.get('groupId'));
+        if (this.examId && groupId) {
+            this.isExamMode = true;
+        }
         /** Query the courseService for the participationId given by the params */
         if (this.courseId) {
             this.courseService.find(this.courseId).subscribe((response: HttpResponse<Course>) => {
                 this.course = response.body!;
                 // Load exerciseGroup and set exam mode
-                if (this.examId && groupId) {
-                    this.isExamMode = true;
-                    this.exerciseGroupService.find(this.courseId!, this.examId, groupId).subscribe((groupResponse: HttpResponse<ExerciseGroup>) => {
+                if (this.isExamMode) {
+                    this.exerciseGroupService.find(this.courseId!, this.examId!, groupId).subscribe((groupResponse: HttpResponse<ExerciseGroup>) => {
                         // Make sure to call init if we didn't receive an id => new quiz-exercise
-                        this.exerciseGroup = groupResponse.body!;
+                        this.exerciseGroup = groupResponse.body || undefined;
                         if (!quizId) {
                             this.init();
                         }
@@ -195,6 +197,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 this.init();
             });
         }
+        // TODO: we should try to avoid calling this.init() above more than once
         this.courseRepository = this.courseService;
     }
 
@@ -611,20 +614,20 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         }
         // Release date is valid if it's not null/undefined and a valid date; Precondition: isPlannedToStart is set
         // Release date should also not be in the past
-        const releaseDateValidAndNotInPastCondition: boolean =
+        const releaseDateValidAndNotInPastCondition =
             !this.quizExercise.isPlannedToStart ||
             (this.quizExercise.releaseDate !== undefined && moment(this.quizExercise.releaseDate).isValid() && moment(this.quizExercise.releaseDate).isAfter(moment()));
 
-        const isGenerallyValid: boolean =
-            this.quizExercise.title !== undefined &&
+        const isGenerallyValid =
+            this.quizExercise.title != undefined &&
             this.quizExercise.title !== '' &&
             this.quizExercise.title.length < 250 &&
             this.quizExercise.duration !== 0 &&
             releaseDateValidAndNotInPastCondition &&
-            this.quizExercise.quizQuestions !== undefined &&
+            this.quizExercise.quizQuestions != undefined &&
             !!this.quizExercise.quizQuestions.length;
         const areAllQuestionsValid = this.quizExercise.quizQuestions?.every(function (question) {
-            if (question.points === undefined || question.points === null) {
+            if (question.points == undefined) {
                 return false;
             }
             if (question.points && question.points < 0) {
@@ -842,7 +845,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     translateValues: { index: index + 1 },
                 });
             }
-            if (question.points === undefined || question.points === null || question.points < 0) {
+            if (question.points == undefined || question.points < 0) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionScore',
                     translateValues: { index: index + 1 },

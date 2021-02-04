@@ -307,6 +307,7 @@
                 "description": "Beschreibung",
                 "status": "Aktueller Status",
                 "goTo": "Gehe zu",
+                "status": "Aktueller Status",
                 "tableItem": {
                     "register": "Registrieren der Studierenden zur Klausur",
                     "exerciseGroups": "Erstellen Sie mindestens eine Aufgaben Gruppe mit mindestens einer Aufgabe",

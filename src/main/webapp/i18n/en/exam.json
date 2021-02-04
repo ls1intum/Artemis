@@ -308,6 +308,7 @@
                 "description": "Description",
                 "status": "Current status",
                 "goTo": "Go to",
+                "status": "Current Status",
                 "tableItem": {
                     "register": "Register students to the exam",
                     "exerciseGroups": "Create at least one exercise group with exercises",
