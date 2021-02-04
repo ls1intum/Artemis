@@ -460,7 +460,7 @@ public class CourseService {
             websocketMessagingService.sendMessage(topic, mapper.writeValueAsString(message));
         }
         catch (IOException e) {
-            // I guess we can ignore this ?
+            log.info("Couldn't notify the user about the archive state of course {}: {}", courseId, e.getMessage());
         }
     }
 }
