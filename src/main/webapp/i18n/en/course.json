@@ -118,6 +118,7 @@
             },
             "archive": {
                 "archiveCourse": "Archive Course",
+                "archiveCourseSuccess": "The course has been archived!",
                 "archiveCourseError": "Failed to archive the course",
                 "archiveDownloadError": "There was a problem downloading the archive",
                 "downloadCourseArchive": "Download Archive"

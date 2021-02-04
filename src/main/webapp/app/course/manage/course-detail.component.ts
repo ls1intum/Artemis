@@ -18,7 +18,6 @@ import { TranslateService } from '@ngx-translate/core';
 
 type CourseArchiveState = {
     archiveState: 'COMPLETED' | 'RUNNING';
-    progress: string;
 };
 
 @Component({
@@ -89,11 +88,12 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
 
     private handleCourseArchiveStateChanges(courseArchiveState: CourseArchiveState) {
-        const { archiveState, progress } = courseArchiveState;
+        const { archiveState } = courseArchiveState;
         this.courseIsBeingArchived = archiveState === 'RUNNING';
-        this.archiveCourseButtonText = archiveState === 'RUNNING' ? progress : this.getArchiveCourseText();
+        this.archiveCourseButtonText = archiveState === 'RUNNING' ? ' The course is being archived...' : this.getArchiveCourseText();
 
         if (archiveState === 'COMPLETED') {
+            this.jhiAlertService.success('artemisApp.course.archive.archiveCourseSuccess');
             this.eventManager.broadcast('courseListModification');
         }
     }

@@ -6,9 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,7 +28,6 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -74,19 +71,14 @@ public class CourseService {
 
     private final LearningGoalRepository learningGoalRepository;
 
-    private final ProgrammingExerciseExportService programmingExerciseExportService;
-
-    private final ZipFileService zipFileService;
-
-    private final FileService fileService;
+    private final CourseExportService courseExportService;
 
     private final WebsocketMessagingService websocketMessagingService;
 
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
             ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository,
-            ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
-            WebsocketMessagingService websocketMessagingService) {
+            CourseExportService courseExportService, WebsocketMessagingService websocketMessagingService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -98,10 +90,8 @@ public class CourseService {
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
         this.learningGoalRepository = learningGoalRepository;
-        this.programmingExerciseExportService = programmingExerciseExportService;
-        this.zipFileService = zipFileService;
+        this.courseExportService = courseExportService;
         this.websocketMessagingService = websocketMessagingService;
-        this.fileService = fileService;
     }
 
     @Autowired
@@ -389,11 +379,6 @@ public class CourseService {
         log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
     }
 
-    /**
-     * Archives the course. The course must be over before it can be archived.
-     *
-     * @param course The course to archive
-     */
     @Async
     public void archiveCourse(Course course) {
         SecurityUtils.setAuthorizationObject();
@@ -403,178 +388,26 @@ public class CourseService {
             return;
         }
 
-        notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.RUNNING, "Archiving course...");
-
-        var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        var courseDirPath = Path.of("./exports", courseDirName);
-        try {
-            Files.createDirectories(courseDirPath);
-        }
-        catch (IOException e) {
-            log.info("Cannot archive course {} because the temporary directories cannot be created: {}", course.getId(), e.getMessage());
-            return;
-        }
-
-        // Archive course exercises and exams
-        archiveCourseExercises(course, courseDirPath.toString());
-        archiveCourseExams(course, courseDirPath.toString());
-
-        var courseArchivePath = createCourseZipFile(courseDirPath);
-
-        // Attach the path to the archive to the course and save it in the database
-        course.setCourseArchivePath(courseArchivePath.toString());
-        courseRepository.save(course);
-
-        notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.COMPLETED, "Archiving course finished!");
-        log.info("Successfully archived course {}. The archive is located at: {}", course.getId(), courseArchivePath);
-    }
-
-    /**
-     * Archives all exercises of the course and adds them into the directory
-     * outputDir/exercises/
-     *
-     * @param course    The course where the exercises are located
-     * @param outputDir The directory that will be used to store the exercises subdirectory
-     */
-    private void archiveCourseExercises(Course course, String outputDir) {
-        Path exercisesDir = Path.of(outputDir, "exercises");
-        try {
-            Files.createDirectory(exercisesDir);
-            archiveExercises(course.getExercises(), exercisesDir.toString());
-        }
-        catch (IOException e) {
-            log.info("Failed to create course exercise directory {}: {}", exercisesDir, e.getMessage());
-        }
-    }
-
-    /**
-     * Archives all exams of the course and adds them into the directory
-     * outputDir/exams/
-     *
-     * @param course    The course where the exercises are located
-     * @param outputDir The directory that will be used to store the exams
-     */
-    private void archiveCourseExams(Course course, String outputDir) {
-        Path examsDir = Path.of(outputDir, "exams");
-        try {
-            Files.createDirectory(examsDir);
-            var exams = findOneWithLecturesAndExams(course.getId()).getExams();
-            exams.forEach(exam -> archiveExam(exam.getId(), examsDir.toString()));
-        }
-        catch (IOException e) {
-            log.info("Failed to create course exams directory {}: {}", examsDir, e.getMessage());
-        }
-    }
-
-    /**
-     * Archives an exams adds it into the directory outputDir/examId-examTitle
-     *
-     * @param examId    The id of the exam to archive
-     * @param outputDir The directory that will be used to store the exam
-     */
-    private void archiveExam(long examId, String outputDir) {
-        var exam = examService.findOneWithExerciseGroupsAndExercises(examId);
-        Path examDir = Path.of(outputDir, exam.getId() + "-" + exam.getTitle());
-        try {
-            Files.createDirectory(examDir);
-            // We retrieve every exercise from each exercise group and flatten the list.
-            var exercises = examService.getAllExercisesOfExam(examId);
-            archiveExercises(exercises, examDir.toString());
-        }
-        catch (IOException e) {
-            log.info("Failed to create exam directory {}: {}", examDir, e.getMessage());
-        }
-    }
-
-    /**
-     * Archives the exercises by creating a zip file for each exercise.
-     *
-     * @param exercises The exercises to archive
-     * @param outputDir The path to a directory that will be used to store the zipped files.
-     */
-    private void archiveExercises(Set<Exercise> exercises, String outputDir) {
-        ArrayList<Long> exercisesThatFailedToExport = new ArrayList<>();
-
-        // Used to send websocket message with the progress
-        AtomicInteger currentExerciseIndex = new AtomicInteger(1);
-
-        exercises.forEach(exercise -> {
-            // We need this call because we need to lazy load the student participations.
-            var participations = exerciseService.findOneWithStudentParticipations(exercise.getId()).getStudentParticipations();
-
-            if (exercise instanceof ProgrammingExercise) {
-                var programmingParticipations = participations.stream().map(participation -> (ProgrammingExerciseStudentParticipation) participation).collect(Collectors.toList());
-                var exportedExercise = programmingExerciseExportService.archiveProgrammingExercise((ProgrammingExercise) exercise, programmingParticipations, outputDir);
-
-                if (exportedExercise == null) {
-                    exercisesThatFailedToExport.add(exercise.getId());
-                }
-            }
-
-            // TODO: Handle archiving for other exercise types
-            log.info("Skipping export of exercise: {} because it's not supported yet.", exercise.getTitle());
-
-            // Notify the client about the progress.
-            notifyUserAboutCourseArchiveState(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), CourseArchiveState.RUNNING,
-                    currentExerciseIndex + "/" + exercises.size() + " done");
-            currentExerciseIndex.addAndGet(1);
-        });
-
-        // Notify that we couldn't export every exercise
-        if (!exercisesThatFailedToExport.isEmpty()) {
-            var failedExerciseIds = exercisesThatFailedToExport.stream().map(String::valueOf).collect(Collectors.joining(","));
-            log.info("The following exercises couldn't be exported {}", failedExerciseIds);
-        }
-
-    }
-
-    /**
-     * Creates a zip file out of all the files and directories inside courseDirPath and saves it to the
-     * course archives directory.
-     *
-     * @param courseDirPath Directory of the contents to zip
-     * @return The path to the course zip file
-     */
-    private Path createCourseZipFile(Path courseDirPath) {
-        var courseArchivePath = Path.of(courseArchivesDirPath, courseDirPath.getFileName() + ".zip");
         try {
             // Create course archives directory if it doesn't exist
             Files.createDirectories(Path.of(courseArchivesDirPath));
             log.info("Created the course archives directory at {} because it didn't exist.", courseArchivesDirPath);
 
-            zipFileService.createZipFileWithFolderContent(courseArchivePath, courseDirPath);
-            log.info("Successfully created a zip file at: {}", courseArchivePath);
-            return courseArchivePath;
+            notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.RUNNING);
+
+            // Export the course to the archives directory.
+            var archivedCoursePath = courseExportService.exportCourse(course, courseArchivesDirPath);
+
+            // Attach the path to the archive to the course and save it in the database
+            if (archivedCoursePath.isPresent()) {
+                course.setCourseArchivePath(archivedCoursePath.get().toString());
+                courseRepository.save(course);
+            }
+
+            notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.COMPLETED);
         }
         catch (IOException e) {
-            log.info("Failed to created a zip file at {}: {}", courseArchivePath, e.getMessage());
-            return null;
-        }
-        finally {
-            fileService.scheduleForDirectoryDeletion(courseDirPath, 1);
-        }
-    }
-
-    /***
-     * Sends a message to the archive-course topic notifying the user about the current archiving state
-     *
-     * @param courseId The id of the course that is being archived
-     * @param archiveState The archive state
-     * @param progress Some optional message e.g "50%"
-     */
-    private void notifyUserAboutCourseArchiveState(long courseId, CourseArchiveState archiveState, String progress) {
-        var topic = "/topic/courses/" + courseId + "/archive-course";
-
-        Map<String, String> message = new HashMap<>();
-        message.put("archiveState", archiveState.toString());
-        message.put("progress", progress);
-
-        var mapper = new ObjectMapper();
-        try {
-            websocketMessagingService.sendMessage(topic, mapper.writeValueAsString(message));
-        }
-        catch (IOException e) {
-            // I guess we can ignore this ?
+            log.info("Failed to create course archives directory {}: {}", courseArchivesDirPath, e.getMessage());
         }
     }
 
@@ -602,5 +435,26 @@ public class CourseService {
         });
 
         log.info("The course {} has been cleaned up!", courseId);
+    }
+
+    /***
+     * Sends a message to the archive-course topic notifying the user about the current archiving state
+     *
+     * @param courseId The id of the course that is being archived
+     * @param archiveState The archive state
+     */
+    private void notifyUserAboutCourseArchiveState(long courseId, CourseArchiveState archiveState) {
+        var topic = "/topic/courses/" + courseId + "/archive-course";
+
+        Map<String, String> message = new HashMap<>();
+        message.put("archiveState", archiveState.toString());
+
+        var mapper = new ObjectMapper();
+        try {
+            websocketMessagingService.sendMessage(topic, mapper.writeValueAsString(message));
+        }
+        catch (IOException e) {
+            // I guess we can ignore this ?
+        }
     }
 }

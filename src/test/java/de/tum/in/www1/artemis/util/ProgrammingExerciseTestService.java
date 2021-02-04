@@ -719,6 +719,7 @@ public class ProgrammingExerciseTestService {
         return request.get(url, expectedStatus, String.class);
     }
 
+    // Test
     public void testArchiveCourseWithProgrammingExercise() throws Exception {
         course.setEndDate(ZonedDateTime.now().minusMinutes(4));
         course.setCourseArchivePath(null);

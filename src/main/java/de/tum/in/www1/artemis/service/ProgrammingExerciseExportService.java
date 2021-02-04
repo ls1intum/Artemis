@@ -97,7 +97,7 @@ public class ProgrammingExerciseExportService {
     }
 
     /**
-     * Archives a programming exercise by creating a zip file. The zip file includes all student, template, solution,
+     * Export a programming exercise by creating a zip file. The zip file includes all student, template, solution,
      * and tests repositories.
      *
      * @param exercise              the programming exercise
@@ -105,7 +105,7 @@ public class ProgrammingExerciseExportService {
      * @param pathToStoreZipFile    The path to a directory that will be used to store the zipped programming exercise.
      * @return the path to the zip file
      */
-    public Path archiveProgrammingExercise(ProgrammingExercise exercise, List<ProgrammingExerciseStudentParticipation> studentParticipations, String pathToStoreZipFile) {
+    public Path exportProgrammingExercise(ProgrammingExercise exercise, List<ProgrammingExerciseStudentParticipation> studentParticipations, String pathToStoreZipFile) {
         // Will contains the zipped files. Note that there can be null elements
         // because e.g exportStudentRepositories returns null if student repositories don't
         // exist.

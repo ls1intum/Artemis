@@ -118,6 +118,7 @@
             },
             "archive": {
                 "archiveCourse": "Kurs Archivieren",
+                "archiveCourseSuccess": "Der Kurs wurde archiviert!",
                 "archiveCourseError": "Der Kurs konnte nicht archiviert werden",
                 "archiveDownloadError": "Beim Herunterladen des Archivs ist ein Problem aufgetreten",
                 "downloadCourseArchive": "Kursarchiv herunterladen"
