@@ -1,7 +1,10 @@
 <div class="d-flex pb-3 border-bottom">
     <div class="d-flex flex-column justify-content-center">
-        <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentExam" [translateValues]="{ examTitle: studentExam.exam!.title! }">
+        <h4 *ngIf="!isTestRun" class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentExam" [translateValues]="{ examTitle: studentExam.exam!.title! }">
             Student exam ({{ studentExam.exam!.title! }})
+        </h4>
+        <h4 *ngIf="isTestRun" class="mb-0" jhiTranslate="artemisApp.studentExamDetail.testRun" [translateValues]="{ examTitle: studentExam.exam!.title! }">
+            Test Run ({{ studentExam.exam!.title! }})
         </h4>
     </div>
 </div>
@@ -111,8 +114,8 @@
                             {{ exercise?.title }}
                         </td>
                         <td class="align-middle">
-                            <ng-container *ngIf="!!exercise?.studentParticipations && exercise.studentParticipations.length > 0 && !!(exercise?.studentParticipations)[0].results">
-                                {{ rounding((((exercise?.studentParticipations)[0]?.results)[0]?.score * exercise?.maxPoints) / 100) }}
+                            <ng-container *ngIf="exercise?.studentParticipations && exercise?.studentParticipations.length > 0 && (exercise?.studentParticipations)![0].results">
+                                {{ rounding(((exercise?.studentParticipations)![0].results![0].score * exercise?.maxPoints) / 100) }}
                             </ng-container>
                         </td>
                         <td class="align-middle">
@@ -124,14 +127,16 @@
                         <td class="align-middle">
                             <ng-container
                                 *ngIf="
-                                    !!exercise?.studentParticipations &&
-                                    exercise.studentParticipations.length > 0 &&
-                                    !!(exercise?.studentParticipations)[0].results &&
-                                    ((exercise?.studentParticipations)[0]?.results)[0].assessor
+                                    exercise?.studentParticipations &&
+                                        exercise?.studentParticipations.length > 0 &&
+                                        (exercise?.studentParticipations)![0].results &&
+                                        (exercise?.studentParticipations)![0].results[0].assessor;
+                                    else noAssessor
                                 "
                             >
-                                {{ ((exercise?.studentParticipations)[0]?.results)[0]?.assessor.name }}
+                                {{ (exercise?.studentParticipations)![0].results[0].assessor.name }}
                             </ng-container>
+                            <ng-template #noAssessor></ng-template>
                         </td>
                     </tr>
                     <tr>
@@ -146,6 +151,7 @@
                         <td class="align-middle">
                             <u> {{ maxTotalScore }} </u>
                         </td>
+                        <td></td>
                         <td></td>
                     </tr>
                 </tbody>
