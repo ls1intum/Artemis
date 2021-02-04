@@ -307,6 +307,7 @@
                 "checklistItem": "Task",
                 "description": "Description",
                 "goTo": "Go to",
+                "status": "Current Status",
                 "tableItem": {
                     "register": "Register students to the exam",
                     "exerciseGroups": "Create at least one exercise group with exercises",
