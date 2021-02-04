@@ -63,7 +63,9 @@
                         <a [routerLink]="[exam.id]">{{ exam.id }}</a>
                     </td>
                     <td class="d-none d-md-table-cell">
-                        <span class="bold">{{ exam.title }}</span>
+                        <span class="bold">
+                            <a [routerLink]="[exam.id]">{{ exam.title }}</a>
+                        </span>
                     </td>
                     <td>{{ exam.visibleDate | artemisDate }}</td>
                     <td>{{ exam.startDate | artemisDate }}</td>
@@ -72,8 +74,25 @@
                     <td>{{ exam.examStudentReviewStart | artemisDate }}</td>
                     <td>{{ exam.examStudentReviewEnd | artemisDate }}</td>
                     <td>{{ exam.startDate | durationTo: exam.endDate }}</td>
-                    <td>{{ exam.numberOfRegisteredUsers }}</td>
+                    <td>
+                        <span *ngIf="isAtLeastInstructor">
+                            <a [routerLink]="[exam.id, 'students']">
+                                {{ exam.numberOfRegisteredUsers }}
+                            </a>
+                        </span>
+                        <span *ngIf="!isAtLeastInstructor && isAtLeastTutor">
+                            {{ exam.numberOfRegisteredUsers }}
+                        </span>
+                    </td>
+
                     <td class="text-right">
+                        <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                            <button *ngIf="isAtLeastInstructor" type="submit" [routerLink]="[exam.id]" class="btn btn-info btn-sm mr-1 mb-1" id="checklist-button-{{ exam.id }}">
+                                <fa-icon [icon]="'th-list'"></fa-icon>
+                                <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examChecklist' | translate }}</span>
+                            </button>
+                        </div>
+
                         <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
                             <a
                                 *ngIf="(isAtLeastTutor && examHasFinished(exam.id)) || isAtLeastInstructor"
