@@ -305,6 +305,7 @@
                 "linkDescription": "Instructors Guide",
                 "checklistItem": "Aufgabe",
                 "description": "Beschreibung",
+                "status": "Aktueller Status",
                 "goTo": "Gehe zu",
                 "tableItem": {
                     "register": "Registrieren der Studierenden zur Klausur",
@@ -323,7 +324,7 @@
                 "descriptionItem": {
                     "register": "Mindestens ein Studierender muss zur Klausur angemeldet sein.",
                     "exerciseGroups": "Du kannst Übungsgruppen mit mehreren Übungsvarianten erstellen, um Unterschleif für Studierende zu erschweren. Die Punkte aller Aufgaben einer Aufgabengruppe müssen identisch sein. Die Anzahl an Aufgabengruppen muss der Anzahl der Aufgaben in der Klausur entsprechen.",
-                    "generateStudentExams": "Die Klausuren der Studierenden müssen generiert worden sein, bevor die Klausur beginnt.",
+                    "generateStudentExams": "Die Klausuren der Studierenden müssen generiert worden sein, bevor die Klausur beginnt. Die Arbeitszeit kann dabei individuell angepasst werden.",
                     "prepareExerciseStart": "Vorbereiten der Aufgaben kann die Serverlast während der Klausur reduzieren.",
                     "examDetails": "Alle relevanten Details der Klausur müssen vor dem Start der Korrektur eingetragen sein.",
                     "conductExam": "In der Studierenden-Klausurübersicht sieht man, welche Studierende ihre Klausur bereits abgegeben haben.",
