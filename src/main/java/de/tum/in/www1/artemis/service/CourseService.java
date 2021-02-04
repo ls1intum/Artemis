@@ -379,6 +379,12 @@ public class CourseService {
         log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
     }
 
+    /**
+     * Archives the course by creating a zip file will student submissions for
+     * both the course exercises and exams.
+     *
+     * @param course the course to archive
+     */
     @Async
     public void archiveCourse(Course course) {
         SecurityUtils.setAuthorizationObject();
