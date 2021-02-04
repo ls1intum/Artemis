@@ -10,9 +10,9 @@ import { round } from 'app/shared/util/utils';
 
 export const ABSOLUTE_SCORE = 'absoluteScore';
 export const RELATIVE_SCORE = 'relativeScore';
-export const MAX_SCORE = 'maxScore';
+export const MAX_POINTS = 'maxPoints';
 export const PRESENTATION_SCORE = 'presentationScore';
-export const REACHABLE_SCORE = 'reachableScore';
+export const REACHABLE_POINTS = 'reachableScore';
 export const CURRENT_RELATIVE_SCORE = 'currentRelativeScore';
 
 @Injectable({ providedIn: 'root' })
@@ -32,7 +32,7 @@ export class CourseScoreCalculationService {
             const isExerciseFinished = !exercise.dueDate || exercise.dueDate.isBefore(moment());
             const isExerciseIncluded = exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED;
             if (isExerciseFinished && isExerciseIncluded) {
-                const maxPointsReachableInExercise = exercise.maxScore!;
+                const maxPointsReachableInExercise = exercise.maxPoints!;
                 if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                     maxPointsInCourse += maxPointsReachableInExercise;
                 }
@@ -76,9 +76,9 @@ export class CourseScoreCalculationService {
         } else {
             scores.set(CURRENT_RELATIVE_SCORE, 0);
         }
-        scores.set(MAX_SCORE, maxPointsInCourse);
+        scores.set(MAX_POINTS, maxPointsInCourse);
         scores.set(PRESENTATION_SCORE, presentationScore);
-        scores.set(REACHABLE_SCORE, reachableMaxPointsInCourse);
+        scores.set(REACHABLE_POINTS, reachableMaxPointsInCourse);
         return scores;
     }
 

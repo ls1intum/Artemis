@@ -235,7 +235,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         testCaseRepository.saveAll(testCases.values());
 
         // Score should be capped at 200%
-        programmingExercise.setBonusPoints(programmingExercise.getMaxScore());
+        programmingExercise.setBonusPoints(programmingExercise.getMaxPoints());
         programmingExerciseRepository.save(programmingExercise);
 
         var result1 = new Result();

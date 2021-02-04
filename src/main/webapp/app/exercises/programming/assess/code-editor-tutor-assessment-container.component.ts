@@ -514,18 +514,18 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResult!.hasFeedback = true;
         // Append the automatic result string which the manual result holds with the score part, to create the manual result string
         if (this.isFirstAssessment) {
-            this.manualResult!.resultString += ', ' + this.createResultString(totalScore, this.exercise.maxScore);
+            this.manualResult!.resultString += ', ' + this.createResultString(totalScore, this.exercise.maxPoints);
             this.isFirstAssessment = false;
         } else {
             /* Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated,
              * as the points the student has achieved have changed
              */
             const resultStringParts: string[] = this.manualResult!.resultString!.split(', ');
-            resultStringParts[resultStringParts.length - 1] = this.createResultString(totalScore, this.exercise.maxScore);
+            resultStringParts[resultStringParts.length - 1] = this.createResultString(totalScore, this.exercise.maxPoints);
             this.manualResult!.resultString = resultStringParts.join(', ');
         }
 
-        this.manualResult!.score = Math.round((totalScore / this.exercise.maxScore!) * 100);
+        this.manualResult!.score = Math.round((totalScore / this.exercise.maxPoints!) * 100);
         // This is done to update the result string in result.component.ts
         this.manualResult = cloneDeep(this.manualResult);
     }
@@ -541,7 +541,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private calculateTotalScore() {
         const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
-        const maxPoints = this.exercise.maxScore! + (this.exercise.bonusPoints! ?? 0.0);
+        const maxPoints = this.exercise.maxPoints! + (this.exercise.bonusPoints! ?? 0.0);
         let totalScore = 0.0;
         let scoreAutomaticTests = 0.0;
         const gradingInstructions = {}; // { instructionId: noOfEncounters }

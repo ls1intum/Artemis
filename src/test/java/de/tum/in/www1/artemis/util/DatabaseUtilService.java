@@ -1209,7 +1209,7 @@ public class DatabaseUtilService {
 
     public Exercise addMaxScoreAndBonusPointsToExercise(Exercise exercise) {
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
-        exercise.setMaxScore(100.0);
+        exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(10.0);
         return exerciseRepo.save(exercise);
     }
@@ -1535,7 +1535,7 @@ public class DatabaseUtilService {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
         programmingExercise.setBonusPoints(0D);
         programmingExercise.setPublishBuildPlanUrl(true);
-        programmingExercise.setMaxScore(42.0);
+        programmingExercise.setMaxPoints(42.0);
         programmingExercise.setDifficulty(DifficultyLevel.EASY);
         programmingExercise.setMode(ExerciseMode.INDIVIDUAL);
         programmingExercise.setProblemStatement("Lorem Ipsum");
@@ -2298,7 +2298,7 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
-        quizExercise.setMaxScore(quizExercise.getMaxTotalScore());
+        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.setGradingInstructions(null);
         return quizExercise;
     }
@@ -2309,7 +2309,7 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
-        quizExercise.setMaxScore(quizExercise.getMaxTotalScore());
+        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.setGradingInstructions(null);
         return quizExercise;
     }

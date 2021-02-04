@@ -28,11 +28,11 @@
                     {{ calculateAchievedPoints(exercise) }}
                 </td>
                 <td>
-                    <span *ngIf="exercise.maxScore != undefined">{{ exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 0 : exercise.maxScore }}</span>
+                    <span *ngIf="exercise.maxPoints != undefined">{{ exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 0 : exercise.maxPoints }}</span>
                 </td>
                 <td>
                     <span *ngIf="exercise.bonusPoints != undefined">{{
-                        exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? exercise.maxScore : exercise.bonusPoints
+                        exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? exercise.maxPoints : exercise.bonusPoints
                     }}</span>
                 </td>
             </tr>

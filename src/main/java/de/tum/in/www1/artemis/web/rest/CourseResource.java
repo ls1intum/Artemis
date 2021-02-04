@@ -474,7 +474,7 @@ public class CourseResource {
         // would lead to a SQL statement that cannot be optimized
 
         // 1st: fetch participations, submissions and results for individual exercises
-        List<StudentParticipation> individualParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
+        List<StudentParticipation> individualParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                 activeIndividualExercises);
 
         // 2nd: fetch participations, submissions and results for team exercises
@@ -614,6 +614,9 @@ public class CourseResource {
     public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseService.findOne(courseId);
+        course.setNumberOfInstructors(userService.countUserInGroup(course.getInstructorGroupName()));
+        course.setNumberOfTeachingAssistants(userService.countUserInGroup(course.getTeachingAssistantGroupName()));
+        course.setNumberOfStudents(userService.countUserInGroup(course.getStudentGroupName()));
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -878,7 +881,7 @@ public class CourseResource {
      * @return list of users
      */
     @NotNull
-    public ResponseEntity<List<User>> getAllUsersInGroup(Course course, @PathVariable String groupName) {
+    public ResponseEntity<List<User>> getAllUsersInGroup(Course course, String groupName) {
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();

@@ -11,7 +11,8 @@
             "ComponentDiagram": "Component Diagram",
             "DeploymentDiagram": "Deployment Diagram",
             "PetriNet": "Petri Net",
-            "SyntaxTree": "Syntax Tree"
+            "SyntaxTree": "Syntax Tree",
+            "Flowchart": "Flowchart"
         }
     }
 }

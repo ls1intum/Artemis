@@ -338,9 +338,9 @@ public class QuizExercise extends Exercise {
      */
     public Long getScoreForSubmission(QuizSubmission quizSubmission) {
         double score = getScoreInPointsForSubmission(quizSubmission);
-        double maxScore = getMaxTotalScore();
+        double maxPoints = getOverallQuizPoints();
         // map the resulting score to the 0 to 100 scale
-        return Math.round(100.0 * score / maxScore);
+        return Math.round(100.0 * score / maxPoints);
     }
 
     /**
@@ -463,7 +463,7 @@ public class QuizExercise extends Exercise {
                 // find original unchanged quizQuestion
                 QuizQuestion originalQuizQuestion = originalQuizExercise.findQuestionById(quizQuestion.getId());
                 // reset score (not allowed to change)
-                quizQuestion.setScore(originalQuizQuestion.getScore());
+                quizQuestion.setPoints(originalQuizQuestion.getPoints());
                 // correct invalid = null to invalid = false
                 if (quizQuestion.isInvalid() == null) {
                     quizQuestion.setInvalid(false);
@@ -524,26 +524,26 @@ public class QuizExercise extends Exercise {
      * @return the sum of all the quizQuestions' maximum scores
      */
     @JsonIgnore
-    public Double getMaxTotalScore() {
-        double maxScore = 0.0;
+    public Double getOverallQuizPoints() {
+        double maxPoints = 0.0;
         // iterate through all quizQuestions of this quiz and add up the score
         if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
             for (QuizQuestion quizQuestion : getQuizQuestions()) {
-                maxScore += quizQuestion.getScore();
+                maxPoints += quizQuestion.getPoints();
             }
         }
-        return maxScore;
+        return maxPoints;
     }
 
     @Override
-    public Double getMaxScore() {
+    public Double getMaxPoints() {
         // this is a temporary solution for legacy exercises where maxScore was not set
-        Double score = super.getMaxScore();
+        Double score = super.getMaxPoints();
         if (score != null) {
             return score;
         }
         else if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
-            return getMaxTotalScore();
+            return getOverallQuizPoints();
         }
         return null;
     }
@@ -558,17 +558,17 @@ public class QuizExercise extends Exercise {
             return;
         }
 
-        double quizScore = getMaxTotalScore();
+        double quizPoints = getOverallQuizPoints();
 
         // add new PointCounter
-        for (double i = 0.0; i <= quizScore; i++) {  // for variable ScoreSteps change: i++ into: i= i + scoreStep
+        for (double i = 0.0; i <= quizPoints; i++) {  // for variable ScoreSteps change: i++ into: i= i + scoreStep
             quizPointStatistic.addScore(i);
         }
         // delete old PointCounter
         Set<PointCounter> pointCounterToDelete = new HashSet<>();
         for (PointCounter pointCounter : quizPointStatistic.getPointCounters()) {
             if (pointCounter.getId() != null) {                                                                                        // for variable ScoreSteps add:
-                if (pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 || quizQuestions == null
+                if (pointCounter.getPoints() > quizPoints || pointCounter.getPoints() < 0 || quizQuestions == null
                         || quizQuestions.isEmpty()/* || (pointCounter.getPoints()% scoreStep) != 0 */) {
                     pointCounterToDelete.add(pointCounter);
                     pointCounter.setQuizPointStatistic(null);

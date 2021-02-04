@@ -45,6 +45,8 @@ public class StudentExamService {
 
     private SubmissionService submissionService;
 
+    private final ExamQuizService examQuizService;
+
     private final QuizSubmissionRepository quizSubmissionRepository;
 
     private final TextSubmissionRepository textSubmissionRepository;
@@ -62,7 +64,7 @@ public class StudentExamService {
     public StudentExamService(StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
@@ -73,6 +75,7 @@ public class StudentExamService {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.examQuizService = examQuizService;
     }
 
     @Autowired
@@ -156,6 +159,10 @@ public class StudentExamService {
                 log.error("lockStudentRepositories threw an exception", e);
             }
         }
+        else {
+            // immediately evaluate quiz participations for test runs
+            examQuizService.evaluateQuizParticipationsForTestRun(studentExam);
+        }
 
         return ResponseEntity.ok(studentExam);
     }
@@ -167,16 +174,12 @@ public class StudentExamService {
     }
 
     private void saveSubmissions(StudentExam studentExam, User currentUser) {
-        List<StudentParticipation> existingParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(currentUser.getId(),
-                studentExam.getExercises());
+        List<StudentParticipation> existingParticipations = participationService.findByStudentExamWithEagerSubmissionsResult(studentExam);
 
         for (Exercise exercise : studentExam.getExercises()) {
             // we do not apply the following checks for programming exercises or file upload exercises
             try {
                 saveSubmission(currentUser, existingParticipations, exercise);
-                if (studentExam.isTestRun()) {
-                    participationService.markSubmissionsOfTestRunParticipations(existingParticipations);
-                }
             }
             catch (Exception e) {
                 log.error("saveSubmission threw an exception", e);
@@ -279,7 +282,8 @@ public class StudentExamService {
         Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
                 .stream().filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), exercisesOfUser.get(user));
+            final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+                    exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
@@ -309,7 +313,8 @@ public class StudentExamService {
         Map<User, List<Exercise>> exercisesOfUser = studentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises().stream()
                 .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), exercisesOfUser.get(user));
+            final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+                    exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent() && studentParticipation.findLatestSubmission().get().isEmpty()) {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
@@ -490,7 +495,7 @@ public class StudentExamService {
     public StudentExam deleteTestRun(Long testRunId) {
         var testRun = findOneWithExercises(testRunId);
         User instructor = testRun.getUser();
-        var participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructor.getId(), testRun.getExercises());
+        var participations = participationService.findTestRunParticipationForExerciseWithEagerSubmissionsResult(instructor.getId(), testRun.getExercises());
         testRun.getExercises().forEach(exercise -> exercise.setStudentParticipations(Set.of(exercise.findRelevantParticipation(participations))));
 
         List<StudentExam> otherTestRunsOfInstructor = findAllTestRunsWithExercisesForUser(testRun.getExam().getId(), instructor.getId()).stream()

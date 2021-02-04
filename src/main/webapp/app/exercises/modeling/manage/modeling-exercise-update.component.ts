@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
@@ -14,6 +14,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -50,6 +51,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         private eventManager: JhiEventManager,
         private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
+        private router: Router,
     ) {}
 
     /**
@@ -183,10 +185,13 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Returns to previous state, which is always exercise page
+     * Revert to the previous state, equivalent with pressing the back button on your browser
+     * Returns to the detail page if there is no previous state
+     * Returns to the overview page if there is no previous state and we created a new exercise
+     * Returns to the exercise groups page if we are in exam mode
      */
-    previousState(): void {
-        window.history.back();
+    previousState() {
+        navigateBackFromExerciseUpdate(this.router, this.modelingExercise);
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>): void {

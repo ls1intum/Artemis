@@ -3,10 +3,10 @@
         <h4 class="mb-0">{{ 'artemisApp.examManagement.exerciseGroups' | translate }}</h4>
     </div>
     <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="d-flex justify-content-end" style="flex: 1">
-        <button *ngIf="course?.isAtLeastInstructor" class="btn btn-primary jh-create-entity create-course" [routerLink]="['new']">
+        <a *ngIf="course?.isAtLeastInstructor" class="btn btn-primary jh-create-entity create-course" [routerLink]="['new']">
             <fa-icon [icon]="'plus'"></fa-icon>
             <span class="hidden-sm-down" jhiTranslate="artemisApp.examManagement.exerciseGroup.create"> Create new Exercise Group </span>
-        </button>
+        </a>
     </div>
 </div>
 <jhi-alert></jhi-alert>
@@ -14,12 +14,12 @@
 <div *ngFor="let exerciseGroup of exerciseGroups; let i = index" class="mt-3" style="border: 1px solid #cccccc">
     <div class="d-flex p-3" style="background-color: #e1e1e1">
         <div class="mr-3 d-flex justify-content-center">
-            <button *ngIf="course?.isAtLeastInstructor" (click)="moveUp(i)" [disabled]="i == 0" class="border-0 p-0 mr-1 bg-transparent">
+            <a *ngIf="course?.isAtLeastInstructor" (click)="moveUp(i)" [class.disabled]="i == 0" class="border-0 p-0 mr-1 bg-transparent">
                 <fa-icon [icon]="'angle-up'" style="font-size: 1.3rem"></fa-icon>
-            </button>
-            <button *ngIf="course?.isAtLeastInstructor" (click)="moveDown(i)" [disabled]="i >= exerciseGroups!.length - 1" class="border-0 p-0 bg-transparent">
+            </a>
+            <a *ngIf="course?.isAtLeastInstructor" (click)="moveDown(i)" [class.disabled]="i >= exerciseGroups!.length - 1" class="border-0 p-0 bg-transparent">
                 <fa-icon [icon]="'angle-down'" style="font-size: 1.3rem"></fa-icon>
-            </button>
+            </a>
         </div>
         <div class="d-flex flex-column justify-content-center">
             <h5 class="font-weight-bold mb-0">{{ exerciseGroup.title }}</h5>
@@ -33,40 +33,40 @@
             <div class="d-flex flex-column justify-content-center">
                 <div class="btn-group flex-btn-group-container">
                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                        <button *ngIf="course?.isAtLeastInstructor" [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']" class="btn btn-info btn-sm mr-1 mb-1">
+                        <a *ngIf="course?.isAtLeastInstructor" [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']" class="btn btn-info btn-sm mr-1 mb-1">
                             <fa-icon [icon]="'plus'"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addQuizExercise' | translate }}</span>
-                        </button>
+                        </a>
                     </div>
                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                        <button *ngIf="course?.isAtLeastInstructor" (click)="openImportModal(exerciseGroup, exerciseType.TEXT)" class="btn btn-info btn-sm mr-1 mb-1">
+                        <a *ngIf="course?.isAtLeastInstructor" (click)="openImportModal(exerciseGroup, exerciseType.TEXT)" class="btn btn-info btn-sm mr-1 mb-1">
                             <fa-icon [icon]="'plus'"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'artemisApp.textExercise.home.importLabel' | translate }}</span>
-                        </button>
-                        <button *ngIf="course?.isAtLeastInstructor" [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="btn btn-info btn-sm mr-1 mb-1">
+                        </a>
+                        <a *ngIf="course?.isAtLeastInstructor" [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="btn btn-info btn-sm mr-1 mb-1">
                             <fa-icon [icon]="'plus'"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addTextExercise' | translate }}</span>
-                        </button>
+                        </a>
                     </div>
                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                        <button *ngIf="course?.isAtLeastInstructor" (click)="openImportModal(exerciseGroup, exerciseType.MODELING)" class="btn btn-info btn-sm mr-1 mb-1">
+                        <a *ngIf="course?.isAtLeastInstructor" (click)="openImportModal(exerciseGroup, exerciseType.MODELING)" class="btn btn-info btn-sm mr-1 mb-1">
                             <fa-icon [icon]="'plus'"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'artemisApp.modelingExercise.home.importLabel' | translate }}</span>
-                        </button>
-                        <button *ngIf="course?.isAtLeastInstructor" [routerLink]="[exerciseGroup.id, 'modeling-exercises', 'new']" class="btn btn-info btn-sm mr-1 mb-1">
+                        </a>
+                        <a *ngIf="course?.isAtLeastInstructor" [routerLink]="[exerciseGroup.id, 'modeling-exercises', 'new']" class="btn btn-info btn-sm mr-1 mb-1">
                             <fa-icon [icon]="'plus'"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addModelingExercise' | translate }}</span>
-                        </button>
+                        </a>
                     </div>
                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                        <button *ngIf="course?.isAtLeastInstructor" (click)="openImportModal(exerciseGroup, exerciseType.PROGRAMMING)" class="btn btn-info btn-sm mr-1 mb-1">
+                        <a *ngIf="course?.isAtLeastInstructor" (click)="openImportModal(exerciseGroup, exerciseType.PROGRAMMING)" class="btn btn-info btn-sm mr-1 mb-1">
                             <fa-icon [icon]="'plus'"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'artemisApp.programmingExercise.home.importLabel' | translate }}</span>
-                        </button>
-                        <button *ngIf="course?.isAtLeastInstructor" [routerLink]="[exerciseGroup.id, 'programming-exercises', 'new']" class="btn btn-info btn-sm mr-1 mb-1">
+                        </a>
+                        <a *ngIf="course?.isAtLeastInstructor" [routerLink]="[exerciseGroup.id, 'programming-exercises', 'new']" class="btn btn-info btn-sm mr-1 mb-1">
                             <fa-icon [icon]="'plus'"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addProgrammingExercise' | translate }}</span>
-                        </button>
+                        </a>
                     </div>
                     <!-- TODO: currently deactivated because file upload is not yet supported in the exam-participation.component.html
                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
@@ -78,10 +78,10 @@
                     -->
                     <div class="btn-group-vertical mr-1 mb-1">
                         <div class="d-flex flex-column mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                            <button *ngIf="course?.isAtLeastInstructor" type="submit" [routerLink]="[exerciseGroup.id, 'edit']" class="btn btn-primary btn-sm mr-1 mb-1">
+                            <a *ngIf="course?.isAtLeastInstructor" [routerLink]="[exerciseGroup.id, 'edit']" class="btn btn-primary btn-sm mr-1 mb-1">
                                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                 <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
-                            </button>
+                            </a>
                             <button
                                 *ngIf="
                                     course?.isAtLeastInstructor && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING);
@@ -179,7 +179,13 @@
                 <tbody>
                     <tr *ngFor="let exercise of exerciseGroup.exercises">
                         <td class="align-middle">
-                            {{ exercise.id }}
+                            <a
+                                *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.QUIZ"
+                                [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id]"
+                            >
+                                <span>{{ exercise.id }}</span>
+                            </a>
+                            <span *ngIf="!course.isAtLeastInstructor || exercise.type === exerciseType.QUIZ">{{ exercise.id }}</span>
                         </td>
                         <td class="align-middle" style="font-size: 1.35rem">
                             <fa-icon [icon]="exerciseIcon(exercise)"></fa-icon>
@@ -188,17 +194,17 @@
                             {{ exercise.title }}
                         </td>
                         <td class="align-middle">
-                            {{ exercise.maxScore }}
+                            {{ exercise.maxPoints }}
                         </td>
-                        <td>{{ exercise.bonusPoints }}</td>
-                        <td>{{ exerciseService.isIncludedInScore(exercise) }}</td>
+                        <td class="align-middle">{{ exercise.bonusPoints }}</td>
+                        <td class="align-middle">{{ exerciseService.isIncludedInScore(exercise) }}</td>
                         <!-- Programming exercise specific cells -->
                         <ng-container *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)">
                             <ng-container *ngIf="exercise.type === exerciseType.PROGRAMMING; else emptyProgrammingCells">
                                 <td class="align-middle">
                                     {{ exercise.shortName }}
                                 </td>
-                                <td>
+                                <td class="align-middle">
                                     <div>
                                         <span *ngIf="exercise.templateParticipation?.repositoryUrl">
                                             <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
@@ -256,7 +262,7 @@
                                         <ng-template #noVersionControlAndContinuousIntegrationAvailableTest>Test</ng-template>
                                     </div>
                                 </td>
-                                <td>
+                                <td class="align-middle">
                                     <span *ngIf="exercise.templateParticipation?.buildPlanId"
                                         ><a
                                             *ngIf="
@@ -284,7 +290,7 @@
                                     >
                                     <ng-template #noVersionControlAndContinuousIntegrationAvailableSolution>Solution</ng-template><br />
                                 </td>
-                                <td class="d-none d-md-table-cell">
+                                <td class="align-middle d-none d-md-table-cell">
                                     <div class="d-flex justify-content-between">{{ 'artemisApp.programmingExercise.offlineIde' | translate }}: {{ exercise.allowOfflineIde }}</div>
                                     <div class="d-flex justify-content-between">
                                         {{ 'artemisApp.programmingExercise.onlineEditor' | translate }}: {{ exercise.allowOnlineEditor }}
@@ -319,7 +325,7 @@
                                 </div>
                             </td>
                         </ng-container>
-                        <td class="d-flex justify-content-end">
+                        <td class="align-middle d-flex justify-content-end">
                             <jhi-exam-exercise-row-buttons
                                 [course]="course"
                                 [exam]="exam"

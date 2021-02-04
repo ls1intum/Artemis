@@ -45,7 +45,7 @@ public class LearningGoalService {
                 .collect(Collectors.toMap(ExerciseUnit::getExercise, exerciseUnit -> {
                     IndividualLearningGoalProgress.IndividualLectureUnitProgress individualLectureUnitProgress = new IndividualLearningGoalProgress.IndividualLectureUnitProgress();
                     individualLectureUnitProgress.lectureUnitId = exerciseUnit.getId();
-                    individualLectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit = exerciseUnit.getExercise().getMaxScore();
+                    individualLectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit = exerciseUnit.getExercise().getMaxPoints();
                     return individualLectureUnitProgress;
                 }, (progress1, progress2) -> progress1)); // in the case of two exercises referencing the same exercise, take the first one
 
@@ -90,7 +90,7 @@ public class LearningGoalService {
                     CourseExerciseStatisticsDTO courseExerciseStatisticsDTO = exerciseIdToExerciseCourseStatistics.get(exerciseUnit.getExercise().getId());
                     CourseLearningGoalProgress.CourseLectureUnitProgress courseLectureUnitProgress = new CourseLearningGoalProgress.CourseLectureUnitProgress();
                     courseLectureUnitProgress.lectureUnitId = exerciseUnit.getId();
-                    courseLectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit = exerciseUnit.getExercise().getMaxScore();
+                    courseLectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit = exerciseUnit.getExercise().getMaxPoints();
                     courseLectureUnitProgress.averageScoreAchievedByStudentInLectureUnit = courseExerciseStatisticsDTO.getAverageScoreInPercent();
                     courseLectureUnitProgress.noOfParticipants = courseExerciseStatisticsDTO.getNoOfParticipatingStudentsOrTeams();
                     courseLectureUnitProgress.participationRate = courseExerciseStatisticsDTO.getParticipationRateInPercent();
@@ -133,8 +133,8 @@ public class LearningGoalService {
      */
     private List<StudentParticipation> getStudentParticipationsWithSubmissionsAndResults(User user, List<Exercise> individualExercises, List<Exercise> teamExercises) {
         // 1st: fetch participations, submissions and results for individual exercises
-        List<StudentParticipation> participationsOfIndividualExercises = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
-                individualExercises);
+        List<StudentParticipation> participationsOfIndividualExercises = participationService
+                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
 
         // 2nd: fetch participations, submissions and results for team exercises
         List<StudentParticipation> participationsOfTeamExercises = participationService.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), teamExercises);

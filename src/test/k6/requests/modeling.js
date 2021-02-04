@@ -1,6 +1,6 @@
 import { fail } from 'k6';
 import { nextAlphanumeric } from '../util/utils.js';
-import { SUBMIT_MODELING_EXAM, MODELING_EXERCISE } from './endpoints.js';
+import { MODELING_EXERCISE, SUBMIT_MODELING_EXAM } from './endpoints.js';
 
 export function submitRandomModelingAnswerExam(artemis, exercise, submissionId) {
     const answer = {
@@ -26,7 +26,7 @@ export function submitRandomModelingAnswerExam(artemis, exercise, submissionId) 
 export function newModelingExercise(artemis, exerciseGroup) {
     const textExercise = {
         exerciseGroup: exerciseGroup,
-        maxScore: 1,
+        maxPoints: 1,
         title: 'modeling' + nextAlphanumeric(5),
         type: 'modeling',
         mode: 'INDIVIDUAL',
