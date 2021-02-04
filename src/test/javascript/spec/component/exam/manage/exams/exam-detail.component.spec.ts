@@ -45,7 +45,12 @@ describe('ExamDetailComponent', () => {
             imports: [
                 RouterTestingModule.withRoutes([
                     { path: 'course-management/:courseId/exams/:examId/edit', component: DummyComponent },
+                    { path: 'course-management/:courseId/exams/:examId/exercise-groups', component: DummyComponent },
+                    { path: 'course-management/:courseId/exams/:examId/tutor-exam-dashboard', component: DummyComponent },
+                    { path: 'course-management/:courseId/exams/:examId/scores', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/student-exams', component: DummyComponent },
+                    { path: 'course-management/:courseId/exams/:examId/test-runs', component: DummyComponent },
+                    { path: 'course-management/:courseId/exams/:examId/students', component: DummyComponent },
                 ]),
             ],
             declarations: [
@@ -120,4 +125,55 @@ describe('ExamDetailComponent', () => {
             expect(location.path()).to.equal('/course-management/1/exams/1/student-exams');
         });
     }));
+
+    it('should correctly route to dashboard', fakeAsync(() => {
+        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        examDetailComponentFixture.detectChanges();
+        const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#tutor-exam-dashboard-button')).nativeElement;
+        dashboardButton.click();
+        examDetailComponentFixture.whenStable().then(() => {
+            expect(location.path()).to.equal('/course-management/1/exams/1/tutor-exam-dashboard');
+        });
+    }));
+
+    it('should correctly route to exercise groups', fakeAsync(() => {
+        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        examDetailComponentFixture.detectChanges();
+        const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#exercises-button-groups')).nativeElement;
+        dashboardButton.click();
+        examDetailComponentFixture.whenStable().then(() => {
+            expect(location.path()).to.equal('/course-management/1/exams/1/exercise-groups');
+        });
+    }));
+
+    it('should correctly route to scores', fakeAsync(() => {
+        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        examDetailComponentFixture.detectChanges();
+        const scoresButton = examDetailComponentFixture.debugElement.query(By.css('#scores-button')).nativeElement;
+        scoresButton.click();
+        examDetailComponentFixture.whenStable().then(() => {
+            expect(location.path()).to.equal('/course-management/1/exams/1/scores');
+        });
+    }));
+
+    it('should correctly route to students', fakeAsync(() => {
+        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        examDetailComponentFixture.detectChanges();
+        const studentsButton = examDetailComponentFixture.debugElement.query(By.css('#students-button')).nativeElement;
+        studentsButton.click();
+        examDetailComponentFixture.whenStable().then(() => {
+            expect(location.path()).to.equal('/course-management/1/exams/1/students');
+        });
+    }));
+
+    it('should correctly route to test runs', fakeAsync(() => {
+        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        examDetailComponentFixture.detectChanges();
+        const studentsButton = examDetailComponentFixture.debugElement.query(By.css('#testrun-button')).nativeElement;
+        studentsButton.click();
+        examDetailComponentFixture.whenStable().then(() => {
+            expect(location.path()).to.equal('/course-management/1/exams/1/test-runs');
+        });
+    }));
+
 });
