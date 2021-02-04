@@ -175,5 +175,4 @@ describe('ExamDetailComponent', () => {
             expect(location.path()).to.equal('/course-management/1/exams/1/test-runs');
         });
     }));
-
 });

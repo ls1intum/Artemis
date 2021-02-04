@@ -212,6 +212,7 @@ public class ExamResource {
             return ResponseEntity.ok(examService.findOneWithExerciseGroupsAndExercises(examId));
         }
         Exam exam = examService.findOneWithRegisteredUsers(examId);
+        examService.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
         exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
         return ResponseEntity.ok(exam);
     }
