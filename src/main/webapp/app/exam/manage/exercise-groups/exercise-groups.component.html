@@ -32,8 +32,13 @@
         <div class="d-flex justify-content-end" style="flex: 1">
             <div class="d-flex flex-column justify-content-center">
                 <div class="btn-group flex-btn-group-container">
-                    <div class="mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" style="margin-right: 0 !important">
-                        <a *ngIf="course?.isAtLeastInstructor" [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']" class="btn btn-info btn-sm mr-1 mb-1">
+                    <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" style="justify-content: end">
+                        <a
+                            *ngIf="course?.isAtLeastInstructor"
+                            [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']"
+                            class="btn btn-info btn-sm mr-1 mb-1"
+                            style="max-height: 44%"
+                        >
                             <fa-icon [icon]="'plus'"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addQuizExercise' | translate }}</span>
                         </a>
