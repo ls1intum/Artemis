@@ -36,8 +36,8 @@ export class ExamDetailComponent implements OnInit {
     /**
      * Returns the route for editing the exam.
      */
-    getEditRoute() {
-        return ['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'edit'];
+    getExamRoutesByIdentifier(identifier: string) {
+        return ['/course-management', this.exam.course?.id, 'exams', this.exam.id, identifier];
     }
 
     /**
@@ -45,5 +45,23 @@ export class ExamDetailComponent implements OnInit {
      */
     getStudentExamRoute() {
         return ['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'student-exams'];
+    }
+
+    getScoreRoute() {
+        return ['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'scores'];
+    }
+
+    getTutorExamDashboardRoute() {
+        return ['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'tutor-exam-dashboard'];
+    }
+
+    getExerciseGroupsRoute() {
+        return ['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'exercise-groups'];
+    }
+    getTestRunsRoute() {
+        return ['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'test-runs'];
+    }
+    getStudentsRoute() {
+        return ['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'students'];
     }
 }
