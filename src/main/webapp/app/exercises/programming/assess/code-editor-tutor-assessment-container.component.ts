@@ -148,9 +148,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             } else {
                 participationId = Number(params['participationId']);
             }
+            // correctionRound = Number(params['correctionRound']);
 
             this.programmingExerciseParticipationService
-                .getStudentParticipationWithLatestManualResult(participationId)
+                .getStudentParticipationWithResultOfCorrectionRound(participationId, this.correctionRound)
                 .pipe(
                     tap(
                         (participationWithResult: ProgrammingExerciseStudentParticipation) => {

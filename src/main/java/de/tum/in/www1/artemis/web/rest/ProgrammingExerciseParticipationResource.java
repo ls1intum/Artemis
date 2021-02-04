@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -109,6 +107,56 @@ public class ProgrammingExerciseParticipationResource {
 
         // Set exercise back to participation
         participation.get().setExercise(exercise);
+
+        return ResponseEntity.ok(participation.get());
+    }
+
+    /**
+     * Get the given student participation with its latest manual result and feedbacks.
+     *
+     * @param participationId for which to retrieve the student participation with result and feedbacks.
+     * @param correctionRound of the result that the participation has
+     * @return the ResponseEntity with status 200 (OK) and the participation with its result in the body.
+     */
+    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-result-and-feedbacks-for/{correctionRound}/correction-round")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Participation> getParticipationWithManualResultByCorrectionRoundForStudentParticipation(@PathVariable Long participationId,
+            @PathVariable int correctionRound) {
+        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService
+                .findStudentParticipationWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(participationId);
+        if (participation.isEmpty()) {
+            return notFound();
+        }
+        if (!programmingExerciseParticipationService.canAccessParticipation(participation.get())) {
+            return forbidden();
+        }
+
+        // Fetch template and solution participation into exercise of participation
+        ProgrammingExercise exercise = (ProgrammingExercise) participation.get().getExercise();
+        exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
+
+        // Fetch grading criterion into exercise of participation
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+        exercise.setGradingCriteria(gradingCriteria);
+
+        // Set exercise back to participation
+        participation.get().setExercise(exercise);
+
+        // get the result which belongs to the specific correctionround and save it as the single result in the participation
+        List<Result> results = new ArrayList<>(participation.get().getResults());
+        results.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
+
+        try {
+            Result resultOfCorrectionRound = results.get(correctionRound);
+            Set resultSet = new HashSet<Result>();
+
+            resultSet.add(resultOfCorrectionRound);
+            participation.get().setResults(resultSet);
+
+        }
+        catch (Exception e) {
+            return notFound();
+        }
 
         return ResponseEntity.ok(participation.get());
     }

@@ -158,6 +158,16 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
+     *
+     * @param participationId
+     * @return the participation with all its manual/semi-automatic results
+     */
+    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(
+            Long participationId) {
+        return studentParticipationRepository.findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(participationId);
+    }
+
+    /**
      * Try to find a programming exercise participation for the given id.
      *
      * @param participationId ProgrammingExerciseParticipation id
