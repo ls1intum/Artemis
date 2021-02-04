@@ -147,6 +147,7 @@ describe('StudentExamDetailComponent', () => {
                             paramMap: convertToParamMap({
                                 courseId: '1',
                             }),
+                            url: [],
                         },
                     },
                 },

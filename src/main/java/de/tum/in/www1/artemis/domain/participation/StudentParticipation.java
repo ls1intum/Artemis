@@ -23,10 +23,6 @@ public class StudentParticipation extends Participation {
     @Column(name = "presentation_score")
     private Integer presentationScore;
 
-    // information whether this student participation belongs to a test run exam, not relevant for course exercises
-    @Column(name = "test_run")
-    private Boolean testRun = false;
-
     @ManyToOne
     @JsonView(QuizView.Before.class)
     private User student;
@@ -126,14 +122,6 @@ public class StudentParticipation extends Participation {
     public String toString() {
         String participantString = getStudent().map(student -> "student=" + student).orElse("team=" + team);
         return "StudentParticipation{" + "id=" + getId() + ", presentationScore=" + presentationScore + ", " + participantString + "}";
-    }
-
-    public boolean isTestRun() {
-        return Boolean.TRUE.equals(testRun);
-    }
-
-    public void setTestRun(boolean testRun) {
-        this.testRun = testRun;
     }
 
     @Override
