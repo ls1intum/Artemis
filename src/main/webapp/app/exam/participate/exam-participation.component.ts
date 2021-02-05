@@ -30,6 +30,8 @@ import { Moment } from 'moment';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash';
 import { Course } from 'app/entities/course.model';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -513,9 +515,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                             () => this.onSaveSubmissionError(),
                         );
                         break;
-                    case ExerciseType.FILE_UPLOAD:
-                        // nothing to do
-                        break;
                     case ExerciseType.MODELING:
                         this.modelingSubmissionService.update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id!).subscribe(
                             () => this.onSaveSubmissionSuccess(submissionToSync.submission),
@@ -532,11 +531,20 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         );
                         break;
                     case ExerciseType.FILE_UPLOAD:
-                        // TODO: SE correct update method
-                        // this.fileUploadSubmissionService.update(submissionToSync.submission as FileUploadSubmission, submissionToSync.exercise.id!).subscribe(
-                        //    () => this.onSaveSubmissionSuccess(submissionToSync.submission),
-                        //    () => this.onSaveSubmissionError(),
-                        // );
+                        const fileUploadComponent = activeComponent as FileUploadExamSubmissionComponent;
+                        if (!fileUploadComponent.submissionFile) {
+                            return;
+                        }
+                        this.fileUploadSubmissionService
+                            .update(submissionToSync.submission as FileUploadSubmission, submissionToSync.exercise.id!, fileUploadComponent.submissionFile)
+                            .subscribe(
+                                (submission) => {
+                                    fileUploadComponent.submission = submission.body!;
+                                    fileUploadComponent.setSubmittedFile();
+                                    this.onSaveSubmissionSuccess(submissionToSync.submission);
+                                },
+                                () => this.onSaveSubmissionError(),
+                            );
                         break;
                 }
             });

@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, Input } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, Input, ChangeDetectorRef } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -8,17 +8,15 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileService } from 'app/shared/http/file.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
-import { AccountService } from 'app/core/auth/account.service';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',
@@ -27,7 +25,7 @@ import { IncludedInOverallScore } from 'app/entities/exercise.model';
     styleUrls: ['./file-upload-exam-submission.component.scss'],
     // change deactivation must be triggered manually
 })
-export class FileUploadExamSubmissionComponent implements OnInit {
+export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
 
     @Input()
@@ -51,10 +49,8 @@ export class FileUploadExamSubmissionComponent implements OnInit {
 
     readonly ButtonType = ButtonType;
 
-    private submissionConfirmationText: string;
-    private examMode = false;
-
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    filePath?: string;
 
     constructor(
         private route: ActivatedRoute,
@@ -65,15 +61,17 @@ export class FileUploadExamSubmissionComponent implements OnInit {
         private location: Location,
         private translateService: TranslateService,
         private fileService: FileService,
+        changeDetectorReference: ChangeDetectorRef,
     ) {
-        translateService.get('artemisApp.fileUploadSubmission.confirmSubmission').subscribe((text) => (this.submissionConfirmationText = text));
+        super(changeDetectorReference);
     }
 
     /**
      * Initializes data for file upload editor
      */
     ngOnInit() {
-        console.log('blub');
+        // show submission answers in UI
+        this.updateViewFromSubmission();
     }
 
     /**
@@ -91,11 +89,12 @@ export class FileUploadExamSubmissionComponent implements OnInit {
                 this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
             } else {
                 this.submissionFile = submissionFile;
+                console.log(this.submissionFile);
             }
         }
     }
 
-    private setSubmittedFile() {
+    setSubmittedFile() {
         // clear submitted file so that it is not displayed in the input (this might be confusing)
         this.submissionFile = undefined;
         const filePath = this.submission!.filePath!.split('/');
@@ -113,5 +112,30 @@ export class FileUploadExamSubmissionComponent implements OnInit {
      */
     get isActive(): boolean {
         return this.exercise && (!this.exercise.dueDate || moment(this.exercise.dueDate).isSameOrAfter(moment()));
+    }
+
+    getExercise(): Exercise {
+        return this.exercise;
+    }
+
+    public hasUnsavedChanges(): boolean {
+        return !this.submission.isSynced!;
+    }
+
+    getSubmission(): Submission {
+        return this.submission;
+    }
+
+    // TODO: clarify why this is needed here and also for the other exercise types
+    updateSubmissionFromView(): void {
+        console.log('updateSubmissionFromView');
+        // intentionally left empty
+    }
+
+    updateViewFromSubmission(): void {
+        console.log('updateViewFromSubmission');
+        if (this.submission.isSynced) {
+            this.setSubmittedFile();
+        }
     }
 }
