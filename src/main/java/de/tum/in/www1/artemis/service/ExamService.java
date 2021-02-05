@@ -690,7 +690,7 @@ public class ExamService {
      * Sets the transient attribute numberOfGeneratedStudentExams for the given exam
      * @param exam Exam for which to compute and set the number of generated student exams
      */
-    public void setNumberOfGeneratedStudentExams(Exam exam){
+    public void setNumberOfGeneratedStudentExams(Exam exam) {
         Exam tmpExam = findWithStudentExams(exam.getId());
         exam.setNumberOfGeneratedStudentExams((long) tmpExam.getStudentExams().size());
     }
