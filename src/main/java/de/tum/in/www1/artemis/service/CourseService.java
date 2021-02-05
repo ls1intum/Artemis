@@ -366,10 +366,16 @@ public class CourseService {
         log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
     }
 
+    /**
+     * Fetches Course Management data from repository and returns a list of Course DTOs
+     *
+     * @param isOnlyActive Whether or not to include courses with a past endDate
+     * @return A list of Course DTOs for the course management overview
+     */
     public List<CourseOverviewDTO> getAllDTOsForOverview(Boolean isOnlyActive) {
         ZonedDateTime now = isOnlyActive ? ZonedDateTime.now() : null;
         List<Map<String, Object>> courses = this.courseRepository.getAllDTOsForOverview(now);
-        List<CourseOverviewDTO> DTOs = new ArrayList<>();
+        List<CourseOverviewDTO> dtos = new ArrayList<>();
         for (var course : courses) {
             CourseOverviewDTO dto = new CourseOverviewDTO();
             dto.setId((Long) course.get("id"));
@@ -381,9 +387,9 @@ public class CourseService {
             dto.setTeachingAssistantGroupName((String) course.get("teachingAssistantGroupName"));
             dto.setInstructorGroupName((String) course.get("instructorGroupName"));
             dto.setShortName((String) course.get("shortName"));
-            DTOs.add(dto);
+            dtos.add(dto);
         }
-        return DTOs;
+        return dtos;
     }
 
     /**
