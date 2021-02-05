@@ -67,6 +67,10 @@ export const isProgrammingExerciseStudentParticipation = (participation: Partici
     return participation && participation.type === ParticipationType.PROGRAMMING;
 };
 
+export const isProgrammingExerciseParticipation = (participation: Participation | undefined): boolean => {
+    return (participation?.type && [ParticipationType.PROGRAMMING, ParticipationType.TEMPLATE, ParticipationType.SOLUTION].includes(participation.type)) || false;
+};
+
 /**
  * The deadline has passed if:
  * - The dueDate is set and the buildAndTestAfterDueDate is not set and the dueDate has passed.

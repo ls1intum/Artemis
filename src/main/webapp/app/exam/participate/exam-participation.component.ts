@@ -230,6 +230,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         }
                     }
 
+                    // adding back the deleted exercise
+                    participation.exercise = exercise;
+
                     // setup subscription for programming exercises
                     if (exercise.type === ExerciseType.PROGRAMMING) {
                         const programmingSubmissionSubscription = this.createProgrammingExerciseSubmission(exercise.id!, participation.id!);
@@ -447,8 +450,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.generateParticipationStatus.next('generating');
         return this.courseExerciseService.startExercise(this.exam.course!.id!, exercise.id!).pipe(
             map((createdParticipation: StudentParticipation) => {
-                // remove because of circular dependency when converting to JSON
-                delete createdParticipation.exercise;
                 exercise.studentParticipations!.push(createdParticipation);
                 if (createdParticipation.submissions && createdParticipation.submissions.length > 0) {
                     createdParticipation.submissions[0].isSynced = true;

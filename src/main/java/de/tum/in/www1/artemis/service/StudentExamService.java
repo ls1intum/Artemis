@@ -205,6 +205,7 @@ public class StudentExamService {
             return;
         }
         if (exercise instanceof FileUploadExercise) {
+            // TODO: remove
             return;
         }
 
@@ -256,6 +257,7 @@ public class StudentExamService {
                         else if (exercise instanceof ModelingExercise) {
                             modelingSubmissionRepository.save((ModelingSubmission) submission);
                         }
+                        // TODO: handle file upload
 
                         // versioning of submission
                         try {
