@@ -48,6 +48,7 @@ describe('ModelingExercise Management Update Component', () => {
             entity.id = 123;
             spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.modelingExercise = entity;
+            comp.modelingExercise.course = { id: 1 } as Course;
             // WHEN
             comp.save();
             tick(); // simulate async
@@ -62,6 +63,7 @@ describe('ModelingExercise Management Update Component', () => {
             const entity = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
             spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.modelingExercise = entity;
+            comp.modelingExercise.course = { id: 1 } as Course;
             // WHEN
             comp.save();
             tick(); // simulate async
@@ -77,6 +79,7 @@ describe('ModelingExercise Management Update Component', () => {
             entity.title = 'My Exercise   ';
             spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.modelingExercise = entity;
+            comp.modelingExercise.course = { id: 1 } as Course;
             // WHEN
             comp.save();
             tick(); // simulate async
