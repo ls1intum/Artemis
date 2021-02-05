@@ -30,7 +30,6 @@ import { Moment } from 'moment';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash';
 import { Course } from 'app/entities/course.model';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 

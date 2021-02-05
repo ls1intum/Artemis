@@ -1,6 +1,5 @@
 <!--resizable container-->
-
-<jhi-resizeable-container *ngIf="exercise" [isExerciseParticipation]="true">
+<jhi-resizeable-container *ngIf="exercise">
     <!--region Left Panel-->
     <span left-header *ngIf="exercise.title">{{ exercise.title }}</span>
     <!-- prettier-ignore -->
@@ -33,22 +32,13 @@
 
         <div *ngIf="submittedFileName && submission?.filePath" class="card-text">
             <h6>
-                {{ 'artemisApp.fileUploadSubmission.submittedFile' | translate: { filename: submittedFileName } }} <span> {{ submission!.submissionDate! | amTimeAgo }}</span>
+                {{ 'artemisApp.fileUploadSubmission.submittedFile' | translate: { filename: submittedFileName } }}
             </h6>
             <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
             <span class="ml-2 badge badge-info" *ngIf="submittedFileExtension">
                 {{ submittedFileExtension | uppercase }}
             </span>
         </div>
-        <div *ngIf="result && result.feedbacks && result.feedbacks.length > 0">
-            <br />
-            <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission">Your assessed submission</span>:</h5>
-            <jhi-file-upload-result [result]="result"></jhi-file-upload-result>
-            <div class="row">
-                <jhi-rating *ngIf="isOwnerOfParticipation" class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result"></jhi-rating>
-            </div>
-        </div>
-        <jhi-complaint-interactions *ngIf="exercise" [result]="result" [participation]="participation" [exercise]="exercise"> </jhi-complaint-interactions>
     </div>
     <!--endregion-->
     <!--region Right Panel-->
