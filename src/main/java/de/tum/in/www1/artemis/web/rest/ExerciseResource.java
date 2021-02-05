@@ -281,8 +281,11 @@ public class ExerciseResource {
 
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
 
-        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
-        stats.setTutorLeaderboardEntries(leaderboardEntries);
+        // tutor leaderboards are currently not supported for exams
+        if (!examMode) {
+            List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
+            stats.setTutorLeaderboardEntries(leaderboardEntries);
+        }
 
         return stats;
     }

@@ -179,7 +179,7 @@ export class AccountService implements IAccountService {
      * checks if the currently logged in user is at least instructor in the given course
      * @param course
      */
-    isAtLeastInstructorInCourse(course?: Course | CourseManagementOverviewCoursesDto) {
+    isAtLeastInstructorInCourse(course?: Course | CourseManagementOverviewCoursesDto): boolean {
         return this.hasGroup(course?.instructorGroupName) || this.hasAnyAuthorityDirect([Authority.ADMIN]);
     }
 
