@@ -202,6 +202,7 @@
                             >
                                 <span>{{ exercise.title }}</span>
                             </a>
+                            <span *ngIf="!course.isAtLeastInstructor || exercise.type === exerciseType.QUIZ">{{ exercise.title }}</span>
                         </td>
                         <td class="align-middle">
                             {{ exercise.maxPoints }}
