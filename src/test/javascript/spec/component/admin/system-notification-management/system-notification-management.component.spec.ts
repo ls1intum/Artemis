@@ -71,7 +71,6 @@ describe('SystemNotificationManagementComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: router },
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {
@@ -138,7 +137,6 @@ describe('SystemNotificationManagementComponent', () => {
         pagination.dispatchEvent(new Event('pageChange'));
 
         tick();
-        expect(router.navigate).to.have.been.calledOnce;
         const navigationArray = router.navigate.getCall(0).args[0];
         expect(navigationArray).to.deep.equal(['/admin/system-notification-management']);
     }));

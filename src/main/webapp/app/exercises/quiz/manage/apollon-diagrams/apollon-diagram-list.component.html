@@ -35,9 +35,9 @@
                 <td>{{ getTitleForApollonDiagram(apollonDiagram) }}</td>
                 <td jhiTranslate="{{ 'artemisApp.DiagramType.' + apollonDiagram.diagramType }}">{{ apollonDiagram.diagramType }}</td>
                 <td>
-                    <button class="btn btn-primary mr-1" [routerLink]="['/course-management', courseId, 'apollon-diagrams', apollonDiagram.id]" jhiTranslate="entity.action.open">
+                    <a class="btn btn-primary mr-1" [routerLink]="['/course-management', courseId, 'apollon-diagrams', apollonDiagram.id]" jhiTranslate="entity.action.open">
                         Open
-                    </button>
+                    </a>
                     <button
                         *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
                         class="btn btn-danger mr-1"

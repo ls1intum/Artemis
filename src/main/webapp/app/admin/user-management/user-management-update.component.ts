@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { navigateBack } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -14,7 +15,7 @@ export class UserManagementUpdateComponent implements OnInit {
     authorities: string[];
     isSaving: boolean;
 
-    constructor(private languageHelper: JhiLanguageHelper, private userService: UserService, private route: ActivatedRoute) {}
+    constructor(private languageHelper: JhiLanguageHelper, private userService: UserService, private route: ActivatedRoute, private router: Router) {}
 
     /**
      * Enable subscriptions to retrieve the user based on the activated route, all authorities and all languages on init
@@ -43,9 +44,15 @@ export class UserManagementUpdateComponent implements OnInit {
 
     /**
      * Navigate to the previous page when the user cancels the update process
+     * Returns to the detail page if there is no previous state and we edited an existing user
+     * Returns to the overview page if there is no previous state and we created a new user
      */
     previousState() {
-        window.history.back();
+        if (this.user.id) {
+            navigateBack(this.router, ['admin', 'user-management', this.user.login!.toString()]);
+        } else {
+            navigateBack(this.router, ['admin', 'user-management']);
+        }
     }
 
     /**

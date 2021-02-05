@@ -388,7 +388,7 @@ public class SubmissionService {
 
     /**
      * Add a result to the last {@link Submission} of a {@link StudentParticipation}, see {@link StudentParticipation#findLatestSubmission()}, with a feedback of type {@link FeedbackType#AUTOMATIC}.
-     * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment, see {@link StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation}.
+     * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment, see {@link StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation}.
      * Sets the feedback text and result score.
      *
      * @param studentParticipation the studentParticipation containing the latest result
@@ -425,7 +425,35 @@ public class SubmissionService {
     }
 
     /**
-     * Soft the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
+     * Serves as a wrapper method to {@link SubmissionService#lockSubmission} for exam test runs
+     * Creates an empty draft assessment with the user as an assessor and copies the automatic feedback (if present) into the new result.
+     * NOTE: We only support one correction round for test runs.
+     *
+     * @param submission the submission
+     * @return the draft assessment
+     */
+    public Result prepareTestRunSubmissionForAssessment(Submission submission) {
+        Optional<Result> existingAutomaticResult = Optional.empty();
+        if (submission.getLatestResult() != null && AssessmentType.AUTOMATIC.equals(submission.getLatestResult().getAssessmentType())) {
+            existingAutomaticResult = resultRepository.findByIdWithEagerFeedbacks(submission.getLatestResult().getId());
+        }
+
+        // we only support one correction round for test runs
+        var draftAssessment = lockSubmission(submission, 0);
+
+        // copy feedback from automatic result
+        if (existingAutomaticResult.isPresent()) {
+            draftAssessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+            draftAssessment.setResultString(existingAutomaticResult.get().getResultString());
+            // also saves the draft assessment
+            draftAssessment.setFeedbacks(copyFeedbackToNewResult(draftAssessment, existingAutomaticResult.get()));
+        }
+
+        return draftAssessment;
+    }
+
+    /**
+     * Soft locks the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
      * tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
      *
      * @param submission the submission to lock
