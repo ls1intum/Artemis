@@ -1041,7 +1041,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, false);
         database.addSubmission(modelingExercise, submission, "student1");
 
-        request.put("/api/courses/" + 1 + "/archive", null, HttpStatus.OK);
+        request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
 
         final var courseId = course.getId();
         await().until(() -> courseRepo.findById(courseId).get().getCourseArchivePath() != null);
