@@ -179,6 +179,8 @@ describe('ShortAnswerQuestionComponent', () => {
 
         component._question = alternativeQuestion;
         expect(component.getBackgroundColourForInputField(tag)).to.equal('lightgreen');
+        component._question.correctMappings = [];
+        expect(component.getBackgroundColourForInputField(tag)).to.equal('yellow');
         component.submittedTexts = [];
         expect(component.getBackgroundColourForInputField(tag)).to.equal('red');
     });
