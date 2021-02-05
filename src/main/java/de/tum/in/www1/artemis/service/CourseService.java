@@ -396,9 +396,6 @@ public class CourseService {
             dto.setTeachingAssistantGroupName(teachingAssistantGroupName);
             dto.setInstructorGroupName(instructorGroupName);
             dto.setShortName((String) course.get("shortName"));
-            dto.setNumberOfStudents((Long) course.get("numberOfStudents"));
-            dto.setNumberOfTeachingAssistants((Long) course.get("numberOfTeachingAssistants"));
-            dto.setNumberOfInstructors((Long) course.get("numberOfInstructors"));
             dtos.add(dto);
         }
         return dtos;

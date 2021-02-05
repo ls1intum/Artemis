@@ -95,10 +95,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             c.color as color,
             c.studentGroupName as studentGroupName,
             c.teachingAssistantGroupName as teachingAssistantGroupName,
-            c.instructorGroupName as instructorGroupName,
-            (select count(user.id) from User user where c.studentGroupName member of user.groups) as numberOfStudents,
-            (select count(user.id) from User user where c.teachingAssistantGroupName member of user.groups) as numberOfTeachingAssistants,
-            (select count(user.id) from User user where c.instructorGroupName member of user.groups) as numberOfInstructors
+            c.instructorGroupName as instructorGroupName
             from Course c
             where c.endDate is null or :#{#now} is null or c.endDate >= :#{#now}
             """)

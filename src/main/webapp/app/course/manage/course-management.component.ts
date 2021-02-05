@@ -121,6 +121,14 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                 this.courseManagementService.getWithUserStats({ onlyActive: this.showOnlyActive }).subscribe(
                     (result: HttpResponse<Course[]>) => {
                         this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(result.body!, tutorAssessmentTour, true);
+                        for (const course of this.courses) {
+                            const courseWithUsers = result.body!.find((c) => c.id === course.id);
+                            if (courseWithUsers) {
+                                course.numberOfStudents = courseWithUsers.numberOfStudents;
+                                course.numberOfTeachingAssistants = courseWithUsers.numberOfTeachingAssistants;
+                                course.numberOfInstructors = courseWithUsers.numberOfInstructors;
+                            }
+                        }
                     },
                     (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
                 );

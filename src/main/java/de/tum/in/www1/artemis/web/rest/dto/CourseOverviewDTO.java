@@ -14,12 +14,6 @@ public class CourseOverviewDTO {
 
     private String color;
 
-    private Long numberOfStudents;
-
-    private Long numberOfTeachingAssistants;
-
-    private Long numberOfInstructors;
-
     private String studentGroupName;
 
     private String teachingAssistantGroupName;
@@ -72,30 +66,6 @@ public class CourseOverviewDTO {
 
     public void setColor(String color) {
         this.color = color;
-    }
-
-    public Long getNumberOfStudents() {
-        return numberOfStudents;
-    }
-
-    public void setNumberOfStudents(Long numberOfStudents) {
-        this.numberOfStudents = numberOfStudents;
-    }
-
-    public Long getNumberOfTeachingAssistants() {
-        return numberOfTeachingAssistants;
-    }
-
-    public void setNumberOfTeachingAssistants(Long numberOfTeachingAssistants) {
-        this.numberOfTeachingAssistants = numberOfTeachingAssistants;
-    }
-
-    public Long getNumberOfInstructors() {
-        return numberOfInstructors;
-    }
-
-    public void setNumberOfInstructors(Long numberOfInstructors) {
-        this.numberOfInstructors = numberOfInstructors;
     }
 
     public String getStudentGroupName() {
