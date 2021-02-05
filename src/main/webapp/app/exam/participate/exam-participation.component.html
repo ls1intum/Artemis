@@ -37,11 +37,11 @@
                                     [exercise]="exercise"
                                     [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                                 ></jhi-quiz-submission-exam>
-                                <jhi-file-upload-editor-exam
+                                <jhi-file-upload-submission-exam
                                     *ngSwitchCase="FILEUPLOAD"
                                     [exercise]="exercise"
-                                    [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
-                                ></jhi-file-upload-editor-exam>
+                                    [submission]="exercise.studentParticipations[0].submissions![0]"
+                                ></jhi-file-upload-submission-exam>
                                 <jhi-text-editor-exam
                                     *ngSwitchCase="TEXT"
                                     [exercise]="exercise"
