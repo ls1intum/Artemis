@@ -103,7 +103,7 @@ public class TextSubmissionService extends SubmissionService {
             if (textExercise.isTeamMode()) {
                 submissionVersionService.saveVersionForTeam(textSubmission, principal.getName());
             }
-            else {
+            else if (textExercise.isExamExercise()) {
                 submissionVersionService.saveVersionForIndividual(textSubmission, principal.getName());
             }
         }

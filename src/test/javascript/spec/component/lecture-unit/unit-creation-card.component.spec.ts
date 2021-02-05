@@ -1,12 +1,12 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { TranslatePipe } from '@ngx-translate/core';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { By } from '@angular/platform-browser';
+import { RouterTestingModule } from '@angular/router/testing';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -15,7 +15,7 @@ describe('UnitCreationCardComponent', () => {
     let unitCreationCardComponent: UnitCreationCardComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            imports: [RouterTestingModule],
             declarations: [UnitCreationCardComponent, MockPipe(TranslatePipe), MockComponent(FaIconComponent)],
             providers: [],
             schemas: [],
@@ -35,20 +35,4 @@ describe('UnitCreationCardComponent', () => {
         unitCreationCardComponentFixture.detectChanges();
         expect(unitCreationCardComponent).to.be.ok;
     });
-
-    it('should send the creation events when buttons are clicked', fakeAsync(() => {
-        unitCreationCardComponentFixture.detectChanges();
-        const buttons = unitCreationCardComponentFixture.debugElement.queryAll(By.css('button'));
-        const spies = [];
-        spies.push(sinon.spy(unitCreationCardComponent.createTextUnit, 'emit'));
-        spies.push(sinon.spy(unitCreationCardComponent.createAttachmentUnit, 'emit'));
-        spies.push(sinon.spy(unitCreationCardComponent.createExerciseUnit, 'emit'));
-        spies.push(sinon.spy(unitCreationCardComponent.createVideoUnit, 'emit'));
-        for (const button of buttons) {
-            button.nativeElement.click();
-        }
-        for (const spy of spies) {
-            expect(spy).to.have.been.calledOnce;
-        }
-    }));
 });

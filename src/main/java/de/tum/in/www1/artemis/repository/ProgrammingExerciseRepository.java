@@ -142,7 +142,14 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @param exerciseId the exercise id we are interested in
      * @return the number of distinct submissions belonging to the exercise id
      */
-    @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
+    @Query("""
+            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :#{#exerciseId}
+            AND p.testRun = FALSE
+            AND EXISTS (SELECT s FROM ProgrammingSubmission s
+                WHERE s.participation.id = p.id
+                AND s.submitted = TRUE)
+            """)
     long countSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
 
     /**
@@ -175,31 +182,31 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
             WHERE p.exercise.id = :#{#exerciseId}
+            AND p.testRun = FALSE
             AND EXISTS (SELECT s FROM ProgrammingSubmission s
                 WHERE s.participation.id = p.id
                 AND s.submitted = TRUE
                 AND EXISTS (SELECT r.assessor FROM s.results r
                         WHERE r.assessor IS NOT NULL
                         AND r.completionDate IS NOT NULL))
-            AND NOT EXISTS (SELECT prs FROM p.results prs
-                            WHERE prs.assessor.id = p.student.id)
             """)
     long countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-               SELECT COUNT(DISTINCT p)
-               FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.id = :exerciseId AND
-                            (SELECT COUNT(r)
-                            FROM Result r
-                            WHERE r.assessor IS NOT NULL
-                                AND r.rated = TRUE
-                                AND r.submission = (select max(id) from p.submissions)
-                                AND r.submission.submitted = TRUE
-                                AND r.completionDate IS NOT NULL
-                                AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
-                                AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)
-                            ) >= (:correctionRound + 1L)
-            """)
+            SELECT COUNT(DISTINCT p)
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+            AND p.testRun = FALSE
+            AND (SELECT COUNT(r)
+                 FROM Result r
+                 WHERE r.assessor IS NOT NULL
+                 AND r.rated = TRUE
+                 AND r.submission = (select max(id) from p.submissions)
+                 AND r.submission.submitted = TRUE
+                 AND r.completionDate IS NOT NULL
+                 AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
+            ) >= (:correctionRound + 1L)
+             """)
     long countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("correctionRound") long correctionRound);
 
     /**
