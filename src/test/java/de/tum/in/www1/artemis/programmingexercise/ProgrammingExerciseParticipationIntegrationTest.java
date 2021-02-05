@@ -92,7 +92,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @ParameterizedTest
     @MethodSource("argumentsForGetParticipationWithLatestResult")
     @WithMockUser(username = "student1", roles = "USER")
-    public void getParticipationWithLatestResultAsAStudent(AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate,
+    public void testGetParticipationWithLatestResultAsAStudent(AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate,
             boolean expectLastCreatedResult) throws Exception {
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExerciseRepository.save(programmingExercise);
@@ -106,7 +106,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @ParameterizedTest
     @MethodSource("argumentsForGetParticipationWithLatestResult")
     @WithMockUser(username = "student1", roles = "USER")
-    public void getParticipationWithLatestResult_multipleResultsAvailable(AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate,
+    public void testGetParticipationWithLatestResult_multipleResultsAvailable(AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate,
             boolean expectLastCreatedResult) throws Exception {
         // Add an automatic result first
         var firstResult = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
@@ -133,7 +133,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getParticipationWithLatestResultAsAnInstructor_noCompletionDate_notFound() throws Exception {
+    public void testGetParticipationWithLatestResultAsAnInstructor_noCompletionDate_notFound() throws Exception {
         addStudentParticipationWithResult(AssessmentType.SEMI_AUTOMATIC, null);
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.NOT_FOUND,
@@ -142,7 +142,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getLatestResultWithFeedbacksAsStudent() throws Exception {
+    public void testGetLatestResultWithFeedbacksAsStudent() throws Exception {
         addStudentParticipationWithResult(null, null);
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
@@ -150,7 +150,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getLatestResultWithFeedbacksForTemplateParticipationAsTutorShouldReturnForbidden() throws Exception {
+    public void testGetLatestResultWithFeedbacksForTemplateParticipationAsTutorShouldReturnForbidden() throws Exception {
         addTemplateParticipationWithResult();
         TemplateProgrammingExerciseParticipation participation = templateProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.FORBIDDEN, Result.class);
@@ -158,7 +158,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getLatestResultWithFeedbacksForTemplateParticipationAsTutor() throws Exception {
+    public void testGetLatestResultWithFeedbacksForTemplateParticipationAsTutor() throws Exception {
         addTemplateParticipationWithResult();
         TemplateProgrammingExerciseParticipation participation = templateProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
@@ -166,7 +166,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getLatestResultWithFeedbacksForTemplateParticipationAsInstructor() throws Exception {
+    public void testGetLatestResultWithFeedbacksForTemplateParticipationAsInstructor() throws Exception {
         addTemplateParticipationWithResult();
         TemplateProgrammingExerciseParticipation participation = templateProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
@@ -174,7 +174,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getLatestResultWithFeedbacksForSolutionParticipationAsTutorShouldReturnForbidden() throws Exception {
+    public void testGetLatestResultWithFeedbacksForSolutionParticipationAsTutorShouldReturnForbidden() throws Exception {
         addSolutionParticipationWithResult();
         SolutionProgrammingExerciseParticipation participation = solutionProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.FORBIDDEN, Result.class);
@@ -182,7 +182,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getLatestResultWithFeedbacksForSolutionParticipationAsTutor() throws Exception {
+    public void testGetLatestResultWithFeedbacksForSolutionParticipationAsTutor() throws Exception {
         addSolutionParticipationWithResult();
         SolutionProgrammingExerciseParticipation participation = solutionProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
@@ -190,7 +190,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getLatestResultWithFeedbacksForSolutionParticipationAsInstructor() throws Exception {
+    public void testGetLatestResultWithFeedbacksForSolutionParticipationAsInstructor() throws Exception {
         addSolutionParticipationWithResult();
         SolutionProgrammingExerciseParticipation participation = solutionProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
@@ -199,7 +199,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "student1", roles = "USER")
-    public void getLatestResultWithSubmission(boolean withSubmission) throws Exception {
+    public void testGetLatestResultWithSubmission(boolean withSubmission) throws Exception {
         var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
         result.setResultString("a of b");
         result.setSuccessful(true);
@@ -219,7 +219,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getLatestPendingSubmissionIfExists_student() throws Exception {
+    public void testGetLatestPendingSubmissionIfExists_student() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
         request.get(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
@@ -227,7 +227,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getLatestPendingSubmissionIfExists_ta() throws Exception {
+    public void testGetLatestPendingSubmissionIfExists_ta() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
         request.get(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
@@ -235,7 +235,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getLatestPendingSubmissionIfExists_instructor() throws Exception {
+    public void testGetLatestPendingSubmissionIfExists_instructor() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
         request.get(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
@@ -243,7 +243,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getLatestPendingSubmissionIfNotExists_student() throws Exception {
+    public void testGetLatestPendingSubmissionIfNotExists_student() throws Exception {
         // Submission has a result, therefore not considered pending.
 
         Result result = resultRepository.save(new Result());
@@ -257,7 +257,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getLatestPendingSubmissionIfNotExists_ta() throws Exception {
+    public void testGetLatestPendingSubmissionIfNotExists_ta() throws Exception {
         // Submission has a result, therefore not considered pending.
         Result result = resultRepository.save(new Result());
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
@@ -270,7 +270,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getLatestPendingSubmissionIfNotExists_instructor() throws Exception {
+    public void testGetLatestPendingSubmissionIfNotExists_instructor() throws Exception {
         // Submission has a result, therefore not considered pending.
         Result result = resultRepository.save(new Result());
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
