@@ -243,7 +243,7 @@ public class CourseService {
      *     <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
      *     <li>All GroupNotifications of the course, see {@link NotificationService#deleteGroupNotification}</li>
      *     <li>All default groups created by Artemis, see {@link ArtemisAuthenticationProvider#deleteGroup}</li>
-     *     <li>All Exams, see {@link ExamService#deleteById}</li>
+     *     <li>All Exams, see {@link de.tum.in.www1.artemis.repository.ExamRepository#deleteById}</li>
      * </ul>
      *
      * @param course the course to be deleted
@@ -374,9 +374,18 @@ public class CourseService {
      */
     public List<CourseOverviewDTO> getAllDTOsForOverview(Boolean isOnlyActive) {
         ZonedDateTime now = isOnlyActive ? ZonedDateTime.now() : null;
+        User user = userService.getUserWithGroupsAndAuthorities();
+        var isAdmin = !authCheckService.isAdmin(user);
+
         List<Map<String, Object>> courses = this.courseRepository.getAllDTOsForOverview(now);
         List<CourseOverviewDTO> dtos = new ArrayList<>();
         for (var course : courses) {
+            var teachingAssistantGroupName = (String) course.get("teachingAssistantGroupName");
+            var instructorGroupName = (String) course.get("instructorGroupName");
+            if (!isAdmin && !user.getGroups().contains(teachingAssistantGroupName) && !user.getGroups().contains(instructorGroupName)){
+                continue;
+            }
+
             CourseOverviewDTO dto = new CourseOverviewDTO();
             dto.setId((Long) course.get("id"));
             dto.setTitle((String) course.get("title"));
@@ -384,9 +393,12 @@ public class CourseService {
             dto.setColor((String) course.get("color"));
             dto.setSemester((String) course.get("semester"));
             dto.setStudentGroupName((String) course.get("studentGroupName"));
-            dto.setTeachingAssistantGroupName((String) course.get("teachingAssistantGroupName"));
-            dto.setInstructorGroupName((String) course.get("instructorGroupName"));
+            dto.setTeachingAssistantGroupName(teachingAssistantGroupName);
+            dto.setInstructorGroupName(instructorGroupName);
             dto.setShortName((String) course.get("shortName"));
+            dto.setNumberOfStudents((Long) course.get("numberOfStudents"));
+            dto.setNumberOfTeachingAssistants((Long) course.get("numberOfTeachingAssistants"));
+            dto.setNumberOfInstructors((Long) course.get("numberOfInstructors"));
             dtos.add(dto);
         }
         return dtos;

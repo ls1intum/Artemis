@@ -87,8 +87,18 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Map<String, Object>> getActiveStudents(@Param("courseId") Long courseId, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select c.id as id, c.title as title, c.testCourse as testCourse, c.semester as semester, c.shortName as shortName, c.color as color,
-            c.studentGroupName as studentGroupName, c.teachingAssistantGroupName as teachingAssistantGroupName, c.instructorGroupName as instructorGroupName
+            select c.id as id,
+            c.title as title,
+            c.testCourse as testCourse,
+            c.semester as semester,
+            c.shortName as shortName,
+            c.color as color,
+            c.studentGroupName as studentGroupName,
+            c.teachingAssistantGroupName as teachingAssistantGroupName,
+            c.instructorGroupName as instructorGroupName,
+            (select count(user.id) from User user where c.studentGroupName member of user.groups) as numberOfStudents,
+            (select count(user.id) from User user where c.teachingAssistantGroupName member of user.groups) as numberOfTeachingAssistants,
+            (select count(user.id) from User user where c.instructorGroupName member of user.groups) as numberOfInstructors
             from Course c
             where c.endDate is null or :#{#now} is null or c.endDate >= :#{#now}
             """)

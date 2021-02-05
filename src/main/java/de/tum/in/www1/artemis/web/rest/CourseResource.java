@@ -437,20 +437,7 @@ public class CourseResource {
     @GetMapping("/courses/course-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public List<CourseOverviewDTO> getAllCoursesForOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        User user = userService.getUserWithGroupsAndAuthorities();
-        List<CourseOverviewDTO> courses = new ArrayList<>();
-        List<CourseOverviewDTO> databaseResult = courseService.getAllDTOsForOverview(onlyActive);
-        for (CourseOverviewDTO course : databaseResult) {
-            if (!user.getGroups().contains(course.getTeachingAssistantGroupName()) && !user.getGroups().contains(course.getInstructorGroupName())
-                    && !authCheckService.isAdmin(user)) {
-                continue;
-            }
-            course.setNumberOfInstructors(userService.countUserInGroup(course.getInstructorGroupName()));
-            course.setNumberOfTeachingAssistants(userService.countUserInGroup(course.getTeachingAssistantGroupName()));
-            course.setNumberOfStudents(userService.countUserInGroup(course.getStudentGroupName()));
-            courses.add(course);
-        }
-        return courses;
+        return courseService.getAllDTOsForOverview(onlyActive);
     }
 
     /**
