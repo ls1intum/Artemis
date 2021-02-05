@@ -81,12 +81,12 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
 
-                        const titleMap = new Map();
+                        const titleMap = new Map<string, number>();
                         if (this.exerciseGroups) {
                             for (const exerciseGroup of this.exerciseGroups) {
                                 if (titleMap.has(exerciseGroup.title)) {
                                     const currentValue = titleMap.get(exerciseGroup.title);
-                                    titleMap.set(exerciseGroup.title, currentValue + 1);
+                                    titleMap.set(exerciseGroup.title, currentValue! + 1);
                                 } else {
                                     titleMap.set(exerciseGroup.title, 1);
                                 }
@@ -94,7 +94,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
                             // this workaround is necessary if the exam has exercise groups with the same title (we add the id to make it unique)
                             for (const exerciseGroup of this.exerciseGroups) {
-                                if (titleMap.has(exerciseGroup.title) && titleMap.get(exerciseGroup.title) > 1) {
+                                if (titleMap.has(exerciseGroup.title) && titleMap.get(exerciseGroup.title)! > 1) {
                                     exerciseGroup.title = `${exerciseGroup.title} (id=${exerciseGroup.id})`;
                                 }
                             }
