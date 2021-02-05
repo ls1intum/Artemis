@@ -66,6 +66,7 @@ export function getLatestSubmissionResult(submission: Submission | undefined): R
  * Used to access a submissions result for a specific correctionRound
  *
  * @param submission
+ * @param correctionRound
  * @returns the results or undefined if submission or the result for the requested correctionRound is undefined
  */
 export function getSubmissionResultByCorrectionRound(submission: Submission | undefined, correctionRound: number): Result | undefined {

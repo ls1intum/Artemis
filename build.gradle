@@ -31,7 +31,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.9.4"
+version = "4.9.5"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -174,8 +174,8 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.3.1"
     implementation "com.atlassian.bamboo:bamboo-specs:7.1.2"
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
-    implementation "io.sentry:sentry-spring-boot-starter:4.0.0"
-    implementation "io.sentry:sentry-logback:4.0.0"
+    implementation "io.sentry:sentry-spring-boot-starter:4.1.0"
+    implementation "io.sentry:sentry-logback:4.1.0"
     implementation "org.jsoup:jsoup:1.13.1"
 
     implementation "org.springdoc:springdoc-openapi-ui:1.5.3"
@@ -266,8 +266,8 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.assertj:assertj-core:3.19.0"
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
-    testImplementation "com.tngtech.archunit:archunit-junit5-api:0.15.0"
-    testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:0.15.0"
+    testImplementation "com.tngtech.archunit:archunit-junit5-api:0.16.0"
+    testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:0.16.0"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
     testImplementation "org.hamcrest:hamcrest-library:2.2"

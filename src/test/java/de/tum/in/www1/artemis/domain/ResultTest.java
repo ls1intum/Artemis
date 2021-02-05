@@ -38,15 +38,15 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @Test
     public void evaluateFeedback() {
-        double maxScore = 7.0;
+        double maxPoints = 7.0;
         result.setFeedbacks(feedbackList);
 
-        Double calculatedScore = assessmentService.calculateTotalScore(feedbackList);
-        double totalScore = assessmentService.calculateTotalScore(calculatedScore, maxScore);
-        result.setScore(totalScore, maxScore);
-        result.setResultString(totalScore, maxScore);
+        Double calculatedPoints = assessmentService.calculateTotalPoints(feedbackList);
+        double totalPoints = assessmentService.calculateTotalPoints(calculatedPoints, maxPoints);
+        result.setScore(totalPoints, maxPoints);
+        result.setResultString(totalPoints, maxPoints);
 
-        assertThat(result.getScore()).isEqualTo(Math.round(5.0 / maxScore * 100));
+        assertThat(result.getScore()).isEqualTo(Math.round(5.0 / maxPoints * 100));
         assertThat(result.getResultString()).isEqualToIgnoringCase("5 of 7 points");
     }
 
@@ -54,10 +54,10 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     public void evaluateFeedback_totalScoreGreaterMaxScore() {
         result.setFeedbacks(feedbackList);
 
-        Double calculatedScore = assessmentService.calculateTotalScore(feedbackList);
-        double totalScore = assessmentService.calculateTotalScore(calculatedScore, 4.0);
-        result.setScore(totalScore, 4.0);
-        result.setResultString(totalScore, 4.0);
+        Double calculatePoints = assessmentService.calculateTotalPoints(feedbackList);
+        double totalPoints = assessmentService.calculateTotalPoints(calculatePoints, 4.0);
+        result.setScore(totalPoints, 4.0);
+        result.setResultString(totalPoints, 4.0);
 
         assertThat(result.getScore()).isEqualTo(100);
         assertThat(result.getResultString()).isEqualToIgnoringCase("4 of 4 points");
@@ -74,10 +74,10 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         feedbackList = Arrays.asList(feedback1, feedback2, feedback3);
         result.setFeedbacks(feedbackList);
 
-        Double calculatedScore = assessmentService.calculateTotalScore(feedbackList);
-        double totalScore = assessmentService.calculateTotalScore(calculatedScore, 7.0);
-        result.setScore(totalScore, 7.0);
-        result.setResultString(totalScore, 7.0);
+        Double calculatePoints = assessmentService.calculateTotalPoints(feedbackList);
+        double totalPoints = assessmentService.calculateTotalPoints(calculatePoints, 7.0);
+        result.setScore(totalPoints, 7.0);
+        result.setResultString(totalPoints, 7.0);
 
         assertThat(result.getScore()).isEqualTo(0);
         assertThat(result.getResultString()).isEqualToIgnoringCase("0 of 7 points");

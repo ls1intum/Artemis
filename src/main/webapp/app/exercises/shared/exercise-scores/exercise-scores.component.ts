@@ -209,11 +209,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Opens the repository for a result
-     * @param result Result for which to open the repository
+     * Returns the link to the repository of a result
+     * @param result Result for which to get the link for
      */
-    goToRepository(result: Result) {
-        window.open((result.participation! as ProgrammingExerciseStudentParticipation).repositoryUrl);
+    getRepositoryLink(result: Result) {
+        return (result.participation! as ProgrammingExerciseStudentParticipation).repositoryUrl;
     }
 
     /**

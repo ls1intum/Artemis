@@ -18,9 +18,7 @@
                 <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.sampleSolution! | htmlForMarkdown"></dd>
             </dl>
 
-            <button type="button" [routerLink]="getEditRoute()" class="btn btn-primary">
-                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-            </button>
+            <a [routerLink]="getEditRoute()" class="btn btn-primary"> <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span> </a>
         </div>
     </div>
 </div>
