@@ -407,7 +407,7 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses : get all courses for administration purposes with user stats.
+     * GET /courses/with-user-stats : get all courses for administration purposes with user stats.
      *
      * @param onlyActive if true, only active courses will be considered in the result
      * @return the list of courses (the user has access to)
@@ -425,6 +425,31 @@ public class CourseResource {
         }
         long end = System.currentTimeMillis();
         log.debug("getAllCoursesWithUserStats took " + (end - start) + "ms for " + courses.size() + " courses");
+        return courses;
+    }
+
+    /**
+     * GET /courses/course-overview : get all courses DTOs for administration purposes.
+     *
+     * @param onlyActive if true, only active courses will be considered in the result
+     * @return the list of courseDTOs (the user has access to)
+     */
+    @GetMapping("/courses/course-overview")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public List<CourseOverviewDTO> getAllCoursesForOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        List<CourseOverviewDTO> courses = new ArrayList<>();
+        List<CourseOverviewDTO> databaseResult = courseService.getAllDTOsForOverview(onlyActive);
+        for (CourseOverviewDTO course : databaseResult) {
+            if (!user.getGroups().contains(course.getTeachingAssistantGroupName()) && !user.getGroups().contains(course.getInstructorGroupName())
+                    && !authCheckService.isAdmin(user)) {
+                continue;
+            }
+            course.setNumberOfInstructors(userService.countUserInGroup(course.getInstructorGroupName()));
+            course.setNumberOfTeachingAssistants(userService.countUserInGroup(course.getTeachingAssistantGroupName()));
+            course.setNumberOfStudents(userService.countUserInGroup(course.getStudentGroupName()));
+            courses.add(course);
+        }
         return courses;
     }
 

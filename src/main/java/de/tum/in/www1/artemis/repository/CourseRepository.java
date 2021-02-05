@@ -85,4 +85,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             order by s.submissionDate asc
             """)
     List<Map<String, Object>> getActiveStudents(@Param("courseId") Long courseId, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+
+    @Query("""
+            select c.id as id, c.title as title, c.testCourse as testCourse, c.semester as semester, c.shortName as shortName, c.color as color,
+            c.studentGroupName as studentGroupName, c.teachingAssistantGroupName as teachingAssistantGroupName, c.instructorGroupName as instructorGroupName
+            from Course c
+            where c.endDate is null or :#{#now} is null or c.endDate >= :#{#now}
+            """)
+    List<Map<String, Object>> getAllDTOsForOverview(@Param("now") ZonedDateTime now);
 }

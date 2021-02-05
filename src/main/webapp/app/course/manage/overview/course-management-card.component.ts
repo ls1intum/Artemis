@@ -1,5 +1,4 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
@@ -8,6 +7,7 @@ import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/entities/cour
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseDetailsDTO } from 'app/entities/course-management-overview-exercise-details-dto.model';
 import { CourseManagementOverviewCourseDto } from 'app/course/manage/course-management-overview-course-dto.model';
+import { CourseManagementOverviewCoursesDto } from 'app/course/manage/course-management-overview-courses-dto.model';
 
 @Component({
     selector: 'jhi-course-management-card',
@@ -17,7 +17,7 @@ import { CourseManagementOverviewCourseDto } from 'app/course/manage/course-mana
 export class CourseManagementCardComponent implements OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
-    @Input() course: Course;
+    @Input() course: CourseManagementOverviewCoursesDto;
     @Input() courseDetails: CourseManagementOverviewCourseDto;
     @Input() courseStatistics: CourseManagementOverviewStatisticsDto;
     @Input() isGuidedTour: boolean;

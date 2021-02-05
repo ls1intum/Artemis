@@ -23,6 +23,7 @@ import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { CourseManagementOverviewCourseDto } from './course-management-overview-course-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/course-management-overview-statistics-dto.model';
+import { CourseManagementOverviewCoursesDto } from 'app/course/manage/course-management-overview-courses-dto.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -218,6 +219,18 @@ export class CourseManagementService {
     }
 
     /**
+     * finds all courses as DTOs using a GET request
+     * @param req
+     */
+    getCourseOverview(req?: any): Observable<HttpResponse<CourseManagementOverviewCoursesDto[]>> {
+        const options = createRequestOption(req);
+        this.fetchingCoursesForNotifications = true;
+        return this.http
+            .get<CourseManagementOverviewCoursesDto[]>(`${this.resourceUrl}/course-overview`, { params: options, observe: 'response' })
+            .pipe(tap((res: HttpResponse<CourseManagementOverviewCoursesDto[]>) => res.body!.forEach((c) => this.checkAndSetCourseRights(c))));
+    }
+
+    /**
      * deletes the course corresponding to the given unique identifier using a DELETE request
      * @param courseId - the id of the course to be deleted
      */
@@ -336,7 +349,7 @@ export class CourseManagementService {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}/${courseGroup}/${login}`, { observe: 'response' });
     }
 
-    checkAndSetCourseRights(course: Course) {
+    checkAndSetCourseRights(course: Course | CourseManagementOverviewCoursesDto) {
         course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
         course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
     }

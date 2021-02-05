@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.web.rest.dto.CourseOverviewDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -363,6 +364,26 @@ public class CourseService {
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
+    }
+
+    public List<CourseOverviewDTO> getAllDTOsForOverview(Boolean isOnlyActive) {
+        ZonedDateTime now = isOnlyActive ? ZonedDateTime.now() : null;
+        List<Map<String, Object>> courses = this.courseRepository.getAllDTOsForOverview(now);
+        List<CourseOverviewDTO> DTOs = new ArrayList<>();
+        for (var course : courses) {
+            CourseOverviewDTO dto = new CourseOverviewDTO();
+            dto.setId((Long) course.get("id"));
+            dto.setTitle((String) course.get("title"));
+            dto.setTestCourse((Boolean) course.get("testCourse"));
+            dto.setColor((String) course.get("color"));
+            dto.setSemester((String) course.get("semester"));
+            dto.setStudentGroupName((String) course.get("studentGroupName"));
+            dto.setTeachingAssistantGroupName((String) course.get("teachingAssistantGroupName"));
+            dto.setInstructorGroupName((String) course.get("instructorGroupName"));
+            dto.setShortName((String) course.get("shortName"));
+            DTOs.add(dto);
+        }
+        return DTOs;
     }
 
     /**

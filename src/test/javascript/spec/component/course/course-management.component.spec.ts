@@ -78,21 +78,10 @@ describe('CourseManagementComponent', () => {
         fixture.detectChanges();
         expect(component).to.be.ok;
         expect(component.showOnlyActive).to.be.true;
-        component.courses[0].semester = '';
         component.toggleShowOnlyActive();
         expect(component.showOnlyActive).to.be.false;
-        component.courses[0].semester = 'SS16';
         fixture.detectChanges();
         expect(component).to.be.ok;
-    });
-
-    it('should track id', async () => {
-        const course = new Course();
-        course.id = 187;
-        course.testCourse = false;
-        course.semester = 'SS19';
-
-        expect(component.trackId(0, course)).to.equal(187);
     });
 
     it('should delete course', async () => {
@@ -101,27 +90,6 @@ describe('CourseManagementComponent', () => {
         spyOn(service, 'delete').and.returnValue(of(new HttpResponse({ body: null })));
 
         component.deleteCourse(187);
-        expect(component).to.be.ok;
-    });
-
-    it('should give the current date', async () => {
-        expect(component.today).to.be.a('Date');
-    });
-
-    it('should sort rows', async () => {
-        const courseSS = new Course();
-        courseSS.id = 187;
-        courseSS.testCourse = false;
-        courseSS.semester = 'SS19';
-        const courseWS = new Course();
-        courseWS.id = 188;
-        courseWS.testCourse = false;
-        courseWS.semester = 'WS19/20';
-        component.courses = [courseWS, courseSS];
-        component.predicate = 'id';
-        component.reverse = false;
-        component.sortRows();
-        expect(component.courses).to.deep.equal([courseWS, courseSS]);
         expect(component).to.be.ok;
     });
 });

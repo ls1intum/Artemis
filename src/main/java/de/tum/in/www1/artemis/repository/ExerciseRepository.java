@@ -171,7 +171,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("""
             SELECT
             e.id as id,
-            e.maxScore as maxPoints,
+            e.maxPoints as maxPoints,
             e.mode as mode,
             (SELECT AVG(r.score)
             FROM e.studentParticipations p JOIN p.submissions s JOIN s.results r

@@ -9,11 +9,11 @@ import { Subject } from 'rxjs';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { JhiAlertService } from 'ng-jhipster';
-import { SortService } from 'app/shared/service/sort.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { CourseManagementOverviewCourseDto } from 'app/course/manage/course-management-overview-course-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/course-management-overview-statistics-dto.model';
+import { CourseManagementOverviewCoursesDto } from './course-management-overview-courses-dto.model';
 
 @Component({
     selector: 'jhi-course',
@@ -26,12 +26,12 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     reverse: boolean;
     showOnlyActive = true;
 
-    courses: Course[];
+    courses: CourseManagementOverviewCoursesDto[];
     details = new Map<number, CourseManagementOverviewCourseDto>();
     statistics = new Map<number, CourseManagementOverviewStatisticsDto>();
     courseSemesters: string[];
     semesterCollapsed: { [key: string]: boolean };
-    coursesBySemester: { [key: string]: Course[] };
+    coursesBySemester: { [key: string]: CourseManagementOverviewCoursesDto[] };
     eventSubscriber: Subscription;
 
     private dialogErrorSource = new Subject<string>();
@@ -47,7 +47,6 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private guidedTourService: GuidedTourService,
-        private sortService: SortService,
     ) {
         this.predicate = 'id';
         // show the newest courses first and the oldest last
@@ -58,10 +57,9 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
      * loads all courses from courseService
      */
     loadAll() {
-        this.courseService.getWithUserStats({ onlyActive: this.showOnlyActive }).subscribe(
-            (res: HttpResponse<Course[]>) => {
+        this.courseService.getCourseOverview({ onlyActive: this.showOnlyActive }).subscribe(
+            (res: HttpResponse<CourseManagementOverviewCoursesDto[]>) => {
                 this.courses = res.body!;
-                this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, tutorAssessmentTour, true);
                 this.courseSemesters = this.courses
                     // test courses get their own section later
                     .filter((c) => !c.testCourse)
@@ -119,6 +117,13 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                     },
                     (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
                 );
+                // load courses after initialization for guidedTour and notifications
+                this.courseManagementService.getWithUserStats({ onlyActive: this.showOnlyActive }).subscribe(
+                    (result: HttpResponse<Course[]>) => {
+                        this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(result.body!, tutorAssessmentTour, true);
+                    },
+                    (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
+                );
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res, false),
         );
@@ -149,15 +154,6 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     /**
-     * Returns the unique identifier for items in the collection
-     * @param index - Index of a course in the collection
-     * @param item - Current course
-     */
-    trackId(index: number, item: Course) {
-        return item.id;
-    }
-
-    /**
      * subscribes to courseListModification event
      */
     registerChangeInCourses() {
@@ -179,17 +175,6 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
-    }
-
-    sortRows() {
-        this.sortService.sortByProperty(this.courses, this.predicate, this.reverse);
-    }
-
-    /**
-     * returns the current Date
-     */
-    get today(): Date {
-        return new Date();
     }
 
     /**
