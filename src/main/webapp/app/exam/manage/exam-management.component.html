@@ -87,10 +87,10 @@
 
                     <td class="text-right">
                         <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                            <button *ngIf="isAtLeastInstructor" type="submit" [routerLink]="[exam.id]" class="btn btn-info btn-sm mr-1 mb-1" id="checklist-button-{{ exam.id }}">
+                            <a *ngIf="isAtLeastInstructor" [routerLink]="[exam.id]" class="btn btn-info btn-sm mr-1 mb-1" id="checklist-button-{{ exam.id }}">
                                 <fa-icon [icon]="'th-list'"></fa-icon>
                                 <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examChecklist' | translate }}</span>
-                            </button>
+                            </a>
                         </div>
 
                         <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
