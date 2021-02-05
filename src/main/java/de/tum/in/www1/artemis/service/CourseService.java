@@ -375,14 +375,14 @@ public class CourseService {
     public List<CourseOverviewDTO> getAllDTOsForOverview(Boolean isOnlyActive) {
         ZonedDateTime now = isOnlyActive ? ZonedDateTime.now() : null;
         User user = userService.getUserWithGroupsAndAuthorities();
-        var isAdmin = !authCheckService.isAdmin(user);
+        var isAdmin = authCheckService.isAdmin(user);
 
         List<Map<String, Object>> courses = this.courseRepository.getAllDTOsForOverview(now);
         List<CourseOverviewDTO> dtos = new ArrayList<>();
         for (var course : courses) {
             var teachingAssistantGroupName = (String) course.get("teachingAssistantGroupName");
             var instructorGroupName = (String) course.get("instructorGroupName");
-            if (!isAdmin && !user.getGroups().contains(teachingAssistantGroupName) && !user.getGroups().contains(instructorGroupName)){
+            if (!isAdmin && !user.getGroups().contains(teachingAssistantGroupName) && !user.getGroups().contains(instructorGroupName)) {
                 continue;
             }
 
