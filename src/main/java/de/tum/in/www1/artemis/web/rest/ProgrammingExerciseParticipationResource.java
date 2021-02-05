@@ -80,43 +80,11 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * Get the given student participation with its latest manual result and feedbacks.
+     * Get the given student participation with the manual result of the given correctionRound and its feedbacks.
      *
      * @param participationId for which to retrieve the student participation with result and feedbacks.
-     * @return the ResponseEntity with status 200 (OK) and the participation with its result in the body.
-     */
-    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-latest-manual-result-and-feedbacks")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> getParticipationWithLatestManualResultForStudentParticipation(@PathVariable Long participationId) {
-        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService
-                .findStudentParticipationWithLatestManualOrSemiAutomaticResultAndFeedbacksAndRelatedSubmissionAndAssessor(participationId);
-        if (participation.isEmpty()) {
-            return notFound();
-        }
-        if (!programmingExerciseParticipationService.canAccessParticipation(participation.get())) {
-            return forbidden();
-        }
-
-        // Fetch template and solution participation into exercise of participation
-        ProgrammingExercise exercise = (ProgrammingExercise) participation.get().getExercise();
-        exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
-
-        // Fetch grading criterion into exercise of participation
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
-        exercise.setGradingCriteria(gradingCriteria);
-
-        // Set exercise back to participation
-        participation.get().setExercise(exercise);
-
-        return ResponseEntity.ok(participation.get());
-    }
-
-    /**
-     * Get the given student participation with its latest manual result and feedbacks.
-     *
-     * @param participationId for which to retrieve the student participation with result and feedbacks.
-     * @param correctionRound of the result that the participation has
-     * @return the ResponseEntity with status 200 (OK) and the participation with its result in the body.
+     * @param correctionRound of the result that the participation must have, otherwise notFound is returned
+     * @return the ResponseEntity with status 200 (OK) and the participation with its results in the body.
      */
     @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-result-and-feedbacks-for/{correctionRound}/correction-round")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -144,6 +112,8 @@ public class ProgrammingExerciseParticipationResource {
 
         // get the result which belongs to the specific correctionround and save it as the single result in the participation
         List<Result> results = new ArrayList<>(participation.get().getResults());
+
+        // usually this should not be necessary, but just in case the participation's results come in a wrong order this is important
         results.sort((r1, r2) -> r1.getId().compareTo(r2.getId()));
 
         try {
