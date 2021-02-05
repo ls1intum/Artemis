@@ -30,6 +30,7 @@ import { Moment } from 'moment';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash';
 import { Course } from 'app/entities/course.model';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -46,6 +47,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly QUIZ = ExerciseType.QUIZ;
     readonly MODELING = ExerciseType.MODELING;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly FILEUPLOAD = ExerciseType.FILE_UPLOAD;
 
     courseId: number;
     examId: number;
@@ -529,6 +531,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                             () => this.onSaveSubmissionSuccess(submissionToSync.submission),
                             () => this.onSaveSubmissionError(),
                         );
+                        break;
+                    case ExerciseType.FILE_UPLOAD:
+                        // TODO: SE correct update method
+                        // this.fileUploadSubmissionService.update(submissionToSync.submission as FileUploadSubmission, submissionToSync.exercise.id!).subscribe(
+                        //    () => this.onSaveSubmissionSuccess(submissionToSync.submission),
+                        //    () => this.onSaveSubmissionError(),
+                        // );
                         break;
                 }
             });
