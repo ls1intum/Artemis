@@ -144,7 +144,7 @@ public class ProgrammingExerciseParticipationResource {
 
         // get the result which belongs to the specific correctionround and save it as the single result in the participation
         List<Result> results = new ArrayList<>(participation.get().getResults());
-        results.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
+        results.sort((r1, r2) -> r1.getId().compareTo(r2.getId()));
 
         try {
             Result resultOfCorrectionRound = results.get(correctionRound);

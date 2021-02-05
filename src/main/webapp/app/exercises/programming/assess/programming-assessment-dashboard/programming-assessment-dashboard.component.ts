@@ -12,6 +12,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProgrammingAssessmentManualResultService } from '../manual-result/programming-assessment-manual-result.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     templateUrl: './programming-assessment-dashboard.component.html',
@@ -86,6 +87,9 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
             .subscribe((submissions: ProgrammingSubmission[]) => {
                 this.submissions = submissions;
                 this.filteredSubmissions = submissions;
+                this.filteredSubmissions.forEach((sub) => {
+                    sub.results = sub.results!.filter((r) => r.assessmentType !== AssessmentType.AUTOMATIC);
+                });
                 this.busy = false;
             });
     }

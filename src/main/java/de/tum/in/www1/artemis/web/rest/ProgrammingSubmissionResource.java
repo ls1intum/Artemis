@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
@@ -389,8 +390,9 @@ public class ProgrammingSubmissionResource {
             return forbidden();
         }
 
-        Optional<Result> manualResult = participation.getResults().stream().filter(Result::isManual).findFirst();
-        if (manualResult.isPresent()) {
+        // Optional<Result> manualResult =
+        int numberOfManualResults = participation.getResults().stream().filter(Result::isManual).collect(Collectors.toList()).size();
+        if (numberOfManualResults == correctionRound + 1) {
             return ResponseEntity.ok(participation);
         }
         else {
