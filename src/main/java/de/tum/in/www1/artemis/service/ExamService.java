@@ -662,8 +662,9 @@ public class ExamService {
             User currentUser = userService.getUserWithGroupsAndAuthorities();
             Map<String, Object> userData = new HashMap<>();
             userData.put("exam", exam.getTitle());
-            for (var studentDto : studentDTOs) {
-                userData.put("student", studentDto.getFirstName() + " " + studentDto.getLastName() + ", " + studentDto.getRegistrationNumber());
+            for (var i = 0; i < studentDTOs.size(); i++) {
+                var studentDTO = studentDTOs.get(i);
+                userData.put("student" + i, studentDTO.toDatabaseString());
             }
             AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, userData);
             auditEventRepository.add(auditEvent);
@@ -1010,7 +1011,7 @@ public class ExamService {
         examRepository.save(exam);
 
         User currentUser = userService.getUserWithGroupsAndAuthorities();
-        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "user=" + student.getLogin());
+        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "student=" + student.getLogin());
         auditEventRepository.add(auditEvent);
         log.info("User " + currentUser.getLogin() + " has added user " + student.getLogin() + " to the exam " + exam.getTitle() + " with id " + exam.getId());
     }
@@ -1036,8 +1037,7 @@ public class ExamService {
 
             // Optionally delete participations and submissions
             if (deleteParticipationsAndSubmission) {
-                List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student.getId(),
-                        studentExam.getExercises());
+                List<StudentParticipation> participations = participationService.findByStudentExamWithEagerSubmissionsResult(studentExam);
                 for (var participation : participations) {
                     participationService.delete(participation.getId(), true, true);
                 }

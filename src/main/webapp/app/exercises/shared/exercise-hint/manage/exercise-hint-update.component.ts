@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, of, Subscription } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
@@ -10,6 +10,7 @@ import { EditorMode, MarkdownEditorHeight } from 'app/shared/markdown-editor/mar
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
+import { navigateBack } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
@@ -19,6 +20,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     MarkdownEditorHeight = MarkdownEditorHeight;
 
+    courseId: number;
     exerciseId: number;
     exerciseHint = new ExerciseHint();
 
@@ -32,6 +34,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     constructor(
         private route: ActivatedRoute,
+        private router: Router,
         protected jhiAlertService: JhiAlertService,
         protected exerciseHintService: ExerciseHintService,
         protected exerciseService: ExerciseService,
@@ -43,6 +46,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.isLoading = true;
         this.paramSub = this.route.params.subscribe((params) => {
+            this.courseId = params['courseId'];
             this.exerciseId = params['exerciseId'];
             this.isSaving = false;
             this.exerciseNotFound = false;
@@ -91,10 +95,16 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Navigates back one step in the browser history
+     * Navigate to the previous page when the user cancels the update process
+     * Returns to the detail page if there is no previous state and we edited an existing hint
+     * Returns to the overview page if there is no previous state and we created a new hint
      */
     previousState() {
-        window.history.back();
+        if (this.exerciseHint.id) {
+            navigateBack(this.router, ['course-management', this.courseId.toString(), 'exercises', this.exerciseId.toString(), 'hints', this.exerciseHint.id!.toString()]);
+        } else {
+            navigateBack(this.router, ['course-management', this.courseId.toString(), 'exercises', this.exerciseId.toString(), 'hints']);
+        }
     }
 
     /**

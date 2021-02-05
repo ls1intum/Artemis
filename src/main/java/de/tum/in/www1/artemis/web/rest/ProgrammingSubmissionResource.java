@@ -400,7 +400,7 @@ public class ProgrammingSubmissionResource {
             // As no manual result is present we need to lock the submission for assessment
             Result latestAutomaticResult = participation.findLatestResult();
             ProgrammingSubmission submission = programmingSubmissionService.findByResultId(latestAutomaticResult.getId());
-            submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId());
+            submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId(), correctionRound);
             return ResponseEntity.ok(submission.getParticipation());
         }
     }

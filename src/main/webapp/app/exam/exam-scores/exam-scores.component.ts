@@ -59,7 +59,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
-    private languageChangeSubscription: Subscription | null;
+    private languageChangeSubscription?: Subscription;
 
     constructor(
         private route: ActivatedRoute,
