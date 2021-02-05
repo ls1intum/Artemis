@@ -13,9 +13,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -191,6 +194,27 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
         addSolutionParticipationWithResult();
         SolutionProgrammingExerciseParticipation participation = solutionProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getLatestResultWithSubmission(boolean withSubmission) throws Exception {
+        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
+        result.setResultString("a of b");
+        result.setSuccessful(true);
+        result = database.addFeedbackToResults(result);
+        var submission = database.addProgrammingSubmissionToResultAndParticipation(result, (ProgrammingExerciseStudentParticipation) programmingExerciseParticipation, "ABC");
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("withSubmission", String.valueOf(withSubmission));
+        var resultResponse = request.get(participationsBaseUrl + programmingExerciseParticipation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class,
+                parameters);
+
+        assertThat(resultResponse.getFeedbacks()).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
+        assertThat(result).usingRecursiveComparison().ignoringFields("submission", "feedbacks", "participation").isEqualTo(resultResponse);
+        if (withSubmission) {
+            assertThat(submission).isEqualTo(resultResponse.getSubmission());
+        }
     }
 
     @Test
