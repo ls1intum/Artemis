@@ -79,7 +79,7 @@
                         name="points"
                         #points="ngModel"
                         id="field_points"
-                        [(ngModel)]="textExercise.maxScore"
+                        [(ngModel)]="textExercise.maxPoints"
                     />
                     <div *ngIf="points?.invalid && (points?.dirty || points?.touched) && points?.errors" class="alert alert-danger">
                         {{ 'artemisApp.exercise.pointsError' | translate }}
@@ -158,12 +158,9 @@
 
             <ul *ngIf="textExercise.id && !isImport">
                 <li *ngFor="let exampleSubmission of textExercise.exampleSubmissions; let i = index">
-                    <button
-                        [routerLink]="['/course-management', examCourseId, 'text-exercises', textExercise.id, 'example-submissions', exampleSubmission.id]"
-                        class="btn btn-link"
-                    >
+                    <a [routerLink]="['/course-management', examCourseId, 'text-exercises', textExercise.id, 'example-submissions', exampleSubmission.id]" class="btn btn-link">
                         Example submission {{ i + 1 }}
-                    </button>
+                    </a>
                     <fa-icon
                         *ngIf="exampleSubmission.usedForTutorial"
                         [icon]="'chalkboard-teacher'"
@@ -182,14 +179,14 @@
                 </li>
             </ul>
 
-            <button
+            <a
                 *ngIf="textExercise.id && !isImport"
                 class="btn btn-primary"
                 [routerLink]="['/course-management', examCourseId, 'text-exercises', textExercise.id, 'example-submissions', 'new']"
                 jhiTranslate="artemisApp.textExercise.createExampleSubmissions"
             >
                 Create example submission
-            </button>
+            </a>
 
             <div class="alert alert-info" *ngIf="!textExercise.id" jhiTranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise">
                 To create an example submission, you first need to finish creating the text exercise.

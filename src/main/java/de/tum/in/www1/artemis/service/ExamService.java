@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
+
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -284,11 +286,11 @@ public class ExamService {
         // Adding exercise group information to DTO
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             // Find the maximum points for this exercise group
-            OptionalDouble optionalMaxPointsGroup = exerciseGroup.getExercises().stream().mapToDouble(Exercise::getMaxScore).max();
+            OptionalDouble optionalMaxPointsGroup = exerciseGroup.getExercises().stream().mapToDouble(Exercise::getMaxPoints).max();
             Double maxPointsGroup = optionalMaxPointsGroup.orElse(0);
 
             // Counter for exerciseGroup participations. Is calculated by summing up the number of exercise participations
-            long numberOfExeciseGroupParticipants = 0;
+            long numberOfExerciseGroupParticipants = 0;
             // Add information about exercise groups and exercises
             var exerciseGroupDTO = new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle(), maxPointsGroup);
             for (Exercise exercise : exerciseGroup.getExercises()) {
@@ -297,11 +299,11 @@ public class ExamService {
                 if (participantsForExercise == null) {
                     participantsForExercise = 0L;
                 }
-                numberOfExeciseGroupParticipants += participantsForExercise;
+                numberOfExerciseGroupParticipants += participantsForExercise;
                 exerciseGroupDTO.containedExercises
-                        .add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), participantsForExercise));
+                        .add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), participantsForExercise));
             }
-            exerciseGroupDTO.numberOfParticipants = numberOfExeciseGroupParticipants;
+            exerciseGroupDTO.numberOfParticipants = numberOfExerciseGroupParticipants;
             scores.exerciseGroups.add(exerciseGroupDTO);
         }
 
@@ -325,7 +327,7 @@ public class ExamService {
                 // Relevant Result is already calculated
                 if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                     Result relevantResult = studentParticipation.getResults().iterator().next();
-                    double achievedPoints = relevantResult.getScore() / 100.0 * exercise.getMaxScore();
+                    double achievedPoints = relevantResult.getScore() / 100.0 * exercise.getMaxPoints();
 
                     // points earned in NOT_INCLUDED exercises do not count towards the students result in the exam
                     if (!exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
@@ -335,7 +337,7 @@ public class ExamService {
                     // Check whether the student attempted to solve the exercise
                     boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise, objectMapper);
                     studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(), new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(),
-                            exercise.getMaxScore(), relevantResult.getScore(), achievedPoints, hasNonEmptySubmission));
+                            exercise.getMaxPoints(), relevantResult.getScore(), achievedPoints, hasNonEmptySubmission));
                 }
 
             }
@@ -447,7 +449,7 @@ public class ExamService {
      * Validates exercise settings.
      *
      * @param exam exam which is validated
-     * @throws BadRequestAlertException
+     * @throws BadRequestAlertException an exception if the exam is not configured correctly
      */
     public void validateForStudentExamGeneration(Exam exam) throws BadRequestAlertException {
         List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
@@ -483,8 +485,7 @@ public class ExamService {
 
         // Ensure that all exercises in an exercise group have the same meaning for the exam score calculation
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            Set<IncludedInOverallScore> meaningsForScoreCalculation = exerciseGroup.getExercises().stream().map(exercise -> exercise.getIncludedInOverallScore())
-                    .collect(Collectors.toSet());
+            Set<IncludedInOverallScore> meaningsForScoreCalculation = exerciseGroup.getExercises().stream().map(Exercise::getIncludedInOverallScore).collect(Collectors.toSet());
             if (meaningsForScoreCalculation.size() > 1) {
                 throw new BadRequestAlertException("All exercises in an exercise group must have the same meaning for the exam score", "Exam",
                         "artemisApp.exam.validation.allExercisesInExerciseGroupOfSameIncludedType");
@@ -498,10 +499,10 @@ public class ExamService {
 
         // Ensure that all exercises in an exercise group have the same amount of max points and max bonus points
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            Set<Double> maxPointsEarnable = exerciseGroup.getExercises().stream().map(Exercise::getMaxScore).collect(Collectors.toSet());
-            Set<Double> bonusPointsEarnable = exerciseGroup.getExercises().stream().map(Exercise::getBonusPoints).collect(Collectors.toSet());
+            Set<Double> allMaxPoints = exerciseGroup.getExercises().stream().map(Exercise::getMaxPoints).collect(Collectors.toSet());
+            Set<Double> allBonusPoints = exerciseGroup.getExercises().stream().map(Exercise::getBonusPoints).collect(Collectors.toSet());
 
-            if (maxPointsEarnable.size() > 1 || bonusPointsEarnable.size() > 1) {
+            if (allMaxPoints.size() > 1 || allBonusPoints.size() > 1) {
                 throw new BadRequestAlertException("All exercises in an exercise group need to give the same amount of points", "Exam",
                         "artemisApp.exam.validation.allExercisesInExerciseGroupGiveSameNumberOfPoints");
             }
@@ -515,7 +516,7 @@ public class ExamService {
         for (ExerciseGroup exerciseGroup : mandatoryExerciseGroups) {
             Exercise groupRepresentativeExercise = exerciseGroup.getExercises().stream().findAny().get();
             if (groupRepresentativeExercise.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_COMPLETELY)) {
-                pointsReachableByMandatoryExercises += groupRepresentativeExercise.getMaxScore();
+                pointsReachableByMandatoryExercises += groupRepresentativeExercise.getMaxPoints();
             }
         }
         if (pointsReachableByMandatoryExercises > exam.getMaxPoints()) {
@@ -528,7 +529,7 @@ public class ExamService {
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             Exercise groupRepresentativeExercise = exerciseGroup.getExercises().stream().findAny().get();
             if (groupRepresentativeExercise.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_COMPLETELY)) {
-                pointsReachable += groupRepresentativeExercise.getMaxScore();
+                pointsReachable += groupRepresentativeExercise.getMaxPoints();
             }
         }
         if (pointsReachable < exam.getMaxPoints()) {
@@ -601,14 +602,14 @@ public class ExamService {
      *
      * @param courseId      the id of the course
      * @param examId        the id of the exam
-     * @param studentDtos   the list of students (with at least registration number) who should get access to the exam
+     * @param studentDTOs   the list of students (with at least registration number) who should get access to the exam
      * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
-    public List<StudentDTO> registerStudentsForExam(Long courseId, Long examId, List<StudentDTO> studentDtos) {
+    public List<StudentDTO> registerStudentsForExam(Long courseId, Long examId, List<StudentDTO> studentDTOs) {
         var course = courseService.findOne(courseId);
         var exam = findOneWithRegisteredUsers(examId);
-        List<StudentDTO> notFoundStudentsDtos = new ArrayList<>();
-        for (var studentDto : studentDtos) {
+        List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
+        for (var studentDto : studentDTOs) {
             var registrationNumber = studentDto.getRegistrationNumber();
             var login = studentDto.getLogin();
             try {
@@ -653,7 +654,7 @@ public class ExamService {
                 log.warn("Error while processing user with registration number " + registrationNumber + ": " + ex.getMessage(), ex);
             }
 
-            notFoundStudentsDtos.add(studentDto);
+            notFoundStudentsDTOs.add(studentDto);
         }
         examRepository.save(exam);
 
@@ -661,18 +662,19 @@ public class ExamService {
             User currentUser = userService.getUserWithGroupsAndAuthorities();
             Map<String, Object> userData = new HashMap<>();
             userData.put("exam", exam.getTitle());
-            for (var studentDto : studentDtos) {
-                userData.put("student", studentDto.getFirstName() + " " + studentDto.getLastName() + ", " + studentDto.getRegistrationNumber());
+            for (var i = 0; i < studentDTOs.size(); i++) {
+                var studentDTO = studentDTOs.get(i);
+                userData.put("student" + i, studentDTO.toDatabaseString());
             }
             AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, userData);
             auditEventRepository.add(auditEvent);
-            log.info("User " + currentUser.getLogin() + " has added multiple users " + studentDtos + " to the exam " + exam.getTitle() + " with id " + exam.getId());
+            log.info("User " + currentUser.getLogin() + " has added multiple users " + studentDTOs + " to the exam " + exam.getTitle() + " with id " + exam.getId());
         }
         catch (Exception ex) {
             log.warn("Could not add audit event to audit log", ex);
         }
 
-        return notFoundStudentsDtos;
+        return notFoundStudentsDTOs;
     }
 
     /**
@@ -738,10 +740,9 @@ public class ExamService {
      * @param examId exam to which the student exams belong
      * @return number of generated Participations
      */
-    public Integer startExercises(Long examId) {
+    public int startExercises(Long examId) {
 
-        var exam = examRepository.findWithStudentExamsExercisesParticipationsSubmissionsById(examId)
-                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        var exam = examRepository.findWithStudentExamsExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
         var studentExams = exam.getStudentExams();
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
@@ -756,13 +757,20 @@ public class ExamService {
      */
     public void setUpExerciseParticipationsAndSubmissions(List<StudentParticipation> generatedParticipations, StudentExam studentExam) {
         User student = studentExam.getUser();
+
         for (Exercise exercise : studentExam.getExercises()) {
+            SecurityUtils.setAuthorizationObject();
+            // NOTE: it is not ideal to invoke the next line several times (e.g. 2000 student exams with 10 exercises would lead to 20.000 database calls to find a participation).
+            // One optimization could be that we load all participations per exercise once (or per exercise) into a large list (10 * 2000 = 20.000 participations) and then check if
+            // those participations exist in Java, however this might lead to memory issues and might be more difficult to program (and more difficult to understand)
+            // TODO: directly check in the database if the entry exists for the student, exercise and InitializationState.INITIALIZED
+            var studentParticipations = participationService.findByExerciseAndStudentId(exercise, student.getId());
             // we start the exercise if no participation was found that was already fully initialized
-            if (exercise.getStudentParticipations().stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
+            if (studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
                     && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                 try {
-                    SecurityUtils.setAuthorizationObject();
                     if (exercise instanceof ProgrammingExercise) {
+                        // TODO: we should try to move this out of the for-loop into the method which calls this method.
                         // Load lazy property
                         final var programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
                         ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
@@ -818,10 +826,10 @@ public class ExamService {
         }
 
         long start = System.nanoTime();
-        log.info("Evaluating {} quiz exercies in exam {}", quizExercises.size(), examId);
+        log.info("Evaluating {} quiz exercises in exam {}", quizExercises.size(), examId);
         // Evaluate all quizzes for that exercise
         quizExercises.forEach(quiz -> examQuizService.evaluateQuizAndUpdateStatistics(quiz.getId()));
-        log.info("Evaluated {} quiz exercies in exam {} in {}", quizExercises.size(), examId, TimeLogUtil.formatDurationFrom(start));
+        log.info("Evaluated {} quiz exercises in exam {} in {}", quizExercises.size(), examId, TimeLogUtil.formatDurationFrom(start));
 
         return quizExercises.size();
     }
@@ -1003,22 +1011,22 @@ public class ExamService {
         examRepository.save(exam);
 
         User currentUser = userService.getUserWithGroupsAndAuthorities();
-        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "user=" + student.getLogin());
+        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "student=" + student.getLogin());
         auditEventRepository.add(auditEvent);
         log.info("User " + currentUser.getLogin() + " has added user " + student.getLogin() + " to the exam " + exam.getTitle() + " with id " + exam.getId());
     }
 
     /**
      *
-     * @param examId
-     * @param withParticipationsAndSubmission
-     * @param student
+     * @param examId the exam for which a student should be unregistered
+     * @param deleteParticipationsAndSubmission whether the participations and submissions of the student should be deleted
+     * @param student the user object that should be unregistered
      */
-    public void unregisterStudentFromExam(Long examId, boolean withParticipationsAndSubmission, User student) {
+    public void unregisterStudentFromExam(Long examId, boolean deleteParticipationsAndSubmission, User student) {
         var exam = findOneWithRegisteredUsers(examId);
         exam.removeRegisteredUser(student);
 
-        // Note: we intentionally do not remove the user from the course, because the student might just have "deregistered" from the exam, but should
+        // Note: we intentionally do not remove the user from the course, because the student might just have "unregistered" from the exam, but should
         // still have access to the course.
         examRepository.save(exam);
 
@@ -1028,9 +1036,8 @@ public class ExamService {
             StudentExam studentExam = optionalStudentExam.get();
 
             // Optionally delete participations and submissions
-            if (withParticipationsAndSubmission) {
-                List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student.getId(),
-                        studentExam.getExercises());
+            if (deleteParticipationsAndSubmission) {
+                List<StudentParticipation> participations = participationService.findByStudentExamWithEagerSubmissionsResult(studentExam);
                 for (var participation : participations) {
                     participationService.delete(participation.getId(), true, true);
                 }
@@ -1045,5 +1052,29 @@ public class ExamService {
         auditEventRepository.add(auditEvent);
         log.info("User " + currentUser.getLogin() + " has removed user " + student.getLogin() + " from the exam " + exam.getTitle() + " with id " + exam.getId()
                 + ". This also deleted a potentially existing student exam with all its participations and submissions.");
+    }
+
+    /**
+     * Adds all students registered in the course to the given exam
+     *
+     * @param courseId Id of the course
+     * @param examId Id of the exam
+     */
+    public void addAllStudentsOfCourseToExam(Long courseId, Long examId) {
+        Course course = courseService.findOne(courseId);
+        var students = userService.getStudents(course);
+        var examOpt = examRepository.findWithRegisteredUsersById(examId);
+
+        if (examOpt.isPresent()) {
+            Exam exam = examOpt.get();
+            students.forEach(student -> {
+                if (!exam.getRegisteredUsers().contains(student) && !student.getAuthorities().contains(ADMIN_AUTHORITY)
+                        && !student.getGroups().contains(course.getInstructorGroupName())) {
+                    exam.addRegisteredUser(student);
+                }
+            });
+            examRepository.save(exam);
+        }
+
     }
 }

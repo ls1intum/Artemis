@@ -363,6 +363,17 @@ public class UserService {
             if (ldapUserOptional.isPresent()) {
                 LdapUserDto ldapUser = ldapUserOptional.get();
                 log.info("Ldap User " + ldapUser.getUsername() + " has registration number: " + ldapUser.getRegistrationNumber());
+
+                // handle edge case, the user already exists in Artemis, but for some reason does not have a registration number or it is wrong
+                if (StringUtils.hasText(ldapUser.getUsername())) {
+                    var existingUser = userRepository.findOneByLogin(ldapUser.getUsername());
+                    if (existingUser.isPresent()) {
+                        existingUser.get().setRegistrationNumber(ldapUser.getRegistrationNumber());
+                        saveUser(existingUser.get());
+                        return existingUser;
+                    }
+                }
+
                 // Use empty password, so that we don't store the credentials of Jira users in the Artemis DB
                 User user = createUser(ldapUser.getUsername(), "", ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(), registrationNumber, null, "en");
                 if (useExternalUserManagement) {
@@ -723,15 +734,6 @@ public class UserService {
     }
 
     /**
-     * Get user with groups by given login string
-     * @param login user login string
-     * @return existing user with given login string or null
-     */
-    public Optional<User> getUserWithGroupsByLogin(String login) {
-        return userRepository.findOneWithGroupsByLogin(login);
-    }
-
-    /**
      * Get user with groups and authorities by given login string
      * @param login user login string
      * @return existing user with given login string or null
@@ -846,7 +848,7 @@ public class UserService {
      * @return list of students for given course
      */
     public List<User> getStudents(Course course) {
-        return findAllUsersInGroup(course.getStudentGroupName());
+        return findAllUsersInGroupWithAuthorities(course.getStudentGroupName());
     }
 
     /**
@@ -855,7 +857,7 @@ public class UserService {
      * @return list of tutors for given course
      */
     public List<User> getTutors(Course course) {
-        return findAllUsersInGroup(course.getTeachingAssistantGroupName());
+        return findAllUsersInGroupWithAuthorities(course.getTeachingAssistantGroupName());
     }
 
     /**
@@ -865,7 +867,7 @@ public class UserService {
      * @return A list of all users that have the role of instructor in the course
      */
     public List<User> getInstructors(Course course) {
-        return findAllUsersInGroup(course.getInstructorGroupName());
+        return findAllUsersInGroupWithAuthorities(course.getInstructorGroupName());
     }
 
     /**
@@ -874,8 +876,8 @@ public class UserService {
      * @param groupName The group name for which to return all members
      * @return A list of all users that belong to the group
      */
-    public List<User> findAllUsersInGroup(String groupName) {
-        return userRepository.findAllInGroup(groupName);
+    public List<User> findAllUsersInGroupWithAuthorities(String groupName) {
+        return userRepository.findAllInGroupWithAuthorities(groupName);
     }
 
     /**
@@ -934,7 +936,7 @@ public class UserService {
         if (!excludedUsers.isEmpty()) {
             return userRepository.findAllInGroupContainingAndNotIn(groupName, new HashSet<>(excludedUsers));
         }
-        return userRepository.findAllInGroup(groupName);
+        return userRepository.findAllInGroupWithAuthorities(groupName);
     }
 
     /**
@@ -944,7 +946,7 @@ public class UserService {
      */
     public void removeGroupFromUsers(String groupName) {
         log.info("Remove group " + groupName + " from users");
-        List<User> users = userRepository.findAllInGroup(groupName);
+        List<User> users = userRepository.findAllInGroupWithAuthorities(groupName);
         log.info("Found " + users.size() + " users with group " + groupName);
         for (User user : users) {
             user.getGroups().remove(groupName);

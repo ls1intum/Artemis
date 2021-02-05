@@ -39,7 +39,7 @@ describe('CourseStatisticsComponent', () => {
             dueDate: moment('2019-06-17T09:47:12+02:00'),
             assessmentDueDate: moment('2019-06-17T09:55:17+02:00'),
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-            maxScore: 12.0,
+            maxPoints: 12.0,
             studentParticipations: [
                 {
                     id: 248,
@@ -69,7 +69,7 @@ describe('CourseStatisticsComponent', () => {
             dueDate: moment('2019-06-17T17:50:08+02:00'),
             assessmentDueDate: moment('2019-06-17T17:51:13+02:00'),
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-            maxScore: 12.0,
+            maxPoints: 12.0,
             studentParticipations: [
                 {
                     id: 249,
@@ -96,7 +96,7 @@ describe('CourseStatisticsComponent', () => {
             title: 'test 18.06. 1',
             dueDate: moment('2019-06-18T07:56:41+02:00'),
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-            maxScore: 12.0,
+            maxPoints: 12.0,
             studentParticipations: [],
             diagramType: 'ClassDiagram',
             numberOfSubmissions: new DueDateStat(),
@@ -110,7 +110,7 @@ describe('CourseStatisticsComponent', () => {
             dueDate: moment('2019-06-16T18:15:03+02:00'),
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
             assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
-            maxScore: 12.0,
+            maxPoints: 12.0,
             studentParticipations: [
                 {
                     id: 246,
@@ -151,7 +151,7 @@ describe('CourseStatisticsComponent', () => {
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
             dueDate: moment('2019-06-16T18:15:03+02:00'),
             assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
-            maxScore: 12.0,
+            maxPoints: 12.0,
             studentParticipations: [
                 {
                     id: 249,
@@ -273,7 +273,7 @@ describe('CourseStatisticsComponent', () => {
         let exercise: any = comp.groupedExercises[0];
         expect(exercise.absoluteScore).to.equal(20);
         expect(exercise.reachableScore).to.equal(36);
-        expect(exercise.totalMaxScore).to.equal(60);
+        expect(exercise.overallMaxPoints).to.equal(60);
 
         const newExercise = [
             ({
@@ -282,7 +282,7 @@ describe('CourseStatisticsComponent', () => {
                 title: 'Until 18:20 too',
                 dueDate: moment('2019-06-16T18:15:03+02:00'),
                 assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
-                maxScore: 10.0,
+                maxPoints: 10.0,
                 includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
                 studentParticipations: [
                     {
@@ -327,12 +327,12 @@ describe('CourseStatisticsComponent', () => {
         exercise = comp.groupedExercises[0];
         expect(exercise.absoluteScore).to.equal(20);
         expect(exercise.reachableScore).to.equal(36);
-        expect(exercise.totalMaxScore).to.equal(60);
+        expect(exercise.overallMaxPoints).to.equal(60);
 
         // check that overall course score is adapted accordingly
-        expect(comp.totalScore).to.equal(25.5);
-        expect(comp.reachableScore).to.equal(46);
-        expect(comp.totalMaxScore).to.equal(70);
+        expect(comp.overallPoints).to.equal(25.5);
+        expect(comp.reachablePoints).to.equal(46);
+        expect(comp.overallMaxPoints).to.equal(70);
 
         // check that html file displays the correct elements
         let debugElement = fixture.debugElement.query(By.css('#absolute-course-score'));

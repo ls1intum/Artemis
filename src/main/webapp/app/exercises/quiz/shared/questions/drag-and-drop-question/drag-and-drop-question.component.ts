@@ -26,7 +26,7 @@ window.addEventListener('touchmove', function () {}, { passive: false });
 @Component({
     selector: 'jhi-drag-and-drop-question',
     templateUrl: './drag-and-drop-question.component.html',
-    providers: [ArtemisMarkdownService, DragAndDropQuestionUtil],
+    providers: [DragAndDropQuestionUtil],
     styleUrls: ['./drag-and-drop-question.component.scss', '../../../participate/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
 })

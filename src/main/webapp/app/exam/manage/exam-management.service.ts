@@ -97,9 +97,9 @@ export class ExamManagementService {
     getExamWithInterestingExercisesForAssessmentDashboard(courseId: number, examId: number, isTestRun: boolean): Observable<EntityResponseType> {
         let url: string;
         if (isTestRun) {
-            url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-test-run-dashboard`;
+            url = `${this.resourceUrl}/${courseId}/exams/${examId}/exam-for-test-run-assessment-dashboard`;
         } else {
-            url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-dashboard`;
+            url = `${this.resourceUrl}/${courseId}/exams/${examId}/exam-for-assessment-dashboard`;
         }
         return this.http
             .get<Exam>(url, { observe: 'response' })
@@ -149,8 +149,17 @@ export class ExamManagementService {
     }
 
     /**
+     * Add all students of the course to the exam
+     * @param courseId
+     * @param examId
+     * @return studentDtos of students that were not found in the system
+     */
+    addAllStudentsOfCourseToExam(courseId: number, examId: number): Observable<HttpResponse<StudentDTO[]>> {
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, { observe: 'response' });
+    }
+    /**
      * Remove a student to the registered users for an exam
-     * @param courseId The course id.
+     * @param courseId The course id
      * @param examId The id of the exam from which to remove the student
      * @param studentLogin Login of the student
      * @param withParticipationsAndSubmission
@@ -270,7 +279,7 @@ export class ExamManagementService {
      * @param exerciseGroups List of exercise groups.
      */
     updateOrder(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<ExerciseGroup[]>> {
-        return this.http.put<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroupsOrder`, exerciseGroups, { observe: 'response' });
+        return this.http.put<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups-order`, exerciseGroups, { observe: 'response' });
     }
 
     public static convertDateFromClient(exam: Exam): Exam {

@@ -11,14 +11,12 @@ import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
-import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { CoursesComponent } from 'app/overview/courses.component';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration-selector/course-registration-selector.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
@@ -31,6 +29,7 @@ import { CourseLearningGoalsComponent } from './course-learning-goals/course-lea
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
+import { CourseExerciseDetailsModule } from 'app/overview/exercise-details/course-exercise-details.module';
 
 @NgModule({
     imports: [
@@ -50,10 +49,10 @@ import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/co
         ArtemisComplaintsModule,
         FeatureToggleModule,
         ProgrammingExerciseUtilsModule,
-        ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisTeamModule,
         RatingModule,
         ArtemisLearningGoalsModule,
+        CourseExerciseDetailsModule, // Important: at the moment, we cannot lazy load this module, because otherwise the LTI integration won't work any more
     ],
     declarations: [
         CoursesComponent,
@@ -62,7 +61,6 @@ import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/co
         CourseCardComponent,
         CourseStatisticsComponent,
         CourseExercisesComponent,
-        CourseExerciseDetailsComponent,
         CourseLecturesComponent,
         CourseLectureRowComponent,
         CourseExamsComponent,

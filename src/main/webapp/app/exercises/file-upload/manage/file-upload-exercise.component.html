@@ -3,14 +3,14 @@
         <span *ngIf="course && !showHeading">{{ course.title }} - </span
         ><span *ngIf="fileUploadExercises && showHeading">{{ getAmountOfExercisesString(fileUploadExercises) }} </span>
         <span jhiTranslate="artemisApp.fileUploadExercise.home.title">File Upload Exercises</span>
-        <button
+        <a
             *ngIf="course && course.isAtLeastInstructor"
             class="btn btn-primary float-right jh-create-entity create-file-upload-exercise"
             [routerLink]="['/course-management', course.id, 'file-upload-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.fileUploadExercise.home.createLabel"> Create File Upload Exercise </span>
-        </button>
+        </a>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
     <div class="row"></div>
@@ -47,67 +47,61 @@
                     <td>{{ fileUploadExercise.releaseDate | artemisDate }}</td>
                     <td>{{ fileUploadExercise.dueDate | artemisDate }}</td>
                     <td>{{ fileUploadExercise.assessmentDueDate | artemisDate }}</td>
-                    <td>{{ fileUploadExercise.maxScore }}</td>
+                    <td>{{ fileUploadExercise.maxPoints }}</td>
                     <td>{{ fileUploadExercise.bonusPoints }}</td>
                     <td>{{ exerciseService.isIncludedInScore(fileUploadExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ fileUploadExercise.presentationScoreEnabled }}</td>
                     <td>{{ fileUploadExercise.filePattern }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
-                            <button
-                                type="submit"
+                            <a
                                 *ngIf="fileUploadExercise.isAtLeastTutor"
                                 [routerLink]="['/course-management', fileUploadExercise.course.id, 'exercises', fileUploadExercise.id, 'scores']"
                                 class="btn btn-info btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'eye'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-                            </button>
-                            <button
-                                type="submit"
+                            </a>
+                            <a
                                 *ngIf="fileUploadExercise.isAtLeastInstructor"
                                 [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'assessment']"
                                 class="btn btn-primary btn-sm mr-1"
                             >
                                 <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
-                            </button>
-                            <button
-                                type="submit"
+                            </a>
+                            <a
                                 *ngIf="fileUploadExercise.isAtLeastTutor"
                                 [routerLink]="['/course-management', courseId, 'exercises', fileUploadExercise.id, 'participations']"
                                 class="btn btn-primary btn-sm mr-1"
                             >
                                 <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-                            </button>
-                            <button
-                                type="submit"
+                            </a>
+                            <a
                                 *ngIf="fileUploadExercise.teamMode && fileUploadExercise.isAtLeastTutor"
                                 [routerLink]="['/course-management', fileUploadExercise.course.id, 'exercises', fileUploadExercise.id, 'teams']"
                                 class="btn btn-primary btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'users'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
-                            </button>
-                            <button
-                                type="submit"
+                            </a>
+                            <a
                                 *ngIf="fileUploadExercise.isAtLeastInstructor"
                                 [routerLink]="['/course-management', fileUploadExercise.course.id, 'file-upload-exercises', fileUploadExercise.id]"
                                 class="btn btn-info btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'eye'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                            </button>
-                            <button
-                                type="submit"
+                            </a>
+                            <a
                                 *ngIf="fileUploadExercise.isAtLeastInstructor"
                                 [routerLink]="['/course-management', fileUploadExercise.course.id, 'file-upload-exercises', fileUploadExercise.id, 'edit']"
                                 class="btn btn-primary btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                            </button>
+                            </a>
                             <button
                                 *ngIf="fileUploadExercise.isAtLeastInstructor"
                                 jhiDeleteButton

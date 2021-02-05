@@ -215,6 +215,7 @@
             "confirmationStartText": "Klausurbeginn Bestätigungstext",
             "confirmationEndText": "Klausurende Bestätigungstext",
             "assessmentDashboard": "Bewertungs-Dashboard",
+            "examChecklist": "Exam Checkliste",
             "studentExams": "Klausuren der Studenten",
             "students": "Studenten",
             "testRun": {
@@ -227,7 +228,8 @@
                 "manage": "Arbeitszeit verwalten",
                 "text": "Hier kannst du einen Testlauf für die Klausur erstellen. Wähle aus, welche Aufgaben die Klausur enthalten soll und führe sie aus. Anschließend, kannst du die Abgabe als Tutor bewerten. Das Ergebnis, kannst du als Student einsehen und dich beschweren. Diese Beschwerden kannst du dann als Tutor bewerten.\n<strong>Hinweis:</strong> Abgaben innerhalb von Testläufen werden nicht bei den Klausurergebnissen gezählt.",
                 "createTestRunDisabled": "Keine Aufgaben gefunden",
-                "reminderToDelete": "Achte darauf, dass du alle Testläufe vor der Durchführung der Klausur löschst.",
+                "reminderToDelete": "Achte darauf, dass du alle Testläufe vor der Durchführung der Klausur löschst. Alle Testläufe werden automatisch gelöscht, wenn du die nicht abgegebenen Klausuren und leeren Abgaben bewertest.",
+                "secondCorrectionHint": "Hinweis: Die zweite Korrektur gilt nicht für Testläufe.",
                 "assessTestRunDisabled": "Keiner deiner Testläufe ist beendet",
                 "delete": {
                     "question": "Soll der <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen elemente werden ebenfalls gelöscht, falls sie von keinem anderen Testlauf referenziert werden.",
@@ -247,6 +249,8 @@
                 "lastName": "Nachname",
                 "email": "E-Mail",
                 "registrationNumber": "Matrikelnummer",
+                "registerAllFromCourse": "Registriere Kurs Studierende",
+                "registerAllFromCourseTooltip": "Registriere alle zu diesem Kurs angemeldeten Studierende",
                 "removeFromExam": {
                     "modalQuestion": "Soll der Student mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Seine individuelle Klausur wird dabei gelöscht.",
                     "deleteParticipationsAndSubmission": "Participations und submissions des Studenten in der zugehörigen Klausur löschen?"
@@ -294,10 +298,47 @@
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studenten. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
+            },
+            "checklist": {
+                "title": "Checkliste für die Durchführung von Prüfungen",
+                "introduction": "Unter folgendem Link kannst du dich über den Ablauf einer Artemis Klausur informieren:",
+                "linkDescription": "Instructors Guide",
+                "checklistItem": "Aufgabe",
+                "description": "Beschreibung",
+                "goTo": "Gehe zu",
+                "tableItem": {
+                    "register": "Registrieren der Studierenden zur Klausur",
+                    "exerciseGroups": "Erstellen Sie mindestens eine Aufgaben Gruppe mit mindestens einer Aufgabe",
+                    "generateStudentExams": "Generieren aller Klausuren",
+                    "prepareExerciseStart": "Aufgabenstart vorbereiten",
+                    "examDetails": "Ausfüllen aller Klausur Details",
+                    "conductExam": "Abhalten der Klausur",
+                    "assessAllSubmissions": "Alle Abgaben bewerten",
+                    "publishResults": "Veröffentlichen der Ergebnisse",
+                    "examReview": "Planung der Klausureinsicht ",
+                    "resolveComplaints": "Auflösen aller Beschwerden",
+                    "testRun": "Abhalten eines Testdurchlaufs",
+                    "exportResults": "Exportiere die Klausurergebnisse"
+                },
+                "descriptionItem": {
+                    "register": "Mindestens ein Studierender muss zur Klausur angemeldet sein.",
+                    "exerciseGroups": "Du kannst Übungsgruppen mit mehreren Übungsvarianten erstellen, um Unterschleif für Studierende zu erschweren. Die Punkte aller Aufgaben einer Aufgabengruppe müssen identisch sein. Die Anzahl an Aufgabengruppen muss der Anzahl der Aufgaben in der Klausur entsprechen.",
+                    "generateStudentExams": "Die Klausuren der Studierenden müssen generiert worden sein, bevor die Klausur beginnt.",
+                    "prepareExerciseStart": "Vorbereiten der Aufgaben kann die Serverlast während der Klausur reduzieren.",
+                    "examDetails": "Alle relevanten Details der Klausur müssen vor dem Start der Korrektur eingetragen sein.",
+                    "conductExam": "In der Studierenden-Klausurübersicht sieht man, welche Studierende ihre Klausur bereits abgegeben haben.",
+                    "assessAllSubmissions": "Die Anzahl der Korrektur Runden der Aufgaben entspricht der in der Klausur angegebenen Anzahl von Korrekturrunden.",
+                    "publishResults": "Das Veröffentlichen der Ergebnisse macht diese zugänglich für die Klausurteilnehmer.",
+                    "examReview": "Alle relevanten Daten müssen in der Klausur spezifiziert sein.",
+                    "resolveComplaints": "Beschwerden können im Bewertungs Dashboard bearbeitet werden.",
+                    "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
+                    "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden."
+                }
             }
         },
         "studentExamDetail": {
             "studentExam": "Klausur ({{ examTitle }})",
+            "testRun": "Testlauf ({{ examTitle }})",
             "exercises": "Aufgaben",
             "downloadPDF": " PDF herunterladen",
             "student": "Student",

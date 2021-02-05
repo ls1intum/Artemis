@@ -18,8 +18,8 @@ export const NAME_KEY = 'Name';
 export const USERNAME_KEY = 'Username';
 export const EMAIL_KEY = 'Email';
 export const REGISTRATION_NUMBER_KEY = 'Registration Number';
-export const TOTAL_COURSE_POINTS_KEY = 'Total Course Points';
-export const TOTAL_COURSE_SCORE_KEY = 'Total Course Score';
+export const OVERALL_COURSE_POINTS_KEY = 'Overall Course Points';
+export const OVERALL_COURSE_SCORE_KEY = 'Overall Course Score';
 export const POINTS_KEY = 'Points';
 export const SCORE_KEY = 'Score';
 
@@ -126,7 +126,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Group the exercises by type and gather statistics for each type (titles, maxScore, accumulated max Score).
+     * Group the exercises by type and gather statistics for each type (titles, max points, accumulated max points).
      */
     calculateExerciseLevelStatistics() {
         for (const exerciseType of this.exerciseTypes) {
@@ -137,14 +137,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 exercisesOfType.map((exercise) => exercise.title!),
             );
 
-            const maxPointsOfAllExercisesOfType = exercisesOfType.map((exercise) => exercise.maxScore!);
+            const maxPointsOfAllExercisesOfType = exercisesOfType.map((exercise) => exercise.maxPoints!);
 
             this.exerciseMaxPointsPerType.set(exerciseType, maxPointsOfAllExercisesOfType);
 
             const maxPointsOfAllIncludedExercisesOfType = exercisesOfType
                 // only exercises marked as included_completely increase the maximum reachable number of points
                 .filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY)
-                .map((exercise) => exercise.maxScore!);
+                .map((exercise) => exercise.maxPoints!);
 
             this.maxNumberOfPointsPerExerciseType.set(exerciseType, sum(maxPointsOfAllIncludedExercisesOfType));
         }
@@ -193,7 +193,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.students.push(student);
 
             for (const exercise of this.exercisesOfCourseThatAreIncludedInScoreCalculation) {
-                const relevantMaxPoints = exercise.maxScore!;
+                const relevantMaxPoints = exercise.maxPoints!;
                 const participation = student.participations.find((part) => part.exercise!.id === exercise.id);
                 if (participation && participation.results && participation.results.length > 0) {
                     // we found a result, there should only be one
@@ -269,13 +269,13 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 const exerciseTypeName = capitalizeFirstLetter(exerciseType);
 
                 // only add it if there are actually exercises in this type
-                if (this.exerciseTitlesPerType.get(exerciseType) && this.exerciseTitlesPerType.get(exerciseType)!.length !== 0) {
+                if (this.exerciseTitlesPerType.get(exerciseType) && this.exerciseTitlesPerType.get(exerciseType)!.length > 0) {
                     keys.push(...this.exerciseTitlesPerType.get(exerciseType)!);
                     keys.push(exerciseTypeName + ' ' + POINTS_KEY);
                     keys.push(exerciseTypeName + ' ' + SCORE_KEY);
                 }
             }
-            keys.push(TOTAL_COURSE_POINTS_KEY, TOTAL_COURSE_SCORE_KEY);
+            keys.push(OVERALL_COURSE_POINTS_KEY, OVERALL_COURSE_SCORE_KEY);
             if (this.course.presentationScore) {
                 keys.push(PRESENTATION_SCORE_KEY);
             }
@@ -307,8 +307,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 }
 
                 const overallScore = (student.overallPoints / this.maxNumberOfOverallPoints) * 100;
-                rowData[TOTAL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(student.overallPoints);
-                rowData[TOTAL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(overallScore);
+                rowData[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(student.overallPoints);
+                rowData[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(overallScore);
                 if (this.course.presentationScore) {
                     rowData[PRESENTATION_SCORE_KEY] = this.localeConversionService.toLocaleString(student.presentationScore);
                 }
@@ -332,8 +332,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     rowDataMax[exerciseTypeName + ' ' + SCORE_KEY] = this.localeConversionService.toLocalePercentageString(100);
                 }
             }
-            rowDataMax[TOTAL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.maxNumberOfOverallPoints);
-            rowDataMax[TOTAL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(100);
+            rowDataMax[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.maxNumberOfOverallPoints);
+            rowDataMax[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(100);
             if (this.course.presentationScore) {
                 rowDataMax[PRESENTATION_SCORE_KEY] = '';
             }
@@ -361,8 +361,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             }
 
             const averageOverallScore = (this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100;
-            rowDataAverage[TOTAL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.averageNumberOfOverallPoints);
-            rowDataAverage[TOTAL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(averageOverallScore);
+            rowDataAverage[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.averageNumberOfOverallPoints);
+            rowDataAverage[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(averageOverallScore);
             if (this.course.presentationScore) {
                 rowDataAverage[PRESENTATION_SCORE_KEY] = '';
             }
@@ -432,8 +432,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         emptyLine[USERNAME_KEY] = '';
         emptyLine[EMAIL_KEY] = '';
         emptyLine[REGISTRATION_NUMBER_KEY] = '';
-        emptyLine[TOTAL_COURSE_POINTS_KEY] = '';
-        emptyLine[TOTAL_COURSE_SCORE_KEY] = '';
+        emptyLine[OVERALL_COURSE_POINTS_KEY] = '';
+        emptyLine[OVERALL_COURSE_SCORE_KEY] = '';
 
         for (const exerciseType of this.exerciseTypes) {
             // only add it if there are actually exercises in this type

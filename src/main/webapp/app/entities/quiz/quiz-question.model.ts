@@ -36,7 +36,7 @@ export abstract class QuizQuestion implements BaseEntity, CanBecomeInvalid, Text
     public text?: string;
     public hint?: string;
     public explanation?: string;
-    public score?: number;
+    public points?: number;
     public scoringType?: ScoringType;
     public randomizeOrder?: boolean;
     public invalid?: boolean;

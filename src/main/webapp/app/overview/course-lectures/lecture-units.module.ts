@@ -8,10 +8,10 @@ import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-uni
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, MomentModule, ArtemisSharedPipesModule, ArtemisCourseExerciseRowModule, ArtemisMarkdownEditorModule],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, MomentModule, ArtemisSharedPipesModule, ArtemisCourseExerciseRowModule, ArtemisMarkdownModule],
     declarations: [ExerciseUnitComponent, AttachmentUnitComponent, VideoUnitComponent, TextUnitComponent],
     exports: [ExerciseUnitComponent, AttachmentUnitComponent, VideoUnitComponent, TextUnitComponent],
 })

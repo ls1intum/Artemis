@@ -6,11 +6,11 @@ import { UserManagementComponent } from 'app/admin/user-management/user-manageme
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { MockRouter } from '../../helpers/mocks/service/mock-route.service';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { of } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;
@@ -24,15 +24,11 @@ describe('UserManagementComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisAdminModule, RouterModule.forRoot([])],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisAdminModule, RouterTestingModule],
             providers: [
                 {
                     provide: ActivatedRoute,
                     useValue: route,
-                },
-                {
-                    provide: Router,
-                    useValue: MockRouter,
                 },
                 { provide: AccountService, useClass: MockAccountService },
             ],

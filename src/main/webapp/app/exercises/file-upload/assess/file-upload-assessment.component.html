@@ -21,7 +21,7 @@
     <jhi-resizeable-container *ngIf="!busy && exercise">
         <!--region Left Panel-->
         <span *ngIf="exercise.title" left-header>{{ exercise.title }}</span>
-        <jhi-score-display left-header [score]="totalScore" [maxPoints]="exercise.maxScore" [maxBonusPoints]="exercise.bonusPoints"></jhi-score-display>
+        <jhi-score-display left-header [score]="totalScore" [maxPoints]="exercise.maxPoints" [maxBonusPoints]="exercise.bonusPoints"></jhi-score-display>
         <div left-body>
             <div class="row">
                 <div *ngIf="submission.filePath" class="col-12 card-text">

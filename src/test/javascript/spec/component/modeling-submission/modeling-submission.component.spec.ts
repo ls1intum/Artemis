@@ -18,15 +18,13 @@ import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import * as moment from 'moment';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
@@ -45,6 +43,8 @@ import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { UMLElement, UMLModel } from '@ls1intum/apollon';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -71,19 +71,19 @@ describe('Component Tests', () => {
                 imports: [
                     ArtemisTestModule,
                     TranslateModule.forRoot(),
-                    ArtemisSharedModule,
-                    ArtemisResultModule,
-                    ArtemisSharedComponentModule,
+                    MockModule(ArtemisSharedModule),
+                    MockModule(ArtemisResultModule),
+                    MockModule(ArtemisSharedComponentModule),
                     ModelingAssessmentModule,
-                    ArtemisComplaintsModule,
-                    ArtemisTeamModule,
-                    ArtemisFullscreenModule,
-                    ArtemisTeamSubmissionSyncModule,
-                    ArtemisHeaderExercisePageWithDetailsModule,
-                    RatingModule,
+                    MockModule(ArtemisComplaintsModule),
+                    MockModule(ArtemisTeamModule),
+                    MockModule(ArtemisFullscreenModule),
+                    MockModule(ArtemisTeamSubmissionSyncModule),
+                    MockModule(ArtemisHeaderExercisePageWithDetailsModule),
+                    MockModule(RatingModule),
                     RouterTestingModule.withRoutes([routes[0]]),
                 ],
-                declarations: [ModelingSubmissionComponent, MockComponent(ModelingEditorComponent)],
+                declarations: [ModelingSubmissionComponent, MockComponent(ModelingEditorComponent), MockPipe(HtmlForMarkdownPipe)],
                 providers: [
                     { provide: ComplaintService, useClass: MockComplaintService },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -102,6 +102,7 @@ describe('Component Tests', () => {
                     debugElement = fixture.debugElement;
                     service = debugElement.injector.get(ModelingSubmissionService);
                     router = debugElement.injector.get(Router);
+                    comp.modelingEditor = TestBed.createComponent(MockComponent(ModelingEditorComponent)).componentInstance;
                 });
         });
 
@@ -270,8 +271,6 @@ describe('Component Tests', () => {
         });
 
         it('should set correct properties on modeling exercise update when submitting', () => {
-            fixture.detectChanges();
-
             const modelSubmission = <ModelingSubmission>(<unknown>{
                 id: 1,
                 model: '{"elements": [{"id": 1}]}',
@@ -282,9 +281,69 @@ describe('Component Tests', () => {
             const fake = sinon.replace(service, 'update', sinon.fake.returns(of({ body: submission })));
             comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
             comp.modelingExercise.id = 1;
+            fixture.detectChanges();
             comp.submit();
             expect(fake).to.have.been.calledOnce;
             expect(comp.submission).to.be.deep.equal(submission);
+        });
+
+        it('should calculate number of elements from model', () => {
+            const elements = [{ id: 1 }, { id: 2 }, { id: 3 }];
+            const relationships = [{ id: 4 }, { id: 5 }];
+            submission.model = JSON.stringify({ elements, relationships });
+            comp.submission = submission;
+            fixture.detectChanges();
+            expect(comp.calculateNumberOfModelElements()).to.equal(elements.length + relationships.length);
+        });
+
+        it('should update selected entities with given elements', () => {
+            const relationships = ['relationShip1', 'relationShip2'];
+            const selection = { elements: ['ownerId1', 'ownerId2'], relationships };
+            comp.umlModel = <UMLModel>(<unknown>{
+                elements: [<UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' }), <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
+            });
+            fixture.detectChanges();
+            comp.onSelectionChanged(selection);
+            expect(comp.selectedRelationships).to.deep.equal(relationships);
+            expect(comp.selectedEntities).to.deep.equal(['ownerId1', 'ownerId2', 'elementId1', 'elementId2']);
+        });
+
+        it('should isSelected return true if no selectedEntities and selectedRelationships', () => {
+            const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: '5' });
+            comp.selectedEntities = [];
+            comp.selectedRelationships = [];
+            fixture.detectChanges();
+            expect(comp.isSelected(feedback)).to.equal(true);
+            comp.selectedEntities = ['3'];
+            fixture.detectChanges();
+            expect(comp.isSelected(feedback)).to.equal(false);
+        });
+
+        it('should isSelected return true if feedback reference is in selectedEntities or selectedRelationships', () => {
+            const id = 'referenceId';
+            const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: id });
+            comp.selectedEntities = [id];
+            comp.selectedRelationships = [];
+            fixture.detectChanges();
+            expect(comp.isSelected(feedback)).to.equal(true);
+            comp.selectedEntities = [];
+            comp.selectedRelationships = [id];
+            fixture.detectChanges();
+            expect(comp.isSelected(feedback)).to.equal(false);
+        });
+
+        it('should update submission with current values', () => {
+            const model = <UMLModel>(<unknown>{
+                elements: [<UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' }), <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
+            });
+            const currentModelStub = stub(comp.modelingEditor, 'getCurrentModel').returns(model);
+            comp.explanation = 'Explanation Test';
+            comp.updateSubmissionWithCurrentValues();
+            expect(currentModelStub).to.have.been.called;
+            expect(comp.hasElements).to.equal(true);
+            expect(comp.submission).to.exist;
+            expect(comp.submission.model).to.equal(JSON.stringify(model));
+            expect(comp.submission.explanationText).to.equal('Explanation Test');
         });
     });
 });

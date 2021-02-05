@@ -10,7 +10,7 @@ import { JhiSortByDirective, JhiSortDirective, JhiTranslateDirective } from 'ng-
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MomentModule } from 'ngx-moment';
-import { CourseScoresComponent, EMAIL_KEY, NAME_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
+import { CourseScoresComponent, EMAIL_KEY, NAME_KEY, OVERALL_COURSE_POINTS_KEY, OVERALL_COURSE_SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
 import { ArtemisTestModule } from '../../../test.module';
 import { Directive, Input } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -51,7 +51,7 @@ describe('CourseScoresComponent', () => {
         dueDate: moment().add(5, 'minutes'),
         type: ExerciseType.TEXT,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-        maxScore: 10,
+        maxPoints: 10,
         bonusPoints: 10,
     } as Exercise;
     const sharedDueDate = moment().add(4, 'minutes');
@@ -61,7 +61,7 @@ describe('CourseScoresComponent', () => {
         dueDate: sharedDueDate,
         type: ExerciseType.QUIZ,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-        maxScore: 10,
+        maxPoints: 10,
         bonusPoints: 0,
     } as Exercise;
     const fileBonusWith10Points0BonusPoints = {
@@ -70,7 +70,7 @@ describe('CourseScoresComponent', () => {
         dueDate: sharedDueDate,
         type: ExerciseType.FILE_UPLOAD,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS,
-        maxScore: 10,
+        maxPoints: 10,
         bonusPoints: 0,
     } as Exercise;
     const modelingIncludedWith10Points0BonusPoints = {
@@ -79,7 +79,7 @@ describe('CourseScoresComponent', () => {
         dueDate: moment().add(2, 'minutes'),
         type: ExerciseType.MODELING,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-        maxScore: 10,
+        maxPoints: 10,
         bonusPoints: 0,
     } as Exercise;
     const quizNotIncludedWith10Points0BonusPoints = {
@@ -88,7 +88,7 @@ describe('CourseScoresComponent', () => {
         dueDate: sharedDueDate,
         type: ExerciseType.QUIZ,
         includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED,
-        maxScore: 10,
+        maxPoints: 10,
         bonusPoints: 0,
     } as Exercise;
 
@@ -296,7 +296,7 @@ describe('CourseScoresComponent', () => {
         const user2Row = generatedRows[1];
         validateUserRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '50%', '0', '0%', '10', '0%', '15', '50%');
         const maxRow = generatedRows[3];
-        expect(maxRow['Total Course Points']).to.equal('30');
+        expect(maxRow[OVERALL_COURSE_POINTS_KEY]).to.equal('30');
     });
 
     function validateUserRow(
@@ -312,8 +312,8 @@ describe('CourseScoresComponent', () => {
         expectedTextScore: string,
         expectedFileUploadPoints: string,
         expectedFileUploadScore: string,
-        expectedTotalCoursePoints: string,
-        expectedTotalCourseScore: string,
+        expectedOverallCoursePoints: string,
+        expectedOverallCourseScore: string,
     ) {
         expect(userRow[NAME_KEY]).to.equal(expectedName);
         expect(userRow[USERNAME_KEY]).to.equal(expectedUsername);
@@ -324,7 +324,7 @@ describe('CourseScoresComponent', () => {
         expect(userRow['Modeling Score']).to.equal(expectedModelingScore);
         expect(userRow['File-upload Points']).to.equal(expectedFileUploadPoints);
         expect(userRow['File-upload Score']).to.equal(expectedFileUploadScore);
-        expect(userRow['Total Course Points']).to.equal(expectedTotalCoursePoints);
-        expect(userRow['Total Course Score']).to.equal(expectedTotalCourseScore);
+        expect(userRow[OVERALL_COURSE_POINTS_KEY]).to.equal(expectedOverallCoursePoints);
+        expect(userRow[OVERALL_COURSE_SCORE_KEY]).to.equal(expectedOverallCourseScore);
     }
 });
