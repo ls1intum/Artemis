@@ -46,7 +46,7 @@ describe('CourseScoresComponent', () => {
     const overallPoints = 10 + 10 + 10;
     const exerciseMaxPointsPerType = new Map<ExerciseType, number[]>();
     const textIncludedWith10Points10BonusPoints = {
-        title: 'exercise one',
+        title: 'exercise', // testing duplicated titles
         id: 1,
         dueDate: moment().add(5, 'minutes'),
         type: ExerciseType.TEXT,
@@ -56,7 +56,7 @@ describe('CourseScoresComponent', () => {
     } as Exercise;
     const sharedDueDate = moment().add(4, 'minutes');
     const quizIncludedWith10Points0BonusPoints = {
-        title: 'exercise two',
+        title: 'exercise', // testing duplicated titles
         id: 2,
         dueDate: sharedDueDate,
         type: ExerciseType.QUIZ,
@@ -235,6 +235,8 @@ describe('CourseScoresComponent', () => {
     });
 
     afterEach(function () {
+        quizIncludedWith10Points0BonusPoints.title = 'exercise'; // testing duplicated titles
+        textIncludedWith10Points10BonusPoints.title = 'exercise'; // testing duplicated titles
         sinon.restore();
     });
 
@@ -250,10 +252,17 @@ describe('CourseScoresComponent', () => {
         expect(component.course).to.equal(course);
         expect(component.exercisesOfCourseThatAreIncludedInScoreCalculation).to.deep.equal([
             modelingIncludedWith10Points0BonusPoints,
-            fileBonusWith10Points0BonusPoints,
             quizIncludedWith10Points0BonusPoints,
+            fileBonusWith10Points0BonusPoints,
             textIncludedWith10Points10BonusPoints,
         ]);
+    });
+
+    it('should make duplicated titles unique', () => {
+        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
+        fixture.detectChanges();
+        expect(quizIncludedWith10Points0BonusPoints.title).to.equal(`exercise (id=2)`);
+        expect(textIncludedWith10Points10BonusPoints.title).to.equal(`exercise (id=1)`);
     });
 
     it('should group exercises and calculate exercise max score', () => {
