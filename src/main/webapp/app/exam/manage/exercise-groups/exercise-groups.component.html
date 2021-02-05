@@ -196,7 +196,12 @@
                             <fa-icon [icon]="exerciseIcon(exercise)"></fa-icon>
                         </td>
                         <td class="align-middle">
-                            {{ exercise.title }}
+                            <a
+                                *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.QUIZ"
+                                [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id]"
+                            >
+                                <span>{{ exercise.title }}</span>
+                            </a>
                         </td>
                         <td class="align-middle">
                             {{ exercise.maxPoints }}
