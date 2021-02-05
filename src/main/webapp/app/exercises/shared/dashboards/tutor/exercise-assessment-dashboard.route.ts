@@ -16,7 +16,7 @@ export const exerciseAssessmentDashboardRoute: Routes = [
     },
 
     {
-        path: ':courseId/exercises/:exerciseId/test-run-tutor-dashboard',
+        path: ':courseId/exercises/:exerciseId/test-run-exercise-assessment-dashboard',
         component: ExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],

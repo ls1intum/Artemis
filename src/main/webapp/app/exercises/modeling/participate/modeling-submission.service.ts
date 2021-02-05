@@ -13,7 +13,7 @@ export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingSubmissionService {
-    private resourceUrl = SERVER_API_URL + 'api';
+    public resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {}
 

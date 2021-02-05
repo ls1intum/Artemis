@@ -19,6 +19,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { Course } from 'app/entities/course.model';
 import { Component } from '@angular/core';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -56,6 +57,7 @@ describe('ExamDetailComponent', () => {
                 MockComponent(AlertErrorComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(JhiTranslateDirective),
+                MockDirective(HasAnyAuthorityDirective),
             ],
             providers: [
                 {
@@ -67,6 +69,7 @@ describe('ExamDetailComponent', () => {
                                     exam,
                                 }),
                         },
+                        snapshot: {},
                     },
                 },
                 MockProvider(AccountService, {

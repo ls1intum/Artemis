@@ -14,7 +14,11 @@ import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue
 import { ScoreChartPreset } from 'app/shared/chart/presets/scoreChartPreset';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
-import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import {
+    isProgrammingExerciseStudentParticipation,
+    isProgrammingExerciseParticipation,
+    isResultPreliminary,
+} from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export enum FeedbackItemType {
@@ -77,6 +81,11 @@ export class ResultDetailComponent implements OnInit {
                 // If the result already has feedbacks assigned to it, don't query the server.
                 switchMap((feedbacks: Feedback[] | undefined | null) => (feedbacks && feedbacks.length ? of(feedbacks) : this.getFeedbackDetailsForResult(this.result.id!))),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
+                    // In case the exerciseType is not set, we try to set it back if the participation is from a programming exercise
+                    if (!this.exerciseType && isProgrammingExerciseParticipation(this.result?.participation)) {
+                        this.exerciseType = ExerciseType.PROGRAMMING;
+                    }
+
                     /*
                      * If we have feedback, filter it if needed, distinguish between test case and static code analysis
                      * feedback and assign the lists to the component

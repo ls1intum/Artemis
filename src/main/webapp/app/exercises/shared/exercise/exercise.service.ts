@@ -299,7 +299,7 @@ export class ExerciseService {
     }
 
     /**
-     * Retreive a collection of useful statistics for the tutor exercise dashboard of the exercise with the given exerciseId
+     * Retrieve a collection of useful statistics for the tutor exercise dashboard of the exercise with the given exerciseId
      * @param { number } exerciseId - Id of exercise to retreive the stats for
      */
     getStatsForTutors(exerciseId: number): Observable<HttpResponse<StatsForDashboard>> {
@@ -307,7 +307,7 @@ export class ExerciseService {
     }
 
     /**
-     * Retreive a collection of useful statistics for the instructor exercise dashboard of the exercise with the given exerciseId
+     * Retrieve a collection of useful statistics for the instructor exercise dashboard of the exercise with the given exerciseId
      * @param { number } exerciseId - Id of exercise to retreive the stats for
      */
     getStatsForInstructors(exerciseId: number): Observable<HttpResponse<StatsForDashboard>> {
