@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import java.util.List;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -9,11 +11,11 @@ public class GroupNotificationFactory {
     /**
      * Creates an instance of GroupNotification based on the passed parameters.
      *
-     * @param attachment for which a notification should be created
-     * @param author of the notification
+     * @param attachment            for which a notification should be created
+     * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
-     * @param notificationType type of the notification that should be created
-     * @param notificationText custom notification text
+     * @param notificationType      type of the notification that should be created
+     * @param notificationText      custom notification text
      * @return an instance of GroupNotification
      */
     public static GroupNotification createNotification(Attachment attachment, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
@@ -50,11 +52,11 @@ public class GroupNotificationFactory {
     /**
      * Creates an instance of GroupNotification based on the passed parameters.
      *
-     * @param exercise for which a notification should be created
-     * @param author of the notification
+     * @param exercise              for which a notification should be created
+     * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
-     * @param notificationType type of the notification that should be created
-     * @param notificationText custom notification text
+     * @param notificationType      type of the notification that should be created
+     * @param notificationText      custom notification text
      * @return an instance of GroupNotification
      */
     public static GroupNotification createNotification(Exercise exercise, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
@@ -107,10 +109,10 @@ public class GroupNotificationFactory {
     /**
      * Creates an instance of GroupNotification based on the passed parameters.
      *
-     * @param question for which a notification should be created
-     * @param author of the notification
+     * @param question              for which a notification should be created
+     * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
-     * @param notificationType type of the notification that should be created
+     * @param notificationType      type of the notification that should be created
      * @return an instance of GroupNotification
      */
     public static GroupNotification createNotification(StudentQuestion question, User author, GroupNotificationType groupNotificationType, NotificationType notificationType) {
@@ -147,10 +149,10 @@ public class GroupNotificationFactory {
     /**
      * Creates an instance of GroupNotification based on the passed parameters.
      *
-     * @param answer for which a notification should be created
-     * @param author of the notification
+     * @param answer                for which a notification should be created
+     * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
-     * @param notificationType type of the notification that should be created
+     * @param notificationType      type of the notification that should be created
      * @return an instance of GroupNotification
      */
     public static GroupNotification createNotification(StudentQuestionAnswer answer, User author, GroupNotificationType groupNotificationType, NotificationType notificationType) {
@@ -181,6 +183,43 @@ public class GroupNotificationFactory {
             notification.setTarget(notification.getLectureAnswerTarget(answer.getQuestion().getLecture()));
         }
 
+        return notification;
+    }
+
+    /**
+     * Creates an instance of GroupNotification based on the passed parameters.
+     *
+     * @param course                the course being archived
+     * @param author                of the notification
+     * @param groupNotificationType user group type the notification should target
+     * @param notificationType      type of the notification that should be created
+     * @return an instance of GroupNotification
+     */
+    public static GroupNotification createNotification(Course course, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
+            List<String> archiveErrors) {
+        String title, text;
+        switch (notificationType) {
+            case COURSE_ARCHIVE_STARTED -> {
+                title = "Course archival started";
+                text = "The course \"" + course.getTitle() + "\" is being archived.";
+            }
+            case COURSE_ARCHIVE_FINISHED -> {
+                title = "Course archival finished";
+                text = "The course \"" + course.getTitle() + "\" has been archived.";
+
+                if (archiveErrors.size() > 0) {
+                    text += " Some exercises couldn't be included in the archive:<br/><br/>" + String.join("<br/><br/>", archiveErrors);
+                }
+            }
+            case COURSE_ARCHIVE_FAILED -> {
+                title = "Course archival failed";
+                text = "The was a problem archiving course \"" + course.getTitle() + "\": <br/>" + String.join("<br/>", archiveErrors);
+            }
+            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        }
+
+        GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
+        notification.setTarget(notification.getCourseTarget(course, "courseArchiveUpdated"));
         return notification;
     }
 }

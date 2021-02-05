@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -75,10 +76,12 @@ public class CourseService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final GroupNotificationService groupNotificationService;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
             ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository,
-            CourseExportService courseExportService, WebsocketMessagingService websocketMessagingService) {
+            CourseExportService courseExportService, WebsocketMessagingService websocketMessagingService, GroupNotificationService groupNotificationService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -92,6 +95,7 @@ public class CourseService {
         this.learningGoalRepository = learningGoalRepository;
         this.courseExportService = courseExportService;
         this.websocketMessagingService = websocketMessagingService;
+        this.groupNotificationService = groupNotificationService;
     }
 
     @Autowired
@@ -394,27 +398,38 @@ public class CourseService {
             return;
         }
 
+        // This contains possible errors encountered during the archve process
+        ArrayList<String> exportErrors = new ArrayList<>();
+
+        groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_STARTED, exportErrors);
+        notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.RUNNING);
+
         try {
             // Create course archives directory if it doesn't exist
             Files.createDirectories(Path.of(courseArchivesDirPath));
             log.info("Created the course archives directory at {} because it didn't exist.", courseArchivesDirPath);
 
-            notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.RUNNING);
-
             // Export the course to the archives directory.
-            var archivedCoursePath = courseExportService.exportCourse(course, courseArchivesDirPath);
+            var archivedCoursePath = courseExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
 
             // Attach the path to the archive to the course and save it in the database
             if (archivedCoursePath.isPresent()) {
                 course.setCourseArchivePath(archivedCoursePath.get().toString());
                 courseRepository.save(course);
             }
-
-            notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.COMPLETED);
+            else {
+                groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FAILED, exportErrors);
+                return;
+            }
         }
         catch (IOException e) {
-            log.info("Failed to create course archives directory {}: {}", courseArchivesDirPath, e.getMessage());
+            var error = "Failed to create course archives directory " + courseArchivesDirPath + ": " + e.getMessage();
+            exportErrors.add(error);
+            log.info(error);
         }
+
+        notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.COMPLETED);
+        groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FINISHED, exportErrors);
     }
 
     /**
@@ -426,6 +441,10 @@ public class CourseService {
     public void cleanupCourse(Long courseId) {
         // Get the course with all exercises
         var course = findOneWithExercisesAndLectures(courseId);
+        if (!course.hasCourseArchive()) {
+            log.info("Cannot clean up course {} because it hasn't been archived.", courseId);
+            return;
+        }
 
         // Clean up exams
         var exams = findOneWithLecturesAndExams(course.getId()).getExams();
