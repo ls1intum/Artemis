@@ -180,6 +180,9 @@
                         <th *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING)">
                             <span>{{ 'artemisApp.modelingExercise.diagramType' | translate }}</span>
                         </th>
+                        <th *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.FILE_UPLOAD)">
+                            <span>{{ 'artemisApp.fileUploadExercise.filePattern' | translate }}</span>
+                        </th>
                         <th
                             *ngIf="
                                 exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING) ||
@@ -331,6 +334,13 @@
                             <td class="align-middle">
                                 <ng-container *ngIf="exercise.type === exerciseType.MODELING">
                                     {{ 'artemisApp.DiagramType.' + exercise.diagramType | translate }}
+                                </ng-container>
+                            </td>
+                        </ng-container>
+                        <ng-container *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.FILE_UPLOAD)">
+                            <td class="align-middle">
+                                <ng-container *ngIf="exercise.type === exerciseType.FILE_UPLOAD">
+                                    {{ exercise.filePattern }}
                                 </ng-container>
                             </td>
                         </ng-container>
