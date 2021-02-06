@@ -213,7 +213,7 @@ public class GroupNotificationFactory {
             }
             case COURSE_ARCHIVE_FAILED -> {
                 title = "Course archival failed";
-                text = "The was a problem archiving course \"" + course.getTitle() + "\": <br/>" + String.join("<br/>", archiveErrors);
+                text = "The was a problem archiving course \"" + course.getTitle() + "\": <br/><br/>" + String.join("<br/><br/>", archiveErrors);
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }

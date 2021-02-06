@@ -187,7 +187,7 @@ public class ProgrammingExerciseExportService {
         }
         catch (InterruptedException | GitAPIException | GitException ex) {
             var error = "Failed to export instructor repository " + repositoryType + " for programming exercise '" + exercise.getTitle() + "' (id: " + exercise.getId()
-                    + ") because the repository doesn't exist. ";
+                    + ") because the repository couldn't be downloaded. ";
             log.info(error);
             exportErrors.add(error);
         }
@@ -255,7 +255,7 @@ public class ProgrammingExerciseExportService {
             }
             catch (IOException | GitAPIException | GitException | InterruptedException e) {
                 var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '" + programmingExercise.getTitle()
-                        + "' (id: " + programmingExercise.getId() + ") because the repository doesn't exist. ";
+                        + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
                 exportFailures.add(error);
             }
         });

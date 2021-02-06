@@ -80,7 +80,7 @@ public class CourseExportService {
             Files.createDirectories(courseDirPath);
         }
         catch (IOException e) {
-            var error = "Failed to export course " + course.getId() + " because the temporary directories: " + courseDirPath + " cannot be created: " + e.getMessage();
+            var error = "Failed to export course " + course.getId() + " because the temporary directory: " + courseDirPath + " cannot be created.";
             exportErrors.add(error);
             log.info(error);
             return Optional.empty();
@@ -112,7 +112,7 @@ public class CourseExportService {
             exportExercises(course.getExercises(), exercisesDir.toString(), exportErrors);
         }
         catch (IOException e) {
-            var error = "Failed to create course exercise directory" + exercisesDir + ": " + e.getMessage();
+            var error = "Failed to create course exercise directory" + exercisesDir + ".";
             log.info(error);
             exportErrors.add(error);
         }
@@ -144,7 +144,7 @@ public class CourseExportService {
             }
         }
         catch (IOException e) {
-            var error = "Failed to create course exams directory " + examsDir + ": " + e.getMessage();
+            var error = "Failed to create course exams directory " + examsDir + ".";
             log.info(error);
             exportErrors.add(error);
         }
@@ -167,7 +167,7 @@ public class CourseExportService {
             exportExercises(exercises, examDir.toString(), exportErrors);
         }
         catch (IOException e) {
-            var error = "Failed to create exam directory " + examDir + ": " + e.getMessage();
+            var error = "Failed to create exam directory " + examDir + ".";
             log.info(error);
             exportErrors.add(error);
         }
@@ -234,7 +234,7 @@ public class CourseExportService {
                     Files.move(exportedSubmissionsFile.toPath(), Path.of(outputDir, exportedSubmissionsFile.getName()));
                 }
                 catch (IOException e) {
-                    var error = "Failed to move file " + exportedSubmissionsFile.toPath() + " to " + outputDir + ": " + e.getMessage();
+                    var error = "Failed to move file " + exportedSubmissionsFile.toPath() + " to " + outputDir + ".";
                     log.info(error);
                     exportErrors.add(error);
                 }
@@ -261,7 +261,7 @@ public class CourseExportService {
             return Optional.of(zippedFile);
         }
         catch (IOException e) {
-            var error = "Failed to create zip file at " + zippedFile + ": " + e.getMessage();
+            var error = "Failed to create zip file at " + zippedFile + ".";
             log.info(error);
             exportErrors.add(error);
             return Optional.empty();
