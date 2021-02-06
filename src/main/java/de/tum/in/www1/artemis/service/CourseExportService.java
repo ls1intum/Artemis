@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,9 +44,11 @@ public class CourseExportService {
 
     private ExamService examService;
 
+    private final WebsocketMessagingService websocketMessagingService;
+
     public CourseExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
             CourseRepository courseRepository, FileUploadSubmissionExportService fileUploadSubmissionExportService, TextSubmissionExportService textSubmissionExportService,
-            ModelingSubmissionExportService modelingSubmissionExportService) {
+            ModelingSubmissionExportService modelingSubmissionExportService, WebsocketMessagingService websocketMessagingService) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
         this.fileService = fileService;
@@ -53,6 +56,7 @@ public class CourseExportService {
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
         this.textSubmissionExportService = textSubmissionExportService;
         this.modelingSubmissionExportService = modelingSubmissionExportService;
+        this.websocketMessagingService = websocketMessagingService;
     }
 
     @Autowired
@@ -71,6 +75,7 @@ public class CourseExportService {
      * @return Path to the zip file
      */
     public Optional<Path> exportCourse(Course course, String outputDir, List<String> exportErrors) {
+        notifyUserAboutCourseExportState(course.getId(), CourseExportState.RUNNING);
 
         var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
 
@@ -87,12 +92,15 @@ public class CourseExportService {
         }
 
         // Export course exercises and exams
+        notifyUserAboutCourseExportState(course.getId(), CourseExportState.EXPORTING_EXERCISES);
         exportCourseExercises(course, courseDirPath.toString(), exportErrors);
+        notifyUserAboutCourseExportState(course.getId(), CourseExportState.EXPORTING_EXAMS);
         exportCourseExams(course, courseDirPath.toString(), exportErrors);
 
         // Zip them together
         var exportedCoursePath = createCourseZipFile(courseDirPath, Path.of(outputDir), exportErrors);
 
+        notifyUserAboutCourseExportState(course.getId(), CourseExportState.COMPLETED);
         log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCoursePath);
         return exportedCoursePath;
     }
@@ -268,6 +276,27 @@ public class CourseExportService {
         }
         finally {
             fileService.scheduleForDirectoryDeletion(courseDirPath, 1);
+        }
+    }
+
+    /***
+     * Sends a message notifying the user about the current state of the course export
+     *
+     * @param courseId The id of the course that is being exported
+     * @param exportState The archive state
+     */
+    private void notifyUserAboutCourseExportState(long courseId, CourseExportState exportState) {
+        var topic = "/topic/courses/" + courseId + "/export-course";
+
+        Map<String, String> message = new HashMap<>();
+        message.put("exportState", exportState.toString());
+
+        var mapper = new ObjectMapper();
+        try {
+            websocketMessagingService.sendMessage(topic, mapper.writeValueAsString(message));
+        }
+        catch (IOException e) {
+            log.info("Couldn't notify the user about the archive state of course {}: {}", courseId, e.getMessage());
         }
     }
 }

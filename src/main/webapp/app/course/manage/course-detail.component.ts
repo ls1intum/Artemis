@@ -17,7 +17,7 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { TranslateService } from '@ngx-translate/core';
 
 type CourseArchiveState = {
-    archiveState: 'COMPLETED' | 'RUNNING';
+    exportState: 'COMPLETED' | 'RUNNING' | 'EXPORTING_EXAMS' | 'EXPORTING_EXERCISES';
 };
 
 @Component({
@@ -88,13 +88,19 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
 
     private handleCourseArchiveStateChanges(courseArchiveState: CourseArchiveState) {
-        const { archiveState } = courseArchiveState;
-        this.courseIsBeingArchived = archiveState === 'RUNNING';
-        this.archiveCourseButtonText = archiveState === 'RUNNING' ? ' The course is being archived...' : this.getArchiveCourseText();
+        const { exportState } = courseArchiveState;
+        this.courseIsBeingArchived = exportState !== 'COMPLETED';
 
-        if (archiveState === 'COMPLETED') {
+        if (exportState === 'RUNNING') {
+            this.archiveCourseButtonText = ' The course is being archived...';
+        } else if (exportState === 'EXPORTING_EXAMS') {
+            this.archiveCourseButtonText = 'Archiving course exams...';
+        } else if (exportState === 'EXPORTING_EXERCISES') {
+            this.archiveCourseButtonText = 'Archiving course exercises...';
+        } else if (exportState === 'COMPLETED') {
             this.jhiAlertService.success('artemisApp.course.archive.archiveCourseSuccess');
             this.eventManager.broadcast('courseListModification');
+            this.archiveCourseButtonText = this.getArchiveCourseText();
         }
     }
 
@@ -133,7 +139,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
 
     private static getCourseArchiveStateTopic(courseId: number) {
-        return '/topic/courses/' + courseId + '/archive-course';
+        return '/topic/courses/' + courseId + '/export-course';
     }
 
     canArchiveCourse() {

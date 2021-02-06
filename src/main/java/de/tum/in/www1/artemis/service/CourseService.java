@@ -12,7 +12,6 @@ import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,14 +73,12 @@ public class CourseService {
 
     private final CourseExportService courseExportService;
 
-    private final WebsocketMessagingService websocketMessagingService;
-
     private final GroupNotificationService groupNotificationService;
 
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
             ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository,
-            CourseExportService courseExportService, WebsocketMessagingService websocketMessagingService, GroupNotificationService groupNotificationService) {
+            CourseExportService courseExportService, GroupNotificationService groupNotificationService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -94,7 +91,6 @@ public class CourseService {
         this.userService = userService;
         this.learningGoalRepository = learningGoalRepository;
         this.courseExportService = courseExportService;
-        this.websocketMessagingService = websocketMessagingService;
         this.groupNotificationService = groupNotificationService;
     }
 
@@ -402,7 +398,6 @@ public class CourseService {
         ArrayList<String> exportErrors = new ArrayList<>();
 
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_STARTED, exportErrors);
-        notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.RUNNING);
 
         try {
             // Create course archives directory if it doesn't exist
@@ -418,7 +413,6 @@ public class CourseService {
                 courseRepository.save(course);
             }
             else {
-                notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.COMPLETED);
                 groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FAILED, exportErrors);
                 return;
             }
@@ -429,7 +423,6 @@ public class CourseService {
             log.info(error);
         }
 
-        notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.COMPLETED);
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FINISHED, exportErrors);
     }
 
@@ -461,26 +454,5 @@ public class CourseService {
         });
 
         log.info("The course {} has been cleaned up!", courseId);
-    }
-
-    /***
-     * Sends a message to the archive-course topic notifying the user about the current archiving state
-     *
-     * @param courseId The id of the course that is being archived
-     * @param archiveState The archive state
-     */
-    private void notifyUserAboutCourseArchiveState(long courseId, CourseArchiveState archiveState) {
-        var topic = "/topic/courses/" + courseId + "/archive-course";
-
-        Map<String, String> message = new HashMap<>();
-        message.put("archiveState", archiveState.toString());
-
-        var mapper = new ObjectMapper();
-        try {
-            websocketMessagingService.sendMessage(topic, mapper.writeValueAsString(message));
-        }
-        catch (IOException e) {
-            log.info("Couldn't notify the user about the archive state of course {}: {}", courseId, e.getMessage());
-        }
     }
 }
