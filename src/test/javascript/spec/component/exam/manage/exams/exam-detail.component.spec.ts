@@ -48,10 +48,6 @@ describe('ExamDetailComponent', () => {
     exam.title = 'Example Exam';
     let exerciseGroupService: ExerciseGroupService;
     let findAllForExamStub;
-    const exerciseGroup = {
-        id: 1,
-    } as ExerciseGroup;
-    const responseExerciseGroup = { body: [exerciseGroup] } as HttpResponse<ExerciseGroup[]>;
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
     const exerciseGroupsExercisePointsEqual = [
         {
@@ -72,6 +68,7 @@ describe('ExamDetailComponent', () => {
             ],
         },
     ];
+    const responseExerciseGroup = { body: exerciseGroupsExercisePointsEqual } as HttpResponse<ExerciseGroup[]>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -213,16 +210,55 @@ describe('ExamDetailComponent', () => {
             expect(location.path()).to.equal('/course-management/1/exams/1/test-runs');
         });
     }));
-
-    describe('test checkAllExamsGenerated', () => {
-        it('should set allExamsGenerated to false', () => {
+    /*
+    describe('test checkTotalPointsMandatory', () => {
+        it('should set totalPointsMandatory to false', () => {
             examDetailComponent.exam = exam;
+            examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsEqual;
+            examDetailComponent.checkTotalPointsMandatory();
+            expect(examDetailComponent.totalPointsMandatory).to.be.equal(false);
         });
 
-        it('should set allExamsGenerated to false', () => {
+        it('should set checkTotalPointsMandatory to true', () => {
             examDetailComponent.exam = exam;
+            examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsEqual;
+            examDetailComponent.checkTotalPointsMandatory();
+            expect(examDetailComponent.totalPointsMandatory).to.be.equal(true);
+        });
+
+        it('should set totalPointsMandatoryOptional to false', () => {
+            examDetailComponent.exam = exam;
+            examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsEqual;
+            examDetailComponent.checkTotalPointsMandatory();
+            expect(examDetailComponent.totalPointsMandatoryOptional).to.be.equal(false);
+
+        });
+
+        it('should set checkTotalPointsMandatoryOptional to true', () => {
+            examDetailComponent.exam = exam;
+            examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsEqual;
+            examDetailComponent.checkTotalPointsMandatory();
+            expect(examDetailComponent.totalPointsMandatoryOptional).to.be.equal(true);
         });
     });
+
+    describe('test checkAllExamsGenerated', () => {
+        it('should set allExamsGenerated to true', () => {
+            examDetailComponent.exam = exam;
+            examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsEqual;
+            examDetailComponent.checkAllExamsGenerated();
+            expect(examDetailComponent.totalPointsMandatoryOptional).to.be.equal(true);
+
+        });
+
+        it('should set allExamsGenerated to false', () => {
+            examDetailComponent.exam = exam;
+            examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsEqual;
+            examDetailComponent.checkAllExamsGenerated();
+            expect(examDetailComponent.totalPointsMandatoryOptional).to.be.equal(false);
+        });
+    });
+    */
 
     describe('test checkEachGroupContainsExercise', () => {
         it('should set allGroupsContainExercise to true', () => {
