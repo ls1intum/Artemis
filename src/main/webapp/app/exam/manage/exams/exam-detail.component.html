@@ -146,7 +146,9 @@
                                     <li class="list-group-item border-1">
                                         <span>
                                             At least one student registered:
-                                            <jhi-exam-checklist-check [checkAttribute]="(exam.numberOfRegisteredUsers && exam?.numberOfRegisteredUsers > 0)"></jhi-exam-checklist-check>
+                                            <jhi-exam-checklist-check
+                                                [checkAttribute]="exam.numberOfRegisteredUsers && exam?.numberOfRegisteredUsers > 0"
+                                            ></jhi-exam-checklist-check>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
@@ -246,9 +248,7 @@
                             <td class="d-none d-md-table-cell">
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.conductExam' | translate }}</span>
                             </td>
-                            <td class="d-none d-md-table-cell">
-                                empty
-                            </td>
+                            <td class="d-none d-md-table-cell">empty</td>
                             <td class="d-none d-md-table-cell">
                                 <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
                                     <fa-icon [icon]="'eye'"></fa-icon>

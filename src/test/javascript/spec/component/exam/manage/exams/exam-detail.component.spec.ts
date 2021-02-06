@@ -46,7 +46,7 @@ describe('ExamDetailComponent', () => {
     exam.course = new Course();
     exam.course.id = 1;
     exam.title = 'Example Exam';
-    let exerciseGroupService : ExerciseGroupService;
+    let exerciseGroupService: ExerciseGroupService;
     let findAllForExamStub;
     const exerciseGroup = {
         id: 1,
