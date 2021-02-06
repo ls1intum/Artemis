@@ -694,8 +694,8 @@ public class ExamService {
      * @param exam Exam for which to compute and set the number of generated student exams
      */
     public void setNumberOfGeneratedStudentExams(Exam exam) {
-        Exam tmpExam = findWithStudentExams(exam.getId());
-        exam.setNumberOfGeneratedStudentExams((long) tmpExam.getStudentExams().size());
+        long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExam(exam.getId());
+        exam.setNumberOfGeneratedStudentExams(numberOfGeneratedStudentExams);
     }
 
     /**
