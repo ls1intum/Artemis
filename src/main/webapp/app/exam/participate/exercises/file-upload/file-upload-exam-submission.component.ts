@@ -114,6 +114,10 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         return this.exercise && (!this.exercise.dueDate || moment(this.exercise.dueDate).isSameOrAfter(moment()));
     }
 
+    saveUploadedFile() {
+        console.log('ab');
+    }
+
     getExercise(): Exercise {
         return this.exercise;
     }

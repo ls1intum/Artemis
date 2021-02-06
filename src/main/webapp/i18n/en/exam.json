@@ -117,6 +117,7 @@
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
+            "uploadFile": "Upload",
             "greeting": "Welcome to {{ title }}.",
             "finish": "This is the end of {{ title }}.",
             "nameDisplay": "Your full name is: {{ fullName }}",
