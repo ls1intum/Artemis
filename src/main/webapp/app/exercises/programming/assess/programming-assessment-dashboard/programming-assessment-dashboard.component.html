@@ -71,11 +71,11 @@
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
                             <!-- exercise without exam-->
                             <span *ngIf="exercise.type === ExerciseType.PROGRAMMING && exercise.course && submission">
-                                <button *ngIf="!submission.latestResult" [disabled]="busy" [routerLink]="getAssessmentLink(submission)" class="btn btn-success btn-sm mb-1">
+                                <button *ngIf="submission.results.length == 0" [disabled]="busy" [routerLink]="getAssessmentLink(submission)" class="btn btn-success btn-sm mb-1">
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
                                 </button>
 
-                                <button *ngIf="submission.latestResult" [disabled]="busy" [routerLink]="getAssessmentLink(submission)" class="btn btn-primary btn-sm mb-1">
+                                <button *ngIf="submission.results.length == 1" [disabled]="busy" [routerLink]="getAssessmentLink(submission)" class="btn btn-primary btn-sm mb-1">
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
                                 </button>
                             </span>

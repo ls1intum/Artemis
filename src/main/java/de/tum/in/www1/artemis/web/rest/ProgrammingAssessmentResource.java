@@ -141,7 +141,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
 
         if (!programmingExercise.areManualResultsAllowed()) {
-            return forbidden();
+            return forbidden("assessment", "assessmentSaveNotAllowed", "Creating nanual results is disabled for this exercise!");
         }
 
         if (Boolean.FALSE.equals(newManualResult.isRated())) {
