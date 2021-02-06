@@ -52,6 +52,26 @@ describe('ExamDetailComponent', () => {
         id: 1,
     } as ExerciseGroup;
     const responseExerciseGroup = { body: [exerciseGroup] } as HttpResponse<ExerciseGroup[]>;
+    const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
+    const exerciseGroupsExercisePointsEqual = [
+        {
+            id: 1,
+            exercises: [
+                { id: 3, maxPoints: 100, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false },
+                { id: 2, maxPoints: 100, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false },
+            ],
+        },
+    ];
+
+    const exerciseGroupsExercisePointsNotEqual = [
+        {
+            id: 1,
+            exercises: [
+                { id: 3, maxPoints: 100, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false },
+                { id: 2, maxPoints: 50, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false },
+            ],
+        },
+    ];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -193,4 +213,52 @@ describe('ExamDetailComponent', () => {
             expect(location.path()).to.equal('/course-management/1/exams/1/test-runs');
         });
     }));
+
+    describe('test checkAllExamsGenerated', () => {
+        it('should set allExamsGenerated to false', () => {
+            examDetailComponent.exam = exam;
+        });
+
+        it('should set allExamsGenerated to false', () => {
+            examDetailComponent.exam = exam;
+        });
+    });
+
+    describe('test checkEachGroupContainsExercise', () => {
+        it('should set allGroupsContainExercise to true', () => {
+            examDetailComponent.exam = exam;
+            examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsNotEqual;
+            examDetailComponent.checkAllGroupContainsExercise();
+            expect(examDetailComponent.allGroupsContainExercise).to.be.equal(true);
+        });
+
+        it('should set allGroupsContainExercise to false', () => {
+            const exerciseGroups = [{ id: 1, exercises: [] }];
+            examDetailComponent.exam = exam;
+            examDetailComponent.exam.exerciseGroups = exerciseGroups;
+            examDetailComponent.checkAllGroupContainsExercise();
+            expect(examDetailComponent.allGroupsContainExercise).to.be.equal(false);
+        });
+    });
+
+    describe('test function checkPointsExercisesEqual', () => {
+        it('should return checkPointsExercisesEqual as true ', () => {
+            examDetailComponent.exam = exam;
+            examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsEqual;
+            examDetailComponent.checkPointsExercisesEqual();
+            expect(examDetailComponent.pointsExercisesEqual).to.be.equal(true);
+        });
+        it('should return checkPointsExercisesEqual as false', () => {
+            examDetailComponent.exam = exam;
+            examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsNotEqual;
+            examDetailComponent.checkPointsExercisesEqual();
+            expect(examDetailComponent.pointsExercisesEqual).to.be.equal(false);
+        });
+    });
+
+    it('should return routes correctly', () => {
+        examDetailComponent.exam = exam;
+        const route = examDetailComponent.getExamRoutesByIdentifier('edit');
+        expect(JSON.stringify(route)).to.be.equal(JSON.stringify(['/course-management', exam.course!.id, 'exams', exam.id, 'edit']));
+    });
 });

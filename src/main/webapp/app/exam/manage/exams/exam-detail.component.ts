@@ -23,6 +23,7 @@ export class ExamDetailComponent implements OnInit {
     isLoading = false;
     pointsExercisesEqual = false;
     allExamsGenerated = false;
+    allGroupsContainExercise = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -45,6 +46,7 @@ export class ExamDetailComponent implements OnInit {
                 .subscribe((x) => {
                     this.exam.exerciseGroups = x;
                     this.checkPointsExercisesEqual();
+                    this.checkAllGroupContainsExercise();
                 });
             this.checkAllExamsGenerated();
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exam.course);
@@ -75,6 +77,19 @@ export class ExamDetailComponent implements OnInit {
                     return;
                 }
             });
+        });
+    }
+
+    /**
+     * Set pointsExercisesEqual to true if exercises have the same number of maxPoints within each exercise groups
+     */
+    checkAllGroupContainsExercise() {
+        this.allGroupsContainExercise = true;
+        this.exam.exerciseGroups!.forEach((exerciseGroup) => {
+            if (!exerciseGroup.exercises || exerciseGroup.exercises.length === 0) {
+                this.allGroupsContainExercise = false;
+                return;
+            }
         });
     }
 
