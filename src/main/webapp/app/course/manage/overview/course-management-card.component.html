@@ -153,14 +153,14 @@
         </button>
         <div *ngIf="course.isAtLeastInstructor" class="float-right">
             <span class="bold">{{ 'artemisApp.course.students' | translate }}:</span>
-            <a [routerLink]="['/course-management', course.id, 'groups', 'students']" *ngIf="course.numberOfStudents">{{ course.studentGroupName }} ({{ course.numberOfStudents }})</a>
-            <a [routerLink]="['/course-management', course.id, 'groups', 'students']" *ngIf="!course.numberOfStudents">{{ course.studentGroupName }}</a>
+            <a [routerLink]="['/course-management', course.id, 'groups', 'students']" *ngIf="course.numberOfStudents !== undefined">{{ course.studentGroupName }} ({{ course.numberOfStudents }})</a>
+            <a [routerLink]="['/course-management', course.id, 'groups', 'students']" *ngIf="course.numberOfStudents === undefined">{{ course.studentGroupName }}</a>
             <span class="bold">{{ 'artemisApp.course.tutors' | translate }}:</span>
-            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" *ngIf="!course.numberOfTeachingAssistants">{{ course.teachingAssistantGroupName }} ({{ course.numberOfTeachingAssistants }})</a>
-            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" *ngIf="!course.numberOfTeachingAssistants">{{ course.teachingAssistantGroupName }}</a>
+            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" *ngIf="course.numberOfTeachingAssistants !== undefined">{{ course.teachingAssistantGroupName }} ({{ course.numberOfTeachingAssistants }})</a>
+            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" *ngIf="course.numberOfTeachingAssistants === undefined">{{ course.teachingAssistantGroupName }}</a>
             <span class="bold">{{ 'artemisApp.course.instructors' | translate }}:</span>
-            <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" *ngIf="!course.numberOfInstructors">{{ course.instructorGroupName }} ({{ course.numberOfInstructors }})</a>
-            <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" *ngIf="!course.numberOfInstructors">{{ course.instructorGroupName }}</a>
+            <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" *ngIf="course.numberOfInstructors !== undefined">{{ course.instructorGroupName }} ({{ course.numberOfInstructors }})</a>
+            <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" *ngIf="course.numberOfInstructors === undefined">{{ course.instructorGroupName }}</a>
         </div>
     </div>
 </div>
