@@ -334,14 +334,9 @@ public class ProgrammingExerciseParticipationService {
     public void stashChangesInStudentRepositoryAfterDueDateHasPassed(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             try {
-                if (programmingExercise.getDueDate().isBefore(ZonedDateTime.now())) {
-                    Repository repo = gitService.getOrCheckoutRepository(participation);
-                    gitService.stashChanges(repo);
-                }
-                else {
-                    log.warn("Cannot stash student repository for participation " + participation.getId() + " because the due date has not passed yet!");
-                }
-
+                // Note: exam exercise do not have a due date, this method should only be invoked directly after the due date so now check is needed here
+                Repository repo = gitService.getOrCheckoutRepository(participation);
+                gitService.stashChanges(repo);
             }
             catch (InterruptedException | GitAPIException e) {
                 log.error("Stashing student repository for participation" + participation.getId() + " in exercise '" + programmingExercise.getTitle()
