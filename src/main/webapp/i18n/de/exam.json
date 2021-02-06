@@ -323,7 +323,7 @@
                     "exportResults": "Exportiere die Klausurergebnisse"
                 },
                 "descriptionItem": {
-                    "register": "Mindestens ein Studierender muss zur Klausur angemeldet sein.",
+                    "register": "Studierende können auf drei verschiedene Arten registriert werden: einzeln, per .csv Datei oder sie können alle zum Kurs der Klausur angemeldeten Studierenden auf einmal anmelden",
                     "exerciseGroups": "Du kannst Übungsgruppen mit mehreren Übungsvarianten erstellen, um Unterschleif für Studierende zu erschweren. Die Punkte aller Aufgaben einer Aufgabengruppe müssen identisch sein. Die Anzahl an Aufgabengruppen muss der Anzahl der Aufgaben in der Klausur entsprechen.",
                     "generateStudentExams": "Die Klausuren der Studierenden müssen generiert worden sein, bevor die Klausur beginnt. Die Arbeitszeit kann dabei individuell angepasst werden.",
                     "prepareExerciseStart": "Vorbereiten der Aufgaben kann die Serverlast während der Klausur reduzieren.",

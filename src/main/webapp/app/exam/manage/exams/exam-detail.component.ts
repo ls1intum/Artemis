@@ -24,6 +24,8 @@ export class ExamDetailComponent implements OnInit {
     pointsExercisesEqual = false;
     allExamsGenerated = false;
     allGroupsContainExercise = false;
+    totalPointsMandatory = false;
+    totalPointsMandatoryOptional = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -47,6 +49,7 @@ export class ExamDetailComponent implements OnInit {
                     this.exam.exerciseGroups = x;
                     this.checkPointsExercisesEqual();
                     this.checkAllGroupContainsExercise();
+                    this.checkTotalPointsMandatory();
                 });
             this.checkAllExamsGenerated();
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exam.course);
@@ -62,6 +65,35 @@ export class ExamDetailComponent implements OnInit {
      */
     checkAllExamsGenerated() {
         this.allExamsGenerated = this.exam.numberOfGeneratedStudentExams === this.exam.numberOfRegisteredUsers;
+    }
+
+    /**
+     * Set totalPointsMandatory to true if total points of exam is smaller or equal to all mandatory points
+     * Set checkTotalPointsMandatoryOptional to true if total points of exam is bigger or equal to all mandatory points
+     */
+    checkTotalPointsMandatory() {
+        this.totalPointsMandatory = false;
+        this.totalPointsMandatoryOptional = false;
+        let sumPointsExerciseGroupsMandatory = 0;
+        let sumPointsExerciseGroupsOptional = 0;
+
+        // calculate mandatory points and optional points
+        if (this.pointsExercisesEqual) {
+            this.exam.exerciseGroups!.forEach((exerciseGroup) => {
+                if (exerciseGroup.isMandatory) {
+                    sumPointsExerciseGroupsMandatory += exerciseGroup!.exercises![0]!.maxPoints!;
+                } else {
+                    sumPointsExerciseGroupsOptional += exerciseGroup!.exercises![0]!.maxPoints!;
+                }
+            });
+
+            if (this.exam.maxPoints! >= sumPointsExerciseGroupsMandatory) {
+                this.totalPointsMandatory = true;
+            }
+            if (this.exam.maxPoints! <= sumPointsExerciseGroupsOptional + sumPointsExerciseGroupsMandatory) {
+                this.totalPointsMandatoryOptional = true;
+            }
+        }
     }
 
     /**
