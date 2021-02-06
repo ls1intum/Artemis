@@ -89,8 +89,7 @@
     </div>
 
     <div class="card-footer">
-        <button
-            type="submit"
+        <a
             *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'exercises']"
             [class.guided-tour]="isGuidedTour"
@@ -99,9 +98,8 @@
         >
             <fa-icon [icon]="'list-alt'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.exercise' | translate }}</span>
-        </button>
-        <button
-            type="submit"
+        </a>
+        <a
             *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'scores']"
             class="btn btn-info mr-1 mb-1"
@@ -109,9 +107,8 @@
         >
             <fa-icon [icon]="'table'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.scores' | translate }}</span>
-        </button>
-        <button
-            type="submit"
+        </a>
+        <a
             *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'lectures']"
             class="btn btn-info mr-1 mb-1"
@@ -119,19 +116,12 @@
         >
             <fa-icon [icon]="'file-pdf'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.lecture' | translate }}</span>
-        </button>
-        <button
-            type="submit"
-            *ngIf="course.isAtLeastTutor"
-            [routerLink]="['/course-management', course.id, 'exams']"
-            class="btn btn-info mr-1 mb-1"
-            [ngbTooltip]="'entity.action.exams' | translate"
-        >
+        </a>
+        <a *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'exams']" class="btn btn-info mr-1 mb-1" [ngbTooltip]="'entity.action.exams' | translate">
             <fa-icon [icon]="'graduation-cap'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.exams' | translate }}</span>
-        </button>
-        <button
-            type="submit"
+        </a>
+        <a
             *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'tutor-dashboard']"
             class="btn btn-info mr-1 mb-1"
@@ -140,9 +130,8 @@
         >
             <fa-icon [icon]="'user-check'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.assessmentDashboard' | translate }}</span>
-        </button>
-        <button
-            type="submit"
+        </a>
+        <a
             *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'instructor-dashboard']"
             class="btn btn-info mr-1 mb-1"
@@ -150,16 +139,24 @@
         >
             <fa-icon [icon]="'chess-king'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'artemisApp.course.instructorDashboard' | translate }}</span>
-        </button>
+        </a>
         <div *ngIf="course.isAtLeastInstructor" class="float-right">
             <span class="bold">{{ 'artemisApp.course.students' | translate }}:</span>
-            <a [routerLink]="['/course-management', course.id, 'groups', 'students']" *ngIf="course.numberOfStudents !== undefined">{{ course.studentGroupName }} ({{ course.numberOfStudents }})</a>
+            <a [routerLink]="['/course-management', course.id, 'groups', 'students']" *ngIf="course.numberOfStudents !== undefined"
+                >{{ course.studentGroupName }} ({{ course.numberOfStudents }})</a
+            >
             <a [routerLink]="['/course-management', course.id, 'groups', 'students']" *ngIf="course.numberOfStudents === undefined">{{ course.studentGroupName }}</a>
             <span class="bold">{{ 'artemisApp.course.tutors' | translate }}:</span>
-            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" *ngIf="course.numberOfTeachingAssistants !== undefined">{{ course.teachingAssistantGroupName }} ({{ course.numberOfTeachingAssistants }})</a>
-            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" *ngIf="course.numberOfTeachingAssistants === undefined">{{ course.teachingAssistantGroupName }}</a>
+            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" *ngIf="course.numberOfTeachingAssistants !== undefined"
+                >{{ course.teachingAssistantGroupName }} ({{ course.numberOfTeachingAssistants }})</a
+            >
+            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" *ngIf="course.numberOfTeachingAssistants === undefined">{{
+                course.teachingAssistantGroupName
+            }}</a>
             <span class="bold">{{ 'artemisApp.course.instructors' | translate }}:</span>
-            <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" *ngIf="course.numberOfInstructors !== undefined">{{ course.instructorGroupName }} ({{ course.numberOfInstructors }})</a>
+            <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" *ngIf="course.numberOfInstructors !== undefined"
+                >{{ course.instructorGroupName }} ({{ course.numberOfInstructors }})</a
+            >
             <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" *ngIf="course.numberOfInstructors === undefined">{{ course.instructorGroupName }}</a>
         </div>
     </div>
