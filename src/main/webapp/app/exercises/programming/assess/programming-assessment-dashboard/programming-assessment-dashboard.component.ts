@@ -27,6 +27,7 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
     reverse = false;
     numberOfCorrectionrounds = 1;
 
+    automaticType = AssessmentType.AUTOMATIC;
     private cancelConfirmationText: string;
 
     constructor(

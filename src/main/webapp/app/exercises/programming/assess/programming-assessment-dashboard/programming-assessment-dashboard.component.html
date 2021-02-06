@@ -74,9 +74,34 @@
                                 <button *ngIf="submission.results.length == 0" [disabled]="busy" [routerLink]="getAssessmentLink(submission)" class="btn btn-success btn-sm mb-1">
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
                                 </button>
-
-                                <button *ngIf="submission.results.length == 1" [disabled]="busy" [routerLink]="getAssessmentLink(submission)" class="btn btn-primary btn-sm mb-1">
+                                <button
+                                    *ngIf="submission.results.length == 1 && submission.latestResult.completionDate"
+                                    [disabled]="busy"
+                                    [routerLink]="getAssessmentLink(submission)"
+                                    class="btn btn-primary btn-sm mb-1"
+                                >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                                </button>
+                                <button
+                                    *ngIf="submission.results.length == 1 && !submission.latestResult.completionDate"
+                                    [disabled]="busy"
+                                    [routerLink]="getAssessmentLink(submission)"
+                                    class="btn btn-warning btn-sm mb-1"
+                                >
+                                    <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.continue' | translate }}
+                                </button>
+                                <button
+                                    (click)="cancelAssessment(submission)"
+                                    *ngIf="
+                                        submission &&
+                                        submission.latestResult &&
+                                        !submission.latestResult!.completionDate &&
+                                        submission.latestResult.assessmentType !== automaticType
+                                    "
+                                    [disabled]="busy"
+                                    class="btn btn-danger btn-sm mb-1"
+                                >
+                                    <fa-icon [fixedWidth]="true" [icon]="'ban'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | translate }}
                                 </button>
                             </span>
                             <!-- start-->
@@ -113,7 +138,12 @@
                                         <span *ngIf="exercise.isAtLeastInstructor">
                                             <button
                                                 (click)="cancelAssessment(submission)"
-                                                *ngIf="submission && submission.latestResult && !submission.latestResult!.completionDate"
+                                                *ngIf="
+                                                    submission &&
+                                                    submission.latestResult &&
+                                                    submission.latestResult.assessmentType !== automaticType &&
+                                                    !submission.latestResult!.completionDate
+                                                "
                                                 [disabled]="busy"
                                                 class="btn btn-danger btn-sm mb-1"
                                             >
