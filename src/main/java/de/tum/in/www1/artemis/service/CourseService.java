@@ -418,6 +418,7 @@ public class CourseService {
                 courseRepository.save(course);
             }
             else {
+                notifyUserAboutCourseArchiveState(course.getId(), CourseArchiveState.COMPLETED);
                 groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FAILED, exportErrors);
                 return;
             }
