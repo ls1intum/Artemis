@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
@@ -75,8 +76,6 @@ public class CourseExportService {
      * @return Path to the zip file
      */
     public Optional<Path> exportCourse(Course course, String outputDir, List<String> exportErrors) {
-        notifyUserAboutCourseExportState(course.getId(), CourseExportState.RUNNING);
-
         var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
 
         // Create a temporary directory that will contain the files that will be zipped
@@ -92,15 +91,13 @@ public class CourseExportService {
         }
 
         // Export course exercises and exams
-        notifyUserAboutCourseExportState(course.getId(), CourseExportState.EXPORTING_EXERCISES);
         exportCourseExercises(course, courseDirPath.toString(), exportErrors);
-        notifyUserAboutCourseExportState(course.getId(), CourseExportState.EXPORTING_EXAMS);
         exportCourseExams(course, courseDirPath.toString(), exportErrors);
 
         // Zip them together
         var exportedCoursePath = createCourseZipFile(courseDirPath, Path.of(outputDir), exportErrors);
 
-        notifyUserAboutCourseExportState(course.getId(), CourseExportState.COMPLETED);
+        notifyUserAboutCourseExportState(course.getId(), CourseExportState.COMPLETED, "");
         log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCoursePath);
         return exportedCoursePath;
     }
@@ -117,7 +114,7 @@ public class CourseExportService {
         Path exercisesDir = Path.of(outputDir, "exercises");
         try {
             Files.createDirectory(exercisesDir);
-            exportExercises(course.getExercises(), exercisesDir.toString(), exportErrors);
+            exportExercises(course.getId(), course.getExercises(), exercisesDir.toString(), exportErrors);
         }
         catch (IOException e) {
             var error = "Failed to create course exercise directory" + exercisesDir + ".";
@@ -172,7 +169,7 @@ public class CourseExportService {
             Files.createDirectory(examDir);
             // We retrieve every exercise from each exercise group and flatten the list.
             var exercises = examService.getAllExercisesOfExam(examId);
-            exportExercises(exercises, examDir.toString(), exportErrors);
+            exportExercises(exam.getCourse().getId(), exercises, examDir.toString(), exportErrors);
         }
         catch (IOException e) {
             var error = "Failed to create exam directory " + examDir + ".";
@@ -190,8 +187,12 @@ public class CourseExportService {
      * @param outputDir    The path to a directory that will be used to store the zipped files.
      * @param exportErrors List of failures that occurred during the export
      */
-    private void exportExercises(Set<Exercise> exercises, String outputDir, List<String> exportErrors) {
+    private void exportExercises(long courseId, Set<Exercise> exercises, String outputDir, List<String> exportErrors) {
+        AtomicInteger exportedExercises = new AtomicInteger(0);
         exercises.forEach(exercise -> {
+            // Notify the user after the progress
+            exportedExercises.addAndGet(1);
+            notifyUserAboutCourseExportState(courseId, CourseExportState.RUNNING, exportedExercises + "/" + exercises.size() + " done");
 
             if (exercise instanceof ProgrammingExercise) {
                 programmingExerciseExportService.exportProgrammingExercise((ProgrammingExercise) exercise, outputDir, exportErrors);
@@ -285,11 +286,12 @@ public class CourseExportService {
      * @param courseId The id of the course that is being exported
      * @param exportState The archive state
      */
-    private void notifyUserAboutCourseExportState(long courseId, CourseExportState exportState) {
+    private void notifyUserAboutCourseExportState(long courseId, CourseExportState exportState, String progress) {
         var topic = "/topic/courses/" + courseId + "/export-course";
 
         Map<String, String> message = new HashMap<>();
         message.put("exportState", exportState.toString());
+        message.put("progress", progress);
 
         var mapper = new ObjectMapper();
         try {
