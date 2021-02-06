@@ -19,6 +19,11 @@
                             <input #fileInput id="fileUploadInput" type="file" class="custom-file-input" (change)="setFileSubmissionForExercise($event)" />
                             <label class="custom-file-label overflow-ellipsis" for="fileUploadInput">{{ submissionFile ? submissionFile!.name : '' }}</label>
                         </div>
+                        <div class="col-4">
+                            <button class="btn btn-primary" (click)="saveUploadedFile()">
+                                {{ 'artemisApp.examParticipation.uploadFile' | translate }}
+                            </button>
+                        </div>
                     </div>
                     <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions">Supported file extensions:</p>
                     <div class="d-inline-block" *ngFor="let extension of exercise.filePattern!.split(',')">
