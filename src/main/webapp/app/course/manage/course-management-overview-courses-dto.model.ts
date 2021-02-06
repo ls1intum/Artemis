@@ -1,7 +1,7 @@
 export class CourseManagementOverviewCoursesDto {
     public id?: number;
     public title?: string;
-    public testCourse: boolean;
+    public testCourse?: boolean;
     public semester?: string;
     public shortName?: string;
     public color?: string;
