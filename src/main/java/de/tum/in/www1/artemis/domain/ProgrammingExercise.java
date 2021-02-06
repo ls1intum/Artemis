@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -528,11 +529,16 @@ public class ProgrammingExercise extends Exercise {
     }
 
     @Override
+    @NotNull
     public AssessmentType getAssessmentType() {
         if (super.getAssessmentType() == null) {
             return AssessmentType.AUTOMATIC;
         }
         return super.getAssessmentType();
+    }
+
+    public boolean needsLockOperation() {
+        return isExamExercise() || !AssessmentType.AUTOMATIC.equals(getAssessmentType()) || getBuildAndTestStudentSubmissionsAfterDueDate() != null;
     }
 
     @Nullable
