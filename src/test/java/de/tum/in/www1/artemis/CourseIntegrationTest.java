@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.nio.file.Files;
@@ -25,6 +26,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
@@ -1015,6 +1017,37 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testArchiveCourseAsTutor_forbidden() throws Exception {
         request.put("/api/courses/" + 1 + "/archive", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testArchiveCourseWithTestModelingAndFileUploadExercises() throws Exception {
+        Course course = database.addCourseWithModelingAndTextAndFileUploadExercise();
+        course.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        course = courseRepo.save(course);
+
+        // Generate submissions
+        var fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "FileUpload");
+        var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+
+        var textExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
+        var textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+        database.saveTextSubmission(textExercise, textSubmission, "student1");
+
+        var modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "Modeling");
+        database.createAndSaveParticipationForExercise(modelingExercise, "student1");
+        String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, false);
+        database.addSubmission(modelingExercise, submission, "student1");
+
+        request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
+
+        final var courseId = course.getId();
+        await().until(() -> courseRepo.findById(courseId).get().getCourseArchivePath() != null);
+
+        var updatedCourse = courseRepo.findById(courseId).get();
+        assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
     }
 
     @Test

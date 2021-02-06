@@ -1,5 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-public enum CourseArchiveState {
+public enum CourseExportState {
     RUNNING, COMPLETED
 }
