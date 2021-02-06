@@ -3,7 +3,6 @@
         <div *ngIf="exam">
             <h2><span jhiTranslate="artemisApp.exam.title">Exam</span> {{ exam.id }}</h2>
             <hr />
-
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
             <a id="editButton" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-primary">
@@ -88,22 +87,19 @@
                                     <li class="list-group-item border-1">
                                         <span>
                                             At least one exercise-group:
-                                            <fa-icon *ngIf="exam.exerciseGroups?.length > 0" [icon]="'check-circle'" style="color: #28a745"></fa-icon>
-                                            <fa-icon *ngIf="!(exam.exerciseGroups?.length > 0)" [icon]="'times'" style="color: #ca2024"></fa-icon>
+                                            <jhi-exam-checklist-check [checkAttribute]="exam.exerciseGroups?.length > 0"></jhi-exam-checklist-check>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
                                         <span>
                                             Number of exercise groups equals number of exercises in exam:
-                                            <fa-icon *ngIf="exam.exerciseGroups?.length == exam.numberOfExercisesInExam" [icon]="'check-circle'" style="color: #28a745"></fa-icon>
-                                            <fa-icon *ngIf="!(exam.exerciseGroups?.length == exam.numberOfExercisesInExam)" [icon]="'times'" style="color: #ca2024"></fa-icon>
+                                            <jhi-exam-checklist-check [checkAttribute]="exam.exerciseGroups?.length == exam.numberOfExercisesInExam"></jhi-exam-checklist-check>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
                                         <span>
                                             Points in exercises of each exercise group are identical:
-                                            <fa-icon *ngIf="pointsExercisesEqual" [icon]="'check-circle'" style="color: #28a745"></fa-icon>
-                                            <fa-icon *ngIf="!pointsExercisesEqual" [icon]="'times'" style="color: #ca2024"></fa-icon>
+                                            <jhi-exam-checklist-check [checkAttribute]="pointsExercisesEqual"></jhi-exam-checklist-check>
                                         </span>
                                     </li>
                                 </ul>
@@ -150,16 +146,7 @@
                                     <li class="list-group-item border-1">
                                         <span>
                                             At least one student registered:
-                                            <fa-icon
-                                                *ngIf="exam.numberOfRegisteredUsers && exam?.numberOfRegisteredUsers > 0"
-                                                [icon]="'check-circle'"
-                                                style="color: #28a745"
-                                            ></fa-icon>
-                                            <fa-icon
-                                                *ngIf="!(exam?.numberOfRegisteredUsers && exam?.numberOfRegisteredUsers > 0)"
-                                                [icon]="'times'"
-                                                style="color: #ca2024"
-                                            ></fa-icon>
+                                            <jhi-exam-checklist-check [checkAttribute]="(exam.numberOfRegisteredUsers && exam?.numberOfRegisteredUsers > 0)"></jhi-exam-checklist-check>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
@@ -182,7 +169,16 @@
                             <td class="d-none d-md-table-cell">
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.generateStudentExams' | translate }}</span>
                             </td>
-                            <td class="d-none d-md-table-cell">empty</td>
+                            <td class="d-none d-md-table-cell">
+                                <ul class="list-unstyled">
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            All exams generated for registered students:
+                                            <jhi-exam-checklist-check [checkAttribute]="allExamsGenerated"></jhi-exam-checklist-check>
+                                        </span>
+                                    </li>
+                                </ul>
+                            </td>
                             <td class="d-none d-md-table-cell">
                                 <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
                                     <fa-icon [icon]="'eye'"></fa-icon>
@@ -214,7 +210,28 @@
                             <td class="d-none d-md-table-cell">
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examDetails' | translate }}</span>
                             </td>
-                            <td class="d-none d-md-table-cell">empty</td>
+                            <td class="d-none d-md-table-cell">
+                                <ul class="list-unstyled">
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            Start date of exam set:
+                                            <jhi-exam-checklist-check [checkAttribute]="exam.startDate"></jhi-exam-checklist-check>
+                                        </span>
+                                    </li>
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            End date of exam set:
+                                            <jhi-exam-checklist-check [checkAttribute]="!!exam.endDate"></jhi-exam-checklist-check>
+                                        </span>
+                                    </li>
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            Visibility date of exam set:
+                                            <jhi-exam-checklist-check [checkAttribute]="!!exam.visibleDate"></jhi-exam-checklist-check>
+                                        </span>
+                                    </li>
+                                </ul>
+                            </td>
                             <td class="d-none d-md-table-cell">
                                 <a id="editButton_table" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-primary">
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
@@ -229,7 +246,9 @@
                             <td class="d-none d-md-table-cell">
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.conductExam' | translate }}</span>
                             </td>
-                            <td class="d-none d-md-table-cell">empty</td>
+                            <td class="d-none d-md-table-cell">
+                                empty
+                            </td>
                             <td class="d-none d-md-table-cell">
                                 <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
                                     <fa-icon [icon]="'eye'"></fa-icon>
@@ -266,7 +285,16 @@
                             <td class="d-none d-md-table-cell">
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.publishResults' | translate }}</span>
                             </td>
-                            <td class="d-none d-md-table-cell">empty</td>
+                            <td class="d-none d-md-table-cell">
+                                <ul class="list-unstyled">
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            Publishing date for results set:
+                                            <jhi-exam-checklist-check [checkAttribute]="!!exam.publishResultsDate"></jhi-exam-checklist-check>
+                                        </span>
+                                    </li>
+                                </ul>
+                            </td>
                             <td class="d-none d-md-table-cell">
                                 <a id="editButton_publish" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-primary">
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
@@ -281,7 +309,22 @@
                             <td class="d-none d-md-table-cell">
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examReview' | translate }}</span>
                             </td>
-                            <td class="d-none d-md-table-cell">empty</td>
+                            <td class="d-none d-md-table-cell">
+                                <ul class="list-unstyled">
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            Start date of exam review set:
+                                            <jhi-exam-checklist-check [checkAttribute]="!!exam.examStudentReviewStart"></jhi-exam-checklist-check>
+                                        </span>
+                                    </li>
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            End date of exam review set:
+                                            <jhi-exam-checklist-check [checkAttribute]="!!exam.examStudentReviewEnd"></jhi-exam-checklist-check>
+                                        </span>
+                                    </li>
+                                </ul>
+                            </td>
                             <td class="d-none d-md-table-cell">
                                 <a id="editButton_review" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-primary">
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>

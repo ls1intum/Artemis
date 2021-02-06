@@ -8,7 +8,6 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { filter, map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -23,6 +22,7 @@ export class ExamDetailComponent implements OnInit {
     isAtLeastInstructor = false;
     isLoading = false;
     pointsExercisesEqual = false;
+    allExamsGenerated = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -41,14 +41,12 @@ export class ExamDetailComponent implements OnInit {
             this.exam = exam;
             this.exerciseGroupService
                 .findAllForExam(this.exam!.course!.id!, this.exam.id!)
-                .pipe(
-                    filter((response: HttpResponse<ExerciseGroup[]>) => response.ok),
-                    map((exerciseGroupArray: HttpResponse<ExerciseGroup[]>) => exerciseGroupArray.body!),
-                )
+                .map((exerciseGroupArray: HttpResponse<ExerciseGroup[]>) => exerciseGroupArray.body!)
                 .subscribe((x) => {
                     this.exam.exerciseGroups = x;
                     this.checkPointsExercisesEqual();
                 });
+            this.checkAllExamsGenerated();
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exam.course);
             this.formattedStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
             this.formattedConfirmationStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
@@ -58,7 +56,14 @@ export class ExamDetailComponent implements OnInit {
     }
 
     /**
-     * Returns true if exercises have the same number of maxPoints within each exercise groups
+     * Set allExamsGenerated to true if all registered students have a student exam
+     */
+    checkAllExamsGenerated() {
+        this.allExamsGenerated = this.exam.numberOfGeneratedStudentExams === this.exam.numberOfRegisteredUsers;
+    }
+
+    /**
+     * Set pointsExercisesEqual to true if exercises have the same number of maxPoints within each exercise groups
      */
     checkPointsExercisesEqual() {
         this.pointsExercisesEqual = true;
@@ -66,7 +71,6 @@ export class ExamDetailComponent implements OnInit {
             const points = exerciseGroup.exercises?.[0].maxPoints;
             return exerciseGroup.exercises?.forEach((exercise) => {
                 if (exercise.maxPoints !== points) {
-                    console.log('we are in!');
                     this.pointsExercisesEqual = false;
                     return;
                 }
