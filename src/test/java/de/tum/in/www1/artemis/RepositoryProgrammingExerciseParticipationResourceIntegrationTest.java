@@ -511,10 +511,14 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @WithMockUser(username = "student1", roles = "USER")
     public void testBuildLogsWithManualResult() throws Exception {
         var submission = database.createProgrammingSubmission(participation, true);
+        doReturn(logs).when(continuousIntegrationService).getLatestBuildLogs(submission);
         database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC);
-        var receivedLogs = request.get(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
+        var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).isNotNull();
-        assertThat(receivedLogs).hasSize(0);
+        assertThat(receivedLogs).hasSize(2);
+        assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
+        // due to timezone assertThat isEqualTo issues, we compare those directly first and ignore them afterwards
+        assertThat(receivedLogs).usingElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
     }
 
     @Test

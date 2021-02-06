@@ -26,7 +26,6 @@ Ace Editor
             color: #3e8acc; // btn-primary color
             height: 16px;
             background: white;
-
         }
 
         .ace_gutter-cell {
@@ -46,7 +45,8 @@ Ace Editor
             }
         }
 
-        .ace_gutter-cell.ace_warning, .ace_gutter-cell.ace_error {
+        .ace_gutter-cell.ace_warning,
+        .ace_gutter-cell.ace_error {
             background-position: unset;
         }
 
