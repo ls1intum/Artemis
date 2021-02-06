@@ -116,15 +116,14 @@ public class ProgrammingExerciseParticipationResource {
         // usually this should not be necessary, but just in case the participation's results come in a wrong order this is important
         results.sort((r1, r2) -> r1.getId().compareTo(r2.getId()));
 
-        try {
+        if (results.size() > correctionRound) {
             Result resultOfCorrectionRound = results.get(correctionRound);
-            Set resultSet = new HashSet<Result>();
+            Set resultSet = new HashSet<>();
 
             resultSet.add(resultOfCorrectionRound);
             participation.get().setResults(resultSet);
-
         }
-        catch (Exception e) {
+        else {
             return notFound();
         }
 

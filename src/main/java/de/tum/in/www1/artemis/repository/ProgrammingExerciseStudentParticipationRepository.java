@@ -41,7 +41,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     /**
      * Will return the participation with the provided participationId. The participation will come with all it's manual results, submissions, feedbacks and assessors
      * @param participationId
-     * @return
+     * @return a participation with all it's manual results.
      */
     @Query("""
             select p from ProgrammingExerciseStudentParticipation p
