@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, Input, ChangeDetectorRef } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, Input, ChangeDetectorRef, EventEmitter, Output } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -33,20 +33,15 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     @Input()
     exercise: FileUploadExercise;
 
+    @Output()
+    onExerciseChanged = new EventEmitter<{ exercise: Exercise; force: boolean }>();
+
     submittedFileName: string;
     submittedFileExtension: string;
     participation: StudentParticipation;
     result: Result;
     submissionFile?: File;
-    // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
-    isAfterAssessmentDueDate: boolean;
-    isSaving: boolean;
-    isOwnerOfParticipation: boolean;
-
-    acceptedFileExtensions: string;
-
-    isLate: boolean; // indicates if the submission is late
-
+    changesSaved = false;
     readonly ButtonType = ButtonType;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -89,6 +84,8 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
                 this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
             } else {
                 this.submissionFile = submissionFile;
+                this.submission.isSynced = false;
+                this.submission.submitted = false;
                 console.log(this.submissionFile);
             }
         }
@@ -101,6 +98,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         this.submittedFileName = filePath[filePath.length - 1];
         const fileName = this.submittedFileName.split('.');
         this.submittedFileExtension = fileName[fileName.length - 1];
+        this.submission.submitted = false;
     }
 
     downloadFile(filePath: string) {
@@ -112,10 +110,6 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      */
     get isActive(): boolean {
         return this.exercise && (!this.exercise.dueDate || moment(this.exercise.dueDate).isSameOrAfter(moment()));
-    }
-
-    saveUploadedFile() {
-        console.log('ab');
     }
 
     getExercise(): Exercise {
@@ -133,13 +127,21 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     // TODO: clarify why this is needed here and also for the other exercise types
     updateSubmissionFromView(): void {
         console.log('updateSubmissionFromView');
-        // intentionally left empty
+        // this.submission.
     }
 
     updateViewFromSubmission(): void {
         console.log('updateViewFromSubmission');
+        console.log(this.submission.isSynced);
         if (this.submission.isSynced) {
             this.setSubmittedFile();
         }
+    }
+
+    saveUploadedFile() {
+        this.submission.submitted = false;
+        console.log(this);
+        this.submission.isSynced = false;
+        this.onExerciseChanged.emit({ exercise: this.exercise, force: false });
     }
 }

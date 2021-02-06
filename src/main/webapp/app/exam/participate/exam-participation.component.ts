@@ -404,6 +404,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     onExerciseChange(exerciseChange: { exercise: Exercise; force: boolean }): void {
         const activeComponent = this.activeSubmissionComponent;
+        console.log('activeCompo', activeComponent);
         if (activeComponent) {
             activeComponent.onDeactivate();
         }
@@ -495,6 +496,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
         // goes through all exercises and checks if there are unsynced submissions
         const submissionsToSync: { exercise: Exercise; submission: Submission }[] = [];
+        console.log(this.studentExam.exercises);
         this.studentExam.exercises!.forEach((exercise: Exercise) => {
             exercise.studentParticipations!.forEach((participation) => {
                 participation
@@ -531,6 +533,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         );
                         break;
                     case ExerciseType.FILE_UPLOAD:
+                        console.log('now saving????');
                         const fileUploadComponent = activeComponent as FileUploadExamSubmissionComponent;
                         if (!fileUploadComponent.submissionFile) {
                             return;
@@ -542,6 +545,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                     fileUploadComponent.submission = submission.body!;
                                     fileUploadComponent.setSubmittedFile();
                                     this.onSaveSubmissionSuccess(submissionToSync.submission);
+                                    fileUploadComponent.updateSubmissionFromView();
+                                    fileUploadComponent.submission.submitted = true;
+                                    fileUploadComponent.submission.isSynced = true;
                                 },
                                 () => this.onSaveSubmissionError(),
                             );

@@ -41,6 +41,7 @@
                                     *ngSwitchCase="FILEUPLOAD"
                                     [exercise]="exercise"
                                     [submission]="exercise.studentParticipations[0].submissions![0]"
+                                    (onExerciseChanged)="onExerciseChange($event)"
                                 ></jhi-file-upload-submission-exam>
                                 <jhi-text-editor-exam
                                     *ngSwitchCase="TEXT"
