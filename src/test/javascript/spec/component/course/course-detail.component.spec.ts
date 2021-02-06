@@ -3,8 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { CourseDetailComponent } from 'app/course/manage/course-detail.component';
-import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -15,6 +15,11 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import * as sinon from 'sinon';
 import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
+import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 describe('Course Management Detail Component', () => {
     let comp: CourseDetailComponent;
@@ -24,7 +29,16 @@ describe('Course Management Detail Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [CourseDetailComponent, MockComponent(SecuredImageComponent)],
+            declarations: [
+                CourseDetailComponent,
+                MockComponent(SecuredImageComponent),
+                MockRouterLinkDirective,
+                MockPipe(TranslatePipe),
+                MockDirective(DeleteButtonDirective),
+                MockComponent(AlertErrorComponent),
+                MockDirective(AlertComponent),
+                MockPipe(ArtemisDatePipe),
+            ],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -32,9 +46,7 @@ describe('Course Management Detail Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(JhiAlertService),
             ],
-        })
-            .overrideTemplate(CourseDetailComponent, '')
-            .compileComponents();
+        }).compileComponents();
         fixture = TestBed.createComponent(CourseDetailComponent);
         comp = fixture.componentInstance;
         courseManagementService = TestBed.inject(CourseManagementService);

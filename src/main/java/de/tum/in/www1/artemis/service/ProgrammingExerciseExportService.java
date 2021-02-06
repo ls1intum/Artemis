@@ -106,7 +106,7 @@ public class ProgrammingExerciseExportService {
      * @return the path to the zip file
      */
     public Path exportProgrammingExercise(ProgrammingExercise exercise, List<ProgrammingExerciseStudentParticipation> studentParticipations, String pathToStoreZipFile) {
-        // Will contains the zipped files. Note that there can be null elements
+        // Will contain the zipped files. Note that there can be null elements
         // because e.g exportStudentRepositories returns null if student repositories don't
         // exist.
         var zipFiles = new ArrayList<File>();
