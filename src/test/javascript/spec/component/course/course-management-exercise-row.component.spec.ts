@@ -13,7 +13,7 @@ import { CourseManagementExerciseRowComponent } from 'app/course/manage/overview
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
-import { CourseManagementOverviewCoursesDto } from 'app/course/manage/course-management-overview-courses-dto.model';
+import { CourseManagementOverviewCourseInformationDto } from 'app/course/manage/course-management-overview-courses-dto.model';
 import { CourseManagementOverviewExerciseDetailsDTO } from 'app/entities/course-management-overview-exercise-details-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/entities/course-management-overview-exercise-statistics-dto.model';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -30,7 +30,7 @@ describe('CourseManagementExerciseRowComponent', () => {
     exerciseDetailDTO.teamMode = false;
     exerciseDetailDTO.exerciseTitle = 'ModelingExercise';
 
-    const coursesDTO = new CourseManagementOverviewCoursesDto();
+    const coursesDTO = new CourseManagementOverviewCourseInformationDto();
 
     const exerciseStatisticsDTO = new CourseManagementOverviewExerciseStatisticsDTO();
     exerciseStatisticsDTO.averageScoreInPercent = 50;

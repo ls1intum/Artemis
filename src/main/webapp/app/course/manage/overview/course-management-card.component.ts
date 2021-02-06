@@ -6,8 +6,8 @@ import { ExerciseRowType } from 'app/course/manage/overview/course-management-ex
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/entities/course-management-overview-exercise-statistics-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseDetailsDTO } from 'app/entities/course-management-overview-exercise-details-dto.model';
-import { CourseManagementOverviewCourseDto } from 'app/course/manage/course-management-overview-course-dto.model';
-import { CourseManagementOverviewCoursesDto } from 'app/course/manage/course-management-overview-courses-dto.model';
+import { CourseManagementOverviewCourseDetailDto } from 'app/course/manage/course-management-overview-course-dto.model';
+import { CourseManagementOverviewCourseInformationDto } from 'app/course/manage/course-management-overview-courses-dto.model';
 
 @Component({
     selector: 'jhi-course-management-card',
@@ -17,8 +17,8 @@ import { CourseManagementOverviewCoursesDto } from 'app/course/manage/course-man
 export class CourseManagementCardComponent implements OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
-    @Input() course: CourseManagementOverviewCoursesDto;
-    @Input() courseDetails: CourseManagementOverviewCourseDto;
+    @Input() course: CourseManagementOverviewCourseInformationDto;
+    @Input() courseDetails: CourseManagementOverviewCourseDetailDto;
     @Input() courseStatistics: CourseManagementOverviewStatisticsDto;
     @Input() isGuidedTour: boolean;
 

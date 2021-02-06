@@ -10,10 +10,10 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CourseManagementExerciseRowComponent } from 'app/course/manage/overview/course-management-exercise-row.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
-import { CourseManagementOverviewCoursesDto } from 'app/course/manage/course-management-overview-courses-dto.model';
+import { CourseManagementOverviewCourseInformationDto } from 'app/course/manage/course-management-overview-courses-dto.model';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementStatisticsComponent } from 'app/course/manage/overview/course-management-statistics.component';
-import { CourseManagementOverviewCourseDto } from 'app/course/manage/course-management-overview-course-dto.model';
+import { CourseManagementOverviewCourseDetailDto } from 'app/course/manage/course-management-overview-course-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseDetailsDTO } from 'app/entities/course-management-overview-exercise-details-dto.model';
 import * as moment from 'moment';
@@ -27,7 +27,7 @@ describe('CourseManagementCardComponent', () => {
     let component: CourseManagementCardComponent;
     let service: CourseManagementService;
 
-    const courseDetails = new CourseManagementOverviewCourseDto();
+    const courseDetails = new CourseManagementOverviewCourseDetailDto();
     courseDetails.courseId = 1;
     const pastExercise = new CourseManagementOverviewExerciseDetailsDTO();
     pastExercise.dueDate = moment().subtract(6, 'days');
@@ -41,7 +41,7 @@ describe('CourseManagementCardComponent', () => {
     futureExercise2.releaseDate = moment().add(6, 'days');
     courseDetails.exerciseDetails = [pastExercise, currentExercise, futureExercise2, futureExercise1];
 
-    const coursesDTO = new CourseManagementOverviewCoursesDto();
+    const coursesDTO = new CourseManagementOverviewCourseInformationDto();
     coursesDTO.id = 1;
     coursesDTO.color = 'red';
 
