@@ -14,17 +14,14 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SortService } from 'app/shared/service/sort.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { stub } from 'sinon';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 const route = { params: of({ courseId: 3, exerciseId: 22 }) };
-const course = { id: 1 };
 const fileUploadExercise1 = {
     id: 22,
     type: ExerciseType.FILE_UPLOAD,
@@ -35,13 +32,6 @@ const fileUploadExercise2 = {
     type: ExerciseType.FILE_UPLOAD,
     exerciseGroup: { id: 94, exam: { id: 777, course: { id: 92 } } },
 } as FileUploadExercise;
-const modelingExercise: ModelingExercise = {
-    id: 33,
-    type: ExerciseType.MODELING,
-    numberOfAssessmentsOfCorrectionRounds: [],
-    studentAssignedTeamIdComputed: false,
-    secondCorrectionEnabled: false,
-};
 
 const fileUploadSubmission1 = {
     id: 1,
@@ -55,18 +45,15 @@ const fileUploadSubmission2 = {
     results: [{ id: 20, assessor: { id: 30, guidedTourSettings: [] } }],
     participation: { id: 41, exercise: fileUploadExercise2 },
 };
-const modelingSubmission = { id: 2, submitted: true, results: [{ id: 20, assessor: { id: 30, guidedTourSettings: [] } }], participation: { id: 42, exercise: modelingExercise } };
 
 describe('FileUploadAssessmentDashboardComponent', () => {
     let component: FileUploadAssessmentDashboardComponent;
     let fixture: ComponentFixture<FileUploadAssessmentDashboardComponent>;
     let exerciseService: ExerciseService;
-    let courseService: CourseManagementService;
     let fileUploadSubmissionService: FileUploadSubmissionService;
     let fileUploadAssessmentsService: FileUploadAssessmentsService;
     let accountService: AccountService;
     let sortService: SortService;
-    let router: Router;
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
@@ -97,20 +84,13 @@ describe('FileUploadAssessmentDashboardComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(FileUploadAssessmentDashboardComponent);
                 component = fixture.componentInstance;
-                router = fixture.debugElement.injector.get(Router);
                 exerciseService = fixture.debugElement.injector.get(ExerciseService);
-                courseService = fixture.debugElement.injector.get(CourseManagementService);
                 fileUploadSubmissionService = fixture.debugElement.injector.get(FileUploadSubmissionService);
                 fileUploadAssessmentsService = fixture.debugElement.injector.get(FileUploadAssessmentsService);
                 accountService = fixture.debugElement.injector.get(AccountService);
                 sortService = fixture.debugElement.injector.get(SortService);
-                // fixture.detectChanges();
             });
     }));
-
-    // afterEach(() => {
-    //     component.ngOnDestroy();
-    // });
 
     it('should set parameters and call functions on init', fakeAsync(() => {
         // setup
