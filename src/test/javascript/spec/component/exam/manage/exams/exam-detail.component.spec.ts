@@ -1,13 +1,13 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
+import { stub } from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { TranslatePipe } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ActivatedRoute, Data } from '@angular/router';
 import { JhiTranslateDirective } from 'ng-jhipster';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterTestingModule } from '@angular/router/testing';
 import { By } from '@angular/platform-browser';
 import { Location } from '@angular/common';
@@ -20,6 +20,13 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { Course } from 'app/entities/course.model';
 import { Component } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { ExamChecklistCheckComponent } from 'app/exam/manage/exams/exam-checklist-check/exam-checklist-check.component';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { of } from 'rxjs';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { HttpResponse } from '@angular/common/http';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -39,6 +46,12 @@ describe('ExamDetailComponent', () => {
     exam.course = new Course();
     exam.course.id = 1;
     exam.title = 'Example Exam';
+    let exerciseGroupService : ExerciseGroupService;
+    let findAllForExamStub;
+    const exerciseGroup = {
+        id: 1,
+    } as ExerciseGroup;
+    const responseExerciseGroup = { body: [exerciseGroup] } as HttpResponse<ExerciseGroup[]>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -52,6 +65,7 @@ describe('ExamDetailComponent', () => {
                     { path: 'course-management/:courseId/exams/:examId/test-runs', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/students', component: DummyComponent },
                 ]),
+                HttpClientTestingModule,
             ],
             declarations: [
                 ExamDetailComponent,
@@ -63,6 +77,7 @@ describe('ExamDetailComponent', () => {
                 MockComponent(FaIconComponent),
                 MockDirective(JhiTranslateDirective),
                 MockDirective(HasAnyAuthorityDirective),
+                ExamChecklistCheckComponent,
             ],
             providers: [
                 {
@@ -90,6 +105,9 @@ describe('ExamDetailComponent', () => {
             .then(() => {
                 examDetailComponentFixture = TestBed.createComponent(ExamDetailComponent);
                 examDetailComponent = examDetailComponentFixture.componentInstance;
+                exerciseGroupService = TestBed.inject(ExerciseGroupService);
+                findAllForExamStub = stub(exerciseGroupService, 'findAllForExam');
+                findAllForExamStub.returns(of(responseExerciseGroup));
             });
     });
 
