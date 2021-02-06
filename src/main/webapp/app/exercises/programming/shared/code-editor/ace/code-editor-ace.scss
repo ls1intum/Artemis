@@ -25,6 +25,8 @@ Ace Editor
             display: none;
             color: #3e8acc; // btn-primary color
             height: 16px;
+            background: white;
+
         }
 
         .ace_gutter-cell {
@@ -42,6 +44,10 @@ Ace Editor
                 font-size: 15px;
                 transition: font-size 0.35s ease;
             }
+        }
+
+        .ace_gutter-cell.ace_warning, .ace_gutter-cell.ace_error {
+            background-position: unset;
         }
 
         &__no-selected {
