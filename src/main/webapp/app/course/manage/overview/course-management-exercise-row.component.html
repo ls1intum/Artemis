@@ -1,9 +1,9 @@
 <div class="course-item">
     <div class="container">
         <div class="row">
-            <div class="col-11 row">
+            <div class="col row details-container">
                 <div class="col-4 row-flex pointer-row">
-                    <div class="exercise-icon ml-2 mr-1" *ngIf="hasLeftoverAssessments">
+                    <div class="ml-2 mr-1" *ngIf="hasLeftoverAssessments">
                         <fa-icon
                             [icon]="'exclamation-triangle'"
                             class="text-warning"
@@ -12,10 +12,10 @@
                             container="body"
                         ></fa-icon>
                     </div>
-                    <div class="exercise-icon ml-2" *ngIf="details.teamMode">
+                    <div class="ml-2" *ngIf="details.teamMode">
                         <fa-icon [icon]="'users'" placement="right" [ngbTooltip]="'artemisApp.exercise.isTeamExercise' | translate" container="body"></fa-icon>
                     </div>
-                    <div class="exercise-icon ml-2">
+                    <div class="ml-2">
                         <fa-icon
                             [icon]="getIcon(details.exerciseType)"
                             placement="right"
@@ -24,7 +24,7 @@
                         ></fa-icon>
                     </div>
                     <p class="item-title" [routerLink]="['/course-management', course.id, details.exerciseType + '-exercises', details.exerciseId]">{{ details.exerciseTitle }}</p>
-                    <div class="item-category d-flex hide-1600" *ngIf="details.categories?.length > 0">
+                    <div class="item-category d-flex hide-categories" *ngIf="details.categories?.length > 0">
                         <!-- We only support two categories -->
                         <h4 *ngFor="let category of details.categories">
                             <span class="badge text-white mr-1" [ngStyle]="{ backgroundColor: JSON.parse(category).color }">{{ JSON.parse(category).category }}</span>
@@ -32,7 +32,7 @@
                     </div>
                 </div>
 
-                <div class="col-5 row-flex hide-1300 exercise-date-container" style="align-content: end">
+                <div class="col-5 row-flex hide-1400 exercise-date-container">
                     <div class="exercise-date">
                         <div class="exercise-date-timeline"></div>
                         <span class="small">{{ 'artemisApp.course.releaseDate' | translate }}</span>
@@ -85,7 +85,7 @@
                     </div>
                 </div>
 
-                <div class="col-3 row-flex hide-1600">
+                <div class="col-3 row-flex hide-1680 exercise-score-container">
                     <div class="exercise-score" *ngIf="statistic && rowType == exerciseRowType.CURRENT">
                         <span class="bold">{{ 'artemisApp.course.participations' | translate }}</span>
                         <jhi-progress-bar

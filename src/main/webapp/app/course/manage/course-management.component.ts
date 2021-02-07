@@ -117,7 +117,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                     },
                     (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
                 );
-                // load courses after initialization for guidedTour and notifications
+                // load courses after initialization for guidedTour, notifications and group numbers
                 this.courseManagementService.getWithUserStats({ onlyActive: this.showOnlyActive }).subscribe(
                     (result: HttpResponse<Course[]>) => {
                         this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(result.body!, tutorAssessmentTour, true);

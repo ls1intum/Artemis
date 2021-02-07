@@ -9,17 +9,14 @@
     overflow: hidden;
     flex-shrink: 0;
 
-    .exercise-icon {
-        margin-top: 10px;
-    }
-
     .item-title {
         font-weight: bold;
-        margin-top: 10px;
         margin-left: 15px;
+        margin-bottom: 0;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        max-width: 40ch;
     }
 
     .item-category {
@@ -32,7 +29,7 @@
             margin-bottom: 0;
 
             .badge {
-                max-width: 225px;
+                max-width: 150px;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -79,7 +76,10 @@
     }
 
     .exercise-date-container {
+        justify-content: end;
         min-width: 340px;
+        max-width: max-content;
+        padding: 0;
     }
 
     .exercise-date {
@@ -88,15 +88,24 @@
         min-width: 130px;
     }
 
+    .exercise-score-container {
+        padding-left: 0;
+        margin: auto;
+    }
+
     .exercise-score {
         padding-left: 15px;
         width: 250px;
         text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     .pointer-row {
         cursor: pointer;
         overflow: hidden;
+        align-items: center;
     }
 
     .container {
@@ -105,28 +114,47 @@
 
     .button-row {
         min-width: 132px;
-        vertical-align: middle;
+        align-items: center;
     }
 }
 
-@media screen and (max-width: 1350px) {
-    .hide-1300 {
+@media screen and (max-width: 1750px) {
+    .hide-categories {
+        display: none !important;
+    }
+}
+
+@media screen and (max-width: 1680px) {
+    .hide-1680 {
         display: none !important;
     }
 
     .pointer-row {
-        min-width: 70% !important;
-        overflow: visible !important;
+        min-width: 45%;
+    }
+
+    .details-container {
+        justify-content: space-between !important;
+    }
+
+    .exercise-date-container {
+        padding-right: 10px !important;
     }
 }
 
-@media screen and (max-width: 1600px) {
-    .hide-1600 {
+@media screen and (max-width: 1400px) {
+    .hide-1400 {
         display: none !important;
     }
 
     .pointer-row {
-        max-width: 30%;
+        min-width: 100%;
+    }
+}
+
+@media screen and (max-width: 675px) {
+    .details-container {
+        max-width: 70% !important;
     }
 }
 
