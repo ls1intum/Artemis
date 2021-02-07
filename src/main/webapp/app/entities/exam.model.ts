@@ -37,6 +37,7 @@ export class Exam implements BaseEntity {
 
     public numberOfRegisteredUsers?: number; // transient
     public numberOfGeneratedStudentExams?: number; // transient
+    public numberOfTestRuns?: number; // transient
 
     // helper attributes
     public visible?: boolean;
