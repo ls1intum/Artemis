@@ -232,10 +232,11 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise     the programming exercise
      * @param participations          participations that should be exported
      * @param repositoryExportOptions the options that should be used for the export
+     * @param exportErrors            A list of errors that occured during export (populated by this function)
      * @return List of zip file paths
      */
     public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
-            RepositoryExportOptionsDTO repositoryExportOptions, List<String> exportFailures) {
+            RepositoryExportOptionsDTO repositoryExportOptions, List<String> exportErrors) {
         var programmingExerciseId = programmingExercise.getId();
         if (repositoryExportOptions.isExportAllParticipants()) {
             log.info("Request to export all student or team repositories of programming exercise {} with title '{}'", programmingExerciseId, programmingExercise.getTitle());
@@ -256,7 +257,7 @@ public class ProgrammingExerciseExportService {
             catch (IOException | GitAPIException | GitException | InterruptedException e) {
                 var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '" + programmingExercise.getTitle()
                         + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
-                exportFailures.add(error);
+                exportErrors.add(error);
             }
         });
         return zippedRepos;

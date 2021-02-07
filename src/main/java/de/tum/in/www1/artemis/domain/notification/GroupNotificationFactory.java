@@ -193,6 +193,7 @@ public class GroupNotificationFactory {
      * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created
+     * @param archiveErrors         a list of errors that occured during archiving
      * @return an instance of GroupNotification
      */
     public static GroupNotification createNotification(Course course, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
@@ -207,7 +208,7 @@ public class GroupNotificationFactory {
                 title = "Course archival finished";
                 text = "The course \"" + course.getTitle() + "\" has been archived.";
 
-                if (archiveErrors.size() > 0) {
+                if (!archiveErrors.isEmpty()) {
                     text += " Some exercises couldn't be included in the archive:<br/><br/>" + String.join("<br/><br/>", archiveErrors);
                 }
             }
