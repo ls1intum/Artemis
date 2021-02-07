@@ -4,6 +4,7 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
+import { cloneDeep } from 'lodash';
 
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {
@@ -101,48 +102,59 @@ export class ShortAnswerQuestionUtil {
     }
 
     /**
-     * Validate that all correct mappings (and any combination of them that doesn't use a spot or solution twice)
-     * can be used in a 100% correct solution.
-     * This means that if any pair of solutions share a possible spot, then they must share all spots,
-     * or in other words the sets of possible spots for these two solutions must be identical
+     * Validate that no mapping exists that makes it impossible to solve the question.
+     * We create iterate through all spots and remove all possible mappings (solutions) for that spot.
+     * If there are still mappings (solutions) left for the other spots everything is ok.
+     * In case we have multiple mappings for spots, we check whether there are an equal or greater amount of mappings than spots.
      *
      * @param question {object} the question to check
      * @return {boolean} true, if the condition is met, otherwise false
      */
 
-    validateNoMisleadingCorrectShortAnswerMapping(question: ShortAnswerQuestion) {
+    validateNoMisleadingShortAnswerMapping(question: ShortAnswerQuestion) {
         if (!question.correctMappings) {
             // no correct mappings at all means there can be no misleading mappings
             return true;
         }
-        let amountOfSolutionsThatShareOneSpot = 0;
-        // iterate through all pairs of solutions
-        if (question.solutions) {
-            for (let i = 0; i < question.solutions.length; i++) {
-                for (let j = 0; j < i; j++) {
-                    // if these two solutions have one common spot, they must share all spots
-                    const solution1 = question.solutions[i];
-                    const solution2 = question.solutions[j];
-                    const shareOneSpot = question.spots?.some((spot) => {
-                        const isMappedWithSolution1 = this.isMappedTogether(question.correctMappings, solution1, spot);
-                        const isMappedWithSolution2 = this.isMappedTogether(question.correctMappings, solution2, spot);
-                        return isMappedWithSolution1 && isMappedWithSolution2;
-                    }, this);
-                    if (shareOneSpot) {
-                        amountOfSolutionsThatShareOneSpot++;
-                        const allSpotsForSolution1 = this.getAllSpotsForSolutions(question.correctMappings, solution1);
-                        const allSpotsForSolution2 = this.getAllSpotsForSolutions(question.correctMappings, solution2);
-                        // there have to be a least as many solutions that share all spots as the amount of existing spots
-                        if (!this.isSameSetOfSpots(allSpotsForSolution1, allSpotsForSolution2) === true && amountOfSolutionsThatShareOneSpot <= question.spots!.length) {
-                            // condition is violated for this pair of solutions
-                            return false;
-                        }
+
+        let unusedMappings: ShortAnswerMapping[] = cloneDeep(question.correctMappings);
+        const spotsCanBeSolved: boolean[] = [];
+
+        for (const spot of question.spots!) {
+            let atLeastOneMapping = false;
+            const solutionsForSpots = this.getAllSolutionsForSpot(question.correctMappings, spot)!;
+
+            solutionsForSpots.forEach((solution) => {
+                if (unusedMappings.length > 0 && unusedMappings.length !== question.correctMappings!.length) {
+                    atLeastOneMapping = true;
+                }
+                // unusedMappings.length > 0 will be always true for the first iteration, therefore we need a special checks
+                if (unusedMappings.length === question.correctMappings!.length) {
+                    // We need to verify if the first spot, has mappings (solutions) that is only for itself
+                    // In case there are multiple mappings (solutions) for spots, we use hasSpotEnoughSolutions
+                    const allSolutionsForSpot = this.getAllSolutionsForSpot(question.correctMappings, spot)!;
+                    const allSolutionsOnlyForSpot = allSolutionsForSpot.filter(
+                        (solutionForSpot) => this.getAllSpotsForSolutions(question.correctMappings, solutionForSpot)!.length === 1,
+                    );
+
+                    if (allSolutionsOnlyForSpot.length > 0) {
+                        atLeastOneMapping = true;
                     }
                 }
+                // remove every solution for a spot in the mapping
+                unusedMappings = unusedMappings.filter((mapping) => !this.isSameSolution(solution, mapping.solution));
+            });
+
+            // In case there are multiple mappings for the spots there have to be at least as many solutions as spots
+            const hasSpotEnoughSolutions = this.getAllSolutionsForSpot(question.correctMappings, spot)!.length >= question.spots!.length;
+            // Check whether a mapping is still left to solve the spot correctly.
+            if (atLeastOneMapping || hasSpotEnoughSolutions) {
+                spotsCanBeSolved.push(true);
+            } else {
+                spotsCanBeSolved.push(false);
             }
         }
-        // condition was met for all pairs of solutions
-        return true;
+        return !spotsCanBeSolved.includes(false);
     }
 
     /**
