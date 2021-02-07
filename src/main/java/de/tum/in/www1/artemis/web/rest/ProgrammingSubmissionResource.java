@@ -381,7 +381,7 @@ public class ProgrammingSubmissionResource {
     public ResponseEntity<Participation> lockAndGetProgrammingSubmissionParticipation(@PathVariable Long participationId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get ProgrammingSubmission of Participation with id: {}", participationId);
-        final var participation = participationService.findOneWithEagerResultsAndCourseAndSubmissionAndResults(participationId);
+        final var participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         final var exercise = participation.getExercise();
         final User user = userService.getUserWithGroupsAndAuthorities();
 

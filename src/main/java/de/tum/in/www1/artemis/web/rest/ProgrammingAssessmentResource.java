@@ -114,7 +114,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestBody Result newManualResult) {
         log.debug("REST request to save a new result : {}", newManualResult);
-        final var participation = participationService.findOneWithEagerResultsAndCourseAndSubmissionAndResults(participationId);
+        final var participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
