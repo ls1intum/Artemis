@@ -46,6 +46,9 @@ describe('ExamDetailComponent', () => {
     exam.course = new Course();
     exam.course.id = 1;
     exam.title = 'Example Exam';
+    exam.numberOfGeneratedStudentExams = 1;
+    exam.numberOfRegisteredUsers = 3;
+    exam.maxPoints = 100;
     let exerciseGroupService: ExerciseGroupService;
     let findAllForExamStub;
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
@@ -126,6 +129,16 @@ describe('ExamDetailComponent', () => {
                 findAllForExamStub = stub(exerciseGroupService, 'findAllForExam');
                 findAllForExamStub.returns(of(responseExerciseGroup));
             });
+    });
+
+    beforeEach(function () {
+        exam.id = 1;
+        exam.course = new Course();
+        exam.course.id = 1;
+        exam.title = 'Example Exam';
+        exam.numberOfGeneratedStudentExams = 1;
+        exam.numberOfRegisteredUsers = 3;
+        exam.maxPoints = 100;
     });
 
     afterEach(function () {
@@ -210,7 +223,7 @@ describe('ExamDetailComponent', () => {
             expect(location.path()).to.equal('/course-management/1/exams/1/test-runs');
         });
     }));
-    /*
+
     describe('test checkTotalPointsMandatory', () => {
         it('should set totalPointsMandatory to false', () => {
             examDetailComponent.exam = exam;
@@ -221,6 +234,7 @@ describe('ExamDetailComponent', () => {
 
         it('should set checkTotalPointsMandatory to true', () => {
             examDetailComponent.exam = exam;
+            examDetailComponent.pointsExercisesEqual = true;
             examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsEqual;
             examDetailComponent.checkTotalPointsMandatory();
             expect(examDetailComponent.totalPointsMandatory).to.be.equal(true);
@@ -231,11 +245,11 @@ describe('ExamDetailComponent', () => {
             examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsEqual;
             examDetailComponent.checkTotalPointsMandatory();
             expect(examDetailComponent.totalPointsMandatoryOptional).to.be.equal(false);
-
         });
 
         it('should set checkTotalPointsMandatoryOptional to true', () => {
             examDetailComponent.exam = exam;
+            examDetailComponent.pointsExercisesEqual = true;
             examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsEqual;
             examDetailComponent.checkTotalPointsMandatory();
             expect(examDetailComponent.totalPointsMandatoryOptional).to.be.equal(true);
@@ -244,21 +258,20 @@ describe('ExamDetailComponent', () => {
 
     describe('test checkAllExamsGenerated', () => {
         it('should set allExamsGenerated to true', () => {
+            exam.numberOfGeneratedStudentExams = 3;
             examDetailComponent.exam = exam;
             examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsEqual;
             examDetailComponent.checkAllExamsGenerated();
-            expect(examDetailComponent.totalPointsMandatoryOptional).to.be.equal(true);
-
+            expect(examDetailComponent.allExamsGenerated).to.be.equal(true);
         });
 
         it('should set allExamsGenerated to false', () => {
             examDetailComponent.exam = exam;
             examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsEqual;
             examDetailComponent.checkAllExamsGenerated();
-            expect(examDetailComponent.totalPointsMandatoryOptional).to.be.equal(false);
+            expect(examDetailComponent.allExamsGenerated).to.be.equal(false);
         });
     });
-    */
 
     describe('test checkEachGroupContainsExercise', () => {
         it('should set allGroupsContainExercise to true', () => {
