@@ -29,7 +29,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
 
     @Input()
-    submission: FileUploadSubmission;
+    studentSubmission: FileUploadSubmission;
     @Input()
     exercise: FileUploadExercise;
 
@@ -41,7 +41,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     participation: StudentParticipation;
     result: Result;
     submissionFile?: File;
-    changesSaved = false;
+
     readonly ButtonType = ButtonType;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -84,8 +84,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
                 this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
             } else {
                 this.submissionFile = submissionFile;
-                this.submission.isSynced = false;
-                this.submission.submitted = false;
+                this.studentSubmission.isSynced = false;
+                this.studentSubmission.isSynced = true;
+                this.studentSubmission.isSynced = false;
                 console.log(this.submissionFile);
             }
         }
@@ -94,11 +95,11 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     setSubmittedFile() {
         // clear submitted file so that it is not displayed in the input (this might be confusing)
         this.submissionFile = undefined;
-        const filePath = this.submission!.filePath!.split('/');
+        const filePath = this.studentSubmission!.filePath!.split('/');
         this.submittedFileName = filePath[filePath.length - 1];
         const fileName = this.submittedFileName.split('.');
         this.submittedFileExtension = fileName[fileName.length - 1];
-        this.submission.submitted = false;
+        this.studentSubmission.submitted = false;
     }
 
     downloadFile(filePath: string) {
@@ -117,31 +118,29 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     }
 
     public hasUnsavedChanges(): boolean {
-        return !this.submission.isSynced!;
+        return !this.studentSubmission.isSynced!;
     }
 
     getSubmission(): Submission {
-        return this.submission;
+        return this.studentSubmission;
     }
 
     // TODO: clarify why this is needed here and also for the other exercise types
     updateSubmissionFromView(): void {
         console.log('updateSubmissionFromView');
-        // this.submission.
+        this.filePath = this.studentSubmission.filePath;
     }
 
     updateViewFromSubmission(): void {
         console.log('updateViewFromSubmission');
-        console.log(this.submission.isSynced);
-        if (this.submission.isSynced) {
+        console.log(this.studentSubmission.isSynced);
+        if (this.studentSubmission.isSynced) {
             this.setSubmittedFile();
         }
     }
 
     saveUploadedFile() {
-        this.submission.submitted = false;
         console.log(this);
-        this.submission.isSynced = false;
         this.onExerciseChanged.emit({ exercise: this.exercise, force: false });
     }
 }

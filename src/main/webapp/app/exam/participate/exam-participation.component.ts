@@ -413,6 +413,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
+     * update the current exercise from the navigation
+     * @param exerciseChange
+     */
+    saveFileUpload(exerciseChange: { exercise: Exercise; force: boolean }): void {
+        this.triggerSave(exerciseChange.force);
+        this.initializeExercise(exerciseChange.exercise);
+    }
+
+    /**
      * sets active exercise and checks if participation is valid for exercise
      * if not -> initialize participation and in case of programming exercises subscribe to latestSubmissions
      * @param exercise to initialize
@@ -541,13 +550,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.fileUploadSubmissionService
                             .update(submissionToSync.submission as FileUploadSubmission, submissionToSync.exercise.id!, fileUploadComponent.submissionFile)
                             .subscribe(
-                                (submission) => {
-                                    fileUploadComponent.submission = submission.body!;
+                                (res) => {
+                                    fileUploadComponent.studentSubmission = res.body!;
                                     fileUploadComponent.setSubmittedFile();
                                     this.onSaveSubmissionSuccess(submissionToSync.submission);
                                     fileUploadComponent.updateSubmissionFromView();
-                                    fileUploadComponent.submission.submitted = true;
-                                    fileUploadComponent.submission.isSynced = true;
                                 },
                                 () => this.onSaveSubmissionError(),
                             );
@@ -612,5 +619,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                 }
             });
+    }
+    log(a: string) {
+        console.log(a);
     }
 }

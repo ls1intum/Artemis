@@ -53,7 +53,6 @@ export class ExamNavigationBarComponent implements OnInit {
         if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
             return;
         }
-        console.log('changeExercise');
         // set index and emit event
         this.exerciseIndex = exerciseIndex;
         this.onExerciseChanged.emit({ exercise: this.exercises[exerciseIndex], force });
@@ -65,7 +64,6 @@ export class ExamNavigationBarComponent implements OnInit {
      * @param changeExercise whether to go to the next exercise {boolean}
      */
     saveExercise(changeExercise = true) {
-        console.log('saveExercise');
         const newIndex = this.exerciseIndex + 1;
         const submission = this.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
         // we do not submit programming exercises on a save
@@ -94,7 +92,6 @@ export class ExamNavigationBarComponent implements OnInit {
         this.icon = 'edit';
         const exercise = this.exercises[exerciseIndex];
         const submission = this.getSubmissionForExercise(exercise);
-        console.log('setExerciseStatus ', submission);
         if (submission) {
             if (submission.submitted) {
                 this.icon = 'check';
@@ -119,7 +116,6 @@ export class ExamNavigationBarComponent implements OnInit {
 
     getExerciseButtonTooltip(exerciseIndex: number): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' {
         const submission = this.getSubmissionForExercise(this.exercises[exerciseIndex]);
-        console.log('getExerciseButtonTooltip', submission);
         if (submission) {
             if (this.exercises[exerciseIndex].type === ExerciseType.PROGRAMMING) {
                 if (submission.submitted && submission.isSynced) {
