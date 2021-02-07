@@ -93,7 +93,6 @@ export class ExamDetailComponent implements OnInit {
             if (sumPointsExerciseGroupsMandatory + sumPointsExerciseGroupsOptional >= this.exam.maxPoints!) {
                 this.totalPointsMandatoryOptional = true;
             }
-            console.log('points: ', sumPointsExerciseGroupsMandatory + sumPointsExerciseGroupsOptional, this.exam.maxPoints!);
         }
     }
 
