@@ -11,7 +11,7 @@
     <!--region Left Panel-->
     <div left-body class="px-2 pb-2 w-100">
         <div class="row">
-            <div class="col-12 col-md-10" *ngIf="isActive && !result && exercise && submission">
+            <div class="col-12 col-md-10" *ngIf="isActive && !result && exercise && studentSubmission">
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile">Please select </label>
                     <div class="input-group background-file">
@@ -35,11 +35,11 @@
             </div>
         </div>
 
-        <div *ngIf="submittedFileName && submission?.filePath" class="card-text">
+        <div *ngIf="submittedFileName && studentSubmission?.filePath" class="card-text">
             <h6>
                 {{ 'artemisApp.fileUploadSubmission.submittedFile' | translate: { filename: submittedFileName } }}
             </h6>
-            <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
+            <a class="text-primary" (click)="downloadFile(studentSubmission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
             <span class="ml-2 badge badge-info" *ngIf="submittedFileExtension">
                 {{ submittedFileExtension | uppercase }}
             </span>
