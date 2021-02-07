@@ -134,13 +134,79 @@ describe('ShortAnswerQuestionUtil', () => {
         hasAtLeastAsManySolutionsAsSpots = service.atLeastAsManySolutionsAsSpots(faultyShortAnswerQuestion);
         expect(hasAtLeastAsManySolutionsAsSpots).to.be.false;
 
-        // TODO more complex tests for validateNoMisleadingCorrectShortAnswerMapping(), after the logic issue is fixed
-        let hasMisleadingMapping = service.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion);
-        expect(hasMisleadingMapping).to.be.true;
+        let hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
+        expect(hasNoMisleadingMapping).to.be.true;
         // @ts-ignore
         shortAnswerQuestion.correctMappings = undefined;
-        hasMisleadingMapping = service.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion);
-        expect(hasMisleadingMapping).to.be.true;
+        hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
+        expect(hasNoMisleadingMapping).to.be.true;
+    });
+
+    it('should check for misleading mappings', () => {
+        // This is done as the correctMappings is undefined (see previous test)
+        shortAnswerQuestion.correctMappings = [mapping];
+
+        const spot2 = new ShortAnswerSpot();
+        spot2.spotNr = 2;
+        spot2.id = 2;
+        const spot3 = new ShortAnswerSpot();
+        spot3.spotNr = 3;
+        spot3.id = 3;
+
+        const solution2 = new ShortAnswerSolution();
+        solution2.text = 'Solution 2';
+        solution2.id = 2;
+        const solution3 = new ShortAnswerSolution();
+        solution3.text = 'Solution 3';
+        solution3.id = 3;
+
+        shortAnswerQuestion.spots!.push(spot2, spot3);
+        shortAnswerQuestion.solutions!.push(solution2, solution3);
+
+        const mapping2 = new ShortAnswerMapping(spot2, solution2);
+        const mapping3 = new ShortAnswerMapping(spot3, solution3);
+
+        shortAnswerQuestion.correctMappings!.push(mapping2, mapping3);
+        let hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
+        expect(hasNoMisleadingMapping).to.be.true;
+
+        const mapping4 = new ShortAnswerMapping(spot2, solution);
+        shortAnswerQuestion.correctMappings!.push(mapping4);
+        hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
+        expect(hasNoMisleadingMapping).to.be.false;
+
+        const mapping5 = new ShortAnswerMapping(spot, solution2);
+        shortAnswerQuestion.correctMappings!.push(mapping5);
+        hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
+        expect(hasNoMisleadingMapping).to.be.true;
+
+        const mapping6 = new ShortAnswerMapping(spot, solution3);
+        shortAnswerQuestion.correctMappings!.push(mapping6);
+        hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
+        expect(hasNoMisleadingMapping).to.be.false;
+
+        const mapping7 = new ShortAnswerMapping(spot2, solution3);
+        shortAnswerQuestion.correctMappings!.push(mapping7);
+        hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
+        expect(hasNoMisleadingMapping).to.be.false;
+
+        const mapping8 = new ShortAnswerMapping(spot3, solution);
+        shortAnswerQuestion.correctMappings!.push(mapping8);
+        hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
+        expect(hasNoMisleadingMapping).to.be.false;
+
+        const mapping9 = new ShortAnswerMapping(spot3, solution2);
+        shortAnswerQuestion.correctMappings!.push(mapping9);
+        hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
+        expect(hasNoMisleadingMapping).to.be.true;
+
+        const solution4 = new ShortAnswerSolution();
+        solution4.text = 'Solution 4';
+        solution4.id = 4;
+        const mapping10 = new ShortAnswerMapping(spot, solution4);
+        shortAnswerQuestion.correctMappings!.push(mapping10);
+        hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
+        expect(hasNoMisleadingMapping).to.be.true;
     });
 
     it('should split the question text into text parts and transform to html', () => {
