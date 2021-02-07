@@ -838,7 +838,7 @@ public class CourseResource {
         }
 
         // Archiving a course is only possible after the course is over
-        if (ZonedDateTime.now().isBefore(course.getEndDate())) {
+        if (now().isBefore(course.getEndDate())) {
             throw new BadRequestAlertException("You cannot archive a course that has not over.", ENTITY_NAME, "courseNotOver", true);
         }
 
@@ -901,7 +901,7 @@ public class CourseResource {
      * @param courseId Id of the course to clean up
      * @return ResponseEntity with status
      */
-    @DeleteMapping(value = "/courses/{courseId}/cleanup")
+    @DeleteMapping("/courses/{courseId}/cleanup")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Resource> cleanup(@PathVariable Long courseId) {
         log.info("REST request to cleanup the Course : {}", courseId);
