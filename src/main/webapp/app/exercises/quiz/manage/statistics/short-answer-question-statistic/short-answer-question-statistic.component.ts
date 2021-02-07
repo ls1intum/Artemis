@@ -118,19 +118,4 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
         });
         this.updateData();
     }
-
-    /**
-     * Get the solution that was mapped to the given spot in the sample solution
-     *
-     * @param spot {object} the spot that the solution should be mapped to
-     * @return the mapped solution or undefined if no solution has been mapped to this location
-     */
-    correctSolutionForSpot(spot: ShortAnswerSpot) {
-        const currMapping = this.shortAnswerQuestionUtil.solveShortAnswer(this.question).filter((mapping) => mapping.spot!.id === spot.id)[0];
-        if (currMapping) {
-            return currMapping.solution;
-        } else {
-            return undefined;
-        }
-    }
 }

@@ -11,99 +11,8 @@ export class ShortAnswerQuestionUtil {
     constructor() {}
 
     /**
-     * Get a sample solution for the given short answer question
-     *
-     * @param question {object} the short answer question we want to solve
-     * @param [mappings] {Array} (optional) the mappings we try to use in the sample solution (this may contain incorrect mappings - they will be filtered out)
-     * @return {Array} array of mappings that would solve this question (may be empty, if question is unsolvable)
-     */
-    solveShortAnswer(question: ShortAnswerQuestion, mappings?: ShortAnswerMapping[]): ShortAnswerMapping[] {
-        if (!question.correctMappings) {
-            return [];
-        }
-
-        const sampleMappings = new Array<ShortAnswerMapping>();
-        let availableSolutions = question.solutions;
-
-        // filter out spots that do not need to be mapped
-        let remainingSpots: ShortAnswerSpot[] = question.spots!.filter((spot) => {
-            return question.correctMappings!.some((mapping) => {
-                return this.isSameSpot(mapping.spot, spot);
-            }, this);
-        }, this);
-
-        if (remainingSpots.length !== question.spots!.length) {
-            return [];
-        }
-
-        if (mappings) {
-            // add mappings that are already correct
-            mappings.forEach((mapping) => {
-                const correctMapping = this.getShortAnswerMapping(question.correctMappings!, mapping.solution!, mapping.spot!);
-                if (correctMapping) {
-                    sampleMappings.push(correctMapping);
-                    remainingSpots = remainingSpots.filter((spot) => {
-                        return !this.isSameSpot(spot, mapping.spot);
-                    }, this);
-                    availableSolutions = availableSolutions?.filter((solution) => {
-                        return !this.isSameSolution(solution, mapping.solution);
-                    }, this);
-                }
-            }, this);
-        }
-
-        // solve recursively
-        const solved = this.solveShortAnswerRec(question.correctMappings, remainingSpots, availableSolutions!, sampleMappings);
-
-        if (solved) {
-            return sampleMappings;
-        } else {
-            return [];
-        }
-    }
-
-    /**
-     * Try to solve a short answer question recursively
-     *
-     * @param correctMappings {Array} the correct mappings defined by the creator of the question
-     * @param remainingSpots {Array} the spots that still need to be mapped (recursion stops if this is empty)
-     * @param availableSolutions {Array} the unused solutions that can still be used to map to spots (recursion stops if this is empty)
-     * @param sampleMappings {Array} the mappings so far
-     * @return {boolean} true, if the question was solved (solution is saved in sampleMappings), otherwise false
-     */
-    solveShortAnswerRec(
-        correctMappings: ShortAnswerMapping[],
-        remainingSpots: ShortAnswerSpot[],
-        availableSolutions: ShortAnswerSolution[],
-        sampleMappings: ShortAnswerMapping[],
-    ): boolean {
-        if (remainingSpots.length === 0) {
-            return true;
-        }
-
-        const spot = remainingSpots[0];
-        return availableSolutions.some((solution, index) => {
-            const correctMapping = this.getShortAnswerMapping(correctMappings, solution, spot);
-            if (correctMapping) {
-                sampleMappings.push(correctMapping); // add new mapping
-                remainingSpots.splice(0, 1); // remove first spot
-                availableSolutions.splice(index, 1); // remove the used solution
-                const solved = this.solveShortAnswerRec(correctMappings, remainingSpots, availableSolutions, sampleMappings);
-                remainingSpots.splice(0, 0, spot); // re-insert first spot
-                availableSolutions.splice(index, 0, solution); // re-insert the used solution
-                if (!solved) {
-                    sampleMappings.pop(); // remove new mapping (only if solution was not found)
-                }
-                return solved;
-            } else {
-                return false;
-            }
-        }, this);
-    }
-
-    /**
      * Validate that no mapping exists that makes it impossible to solve the question.
-     * We create iterate through all spots and remove all possible mappings (solutions) for that spot.
+     * We iterate through all spots and remove all possible mappings (solutions) for that spot.
      * If there are still mappings (solutions) left for the other spots everything is ok.
      * In case we have multiple mappings for spots, we check whether there are an equal or greater amount of mappings than spots.
      *
@@ -128,9 +37,9 @@ export class ShortAnswerQuestionUtil {
                 if (unusedMappings.length > 0 && unusedMappings.length !== question.correctMappings!.length) {
                     atLeastOneMapping = true;
                 }
-                // unusedMappings.length > 0 will be always true for the first iteration, therefore we need a special checks
+                // unusedMappings.length > 0 will be always true for the first iteration, therefore we need a special check
                 if (unusedMappings.length === question.correctMappings!.length) {
-                    // We need to verify if the first spot, has mappings (solutions) that is only for itself
+                    // We need to verify if the first spot has mappings (solutions) that is only for itself
                     // In case there are multiple mappings (solutions) for spots, we use hasSpotEnoughSolutions
                     const allSolutionsForSpot = this.getAllSolutionsForSpot(question.correctMappings, spot)!;
                     const allSolutionsOnlyForSpot = allSolutionsForSpot.filter(
@@ -141,13 +50,13 @@ export class ShortAnswerQuestionUtil {
                         atLeastOneMapping = true;
                     }
                 }
-                // remove every solution for a spot in the mapping
+                // Remove every solution for a spot in the mapping
                 unusedMappings = unusedMappings.filter((mapping) => !this.isSameSolution(solution, mapping.solution));
             });
 
             // In case there are multiple mappings for the spots there have to be at least as many solutions as spots
             const hasSpotEnoughSolutions = this.getAllSolutionsForSpot(question.correctMappings, spot)!.length >= question.spots!.length;
-            // Check whether a mapping is still left to solve the spot correctly.
+            // Check whether a mapping is still left to solve a spot correctly.
             if (atLeastOneMapping || hasSpotEnoughSolutions) {
                 spotsCanBeSolved.push(true);
             } else {
