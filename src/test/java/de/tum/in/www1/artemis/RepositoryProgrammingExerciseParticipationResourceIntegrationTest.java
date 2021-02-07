@@ -642,20 +642,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void testStashChangesInStudentRepositoryAfterDueDateHasPassed_dueDateNotPassed() {
-        // Try to stash changes
-        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
-
-        // Check the logs
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.get(0).getMessage())
-                .isEqualTo("Cannot stash student repository for participation " + participation.getId() + " because the due date has not passed yet!");
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
     void testStashChangesInStudentRepositoryAfterDueDateHasPassed_throwError() {
-        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         // Try to stash changes, but it will throw error as the HEAD is not initialized in the remote repo (this is done with the initial commit)
         programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
 
