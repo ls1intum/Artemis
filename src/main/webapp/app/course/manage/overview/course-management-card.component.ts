@@ -3,11 +3,11 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { ExerciseRowType } from 'app/course/manage/overview/course-management-exercise-row.component';
-import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/entities/course-management-overview-exercise-statistics-dto.model';
-import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/course-management-overview-statistics-dto.model';
-import { CourseManagementOverviewExerciseDetailsDTO } from 'app/entities/course-management-overview-exercise-details-dto.model';
-import { CourseManagementOverviewCourseDetailDto } from 'app/course/manage/course-management-overview-course-dto.model';
-import { CourseManagementOverviewCourseInformationDto } from 'app/course/manage/course-management-overview-courses-dto.model';
+import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
+import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
+import { CourseManagementOverviewExerciseDetailsDTO } from 'app/course/manage/overview/course-management-overview-exercise-details-dto.model';
+import { CourseManagementOverviewDto } from 'app/course/manage/overview/course-management-overview-dto.model';
+import { CourseManagementOverviewDetailsDto } from 'app/course/manage/overview/course-management-overview-details-dto.model';
 
 @Component({
     selector: 'jhi-course-management-card',
@@ -17,8 +17,8 @@ import { CourseManagementOverviewCourseInformationDto } from 'app/course/manage/
 export class CourseManagementCardComponent implements OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
-    @Input() course: CourseManagementOverviewCourseInformationDto;
-    @Input() courseDetails: CourseManagementOverviewCourseDetailDto;
+    @Input() course: CourseManagementOverviewDetailsDto;
+    @Input() courseDetails: CourseManagementOverviewDto;
     @Input() courseStatistics: CourseManagementOverviewStatisticsDto;
     @Input() isGuidedTour: boolean;
 

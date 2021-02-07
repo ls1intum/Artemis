@@ -15,7 +15,7 @@ import { setUser } from '@sentry/browser';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { CourseManagementOverviewCourseInformationDto } from 'app/course/manage/course-management-overview-courses-dto.model';
+import { CourseManagementOverviewDetailsDto } from 'app/course/manage/overview/course-management-overview-details-dto.model';
 
 export interface IAccountService {
     fetch: () => Observable<HttpResponse<User>>;
@@ -171,7 +171,7 @@ export class AccountService implements IAccountService {
      * checks if the currently logged in user is at least tutor in the given course
      * @param course
      */
-    isAtLeastTutorInCourse(course?: Course | CourseManagementOverviewCourseInformationDto): boolean {
+    isAtLeastTutorInCourse(course?: Course | CourseManagementOverviewDetailsDto): boolean {
         return this.hasGroup(course?.instructorGroupName) || this.hasGroup(course?.teachingAssistantGroupName) || this.hasAnyAuthorityDirect([Authority.ADMIN]);
     }
 
@@ -179,7 +179,7 @@ export class AccountService implements IAccountService {
      * checks if the currently logged in user is at least instructor in the given course
      * @param course
      */
-    isAtLeastInstructorInCourse(course?: Course | CourseManagementOverviewCourseInformationDto): boolean {
+    isAtLeastInstructorInCourse(course?: Course | CourseManagementOverviewDetailsDto): boolean {
         return this.hasGroup(course?.instructorGroupName) || this.hasAnyAuthorityDirect([Authority.ADMIN]);
     }
 

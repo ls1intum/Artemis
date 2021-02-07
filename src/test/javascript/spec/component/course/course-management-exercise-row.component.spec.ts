@@ -13,9 +13,9 @@ import { CourseManagementExerciseRowComponent } from 'app/course/manage/overview
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
-import { CourseManagementOverviewCourseInformationDto } from 'app/course/manage/course-management-overview-courses-dto.model';
-import { CourseManagementOverviewExerciseDetailsDTO } from 'app/entities/course-management-overview-exercise-details-dto.model';
-import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/entities/course-management-overview-exercise-statistics-dto.model';
+import { CourseManagementOverviewDetailsDto } from 'app/course/manage/overview/course-management-overview-details-dto.model';
+import { CourseManagementOverviewExerciseDetailsDTO } from 'app/course/manage/overview/course-management-overview-exercise-details-dto.model';
+import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 
 chai.use(sinonChai);
@@ -30,7 +30,7 @@ describe('CourseManagementExerciseRowComponent', () => {
     exerciseDetailDTO.teamMode = false;
     exerciseDetailDTO.exerciseTitle = 'ModelingExercise';
 
-    const coursesDTO = new CourseManagementOverviewCourseInformationDto();
+    const coursesDTO = new CourseManagementOverviewDetailsDto();
 
     const exerciseStatisticsDTO = new CourseManagementOverviewExerciseStatisticsDTO();
     exerciseStatisticsDTO.averageScoreInPercent = 50;

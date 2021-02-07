@@ -21,9 +21,9 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
-import { CourseManagementOverviewCourseDetailDto } from './course-management-overview-course-dto.model';
-import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/course-management-overview-statistics-dto.model';
-import { CourseManagementOverviewCourseInformationDto } from 'app/course/manage/course-management-overview-courses-dto.model';
+import { CourseManagementOverviewDto } from './overview/course-management-overview-dto.model';
+import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
+import { CourseManagementOverviewDetailsDto } from 'app/course/manage/overview/course-management-overview-details-dto.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -222,12 +222,12 @@ export class CourseManagementService {
      * finds all courses as DTOs using a GET request
      * @param req
      */
-    getCourseOverview(req?: any): Observable<HttpResponse<CourseManagementOverviewCourseInformationDto[]>> {
+    getCourseOverview(req?: any): Observable<HttpResponse<CourseManagementOverviewDetailsDto[]>> {
         const options = createRequestOption(req);
         this.fetchingCoursesForNotifications = true;
         return this.http
-            .get<CourseManagementOverviewCourseInformationDto[]>(`${this.resourceUrl}/course-overview`, { params: options, observe: 'response' })
-            .pipe(tap((res: HttpResponse<CourseManagementOverviewCourseInformationDto[]>) => res.body!.forEach((c) => this.checkAndSetCourseRights(c))));
+            .get<CourseManagementOverviewDetailsDto[]>(`${this.resourceUrl}/course-overview`, { params: options, observe: 'response' })
+            .pipe(tap((res: HttpResponse<CourseManagementOverviewDetailsDto[]>) => res.body!.forEach((c) => this.checkAndSetCourseRights(c))));
     }
 
     /**
@@ -250,15 +250,15 @@ export class CourseManagementService {
      * returns the exercise details of the courses for the courses management dashboard
      * @param courseIds - the ids of the courses
      */
-    getExercisesForManagementOverview(courseIds: number[]): Observable<HttpResponse<CourseManagementOverviewCourseDetailDto[]>> {
+    getExercisesForManagementOverview(courseIds: number[]): Observable<HttpResponse<CourseManagementOverviewDto[]>> {
         let httpParams = new HttpParams();
         courseIds.forEach((id) => {
             httpParams = httpParams.append('courseIds[]', id.toString());
         });
         return this.http
-            .get<CourseManagementOverviewCourseDetailDto[]>(`${this.resourceUrl}/exercises-for-management-overview`, { params: httpParams, observe: 'response' })
+            .get<CourseManagementOverviewDto[]>(`${this.resourceUrl}/exercises-for-management-overview`, { params: httpParams, observe: 'response' })
             .pipe(
-                map((res: HttpResponse<CourseManagementOverviewCourseDetailDto[]>) => {
+                map((res: HttpResponse<CourseManagementOverviewDto[]>) => {
                     if (res.body) {
                         res.body.forEach((b) => {
                             if (b.exerciseDetails && b.exerciseDetails.length > 0) {
@@ -349,7 +349,7 @@ export class CourseManagementService {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}/${courseGroup}/${login}`, { observe: 'response' });
     }
 
-    checkAndSetCourseRights(course: Course | CourseManagementOverviewCourseInformationDto) {
+    checkAndSetCourseRights(course: Course | CourseManagementOverviewDetailsDto) {
         course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
         course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
     }
