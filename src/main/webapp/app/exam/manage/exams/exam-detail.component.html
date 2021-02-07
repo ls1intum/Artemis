@@ -110,10 +110,10 @@
                                                     <span>{{ 'artemisApp.examManagement.checklist.textitems.zeroexercises' | translate }}</span>
                                                 </span>
                                                 <span *ngIf="!exerciseGroup.exercises || (exerciseGroup.exercises && exerciseGroup.exercises.length > 1)">
-                                                    {{'artemisApp.examManagement.checklist.textitems.exercises' | translate}}
+                                                    {{ 'artemisApp.examManagement.checklist.textitems.exercises' | translate }}
                                                 </span>
                                                 <span *ngIf="!(exerciseGroup.exercises && exerciseGroup.exercises.length > 1)">
-                                                    {{'artemisApp.examManagement.checklist.textitems.exercise' | translate}}
+                                                    {{ 'artemisApp.examManagement.checklist.textitems.exercise' | translate }}
                                                 </span>
                                             </li>
                                         </ul>
@@ -156,10 +156,9 @@
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>{{ 'artemisApp.examManagement.checklist.textitems.testruns' | translate }}</span>
-                                        {{exam.numberOfTestRuns}}
+                                        {{ exam.numberOfTestRuns }}
                                     </li>
                                 </ul>
-
                             </td>
                             <td class="d-none d-md-table-cell">
                                 <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info">
@@ -179,9 +178,9 @@
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
-                                             <jhi-exam-checklist-check
-                                                 [checkAttribute]="exam.numberOfRegisteredUsers && exam?.numberOfRegisteredUsers > 0"
-                                             ></jhi-exam-checklist-check>
+                                            <jhi-exam-checklist-check
+                                                [checkAttribute]="exam.numberOfRegisteredUsers && exam?.numberOfRegisteredUsers > 0"
+                                            ></jhi-exam-checklist-check>
                                             <span>{{ 'artemisApp.examManagement.checklist.textitems.leastonestudent' | translate }}</span>
                                         </span>
                                     </li>
