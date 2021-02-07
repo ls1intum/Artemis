@@ -219,8 +219,6 @@ describe('ExamDetailComponent', () => {
     }));
 
     describe('test checkTotalPointsMandatory', () => {
-
-
         it('should set totalPointsMandatory to false', () => {
             examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsEqual;
             examDetailComponent.checkTotalPointsMandatory();
@@ -271,7 +269,7 @@ describe('ExamDetailComponent', () => {
         });
 
         it('should set allGroupsContainExercise to false', () => {
-            examDetailComponent.exam.exerciseGroups = [{id: 1, exercises: []}];
+            examDetailComponent.exam.exerciseGroups = [{ id: 1, exercises: [] }];
             examDetailComponent.checkAllGroupContainsExercise();
             expect(examDetailComponent.allGroupsContainExercise).to.be.equal(false);
         });
