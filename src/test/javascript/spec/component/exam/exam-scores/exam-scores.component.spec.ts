@@ -43,7 +43,7 @@ describe('ExamScoresComponent', () => {
     const exGroup1Id = 1;
     const exGroup1 = {
         id: exGroup1Id,
-        title: 'group1',
+        title: 'group',
         maxPoints: 100,
         numberOfParticipants: 2,
         containedExercises: [exInfo1, exInfo2],
@@ -162,6 +162,23 @@ describe('ExamScoresComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(comp).to.be.ok;
+    });
+
+    it('should make duplicated titles unique', () => {
+        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+
+        const newExerciseGroup = new ExerciseGroup();
+        newExerciseGroup.title = 'group';
+        newExerciseGroup.id = 2;
+        examScoreDTO.exerciseGroups.push(newExerciseGroup);
+        fixture.detectChanges();
+
+        expect(examScoreDTO.exerciseGroups[0].title).to.equal(`group (id=1)`);
+        expect(examScoreDTO.exerciseGroups[1].title).to.equal(`group (id=2)`);
+
+        // reset state
+        examScoreDTO.exerciseGroups.pop();
+        examScoreDTO.exerciseGroups[0].title = 'group';
     });
 
     it('histogram should have correct entries', () => {
@@ -349,9 +366,9 @@ function validateUserRow(
     expect(userRow.login).to.equal(expectedUsername);
     expect(userRow.eMail).to.equal(expectedEmail);
     expect(userRow.registrationNumber).to.equal(expectedRegistrationNumber);
-    expect(userRow['group1 Assigned Exercise']).to.equal(expectedExerciseTitle);
-    expect(userRow['group1 Achieved Points']).to.equal(expectedAchievedPoints);
-    expect(userRow['group1 Achieved Score (%)']).to.equal(expectedAchievedScore);
+    expect(userRow['group Assigned Exercise']).to.equal(expectedExerciseTitle);
+    expect(userRow['group Achieved Points']).to.equal(expectedAchievedPoints);
+    expect(userRow['group Achieved Score (%)']).to.equal(expectedAchievedScore);
     expect(userRow.overAllPoints).to.equal(expectedOverAllPoints);
     expect(userRow.overAllScore).to.equal(expectedOverAllScore);
     expect(userRow.submitted).to.equal(expectedSubmitted);
