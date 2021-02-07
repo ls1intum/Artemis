@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
@@ -23,8 +23,13 @@ export class LearningGoalService {
         return this.httpClient.get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/goals`, { observe: 'response' });
     }
 
-    getProgress(learningGoalId: number, courseId: number) {
-        return this.httpClient.get<IndividualLearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/individual-progress`, { observe: 'response' });
+    getProgress(learningGoalId: number, courseId: number, useParticipantScoreTable = false) {
+        let params = new HttpParams();
+        params = params.set('useParticipantScoreTable', String(useParticipantScoreTable));
+        return this.httpClient.get<IndividualLearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/individual-progress`, {
+            observe: 'response',
+            params,
+        });
     }
 
     getCourseProgress(learningGoalId: number, courseId: number) {

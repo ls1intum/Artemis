@@ -38,4 +38,11 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
             """)
     List<ParticipantScoreAverageDTO> getAvgScoreOfStudentsInExercises(@Param("exercises") Set<Exercise> exercises);
 
+    @Query("""
+                  SELECT DISTINCT s
+                  FROM StudentScore s
+                  WHERE s.exercise = :exercise AND s.user = :user
+            """)
+    Optional<StudentScore> findStudentScoreByExerciseAndUserLazy(@Param("exercise") Exercise exercise, @Param("user") User user);
+
 }

@@ -316,6 +316,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         // result
         Result result = ModelFactory.generateResult(rated, scoreAwarded);
         result.setParticipation(studentParticipation);
+        result.setCompletionDate(ZonedDateTime.now());
         result = resultRepository.save(result);
 
         submission.addResult(result);
@@ -423,10 +424,30 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getLearningGoalProgress_asStudent1_usingParticipantScores_shouldReturnProgressTenOutOfTwenty() throws Exception {
+        IndividualLearningGoalProgress individualLearningGoalProgress = request.get(
+                "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress?useParticipantScoreTable=true", HttpStatus.OK,
+                IndividualLearningGoalProgress.class);
+        assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
+        assertThat(individualLearningGoalProgress.pointsAchievedByStudentInLearningGoal).isEqualTo(10.0);
+    }
+
+    @Test
     @WithMockUser(username = "team1student1", roles = "USER")
     public void getLearningGoalProgress_asTeam1Student1_shouldReturnProgressTenOutOfThirty() throws Exception {
         IndividualLearningGoalProgress individualLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress",
                 HttpStatus.OK, IndividualLearningGoalProgress.class);
+        assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
+        assertThat(individualLearningGoalProgress.pointsAchievedByStudentInLearningGoal).isEqualTo(5.0);
+    }
+
+    @Test
+    @WithMockUser(username = "team1student1", roles = "USER")
+    public void getLearningGoalProgress_asTeam1Student1_usingParticipantScores_shouldReturnProgressTenOutOfThirty() throws Exception {
+        IndividualLearningGoalProgress individualLearningGoalProgress = request.get(
+                "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress?useParticipantScoreTable=true", HttpStatus.OK,
+                IndividualLearningGoalProgress.class);
         assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
         assertThat(individualLearningGoalProgress.pointsAchievedByStudentInLearningGoal).isEqualTo(5.0);
     }
