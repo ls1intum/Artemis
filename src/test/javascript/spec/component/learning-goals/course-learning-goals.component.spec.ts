@@ -114,7 +114,7 @@ describe('CourseLearningGoals', () => {
 
         const learningGoalProgressParticipantScores = _.cloneDeep(learningGoalProgress);
         learningGoalProgressParticipantScores.pointsAchievedByStudentInLearningGoal = 0;
-        const learningGOalProgressParticipantScoreResponse: HttpResponse<IndividualLearningGoalProgress> = new HttpResponse({
+        const learningGoalProgressParticipantScoreResponse: HttpResponse<IndividualLearningGoalProgress> = new HttpResponse({
             body: learningGoalProgressParticipantScores,
             status: 200,
         });
@@ -122,7 +122,7 @@ describe('CourseLearningGoals', () => {
         const getAllForCourseStub = sinon.stub(learningGoalService, 'getAllForCourse').returns(of(learningGoalsOfCourseResponse));
         const getProgressStub = sinon.stub(learningGoalService, 'getProgress');
         getProgressStub.withArgs(sinon.match.any, sinon.match.any, false).returns(of(learningGoalProgressResponse));
-        getProgressStub.withArgs(sinon.match.any, sinon.match.any, true).returns(of(learningGOalProgressParticipantScoreResponse));
+        getProgressStub.withArgs(sinon.match.any, sinon.match.any, true).returns(of(learningGoalProgressParticipantScoreResponse));
 
         const captureExceptionSpy = sinon.spy(Sentry, 'captureException');
 
