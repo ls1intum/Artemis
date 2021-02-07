@@ -308,7 +308,6 @@
                 "description": "Description",
                 "status": "Current status",
                 "goTo": "Go to",
-                "status": "Current Status",
                 "tableItem": {
                     "register": "Register students to the exam",
                     "exerciseGroups": "Create at least one exercise group with exercises",
@@ -336,6 +335,24 @@
                     "resolveComplaints": "Complaints can be resolved within the Assessment Dashboard.",
                     "testRun": "Try out different combinations of exercise variants from the student perspective.",
                     "exportResults": "Exports the exam results as a .csv file."
+                },
+                "textitems": {
+                    "leastoneexercisegroup": "At least one exercise-group:",
+                    "numberofexercisegroupsequal": "Number of exercise groups equals number of exercises in exam:",
+                    "eachexercisegroup": "Each exercise group contains at least one exercise:",
+                    "pointsexercisegroupequal": "Points in exercises of each exercise group are identical:",
+                    "totalpointssmallerequal": "Total points in exam bigger or equal to all mandatory points",
+                    "totalpointsbiggerequal": "Total points in exam smaller or equal to all mandatory + optional points",
+                    "hasExercises": "has",
+                    "zeroexercises": "0",
+                    "exercise": "Exercise",
+                    "exercises": "exercises.",
+                    "leastonestudent": "At least one student registered:",
+                    "studentsregistered": "Current number of students registered:",
+                    "allexamsgenerated": "All exams generated for registered students:",
+                    "pulishingdateset": "Publishing date for results set:",
+                    "startdatereviewset": "Start date of exam review set:",
+                    "enddatereviewset": "End date of exam review set:"
                 }
             }
         },

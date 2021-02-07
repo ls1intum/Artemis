@@ -87,12 +87,13 @@ export class ExamDetailComponent implements OnInit {
                 }
             });
 
-            if (this.exam.maxPoints! >= sumPointsExerciseGroupsMandatory) {
+            if (sumPointsExerciseGroupsMandatory <= this.exam.maxPoints!) {
                 this.totalPointsMandatory = true;
             }
-            if (this.exam.maxPoints! <= sumPointsExerciseGroupsOptional + sumPointsExerciseGroupsMandatory) {
+            if (sumPointsExerciseGroupsMandatory + sumPointsExerciseGroupsOptional >= this.exam.maxPoints!) {
                 this.totalPointsMandatoryOptional = true;
             }
+            console.log('points: ', sumPointsExerciseGroupsMandatory + sumPointsExerciseGroupsOptional, this.exam.maxPoints!);
         }
     }
 

@@ -82,45 +82,53 @@
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
-                                            At least one exercise-group:
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.leastoneexercisegroup' | translate }}</span>
                                             <jhi-exam-checklist-check [checkAttribute]="exam.exerciseGroups?.length > 0"></jhi-exam-checklist-check>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
                                         <span>
-                                            Number of exercise groups equals number of exercises in exercise:
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.numberofexercisegroupsequal' | translate }}</span>
                                             <jhi-exam-checklist-check [checkAttribute]="exam.exerciseGroups?.length == exam.numberOfExercisesInExam"></jhi-exam-checklist-check>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
                                         <span>
-                                            Each exercise group contains at least one exercise:
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.eachexercisegroup' | translate }}</span>
                                             <jhi-exam-checklist-check [checkAttribute]="allGroupsContainExercise"></jhi-exam-checklist-check>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
                                         <span>
-                                            Points in exercises of each exercise group are identical:
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.pointsexercisegroupequal' | translate }}</span>
                                             <jhi-exam-checklist-check [checkAttribute]="pointsExercisesEqual"></jhi-exam-checklist-check>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
                                         <span>
-                                            Total points in exam smaller or equal to all mandatory points
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.totalpointssmallerequal' | translate }}</span>
                                             <jhi-exam-checklist-check [checkAttribute]="totalPointsMandatory"></jhi-exam-checklist-check>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
                                         <span>
-                                            Total points in exam bigger or equal to all mandatory + optional points
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.totalpointsbiggerequal' | translate }}</span>
                                             <jhi-exam-checklist-check [checkAttribute]="totalPointsMandatoryOptional"></jhi-exam-checklist-check>
                                         </span>
                                     </li>
                                 </ul>
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1" *ngFor="let exerciseGroup of exam.exerciseGroups">
-                                        <span *ngIf="exerciseGroup.exercises"> Exercise '{{ exerciseGroup.title }}' has {{ exerciseGroup.exercises?.length }} exercises. </span>
-                                        <span *ngIf="!exerciseGroup.exercises"> {{ exerciseGroup.title }} has 0 exercises. </span>
+                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.exercise' | translate }}</span>
+                                        '{{ exerciseGroup.title }}'
+                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.hasExercises' | translate }}</span>
+                                        <span *ngIf="exerciseGroup.exercises">
+                                            {{ exerciseGroup.exercises?.length }}
+                                        </span>
+                                        <span *ngIf="!exerciseGroup.exercises">
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.zeroexercises' | translate }}</span>
+                                        </span>
+                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.exercises' | translate }}</span>
                                     </li>
                                 </ul>
                             </td>
@@ -163,14 +171,16 @@
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
-                                            At least one student registered:
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.leastonestudent' | translate }}</span>
+
                                             <jhi-exam-checklist-check
                                                 [checkAttribute]="exam.numberOfRegisteredUsers && exam?.numberOfRegisteredUsers > 0"
                                             ></jhi-exam-checklist-check>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
-                                        <span> Current number of students registered: {{ exam.registeredUsers?.length }} </span>
+                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.studentsregistered' | translate }}</span>
+                                        <span> {{ exam.registeredUsers?.length }} </span>
                                     </li>
                                 </ul>
                             </td>
@@ -192,7 +202,7 @@
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
-                                            All exams generated for registered students:
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.allexamsgenerated' | translate }}</span>
                                             <jhi-exam-checklist-check [checkAttribute]="allExamsGenerated"></jhi-exam-checklist-check>
                                         </span>
                                     </li>
@@ -280,7 +290,7 @@
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
-                                            Publishing date for results set:
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.pulishingdateset' | translate }}</span>
                                             <jhi-exam-checklist-check [checkAttribute]="!!exam.publishResultsDate"></jhi-exam-checklist-check>
                                         </span>
                                     </li>
@@ -303,13 +313,13 @@
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
-                                            Start date of exam review set:
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.startdatereviewset' | translate }}</span>
                                             <jhi-exam-checklist-check [checkAttribute]="!!exam.examStudentReviewStart"></jhi-exam-checklist-check>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
                                         <span>
-                                            End date of exam review set:
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.enddatereviewset' | translate }}</span>
                                             <jhi-exam-checklist-check [checkAttribute]="!!exam.examStudentReviewEnd"></jhi-exam-checklist-check>
                                         </span>
                                     </li>

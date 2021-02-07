@@ -307,7 +307,6 @@
                 "description": "Beschreibung",
                 "status": "Aktueller Status",
                 "goTo": "Gehe zu",
-                "status": "Aktueller Status",
                 "tableItem": {
                     "register": "Registrieren der Studierenden zur Klausur",
                     "exerciseGroups": "Erstellen Sie mindestens eine Aufgaben Gruppe mit mindestens einer Aufgabe",
@@ -335,6 +334,24 @@
                     "resolveComplaints": "Beschwerden können im Bewertungs Dashboard bearbeitet werden.",
                     "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
                     "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden."
+                },
+                "textitems": {
+                    "leastoneexercisegroup": "Mindestens eine Aufgabengruppe:",
+                    "numberofexercisegroupsequal": "Anzahl der Aufgabengruppen entspricht Anzahl der Aufgaben der Klausur:",
+                    "eachexercisegroup": "Jede Aufgabengruppe hat mindestens eine Aufgabe:",
+                    "pointsexercisegroupequal": "Gleiche Anzahl Punkte in jeder Aufgabe in einer Aufgabengruppe:",
+                    "totalpointssmallerequal": "Gesamtpunktzahl der Klausur größer or gleich der Punkte aller verpflichtenden Aufgaben.",
+                    "totalpointsbiggerequal": "Gesamtpunktzahl der Klausur kleiner or gleich der Punkte aller verpflichtenden und optionalen Aufgaben.",
+                    "hasExercises": "hat",
+                    "zeroexercises": "0",
+                    "exercise": "Aufgabe",
+                    "exercises": "Aufgaben.",
+                    "leastonestudent": "Mindestens ein Studierender angemeldet zur Klausur:",
+                    "studentsregistered": "Aktuelle Anzahl angemeldeter Studierender:",
+                    "allexamsgenerated": "Alle Klausuren generiert für alle angemeldeten Studierenden:",
+                    "pulishingdateset": "Veröffentlichungsdatum der Ergebnisse gesetzt:",
+                    "startdatereviewset": "Startdatum der Klausureinsicht gesetzt:",
+                    "enddatereviewset": "Enddatum der Klausureinsicht gesetzt:"
                 }
             }
         },
