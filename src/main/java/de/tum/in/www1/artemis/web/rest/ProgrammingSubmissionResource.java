@@ -363,7 +363,7 @@ public class ProgrammingSubmissionResource {
         }
 
         if (!examMode) {
-            programmingSubmissions.forEach(programmingSubmission -> programmingSubmission.removeNullResults());
+            programmingSubmissions.forEach(Submission::removeNullResults);
         }
         return ResponseEntity.ok().body(programmingSubmissions);
     }
@@ -381,7 +381,7 @@ public class ProgrammingSubmissionResource {
     public ResponseEntity<Participation> lockAndGetProgrammingSubmissionParticipation(@PathVariable Long participationId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get ProgrammingSubmission of Participation with id: {}", participationId);
-        final var participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
+        final var participation = participationService.findOneWithEagerResults(participationId);
         final var exercise = participation.getExercise();
         final User user = userService.getUserWithGroupsAndAuthorities();
 

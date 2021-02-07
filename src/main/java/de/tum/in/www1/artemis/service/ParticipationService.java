@@ -696,7 +696,7 @@ public class ParticipationService {
      */
     public StudentParticipation findOneWithEagerResults(Long participationId) {
         log.debug("Request to get Participation : {}", participationId);
-        Optional<StudentParticipation> participation = studentParticipationRepository.findByIdWithEagerResults(participationId);
+        Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerResultsById(participationId);
         if (participation.isEmpty()) {
             throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
         }
@@ -724,7 +724,7 @@ public class ParticipationService {
      * @param participationId the id of the entity
      * @return the participation with all its submissions and results
      */
-    public StudentParticipation findOneWithEagerSubmissionsAndResults(Long participationId) {
+    public StudentParticipation findOneWithEagerSubmissionsResultsFeedback(Long participationId) {
         log.debug("Request to get Participation : {}", participationId);
         Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerSubmissionsResultsFeedbacksById(participationId);
         if (participation.isEmpty()) {
