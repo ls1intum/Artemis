@@ -344,6 +344,7 @@
                     "totalpointsbiggerequal": "Gesamtpunktzahl der Klausur kleiner or gleich der Punkte aller verpflichtenden und optionalen Aufgaben.",
                     "hasExercises": "hat",
                     "zeroexercises": "0",
+                    "exerciseStart": "Aufgaben Gruppe",
                     "exercise": "Aufgabe",
                     "exercises": "Aufgaben.",
                     "leastonestudent": "Mindestens ein Studierender angemeldet zur Klausur:",

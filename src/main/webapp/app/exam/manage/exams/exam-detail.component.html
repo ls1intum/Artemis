@@ -119,7 +119,7 @@
                                 </ul>
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1" *ngFor="let exerciseGroup of exam.exerciseGroups">
-                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.exercise' | translate }}</span>
+                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.exerciseStart' | translate }}</span>
                                         '{{ exerciseGroup.title }}'
                                         <span>{{ 'artemisApp.examManagement.checklist.textitems.hasExercises' | translate }}</span>
                                         <span *ngIf="exerciseGroup.exercises">
@@ -128,7 +128,12 @@
                                         <span *ngIf="!exerciseGroup.exercises">
                                             <span>{{ 'artemisApp.examManagement.checklist.textitems.zeroexercises' | translate }}</span>
                                         </span>
-                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.exercises' | translate }}</span>
+                                        <span *ngIf="!exerciseGroup.exercises || (exerciseGroup.exercises && exerciseGroup.exercises.length > 1)">{{
+                                            'artemisApp.examManagement.checklist.textitems.exercises' | translate
+                                        }}</span>
+                                        <span *ngIf="!(exerciseGroup.exercises && exerciseGroup.exercises.length > 1)">{{
+                                            'artemisApp.examManagement.checklist.textitems.exercise' | translate
+                                        }}</span>
                                     </li>
                                 </ul>
                             </td>
