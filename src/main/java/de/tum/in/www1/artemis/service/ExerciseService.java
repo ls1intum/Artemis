@@ -553,15 +553,16 @@ public class ExerciseService {
 
     /**
      * Gets the {@link CourseExerciseStatisticsDTO} for each exercise proved in <code>exerciseIds</code>.
-     *
+     * <p>
      * calculates the average score and the participation rate of students for each given course exercise (team or individual)
      * by using the last result (rated or not)
      *
-     * @param exerciseIds - list of exercise ids (must be belong to the same course)
+     * @param exerciseIds              - list of exercise ids (must be belong to the same course)
+     * @param useParticipantScoreTable use the participant score table instead of going through participation -> submission -> result
      * @return the list of {@link CourseExerciseStatisticsDTO}
      * @throws IllegalArgumentException if exercise is not found in database, exercise is not a course exercise or not all exercises are from the same course
      */
-    public List<CourseExerciseStatisticsDTO> calculateExerciseStatistics(List<Long> exerciseIds) throws IllegalArgumentException {
+    public List<CourseExerciseStatisticsDTO> calculateExerciseStatistics(List<Long> exerciseIds, boolean useParticipantScoreTable) throws IllegalArgumentException {
         List<Exercise> exercisesFromDb = new ArrayList<>();
         for (Long exerciseId : exerciseIds) {
             Optional<Exercise> exerciseFromDbOptional = this.exerciseRepository.findById(exerciseId);
@@ -584,12 +585,10 @@ public class ExerciseService {
 
         List<CourseExerciseStatisticsDTO> courseExerciseStatisticsDTOs = new ArrayList<>();
 
-        Map<Long, Object[]> exerciseIdToRawStatisticQueryData = getRawStatisticQueryData(exercisesFromDb);
-
+        Map<Long, Object[]> exerciseIdToRawStatisticQueryData = getRawStatisticQueryData(exercisesFromDb, useParticipantScoreTable);
         exercisesFromDb.forEach((exercise) -> {
             CourseExerciseStatisticsDTO courseExerciseStatisticsDTO = convertRawStatisticQueryDataToDTO(exerciseIdToRawStatisticQueryData, exercise);
             courseExerciseStatisticsDTOs.add(courseExerciseStatisticsDTO);
-
         });
 
         return courseExerciseStatisticsDTOs;
@@ -634,16 +633,30 @@ public class ExerciseService {
     /**
      * calculates the average score and the participation rate of students for each given course exercise (team or individual)
      * by using the last result (rated or not)
-     * @param exercisesFromDb exercises to calculate the statistics for
+     *
+     * @param exercisesFromDb          exercises to calculate the statistics for
+     * @param useParticipantScoreTable use the participant score table instead of going through participation -> submission -> result*
      * @return Map which maps from exercise id to statistic query row data
      */
-    private Map<Long, Object[]> getRawStatisticQueryData(List<Exercise> exercisesFromDb) {
+    private Map<Long, Object[]> getRawStatisticQueryData(List<Exercise> exercisesFromDb, boolean useParticipantScoreTable) {
         List<Exercise> individualExercises = exercisesFromDb.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.INDIVIDUAL)).collect(Collectors.toList());
         List<Exercise> teamExercises = exercisesFromDb.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.TEAM)).collect(Collectors.toList());
-        List<Object[]> statisticForIndividualExercises = this.exerciseRepository
-                .calculateExerciseStatisticsForIndividualCourseExercises(individualExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
-        List<Object[]> statisticTeamExercises = this.exerciseRepository
-                .calculateExerciseStatisticsForTeamCourseExercises(teamExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
+
+        List<Object[]> statisticForIndividualExercises;
+        List<Object[]> statisticTeamExercises;
+
+        if (useParticipantScoreTable) {
+            statisticForIndividualExercises = this.exerciseRepository
+                    .calculateExerciseStatisticsForIndividualCourseUsingParticipationTable(individualExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
+            statisticTeamExercises = this.exerciseRepository
+                    .calculateExerciseStatisticsForTeamCourseExercisesUsingParticipationTable(teamExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
+        }
+        else {
+            statisticForIndividualExercises = this.exerciseRepository
+                    .calculateExerciseStatisticsForIndividualCourseExercises(individualExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
+            statisticTeamExercises = this.exerciseRepository
+                    .calculateExerciseStatisticsForTeamCourseExercises(teamExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
+        }
 
         List<Object[]> combinedStatistics = new ArrayList<>();
         combinedStatistics.addAll(statisticForIndividualExercises);

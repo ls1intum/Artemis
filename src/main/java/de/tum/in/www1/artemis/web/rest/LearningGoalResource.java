@@ -63,13 +63,16 @@ public class LearningGoalResource {
 
     /**
      * GET /courses/:courseId/goals/:learningGoalId/course-progress  gets the learning goal progress for the whole course
-     * @param courseId the id of the course to which the learning goal belongs
-     * @param learningGoalId the id of the learning goal for which to get the progress
+     *
+     * @param courseId                 the id of the course to which the learning goal belongs
+     * @param learningGoalId           the id of the learning goal for which to get the progress
+     * @param useParticipantScoreTable use the participant score table instead of going through participation -> submission -> result
      * @return the ResponseEntity with status 200 (OK) and with the learning goal cours performance in the body
      */
     @GetMapping("/courses/{courseId}/goals/{learningGoalId}/course-progress")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<CourseLearningGoalProgress> getLearningGoalProgressOfCourse(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
+    public ResponseEntity<CourseLearningGoalProgress> getLearningGoalProgressOfCourse(@PathVariable Long learningGoalId, @PathVariable Long courseId,
+            @RequestParam(defaultValue = "false", required = false) boolean useParticipantScoreTable) {
         log.debug("REST request to get course progress for LearningGoal : {}", learningGoalId);
         Optional<LearningGoal> optionalLearningGoal = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoalId);
         if (optionalLearningGoal.isEmpty()) {
@@ -87,7 +90,7 @@ public class LearningGoalResource {
             return forbidden();
         }
 
-        CourseLearningGoalProgress courseLearningGoalProgress = learningGoalService.calculateLearningGoalCourseProgress(learningGoal);
+        CourseLearningGoalProgress courseLearningGoalProgress = learningGoalService.calculateLearningGoalCourseProgress(learningGoal, useParticipantScoreTable);
         return ResponseEntity.ok().body(courseLearningGoalProgress);
     }
 

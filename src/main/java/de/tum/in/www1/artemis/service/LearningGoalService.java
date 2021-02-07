@@ -107,22 +107,23 @@ public class LearningGoalService {
 
     /**
      * Calculates the course progress in the given exercise units
-     *
+     * <p>
      * Note: In the case of two exercise units referencing the same exercise, only the first exercise unit will be used.
-     *
+     * <p>
      * Note: Please note that we take always the last submission into account here. Even submissions after the due date. This means for example that a student can improve his/her
      * progress by re-trying a quiz as often as you like. It is therefore normal, that the points here might differ from the points officially achieved in an exercise.
      *
-     * @param exerciseUnits exercise units to check
+     * @param exerciseUnits            exercise units to check
+     * @param useParticipantScoreTable use the participant score table instead of going through participation -> submission -> result
      * @return progress of the course in the exercise units
      */
-    private Set<CourseLearningGoalProgress.CourseLectureUnitProgress> calculateExerciseUnitsProgressForCourse(List<ExerciseUnit> exerciseUnits) {
+    private Set<CourseLearningGoalProgress.CourseLectureUnitProgress> calculateExerciseUnitsProgressForCourse(List<ExerciseUnit> exerciseUnits, boolean useParticipantScoreTable) {
         List<ExerciseUnit> filteredExerciseUnits = exerciseUnits.stream()
                 .filter(exerciseUnit -> exerciseUnit.getExercise() != null && exerciseUnit.getExercise().isAssessmentDueDateOver()).collect(Collectors.toList());
         List<Long> exerciseIds = filteredExerciseUnits.stream().map(exerciseUnit -> exerciseUnit.getExercise().getId()).distinct().collect(Collectors.toList());
 
-        Map<Long, CourseExerciseStatisticsDTO> exerciseIdToExerciseCourseStatistics = this.exerciseService.calculateExerciseStatistics(exerciseIds).stream()
-                .collect(Collectors.toMap(CourseExerciseStatisticsDTO::getExerciseId, courseExerciseStatisticsDTO -> courseExerciseStatisticsDTO));
+        Map<Long, CourseExerciseStatisticsDTO> exerciseIdToExerciseCourseStatistics = this.exerciseService.calculateExerciseStatistics(exerciseIds, useParticipantScoreTable)
+                .stream().collect(Collectors.toMap(CourseExerciseStatisticsDTO::getExerciseId, courseExerciseStatisticsDTO -> courseExerciseStatisticsDTO));
 
         // for each exercise unit, the exercise will be mapped to a freshly created lecture unit course progress.
         Map<Exercise, CourseLearningGoalProgress.CourseLectureUnitProgress> exerciseToLectureUnitCourseProgress = filteredExerciseUnits.stream()
@@ -153,12 +154,28 @@ public class LearningGoalService {
         if (relevantParticipation == null) {
             return Optional.empty();
         }
+
+        relevantParticipation.setSubmissions(relevantParticipation.getSubmissions().stream().filter(submission -> {
+            boolean hasFittingResult = false;
+            for (Result result : submission.getResults()) {
+                if (result.getScore() != null && result.getCompletionDate() != null) {
+                    hasFittingResult = true;
+                    break;
+                }
+            }
+            return hasFittingResult;
+        }).collect(Collectors.toSet()));
+
         // find the latest submission of the relevant participation
         Optional<Submission> latestSubmissionOptional = relevantParticipation.findLatestSubmission();
         if (latestSubmissionOptional.isEmpty()) {
             return Optional.empty();
         }
         Submission latestSubmission = latestSubmissionOptional.get();
+
+        latestSubmission
+                .setResults(latestSubmission.getResults().stream().filter(result -> result.getScore() != null && result.getCompletionDate() != null).collect(Collectors.toList()));
+
         // find the latest result of the latest submission
         Result latestResult = latestSubmission.getLatestResult();
         return latestResult == null ? Optional.empty() : Optional.of(latestResult);
@@ -222,10 +239,11 @@ public class LearningGoalService {
     /**
      * Calculate the progress in a learning goal for a whole course
      *
-     * @param learningGoal learning goal to get the progress for
+     * @param useParticipantScoreTable use the participant score table instead of going through participation -> submission -> result
+     * @param learningGoal             learning goal to get the progress for
      * @return progress of the course in the learning goal
      */
-    public CourseLearningGoalProgress calculateLearningGoalCourseProgress(LearningGoal learningGoal) {
+    public CourseLearningGoalProgress calculateLearningGoalCourseProgress(LearningGoal learningGoal, boolean useParticipantScoreTable) {
         CourseLearningGoalProgress courseLearningGoalProgress = new CourseLearningGoalProgress();
         courseLearningGoalProgress.courseId = learningGoal.getCourse().getId();
         courseLearningGoalProgress.learningGoalId = learningGoal.getId();
@@ -236,7 +254,8 @@ public class LearningGoalService {
         // The progress will be calculated from a subset of the connected lecture units (currently only from released exerciseUnits)
         List<ExerciseUnit> exerciseUnitsUsableForProgressCalculation = learningGoal.getLectureUnits().parallelStream().filter(LectureUnit::isVisibleToStudents)
                 .filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).map(lectureUnit -> (ExerciseUnit) lectureUnit).collect(Collectors.toList());
-        Set<CourseLearningGoalProgress.CourseLectureUnitProgress> progressInLectureUnits = this.calculateExerciseUnitsProgressForCourse(exerciseUnitsUsableForProgressCalculation);
+        Set<CourseLearningGoalProgress.CourseLectureUnitProgress> progressInLectureUnits = this.calculateExerciseUnitsProgressForCourse(exerciseUnitsUsableForProgressCalculation,
+                useParticipantScoreTable);
 
         // updating learningGoalPerformance by summing up the points of the individual lecture unit progress
         courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal = progressInLectureUnits.stream()

@@ -506,6 +506,36 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThatSpecificCourseLectureUnitProgressExists(courseLearningGoalProgress, 20.0, 4, 30.0);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getLearningGoalCourseProgressIndividualTest_asInstructorOne_usingParticipantScoreTable() throws Exception {
+        cleanUpInitialParticipations();
+        User student1 = userRepository.findOneByLogin("student1").get();
+        User student2 = userRepository.findOneByLogin("student2").get();
+        User student3 = userRepository.findOneByLogin("student3").get();
+        User student4 = userRepository.findOneByLogin("student4").get();
+        User instructor1 = userRepository.findOneByLogin("instructor1").get();
+
+        createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
+        createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 50, false);
+
+        createParticipationSubmissionAndResult(idOfTextExercise, student2, 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from student
+        createParticipationSubmissionAndResult(idOfTextExercise, student2, 10.0, 0.0, 10, false);
+
+        createParticipationSubmissionAndResult(idOfTextExercise, student3, 10.0, 0.0, 10, true);
+        createParticipationSubmissionAndResult(idOfTextExercise, student4, 10.0, 0.0, 50, true);
+
+        createParticipationSubmissionAndResult(idOfTextExercise, instructor1, 10.0, 0.0, 100, true); // will be ignored as not a student
+
+        CourseLearningGoalProgress courseLearningGoalProgress = request.get(
+                "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress?useParticipantScoreTable=true", HttpStatus.OK, CourseLearningGoalProgress.class);
+
+        assertThat(courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
+        assertThat(courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal).isEqualTo(3.0);
+
+        assertThatSpecificCourseLectureUnitProgressExists(courseLearningGoalProgress, 20.0, 4, 30.0);
+    }
+
     public void assertThatSpecificCourseLectureUnitProgressExists(CourseLearningGoalProgress courseLearningGoalProgress, double expectedParticipationRate,
             int expectedNoOfParticipants, double expectedAverageScore) {
         boolean foundProgressWithCorrectNumbers = false;

@@ -32,8 +32,13 @@ export class LearningGoalService {
         });
     }
 
-    getCourseProgress(learningGoalId: number, courseId: number) {
-        return this.httpClient.get<CourseLearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/course-progress`, { observe: 'response' });
+    getCourseProgress(learningGoalId: number, courseId: number, useParticipantScoreTable = false) {
+        let params = new HttpParams();
+        params = params.set('useParticipantScoreTable', String(useParticipantScoreTable));
+        return this.httpClient.get<CourseLearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/course-progress`, {
+            observe: 'response',
+            params,
+        });
     }
 
     findById(learningGoalId: number, courseId: number) {
