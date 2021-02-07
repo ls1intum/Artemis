@@ -12,9 +12,7 @@ export class FileUploadExamSummaryComponent implements OnInit {
 
     constructor(private fileService: FileService) {}
 
-    ngOnInit(): void {
-        console.log('submission of summary: ', this.submission);
-    }
+    ngOnInit(): void {}
 
     /**
      *

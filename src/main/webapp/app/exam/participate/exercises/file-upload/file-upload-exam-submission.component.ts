@@ -117,7 +117,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     }
 
     updateViewFromSubmission(): void {
-        if (this.studentSubmission.isSynced) {
+        if (this.studentSubmission.isSynced && this.studentSubmission.filePath) {
             // clear submitted file so that it is not displayed in the input (this might be confusing)
             this.submissionFile = undefined;
             const filePath = this.studentSubmission!.filePath!.split('/');
