@@ -41,7 +41,6 @@ export class ExamDetailComponent implements OnInit {
     ngOnInit(): void {
         this.isLoading = true;
         this.route.data.subscribe(({ exam }) => {
-            console.log(exam);
             this.exam = exam;
             this.exerciseGroupService
                 .findAllForExam(this.exam!.course!.id!, this.exam.id!)
