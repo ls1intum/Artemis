@@ -22,7 +22,6 @@ import { Submission } from 'app/entities/submission.model';
     selector: 'jhi-file-upload-submission-exam',
     templateUrl: './file-upload-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: FileUploadExamSubmissionComponent }],
-    styleUrls: ['./file-upload-exam-submission.component.scss'],
     // change deactivation must be triggered manually
 })
 export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
