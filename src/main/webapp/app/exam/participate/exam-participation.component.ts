@@ -272,7 +272,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
-            if (this.autoSaveTimer >= 30 && !this.isOver()) {
+            if (this.autoSaveTimer >= 300 && !this.isOver()) {
                 this.triggerSave(false);
             }
         }, 1000);
@@ -404,7 +404,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     onExerciseChange(exerciseChange: { exercise: Exercise; force: boolean }): void {
         const activeComponent = this.activeSubmissionComponent;
-        console.log('activeCompo', activeComponent);
         if (activeComponent) {
             activeComponent.onDeactivate();
         }
@@ -505,7 +504,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
         // goes through all exercises and checks if there are unsynced submissions
         const submissionsToSync: { exercise: Exercise; submission: Submission }[] = [];
-        console.log(this.studentExam.exercises);
         this.studentExam.exercises!.forEach((exercise: Exercise) => {
             exercise.studentParticipations!.forEach((participation) => {
                 participation
@@ -542,7 +540,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         );
                         break;
                     case ExerciseType.FILE_UPLOAD:
-                        console.log('now saving????');
                         const fileUploadComponent = activeComponent as FileUploadExamSubmissionComponent;
                         if (!fileUploadComponent.submissionFile) {
                             return;
@@ -551,10 +548,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                             .update(submissionToSync.submission as FileUploadSubmission, submissionToSync.exercise.id!, fileUploadComponent.submissionFile)
                             .subscribe(
                                 (res) => {
-                                    fileUploadComponent.studentSubmission = res.body!;
-                                    fileUploadComponent.setSubmittedFile();
+                                    const submissionFromServer = res.body!;
+                                    (submissionToSync.submission as FileUploadSubmission).filePath = submissionFromServer.filePath;
                                     this.onSaveSubmissionSuccess(submissionToSync.submission);
-                                    fileUploadComponent.updateSubmissionFromView();
+                                    activeComponent!.updateViewFromSubmission();
                                 },
                                 () => this.onSaveSubmissionError(),
                             );
@@ -619,8 +616,5 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                 }
             });
-    }
-    log(a: string) {
-        console.log(a);
     }
 }

@@ -85,21 +85,8 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
             } else {
                 this.submissionFile = submissionFile;
                 this.studentSubmission.isSynced = false;
-                this.studentSubmission.isSynced = true;
-                this.studentSubmission.isSynced = false;
-                console.log(this.submissionFile);
             }
         }
-    }
-
-    setSubmittedFile() {
-        // clear submitted file so that it is not displayed in the input (this might be confusing)
-        this.submissionFile = undefined;
-        const filePath = this.studentSubmission!.filePath!.split('/');
-        this.submittedFileName = filePath[filePath.length - 1];
-        const fileName = this.submittedFileName.split('.');
-        this.submittedFileExtension = fileName[fileName.length - 1];
-        this.studentSubmission.submitted = false;
     }
 
     downloadFile(filePath: string) {
@@ -125,22 +112,22 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         return this.studentSubmission;
     }
 
-    // TODO: clarify why this is needed here and also for the other exercise types
     updateSubmissionFromView(): void {
-        console.log('updateSubmissionFromView');
-        this.filePath = this.studentSubmission.filePath;
+        // we do nothing here as the new file path comes from the server
     }
 
     updateViewFromSubmission(): void {
-        console.log('updateViewFromSubmission');
-        console.log(this.studentSubmission.isSynced);
         if (this.studentSubmission.isSynced) {
-            this.setSubmittedFile();
+            // clear submitted file so that it is not displayed in the input (this might be confusing)
+            this.submissionFile = undefined;
+            const filePath = this.studentSubmission!.filePath!.split('/');
+            this.submittedFileName = filePath[filePath.length - 1];
+            const fileName = this.submittedFileName.split('.');
+            this.submittedFileExtension = fileName[fileName.length - 1];
         }
     }
 
     saveUploadedFile() {
-        console.log(this);
         this.onExerciseChanged.emit({ exercise: this.exercise, force: false });
     }
 }
