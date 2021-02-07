@@ -1,18 +1,17 @@
 package de.tum.in.www1.artemis.repository;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.exam.Exam;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 /**
  * Spring Data JPA repository for the ExamRepository entity.
@@ -66,7 +65,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("select exam.id, count(registeredUsers) from Exam exam left join exam.registeredUsers registeredUsers where exam.id in :#{#examIds} group by exam.id")
     List<long[]> countRegisteredUsersByExamIds(@Param("examIds") List<Long> examIds);
 
-    @Query("select count(studentExam) from StudentExam studentExam where (studentExam.exam.id = :#{#examId})")
-    long countGeneratedStudentExamsByExam(@Param("examId") Long examId);
+    @Query("select count(studentExam) from StudentExam studentExam where studentExam.testRun = FALSE AND studentExam.exam.id = :#{#examId}")
+    long countGeneratedStudentExamsByExamWithoutTestruns(@Param("examId") Long examId);
 
 }
