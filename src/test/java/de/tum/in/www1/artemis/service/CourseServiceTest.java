@@ -1,21 +1,19 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,6 +41,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @Test
     public void getActiveStudents() {
+        SecurityUtils.setAuthorizationObject();
         var course = database.addEmptyCourse();
         var now = ZonedDateTime.now();
         var exercise = ModelFactory.generateTextExercise(now, now, now, course);
