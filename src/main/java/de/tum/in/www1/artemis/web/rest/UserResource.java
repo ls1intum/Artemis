@@ -129,19 +129,23 @@ public class UserResource {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) {
         log.debug("REST request to update User : {}", managedUserVM);
+
         Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail());
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(managedUserVM.getId()))) {
             throw new EmailAlreadyUsedException();
         }
+
         existingUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(managedUserVM.getLogin().toLowerCase());
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(managedUserVM.getId()))) {
             throw new LoginAlreadyUsedException();
         }
+
         if (managedUserVM.getGroups().stream().anyMatch(group -> !artemisAuthenticationProvider.isGroupAvailable(group))) {
             throw new EntityNotFoundException("Not all groups are available: " + managedUserVM.getGroups());
         }
 
         User updatedUser = null;
+        existingUser = userRepository.findOneWithGroupsAndAuthoritiesById(managedUserVM.getId());
         if (existingUser.isPresent()) {
             updatedUser = userService.updateUser(existingUser.get(), managedUserVM);
         }
@@ -184,7 +188,9 @@ public class UserResource {
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
-    /** @return a string list of the all of the roles */
+    /**
+     * @return a string list of the all of the roles
+     */
     @GetMapping("/users/authorities")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public List<String> getAuthorities() {

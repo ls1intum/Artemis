@@ -135,6 +135,6 @@ public class SubmissionResource {
             return studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
 
-        return participationService.findOneWithEagerCourseAndExercise(studentParticipation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        return participationService.findOneStudentParticipation(studentParticipation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
     }
 }
