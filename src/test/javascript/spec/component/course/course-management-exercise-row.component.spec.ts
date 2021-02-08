@@ -1,7 +1,6 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -24,7 +23,6 @@ const expect = chai.expect;
 describe('CourseManagementExerciseRowComponent', () => {
     let fixture: ComponentFixture<CourseManagementExerciseRowComponent>;
     let component: CourseManagementExerciseRowComponent;
-    let service: CourseManagementService;
 
     const exerciseDetailDTO = new CourseManagementOverviewExerciseDetailsDTO();
     exerciseDetailDTO.teamMode = false;
@@ -53,7 +51,6 @@ describe('CourseManagementExerciseRowComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseManagementExerciseRowComponent);
                 component = fixture.componentInstance;
-                service = TestBed.inject(CourseManagementService);
             });
     });
 
