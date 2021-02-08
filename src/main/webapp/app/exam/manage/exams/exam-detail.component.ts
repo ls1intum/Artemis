@@ -45,8 +45,8 @@ export class ExamDetailComponent implements OnInit {
             this.exerciseGroupService
                 .findAllForExam(this.exam!.course!.id!, this.exam.id!)
                 .map((exerciseGroupArray: HttpResponse<ExerciseGroup[]>) => exerciseGroupArray.body!)
-                .subscribe((x) => {
-                    this.exam.exerciseGroups = x;
+                .subscribe((exGroups) => {
+                    this.exam.exerciseGroups = exGroups;
                     this.checkPointsExercisesEqual();
                     this.checkAllGroupContainsExercise();
                     this.checkTotalPointsMandatory();
