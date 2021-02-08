@@ -117,11 +117,12 @@ export class ExamDetailComponent implements OnInit {
      */
     checkAllGroupContainsExercise() {
         this.allGroupsContainExercise = true;
-        this.exam.exerciseGroups!.forEach((exerciseGroup) => {
+        this.exam.exerciseGroups!.some((exerciseGroup) => {
             if (!exerciseGroup.exercises || exerciseGroup.exercises.length === 0) {
                 this.allGroupsContainExercise = false;
-                return;
+                return true;
             }
+            return false;
         });
     }
 
