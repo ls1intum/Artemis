@@ -44,6 +44,7 @@ import { stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -56,6 +57,7 @@ describe('ExamParticipationComponent', () => {
     let courseExerciseService: CourseExerciseService;
     let textSubmissionService: TextSubmissionService;
     let modelingSubmissionService: ModelingSubmissionService;
+    let fileUploadSubmissionService: FileUploadSubmissionService;
     let alertService: JhiAlertService;
     let artemisServerDateService: ArtemisServerDateService;
 
@@ -72,6 +74,7 @@ describe('ExamParticipationComponent', () => {
                 MockComponent(TextExamSubmissionComponent),
                 MockComponent(ModelingExamSubmissionComponent),
                 MockComponent(ProgrammingExamSubmissionComponent),
+                MockComponent(FileUploadExamSubmissionComponent),
                 MockComponent(JhiConnectionStatusComponent),
                 MockComponent(AlertComponent),
                 TestRunRibbonComponent,
