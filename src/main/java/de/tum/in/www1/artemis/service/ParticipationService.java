@@ -221,7 +221,9 @@ public class ParticipationService {
         else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
             if (participation.getInitializationState() == null || participation.getInitializationState() == UNINITIALIZED || participation.getInitializationState() == FINISHED) {
                 // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side
-                participation.setInitializationState(INITIALIZED);
+                if (!(exercise instanceof QuizExercise)) {
+                    participation.setInitializationState(INITIALIZED);
+                }
             }
 
             if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
