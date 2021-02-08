@@ -66,7 +66,25 @@ describe('ParticipantScoresAverageTable', () => {
         expect(cellElements.length).to.equal(4);
         expect(cellElements[0].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.userName);
         expect(cellElements[1].nativeElement.innerHTML).to.contain('');
-        expect(cellElements[2].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.averageScore + '');
-        expect(cellElements[3].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.averageRatedScore + '');
+        expect(cellElements[2].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.averageScore);
+        expect(cellElements[3].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.averageRatedScore);
+    });
+
+    it('should extract participant name correctly', () => {
+        let participantScoreAverageDTO = new ParticipantScoreAverageDTO();
+        participantScoreAverageDTO.userName = 'testUser';
+        participantScoreAverageDTO.averageRatedScore = 10;
+        participantScoreAverageDTO.averageScore = 5;
+        participantScoreAverageDTO.teamName = null;
+
+        expect(component.extractParticipantName(participantScoreAverageDTO)).to.equal(participantScoreAverageDTO.userName);
+
+        participantScoreAverageDTO = new ParticipantScoreAverageDTO();
+        participantScoreAverageDTO.userName = null;
+        participantScoreAverageDTO.averageRatedScore = 10;
+        participantScoreAverageDTO.averageScore = 5;
+        participantScoreAverageDTO.teamName = 'testTeam';
+
+        expect(component.extractParticipantName(participantScoreAverageDTO)).to.equal(participantScoreAverageDTO.teamName);
     });
 });
