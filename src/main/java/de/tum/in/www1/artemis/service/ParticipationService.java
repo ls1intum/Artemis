@@ -80,11 +80,7 @@ public class ParticipationService {
 
     private final QuizScheduleService quizScheduleService;
 
-    private final QuizExerciseRepository quizExerciseRepository;
-
     private final UrlService urlService;
-
-    private final FeedbackRepository feedbackRepository;
 
     public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -93,8 +89,7 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserService userService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService,
-            @Lazy QuizScheduleService quizScheduleService, QuizExerciseRepository quizExerciseRepository, RatingRepository ratingRepository, UrlService urlService,
-            FeedbackRepository feedbackRepository) {
+            @Lazy QuizScheduleService quizScheduleService, RatingRepository ratingRepository, UrlService urlService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -113,10 +108,8 @@ public class ParticipationService {
         this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
         this.quizScheduleService = quizScheduleService;
-        this.quizExerciseRepository = quizExerciseRepository;
         this.ratingRepository = ratingRepository;
         this.urlService = urlService;
-        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -671,9 +664,9 @@ public class ParticipationService {
      * @param participationId the id of the entity
      * @return the entity
      **/
-    public StudentParticipation findOneStudentParticipationWithEagerSubmissionsResultsExerciseAndCourse(Long participationId) {
+    public StudentParticipation findOneStudentParticipationWithEagerSubmissionsResultsFeedbacks(Long participationId) {
         log.debug("Request to get Participation : {}", participationId);
-        Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAndExerciseAndCourseById(participationId);
+        Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerSubmissionsResultsFeedbacksById(participationId);
         if (participation.isEmpty()) {
             throw new EntityNotFoundException("StudentParticipation with " + participationId + " was not found!");
         }
@@ -703,7 +696,7 @@ public class ParticipationService {
      */
     public StudentParticipation findOneWithEagerResults(Long participationId) {
         log.debug("Request to get Participation : {}", participationId);
-        Optional<StudentParticipation> participation = studentParticipationRepository.findByIdWithEagerResults(participationId);
+        Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerResultsById(participationId);
         if (participation.isEmpty()) {
             throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
         }
@@ -731,9 +724,9 @@ public class ParticipationService {
      * @param participationId the id of the entity
      * @return the participation with all its submissions and results
      */
-    public StudentParticipation findOneWithEagerSubmissionsAndResults(Long participationId) {
+    public StudentParticipation findOneWithEagerSubmissionsResultsFeedback(Long participationId) {
         log.debug("Request to get Participation : {}", participationId);
-        Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerSubmissionsAndResultsById(participationId);
+        Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerSubmissionsResultsFeedbacksById(participationId);
         if (participation.isEmpty()) {
             throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
         }
@@ -1116,7 +1109,7 @@ public class ParticipationService {
      */
     @Transactional // ok
     public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
-        StudentParticipation participation = studentParticipationRepository.findWithEagerSubmissionsAndResultsById(participationId).get();
+        StudentParticipation participation = studentParticipationRepository.findWithEagerSubmissionsResultsFeedbacksById(participationId).get();
         log.debug("Request to delete Participation : {}", participation);
 
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
@@ -1209,36 +1202,6 @@ public class ParticipationService {
         for (StudentParticipation participation : participationsToDelete) {
             delete(participation.getId(), deleteBuildPlan, deleteRepository);
         }
-    }
-
-    /**
-     * Get one participation with eager course.
-     *
-     * @param participationId id of the participation
-     * @return participation with eager course
-     */
-    public StudentParticipation findOneWithEagerCourseAndExercise(Long participationId) {
-        return studentParticipationRepository.findOneByIdWithEagerExerciseAndEagerCourse(participationId);
-    }
-
-    /**
-     * Get one participation with eager course.
-     *
-     * @param participationId id of the participation
-     * @return participation with eager course
-     */
-    public StudentParticipation findOneWithEagerResultsAndCourse(Long participationId) {
-        return studentParticipationRepository.findOneByIdWithEagerResultsAndExerciseAndEagerCourse(participationId);
-    }
-
-    /**
-     * Get one participation with eager course, eager submissions and eager results.
-     *
-     * @param paricipationId
-     * @return participation with eager course and submission
-     */
-    public StudentParticipation findOneWithEagerResultsAndCourseAndSubmissionAndResults(Long paricipationId) {
-        return studentParticipationRepository.findOneByIdWithEagerResultsAndExerciseAndEagerCourseAndEagerSubmissionAndResults(paricipationId);
     }
 
     /**
