@@ -436,7 +436,7 @@ public class CourseResource {
      */
     @GetMapping("/courses/course-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public List<CourseOverviewDTO> getAllCoursesForOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
+    public List<CourseManagementOverviewDetailsDTO> getAllCoursesForOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         return courseService.getAllDTOsForOverview(onlyActive);
     }
 
@@ -807,16 +807,16 @@ public class CourseResource {
      */
     @GetMapping("/courses/exercises-for-management-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<CourseManagementOverviewCourseDTO>> getExercisesForCourseOverview(@RequestParam("courseIds[]") Long[] courseIds) {
+    public ResponseEntity<List<CourseManagementOverviewDTO>> getExercisesForCourseOverview(@RequestParam("courseIds[]") Long[] courseIds) {
         final User user = userService.getUserWithGroupsAndAuthorities();
-        final List<CourseManagementOverviewCourseDTO> courseDTOS = new ArrayList<>();
+        final List<CourseManagementOverviewDTO> courseDTOS = new ArrayList<>();
         for (final var courseId : courseIds) {
             final Course course = courseService.findOne(courseId);
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 continue;
             }
 
-            final var courseDTO = new CourseManagementOverviewCourseDTO();
+            final var courseDTO = new CourseManagementOverviewDTO();
             courseDTO.setCourseId(courseId);
             courseDTO.setExerciseDetails(exerciseService.getExercisesForCourseManagementOverview(courseId));
             courseDTOS.add(courseDTO);

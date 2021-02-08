@@ -1,4 +1,4 @@
-export class CourseManagementOverviewCourseInformationDto {
+export class CourseManagementOverviewDetailsDto {
     public id?: number;
     public title?: string;
     public testCourse?: boolean;

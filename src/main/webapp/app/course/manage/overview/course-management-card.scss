@@ -23,11 +23,6 @@
         }
     }
 
-    .statistics-card {
-        min-width: 550px;
-        max-width: 800px;
-    }
-
     .section-header {
         height: 40px;
         background-color: $primary;
@@ -89,10 +84,14 @@
     }
 }
 
-@media screen and (max-width: 800px) {
+@media screen and (max-width: 950px) {
     .card {
         .statistics-card {
             display: none;
+        }
+
+        .section-card {
+            min-width: 100%;
         }
     }
 }

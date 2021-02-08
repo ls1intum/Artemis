@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.web.rest.dto.CourseOverviewDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewDetailsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -372,13 +372,13 @@ public class CourseService {
      * @param isOnlyActive Whether or not to include courses with a past endDate
      * @return A list of Course DTOs for the course management overview
      */
-    public List<CourseOverviewDTO> getAllDTOsForOverview(Boolean isOnlyActive) {
+    public List<CourseManagementOverviewDetailsDTO> getAllDTOsForOverview(Boolean isOnlyActive) {
         ZonedDateTime now = isOnlyActive ? ZonedDateTime.now() : null;
         User user = userService.getUserWithGroupsAndAuthorities();
         var isAdmin = authCheckService.isAdmin(user);
 
         List<Map<String, Object>> courses = this.courseRepository.getAllDTOsForOverview(now);
-        List<CourseOverviewDTO> dtos = new ArrayList<>();
+        List<CourseManagementOverviewDetailsDTO> dtos = new ArrayList<>();
         for (var course : courses) {
             var teachingAssistantGroupName = (String) course.get("teachingAssistantGroupName");
             var instructorGroupName = (String) course.get("instructorGroupName");
@@ -386,7 +386,7 @@ public class CourseService {
                 continue;
             }
 
-            CourseOverviewDTO dto = new CourseOverviewDTO();
+            CourseManagementOverviewDetailsDTO dto = new CourseManagementOverviewDetailsDTO();
             dto.setId((Long) course.get("id"));
             dto.setTitle((String) course.get("title"));
             dto.setTestCourse((Boolean) course.get("testCourse"));

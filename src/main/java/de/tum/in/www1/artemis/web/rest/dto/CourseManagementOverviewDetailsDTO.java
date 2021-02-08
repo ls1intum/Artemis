@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-public class CourseOverviewDTO {
+public class CourseManagementOverviewDetailsDTO {
 
     private Long id;
 

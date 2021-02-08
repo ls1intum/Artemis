@@ -349,7 +349,7 @@ public class TextExerciseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        StudentParticipation participation = participationService.findOneStudentParticipationWithEagerSubmissionsResultsExerciseAndCourse(participationId);
+        StudentParticipation participation = participationService.findOneStudentParticipationWithEagerSubmissionsResultsFeedbacks(participationId);
         if (participation == null) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);

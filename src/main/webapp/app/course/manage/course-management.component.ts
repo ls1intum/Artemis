@@ -11,9 +11,9 @@ import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour
 import { JhiAlertService } from 'ng-jhipster';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { LectureService } from 'app/lecture/lecture.service';
-import { CourseManagementOverviewCourseDetailDto } from 'app/course/manage/course-management-overview-course-dto.model';
-import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/course-management-overview-statistics-dto.model';
-import { CourseManagementOverviewCourseInformationDto } from './course-management-overview-courses-dto.model';
+import { CourseManagementOverviewDto } from 'app/course/manage/overview/course-management-overview-dto.model';
+import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
+import { CourseManagementOverviewDetailsDto } from './overview/course-management-overview-details-dto.model';
 
 @Component({
     selector: 'jhi-course',
@@ -26,12 +26,12 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     reverse: boolean;
     showOnlyActive = true;
 
-    courses: CourseManagementOverviewCourseInformationDto[];
-    details = new Map<number, CourseManagementOverviewCourseDetailDto>();
+    courses: CourseManagementOverviewDetailsDto[];
+    details = new Map<number, CourseManagementOverviewDto>();
     statistics = new Map<number, CourseManagementOverviewStatisticsDto>();
     courseSemesters: string[];
     semesterCollapsed: { [key: string]: boolean };
-    coursesBySemester: { [key: string]: CourseManagementOverviewCourseInformationDto[] };
+    coursesBySemester: { [key: string]: CourseManagementOverviewDetailsDto[] };
     eventSubscriber: Subscription;
 
     private dialogErrorSource = new Subject<string>();
@@ -58,7 +58,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
      */
     loadAll() {
         this.courseService.getCourseOverview({ onlyActive: this.showOnlyActive }).subscribe(
-            (res: HttpResponse<CourseManagementOverviewCourseInformationDto[]>) => {
+            (res: HttpResponse<CourseManagementOverviewDetailsDto[]>) => {
                 this.courses = res.body!;
                 this.courseSemesters = this.courses
                     // test courses get their own section later
@@ -100,7 +100,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
 
                 // First fetch important data like title for each course
                 this.courseManagementService.getExercisesForManagementOverview(this.courses.map((c) => c.id!)).subscribe(
-                    (result: HttpResponse<CourseManagementOverviewCourseDetailDto[]>) => {
+                    (result: HttpResponse<CourseManagementOverviewDto[]>) => {
                         result.body!.forEach((dto) => {
                             this.details[dto.courseId] = dto;
                             if (!this.statistics[dto.courseId]) {
@@ -117,7 +117,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                     },
                     (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
                 );
-                // load courses after initialization for guidedTour and notifications
+                // load courses after initialization for guidedTour, notifications and group numbers
                 this.courseManagementService.getWithUserStats({ onlyActive: this.showOnlyActive }).subscribe(
                     (result: HttpResponse<Course[]>) => {
                         this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(result.body!, tutorAssessmentTour, true);

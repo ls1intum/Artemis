@@ -1,9 +1,9 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/entities/course-management-overview-exercise-statistics-dto.model';
-import { CourseManagementOverviewExerciseDetailsDTO } from 'app/entities/course-management-overview-exercise-details-dto.model';
-import { CourseManagementOverviewCourseInformationDto } from 'app/course/manage/course-management-overview-courses-dto.model';
+import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
+import { CourseManagementOverviewExerciseDetailsDTO } from 'app/course/manage/overview/course-management-overview-exercise-details-dto.model';
+import { CourseManagementOverviewDetailsDto } from 'app/course/manage/overview/course-management-overview-details-dto.model';
 
 export enum ExerciseRowType {
     FUTURE = 'future',
@@ -18,7 +18,7 @@ export enum ExerciseRowType {
     styleUrls: ['course-management-exercise-row.scss'],
 })
 export class CourseManagementExerciseRowComponent implements OnChanges {
-    @Input() course: CourseManagementOverviewCourseInformationDto;
+    @Input() course: CourseManagementOverviewDetailsDto;
     @Input() details: CourseManagementOverviewExerciseDetailsDTO;
     @Input() statistic: CourseManagementOverviewExerciseStatisticsDTO;
     @Input() rowType: ExerciseRowType;
