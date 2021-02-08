@@ -1,120 +1,266 @@
+import { ChangeDetectorRef } from '@angular/core';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { By, SafeHtml } from '@angular/platform-browser';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { Course } from 'app/entities/course.model';
+import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import * as chai from 'chai';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Course } from 'app/entities/course.model';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { JhiAlertService } from 'ng-jhipster';
-import { FormsModule } from '@angular/forms';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { MockTranslateService, TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../../test.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
-import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { HttpClientModule } from '@angular/common/http';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { stringifyCircular } from 'app/shared/util/utils';
+import { createFileUploadSubmission } from '../../../../helpers/mocks/service/mock-file-upload-submission.service';
+import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { JhiAlertService } from 'ng-jhipster';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('FileUploadExamSubmissionComponent', () => {
     let fixture: ComponentFixture<FileUploadExamSubmissionComponent>;
-    let component: FileUploadExamSubmissionComponent;
+    let comp: FileUploadExamSubmissionComponent;
+    let jhiAlertService: JhiAlertService;
+    let mockSubmission: FileUploadSubmission;
+    let mockExercise: FileUploadExercise;
 
-    let fileUploadSubmission: FileUploadSubmission;
-    let exercise: FileUploadExercise;
+    const resetComponent = () => {
+        if (comp) {
+            mockSubmission = { filePath: 'path/to/the/file/file1.png' } as FileUploadSubmission;
+            const course = new Course();
+            course.isAtLeastInstructor = true;
+            const exerciseGroup = { id: 4 } as ExerciseGroup;
+            mockExercise = new FileUploadExercise(undefined, exerciseGroup);
+            mockExercise.filePattern = 'png,pdf';
+            mockExercise.problemStatement = 'Test Problem Statement';
+            comp.exercise = mockExercise;
+            comp.studentSubmission = mockSubmission;
+        }
+    };
 
     beforeEach(() => {
-        fileUploadSubmission = new FileUploadSubmission();
-        exercise = new FileUploadExercise(new Course(), new ExerciseGroup());
-
-        return TestBed.configureTestingModule({
-            imports: [
-                RouterTestingModule.withRoutes([]),
-                MockModule(ArtemisQuizQuestionTypesModule),
-                MockModule(NgbModule),
-                MockModule(FormsModule),
-                MockModule(FontAwesomeModule),
-                MockModule(ArtemisSharedModule),
-                HttpClientTestingModule,
-                SessionStorageService,
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            declarations: [
+                FileUploadExamSubmissionComponent,
+                FullscreenComponent,
+                ResizeableContainerComponent,
+                TranslatePipeMock,
+                MockPipe(HtmlForMarkdownPipe, (markdown) => markdown as SafeHtml),
+                MockDirective(NgbTooltip),
+                MockComponent(IncludedInScoreBadgeComponent),
             ],
-            declarations: [FileUploadExamSubmissionComponent, MockPipe(TranslatePipe), MockPipe(HtmlForMarkdownPipe), MockComponent(IncludedInScoreBadgeComponent)],
-            providers: [MockProvider(JhiAlertService), MockProvider(TranslateService), MockProvider(ArtemisMarkdownService), SessionStorageService],
+            providers: [MockProvider(ChangeDetectorRef), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(FileUploadExamSubmissionComponent);
-                component = fixture.componentInstance;
+                comp = fixture.componentInstance;
+                jhiAlertService = TestBed.inject(JhiAlertService);
             });
     });
-    afterEach(() => {
-        sinon.restore();
-    });
 
-    it('should initialize', () => {
-        component.exercise = exercise;
-        fileUploadSubmission.filePath = 'some/link/file.png';
-        component.studentSubmission = fileUploadSubmission;
-
-        component.onActivate();
-        fixture.detectChanges();
-        component.onDeactivate();
-
-        expect(component.submittedFileName).to.equal(undefined);
-        expect(component.filePath).to.equal('some/link/file.png');
-        expect(component.getExercise()).to.equal(exercise);
-        expect(component.getSubmission()).to.equal(fileUploadSubmission);
-    });
-
-    it('should initialize with no filePath', () => {
-        component.exercise = exercise;
-        component.studentSubmission = fileUploadSubmission;
-
-        fixture.detectChanges();
-
-        expect(component.filePath).to.equal(undefined);
-    });
-
-    it('should return the negation of student submission isSynced value', () => {
-        component.exercise = exercise;
-        component.studentSubmission = fileUploadSubmission;
-        component.studentSubmission.isSynced = false;
-
-        fixture.detectChanges();
-
-        expect(component.hasUnsavedChanges()).to.equal(true);
-    });
-    /* this needs to be adapted so that the event of adding the file is tested
-    it('should trigger upload event', () => {
-        component.exercise = exercise;
-
-        component.studentSubmission = fileUploadSubmission;
-
-        fixture.detectChanges();
-        fixture.whenStable().then(() => {
-            const textareaDebugElement = fixture.debugElement.query(By.css('#text-editor-tab'));
-            expect(textareaDebugElement).to.exist;
-            const textarea = textareaDebugElement.nativeElement;
-            textarea.value = 'Test';
-            textarea.dispatchEvent(new Event('input'));
-
-            textarea.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
-            textarea.dispatchEvent(new Event('input'));
+    describe('With exercise', () => {
+        beforeEach(() => {
+            resetComponent();
+        });
+        it('should initialize', () => {
             fixture.detectChanges();
-            expect(textarea.value).to.equal('Test\t');
-            expect(component.studentSubmission.isSynced).to.be.false;
+            expect(FileUploadExamSubmissionComponent).to.be.ok;
+        });
+
+        it('should show exercise title if any', () => {
+            comp.exercise.title = 'Test Title';
+            fixture.detectChanges();
+            const el = fixture.debugElement.query((de) => de.nativeElement.textContent === comp.exercise.title);
+            expect(el).to.exist;
+        });
+
+        it('should show exercise max score if any', () => {
+            const maxScore = 30;
+            comp.exercise.maxPoints = maxScore;
+            fixture.detectChanges();
+            const el = fixture.debugElement.query((de) => de.nativeElement.textContent.includes(`[${maxScore} artemisApp.examParticipation.points]`));
+            expect(el).to.exist;
+        });
+
+        it('should show exercise bonus score if any', () => {
+            const maxScore = 40;
+            comp.exercise.maxPoints = maxScore;
+            const bonusPoints = 55;
+            comp.exercise.bonusPoints = bonusPoints;
+            fixture.detectChanges();
+            const el = fixture.debugElement.query((de) =>
+                de.nativeElement.textContent.includes(`[${maxScore} artemisApp.examParticipation.points, ${bonusPoints} artemisApp.examParticipation.bonus]`),
+            );
+            expect(el).to.exist;
+        });
+        it('should show problem statement if there is any', () => {
+            fixture.detectChanges();
+            const el = fixture.debugElement.query((de) => de.nativeElement.textContent === mockExercise.problemStatement);
+            expect(el).to.exist;
         });
     });
 
-     */
+    describe('ngOnInit', () => {
+        beforeEach(() => {
+            resetComponent();
+        });
+        afterEach(() => {
+            sinon.restore();
+        });
+        it('should call updateViewFromSubmission', () => {
+            const updateViewStub = sinon.stub(comp, 'updateViewFromSubmission');
+            comp.ngOnInit();
+            expect(updateViewStub).to.have.been.called;
+        });
+    });
+
+    describe('getSubmission', () => {
+        beforeEach(() => {
+            resetComponent();
+        });
+        it('should return student submission', () => {
+            expect(comp.getSubmission()).to.deep.equal(mockSubmission);
+        });
+    });
+
+    describe('getExercise', () => {
+        beforeEach(() => {
+            resetComponent();
+        });
+        it('should return exercise', () => {
+            expect(comp.getExercise()).to.deep.equal(mockExercise);
+        });
+    });
+
+    describe('updateSubmissionFromView', () => {
+        beforeEach(() => {
+            resetComponent();
+            fixture.detectChanges();
+        });
+        afterEach(() => {
+            sinon.restore();
+        });
+        it('should do nothing', () => {
+            const jsonOfComponent = stringifyCircular(comp);
+            comp.updateSubmissionFromView();
+            expect(stringifyCircular(comp)).to.deep.equal(jsonOfComponent);
+        });
+    });
+
+    describe('hasUnsavedChanges', () => {
+        beforeEach(() => {
+            resetComponent();
+        });
+        it('should return true if isSynced false', () => {
+            comp.studentSubmission.isSynced = false;
+            expect(comp.hasUnsavedChanges()).to.equal(true);
+        });
+        it('should return false if isSynced true', () => {
+            comp.studentSubmission.isSynced = true;
+            expect(comp.hasUnsavedChanges()).to.equal(false);
+        });
+    });
+
+    describe('updateViewFromSubmission', () => {
+        beforeEach(() => {
+            resetComponent();
+            fixture.detectChanges();
+        });
+        afterEach(() => {
+            sinon.restore();
+        });
+        it('should do nothing if isSynced is false', () => {
+            comp.studentSubmission.isSynced = false;
+            comp.submissionFile = new File([], 'file2');
+            comp.updateViewFromSubmission();
+            expect(comp.submissionFile).to.not.equal(undefined);
+        });
+        it('should set submitted filename and file extension', () => {
+            comp.studentSubmission.isSynced = true;
+            comp.submissionFile = new File([], 'file2');
+            comp.updateViewFromSubmission();
+            expect(comp.submittedFileName).to.equal('file1.png');
+            expect(comp.submittedFileExtension).to.equal('png');
+            expect(comp.submissionFile).to.equal(undefined);
+        });
+    });
+
+    it('Too big file can not be submitted', fakeAsync(() => {
+        // Ignore console errors
+        console.error = jest.fn();
+        resetComponent();
+        fixture.detectChanges();
+        tick();
+
+        const submissionFile = new File([''], 'exampleSubmission.png');
+        Object.defineProperty(submissionFile, 'size', { value: MAX_SUBMISSION_FILE_SIZE + 1, writable: false });
+        comp.studentSubmission = createFileUploadSubmission();
+        const jhiErrorSpy = sinon.spy(jhiAlertService, 'error');
+        const event = { target: { files: [submissionFile] } };
+        comp.setFileSubmissionForExercise(event);
+        fixture.detectChanges();
+
+        // check that properties are set properly
+        expect(jhiErrorSpy.callCount).to.be.equal(1);
+        expect(comp.submissionFile).to.be.undefined;
+        expect(comp.studentSubmission!.filePath).to.be.undefined;
+
+        // check if fileUploadInput is available
+        const fileUploadInput = fixture.debugElement.query(By.css('#fileUploadInput'));
+        expect(fileUploadInput).to.exist;
+        expect(fileUploadInput.nativeElement.disabled).to.be.false;
+        expect(fileUploadInput.nativeElement.value).to.be.equal('');
+        sinon.restore();
+    }));
+
+    it('Incorrect file type can not be submitted', fakeAsync(() => {
+        // Ignore console errors
+        console.error = jest.fn();
+        resetComponent();
+        fixture.detectChanges();
+        tick();
+
+        // Only png and pdf types are allowed
+        const submissionFile = new File([''], 'exampleSubmission.jpg');
+        comp.studentSubmission = createFileUploadSubmission();
+        const jhiErrorSpy = sinon.spy(jhiAlertService, 'error');
+        const event = { target: { files: [submissionFile] } };
+        comp.setFileSubmissionForExercise(event);
+        fixture.detectChanges();
+
+        // check that properties are set properly
+        expect(jhiErrorSpy.callCount).to.be.equal(1);
+        expect(comp.submissionFile).to.be.undefined;
+        expect(comp.studentSubmission!.filePath).to.be.undefined;
+
+        // check if fileUploadInput is available
+        const fileUploadInput = fixture.debugElement.query(By.css('#fileUploadInput'));
+        expect(fileUploadInput).to.exist;
+        expect(fileUploadInput.nativeElement.disabled).to.be.false;
+        expect(fileUploadInput.nativeElement.value).to.be.equal('');
+
+        tick();
+        fixture.destroy();
+        flush();
+        sinon.restore();
+    }));
+
+    it('should emit on upload button press', () => {
+        const emitSpy = sinon.spy(comp.onExerciseChanged, 'emit');
+        resetComponent();
+        fixture.detectChanges();
+        comp.saveUploadedFile();
+        expect(emitSpy).to.have.been.calledOnce;
+    });
 });
