@@ -110,9 +110,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("/participations/{participationId}/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO: either remove correctionRound or actually use it
     public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestBody Result newManualResult) {
+            @RequestBody Result newManualResult) {
         log.debug("REST request to save a new result : {}", newManualResult);
         final var participation = participationService.findOneWithEagerSubmissionsResultsFeedback(participationId);
 
