@@ -50,8 +50,8 @@
     }
 
     .calender-icon-container {
-        width: 30px;
-        height: 30px;
+        width: 24px;
+        height: 24px;
         background-color: $light-border-color;
         border-radius: 25px;
         border-color: #3e8acc;
@@ -61,8 +61,7 @@
     }
 
     .calender-icon {
-        position: relative;
-        top: 3px;
+        font-size: 0.8em;
     }
 
     .exercise-date-timeline {
