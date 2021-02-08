@@ -43,6 +43,9 @@ public class ParticipantScoreDTO {
         this.lastRatedResultScore = lastRatedResultScore;
     }
 
+    public ParticipantScoreDTO() {
+    }
+
     /**
      * Generates a {@link ParticipantScoreDTO} from a {@link ParticipantScore}
      *
