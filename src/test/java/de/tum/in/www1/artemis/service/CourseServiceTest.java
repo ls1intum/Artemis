@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -61,12 +62,21 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         participation2.exercise(exercise);
         studentParticipationRepo.save(participation2);
 
-        var submission1 = ModelFactory.generateTextSubmission("text of text submission1", Language.ENGLISH, true);
+        var submission1 = new TextSubmission();
+        submission1.text("text of text submission1");
+        submission1.setLanguage(Language.ENGLISH);
+        submission1.setSubmitted(true);
+        submission1.setSubmissionDate(ZonedDateTime.now());
         submission1.setParticipation(participation1);
-        submission1.setSubmissionDate(now.minusDays(1));
-        var submission2 = ModelFactory.generateTextSubmission("text of text submission2", Language.ENGLISH, true);
+        submission1.setSubmissionDate(now);
+
+        var submission2 = new TextSubmission();
+        submission2.text("text of text submission2");
+        submission2.setLanguage(Language.ENGLISH);
+        submission2.setSubmitted(true);
+        submission2.setSubmissionDate(ZonedDateTime.now());
         submission2.setParticipation(participation2);
-        submission2.setSubmissionDate(now.minusDays(1));
+        submission2.setSubmissionDate(now);
         submissionRepository.save(submission1);
         submissionRepository.save(submission2);
 
