@@ -33,15 +33,15 @@
                 </div>
 
                 <div class="col-5 row-flex hide-1400 exercise-date-container">
-                    <div class="exercise-date">
+                    <div [ngClass]="!!details.releaseDate ? 'exercise-date' : 'exercise-date exercise-no-date'">
                         <div class="exercise-date-timeline"></div>
                         <span class="small">{{ 'artemisApp.course.releaseDate' | translate }}</span>
-                        <div *ngIf="!details.releaseDate" style="display: block">
+                        <div *ngIf="!details.releaseDate">
                             <div class="calender-icon-container">
-                                <fa-icon class="calender-icon" [icon]="'calendar-minus'"></fa-icon>
+                                <fa-icon class="calender-icon" [icon]="'times'"></fa-icon>
                             </div>
                         </div>
-                        <div *ngIf="details.releaseDate" style="display: block" [ngbTooltip]="details.releaseDate | artemisDate">
+                        <div *ngIf="details.releaseDate" [ngbTooltip]="details.releaseDate | artemisDate">
                             <div class="calender-icon-container">
                                 <fa-icon class="calender-icon" [icon]="'calendar-check'"></fa-icon>
                             </div>
@@ -50,16 +50,16 @@
                         <div *ngIf="!details.releaseDate"><p></p></div>
                     </div>
 
-                    <div class="exercise-date">
+                    <div [ngClass]="!!details.dueDate ? 'exercise-date' : 'exercise-date exercise-no-date'">
                         <div class="exercise-date-timeline"></div>
                         <span class="small">{{ 'artemisApp.course.dueDate' | translate }}</span>
                         <div *ngIf="!details.dueDate">
-                            <div class="calender-icon-container" style="display: block">
-                                <fa-icon class="calender-icon" [icon]="'calendar-minus'"></fa-icon>
+                            <div class="calender-icon-container">
+                                <fa-icon class="calender-icon" [icon]="'times'"></fa-icon>
                             </div>
                         </div>
                         <div *ngIf="details.dueDate" [ngbTooltip]="details.dueDate | artemisDate">
-                            <div class="calender-icon-container" style="display: block">
+                            <div class="calender-icon-container">
                                 <fa-icon class="calender-icon" [icon]="'calendar-check'"></fa-icon>
                             </div>
                             <span class="small">{{ details.dueDate! | amTimeAgo }}</span>
@@ -67,16 +67,16 @@
                         <div *ngIf="!details.dueDate"><p></p></div>
                     </div>
 
-                    <div class="exercise-date">
+                    <div [ngClass]="!!details.assessmentDueDate ? 'exercise-date' : 'exercise-date exercise-no-date'">
                         <div class="exercise-date-timeline"></div>
                         <span class="small">{{ 'artemisApp.course.assessmentDueDate' | translate }}</span>
                         <div *ngIf="!details.assessmentDueDate">
-                            <div class="calender-icon-container" style="display: block">
-                                <fa-icon class="calender-icon" [icon]="'calendar-minus'"></fa-icon>
+                            <div class="calender-icon-container">
+                                <fa-icon class="calender-icon" [icon]="'times'"></fa-icon>
                             </div>
                         </div>
                         <div *ngIf="details.assessmentDueDate" [ngbTooltip]="details.assessmentDueDate | artemisDate">
-                            <div class="calender-icon-container" style="display: block">
+                            <div class="calender-icon-container">
                                 <fa-icon class="calender-icon" [icon]="'calendar-check'"></fa-icon>
                             </div>
                             <span class="small">{{ details.assessmentDueDate! | amTimeAgo }}</span>

@@ -57,6 +57,7 @@
         border-color: #3e8acc;
         border-width: 2px;
         margin: auto;
+        display: block;
     }
 
     .calender-icon {
@@ -86,6 +87,10 @@
         text-align: center;
         z-index: 1;
         min-width: 130px;
+    }
+
+    .exercise-no-date {
+        opacity: 0.4;
     }
 
     .exercise-score-container {
