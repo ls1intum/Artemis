@@ -186,7 +186,7 @@
                                     </li>
                                     <li class="list-group-item border-1">
                                         <span>{{ 'artemisApp.examManagement.checklist.textitems.studentsregistered' | translate }}</span>
-                                        <span> {{ exam.registeredUsers?.length }} </span>
+                                        <span> {{ exam.registeredUsers?.length || 0 }} </span>
                                     </li>
                                 </ul>
                             </td>
