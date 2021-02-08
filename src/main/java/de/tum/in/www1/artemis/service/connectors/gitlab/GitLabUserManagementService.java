@@ -66,18 +66,29 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     @Override
-    public void updateUser(User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword) {
+    public void updateUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword) {
         try {
             var userApi = gitlab.getUserApi();
-            final var gitlabUser = userApi.getUser(user.getLogin());
+            final var gitlabUser = userApi.getUser(vcsLogin);
             if (gitlabUser == null) {
                 // in case the user does not exist in Gitlab, we cannot update it
                 log.warn("User " + user.getLogin() + " does not exist in Gitlab and cannot be updated!");
                 return;
             }
+
+            // Update general user information. Skip confirmation is necessary
+            // in order to update the email without user re-confirmation
+            gitlabUser.setName(user.getName());
+            gitlabUser.setUsername(user.getLogin());
+            gitlabUser.setEmail(user.getEmail());
+            gitlabUser.setSkipConfirmation(true);
+
             if (shouldSynchronizePassword) {
                 // update the user password in Gitlab with the one stored in the Artemis database
                 userApi.updateUser(gitlabUser, userService.decryptPassword(user));
+            }
+            else {
+                userApi.updateUser(gitlabUser, null);
             }
 
             // Add as member to new groups
@@ -184,12 +195,12 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      *     <li>REMOVAL from GitLab group, because no valid active group is present</li>
      * </ul>
      *
-     * @param exercises All exercises for the updated course
-     * @param users All user in the old group
-     * @param newGroupName The name of the new group, e.g. "newInstructors"
-     * @param alternativeGroupName The name of the other group (instructor or TA), e.g. "newTeachingAssistant"
+     * @param exercises              All exercises for the updated course
+     * @param users                  All user in the old group
+     * @param newGroupName           The name of the new group, e.g. "newInstructors"
+     * @param alternativeGroupName   The name of the other group (instructor or TA), e.g. "newTeachingAssistant"
      * @param alternativeAccessLevel The access level for the alternative group, e.g. GUEST for TAs
-     * @param doUpgrade True, if the alternative group would be an upgrade. This is the case if the old group was TA, so the new instructor group would be better (if applicable)
+     * @param doUpgrade              True, if the alternative group would be an upgrade. This is the case if the old group was TA, so the new instructor group would be better (if applicable)
      */
     private void updateOldGroupMembers(List<ProgrammingExercise> exercises, List<User> users, String newGroupName, String alternativeGroupName, AccessLevel alternativeAccessLevel,
             boolean doUpgrade) {
@@ -271,8 +282,9 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     /**
      * adds a Gitlab user to a Gitlab group based on the provided exercises (project key) and the given access level
-     * @param userId the Gitlab user id
-     * @param exercises the list of exercises which project key is used as the Gitlab "group" (i.e. Gitlab project)
+     *
+     * @param userId      the Gitlab user id
+     * @param exercises   the list of exercises which project key is used as the Gitlab "group" (i.e. Gitlab project)
      * @param accessLevel the access level that the user should get as part of the group/project
      */
     public void addUserToGroups(int userId, List<ProgrammingExercise> exercises, AccessLevel accessLevel) {
@@ -292,6 +304,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     /**
      * creates a Gitlab user account based on the passed Artemis user account with the same email, login, name and password
+     *
      * @param user a valid Artemis user (account)
      * @return a Gitlab user
      */
@@ -308,6 +321,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     /**
      * retrieves the user id of the Gitlab user with the given user name
+     *
      * @param username the username for which the user id should be retrieved
      * @return the Gitlab user id
      */

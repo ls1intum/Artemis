@@ -649,8 +649,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the programming submission with the given id
      */
-    public ProgrammingSubmission findByIdWithEagerResultAndFeedback(long submissionId) {
-        return programmingSubmissionRepository.findWithEagerResultAssessorFeedbackById(submissionId)
+    public ProgrammingSubmission findByIdWithEagerResultsFeedbacksAssessor(long submissionId) {
+        return programmingSubmissionRepository.findWithEagerResultsFeedbacksAssessorById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
     }
 
@@ -662,12 +662,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return the locked programming submission
      */
     public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId, int correctionRound) {
-        ProgrammingSubmission programmingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
-
+        ProgrammingSubmission programmingSubmission = findOneWithEagerResultsFeedbacksAssessor(submissionId);
         var manualResult = lockSubmission(programmingSubmission, correctionRound);
-        programmingSubmission = (ProgrammingSubmission) manualResult.getSubmission();
-
-        return programmingSubmission;
+        return (ProgrammingSubmission) manualResult.getSubmission();
     }
 
     /**
@@ -710,7 +707,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             optionalExistingResult = Optional.empty();
         }
         else {
-            optionalExistingResult = Optional.of(submission.getResultForCorrectionRound(correctionRound - 1));
+            optionalExistingResult = Optional.ofNullable(submission.getResultForCorrectionRound(correctionRound - 1));
         }
         List<Feedback> automaticFeedbacks = new ArrayList<>();
         if (optionalExistingResult.isPresent()) {
@@ -741,8 +738,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         return newResult;
     }
 
-    private ProgrammingSubmission findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
-        return programmingSubmissionRepository.findWithEagerResultAssessorFeedbackById(submissionId)
+    private ProgrammingSubmission findOneWithEagerResultsFeedbacksAssessor(Long submissionId) {
+        return programmingSubmissionRepository.findWithEagerResultsFeedbacksAssessorById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
     }
 }

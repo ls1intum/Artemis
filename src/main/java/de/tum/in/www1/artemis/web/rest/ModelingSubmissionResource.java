@@ -316,7 +316,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("/participations/{participationId}/latest-modeling-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getLatestSubmissionForModelingEditor(@PathVariable long participationId) {
-        StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
+        StudentParticipation participation = participationService.findOneWithEagerSubmissionsResultsFeedback(participationId);
         User user = userService.getUserWithGroupsAndAuthorities();
         ModelingExercise modelingExercise;
 
