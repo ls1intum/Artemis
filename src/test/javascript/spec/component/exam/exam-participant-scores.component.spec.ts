@@ -38,7 +38,6 @@ describe('ExamParticipantScores', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [ExamParticipantScoresComponent, ParticipantScoresTableContainerStubComponent, MockPipe(TranslatePipe), MockComponent(AlertComponent)],
             providers: [
                 MockProvider(ParticipantScoresService),
@@ -48,7 +47,6 @@ describe('ExamParticipantScores', () => {
                     useValue: { params: of({ examId: 1 }) },
                 },
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {
