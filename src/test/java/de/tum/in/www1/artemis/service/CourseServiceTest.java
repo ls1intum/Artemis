@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -23,9 +22,6 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @Autowired
     private CourseService courseService;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     SubmissionRepository submissionRepository;
