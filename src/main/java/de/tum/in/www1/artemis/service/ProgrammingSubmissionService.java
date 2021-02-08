@@ -361,6 +361,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private ProgrammingSubmission createSubmissionWithCommitHashAndSubmissionType(ProgrammingExerciseParticipation participation, ObjectId commitHash,
             SubmissionType submissionType) {
+        // Make sure that the new submission has the submission date of now
         ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash(commitHash.getName()).submitted(true)
                 .submissionDate(ZonedDateTime.now()).type(submissionType);
         newSubmission.setParticipation((Participation) participation);

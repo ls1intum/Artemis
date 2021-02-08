@@ -3,8 +3,10 @@ package de.tum.in.www1.artemis.service.connectors;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -69,7 +71,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
         return submissions.stream().filter(theSubmission -> {
             var commitHash = getCommitHash(buildResult, theSubmission.getType());
             return commitHash.isPresent() && commitHash.get().equals(theSubmission.getCommitHash());
-        }).findFirst();
+        }).sorted(Comparator.comparing(ProgrammingSubmission::getSubmissionDate).reversed()).findFirst();
     }
 
     /**
