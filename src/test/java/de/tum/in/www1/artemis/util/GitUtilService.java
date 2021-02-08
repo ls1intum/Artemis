@@ -53,18 +53,27 @@ public class GitUtilService {
     private Git remoteGit;
 
     public void initRepo() {
+        initRepo("main");
+    }
+
+    public void initRepo(String defaultBranch) {
         try {
             deleteRepos();
 
             remoteGit = Git.init().setDirectory(remotePath.toFile()).call();
-
-            // create some files in the remote repository and clone them
+            // create some files in the remote repository
             remotePath.resolve(FILES.FILE1.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE2.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE3.toString()).toFile().createNewFile();
             remoteGit.add().addFilepattern(".").call();
             remoteGit.commit().setMessage("initial commit").call();
 
+            if (!defaultBranch.equals("master")) {
+                // set HEAD in remote repository
+                remoteGit.checkout().setCreateBranch(true).setName(defaultBranch).call();
+            }
+
+            // clone remote repository
             localGit = Git.cloneRepository().setURI(remotePath.toString()).setDirectory(localPath.toFile()).call();
 
             reinitializeLocalRepository();
