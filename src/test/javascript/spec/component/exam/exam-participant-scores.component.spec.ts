@@ -1,4 +1,3 @@
-import { CourseParticipantScoresComponent } from 'app/course/course-participant-scores/course-participant-scores.component';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -12,6 +11,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ParticipantScoreAverageDTO, ParticipantScoreDTO, ParticipantScoresService } from 'app/shared/participant-scores/participant-scores.service';
 import * as chai from 'chai';
 import { HttpResponse } from '@angular/common/http';
+import { ExamParticipantScoresComponent } from 'app/exam/manage/exam-participant-scores/exam-participant-scores.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -32,27 +32,27 @@ class ParticipantScoresTableContainerStubComponent {
     reload = new EventEmitter<void>();
 }
 
-describe('CourseParticipantScores', () => {
-    let fixture: ComponentFixture<CourseParticipantScoresComponent>;
-    let component: CourseParticipantScoresComponent;
+describe('ExamParticipantScores', () => {
+    let fixture: ComponentFixture<ExamParticipantScoresComponent>;
+    let component: ExamParticipantScoresComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [CourseParticipantScoresComponent, ParticipantScoresTableContainerStubComponent, MockPipe(TranslatePipe), MockComponent(AlertComponent)],
+            declarations: [ExamParticipantScoresComponent, ParticipantScoresTableContainerStubComponent, MockPipe(TranslatePipe), MockComponent(AlertComponent)],
             providers: [
                 MockProvider(ParticipantScoresService),
                 MockProvider(JhiAlertService),
                 {
                     provide: ActivatedRoute,
-                    useValue: { params: of({ courseId: 1 }) },
+                    useValue: { params: of({ examId: 1 }) },
                 },
             ],
             schemas: [],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(CourseParticipantScoresComponent);
+                fixture = TestBed.createComponent(ExamParticipantScoresComponent);
                 component = fixture.componentInstance;
             });
     });
@@ -69,32 +69,30 @@ describe('CourseParticipantScores', () => {
     it('should load date when initialized', () => {
         const participantScoreService = TestBed.inject(ParticipantScoresService);
 
-        // stub find all of course
+        // stub find all of exam
         const participantScoreDTO = new ParticipantScoreDTO();
         participantScoreDTO.id = 1;
         participantScoreDTO.userName = 'test';
-        const findAllOfCourseResponse: HttpResponse<ParticipantScoreDTO[]> = new HttpResponse({
+        const findAllOfExamResponse: HttpResponse<ParticipantScoreDTO[]> = new HttpResponse({
             body: [participantScoreDTO],
             status: 200,
         });
-        const findAllOfCourseStub = sinon.stub(participantScoreService, 'findAllOfCourse').returns(of(findAllOfCourseResponse));
-        // stub find average of course
+        const findAllOfExamStub = sinon.stub(participantScoreService, 'findAllOfExam').returns(of(findAllOfExamResponse));
+        // stub find average of exam
         const participantScoreAverageDTO = new ParticipantScoreAverageDTO();
         participantScoreAverageDTO.userName = 'test';
         participantScoreAverageDTO.averageScore = 10;
-        const findAverageOfCoursePerParticipantResponse: HttpResponse<ParticipantScoreAverageDTO[]> = new HttpResponse({
+        const findAverageOfExamPerParticipantResponse: HttpResponse<ParticipantScoreAverageDTO[]> = new HttpResponse({
             body: [participantScoreAverageDTO],
             status: 200,
         });
-        const findAverageOfCoursePerParticipantStub = sinon
-            .stub(participantScoreService, 'findAverageOfCoursePerParticipant')
-            .returns(of(findAverageOfCoursePerParticipantResponse));
-        // stub find average of course
-        const findAverageOfCourseResponse: HttpResponse<number> = new HttpResponse({
+        const findAverageOfExamPerParticipantStub = sinon.stub(participantScoreService, 'findAverageOfExamPerParticipant').returns(of(findAverageOfExamPerParticipantResponse));
+        // stub find average of exam
+        const findAverageOfExamResponse: HttpResponse<number> = new HttpResponse({
             body: 99,
             status: 200,
         });
-        const findAverageOfCourseStub = sinon.stub(participantScoreService, 'findAverageOfCourse').returns(of(findAverageOfCourseResponse));
+        const findAverageOfExamStub = sinon.stub(participantScoreService, 'findAverageOfExam').returns(of(findAverageOfExamResponse));
 
         fixture.detectChanges();
 
@@ -102,8 +100,8 @@ describe('CourseParticipantScores', () => {
         expect(component.participantScoresAverage).to.deep.equal([participantScoreAverageDTO]);
         expect(component.avgScore).to.equal(99);
         expect(component.avgRatedScore).to.equal(99);
-        expect(findAllOfCourseStub).to.have.been.called;
-        expect(findAverageOfCoursePerParticipantStub).to.have.been.called;
-        expect(findAverageOfCourseStub).to.have.been.called;
+        expect(findAllOfExamStub).to.have.been.called;
+        expect(findAverageOfExamPerParticipantStub).to.have.been.called;
+        expect(findAverageOfExamStub).to.have.been.called;
     });
 });
