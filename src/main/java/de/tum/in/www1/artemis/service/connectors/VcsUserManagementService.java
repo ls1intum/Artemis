@@ -23,12 +23,13 @@ public interface VcsUserManagementService {
      *     <li>Update the groups the user belongs to, i.e. removing him from exercises that reference old groups</li>
      * </ul>
      *
-     * @param user The updated user in Artemis
-     * @param removedGroups groups that the user does not belong to any longer
-     * @param addedGroups The new groups the Artemis user got added to
+     * @param vcsLogin                  The username of the user in the VCS
+     * @param user                      The updated user in Artemis
+     * @param removedGroups             groups that the user does not belong to any longer
+     * @param addedGroups               The new groups the Artemis user got added to
      * @param shouldSynchronizePassword whether the password should be synchronized between Artemis and the VcsUserManagementService
      */
-    void updateUser(User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword);
+    void updateUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword);
 
     /**
      * Deletes the user under the specified login from the VCS
@@ -42,8 +43,8 @@ public interface VcsUserManagementService {
      * all users from exercises, that are no longer part of any relevant group and adding all users to exercises in the course
      * that are part of the updated groups.
      *
-     * @param updatedCourse The updated course with the new permissions
-     * @param oldInstructorGroup The old instructor group name
+     * @param updatedCourse             The updated course with the new permissions
+     * @param oldInstructorGroup        The old instructor group name
      * @param oldTeachingAssistantGroup The old teaching assistant group name
      */
     void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup);

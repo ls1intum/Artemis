@@ -190,8 +190,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResults(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results where participation.id = :#{#participationId}")
-    Optional<StudentParticipation> findByIdWithEagerResults(@Param("participationId") Long participationId);
+    @EntityGraph(type = LOAD, attributePaths = { "results" })
+    Optional<StudentParticipation> findWithEagerResultsById(@Param("participationId") Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks" })
     Optional<StudentParticipation> findWithEagerResultsAndFeedbackById(@Param("participationId") Long participationId);

@@ -63,7 +63,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> updateProgrammingManualResultAfterComplaint(@RequestBody AssessmentUpdate assessmentUpdate, @PathVariable long submissionId) {
         log.debug("REST request to update the assessment of manual result for submission {} after complaint.", submissionId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        ProgrammingSubmission programmingSubmission = programmingSubmissionService.findByIdWithEagerResultAndFeedback(submissionId);
+        ProgrammingSubmission programmingSubmission = programmingSubmissionService.findByIdWithEagerResultsFeedbacksAssessor(submissionId);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
         if (!programmingExercise.areManualResultsAllowed()) {
@@ -104,17 +104,17 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      *
      * @param participationId the id of the participation that should be sent to the client
      * @param submit       defines if assessment is submitted or saved
-     * @param correctionRound correction round for which we prepare the submission
      * @param newManualResult    result with list of feedbacks to be saved to the database
      * @return the result saved to the database
      */
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("/participations/{participationId}/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    // TODO: either remove correctionRound or actually use it
     public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestBody Result newManualResult) {
         log.debug("REST request to save a new result : {}", newManualResult);
-        final var participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
+        final var participation = participationService.findOneWithEagerSubmissionsResultsFeedback(participationId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
