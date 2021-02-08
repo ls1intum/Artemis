@@ -97,17 +97,18 @@ export class ExamDetailComponent implements OnInit {
     }
 
     /**
-     * Set pointsExercisesEqual to true if exercises have the same number of maxPoints within each exercise groups
+     * Set pointsExercisesEqual to true if exercises have the same number of maxPoints within each exercise group
      */
     checkPointsExercisesEqual() {
         this.pointsExercisesEqual = true;
         this.exam.exerciseGroups!.forEach((exerciseGroup) => {
-            const points = exerciseGroup.exercises?.[0].maxPoints;
-            return exerciseGroup.exercises?.forEach((exercise) => {
-                if (exercise.maxPoints !== points) {
+            const maxPoints = exerciseGroup.exercises?.[0].maxPoints;
+            return exerciseGroup.exercises?.some((exercise) => {
+                if (exercise.maxPoints !== maxPoints) {
                     this.pointsExercisesEqual = false;
-                    return;
+                    return true;
                 }
+                return false;
             });
         });
     }
