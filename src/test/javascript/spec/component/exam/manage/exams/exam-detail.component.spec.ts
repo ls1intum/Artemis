@@ -125,6 +125,7 @@ describe('ExamDetailComponent', () => {
     });
 
     beforeEach(function () {
+        // reset exam
         exam.id = 1;
         exam.course = new Course();
         exam.course.id = 1;
