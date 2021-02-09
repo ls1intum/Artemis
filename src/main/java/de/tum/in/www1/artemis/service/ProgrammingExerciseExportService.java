@@ -173,7 +173,7 @@ public class ProgrammingExerciseExportService {
         try {
             // Checkout the repository
             repository = gitService.getOrCheckoutRepository(repositoryUrl, repoProjectPath, true);
-            gitService.resetToOriginMaster(repository);
+            gitService.resetToOriginHead(repository);
 
             // Zip it
             zippedRepo = gitService.zipRepository(repository.getLocalPath(), zipFilename, repoProjectPath);
@@ -245,7 +245,7 @@ public class ProgrammingExerciseExportService {
         try {
             // Checkout the repository
             repository = gitService.getOrCheckoutRepository(participation, targetPath);
-            gitService.resetToOriginMaster(repository);
+            gitService.resetToOriginHead(repository);
 
             if (repositoryExportOptions.isFilterLateSubmissions() && repositoryExportOptions.getFilterLateSubmissionsDate() != null) {
                 filterLateSubmissions(repositoryExportOptions.getFilterLateSubmissionsDate(), participation, repository);
@@ -498,7 +498,7 @@ public class ProgrammingExerciseExportService {
         participations.forEach(participation -> {
             try {
                 Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
-                gitService.resetToOriginMaster(repo); // start with clean state
+                gitService.resetToOriginHead(repo); // start with clean state
                 downloadedRepositories.add(repo);
             }
             catch (GitException | GitAPIException | InterruptedException ex) {
@@ -510,7 +510,7 @@ public class ProgrammingExerciseExportService {
         // clone the template repo
         try {
             Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath);
-            gitService.resetToOriginMaster(templateRepo); // start with clean state
+            gitService.resetToOriginHead(templateRepo); // start with clean state
             downloadedRepositories.add(templateRepo);
         }
         catch (GitException | GitAPIException | InterruptedException ex) {

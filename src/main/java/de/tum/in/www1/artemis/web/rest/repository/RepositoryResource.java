@@ -253,7 +253,7 @@ public abstract class RepositoryResource {
     public ResponseEntity<Void> resetToLastCommit(Long domainId) {
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, false);
-            gitService.resetToOriginMaster(repository);
+            gitService.resetToOriginHead(repository);
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }

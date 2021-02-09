@@ -70,6 +70,17 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
+    public void getOriginHead() throws IOException, GitAPIException {
+        var defaultBranch = "test";
+        gitUtilService.initRepo(defaultBranch);
+        // Checkout a different branch in local repo
+        gitUtilService.checkoutBranch(GitUtilService.REPOS.LOCAL, "other-branch");
+
+        var repo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
+        assertThat(gitService.getOriginHead(repo)).isEqualTo(defaultBranch);
+    }
+
+    @Test
     public void combineAllCommitsIntoInitialCommitTest() throws GitAPIException {
         String newFileContent1 = "lorem ipsum";
         String newFileContent2 = "lorem ipsum solet";

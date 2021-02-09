@@ -23,13 +23,13 @@ import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
@@ -621,22 +621,48 @@ public class GitService {
     }
 
     /**
-     * Hard reset local repository to origin/master.
+     * Get branch that origin/HEAD points to, useful to handle default branches that are not master
+     *
+     * @param repo Local Repository Object.
+     * @return name of the origin/HEAD branch, e.g. 'main' or null if there is no HEAD
+     */
+    public String getOriginHead(Repository repo) throws GitAPIException {
+        Git git = new Git(repo);
+        var originHeadRef = git.lsRemote().callAsMap().get("HEAD");
+        git.close();
+
+        // Empty Git repos don't have HEAD
+        if (originHeadRef == null) {
+            return null;
+        }
+
+        var fullName = originHeadRef.getTarget().getName();
+        return StringUtils.substringAfterLast(fullName, "/");
+    }
+
+    /**
+     * Hard reset local repository to origin/HEAD.
      *
      * @param repo Local Repository Object.
      */
-    public void resetToOriginMaster(Repository repo) {
+    public void resetToOriginHead(Repository repo) {
         try {
             fetchAll(repo);
-            reset(repo, "origin/master");
+            var originHead = getOriginHead(repo);
+
+            if (originHead == null) {
+                log.error("Cannot hard reset the repo " + repo.getLocalPath() + " to origin/HEAD because it is empty.");
+            }
+
+            reset(repo, "origin/" + originHead);
         }
         catch (GitAPIException | JGitInternalException ex) {
-            log.error("Cannot hard reset the repo " + repo.getLocalPath() + " to origin/master due to the following exception: " + ex.getMessage());
+            log.error("Cannot hard reset the repo " + repo.getLocalPath() + " to origin/HEAD due to the following exception: " + ex.getMessage());
         }
     }
 
     /**
-     * Get last commit hash from master
+     * Get last commit hash from HEAD
      *
      * @param repoUrl to get the latest hash from.
      * @return the latestHash of the given repo.
@@ -646,22 +672,20 @@ public class GitService {
         if (repoUrl == null || repoUrl.getURL() == null) {
             return null;
         }
-        // Get refs of repo without cloning it locally
-        Collection<Ref> refs;
+        // Get HEAD ref of repo without cloning it locally
         try {
             log.debug("getLastCommitHash " + repoUrl);
-            refs = Git.lsRemoteRepository().setRemote(getGitUriAsString(repoUrl)).setTransportConfigCallback(sshCallback).call();
+            var headRef = Git.lsRemoteRepository().setRemote(getGitUriAsString(repoUrl)).setTransportConfigCallback(sshCallback).callAsMap().get("HEAD");
+
+            if (headRef == null) {
+                return null;
+            }
+
+            return headRef.getObjectId();
         }
         catch (GitAPIException | URISyntaxException ex) {
             throw new EntityNotFoundException("Could not retrieve the last commit hash for repoUrl " + repoUrl + " due to the following exception: " + ex);
         }
-        for (Ref ref : refs) {
-            // We are looking for the latest commit hash of the master branch
-            if (ref.getName().equalsIgnoreCase("refs/heads/master")) {
-                return ref.getObjectId();
-            }
-        }
-        return null;
     }
 
     /**
@@ -855,7 +879,7 @@ public class GitService {
     public void combineAllCommitsIntoInitialCommit(Repository repo) throws IllegalStateException, GitAPIException {
         Git git = new Git(repo);
         try {
-            resetToOriginMaster(repo);
+            resetToOriginHead(repo);
             List<RevCommit> commits = StreamSupport.stream(git.log().call().spliterator(), false).collect(Collectors.toList());
             RevCommit firstCommit = commits.get(commits.size() - 1);
             // If there is a first commit, combine all other commits into it.

@@ -774,11 +774,11 @@ public class ProgrammingExerciseService {
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL, true);
         Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL, true);
 
-        gitService.resetToOriginMaster(solutionRepository);
+        gitService.resetToOriginHead(solutionRepository);
         gitService.pullIgnoreConflicts(solutionRepository);
-        gitService.resetToOriginMaster(exerciseRepository);
+        gitService.resetToOriginHead(exerciseRepository);
         gitService.pullIgnoreConflicts(exerciseRepository);
-        gitService.resetToOriginMaster(testRepository);
+        gitService.resetToOriginHead(testRepository);
         gitService.pullIgnoreConflicts(testRepository);
 
         Path solutionRepositoryPath = solutionRepository.getLocalPath().toRealPath();

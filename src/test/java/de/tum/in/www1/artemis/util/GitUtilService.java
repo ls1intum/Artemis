@@ -183,6 +183,20 @@ public class GitUtilService {
         }
     }
 
+    public void checkoutBranch(REPOS repo, String branch) {
+        checkoutBranch(repo, branch, true);
+    }
+
+    public void checkoutBranch(REPOS repo, String branch, boolean createBranch) {
+        try {
+            Git git = new Git(getRepoByType(repo));
+            git.checkout().setCreateBranch(createBranch).setName(branch).call();
+            git.close();
+        }
+        catch (GitAPIException ignored) {
+        }
+    }
+
     public boolean isLocalEqualToRemote() {
         String fileContentLocal1 = getFileContent(REPOS.LOCAL, GitUtilService.FILES.FILE1);
         String fileContentLocal2 = getFileContent(REPOS.LOCAL, GitUtilService.FILES.FILE2);
