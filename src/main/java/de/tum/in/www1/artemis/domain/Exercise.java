@@ -671,6 +671,11 @@ public abstract class Exercise extends DomainObject {
             }
         }
         else if (submissionsWithUnratedResult.size() > 0) {
+            if (this instanceof ProgrammingExercise) {
+                // this is an edge case that is treated differently: the student has not submitted before the due date and the client would otherwise think
+                // that there is no result for the submission and would display a red trigger button.
+                return null;
+            }
             if (submissionsWithUnratedResult.size() == 1) {
                 return submissionsWithUnratedResult.get(0);
             }
