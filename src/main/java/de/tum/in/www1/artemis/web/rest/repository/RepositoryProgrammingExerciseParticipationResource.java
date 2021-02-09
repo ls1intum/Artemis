@@ -315,13 +315,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return forbidden();
         }
 
-        Result latestResult = latestSubmission.getLatestResult();
-        // We don't try to fetch build logs for manual results (they were not created through the build but manually by an assessor)!
-        if (latestResult != null && latestResult.isManual()) {
-            // Don't throw an error here, just return an empty list.
-            return ResponseEntity.ok(new ArrayList<>());
-        }
-
         // Load the logs from the database
         List<BuildLogEntry> buildLogsFromDatabase = buildLogService.getLatestBuildLogs(latestSubmission);
 

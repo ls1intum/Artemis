@@ -282,6 +282,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
                 // Stash the not submitted/committed changes for exercises with manual assessment and with online editor enabled
                 // This is necessary for students who have used the online editor, to ensure that only submitted/committed changes are displayed during manual assessment
+                // in the case they still have saved changes on the Artemis server which have not been committed / pushed
                 if (Boolean.TRUE.equals(exercise.isAllowOnlineEditor()) && exercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
                     List<ProgrammingExerciseStudentParticipation> failedStashOperations = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
                     long numberOfFailedStashOperations = failedStashOperations.size();
@@ -423,7 +424,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private List<ProgrammingExerciseStudentParticipation> stashChangesInAllStudentRepositories(Long programmingExerciseId,
             Predicate<ProgrammingExerciseStudentParticipation> condition) throws EntityNotFoundException {
-        // TODO: this should only be invoked on git repositories that have already been checked out on the Artemis server
         return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::stashChangesInStudentRepositoryAfterDueDateHasPassed,
                 condition, "stash changes from all student repositories");
     }
