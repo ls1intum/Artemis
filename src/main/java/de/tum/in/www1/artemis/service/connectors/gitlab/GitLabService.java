@@ -92,7 +92,8 @@ public class GitLabService extends AbstractVersionControlService {
             }
         }
 
-        protectBranch(repositoryUrl, "master");
+        var defaultBranch = getDefaultBranch(repositoryUrl);
+        protectBranch(repositoryUrl, defaultBranch);
     }
 
     @Override
@@ -124,6 +125,23 @@ public class GitLabService extends AbstractVersionControlService {
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Error while trying to remove user from repository: " + user.getLogin() + " from repo " + repositoryUrl, e);
+        }
+    }
+
+    /**
+     * Get the default branch of the repository
+     *
+     * @param repositoryUrl The repository url of the repository to update. It contains the project key & the repository name.
+     * @return the name of the default branch, e.g. 'main'
+     */
+    private String getDefaultBranch(VcsRepositoryUrl repositoryUrl) {
+        var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+
+        try {
+            return gitlab.getProjectApi().getProject(repositoryId).getDefaultBranch();
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Unable to get default branch for repository " + repositoryId, e);
         }
     }
 

@@ -185,6 +185,10 @@ public class GitlabRequestMockProvider {
 
     public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<de.tum.in.www1.artemis.domain.User> users, boolean ltiUserExists)
             throws GitLabApiException {
+        // TODO: Does it make sense to use the template repository URL here? .configureRepository() is only
+        // used by ParticipationService and ProgrammingExerciseParticipationService. At the moment
+        // the repositoryUrl that is used when the test runs is different to the one that we mock
+        // the Gitlab API methods for. In this case Mockito returns null instead.
         var repositoryUrl = exercise.getVcsTemplateRepositoryUrl();
         for (de.tum.in.www1.artemis.domain.User user : users) {
             String loginName = user.getLogin();
@@ -201,7 +205,9 @@ public class GitlabRequestMockProvider {
 
             mockAddMemberToRepository(repositoryUrl, user);
         }
-        mockProtectBranch("master", repositoryUrl);
+        var defaultBranch = "main";
+        mockGetDefaultBranch(defaultBranch, repositoryUrl);
+        mockProtectBranch(defaultBranch, repositoryUrl);
     }
 
     private void mockUserExists(String username, boolean exists) throws GitLabApiException {
@@ -221,6 +227,14 @@ public class GitlabRequestMockProvider {
         final var mockedUserId = 1;
         mockGitlabUserManagementServiceGetUserId(user.getLogin(), mockedUserId);
         doReturn(new Member()).when(projectApi).addMember(repositoryId, mockedUserId, DEVELOPER);
+    }
+
+    private void mockGetDefaultBranch(String defaultBranch, VcsRepositoryUrl repositoryUrl) throws GitLabApiException {
+        // TODO: Use explicit repositoryId when we supply it from the user Participation
+        // var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        var mockProject = new Project();
+        mockProject.setDefaultBranch(defaultBranch);
+        doReturn(mockProject).when(projectApi).getProject(notNull());
     }
 
     private void mockProtectBranch(String branch, VcsRepositoryUrl repositoryUrl) throws GitLabApiException {
