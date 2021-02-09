@@ -239,7 +239,7 @@ Exercise Creation
   .. figure:: programming/configure-grading-update-information.png
             :align: center
 
-  .. note::
+  .. warning::
     The badge at the bottom is only affected by changes to the configuration, if students already participated in the exercise. Artemis always grades new submissions with the latest configuration but existing submissions might have been graded with an outdated configuration. Artemis warns instructors about grading inconsistencies with the **Updated grading** badge.
 
 - **Test Case Tab**: Adapt the contribution of each test case to the overall score
