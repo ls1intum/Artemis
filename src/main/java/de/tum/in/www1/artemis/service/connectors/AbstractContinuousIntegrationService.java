@@ -70,7 +70,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
         return submissions.stream().filter(theSubmission -> {
             var commitHash = getCommitHash(buildResult, theSubmission.getType());
             return commitHash.isPresent() && commitHash.get().equals(theSubmission.getCommitHash());
-        }).sorted(Comparator.comparing(ProgrammingSubmission::getSubmissionDate).reversed()).findFirst();
+        }).max(Comparator.comparing(ProgrammingSubmission::getSubmissionDate));
     }
 
     /**

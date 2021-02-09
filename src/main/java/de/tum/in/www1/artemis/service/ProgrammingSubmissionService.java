@@ -454,8 +454,18 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public void setTestCasesChangedAndTriggerTestCaseUpdate(Long programmingExerciseId) throws EntityNotFoundException {
         setTestCasesChanged(programmingExerciseId, true);
         try {
-            ProgrammingSubmission submission = createSolutionParticipationSubmissionWithTypeTest(programmingExerciseId, null);
-            triggerBuildAndNotifyUser(submission);
+            // TODO: do not create a submission (only grading has changed!!)
+            SolutionProgrammingExerciseParticipation solutionParticipation = programmingExerciseParticipationService
+                    .findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
+            var latestSubmissionOptional = solutionParticipation.getSubmissions().stream().max(Comparator.comparing(Submission::getSubmissionDate));
+            // check if solutionParticipation is from type TEST, if yes don't create a new submission, else create a new TEST submission
+            if (latestSubmissionOptional.isPresent() && latestSubmissionOptional.get().getType() != SubmissionType.TEST) {
+                ProgrammingSubmission submission = createSolutionParticipationSubmissionWithTypeTest(programmingExerciseId, null);
+                triggerBuildAndNotifyUser(submission);
+            }
+            else {
+                triggerBuildAndNotifyUser(solutionParticipation);
+            }
             return;
         }
         catch (IllegalStateException ex) {
