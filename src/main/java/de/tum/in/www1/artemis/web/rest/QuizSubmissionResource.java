@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -132,6 +133,8 @@ public class QuizSubmissionResource {
         StudentParticipation participation = participationService.startExercise(quizExercise, user, false);
         // we set the exercise again to prevent issues with lazy loaded quiz questions
         participation.setExercise(quizExercise);
+        participation.setInitializationState(InitializationState.FINISHED);
+        participation = participationService.save(participation);
 
         // update and save submission
         Result result = quizSubmissionService.submitForPractice(quizSubmission, quizExercise, participation);
