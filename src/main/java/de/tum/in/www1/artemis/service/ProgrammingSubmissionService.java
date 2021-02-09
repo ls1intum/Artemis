@@ -445,39 +445,19 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Executes setTestCasesChanged with testCasesChanged = true, also creates a submission for the solution participation and triggers its build.
+     * Executes setTestCasesChanged with testCasesChanged = true, also triggers template and solution build.
      * This method should be used if the solution participation would otherwise not be built.
      *
      * @param programmingExerciseId ProgrammingExercise id
      * @throws EntityNotFoundException if there is no programming exercise for the given id.
      */
-    public void setTestCasesChangedAndTriggerTestCaseUpdate(Long programmingExerciseId) throws EntityNotFoundException {
+    public void setTestCasesChangedAndTriggerTestCaseUpdate(long programmingExerciseId) throws EntityNotFoundException {
         setTestCasesChanged(programmingExerciseId, true);
-        try {
-            // TODO: do not create a submission (only grading has changed!!)
-            SolutionProgrammingExerciseParticipation solutionParticipation = programmingExerciseParticipationService
-                    .findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
-            var latestSubmissionOptional = solutionParticipation.getSubmissions().stream().max(Comparator.comparing(Submission::getSubmissionDate));
-            // check if solutionParticipation is from type TEST, if yes don't create a new submission, else create a new TEST submission
-            if (latestSubmissionOptional.isPresent() && latestSubmissionOptional.get().getType() != SubmissionType.TEST) {
-                ProgrammingSubmission submission = createSolutionParticipationSubmissionWithTypeTest(programmingExerciseId, null);
-                triggerBuildAndNotifyUser(submission);
-            }
-            else {
-                triggerBuildAndNotifyUser(solutionParticipation);
-            }
-            return;
-        }
-        catch (IllegalStateException ex) {
-            log.debug("No submission could be created for the programming exercise with the id " + programmingExerciseId + ", trying to trigger the build without a submission.");
-        }
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExerciseId).get();
 
-        // Edge case: If no submission could be created, just trigger the solution build. On receiving the result, Artemis will try to create a new submission with the result
-        // completionDate.
-        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExerciseParticipationService
-                .findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
         try {
-            continuousIntegrationService.get().triggerBuild(solutionParticipation);
+            continuousIntegrationService.get().triggerBuild(programmingExercise.getSolutionParticipation());
+            continuousIntegrationService.get().triggerBuild(programmingExercise.getTemplateParticipation());
         }
         catch (HttpException ex) {
             log.error("Could not trigger build for solution repository after test case update for programming exercise with id " + programmingExerciseId);
@@ -494,7 +474,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return the updated ProgrammingExercise.
      * @throws EntityNotFoundException if the programming exercise does not exist.
      */
-    public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
+    public ProgrammingExercise setTestCasesChanged(long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
         Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
         if (optionalProgrammingExercise.isEmpty()) {
