@@ -8,7 +8,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.tum.in.www1.artemis.domain.enumeration.TestCaseVisibility;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 
 /**
  * A ProgrammingExerciseTestCase.
@@ -30,7 +30,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "visibility")
-    private TestCaseVisibility visibility;
+    private Visibility visibility;
 
     @Column(name = "bonus_multiplier")
     private Double bonusMultiplier;
@@ -128,22 +128,22 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     }
 
     public boolean isAfterDueDate() {
-        return visibility == TestCaseVisibility.AFTER_DUE_DATE;
+        return visibility == Visibility.AFTER_DUE_DATE;
     }
 
     public boolean isInvisible() {
-        return visibility == TestCaseVisibility.NEVER;
+        return visibility == Visibility.NEVER;
     }
 
-    public TestCaseVisibility getVisibility() {
+    public Visibility getVisibility() {
         return visibility;
     }
 
-    public void setVisibility(TestCaseVisibility visibility) {
+    public void setVisibility(Visibility visibility) {
         this.visibility = visibility;
     }
 
-    public ProgrammingExerciseTestCase visibility(TestCaseVisibility visibility) {
+    public ProgrammingExerciseTestCase visibility(Visibility visibility) {
         this.visibility = visibility;
         return this;
     }

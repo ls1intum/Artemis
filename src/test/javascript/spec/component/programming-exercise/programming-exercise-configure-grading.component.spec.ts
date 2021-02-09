@@ -16,7 +16,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
-import { ProgrammingExerciseTestCase, TestCaseVisibility } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisProgrammingExerciseGradingModule } from 'app/exercises/programming/manage/grading/programming-exercise-grading.module';
 import { expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
@@ -94,7 +94,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             weight: 1,
             bonusMultiplier: 1,
             bonusPoints: 0,
-            visibility: TestCaseVisibility.Always,
+            visibility: Visibility.Always,
         },
         {
             id: 2,
@@ -103,7 +103,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             weight: 1,
             bonusMultiplier: 1,
             bonusPoints: 0,
-            visibility: TestCaseVisibility.AfterDueDate,
+            visibility: Visibility.AfterDueDate,
         },
         {
             id: 3,
@@ -112,7 +112,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             weight: 1,
             bonusMultiplier: 1,
             bonusPoints: 0,
-            visibility: TestCaseVisibility.Always,
+            visibility: Visibility.Always,
         },
         {
             id: 4,
@@ -121,7 +121,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             weight: 1,
             bonusMultiplier: 1,
             bonusPoints: 0,
-            visibility: TestCaseVisibility.Never,
+            visibility: Visibility.Never,
         },
     ] as ProgrammingExerciseTestCase[];
     const codeAnalysisCategories1 = [
@@ -471,7 +471,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const table = debugElement.query(By.css(testCaseTableId));
         const dropdowns = table.queryAll(By.all()).filter((elem) => elem.name === 'select');
         expect(dropdowns).to.have.lengthOf(testCases1.length);
-        dropdowns[0].nativeElement.value = TestCaseVisibility.AfterDueDate;
+        dropdowns[0].nativeElement.value = Visibility.AfterDueDate;
         dropdowns[0].nativeElement.dispatchEvent(new Event('change'));
 
         await fixture.whenStable();

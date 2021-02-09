@@ -79,9 +79,9 @@ public class ProgrammingExerciseParticipationResource {
             participation.get().getExercise().filterSensitiveInformation();
 
             final boolean isBeforeDueDate = participation.get().getExercise().isBeforeDueDate();
-            for (Result r : participation.get().getResults()) {
-                r.filterSensitiveInformation();
-                r.filterSensitiveFeedbacks(isBeforeDueDate);
+            for (Result result : participation.get().getResults()) {
+                result.filterSensitiveInformation();
+                result.filterSensitiveFeedbacks(isBeforeDueDate);
             }
         }
         return ResponseEntity.ok(participation.get());

@@ -306,8 +306,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         result = database.addVariousVisibilityFeedbackToResults(result);
 
         List<Feedback> feedbacks = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
-        assertThat(feedbacks.stream().filter(f -> f.getVisibility() == TestCaseVisibility.NEVER)).hasSize(1);
-        assertThat(feedbacks.stream().filter(f -> f.getVisibility() == TestCaseVisibility.AFTER_DUE_DATE)).hasSize(1);
+        assertThat(feedbacks.stream().filter(f -> f.getVisibility() == Visibility.NEVER)).hasSize(1);
+        assertThat(feedbacks.stream().filter(f -> f.getVisibility() == Visibility.AFTER_DUE_DATE)).hasSize(1);
     }
 
     @ParameterizedTest

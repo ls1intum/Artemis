@@ -169,11 +169,11 @@ public class ProgrammingExerciseResultTestService {
 
         Set<ProgrammingExerciseTestCase> expectedTestCases = new HashSet<>();
         expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test1").active(true).weight(1.0).id(1L).bonusMultiplier(1D).bonusPoints(0D)
-                .visibility(TestCaseVisibility.ALWAYS));
+                .visibility(Visibility.ALWAYS));
         expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test2").active(true).weight(1.0).id(2L).bonusMultiplier(1D).bonusPoints(0D)
-                .visibility(TestCaseVisibility.ALWAYS));
+                .visibility(Visibility.ALWAYS));
         expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test4").active(true).weight(1.0).id(3L).bonusMultiplier(1D).bonusPoints(0D)
-                .visibility(TestCaseVisibility.ALWAYS));
+                .visibility(Visibility.ALWAYS));
 
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
 

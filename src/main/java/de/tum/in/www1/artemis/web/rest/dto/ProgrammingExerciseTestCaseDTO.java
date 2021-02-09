@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import de.tum.in.www1.artemis.domain.enumeration.TestCaseVisibility;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 
 /**
  * This is a dto for updating a programming exercise test case.
@@ -17,7 +17,7 @@ public class ProgrammingExerciseTestCaseDTO {
 
     private Double bonusPoints;
 
-    private TestCaseVisibility visibility;
+    private Visibility visibility;
 
     public Long getId() {
         return id;
@@ -35,11 +35,11 @@ public class ProgrammingExerciseTestCaseDTO {
         this.weight = weight;
     }
 
-    public TestCaseVisibility getVisibility() {
+    public Visibility getVisibility() {
         return visibility;
     }
 
-    public void setVisibility(TestCaseVisibility visibility) {
+    public void setVisibility(Visibility visibility) {
         this.visibility = visibility;
     }
 

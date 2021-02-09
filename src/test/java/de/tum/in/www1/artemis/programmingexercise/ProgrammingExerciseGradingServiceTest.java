@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.enumeration.TestCaseVisibility;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
@@ -135,9 +135,9 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         // Set up test cases with bonus
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
-        testCases.get("test1").active(true).visibility(TestCaseVisibility.ALWAYS).weight(5.).bonusMultiplier(1D).setBonusPoints(7D);
-        testCases.get("test2").active(true).visibility(TestCaseVisibility.ALWAYS).weight(2.).bonusMultiplier(2D).setBonusPoints(0D);
-        testCases.get("test3").active(true).visibility(TestCaseVisibility.ALWAYS).weight(3.).bonusMultiplier(1D).setBonusPoints(10.5D);
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS).weight(5.).bonusMultiplier(1D).setBonusPoints(7D);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(2.).bonusMultiplier(2D).setBonusPoints(0D);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS).weight(3.).bonusMultiplier(1D).setBonusPoints(10.5D);
         testCaseRepository.saveAll(testCases.values());
 
         var result1 = new Result();
@@ -232,9 +232,9 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         // Set up test cases with bonus
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
-        testCases.get("test1").active(true).visibility(TestCaseVisibility.ALWAYS).weight(4.).bonusMultiplier(1D).setBonusPoints(0D);
-        testCases.get("test2").active(true).visibility(TestCaseVisibility.ALWAYS).weight(3.).bonusMultiplier(3D).setBonusPoints(21D);
-        testCases.get("test3").active(true).visibility(TestCaseVisibility.ALWAYS).weight(3.).bonusMultiplier(2D).setBonusPoints(14D);
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS).weight(4.).bonusMultiplier(1D).setBonusPoints(0D);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(3.).bonusMultiplier(3D).setBonusPoints(21D);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS).weight(3.).bonusMultiplier(2D).setBonusPoints(14D);
         testCaseRepository.saveAll(testCases.values());
 
         // Score should be capped at 200%
@@ -306,8 +306,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(result.getResultString()).isEqualTo("1 of 1 passed");
         assertThat(result.isSuccessful()).isFalse();
         // The feedback of the after due date test case must still be there but have its visibility set to AFTER_DUE_DATE.
-        assertThat(result.getFeedbacks().stream().filter(feedback -> feedback.getVisibility() == TestCaseVisibility.AFTER_DUE_DATE).map(Feedback::getText))
-                .containsExactly("test3");
+        assertThat(result.getFeedbacks().stream().filter(feedback -> feedback.getVisibility() == Visibility.AFTER_DUE_DATE).map(Feedback::getText)).containsExactly("test3");
     }
 
     @Test
@@ -333,8 +332,8 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(result.getResultString()).isEqualTo("1 of 2 passed");
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
-        assertThat(result.getFeedbacks().stream().filter(f -> f.getVisibility() == TestCaseVisibility.ALWAYS)).hasSize(1);
-        assertThat(result.getFeedbacks().stream().filter(f -> f.getVisibility() == TestCaseVisibility.AFTER_DUE_DATE)).hasSize(1);
+        assertThat(result.getFeedbacks().stream().filter(f -> f.getVisibility() == Visibility.ALWAYS)).hasSize(1);
+        assertThat(result.getFeedbacks().stream().filter(f -> f.getVisibility() == Visibility.AFTER_DUE_DATE)).hasSize(1);
     }
 
     @Test
@@ -372,7 +371,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         // Set all test cases of the programming exercise to be executed after due date.
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         for (ProgrammingExerciseTestCase testCase : testCases) {
-            testCase.visibility(TestCaseVisibility.AFTER_DUE_DATE);
+            testCase.visibility(Visibility.AFTER_DUE_DATE);
         }
         testCaseRepository.saveAll(testCases);
 
@@ -399,9 +398,9 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
-        testCases.get("test1").active(true).visibility(TestCaseVisibility.ALWAYS).setWeight(1.);
-        testCases.get("test2").active(true).visibility(TestCaseVisibility.ALWAYS).setWeight(1.);
-        testCases.get("test3").active(true).visibility(TestCaseVisibility.ALWAYS).setWeight(2.);
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS).setWeight(2.);
         testCaseRepository.saveAll(testCases.values());
 
         var testParticipations = createTestParticipations();
@@ -469,10 +468,10 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
-        testCases.get("test1").active(true).visibility(TestCaseVisibility.ALWAYS).setWeight(1.);
-        testCases.get("test2").active(true).visibility(TestCaseVisibility.ALWAYS).setWeight(1.);
-        testCases.get("test3").active(true).visibility(TestCaseVisibility.ALWAYS).setWeight(2.);
-        testCases.get("test4").active(true).visibility(TestCaseVisibility.NEVER).setWeight(1.);
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS).setWeight(2.);
+        testCases.get("test4").active(true).visibility(Visibility.NEVER).setWeight(1.);
         testCaseRepository.saveAll(testCases.values());
 
         var testParticipations = createTestParticipations();
@@ -927,9 +926,9 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         var testCases = new ArrayList<>(testCaseService.findByExerciseId(programmingExerciseSCAEnabled.getId()));
         var bonusMultiplier = withBonus ? 2D : null;
         var bonusPoints = withBonus ? 4D : null;
-        testCases.get(0).active(true).visibility(TestCaseVisibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
-        testCases.get(1).active(true).visibility(TestCaseVisibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
-        testCases.get(2).active(true).visibility(TestCaseVisibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
+        testCases.get(0).active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
+        testCases.get(1).active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
+        testCases.get(2).active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
         testCaseRepository.saveAll(testCases);
     }
 

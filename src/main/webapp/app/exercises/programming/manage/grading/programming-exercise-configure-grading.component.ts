@@ -5,7 +5,7 @@ import { of, Subscription, zip } from 'rxjs';
 import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
-import { ProgrammingExerciseTestCase, TestCaseVisibility } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -50,7 +50,7 @@ const DefaultFieldValues = {
 export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     EditableField = EditableField;
     CategoryState = StaticCodeAnalysisCategoryState;
-    TestCaseVisibility = TestCaseVisibility;
+    Visibility = Visibility;
 
     courseId: number;
     exercise: ProgrammingExercise;
@@ -78,7 +78,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     maxIssuesPerCategory = 0;
 
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
-    testCaseVisibilityList = Object.entries(TestCaseVisibility).map(([name, value]) => ({ value, name }));
+    testCaseVisibilityList = Object.entries(Visibility).map(([name, value]) => ({ value, name }));
 
     testCaseColors = {};
     categoryColors = {};

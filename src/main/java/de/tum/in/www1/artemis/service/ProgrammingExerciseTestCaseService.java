@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.TestCaseVisibility;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.repository.CustomAuditEventRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
@@ -137,7 +137,7 @@ public class ProgrammingExerciseTestCaseService {
         Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = feedbacks.stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback())
                 // we use default values for weight, bonus multiplier and bonus points
                 .map(feedback -> new ProgrammingExerciseTestCase().testName(feedback.getText()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true)
-                        .visibility(TestCaseVisibility.ALWAYS))
+                        .visibility(Visibility.ALWAYS))
                 .collect(Collectors.toSet());
         // Get test cases that are not already in database - those will be added as new entries.
         Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::isSameTestCase))

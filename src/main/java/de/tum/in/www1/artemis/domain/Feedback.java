@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.enumeration.TestCaseVisibility;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 
 /**
  * A Feedback.
@@ -62,7 +62,7 @@ public class Feedback extends DomainObject {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "visibility")
-    private TestCaseVisibility visibility;
+    private Visibility visibility;
 
     @ManyToOne
     @JsonIgnoreProperties("feedbacks")
@@ -188,24 +188,24 @@ public class Feedback extends DomainObject {
         this.type = type;
     }
 
-    public TestCaseVisibility getVisibility() {
+    public Visibility getVisibility() {
         return visibility;
     }
 
     public boolean isAfterDueDate() {
-        return this.visibility == TestCaseVisibility.AFTER_DUE_DATE;
+        return this.visibility == Visibility.AFTER_DUE_DATE;
     }
 
     public boolean isInvisible() {
-        return this.visibility == TestCaseVisibility.NEVER;
+        return this.visibility == Visibility.NEVER;
     }
 
-    public Feedback visibility(TestCaseVisibility visibility) {
+    public Feedback visibility(Visibility visibility) {
         this.visibility = visibility;
         return this;
     }
 
-    public void setVisibility(TestCaseVisibility visibility) {
+    public void setVisibility(Visibility visibility) {
         this.visibility = visibility;
     }
 
