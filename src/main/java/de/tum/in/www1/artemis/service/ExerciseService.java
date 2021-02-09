@@ -520,6 +520,9 @@ public class ExerciseService {
             if (submission != null) {
                 participation.setSubmissions(Set.of(submission));
             }
+            else {
+                participation.setSubmissions(null);
+            }
 
             participation.setResults(results);
 
