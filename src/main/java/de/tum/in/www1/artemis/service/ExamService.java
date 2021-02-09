@@ -1,28 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-
-import java.security.SecureRandom;
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.validation.constraints.NotNull;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
@@ -43,8 +21,28 @@ import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.stereotype.Service;
+
+import javax.validation.constraints.NotNull;
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 
 /**
  * Service Implementation for managing Course.
@@ -693,20 +691,29 @@ public class ExamService {
      * Sets the transient attribute numberOfGeneratedStudentExams for the given exam
      * @param exam Exam for which to compute and set the number of generated student exams
      */
-    public void setNumberOfGeneratedStudentExams(Exam exam) {
+    public void setNumberOfGeneratedStudentExams(Exam exam, ExamStatisticsDTO examStatisticsDTO) {
         long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExamWithoutTestruns(exam.getId());
-        exam.setNumberOfGeneratedStudentExams(numberOfGeneratedStudentExams);
+        examStatisticsDTO.setNumberOfGeneratedStudentExams(numberOfGeneratedStudentExams);
     }
 
-    public void setStatsForChecklist(Exam exam) {
-        this.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
-        this.setNumberOfGeneratedStudentExams(exam);
-        this.setNumberOfTestRuns(exam);
+    /**
+     * Gets all statistics for an instructor regarding an exam
+     *
+     * @param exam the exam for which to get statistics for
+     * @return a examStatisticsDTO filled with all statistics regaring the exam
+     */
+    public ExamStatisticsDTO getStatsForChecklist(Exam exam) {
+        ExamStatisticsDTO examStatisticsDTO = new ExamStatisticsDTO();
+
+        this.setNumberOfGeneratedStudentExams(exam, examStatisticsDTO);
+        this.setNumberOfTestRuns(exam, examStatisticsDTO);
+
+        return examStatisticsDTO;
     }
 
-    public void setNumberOfTestRuns(Exam exam) {
+    public void setNumberOfTestRuns(Exam exam, ExamStatisticsDTO examStatisticsDTO) {
         long numberOfTestRuns = studentExamRepository.countTestRunsByExamId(exam.getId());
-        exam.setNumberOfTestRuns(numberOfTestRuns);
+        examStatisticsDTO.setNumberOfTestRuns(numberOfTestRuns);
     }
 
     /**

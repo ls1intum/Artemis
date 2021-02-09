@@ -1,21 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -31,9 +15,25 @@ import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+
+import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 /**
  * REST controller for managing Exam.
@@ -212,12 +212,33 @@ public class ExamResource {
             return ResponseEntity.ok(examService.findOneWithExerciseGroupsAndExercises(examId));
         }
         Exam exam = examService.findOneWithRegisteredUsers(examId);
-
-        examService.setStatsForChecklist(exam);
+        examService.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
 
         exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
         return ResponseEntity.ok(exam);
     }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId} : Find an exam by id.
+     *
+     * @param courseId              the course to which the exam belongs
+     * @param examId                the exam to find
+     * @return the ResponseEntity with status 200 (OK) and with the found exam as body
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<ExamStatisticsDTO> getExamStatistics(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to get exam statistics: {}", examId);
+        Optional<ResponseEntity<ExamStatisticsDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+        Exam exam = examService.findOneWithRegisteredUsers(examId);
+        ExamStatisticsDTO examStatisticsDTO = examService.getStatsForChecklist(exam);
+
+        return ResponseEntity.ok(examStatisticsDTO);
+    }
+
 
     /**
      * GET /courses/{courseId}/exams/{examId}/scores : Find scores for an exam by id.
