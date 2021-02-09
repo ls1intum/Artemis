@@ -263,8 +263,8 @@ public abstract class Exercise extends DomainObject {
         return maxPoints;
     }
 
-    public void setMaxPoints(Double maxScore) {
-        this.maxPoints = maxScore;
+    public void setMaxPoints(Double maxPoints) {
+        this.maxPoints = maxPoints;
     }
 
     public Double getBonusPoints() {

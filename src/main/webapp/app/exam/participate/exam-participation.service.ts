@@ -10,6 +10,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { cloneDeep } from 'lodash';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -37,7 +38,7 @@ export class ExamParticipationService {
      * @param examId the id of the exam
      */
     public loadStudentExamWithExercisesForConduction(courseId: number, examId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/studentExams/conduction';
+        const url = this.getResourceURL(courseId, examId) + '/student-exams/conduction';
         return this.getStudentExamFromServer(url, courseId, examId);
     }
 
@@ -47,7 +48,7 @@ export class ExamParticipationService {
      * @param examId the id of the exam
      */
     public loadStudentExamWithExercisesForSummary(courseId: number, examId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/studentExams/summary';
+        const url = this.getResourceURL(courseId, examId) + '/student-exams/summary';
         return this.getStudentExamFromServer(url, courseId, examId);
     }
 
@@ -76,7 +77,7 @@ export class ExamParticipationService {
      * @param examId the id of the exam
      */
     public loadStudentExam(courseId: number, examId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/conduction';
+        const url = this.getResourceURL(courseId, examId) + '/start';
         return this.httpClient.get<StudentExam>(url).map((studentExam: StudentExam) => {
             const convertedStudentExam = this.convertStudentExamDateFromServer(studentExam);
             this.currentlyLoadedStudentExam.next(convertedStudentExam);
@@ -101,10 +102,11 @@ export class ExamParticipationService {
      * @return returns the studentExam version of the server
      */
     public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/studentExams/submit';
-        ExamParticipationService.breakCircularDependency(studentExam);
+        const url = this.getResourceURL(courseId, examId) + '/student-exams/submit';
+        const studentExamCopy = cloneDeep(studentExam);
+        ExamParticipationService.breakCircularDependency(studentExamCopy);
 
-        return this.httpClient.post<StudentExam>(url, studentExam).pipe(
+        return this.httpClient.post<StudentExam>(url, studentExamCopy).pipe(
             map((submittedStudentExam: StudentExam) => {
                 return this.convertStudentExamFromServer(submittedStudentExam);
             }),
@@ -130,13 +132,14 @@ export class ExamParticipationService {
                     if (!!participation.submissions) {
                         for (const submission of participation.submissions) {
                             delete submission.participation;
-                            if (!!getLatestSubmissionResult(submission)) {
-                                const result = getLatestSubmissionResult(submission)!;
+                            const result = getLatestSubmissionResult(submission);
+                            if (!!result) {
                                 delete result.participation;
                                 delete result.submission;
                             }
                         }
                     }
+                    delete participation.exercise;
                 }
             }
         });
@@ -150,8 +153,9 @@ export class ExamParticipationService {
      * @param studentExam
      */
     public saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {
-        ExamParticipationService.breakCircularDependency(studentExam);
-        this.localStorageService.store(this.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExam));
+        const studentExamCopy = cloneDeep(studentExam);
+        ExamParticipationService.breakCircularDependency(studentExamCopy);
+        this.localStorageService.store(this.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExamCopy));
     }
 
     /**

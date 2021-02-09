@@ -48,6 +48,7 @@ describe('TextExercise Management Update Component', () => {
             entity.id = 123;
             spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.textExercise = entity;
+            comp.textExercise.course = { id: 1 } as Course;
             // WHEN
             comp.save();
             tick(); // simulate async
@@ -62,6 +63,7 @@ describe('TextExercise Management Update Component', () => {
             const entity = new TextExercise(undefined, undefined);
             spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.textExercise = entity;
+            comp.textExercise.course = { id: 1 } as Course;
             // WHEN
             comp.save();
             tick(); // simulate async
@@ -76,6 +78,7 @@ describe('TextExercise Management Update Component', () => {
             const entity = new TextExercise(undefined, undefined);
             spyOn(service, 'import').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.textExercise = entity;
+            comp.textExercise.course = { id: 1 } as Course;
             comp.isImport = true;
             // WHEN
             comp.save();
@@ -92,6 +95,7 @@ describe('TextExercise Management Update Component', () => {
             entity.title = 'My Exercise   ';
             spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.textExercise = entity;
+            comp.textExercise.course = { id: 1 } as Course;
 
             // WHEN
             comp.save();

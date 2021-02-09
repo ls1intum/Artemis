@@ -33,10 +33,10 @@
                 </li>
             </ul>
         </dd>
-        <button type="submit" [routerLink]="['edit']" class="btn btn-warning">
+        <a [routerLink]="['edit']" class="btn btn-warning">
             <fa-icon [icon]="'wrench'"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-        </button>
+        </a>
     </dl>
 </div>
 <router-outlet></router-outlet>

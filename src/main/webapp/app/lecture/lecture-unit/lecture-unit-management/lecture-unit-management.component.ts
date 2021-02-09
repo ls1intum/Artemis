@@ -113,22 +113,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.updateOrderSubject.next('down');
     }
 
-    createExerciseUnit() {
-        this.router.navigate(['exercise-units', 'create'], { relativeTo: this.activatedRoute });
-    }
-
-    createAttachmentUnit() {
-        this.router.navigate(['attachment-units', 'create'], { relativeTo: this.activatedRoute });
-    }
-
-    createVideoUnit() {
-        this.router.navigate(['video-units', 'create'], { relativeTo: this.activatedRoute });
-    }
-
-    createTextUnit() {
-        this.router.navigate(['text-units', 'create'], { relativeTo: this.activatedRoute });
-    }
-
     identify(index: number, lectureUnit: LectureUnit) {
         return `${index}-${lectureUnit.id}`;
     }
@@ -188,17 +172,17 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
     }
 
-    editButtonClicked(lectureUnit: LectureUnit) {
+    editButtonRouterLink(lectureUnit: LectureUnit) {
         switch (lectureUnit?.type) {
             case LectureUnitType.ATTACHMENT:
-                this.router.navigate(['attachment-units', lectureUnit.id, 'edit'], { relativeTo: this.activatedRoute });
+                return ['attachment-units', lectureUnit.id, 'edit'];
                 break;
             case LectureUnitType.VIDEO: {
-                this.router.navigate(['video-units', lectureUnit.id, 'edit'], { relativeTo: this.activatedRoute });
+                return ['video-units', lectureUnit.id, 'edit'];
                 break;
             }
             case LectureUnitType.TEXT: {
-                this.router.navigate(['text-units', lectureUnit.id, 'edit'], { relativeTo: this.activatedRoute });
+                return ['text-units', lectureUnit.id, 'edit'];
                 break;
             }
             default:
