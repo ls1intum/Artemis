@@ -1404,7 +1404,7 @@ describe('QuizExercise Management Detail Component', () => {
                 });
 
                 it('should put reason for misleading correct mappings ', () => {
-                    const shortAnswerUtilMisleadingStub = stub(shortAnswerQuestionUtil, 'validateNoMisleadingCorrectShortAnswerMapping').returns(false);
+                    const shortAnswerUtilMisleadingStub = stub(shortAnswerQuestionUtil, 'validateNoMisleadingShortAnswerMapping').returns(false);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping');
                     shortAnswerUtilMisleadingStub.restore();
                 });

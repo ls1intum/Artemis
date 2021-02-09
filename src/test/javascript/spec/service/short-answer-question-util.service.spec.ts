@@ -40,6 +40,17 @@ describe('ShortAnswerQuestionUtil', () => {
     solutionUnmapped.text = 'Solution 2';
     solutionUnmapped.id = 2;
 
+    const addMappingToQuestionAndCheckMisleadingMapping = (spotForMapping: ShortAnswerSpot, solutionForMapping: ShortAnswerSolution, toBeTrue: boolean) => {
+        const mappingToCheck = new ShortAnswerMapping(spotForMapping, solutionForMapping);
+        shortAnswerQuestion.correctMappings!.push(mappingToCheck);
+        const hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
+        if (toBeTrue) {
+            expect(hasNoMisleadingMapping).to.be.true;
+        } else {
+            expect(hasNoMisleadingMapping).to.be.false;
+        }
+    };
+
     beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule],
@@ -134,13 +145,55 @@ describe('ShortAnswerQuestionUtil', () => {
         hasAtLeastAsManySolutionsAsSpots = service.atLeastAsManySolutionsAsSpots(faultyShortAnswerQuestion);
         expect(hasAtLeastAsManySolutionsAsSpots).to.be.false;
 
-        // TODO more complex tests for validateNoMisleadingCorrectShortAnswerMapping(), after the logic issue is fixed
-        let hasMisleadingMapping = service.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion);
-        expect(hasMisleadingMapping).to.be.true;
+        let hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
+        expect(hasNoMisleadingMapping).to.be.true;
         // @ts-ignore
         shortAnswerQuestion.correctMappings = undefined;
-        hasMisleadingMapping = service.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion);
-        expect(hasMisleadingMapping).to.be.true;
+        hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
+        expect(hasNoMisleadingMapping).to.be.true;
+    });
+
+    it('should check for misleading mappings', () => {
+        // This is done as the correctMappings is undefined (see previous test)
+        shortAnswerQuestion.correctMappings = [mapping];
+
+        const spot2 = new ShortAnswerSpot();
+        spot2.spotNr = 2;
+        spot2.id = 2;
+        const spot3 = new ShortAnswerSpot();
+        spot3.spotNr = 3;
+        spot3.id = 3;
+
+        const solution2 = new ShortAnswerSolution();
+        solution2.text = 'Solution 2';
+        solution2.id = 2;
+        const solution3 = new ShortAnswerSolution();
+        solution3.text = 'Solution 3';
+        solution3.id = 3;
+
+        shortAnswerQuestion.spots!.push(spot2, spot3);
+        shortAnswerQuestion.solutions!.push(solution2, solution3);
+
+        addMappingToQuestionAndCheckMisleadingMapping(spot2, solution2, false);
+
+        addMappingToQuestionAndCheckMisleadingMapping(spot3, solution3, true);
+
+        addMappingToQuestionAndCheckMisleadingMapping(spot2, solution, false);
+
+        addMappingToQuestionAndCheckMisleadingMapping(spot, solution2, true);
+
+        addMappingToQuestionAndCheckMisleadingMapping(spot, solution3, false);
+
+        addMappingToQuestionAndCheckMisleadingMapping(spot2, solution3, false);
+
+        addMappingToQuestionAndCheckMisleadingMapping(spot3, solution, false);
+
+        addMappingToQuestionAndCheckMisleadingMapping(spot3, solution2, true);
+
+        const solution4 = new ShortAnswerSolution();
+        solution4.text = 'Solution 4';
+        solution4.id = 4;
+        addMappingToQuestionAndCheckMisleadingMapping(spot, solution4, true);
     });
 
     it('should split the question text into text parts and transform to html', () => {
