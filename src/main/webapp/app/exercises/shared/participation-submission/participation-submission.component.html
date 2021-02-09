@@ -1,7 +1,7 @@
 <h2
     *ngIf="participation"
     jhiTranslate="artemisApp.participation.participationSubmission.submissionsForParticipation"
-    [translateValues]="{ participant: participation.student?.name || participation.team?.name, exercise: participation.exercise?.title }"
+    [translateValues]="{ participant: getName(), exercise: participation.exercise?.title }"
 ></h2>
 <br />
 <jhi-alert></jhi-alert>

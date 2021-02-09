@@ -8,6 +8,7 @@ import { catchError, map } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Submission } from 'app/entities/submission.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
@@ -16,7 +17,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 })
 export class ParticipationSubmissionComponent implements OnInit {
     @Input() participationId: number;
-    participation: StudentParticipation;
+    participation: Participation;
     submissions: Submission[];
     eventSubscriber: Subscription;
     isLoading = true;
@@ -71,5 +72,19 @@ export class ParticipationSubmissionComponent implements OnInit {
                     this.isLoading = false;
                 }
             });
+    }
+
+    // TODO: also display commit hash
+
+    getName() {
+        if (this.participation.type === ParticipationType.STUDENT) {
+            return (this.participation as StudentParticipation).student?.name || (this.participation as StudentParticipation).team?.name;
+        } else if (this.participation.type === ParticipationType.SOLUTION) {
+            return 'Solution Participation'; // TODO: translation string
+        } else if (this.participation.type === ParticipationType.TEMPLATE) {
+            return 'Template Participation'; // TODO: translation string
+        } else {
+            return 'Unknown';
+        }
     }
 }
