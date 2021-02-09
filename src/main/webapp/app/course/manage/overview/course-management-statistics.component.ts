@@ -25,7 +25,7 @@ export class CourseManagementStatisticsComponent implements OnChanges {
     // Chart
     chartName: string;
 
-    // Histogram related properties
+    // Histogram-related properties
     barChartOptions: any = {};
     barChartType: ChartType = 'line';
     amountOfStudents: string;
