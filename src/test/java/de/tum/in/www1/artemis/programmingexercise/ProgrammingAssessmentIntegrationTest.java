@@ -142,7 +142,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
 
         // Check that result and submission are properly connected
-        var submissionFromDb = programmingSubmissionService.findByIdWithEagerResultAndFeedback(programmingSubmission.getId());
+        var submissionFromDb = programmingSubmissionService.findByIdWithEagerResultsFeedbacksAssessor(programmingSubmission.getId());
         var resultFromDb = resultRepository.findWithEagerSubmissionAndFeedbackById(programmingAssessment.getId()).get();
         assertThat(submissionFromDb.getLatestResult()).isEqualTo(updatedResult);
         assertThat(resultFromDb.getSubmission()).isEqualTo(updatedResult.getSubmission());
@@ -265,7 +265,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, HttpStatus.OK);
 
         ProgrammingSubmission submission = programmingSubmissionService
-                .findByIdWithEagerResultAndFeedback(programmingExerciseStudentParticipation.getSubmissions().iterator().next().getId());
+                .findByIdWithEagerResultsFeedbacksAssessor(programmingExerciseStudentParticipation.getSubmissions().iterator().next().getId());
         String commitHash = submission.getCommitHash();
 
         assertThat("123".equalsIgnoreCase(commitHash));
@@ -537,7 +537,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(response.getFeedbacks().size()).isEqualTo(manualResult.getFeedbacks().size());
 
         // Submission in response is lazy loaded therefore, we fetch submission and check if relation is correct
-        ProgrammingSubmission submissionFetch = programmingSubmissionService.findByIdWithEagerResultAndFeedback(programmingSubmission.getId());
+        ProgrammingSubmission submissionFetch = programmingSubmissionService.findByIdWithEagerResultsFeedbacksAssessor(programmingSubmission.getId());
         assertThat(response.getId().equals(submissionFetch.getLatestResult().getId()));
         assertThat(submissionFetch.getId().equals(programmingSubmission.getId()));
     }

@@ -141,7 +141,7 @@ public class UserService {
                     // needs to be mutable --> new HashSet<>(Set.of(...))
                     existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(USER))));
                     saveUser(existingInternalAdmin.get());
-                    updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getGroups());
+                    updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getLogin(), existingInternalAdmin.get().getGroups());
                 }
                 else {
                     log.info("Create internal admin user " + artemisInternalAdminUsername.get());
@@ -169,6 +169,7 @@ public class UserService {
 
     /**
      * load additional user details from the ldap if it is available: correct firstname, correct lastname and registration number (= matriculation number)
+     *
      * @param login the login of the user for which the details should be retrieved
      * @return the found Ldap user details or null if the user cannot be found
      */
@@ -197,6 +198,7 @@ public class UserService {
 
     /**
      * Get the encoder for password encryption
+     *
      * @return existing password encoder or newly created password encryptor
      */
     public PBEPasswordEncoder passwordEncoder() {
@@ -209,6 +211,7 @@ public class UserService {
 
     /**
      * Get the the password encryptor with MD5 and DES encryption algorithm
+     *
      * @return existing encryptor or newly created encryptor
      */
     public StandardPBEStringEncryptor encryptor() {
@@ -223,6 +226,7 @@ public class UserService {
 
     /**
      * Activate user registration
+     *
      * @param key activation key for user registration
      * @return user if user exists otherwise null
      */
@@ -237,6 +241,7 @@ public class UserService {
 
     /**
      * Activate user
+     *
      * @param user the user that should be activated
      */
     public void activateUser(User user) {
@@ -248,8 +253,9 @@ public class UserService {
 
     /**
      * Reset user password for given reset key
+     *
      * @param newPassword new password string
-     * @param key reset key
+     * @param key         reset key
      * @return user for whom the password was performed
      */
     public Optional<User> completePasswordReset(String newPassword, String key) {
@@ -259,13 +265,14 @@ public class UserService {
             user.setResetKey(null);
             user.setResetDate(null);
             saveUser(user);
-            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, null, null, true));
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, null, null, true));
             return user;
         });
     }
 
     /**
      * saves the user and clears the cache
+     *
      * @param user the user object that will be saved into the database
      * @return the saved and potentially updated user object
      */
@@ -277,6 +284,7 @@ public class UserService {
 
     /**
      * Request password reset for user email
+     *
      * @param mail to find user
      * @return user if user exists otherwise null
      */
@@ -290,7 +298,8 @@ public class UserService {
 
     /**
      * Register user and create it only in the internal Artemis database. This is a pure service method without any logic with respect to external systems.
-     * @param userDTO user data transfer object
+     *
+     * @param userDTO  user data transfer object
      * @param password string
      * @return newly registered user or throw registration exception
      */
@@ -363,6 +372,17 @@ public class UserService {
             if (ldapUserOptional.isPresent()) {
                 LdapUserDto ldapUser = ldapUserOptional.get();
                 log.info("Ldap User " + ldapUser.getUsername() + " has registration number: " + ldapUser.getRegistrationNumber());
+
+                // handle edge case, the user already exists in Artemis, but for some reason does not have a registration number or it is wrong
+                if (StringUtils.hasText(ldapUser.getUsername())) {
+                    var existingUser = userRepository.findOneByLogin(ldapUser.getUsername());
+                    if (existingUser.isPresent()) {
+                        existingUser.get().setRegistrationNumber(ldapUser.getRegistrationNumber());
+                        saveUser(existingUser.get());
+                        return existingUser;
+                    }
+                }
+
                 // Use empty password, so that we don't store the credentials of Jira users in the Artemis DB
                 User user = createUser(ldapUser.getUsername(), "", ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(), registrationNumber, null, "en");
                 if (useExternalUserManagement) {
@@ -406,14 +426,14 @@ public class UserService {
     /**
      * Create user only in the internal Artemis database. This is a pure service method without any logic with respect to external systems.
      *
-     * @param login     user login string
-     * @param password  user password
-     * @param firstName first name of user
-     * @param lastName  last name of the user
-     * @param email     email of the user
+     * @param login              user login string
+     * @param password           user password
+     * @param firstName          first name of user
+     * @param lastName           last name of the user
+     * @param email              email of the user
      * @param registrationNumber the matriculation number of the student
-     * @param imageUrl  user image url
-     * @param langKey   user language
+     * @param imageUrl           user image url
+     * @param langKey            user language
      * @return newly created user
      */
     public User createUser(String login, @Nullable String password, String firstName, String lastName, String email, String registrationNumber, String imageUrl, String langKey) {
@@ -423,14 +443,14 @@ public class UserService {
     /**
      * Create user only in the internal Artemis database. This is a pure service method without any logic with respect to external systems.
      *
-     * @param login     user login string
-     * @param groups The groups the user should belong to
-     * @param firstName first name of user
-     * @param lastName  last name of the user
-     * @param email     email of the user
+     * @param login              user login string
+     * @param groups             The groups the user should belong to
+     * @param firstName          first name of user
+     * @param lastName           last name of the user
+     * @param email              email of the user
      * @param registrationNumber the matriculation number of the student
-     * @param imageUrl  user image url
-     * @param langKey   user language
+     * @param imageUrl           user image url
+     * @param langKey            user language
      * @return newly created user
      */
     public User createUser(String login, Set<String> groups, String firstName, String lastName, String email, String registrationNumber, String imageUrl, String langKey) {
@@ -440,15 +460,15 @@ public class UserService {
     /**
      * Create user only in the internal Artemis database. This is a pure service method without any logic with respect to external systems.
      *
-     * @param login     user login string
-     * @param password  user password, if set to null, the password will be set randomly
-     * @param groups The groups the user should belong to
-     * @param firstName first name of user
-     * @param lastName  last name of the user
-     * @param email     email of the user
+     * @param login              user login string
+     * @param password           user password, if set to null, the password will be set randomly
+     * @param groups             The groups the user should belong to
+     * @param firstName          first name of user
+     * @param lastName           last name of the user
+     * @param email              email of the user
      * @param registrationNumber the matriculation number of the student*
-     * @param imageUrl  user image url
-     * @param langKey   user language
+     * @param imageUrl           user image url
+     * @param langKey            user language
      * @return newly created user
      */
     public User createUser(String login, @Nullable String password, Set<String> groups, String firstName, String lastName, String email, String registrationNumber, String imageUrl,
@@ -489,7 +509,7 @@ public class UserService {
     /**
      * Create user based on UserDTO. If the user management is done internally by Artemis, also create the user in the (optional) version control system
      * In case user management is done externally, the users groups are configured in the external user management as well.
-     *
+     * <p>
      * TODO: how should we handle the case, that a new user is created that does not exist in the external user management?
      *
      * @param userDTO user data transfer object
@@ -533,6 +553,7 @@ public class UserService {
 
     /**
      * tries to create the user in the external system, in case this is available
+     *
      * @param user the user, that should be created in the external system
      */
     private void createUserInExternalSystems(User user) {
@@ -558,18 +579,19 @@ public class UserService {
             user.setImageUrl(imageUrl);
             saveUser(user);
             log.info("Changed Information for User: {}", user);
-            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, null, null, true));
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, null, null, true));
         });
     }
 
     /**
      * Update all information for a specific user (incl. its password), and return the modified user.
      *
-     * @param user The user that should get updated
+     * @param user           The user that should get updated
      * @param updatedUserDTO The DTO containing the to be updated values
      * @return updated user
      */
     public User updateUser(User user, ManagedUserVM updatedUserDTO) {
+        final var oldUserLogin = user.getLogin();
         final var oldGroups = user.getGroups();
         user.setLogin(updatedUserDTO.getLogin().toLowerCase());
         user.setFirstName(updatedUserDTO.getFirstName());
@@ -587,7 +609,7 @@ public class UserService {
         updatedUserDTO.getAuthorities().stream().map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get).forEach(managedAuthorities::add);
         user = saveUser(user);
 
-        updateUserInConnectorsAndAuthProvider(user, oldGroups);
+        updateUserInConnectorsAndAuthProvider(user, oldUserLogin, oldGroups);
 
         log.debug("Changed Information for User: {}", user);
         return user;
@@ -596,14 +618,16 @@ public class UserService {
     /**
      * Updates the user (optionally also synchronizes its password) and its groups in the connected version control system (e.g. GitLab if available).
      * Also updates the user groups in the used authentication provider (like {@link JiraAuthenticationProvider}.
-     *  @param user The updated user in Artemis (this method assumes that the user including its groups was already saved to the Artemis database)
-     * @param oldGroups The old groups of the user before the update
+     *
+     * @param oldUserLogin The username of the user. If the username is updated in the user object, it must be the one before the update in order to find the user in the VCS
+     * @param user         The updated user in Artemis (this method assumes that the user including its groups was already saved to the Artemis database)
+     * @param oldGroups    The old groups of the user before the update
      */
-    private void updateUserInConnectorsAndAuthProvider(User user, Set<String> oldGroups) {
+    private void updateUserInConnectorsAndAuthProvider(User user, String oldUserLogin, Set<String> oldGroups) {
         final var updatedGroups = user.getGroups();
         final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
         final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, removedGroups, addedGroups, true));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(oldUserLogin, user, removedGroups, addedGroups, true));
         removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group)); // e.g. Jira
         try {
             addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(user, group)); // e.g. Jira
@@ -615,6 +639,7 @@ public class UserService {
 
     /**
      * Delete user based on login string
+     *
      * @param login user login string
      */
     @Transactional // ok because entities are deleted
@@ -648,8 +673,9 @@ public class UserService {
 
     /**
      * Change password of current user
+     *
      * @param currentClearTextPassword cleartext password
-     * @param newPassword new password string
+     * @param newPassword              new password string
      */
     public void changePassword(String currentClearTextPassword, String newPassword) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
@@ -660,13 +686,14 @@ public class UserService {
             String encryptedPassword = passwordEncoder().encode(newPassword);
             user.setPassword(encryptedPassword);
             saveUser(user);
-            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, null, null, true));
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, null, null, true));
             log.debug("Changed password for User: {}", user);
         });
     }
 
     /**
      * Get decrypted password for the current user
+     *
      * @return decrypted password or empty string
      */
     public String decryptPasswordOfCurrentUser() {
@@ -681,6 +708,7 @@ public class UserService {
 
     /**
      * Get decrypted password for given user
+     *
      * @param user the user
      * @return decrypted password or empty string
      */
@@ -690,6 +718,7 @@ public class UserService {
 
     /**
      * Get decrypted password for given user login
+     *
      * @param login of a user
      * @return decrypted password or empty string
      */
@@ -699,6 +728,7 @@ public class UserService {
 
     /**
      * Get all managed users
+     *
      * @param userSearch used to find users
      * @return all users
      */
@@ -712,7 +742,8 @@ public class UserService {
 
     /**
      * Search for all users by login or name
-     * @param pageable Pageable configuring paginated access (e.g. to limit the number of records returned)
+     *
+     * @param pageable    Pageable configuring paginated access (e.g. to limit the number of records returned)
      * @param loginOrName Search query that will be searched for in login and name field
      * @return all users matching search criteria
      */
@@ -723,16 +754,8 @@ public class UserService {
     }
 
     /**
-     * Get user with groups by given login string
-     * @param login user login string
-     * @return existing user with given login string or null
-     */
-    public Optional<User> getUserWithGroupsByLogin(String login) {
-        return userRepository.findOneWithGroupsByLogin(login);
-    }
-
-    /**
      * Get user with groups and authorities by given login string
+     *
      * @param login user login string
      * @return existing user with given login string or null
      */
@@ -742,6 +765,7 @@ public class UserService {
 
     /**
      * Get user with authorities by given login string
+     *
      * @param login user login string
      * @return existing user with given login string or null
      */
@@ -751,6 +775,7 @@ public class UserService {
 
     /**
      * Get current user for login string
+     *
      * @param login user login string
      * @return existing user for the given login string or null
      */
@@ -770,6 +795,7 @@ public class UserService {
 
     /**
      * Get user with user groups and authorities of currently logged in user
+     *
      * @return currently logged in user
      */
     @NotNull
@@ -782,6 +808,7 @@ public class UserService {
     /**
      * Get user with user groups, authorities and guided tour settings of currently logged in user
      * Note: this method should only be invoked if the guided tour settings are really needed
+     *
      * @return currently logged in user
      */
     @NotNull
@@ -809,6 +836,7 @@ public class UserService {
 
     /**
      * Get user with user groups and authorities with the username (i.e. user.getLogin() or principal.getName())
+     *
      * @param username the username of the user who should be retrieved from the database
      * @return the user that belongs to the given principal with eagerly loaded groups and authorities
      */
@@ -833,6 +861,7 @@ public class UserService {
 
     /**
      * Update user notification read date for current user
+     *
      * @param userId the user for which the notification read date should be updated
      */
     @Transactional // ok because of modifying query
@@ -842,6 +871,7 @@ public class UserService {
 
     /**
      * Get students by given course
+     *
      * @param course object
      * @return list of students for given course
      */
@@ -851,6 +881,7 @@ public class UserService {
 
     /**
      * Get tutors by given course
+     *
      * @param course object
      * @return list of tutors for given course
      */
@@ -881,7 +912,7 @@ public class UserService {
     /**
      * Get all users in a given team
      *
-     * @param course The course to which the team belongs (acts as a scope for the team short name)
+     * @param course        The course to which the team belongs (acts as a scope for the team short name)
      * @param teamShortName The short name of the team for which to get all students
      * @return A set of all users that belong to the team
      */
@@ -891,6 +922,7 @@ public class UserService {
 
     /**
      * Update the guided tour settings of the currently logged in user
+     *
      * @param guidedTourSettings the updated set of guided tour settings
      * @return the updated user object with the changed guided tour settings
      */
@@ -907,6 +939,7 @@ public class UserService {
 
     /**
      * Delete a given guided tour setting of the currently logged in user (e.g. when the user restarts a guided tutorial)
+     *
      * @param guidedTourSettingsKey the key of the guided tour setting that should be deleted
      * @return the updated user object without the deleted guided tour setting
      */
@@ -925,7 +958,7 @@ public class UserService {
     /**
      * Finds all users that are part of the specified group, but are not contained in the collection of excluded users
      *
-     * @param groupName The group by which all users should get filtered
+     * @param groupName     The group by which all users should get filtered
      * @param excludedUsers The users that should get ignored/excluded
      * @return A list of filtered users
      */
@@ -958,7 +991,8 @@ public class UserService {
 
     /**
      * add the user to the specified group and update in VCS (like GitLab) if used
-     * @param user the user
+     *
+     * @param user  the user
      * @param group the group
      */
     public void addUserToGroup(User user, String group) {
@@ -969,13 +1003,14 @@ public class UserService {
         catch (ArtemisAuthenticationException e) {
             // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
         }
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, Set.of(), Set.of(group), false)); // e.g. Gitlab
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, Set.of(), Set.of(group), false)); // e.g.
+                                                                                                                                                                            // Gitlab
     }
 
     /**
      * adds the user to the group only in the Artemis database
      *
-     * @param user the user
+     * @param user  the user
      * @param group the group
      */
     private void addUserToGroupInternal(User user, String group) {
@@ -990,7 +1025,7 @@ public class UserService {
     /**
      * Adds a user to the specified set of groups.
      *
-     * @param user the user who should be added to the given groups
+     * @param user   the user who should be added to the given groups
      * @param groups the groups in which the user should be added
      */
     private void addUserToGroupsInternal(User user, @Nullable Set<String> groups) {
@@ -1016,6 +1051,7 @@ public class UserService {
      * if a course with the given group names exist
      * The groups can be customized in application-dev.yml or application-prod.yml
      * at {info.tutorial-course-groups}
+     *
      * @param user the userDTO to add to the groups to
      */
     private void addTutorialGroups(ManagedUserVM user) {
@@ -1042,19 +1078,20 @@ public class UserService {
     /**
      * remove the user from the specified group only in the Artemis database
      *
-     * @param user the user
+     * @param user  the user
      * @param group the group
      */
     public void removeUserFromGroup(User user, String group) {
         removeUserFromGroupInternal(user, group); // internal Artemis database
         artemisAuthenticationProvider.removeUserFromGroup(user, group); // e.g. JIRA
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, Set.of(group), Set.of(), false)); // e.g. Gitlab
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, Set.of(group), Set.of(), false)); // e.g.
+                                                                                                                                                                            // Gitlab
     }
 
     /**
      * remove the user from the specified group and update in VCS (like GitLab) if used
      *
-     * @param user the user
+     * @param user  the user
      * @param group the group
      */
     private void removeUserFromGroupInternal(User user, String group) {
@@ -1067,9 +1104,8 @@ public class UserService {
     }
 
     /**
-     *
      * Builds the authorities list from the groups:
-     *
+     * <p>
      * 1) Admin group if the globally defined ADMIN_GROUP_NAME is available and is contained in the users groups, or if the user was an admin before
      * 2) group contains configured instructor group name -> instructor role
      * 3) group contains configured tutor group name -> tutor role

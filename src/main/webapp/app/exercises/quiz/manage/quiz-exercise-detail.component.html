@@ -295,7 +295,7 @@
                                 *ngIf="quizExercise.course || quizExercise.exerciseGroup"
                                 class="btn btn-default"
                                 [ngClass]="{ 'btn-secondary': !pendingChangesCache, 'btn-danger': pendingChangesCache }"
-                                (click)="back()"
+                                (click)="cancel()"
                                 jhiTranslate="{{ pendingChangesCache ? 'entity.action.cancel' : 'entity.action.back' }}"
                             ></button>
                             <button
@@ -341,7 +341,7 @@
             <hr />
         </ng-template>
         <ng-template #existingQuestionsFromCourseTemplate>
-            <div class="form-group question-options">
+            <div class="form-group question-options existing-question-container">
                 <div class="existing-question-select-course w-100">
                     <span jhiTranslate="artemisApp.quizExercise.selectCourse" class="font-weight-bold align-middle"></span>
                     <select class="form-control ml-5" [(ngModel)]="selectedCourseId" (change)="onCourseSelect()" style="flex: 1">
@@ -370,7 +370,7 @@
                     <div>&nbsp;</div>
                     <span jhiTranslate="artemisApp.quizExercise.noQuestionsFound"></span>
                 </div>
-                <div class="table-responsive" *ngIf="existingQuestions.length !== 0">
+                <div class="table-responsive existing-question-table" *ngIf="existingQuestions.length !== 0">
                     <table class="table table-striped">
                         <thead class="thead-dark">
                             <tr>

@@ -49,6 +49,10 @@ public abstract class Participation extends DomainObject implements Participatio
     @JsonView(QuizView.Before.class)
     private ZonedDateTime initializationDate;
 
+    // information whether this participation belongs to a test run exam, not relevant for course exercises
+    @Column(name = "test_run")
+    private Boolean testRun = false;
+
     // NOTE: Keep default of FetchType.EAGER because most of the times we want
     // to get a student participation, we also need the exercise. Dealing with Proxy
     // objects would cause more issues (Subclasses don't work properly for Proxy objects)
@@ -122,6 +126,14 @@ public abstract class Participation extends DomainObject implements Participatio
 
     public void setInitializationDate(ZonedDateTime initializationDate) {
         this.initializationDate = initializationDate;
+    }
+
+    public boolean isTestRun() {
+        return Boolean.TRUE.equals(testRun);
+    }
+
+    public void setTestRun(boolean testRun) {
+        this.testRun = testRun;
     }
 
     /**
