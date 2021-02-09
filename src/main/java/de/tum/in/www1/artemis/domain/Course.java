@@ -147,7 +147,7 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties("course")
     private Set<Exam> exams = new HashSet<>();
 
-    @ManyToMany(mappedBy = "courses", cascade = CascadeType.REMOVE)
+    @ManyToMany(mappedBy = "courses")
     private Set<Organization> organizations = new HashSet<Organization>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
