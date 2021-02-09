@@ -224,10 +224,9 @@ public class CourseExportService {
                     // TODO: Quiz submssions aren't supported yet
                     return;
                 }
-                else {
-                    // Exercise is not supported so return
-                    return;
-                }
+
+                // Exercise is not supported so return
+                return;
             }
             catch (IOException e) {
                 var error = "Failed to export exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + "): " + e.getMessage();

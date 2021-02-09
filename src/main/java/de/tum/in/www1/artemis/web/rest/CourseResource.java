@@ -839,7 +839,7 @@ public class CourseResource {
 
         // Archiving a course is only possible after the course is over
         if (now().isBefore(course.getEndDate())) {
-            throw new BadRequestAlertException("You cannot archive a course that has not over.", ENTITY_NAME, "courseNotOver", true);
+            throw new BadRequestAlertException("You cannot archive a course that is not over.", ENTITY_NAME, "courseNotOver", true);
         }
 
         courseService.archiveCourse(course);

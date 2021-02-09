@@ -226,7 +226,7 @@ public class ExamAccessService {
      * @param examId        The id of the exam
      * @param studentExamId The if of the student exam
      * @param <X>           The type of the return type of the requesting route so that the
-     *                      *               response can be returned there
+     *                      response can be returned there
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <X> Optional<ResponseEntity<X>> checkCourseAndExamAndStudentExamAccess(Long courseId, Long examId, Long studentExamId) {
