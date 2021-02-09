@@ -272,7 +272,7 @@ describe('CourseStatisticsComponent', () => {
         expect(comp.groupedExercises.length).to.equal(1);
         let exercise: any = comp.groupedExercises[0];
         expect(exercise.absoluteScore).to.equal(20);
-        expect(exercise.reachableScore).to.equal(60);
+        expect(exercise.reachableScore).to.equal(36);
         expect(exercise.overallMaxPoints).to.equal(60);
 
         const newExercise = [
@@ -326,12 +326,12 @@ describe('CourseStatisticsComponent', () => {
         // check that exerciseGroup scores are untouched
         exercise = comp.groupedExercises[0];
         expect(exercise.absoluteScore).to.equal(20);
-        expect(exercise.reachableScore).to.equal(60);
+        expect(exercise.reachableScore).to.equal(36);
         expect(exercise.overallMaxPoints).to.equal(60);
 
         // check that overall course score is adapted accordingly
         expect(comp.overallPoints).to.equal(25.5);
-        expect(comp.reachablePoints).to.equal(70);
+        expect(comp.reachablePoints).to.equal(46);
         expect(comp.overallMaxPoints).to.equal(70);
 
         // check that html file displays the correct elements
