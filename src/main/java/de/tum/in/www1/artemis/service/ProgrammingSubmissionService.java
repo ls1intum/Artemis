@@ -418,8 +418,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @throws EntityNotFoundException  if the programming exercise has no template participation (edge case).
      */
     public void triggerTemplateBuildAndNotifyUser(long programmingExerciseId, ObjectId commitHash, SubmissionType submissionType) throws EntityNotFoundException {
-        TemplateProgrammingExerciseParticipation templateParticipation;
-        templateParticipation = programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(programmingExerciseId);
+        TemplateProgrammingExerciseParticipation templateParticipation = programmingExerciseParticipationService
+                .findTemplateParticipationByProgrammingExerciseId(programmingExerciseId);
         // If for some reason the programming exercise does not have a template participation, we can only log and abort.
         createSubmissionTriggerBuildAndNotifyUser(templateParticipation, commitHash, submissionType);
     }
