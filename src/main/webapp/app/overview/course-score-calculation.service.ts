@@ -49,10 +49,6 @@ export class CourseScoreCalculationService {
                         if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                             reachableMaxPointsInCourse += maxPointsReachableInExercise;
                         }
-                    } else {
-                        if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                            reachableMaxPointsInCourse += maxPointsReachableInExercise;
-                        }
                     }
                     presentationScore += participation.presentationScore ? participation.presentationScore : 0;
 
