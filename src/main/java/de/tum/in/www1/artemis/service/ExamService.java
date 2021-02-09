@@ -690,6 +690,26 @@ public class ExamService {
     }
 
     /**
+     * Sets the transient attribute numberOfGeneratedStudentExams for the given exam
+     * @param exam Exam for which to compute and set the number of generated student exams
+     */
+    public void setNumberOfGeneratedStudentExams(Exam exam) {
+        long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExamWithoutTestruns(exam.getId());
+        exam.setNumberOfGeneratedStudentExams(numberOfGeneratedStudentExams);
+    }
+
+    public void setStatsForChecklist(Exam exam) {
+        this.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
+        this.setNumberOfGeneratedStudentExams(exam);
+        this.setNumberOfTestRuns(exam);
+    }
+
+    public void setNumberOfTestRuns(Exam exam) {
+        long numberOfTestRuns = studentExamRepository.countTestRunsByExamId(exam.getId());
+        exam.setNumberOfTestRuns(numberOfTestRuns);
+    }
+
+    /**
      * Finds an exam based on the id with all student exams which are not marked as test runs.
      * @param examId the id of the exam
      * @return the exam with student exams loaded
