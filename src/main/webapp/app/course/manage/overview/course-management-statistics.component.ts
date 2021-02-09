@@ -64,7 +64,7 @@ export class CourseManagementStatisticsComponent implements OnChanges {
                 pointHoverBorderColor: 'rgba(53,61,71,1)',
             },
         ];
-
+        const graphTopPadding = this.amountOfStudentsInCourse >= 1000 ? 100 : this.amountOfStudentsInCourse >= 50 ? 10 : 2;
         this.barChartOptions = {
             layout: {
                 padding: {
@@ -98,7 +98,7 @@ export class CourseManagementStatisticsComponent implements OnChanges {
                         ticks: {
                             beginAtZero: true,
                             min: 0,
-                            max: this.amountOfStudentsInCourse ?? undefined,
+                            max: this.amountOfStudentsInCourse ? this.amountOfStudentsInCourse + graphTopPadding : undefined,
                             precision: 0,
                         },
                     },
