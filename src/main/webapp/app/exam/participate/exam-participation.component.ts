@@ -69,6 +69,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     handInEarly = false;
     handInPossible = true;
+    submitInProgress = false;
 
     exerciseIndex = 0;
 
@@ -281,17 +282,25 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     onExamEndConfirmed() {
         // temporary lock the submit button in order to protect against spam
         this.handInPossible = false;
+        this.submitInProgress = true;
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
-        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe(
-            (studentExam) => (this.studentExam = studentExam),
-            (error: Error) => {
-                this.alertService.error(error.message);
-                // Explicitly check whether the error was caused by the submission not being in-time, in this case, set hand in not possible
-                this.handInPossible = error.message !== 'studentExam.submissionNotInTime';
-            },
-        );
+
+        this.examParticipationService
+            .submitStudentExam(this.courseId, this.examId, this.studentExam)
+            .timeoutWith(20000, Observable.throw(new Error('Submission request timed out. Please check your connection and try again.')))
+            .subscribe(
+                (studentExam) => {
+                    this.studentExam = studentExam;
+                },
+                (error: Error) => {
+                    this.alertService.error(error.message);
+                    // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible
+                    this.handInPossible = error.message !== 'studentExam.submissionNotInTime' && error.message !== 'studentExam.alreadySubmitted';
+                    this.submitInProgress = false;
+                },
+            );
     }
 
     /**
