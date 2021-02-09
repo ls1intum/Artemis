@@ -132,9 +132,9 @@ public class QuizSubmissionResource {
         // the following method either reuses an existing participation or creates a new one
         StudentParticipation participation = participationService.startExercise(quizExercise, user, false);
         // we set the exercise again to prevent issues with lazy loaded quiz questions
-        participation.setExercise(quizExercise);
         participation.setInitializationState(InitializationState.FINISHED);
         participation = participationService.save(participation);
+        participation.setExercise(quizExercise);
 
         // update and save submission
         Result result = quizSubmissionService.submitForPractice(quizSubmission, quizExercise, participation);
