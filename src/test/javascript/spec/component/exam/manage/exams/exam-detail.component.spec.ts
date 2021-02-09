@@ -20,7 +20,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { Course } from 'app/entities/course.model';
 import { Component } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { ExamChecklistCheckComponent } from 'app/exam/manage/exams/exam-checklist-check/exam-checklist-check.component';
+import { ExamChecklistCheckComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-check/exam-checklist-check.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { of } from 'rxjs';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
