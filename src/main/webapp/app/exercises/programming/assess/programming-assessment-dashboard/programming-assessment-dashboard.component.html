@@ -18,10 +18,6 @@
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="result.score">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
-                    </th>
                     <th jhiSortBy="durationInMinutes">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
@@ -54,9 +50,6 @@
                         <ng-container *ngIf="submission.participation.submissions">
                             {{ submission.participation.submissions.length }}
                         </ng-container>
-                    </td>
-                    <td>
-                        <span *ngIf="submission.latestResult && submission.latestResult!.score != null"> {{ submission.latestResult!.score }} % </span>
                     </td>
                     <td>
                         {{ submission.durationInMinutes }}
