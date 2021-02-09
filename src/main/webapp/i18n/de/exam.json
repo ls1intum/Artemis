@@ -305,7 +305,8 @@
                 "linkDescription": "Instructors Guide",
                 "checklistItem": "Aufgabe",
                 "description": "Beschreibung",
-                "goTo": "Gehe zu",
+                "status": "Aktueller Status",
+                "goTo": "Seite",
                 "tableItem": {
                     "register": "Registrieren der Studierenden zur Klausur",
                     "exerciseGroups": "Erstellen Sie mindestens eine Aufgaben Gruppe mit mindestens einer Aufgabe",
@@ -321,9 +322,9 @@
                     "exportResults": "Exportiere die Klausurergebnisse"
                 },
                 "descriptionItem": {
-                    "register": "Mindestens ein Studierender muss zur Klausur angemeldet sein.",
+                    "register": "Studierende können auf drei verschiedene Arten registriert werden: einzeln, per .csv Datei oder Sie können alle zum Kurs der Klausur angemeldeten Studierenden auf einmal anmelden",
                     "exerciseGroups": "Du kannst Übungsgruppen mit mehreren Übungsvarianten erstellen, um Unterschleif für Studierende zu erschweren. Die Punkte aller Aufgaben einer Aufgabengruppe müssen identisch sein. Die Anzahl an Aufgabengruppen muss der Anzahl der Aufgaben in der Klausur entsprechen.",
-                    "generateStudentExams": "Die Klausuren der Studierenden müssen generiert worden sein, bevor die Klausur beginnt.",
+                    "generateStudentExams": "Die Klausuren der Studierenden müssen generiert worden sein, bevor die Klausur beginnt. Die Arbeitszeit kann dabei individuell angepasst werden.",
                     "prepareExerciseStart": "Vorbereiten der Aufgaben kann die Serverlast während der Klausur reduzieren.",
                     "examDetails": "Alle relevanten Details der Klausur müssen vor dem Start der Korrektur eingetragen sein.",
                     "conductExam": "In der Studierenden-Klausurübersicht sieht man, welche Studierende ihre Klausur bereits abgegeben haben.",
@@ -333,6 +334,25 @@
                     "resolveComplaints": "Beschwerden können im Bewertungs Dashboard bearbeitet werden.",
                     "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
                     "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden."
+                },
+                "textitems": {
+                    "leastoneexercisegroup": "Mindestens eine Aufgabengruppe",
+                    "numberofexercisegroupsequal": "Anzahl der Aufgabengruppen entspricht Anzahl der Aufgaben der Klausur",
+                    "eachexercisegroup": "Jede Aufgabengruppe hat mindestens eine Aufgabe",
+                    "pointsexercisegroupequal": "Gleiche Anzahl Punkte in jeder Aufgabe in einer Aufgabengruppe",
+                    "totalpointspossible": "Gesamtpunktzahl der Klausur kann mit der aktuellen Aufgabenkonfiguration erreicht werden",
+                    "hasExercises": "hat",
+                    "zeroexercises": "0",
+                    "exerciseStart": "Aufgaben Gruppe",
+                    "exercise": "Aufgabe Variante.",
+                    "exercises": "Aufgaben Varianten.",
+                    "leastonestudent": "Mindestens ein Studierender angemeldet zur Klausur",
+                    "studentsregistered": "Aktuelle Anzahl angemeldeter Studierender:",
+                    "allexamsgenerated": "Alle Klausuren generiert für alle angemeldeten Studierenden",
+                    "pulishingdateset": "Veröffentlichungsdatum der Ergebnisse gesetzt",
+                    "startdatereviewset": "Startdatum der Klausureinsicht gesetzt",
+                    "enddatereviewset": "Enddatum der Klausureinsicht gesetzt",
+                    "testruns": "Aktuelle Anzahl an Testläufen:"
                 }
             }
         },
