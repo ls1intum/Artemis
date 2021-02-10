@@ -41,6 +41,7 @@ describe('ProgrammingSubmissionService', () => {
     let wsReceiveStub: SinonStub;
     let participationWsLatestResultStub: SinonStub;
     let getLatestResultStub: SinonStub;
+    let notifyAllResultSubscribersStub: SinonStub;
 
     let wsSubmissionSubject: Subject<Submission | undefined>;
     let wsLatestResultSubject: Subject<Result | undefined>;
@@ -67,6 +68,7 @@ describe('ProgrammingSubmissionService', () => {
         wsLatestResultSubject = new Subject<Result | undefined>();
         participationWsLatestResultStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(wsLatestResultSubject as any);
         getLatestResultStub = stub(participationService, 'getLatestResultWithFeedback');
+        notifyAllResultSubscribersStub = stub(participationWebsocketService, 'notifyAllResultSubscribers');
 
         // @ts-ignore
         submissionService = new ProgrammingSubmissionService(websocketService, httpService, participationWebsocketService, participationService, alertService);
@@ -169,13 +171,13 @@ describe('ProgrammingSubmissionService', () => {
             { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
         ]);
-        // Wait 10ms.
+        // Wait 10ms for the timeout
         await new Promise<void>((resolve) => setTimeout(() => resolve(), 10));
 
         // Expect the fallback mechanism to kick in after the timeout
         expect(getLatestResultStub).to.have.been.calledOnceWithExactly(participationId, true);
 
-        // HAS_FAILED_SUBMISSION is expected as the result provided by getLatestResult does not match the pending submision
+        // HAS_FAILED_SUBMISSION is expected as the result provided by getLatestResult does not match the pending submission
         expect(returnedSubmissions).to.deep.equal([
             { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
@@ -188,6 +190,46 @@ describe('ProgrammingSubmissionService', () => {
             { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
             { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: currentSubmission2, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+        ]);
+    });
+
+    it('should emit has no pending submission if the fallback mechanism fetches the right result from the server', async () => {
+        // Set the timer to 10ms for testing purposes.
+        // @ts-ignore
+        submissionService.DEFAULT_EXPECTED_RESULT_ETA = 10;
+        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
+        httpGetStub.returns(of(undefined));
+        submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
+        // We simulate that the latest result from the server matches the pending submission
+        getLatestResultStub = getLatestResultStub.returns(of(result));
+
+        expect(returnedSubmissions).to.deep.equal([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
+        wsSubmissionSubject.next(currentSubmission);
+        expect(returnedSubmissions).to.deep.equal([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
+        ]);
+        // Wait 10ms for the timeout.
+        await new Promise<void>((resolve) => setTimeout(() => resolve(), 10));
+
+        // Expect the fallback mechanism to kick in after the timeout
+        expect(getLatestResultStub).to.have.been.calledOnceWithExactly(participationId, true);
+        expect(notifyAllResultSubscribersStub).to.have.been.calledOnceWithExactly({ ...result, participation: { id: participationId } });
+        wsLatestResultSubject.next(result);
+
+        // HAS_NO_PENDING_SUBMISSION is expected as the result provided by getLatestResult matches the pending submission
+        expect(returnedSubmissions).to.deep.equal([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+        ]);
+
+        // If the "real" websocket connection triggers now for some reason, the submission state should not change
+        wsLatestResultSubject.next(result);
+        expect(returnedSubmissions).to.deep.equal([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
             { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
         ]);
     });
