@@ -390,6 +390,7 @@ public class ProgrammingSubmissionResource {
             return forbidden();
         }
 
+        // Optional<Result> manualResult =
         int numberOfManualResults = participation.getResults().stream().filter(Result::isManual).collect(Collectors.toList()).size();
         if (numberOfManualResults == correctionRound + 1) {
             return ResponseEntity.ok(participation);
