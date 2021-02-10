@@ -78,7 +78,7 @@
         "zone.js": "0.11.3"
     },
     "devDependencies": {
-        "@angular/cdk": "11.1.2",
+        "@angular/cdk": "11.2.0",
         "@angular/cli": "11.1.4",
         "@angular/compiler-cli": "11.1.2",
         "@angular/language-service": "11.1.2",
@@ -145,7 +145,7 @@
         "prettier": "2.2.1",
         "reflect-metadata": "0.1.13",
         "rimraf": "3.0.2",
-        "sass": "1.32.6",
+        "sass": "1.32.7",
         "sass-loader": "10.1.1",
         "simple-progress-webpack-plugin": "1.1.2",
         "sinon": "9.2.4",
