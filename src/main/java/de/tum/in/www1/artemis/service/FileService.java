@@ -498,10 +498,11 @@ public class FileService implements DisposableBean {
 
     /**
      * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file
-     *
+     * <p>
      * {@link #replaceVariablesInFile(String, Map) replaceVariablesInFile}
-     * @param startPath          the path where the start directory is located
-     * @param replacements       the replacements that should be applied
+     *
+     * @param startPath    the path where the start directory is located
+     * @param replacements the replacements that should be applied
      * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
     public void replaceVariablesInFileRecursive(String startPath, Map<String, String> replacements) throws IOException {
@@ -537,8 +538,8 @@ public class FileService implements DisposableBean {
      * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file. It assumes that the size of the lists is equal and the
      * order of the argument is the same
      *
-     * @param filePath           the path where the file is located
-     * @param replacements       the replacements that should be applied
+     * @param filePath     the path where the file is located
+     * @param replacements the replacements that should be applied
      * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
     public void replaceVariablesInFile(String filePath, Map<String, String> replacements) throws IOException {
@@ -556,9 +557,10 @@ public class FileService implements DisposableBean {
 
     /**
      * This normalizes all line endings to UNIX-line-endings recursively from the startPath.
-     *
+     * <p>
      * {@link #normalizeLineEndings(String) normalizeLineEndings}
-     * @param startPath          the path where the start directory is located
+     *
+     * @param startPath the path where the start directory is located
      * @throws IOException if an issue occurs on file access for the normalizing of the line endings.
      */
     public void normalizeLineEndingsDirectory(String startPath) throws IOException {
@@ -583,7 +585,7 @@ public class FileService implements DisposableBean {
      * '\r\n' gets replaced to '\n'
      * '\r' gets replaced to '\n'
      *
-     * @param filePath           the path where the file is located
+     * @param filePath the path where the file is located
      * @throws IOException if an issue occurs on file access for the normalizing of the line endings.
      */
     public void normalizeLineEndings(String filePath) throws IOException {
@@ -599,9 +601,10 @@ public class FileService implements DisposableBean {
 
     /**
      * This converts all files to the UTF-8 encoding recursively from the startPath.
-     *
+     * <p>
      * {@link #convertToUTF8(String) convertToUTF8}
-     * @param startPath          the path where the start directory is located
+     *
+     * @param startPath the path where the start directory is located
      * @throws IOException if an issue occurs on file access when converting to UTF-8.
      */
     public void convertToUTF8Directory(String startPath) throws IOException {
@@ -625,7 +628,7 @@ public class FileService implements DisposableBean {
      * This converts a specific file to the UTF-8 encoding.
      * To determine the encoding of the file, the library com.ibm.icu.text is used.
      *
-     * @param filePath           the path where the file is located
+     * @param filePath the path where the file is located
      * @throws IOException if an issue occurs on file access when converting to UTF-8.
      */
     public void convertToUTF8(String filePath) throws IOException {
@@ -657,7 +660,7 @@ public class FileService implements DisposableBean {
     /**
      * Schedule the deletion of the given path with a given delay
      *
-     * @param path The path that should be deleted
+     * @param path           The path that should be deleted
      * @param delayInMinutes The delay in minutes after which the path should be deleted
      */
     public void scheduleForDeletion(Path path, long delayInMinutes) {
@@ -669,6 +672,27 @@ public class FileService implements DisposableBean {
             }
             catch (IOException e) {
                 log.error("Deleting the file " + path + " did not work", e);
+            }
+        }, delayInMinutes, TimeUnit.MINUTES);
+
+        futures.put(path, future);
+    }
+
+    /**
+     * Schedule the recursive deletion of the given directory with a given delay.
+     *
+     * @param path           The path to the directory that should be deleted
+     * @param delayInMinutes The delay in minutes after which the path should be deleted
+     */
+    public void scheduleForDirectoryDeletion(Path path, long delayInMinutes) {
+        ScheduledFuture<?> future = executor.schedule(() -> {
+            try {
+                log.info("Delete directory  " + path);
+                FileUtils.deleteDirectory(path.toFile());
+                futures.remove(path);
+            }
+            catch (IOException e) {
+                log.error("Deleting the directory " + path + " did not work", e);
             }
         }, delayInMinutes, TimeUnit.MINUTES);
 

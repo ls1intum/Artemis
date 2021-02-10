@@ -1095,6 +1095,7 @@ public class ParticipationService {
         // ignore participations without repository URL
         if (participation.getRepositoryUrl() != null) {
             versionControlService.get().deleteRepository(participation.getVcsRepositoryUrl());
+            gitService.deleteLocalRepository(participation.getVcsRepositoryUrl());
             participation.setRepositoryUrl(null);
             participation.setInitializationState(InitializationState.FINISHED);
             save(participation);
