@@ -10,6 +10,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 
 /**
  * A ProgrammingSubmission.
@@ -70,6 +71,10 @@ public class ProgrammingSubmission extends Submission {
 
     public void setBuildLogEntries(List<BuildLogEntry> buildLogEntries) {
         this.buildLogEntries = buildLogEntries;
+    }
+
+    public boolean belongsToTestRepository() {
+        return SubmissionType.TEST.equals(getType());
     }
 
     @Override

@@ -3,14 +3,12 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createNotification;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Attachment;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.StudentQuestion;
-import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
@@ -35,7 +33,7 @@ public class GroupNotificationService {
     /**
      * Notify student groups about an attachment change.
      *
-     * @param attachment that has been changed
+     * @param attachment       that has been changed
      * @param notificationText that should be displayed
      */
     public void notifyStudentGroupAboutAttachmentChange(Attachment attachment, String notificationText) {
@@ -68,7 +66,7 @@ public class GroupNotificationService {
     /**
      * Notify student groups about an exercise update.
      *
-     * @param exercise that has been updated
+     * @param exercise         that has been updated
      * @param notificationText that should be displayed
      */
     public void notifyStudentGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
@@ -92,7 +90,7 @@ public class GroupNotificationService {
     /**
      * Notify instructor groups about an exercise update.
      *
-     * @param exercise that has been updated
+     * @param exercise         that has been updated
      * @param notificationText that should be displayed
      */
     public void notifyInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
@@ -137,6 +135,17 @@ public class GroupNotificationService {
     public void notifyTutorAndInstructorGroupAboutNewAnswerForLecture(StudentQuestionAnswer studentQuestionAnswer) {
         saveAndSend(createNotification(studentQuestionAnswer, userService.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_FOR_LECTURE));
         saveAndSend(createNotification(studentQuestionAnswer, userService.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_FOR_LECTURE));
+    }
+
+    /**
+     * Notify tutor and instructor groups about a new answer for a lecture.
+     *
+     * @param course           The course
+     * @param notificationType The state of the archiving process
+     * @param archiveErrors    a list of errors that happened during archiving
+     */
+    public void notifyInstructorGroupAboutCourseArchiveState(Course course, NotificationType notificationType, List<String> archiveErrors) {
+        saveAndSend(createNotification(course, null, GroupNotificationType.INSTRUCTOR, notificationType, archiveErrors));
     }
 
     /**

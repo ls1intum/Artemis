@@ -34,6 +34,7 @@ import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { ExamChecklistCheckComponent } from 'app/exam/manage/exams/exam-checklist-check/exam-checklist-check.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -76,6 +77,7 @@ const ENTITY_STATES = [...examManagementState];
         StudentExamDetailComponent,
         DurationPipe,
         StudentExamSummaryComponent,
+        ExamChecklistCheckComponent,
     ],
 })
 export class ArtemisExamManagementModule {}

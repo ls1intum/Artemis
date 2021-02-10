@@ -17,6 +17,7 @@ import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/progr
 import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
+import { ArtemisProgrammingAssessmentDashboardModule } from 'app/exercises/programming/assess/programming-assessment-dashboard/programming-assessment-dashboard.module';
 
 @NgModule({
     imports: [
@@ -35,6 +36,7 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
         ArtemisProgrammingManualAssessmentModule,
         AssessmentInstructionsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
+        ArtemisProgrammingAssessmentDashboardModule,
     ],
     declarations: [ProgrammingAssessmentRepoExportButtonComponent, ProgrammingAssessmentRepoExportDialogComponent, CodeEditorTutorAssessmentContainerComponent],
     entryComponents: [ProgrammingAssessmentRepoExportDialogComponent],
