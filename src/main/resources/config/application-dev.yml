@@ -32,7 +32,7 @@ spring:
         type: com.zaxxer.hikari.HikariDataSource
         url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
         username: root
-        password: 12345678
+        password:
         hikari:
             poolName: Hikari
             auto-commit: false
@@ -60,7 +60,7 @@ spring:
         localInstances: true
 server:
     port: 8080
-    url: http://docker.for.mac.host.internal:8080
+    url: https://artemislocal.ase.in.tum.de
 
 # ===================================================================
 # JHipster specific properties
