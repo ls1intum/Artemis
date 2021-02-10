@@ -288,71 +288,71 @@ Exercise Creation
 
   - Code quality issues found during the automatic assessment of a submission are grouped into categories. Artemis maps categories defined by the static code analysis tools to Artemis categories according to the following table:
 
-+-----------------+--------------------------------------------------------------------------------------------------------------------------+--------------------------+
-|                 |                                                                                                                          | Mapping                  |
-+-----------------+--------------------------------------------------------------------------------------------------------------------------+--------------------------+
-| Category        | Description                                                                                                              | Java                     |
-+-----------------+--------------------------------------------------------------------------------------------------------------------------+--------------------------+
-| Bad Practice    | Code that violates recommended and essential coding practices                                                            | Spotbugs BAD_PRACTICE    |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | Spotbugs I18N            |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | PMD Best Practices       |
-+-----------------+--------------------------------------------------------------------------------------------------------------------------+--------------------------+
-| Code Style      | Code that is confusing and hard to maintain                                                                              | Spotbugs STYLE           |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | Checkstyle blocks        |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | Checkstyle coding        |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | Checkstyle modifier      |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | PMD Code Style           |
-+-----------------+--------------------------------------------------------------------------------------------------------------------------+--------------------------+
-| Potential Bugs  | Coding mistakes, error-prone code or threading errors                                                                    | Spotbugs CORRECTNESS     |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | Spotbugs MT_CORRECTNESS  |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | PMD Error Prone          |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | PMD Multithreading       |
-+-----------------+--------------------------------------------------------------------------------------------------------------------------+--------------------------+
-| Duplicated Code | Code clones                                                                                                              | PMD CPD                  |
-+-----------------+--------------------------------------------------------------------------------------------------------------------------+--------------------------+
-| Security        | Vulnerable code, unchecked inputs and security flaws                                                                     | Spotbugs MALICIOUS_CODE  |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | Spotbugs SECURITY        |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | PMD Security             |
-+-----------------+--------------------------------------------------------------------------------------------------------------------------+--------------------------+
-| Performance     | Inefficient code                                                                                                         | Spotbugs PERFORMANCE     |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | PMD Performance          |
-+-----------------+--------------------------------------------------------------------------------------------------------------------------+--------------------------+
-| Design          | Program structure/architecture and object design                                                                         | Checkstyle design        |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | PMD Design               |
-+-----------------+--------------------------------------------------------------------------------------------------------------------------+--------------------------+
-| Code Metrics    | Violations of code complexity metrics or size limitations                                                                | Checkstyle metrics       |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | Checkstyle sizes         |
-+-----------------+--------------------------------------------------------------------------------------------------------------------------+--------------------------+
-| Documentation   | Code with missing or flawed documentation                                                                                | Checkstyle javadoc       |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | Checkstyle annotation    |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | PMD Documentation        |
-+-----------------+--------------------------------------------------------------------------------------------------------------------------+--------------------------+
-| Naming & Format | Rules that ensure the readability of the source code (name conventions, imports, indentation, annotations, white spaces) | Checkstyle imports       |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | Checkstyle indentation   |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | Checkstyle naming        |
-|                 |                                                                                                                          +--------------------------+
-|                 |                                                                                                                          | Checkstyle whitespace    |
-+-----------------+--------------------------------------------------------------------------------------------------------------------------+--------------------------+
-| Miscellaneous   | Uncategorized rules                                                                                                      | Checkstyle miscellaneous |
-+-----------------+--------------------------------------------------------------------------------------------------------------------------+--------------------------+
++-----------------+----------------------------------------+--------------------------+
+|                 |                                        | Mappings                 |
++-----------------+----------------------------------------+--------------------------+
+| Category        | Description                            | Java                     |
++-----------------+----------------------------------------+--------------------------+
+| Bad Practice    | Code that violates recommended         | Spotbugs BAD_PRACTICE    |
+|                 | and essential coding practices         +--------------------------+
+|                 |                                        | Spotbugs I18N            |
+|                 |                                        +--------------------------+
+|                 |                                        | PMD Best Practices       |
++-----------------+----------------------------------------+--------------------------+
+| Code Style      | Code that is confusing                 | Spotbugs STYLE           |
+|                 | and hard to maintain                   +--------------------------+
+|                 |                                        | Checkstyle blocks        |
+|                 |                                        +--------------------------+
+|                 |                                        | Checkstyle coding        |
+|                 |                                        +--------------------------+
+|                 |                                        | Checkstyle modifier      |
+|                 |                                        +--------------------------+
+|                 |                                        | PMD Code Style           |
++-----------------+----------------------------------------+--------------------------+
+| Potential Bugs  | Coding mistakes, error-prone           | Spotbugs CORRECTNESS     |
+|                 | code or threading errors               +--------------------------+
+|                 |                                        | Spotbugs MT_CORRECTNESS  |
+|                 |                                        +--------------------------+
+|                 |                                        | PMD Error Prone          |
+|                 |                                        +--------------------------+
+|                 |                                        | PMD Multithreading       |
++-----------------+----------------------------------------+--------------------------+
+| Duplicated Code | Code clones                            | PMD CPD                  |
++-----------------+----------------------------------------+--------------------------+
+| Security        | Vulnerable code, unchecked             | Spotbugs MALICIOUS_CODE  |
+|                 | inputs and security flaws              +--------------------------+
+|                 |                                        | Spotbugs SECURITY        |
+|                 |                                        +--------------------------+
+|                 |                                        | PMD Security             |
++-----------------+----------------------------------------+--------------------------+
+| Performance     | Inefficient code                       | Spotbugs PERFORMANCE     |
+|                 |                                        +--------------------------+
+|                 |                                        | PMD Performance          |
++-----------------+----------------------------------------+--------------------------+
+| Design          | Program structure/architecture         | Checkstyle design        |
+|                 | and object design                      +--------------------------+
+|                 |                                        | PMD Design               |
++-----------------+----------------------------------------+--------------------------+
+| Code Metrics    | Violations of code complexity          | Checkstyle metrics       |
+|                 | metrics or size limitations            +--------------------------+
+|                 |                                        | Checkstyle sizes         |
++-----------------+----------------------------------------+--------------------------+
+| Documentation   | Code with missing or flawed            | Checkstyle javadoc       |
+|                 | documentation                          +--------------------------+
+|                 |                                        | Checkstyle annotation    |
+|                 |                                        +--------------------------+
+|                 |                                        | PMD Documentation        |
++-----------------+----------------------------------------+--------------------------+
+| Naming & Format | Rules that ensure the readability      | Checkstyle imports       |
+|                 | of the source code (name conventions,  +--------------------------+
+|                 | imports, indentation, annotations,     | Checkstyle indentation   |
+|                 | white spaces)                          +--------------------------+
+|                 |                                        | Checkstyle naming        |
+|                 |                                        +--------------------------+
+|                 |                                        | Checkstyle whitespace    |
++-----------------+----------------------------------------+--------------------------+
+| Miscellaneous   | Uncategorized rules                    | Checkstyle miscellaneous |
++-----------------+----------------------------------------+--------------------------+
 
   - On the left side of the page, instructors can configure the static code analysis categories.
 
