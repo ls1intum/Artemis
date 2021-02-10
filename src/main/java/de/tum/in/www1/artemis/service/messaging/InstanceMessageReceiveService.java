@@ -95,7 +95,7 @@ public class InstanceMessageReceiveService {
         log.info("Received unlock all repositories for programming exercise " + exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         // Run the runnable immediately so that the repositories are unlocked as fast as possible
-        programmingExerciseScheduleService.unlockAllStudentRepositoriesForExam(programmingExercise).run();
+        programmingExerciseScheduleService.unlockAllStudentRepositories(programmingExercise).run();
     }
 
     public void processLockAllRepositories(Long exerciseId) {
