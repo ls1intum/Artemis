@@ -21,11 +21,11 @@ plugins {
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "2.7.1"
-    id "com.github.node-gradle.node" version "3.0.0-rc7"
+    id "com.github.node-gradle.node" version "3.0.1"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
-    id "com.diffplug.spotless" version "5.9.0"
+    id "com.diffplug.spotless" version "5.10.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.35.0"
 }
@@ -203,7 +203,7 @@ dependencies {
     implementation "org.hibernate:hibernate-jcache:${hibernate_version}"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
     implementation "org.hibernate.validator:hibernate-validator:6.2.0.Final"
-    implementation "org.liquibase:liquibase-core:4.2.2"
+    implementation "org.liquibase:liquibase-core:4.3.0"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
@@ -225,7 +225,7 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.2"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
-    implementation "io.netty:netty-all:4.1.58.Final"
+    implementation "io.netty:netty-all:4.1.59.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.0.3"
     implementation "org.springframework:spring-messaging:5.3.3"
 
@@ -273,7 +273,7 @@ dependencies {
     testImplementation "org.hamcrest:hamcrest-library:2.2"
     testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.0.3"
-    testImplementation "org.apache.maven.shared:maven-invoker:3.0.1"
+    testImplementation "org.apache.maven.shared:maven-invoker:3.1.0"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:2.22.2"
 
     // Java's lightweight JSON library needed for the internals of the MockRestServiceServer
