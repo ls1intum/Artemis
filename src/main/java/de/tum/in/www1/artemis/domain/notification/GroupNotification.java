@@ -146,6 +146,23 @@ public class GroupNotification extends Notification {
         return target.toString();
     }
 
+    /**
+     * Create JSON representation for a GroupNotification for a Course.
+     *
+     * @param course for which to create the notification.
+     * @param message to use for the notification.
+     * @return the stringified JSON of the target.
+     */
+    public String getCourseTarget(Course course, String message) {
+        JsonObject target = new JsonObject();
+        target.addProperty("message", message);
+        target.addProperty("id", course.getId());
+        target.addProperty("entity", "courses");
+        target.addProperty("course", course.getId());
+        target.addProperty("mainPage", "courses");
+        return target.toString();
+    }
+
     public String getTopic() {
         return "/topic/course/" + getCourse().getId() + "/" + getType();
     }

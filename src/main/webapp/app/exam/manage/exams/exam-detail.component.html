@@ -1,50 +1,44 @@
 <div class="row justify-content-center">
-    <div class="col-8">
+    <div class="col-11">
         <div *ngIf="exam">
             <h2><span jhiTranslate="artemisApp.exam.title">Exam</span> {{ exam.id }}</h2>
             <hr />
-
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
             <a *ngIf="isAtLeastInstructor" [routerLink]="['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'participant-scores']" class="btn btn-primary mr-1">
                 <fa-icon [icon]="'table'"></fa-icon>
                 <span class="d-none d-md-inline" [innerHTML]="'artemisApp.participantScores.pageTitle' | translate"></span>
             </a>
-            <a id="editButton" *ngIf="isAtLeastInstructor" [routerLink]="getEditRoute()" class="btn btn-primary">
+            <a id="editButton" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </a>
 
-            <a id="studentExamsButton" *ngIf="isAtLeastInstructor" [routerLink]="getStudentExamRoute()" class="btn btn-info">
-                <fa-icon [icon]="'eye'"></fa-icon>
-                <span>{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
-            </a>
-
-            <a *ngIf="isAtLeastInstructor" [routerLink]="['tutor-exam-dashboard']" class="btn btn-primary" id="tutor-exam-dashboard-button">
-                <fa-icon [icon]="'th-list'"></fa-icon>
-                <span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
-            </a>
-
-            <a *ngIf="isAtLeastInstructor" [routerLink]="['scores']" class="btn btn-info" id="scores-button">
-                <fa-icon [icon]="'eye'"></fa-icon>
-                <span>{{ 'entity.action.scores' | translate }}</span>
-            </a>
-
-            <a *ngIf="isAtLeastInstructor" type="submit" [routerLink]="['exercise-groups']" class="btn btn-primary" id="exercises-button-groups">
-                <fa-icon [icon]="'list-alt'"></fa-icon>
-                <span>{{ 'artemisApp.examManagement.exerciseGroups' | translate }}</span>
-            </a>
-
-            <a *ngIf="isAtLeastInstructor" [routerLink]="['test-runs']" class="btn btn-info">
-                <fa-icon [icon]="'user'"></fa-icon>
-                <span>{{ 'artemisApp.examManagement.testRun.testRun' | translate }}</span>
-            </a>
-
-            <a *ngIf="isAtLeastInstructor" [routerLink]="['student-exams']" class="btn btn-primary">
+            <a id="studentExamsButton" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-info">
                 <fa-icon [icon]="'eye'"></fa-icon>
                 <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
             </a>
 
-            <a *ngIf="isAtLeastInstructor" [routerLink]="['students']" class="btn btn-info">
+            <a id="tutor-exam-dashboard-button" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('tutor-exam-dashboard')" class="btn btn-primary">
+                <fa-icon [icon]="'th-list'"></fa-icon>
+                <span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
+            </a>
+
+            <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info" id="scores-button">
+                <fa-icon [icon]="'eye'"></fa-icon>
+                <span>{{ 'entity.action.scores' | translate }}</span>
+            </a>
+
+            <a *ngIf="isAtLeastInstructor" type="submit" [routerLink]="getExamRoutesByIdentifier('exercise-groups')" class="btn btn-primary" id="exercises-button-groups">
+                <fa-icon [icon]="'list-alt'"></fa-icon>
+                <span>{{ 'artemisApp.examManagement.exerciseGroups' | translate }}</span>
+            </a>
+
+            <a id="testrun-button" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info">
+                <fa-icon [icon]="'user'"></fa-icon>
+                <span>{{ 'artemisApp.examManagement.testRun.testRun' | translate }}</span>
+            </a>
+
+            <a id="students-button" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info">
                 <fa-icon [icon]="'user'"></fa-icon>
                 <span>{{ 'artemisApp.examManagement.students' | translate }}</span>
             </a>
@@ -66,7 +60,7 @@
                     <thead>
                         <tr>
                             <th>
-                                <span>{{ 'global.field.id' | translate }}</span>
+                                <span>#</span>
                             </th>
                             <th>
                                 <span>{{ 'artemisApp.examManagement.checklist.checklistItem' | translate }}</span>
@@ -84,45 +78,126 @@
                         <tr>
                             <td class="d-none d-md-table-cell">1</td>
                             <td class="d-none d-md-table-cell">
-                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.register' | translate }}</span>
-                            </td>
-                            <td class="d-none d-md-table-cell">
-                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.register' | translate }}</span>
-                            </td>
-                            <td class="d-none d-md-table-cell">
-                                <a *ngIf="isAtLeastInstructor" [routerLink]="['students']" class="btn btn-info">
-                                    <fa-icon [icon]="'user'"></fa-icon>
-                                    <span>{{ 'artemisApp.examManagement.students' | translate }}</span>
-                                </a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="d-none d-md-table-cell">2</td>
-                            <td class="d-none d-md-table-cell">
                                 <span>{{ 'artemisApp.examManagement.checklist.tableItem.exerciseGroups' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.exerciseGroups' | translate }}</span>
+                                <hr />
+                                <ul class="list-unstyled">
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            <jhi-exam-checklist-check [checkAttribute]="exam.exerciseGroups?.length > 0"></jhi-exam-checklist-check>
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.leastoneexercisegroup' | translate }}</span>
+                                        </span>
+                                    </li>
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            <jhi-exam-checklist-check [checkAttribute]="exam.exerciseGroups?.length == exam.numberOfExercisesInExam"></jhi-exam-checklist-check>
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.numberofexercisegroupsequal' | translate }}</span>
+                                        </span>
+                                    </li>
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            <jhi-exam-checklist-check [checkAttribute]="allGroupsContainExercise"></jhi-exam-checklist-check>
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.eachexercisegroup' | translate }}</span>
+                                        </span>
+                                        <hr />
+                                        <ul class="list-unstyled">
+                                            <li class="list-group-item border-1" *ngFor="let exerciseGroup of exam.exerciseGroups">
+                                                <span>{{ 'artemisApp.examManagement.checklist.textitems.exerciseStart' | translate }}</span>
+                                                '{{ exerciseGroup.title }}'
+                                                <span>{{ 'artemisApp.examManagement.checklist.textitems.hasExercises' | translate }}</span>
+                                                <span *ngIf="exerciseGroup.exercises">
+                                                    {{ exerciseGroup.exercises?.length }}
+                                                </span>
+                                                <span *ngIf="!exerciseGroup.exercises">
+                                                    <span>{{ 'artemisApp.examManagement.checklist.textitems.zeroexercises' | translate }}</span>
+                                                </span>
+                                                <span *ngIf="!exerciseGroup.exercises || (exerciseGroup.exercises && exerciseGroup.exercises.length > 1)">
+                                                    {{ 'artemisApp.examManagement.checklist.textitems.exercises' | translate }}
+                                                </span>
+                                                <span *ngIf="!(exerciseGroup.exercises && exerciseGroup.exercises.length > 1)">
+                                                    {{ 'artemisApp.examManagement.checklist.textitems.exercise' | translate }}
+                                                </span>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            <jhi-exam-checklist-check [checkAttribute]="pointsExercisesEqual"></jhi-exam-checklist-check>
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.pointsexercisegroupequal' | translate }}</span>
+                                        </span>
+                                    </li>
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            <jhi-exam-checklist-check [checkAttribute]="totalPointsMandatory && totalPointsMandatoryOptional"></jhi-exam-checklist-check>
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.totalpointspossible' | translate }}</span>
+                                        </span>
+                                    </li>
+                                </ul>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a *ngIf="isAtLeastInstructor" [routerLink]="['exercise-groups']" class="btn btn-primary" id="exercises-button-groups_table">
+                                <a
+                                    *ngIf="isAtLeastInstructor"
+                                    type="submit"
+                                    [routerLink]="getExamRoutesByIdentifier('exercise-groups')"
+                                    class="btn btn-primary"
+                                    id="exercises-button-groups-table"
+                                >
                                     <fa-icon [icon]="'list-alt'"></fa-icon>
                                     <span>{{ 'artemisApp.examManagement.exerciseGroups' | translate }}</span>
                                 </a>
                             </td>
                         </tr>
                         <tr>
-                            <td class="d-none d-md-table-cell">3</td>
+                            <td class="d-none d-md-table-cell">2</td>
                             <td class="d-none d-md-table-cell">
                                 <span>{{ 'artemisApp.examManagement.checklist.tableItem.testRun' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.testRun' | translate }}</span>
+                                <hr />
+                                <ul class="list-unstyled">
+                                    <li class="list-group-item border-1">
+                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.testruns' | translate }}</span>
+                                        {{ exam.numberOfTestRuns }}
+                                    </li>
+                                </ul>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a *ngIf="isAtLeastInstructor" [routerLink]="['test-runs']" class="btn btn-info">
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info">
                                     <fa-icon [icon]="'user'"></fa-icon>
                                     <span>{{ 'artemisApp.examManagement.testRun.testRun' | translate }}</span>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="d-none d-md-table-cell">3</td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.register' | translate }}</span>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.register' | translate }}</span>
+                                <hr />
+                                <ul class="list-unstyled">
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            <jhi-exam-checklist-check
+                                                [checkAttribute]="exam.numberOfRegisteredUsers && exam.numberOfRegisteredUsers > 0"
+                                            ></jhi-exam-checklist-check>
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.leastonestudent' | translate }}</span>
+                                        </span>
+                                    </li>
+                                    <li class="list-group-item border-1">
+                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.studentsregistered' | translate }}</span>
+                                        <span> {{ exam.registeredUsers?.length || 0 }} </span>
+                                    </li>
+                                </ul>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info">
+                                    <fa-icon [icon]="'user'"></fa-icon>
+                                    <span>{{ 'artemisApp.examManagement.students' | translate }}</span>
                                 </a>
                             </td>
                         </tr>
@@ -133,9 +208,18 @@
                             </td>
                             <td class="d-none d-md-table-cell">
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.generateStudentExams' | translate }}</span>
+                                <hr />
+                                <ul class="list-unstyled">
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            <jhi-exam-checklist-check [checkAttribute]="allExamsGenerated"></jhi-exam-checklist-check>
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.allexamsgenerated' | translate }}</span>
+                                        </span>
+                                    </li>
+                                </ul>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a *ngIf="isAtLeastInstructor" [routerLink]="['student-exams']" class="btn btn-primary">
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
                                     <fa-icon [icon]="'eye'"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
                                 </a>
@@ -150,7 +234,7 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.prepareExerciseStart' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a *ngIf="isAtLeastInstructor" [routerLink]="['student-exams']" class="btn btn-primary">
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
                                     <fa-icon [icon]="'eye'"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
                                 </a>
@@ -165,7 +249,7 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examDetails' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a id="editButton_table" *ngIf="isAtLeastInstructor" [routerLink]="getEditRoute()" class="btn btn-primary">
+                                <a id="editButton_table" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-primary">
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
                                 </a>
                             </td>
@@ -179,7 +263,7 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.conductExam' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a *ngIf="isAtLeastInstructor" [routerLink]="['student-exams']" class="btn btn-primary">
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
                                     <fa-icon [icon]="'eye'"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
                                 </a>
@@ -194,7 +278,12 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.assessAllSubmissions' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a *ngIf="isAtLeastInstructor" [routerLink]="['tutor-exam-dashboard']" class="btn btn-primary" id="tutor-exam-dashboard-button_table">
+                                <a
+                                    *ngIf="isAtLeastInstructor"
+                                    [routerLink]="getExamRoutesByIdentifier('tutor-exam-dashboard')"
+                                    class="btn btn-primary"
+                                    id="tutor-dashboard-button-table-submission"
+                                >
                                     <fa-icon [icon]="'th-list'"></fa-icon>
                                     <span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
                                 </a>
@@ -207,9 +296,18 @@
                             </td>
                             <td class="d-none d-md-table-cell">
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.publishResults' | translate }}</span>
+                                <hr />
+                                <ul class="list-unstyled">
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            <jhi-exam-checklist-check [checkAttribute]="!!exam.publishResultsDate"></jhi-exam-checklist-check>
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.pulishingdateset' | translate }}</span>
+                                        </span>
+                                    </li>
+                                </ul>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a id="editButton_publish" *ngIf="isAtLeastInstructor" [routerLink]="getEditRoute()" class="btn btn-primary">
+                                <a id="editButton_publish" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-primary">
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
                                 </a>
                             </td>
@@ -221,9 +319,24 @@
                             </td>
                             <td class="d-none d-md-table-cell">
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examReview' | translate }}</span>
+                                <hr />
+                                <ul class="list-unstyled">
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            <jhi-exam-checklist-check [checkAttribute]="!!exam.examStudentReviewStart"></jhi-exam-checklist-check>
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.startdatereviewset' | translate }}</span>
+                                        </span>
+                                    </li>
+                                    <li class="list-group-item border-1">
+                                        <span>
+                                            <jhi-exam-checklist-check [checkAttribute]="!!exam.examStudentReviewEnd"></jhi-exam-checklist-check>
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.enddatereviewset' | translate }}</span>
+                                        </span>
+                                    </li>
+                                </ul>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a id="editButton_review" *ngIf="isAtLeastInstructor" [routerLink]="getEditRoute()" class="btn btn-primary">
+                                <a id="editButton_review" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-primary">
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
                                 </a>
                             </td>
@@ -237,7 +350,12 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.resolveComplaints' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a *ngIf="isAtLeastInstructor" [routerLink]="['tutor-exam-dashboard']" class="btn btn-primary" id="tutor-exam-dashboard-button_table_complaints">
+                                <a
+                                    *ngIf="isAtLeastInstructor"
+                                    [routerLink]="getExamRoutesByIdentifier('tutor-exam-dashboard')"
+                                    class="btn btn-primary"
+                                    id="tutor-exam-dashboard-button_table_complaints"
+                                >
                                     <fa-icon [icon]="'th-list'"></fa-icon>
                                     <span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
                                 </a>
@@ -252,7 +370,7 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.exportResults' | translate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a *ngIf="isAtLeastInstructor" [routerLink]="['scores']" class="btn btn-info" id="scores-button_publish_result">
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info" id="scores-button_publish_result">
                                     <fa-icon [icon]="'eye'"></fa-icon>
                                     <span>{{ 'entity.action.scores' | translate }}</span>
                                 </a>

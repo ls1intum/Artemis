@@ -159,7 +159,11 @@ export const areManualResultsAllowed = (exercise: Exercise) => {
     // Only allow new results if manual reviews are activated and the due date/after due date has passed
     const progEx = exercise as ProgrammingExercise;
     const relevantDueDate = progEx.buildAndTestStudentSubmissionsAfterDueDate ?? progEx.dueDate;
-    return progEx.isAtLeastTutor === true && progEx.assessmentType === AssessmentType.SEMI_AUTOMATIC && (!relevantDueDate || moment(relevantDueDate).isBefore(now()));
+    return (
+        (!!progEx.isAtLeastTutor || !!progEx.isAtLeastInstructor) &&
+        progEx.assessmentType === AssessmentType.SEMI_AUTOMATIC &&
+        (!relevantDueDate || moment(relevantDueDate).isBefore(now()))
+    );
 };
 
 /**
