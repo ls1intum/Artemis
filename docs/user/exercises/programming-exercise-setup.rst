@@ -363,6 +363,7 @@ Exercise Creation
 
     - **Category**: The name of category defined by Artemis
     - **State**:
+
       - ``INACTIVE``: Code quality issues of an inactive category are not shown to students and do not influence the score calculation
       - ``FEEDBACK``: Code quality issues of a feedback category are shown to students but do not influence the score calculation
       - ``GRADED``: Code quality issues of a graded category are shown to students and deduct points according to the Penalty and Max Penalty configuration
