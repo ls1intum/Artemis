@@ -190,7 +190,7 @@ Exercise Creation
 5. **Optional:** Configure static code analysis tools
 
 - The **Test** repository contains files for the configuration of static code analysis tools, if static code analysis was activated during the creation/import of the exercise
-- The folder *staticCodeAnalysisTools* contains configuration files for each used static code analysis tool
+- The folder *staticCodeAnalysisConfig* contains configuration files for each used static code analysis tool
 - On exercise creation, Artemis generates a default configuration for each tool, which contain a predefined set of parameterized activated/excluded rules. The configuration files serve as a documented template that instructors can freely tailor to their needs.
 - On exercise import, Artemis copies the configuration files from the imported exercise
 - The following table depicts the supported static code analysis tools for each programming language, the dependency mechanism used to execute the tools and the name of their respective configuration files
@@ -205,6 +205,8 @@ Exercise Creation
 |                      |                         | PMD                           | pmd-configuration.xml        |
 |                      |                         +-------------------------------+------------------------------+
 |                      |                         | PMD Copy/Paste Detector (CPD) |                              |
++----------------------+-------------------------+-------------------------------+------------------------------+
+| Swift                | Script                  | SwiftLint                     | .swiftlint.yml               |
 +----------------------+-------------------------+-------------------------------+------------------------------+
 
 .. note::
@@ -288,79 +290,82 @@ Exercise Creation
 
   - Code quality issues found during the automatic assessment of a submission are grouped into categories. Artemis maps categories defined by the static code analysis tools to Artemis categories according to the following table:
 
-+-----------------+----------------------------------------+--------------------------+
-|                 |                                        | Mappings                 |
-+-----------------+----------------------------------------+--------------------------+
-| Category        | Description                            | Java                     |
-+=================+========================================+==========================+
-| Bad Practice    | Code that violates recommended         | Spotbugs BAD_PRACTICE    |
-|                 | and essential coding practices         +--------------------------+
-|                 |                                        | Spotbugs I18N            |
-|                 |                                        +--------------------------+
-|                 |                                        | PMD Best Practices       |
-+-----------------+----------------------------------------+--------------------------+
-| Code Style      | Code that is confusing                 | Spotbugs STYLE           |
-|                 | and hard to maintain                   +--------------------------+
-|                 |                                        | Checkstyle blocks        |
-|                 |                                        +--------------------------+
-|                 |                                        | Checkstyle coding        |
-|                 |                                        +--------------------------+
-|                 |                                        | Checkstyle modifier      |
-|                 |                                        +--------------------------+
-|                 |                                        | PMD Code Style           |
-+-----------------+----------------------------------------+--------------------------+
-| Potential Bugs  | Coding mistakes, error-prone           | Spotbugs CORRECTNESS     |
-|                 | code or threading errors               +--------------------------+
-|                 |                                        | Spotbugs MT_CORRECTNESS  |
-|                 |                                        +--------------------------+
-|                 |                                        | PMD Error Prone          |
-|                 |                                        +--------------------------+
-|                 |                                        | PMD Multithreading       |
-+-----------------+----------------------------------------+--------------------------+
-| Duplicated Code | Code clones                            | PMD CPD                  |
-+-----------------+----------------------------------------+--------------------------+
-| Security        | Vulnerable code, unchecked             | Spotbugs MALICIOUS_CODE  |
-|                 | inputs and security flaws              +--------------------------+
-|                 |                                        | Spotbugs SECURITY        |
-|                 |                                        +--------------------------+
-|                 |                                        | PMD Security             |
-+-----------------+----------------------------------------+--------------------------+
-| Performance     | Inefficient code                       | Spotbugs PERFORMANCE     |
-|                 |                                        +--------------------------+
-|                 |                                        | PMD Performance          |
-+-----------------+----------------------------------------+--------------------------+
-| Design          | Program structure/architecture         | Checkstyle design        |
-|                 | and object design                      +--------------------------+
-|                 |                                        | PMD Design               |
-+-----------------+----------------------------------------+--------------------------+
-| Code Metrics    | Violations of code complexity          | Checkstyle metrics       |
-|                 | metrics or size limitations            +--------------------------+
-|                 |                                        | Checkstyle sizes         |
-+-----------------+----------------------------------------+--------------------------+
-| Documentation   | Code with missing or flawed            | Checkstyle javadoc       |
-|                 | documentation                          +--------------------------+
-|                 |                                        | Checkstyle annotation    |
-|                 |                                        +--------------------------+
-|                 |                                        | PMD Documentation        |
-+-----------------+----------------------------------------+--------------------------+
-| Naming & Format | Rules that ensure the readability      | Checkstyle imports       |
-|                 | of the source code (name conventions,  +--------------------------+
-|                 | imports, indentation, annotations,     | Checkstyle indentation   |
-|                 | white spaces)                          +--------------------------+
-|                 |                                        | Checkstyle naming        |
-|                 |                                        +--------------------------+
-|                 |                                        | Checkstyle whitespace    |
-+-----------------+----------------------------------------+--------------------------+
-| Miscellaneous   | Uncategorized rules                    | Checkstyle miscellaneous |
-+-----------------+----------------------------------------+--------------------------+
++-----------------+----------------------------------------+--------------------------+-----------------------+
+|                 |                                        | Mapping                  |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+
+| Category        | Description                            | Java                     | Swift                 |
++-----------------+----------------------------------------+--------------------------+-----------------------+
+| Bad Practice    | Code that violates recommended         | Spotbugs BAD_PRACTICE    |                       |
+|                 | and essential coding practices         +--------------------------+                       |
+|                 |                                        | Spotbugs I18N            |                       |
+|                 |                                        +--------------------------+                       |
+|                 |                                        | PMD Best Practices       |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+
+| Code Style      | Code that is confusing                 | Spotbugs STYLE           | Swiftlint (all rules) |
+|                 | and hard to maintain                   +--------------------------+                       |
+|                 |                                        | Checkstyle blocks        |                       |
+|                 |                                        +--------------------------+                       |
+|                 |                                        | Checkstyle coding        |                       |
+|                 |                                        +--------------------------+                       |
+|                 |                                        | Checkstyle modifier      |                       |
+|                 |                                        +--------------------------+                       |
+|                 |                                        | PMD Code Style           |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+
+| Potential Bugs  | Coding mistakes, error-prone           | Spotbugs CORRECTNESS     |                       |
+|                 | code or threading errors               +--------------------------+-----------------------+
+|                 |                                        | Spotbugs MT_CORRECTNESS  |                       |
+|                 |                                        +--------------------------+-----------------------+
+|                 |                                        | PMD Error Prone          |                       |
+|                 |                                        +--------------------------+-----------------------+
+|                 |                                        | PMD Multithreading       |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+
+| Duplicated Code | Code clones                            | PMD CPD                  |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+
+| Security        | Vulnerable code, unchecked             | Spotbugs MALICIOUS_CODE  |                       |
+|                 | inputs and security flaws              +--------------------------+-----------------------+
+|                 |                                        | Spotbugs SECURITY        |                       |
+|                 |                                        +--------------------------+-----------------------+
+|                 |                                        | PMD Security             |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+
+| Performance     | Inefficient code                       | Spotbugs PERFORMANCE     |                       |
+|                 |                                        +--------------------------+-----------------------+
+|                 |                                        | PMD Performance          |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+
+| Design          | Program structure/architecture         | Checkstyle design        |                       |
+|                 | and object design                      +--------------------------+-----------------------+
+|                 |                                        | PMD Design               |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+
+| Code Metrics    | Violations of code complexity          | Checkstyle metrics       |                       |
+|                 | metrics or size limitations            +--------------------------+-----------------------+
+|                 |                                        | Checkstyle sizes         |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+
+| Documentation   | Code with missing or flawed            | Checkstyle javadoc       |                       |
+|                 | documentation                          +--------------------------+-----------------------+
+|                 |                                        | Checkstyle annotation    |                       |
+|                 |                                        +--------------------------+-----------------------+
+|                 |                                        | PMD Documentation        |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+
+| Naming & Format | Rules that ensure the readability      | Checkstyle imports       |                       |
+|                 | of the source code (name conventions,  +--------------------------+-----------------------+
+|                 | imports, indentation, annotations,     | Checkstyle indentation   |                       |
+|                 | white spaces)                          +--------------------------+-----------------------+
+|                 |                                        | Checkstyle naming        |                       |
+|                 |                                        +--------------------------+-----------------------+
+|                 |                                        | Checkstyle whitespace    |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+
+| Miscellaneous   | Uncategorized rules                    | Checkstyle miscellaneous |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+
+
+  .. note::
+    For Swift, only the category Code Style can contain code quality issues currently. All other categories displayed on the grading page are dummies.
 
   - On the left side of the page, instructors can configure the static code analysis categories.
 
     - **Category**: The name of category defined by Artemis
     - **State**:
-    - ``INACTIVE``: Code quality issues of an inactive category are not shown to students and do not influence the score calculation
-    - ``FEEDBACK``: Code quality issues of a feedback category are shown to students but do not influence the score calculation
-    - ``GRADED``: Code quality issues of a graded category are shown to students and deduct points according to the Penalty and Max Penalty configuration
+      - ``INACTIVE``: Code quality issues of an inactive category are not shown to students and do not influence the score calculation
+      - ``FEEDBACK``: Code quality issues of a feedback category are shown to students but do not influence the score calculation
+      - ``GRADED``: Code quality issues of a graded category are shown to students and deduct points according to the Penalty and Max Penalty configuration
     - Penalty: Artemis deducts the selected amount of points for each code quality issue from points achieved by passing test cases
     - Max Penalty: Limits the amount of points deducted for code quality issues belonging to this category
     - Detected Issues: Visualizes how many students encountered a specific number of issues in this category
