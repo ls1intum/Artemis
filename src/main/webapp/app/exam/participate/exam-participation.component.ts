@@ -287,6 +287,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             window.clearInterval(this.autoSaveInterval);
         }
 
+        // Submit the exam with a timeout of 20s = 20000ms
+        // If we don't receive a response within that time throw an error the subscription can then handle
         this.examParticipationService
             .submitStudentExam(this.courseId, this.examId, this.studentExam)
             .timeoutWith(20000, Observable.throw(new Error('Submission request timed out. Please check your connection and try again.')))
