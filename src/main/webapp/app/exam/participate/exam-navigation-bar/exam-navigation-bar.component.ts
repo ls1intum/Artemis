@@ -84,6 +84,10 @@ export class ExamNavigationBarComponent implements OnInit {
         return this.exercises[this.exerciseIndex].type === ExerciseType.PROGRAMMING;
     }
 
+    isFileUploadExercise() {
+        return this.exercises[this.exerciseIndex].type === ExerciseType.FILE_UPLOAD;
+    }
+
     setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
         this.icon = 'edit';
         const exercise = this.exercises[exerciseIndex];

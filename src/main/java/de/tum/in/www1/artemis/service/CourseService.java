@@ -2,23 +2,31 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.util.*;
 import java.time.*;
 import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
-import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -27,6 +35,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewDetailsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -36,6 +45,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Service
 public class CourseService {
+
+    @Value("${artemis.course-archives-path}")
+    private String courseArchivesDirPath;
 
     private final Logger log = LoggerFactory.getLogger(CourseService.class);
 
@@ -63,9 +75,14 @@ public class CourseService {
 
     private final LearningGoalRepository learningGoalRepository;
 
+    private CourseExportService courseExportService;
+
+    private final GroupNotificationService groupNotificationService;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
-            ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository) {
+            ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository,
+            GroupNotificationService groupNotificationService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -77,12 +94,19 @@ public class CourseService {
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
         this.learningGoalRepository = learningGoalRepository;
+        this.groupNotificationService = groupNotificationService;
     }
 
     @Autowired
     // break the dependency cycle
     public void setExamService(ExamService examService) {
         this.examService = examService;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setCourseExportService(CourseExportService courseExportService) {
+        this.courseExportService = courseExportService;
     }
 
     /**
@@ -129,9 +153,9 @@ public class CourseService {
     /**
      * Get one course with exercises and lectures (filtered for given user)
      *
-     * @param courseId  the course to fetch
-     * @param user      the user entity
-     * @return          the course including exercises and lectures for the user
+     * @param courseId the course to fetch
+     * @param user     the user entity
+     * @return the course including exercises and lectures for the user
      */
     public Course findOneWithExercisesAndLecturesForUser(Long courseId, User user) {
         Course course = findOneWithLecturesAndExams(courseId);
@@ -148,6 +172,7 @@ public class CourseService {
 
     /**
      * Get all courses for the given user
+     *
      * @param user the user entity
      * @return the list of all courses for the user
      */
@@ -159,7 +184,7 @@ public class CourseService {
     /**
      * Get all courses with exercises and lectures (filtered for given user)
      *
-     * @param user      the user entity
+     * @param user the user entity
      * @return the list of all courses including exercises and lectures for the user
      */
     public List<Course> findAllActiveWithExercisesAndLecturesForUser(User user) {
@@ -344,6 +369,7 @@ public class CourseService {
 
     /**
      * filters the passed exercises for the relevant ones that need to be manually assessed. This excludes quizzes and automatic programming exercises
+     *
      * @param exercises all exercises (e.g. of a course or exercise group) that should be filtered
      * @return the filtered and relevant exercises for manual assessment
      */
@@ -355,7 +381,7 @@ public class CourseService {
     /**
      * Registers a user in a course by adding him to the student group of the course
      *
-     * @param user The user that should get added to the course
+     * @param user   The user that should get added to the course
      * @param course The course to which the user should get added to
      */
     public void registerUserForCourse(User user, Course course) {
@@ -487,5 +513,82 @@ public class CourseService {
         LocalDate localDate = date.toLocalDate();
         TemporalField woy = WeekFields.of(DayOfWeek.MONDAY, 4).weekOfWeekBasedYear();
         return localDate.get(woy);
+    }
+
+    /**
+     * Archives the course by creating a zip file will student submissions for
+     * both the course exercises and exams.
+     *
+     * @param course the course to archive
+     */
+    @Async
+    public void archiveCourse(Course course) {
+        SecurityUtils.setAuthorizationObject();
+
+        // Archiving a course is only possible after the course is over
+        if (ZonedDateTime.now().isBefore(course.getEndDate())) {
+            return;
+        }
+
+        // This contains possible errors encountered during the archve process
+        ArrayList<String> exportErrors = new ArrayList<>();
+
+        groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_STARTED, exportErrors);
+
+        try {
+            // Create course archives directory if it doesn't exist
+            Files.createDirectories(Path.of(courseArchivesDirPath));
+            log.info("Created the course archives directory at {} because it didn't exist.", courseArchivesDirPath);
+
+            // Export the course to the archives directory.
+            var archivedCoursePath = courseExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+
+            // Attach the path to the archive to the course and save it in the database
+            if (archivedCoursePath.isPresent()) {
+                course.setCourseArchivePath(archivedCoursePath.get().toString());
+                courseRepository.save(course);
+            }
+            else {
+                groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FAILED, exportErrors);
+                return;
+            }
+        }
+        catch (IOException e) {
+            var error = "Failed to create course archives directory " + courseArchivesDirPath + ": " + e.getMessage();
+            exportErrors.add(error);
+            log.info(error);
+        }
+
+        groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FINISHED, exportErrors);
+    }
+
+    /**
+     * Cleans up a course by cleaning up all exercises from that course. This deletes all student
+     * submissions. Note that a course has to be archived first before being cleaned up.
+     *
+     * @param courseId The id of the course to clean up
+     */
+    public void cleanupCourse(Long courseId) {
+        // Get the course with all exercises
+        var course = findOneWithExercisesAndLectures(courseId);
+        if (!course.hasCourseArchive()) {
+            log.info("Cannot clean up course {} because it hasn't been archived.", courseId);
+            return;
+        }
+
+        // Clean up exams
+        var exams = findOneWithLecturesAndExams(course.getId()).getExams();
+        var examExercises = exams.stream().map(exam -> examService.getAllExercisesOfExam(exam.getId())).flatMap(Collection::stream).collect(Collectors.toSet());
+
+        var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());
+        exercisesToCleanup.forEach(exercise -> {
+            if (exercise instanceof ProgrammingExercise) {
+                exerciseService.cleanup(exercise.getId(), true);
+            }
+
+            // TODO: extend exerciseService.cleanup to clean up all exercise types
+        });
+
+        log.info("The course {} has been cleaned up!", courseId);
     }
 }

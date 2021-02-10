@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
@@ -289,7 +290,7 @@ public class ProgrammingSubmissionResource {
     }
 
     /**
-     * POST /programming-exercises/test-cases-changed/:exerciseId : informs Artemis about changed test cases for the "id" programmingExercise.
+     * POST /programming-exercises/test-cases-changed/:exerciseId : informs Artemis about changed test cases for the "exerciseId" programmingExercise.
      *
      * Problem with legacy programming exercises:
      * The repositories (solution, template, student) are built automatically when a commit is pushed into the test repository.
@@ -389,8 +390,12 @@ public class ProgrammingSubmissionResource {
             return forbidden();
         }
 
-        Optional<Result> manualResult = participation.getResults().stream().filter(Result::isManual).findFirst();
-        if (manualResult.isPresent()) {
+        if (!((ProgrammingExercise) participation.getExercise()).areManualResultsAllowed()) {
+            return forbidden("assessment", "assessmentSaveNotAllowed", "Creating manual results is disabled for this exercise!");
+        }
+
+        int numberOfManualResults = participation.getResults().stream().filter(Result::isManual).collect(Collectors.toList()).size();
+        if (numberOfManualResults == correctionRound + 1) {
             return ResponseEntity.ok(participation);
         }
         else {

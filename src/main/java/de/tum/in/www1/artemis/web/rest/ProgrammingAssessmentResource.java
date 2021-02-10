@@ -105,15 +105,13 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      * @param participationId the id of the participation that should be sent to the client
      * @param submit       defines if assessment is submitted or saved
      * @param newManualResult    result with list of feedbacks to be saved to the database
-     * @param correctionRound the correction round of the assessment
      * @return the result saved to the database
      */
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("/participations/{participationId}/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO: either remove correctionRound or actually use it
     public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestBody Result newManualResult) {
+            @RequestBody Result newManualResult) {
         log.debug("REST request to save a new result : {}", newManualResult);
         final var participation = participationService.findOneWithEagerSubmissionsResultsFeedback(participationId);
 
@@ -142,7 +140,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
 
         if (!programmingExercise.areManualResultsAllowed()) {
-            return forbidden();
+            return forbidden("assessment", "assessmentSaveNotAllowed", "Creating manual results is disabled for this exercise!");
         }
 
         if (Boolean.FALSE.equals(newManualResult.isRated())) {

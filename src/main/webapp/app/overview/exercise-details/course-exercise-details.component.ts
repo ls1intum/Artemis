@@ -239,10 +239,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.exercise.studentParticipations.forEach((participation) => {
                 this.participationWebsocketService.addParticipation(participation, this.exercise!);
             });
-            if (this.currentResult) {
-                if (this.currentResult.successful) {
+            if (this.latestRatedResult) {
+                if (this.latestRatedResult.successful) {
                     this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseSuccess, true);
-                } else if (this.currentResult.hasFeedback && !this.currentResult.successful) {
+                } else if (this.latestRatedResult.hasFeedback && !this.latestRatedResult.successful) {
                     this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseFail, true);
                 }
             }
@@ -318,7 +318,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Returns the latest finished result for modeling and text exercises. It does not have to be rated.
      * For other exercise types it returns a rated result.
      */
-    get currentResult() {
+    get latestRatedResult() {
         if (!this.studentParticipation || !this.hasResults) {
             return undefined;
         }

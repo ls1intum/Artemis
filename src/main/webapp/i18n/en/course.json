@@ -128,6 +128,17 @@
             "releaseDate": "Release",
             "dueDate": "Due",
             "assessmentDueDate": "Assessment Due"
+            },
+            "archive": {
+                "archiveCourse": "Archive Course",
+                "archiveCourseSuccess": "The course has been archived!",
+                "archiveCourseError": "Failed to archive the course",
+                "archiveDownloadError": "There was a problem downloading the archive",
+                "downloadCourseArchive": "Download Archive"
+            },
+            "cleanup": {
+                "title": "Cleanup",
+                "question": "Are you sure you want to delete ALL student submissions for course <strong>{{ title }}</strong>? This action can NOT be undone!"
+            }
         }
     }
-}

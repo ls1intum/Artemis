@@ -306,6 +306,30 @@ export class CourseManagementService {
     }
 
     /**
+     * Downloads the course archive of the specified courseId. Returns an error
+     * if the archive does not exist.
+     * @param courseId The id of the course
+     */
+    downloadCourseArchive(courseId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${courseId}/download-archive`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
+    /**
+     * Archives the course of the specified courseId.
+     * @param courseId The id of the course to archive
+     */
+    archiveCourse(courseId: number): Observable<HttpResponse<any>> {
+        return this.http.put(`${this.resourceUrl}/${courseId}/archive`, {}, { observe: 'response' });
+    }
+
+    cleanupCourse(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/cleanup`, { observe: 'response' });
+    }
+
+    /**
      * Find all locked submissions of a given course for user
      * @param {number} courseId - The id of the course to be searched for
      */

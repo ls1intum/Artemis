@@ -526,10 +526,8 @@ public class ExerciseService {
                 submission.getLatestResult().filterSensitiveInformation();
             }
 
-            // add submission to participation
-            if (submission != null) {
-                participation.setSubmissions(Set.of(submission));
-            }
+            // add submission to participation or set it to null
+            participation.setSubmissions(submission != null ? Set.of(submission) : null);
 
             participation.setResults(results);
 

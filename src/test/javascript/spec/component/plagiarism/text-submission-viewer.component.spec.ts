@@ -14,6 +14,8 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
+import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 
 describe('Text Submission Viewer Component', () => {
     let comp: TextSubmissionViewerComponent;
@@ -75,6 +77,8 @@ describe('Text Submission Viewer Component', () => {
     });
 
     it('handles file selection', () => {
+        comp.plagiarismSubmission = { submissionId: 1 } as PlagiarismSubmission<TextSubmissionElement>;
+
         const fileName = Object.keys(files)[1];
         spyOn(repositoryService, 'getFile').and.returnValue(of({ fileContent: 'Test' }));
 
