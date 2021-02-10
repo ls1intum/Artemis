@@ -160,7 +160,7 @@ export const areManualResultsAllowed = (exercise: Exercise) => {
     const progEx = exercise as ProgrammingExercise;
     const relevantDueDate = progEx.buildAndTestStudentSubmissionsAfterDueDate ?? progEx.dueDate;
     return (
-        (progEx.isAtLeastTutor || progEx.isAtLeastInstructor) &&
+        (!!progEx.isAtLeastTutor || !!progEx.isAtLeastInstructor) &&
         progEx.assessmentType === AssessmentType.SEMI_AUTOMATIC &&
         (!relevantDueDate || moment(relevantDueDate).isBefore(now()))
     );
