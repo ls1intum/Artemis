@@ -71,14 +71,14 @@ public class CourseService {
 
     private final LearningGoalRepository learningGoalRepository;
 
-    private final CourseExportService courseExportService;
+    private CourseExportService courseExportService;
 
     private final GroupNotificationService groupNotificationService;
 
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
             ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository,
-            CourseExportService courseExportService, GroupNotificationService groupNotificationService) {
+            GroupNotificationService groupNotificationService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -90,7 +90,6 @@ public class CourseService {
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
         this.learningGoalRepository = learningGoalRepository;
-        this.courseExportService = courseExportService;
         this.groupNotificationService = groupNotificationService;
     }
 
@@ -98,6 +97,12 @@ public class CourseService {
     // break the dependency cycle
     public void setExamService(ExamService examService) {
         this.examService = examService;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setCourseExportService(CourseExportService courseExportService) {
+        this.courseExportService = courseExportService;
     }
 
     /**
