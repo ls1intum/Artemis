@@ -1,14 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -134,24 +132,24 @@ public class ProgrammingExerciseParticipationResource {
      * Get the latest result for a given programming exercise participation including it's result.
      *
      * @param participationId for which to retrieve the programming exercise participation with latest result and feedbacks.
+     * @param withSubmission flag determining whether the corresponding submission should also be returned
      * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body, 404 if the participation can't be found or 403 if the user is not allowed to access the participation.
      */
     @GetMapping(value = "/programming-exercise-participations/{participationId}/latest-result-with-feedbacks")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> getLatestResultWithFeedbacksForProgrammingExerciseParticipation(@PathVariable Long participationId) {
-        Participation participation;
-        try {
-            participation = participationService.findOne(participationId);
+    public ResponseEntity<Result> getLatestResultWithFeedbacksForProgrammingExerciseParticipation(@PathVariable Long participationId,
+            @RequestParam(defaultValue = "false") boolean withSubmission) {
+        Participation participation = participationService.findOne(participationId);
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+            return badRequest();
         }
-        catch (EntityNotFoundException ex) {
-            return notFound();
+        var programmingParticipation = (ProgrammingExerciseParticipation) participation;
+
+        if (!programmingExerciseParticipationService.canAccessParticipation(programmingParticipation)) {
+            return forbidden();
         }
-        if (participation instanceof ProgrammingExerciseParticipation) {
-            return getLatestResultWithFeedbacks((ProgrammingExerciseParticipation) participation);
-        }
-        else {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+        Optional<Result> result = resultService.findLatestResultWithFeedbacksForParticipation(programmingParticipation.getId(), withSubmission);
+        return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }
 
     /**
@@ -219,19 +217,4 @@ public class ProgrammingExerciseParticipationResource {
         }));
         return ResponseEntity.ok(pendingSubmissions);
     }
-
-    /**
-     * Util method for retrieving the latest result with feedbacks of participation. Generates the appropriate response type (ok, forbidden, notFound).
-     *
-     * @param participation to retrieve the latest result for.
-     * @return the appropriate ResponseEntity for the result request.
-     */
-    private ResponseEntity<Result> getLatestResultWithFeedbacks(ProgrammingExerciseParticipation participation) {
-        if (!programmingExerciseParticipationService.canAccessParticipation(participation)) {
-            return forbidden();
-        }
-        Optional<Result> result = resultService.findLatestResultWithFeedbacksForParticipation(participation.getId());
-        return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
-    }
-
 }
