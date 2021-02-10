@@ -40,7 +40,7 @@ export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends Pr
         // The instructor needs to confirm overriding a manual result.
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.title = 'artemisApp.programmingExercise.resubmitSingle';
-        modalRef.componentInstance.text = 'artemisApp.programmingExercise.resubmitConfirmManualResultOverride';
+        modalRef.componentInstance.text = this.translateService.instant('artemisApp.programmingExercise.resubmitConfirmManualResultOverride');
         modalRef.result.then(() => {
             super.triggerWithType(SubmissionType.INSTRUCTOR);
         });

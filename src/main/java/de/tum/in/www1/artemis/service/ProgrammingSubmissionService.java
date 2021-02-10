@@ -361,6 +361,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private ProgrammingSubmission createSubmissionWithCommitHashAndSubmissionType(ProgrammingExerciseParticipation participation, ObjectId commitHash,
             SubmissionType submissionType) {
+        // Make sure that the new submission has the submission date of now
         ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash(commitHash.getName()).submitted(true)
                 .submissionDate(ZonedDateTime.now()).type(submissionType);
         newSubmission.setParticipation((Participation) participation);
@@ -417,8 +418,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @throws EntityNotFoundException  if the programming exercise has no template participation (edge case).
      */
     public void triggerTemplateBuildAndNotifyUser(long programmingExerciseId, ObjectId commitHash, SubmissionType submissionType) throws EntityNotFoundException {
-        TemplateProgrammingExerciseParticipation templateParticipation;
-        templateParticipation = programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(programmingExerciseId);
+        TemplateProgrammingExerciseParticipation templateParticipation = programmingExerciseParticipationService
+                .findTemplateParticipationByProgrammingExerciseId(programmingExerciseId);
         // If for some reason the programming exercise does not have a template participation, we can only log and abort.
         createSubmissionTriggerBuildAndNotifyUser(templateParticipation, commitHash, submissionType);
     }
@@ -444,29 +445,19 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Executes setTestCasesChanged with testCasesChanged = true, also creates a submission for the solution participation and triggers its build.
+     * Executes setTestCasesChanged with testCasesChanged = true, also triggers template and solution build.
      * This method should be used if the solution participation would otherwise not be built.
      *
      * @param programmingExerciseId ProgrammingExercise id
      * @throws EntityNotFoundException if there is no programming exercise for the given id.
      */
-    public void setTestCasesChangedAndTriggerTestCaseUpdate(Long programmingExerciseId) throws EntityNotFoundException {
+    public void setTestCasesChangedAndTriggerTestCaseUpdate(long programmingExerciseId) throws EntityNotFoundException {
         setTestCasesChanged(programmingExerciseId, true);
-        try {
-            ProgrammingSubmission submission = createSolutionParticipationSubmissionWithTypeTest(programmingExerciseId, null);
-            triggerBuildAndNotifyUser(submission);
-            return;
-        }
-        catch (IllegalStateException ex) {
-            log.debug("No submission could be created for the programming exercise with the id " + programmingExerciseId + ", trying to trigger the build without a submission.");
-        }
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExerciseId).get();
 
-        // Edge case: If no submission could be created, just trigger the solution build. On receiving the result, Artemis will try to create a new submission with the result
-        // completionDate.
-        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExerciseParticipationService
-                .findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
         try {
-            continuousIntegrationService.get().triggerBuild(solutionParticipation);
+            continuousIntegrationService.get().triggerBuild(programmingExercise.getSolutionParticipation());
+            continuousIntegrationService.get().triggerBuild(programmingExercise.getTemplateParticipation());
         }
         catch (HttpException ex) {
             log.error("Could not trigger build for solution repository after test case update for programming exercise with id " + programmingExerciseId);
@@ -483,7 +474,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return the updated ProgrammingExercise.
      * @throws EntityNotFoundException if the programming exercise does not exist.
      */
-    public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
+    public ProgrammingExercise setTestCasesChanged(long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
         Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
         if (optionalProgrammingExercise.isEmpty()) {
@@ -649,8 +640,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the programming submission with the given id
      */
-    public ProgrammingSubmission findByIdWithEagerResultAndFeedback(long submissionId) {
-        return programmingSubmissionRepository.findWithEagerResultAssessorFeedbackById(submissionId)
+    public ProgrammingSubmission findByIdWithEagerResultsFeedbacksAssessor(long submissionId) {
+        return programmingSubmissionRepository.findWithEagerResultsFeedbacksAssessorById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
     }
 
@@ -662,12 +653,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return the locked programming submission
      */
     public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId, int correctionRound) {
-        ProgrammingSubmission programmingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
-
+        ProgrammingSubmission programmingSubmission = findOneWithEagerResultsFeedbacksAssessor(submissionId);
         var manualResult = lockSubmission(programmingSubmission, correctionRound);
-        programmingSubmission = (ProgrammingSubmission) manualResult.getSubmission();
-
-        return programmingSubmission;
+        return (ProgrammingSubmission) manualResult.getSubmission();
     }
 
     /**
@@ -710,7 +698,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             optionalExistingResult = Optional.empty();
         }
         else {
-            optionalExistingResult = Optional.of(submission.getResultForCorrectionRound(correctionRound - 1));
+            optionalExistingResult = Optional.ofNullable(submission.getResultForCorrectionRound(correctionRound - 1));
         }
         List<Feedback> automaticFeedbacks = new ArrayList<>();
         if (optionalExistingResult.isPresent()) {
@@ -741,8 +729,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         return newResult;
     }
 
-    private ProgrammingSubmission findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
-        return programmingSubmissionRepository.findWithEagerResultAssessorFeedbackById(submissionId)
+    private ProgrammingSubmission findOneWithEagerResultsFeedbacksAssessor(Long submissionId) {
+        return programmingSubmissionRepository.findWithEagerResultsFeedbacksAssessorById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
     }
 }

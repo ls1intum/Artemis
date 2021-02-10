@@ -150,7 +150,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             }
 
             this.programmingExerciseParticipationService
-                .getStudentParticipationWithLatestManualResult(participationId)
+                .getStudentParticipationWithResultOfCorrectionRound(participationId, this.correctionRound)
                 .pipe(
                     tap(
                         (participationWithResult: ProgrammingExerciseStudentParticipation) => {
@@ -266,7 +266,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     save(): void {
         this.saveBusy = true;
         this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, undefined, this.correctionRound).subscribe(
+        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, undefined).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         );
@@ -278,7 +278,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     submit(): void {
         this.submitBusy = true;
         this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, true, this.correctionRound).subscribe(
+        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, true).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         );

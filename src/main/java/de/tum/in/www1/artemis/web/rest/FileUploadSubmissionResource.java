@@ -239,8 +239,8 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * Returns the data needed for the file upload editor, which includes the participation, fileUploadSubmission with answer if existing and the assessments if the submission was already
-     * submitted.
+     * Returns the data needed for the file upload editor, which includes the participation, fileUploadSubmission with answer if existing and the assessments if the submission
+     * was already submitted.
      *
      * @param participationId the participationId for which to find the data for the file upload editor
      * @return the ResponseEntity with the participation as body
@@ -248,7 +248,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("/participations/{participationId}/file-upload-editor")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<FileUploadSubmission> getDataForFileUpload(@PathVariable Long participationId) {
-        StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
+        StudentParticipation participation = participationService.findOneWithEagerSubmissionsResultsFeedback(participationId);
         if (participation == null) {
             return ResponseEntity.notFound()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).build();

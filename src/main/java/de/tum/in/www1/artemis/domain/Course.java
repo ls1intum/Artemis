@@ -123,6 +123,9 @@ public class Course extends DomainObject {
     @Column(name = "presentation_score")
     private Integer presentationScore;
 
+    @Column(name = "course_archive_path")
+    private String courseArchivePath;
+
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
@@ -506,5 +509,17 @@ public class Course extends DomainObject {
     public void removeLearningGoal(LearningGoal learningGoal) {
         this.learningGoals.remove(learningGoal);
         learningGoal.setCourse(null);
+    }
+
+    public boolean hasCourseArchive() {
+        return courseArchivePath != null && !courseArchivePath.isEmpty();
+    }
+
+    public String getCourseArchivePath() {
+        return courseArchivePath;
+    }
+
+    public void setCourseArchivePath(String courseArchiveUrl) {
+        this.courseArchivePath = courseArchiveUrl;
     }
 }

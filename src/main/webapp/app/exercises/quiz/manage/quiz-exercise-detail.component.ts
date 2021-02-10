@@ -656,7 +656,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     question.title !== '' &&
                     shortAnswerQuestion.correctMappings &&
                     shortAnswerQuestion.correctMappings.length > 0 &&
-                    this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion) &&
+                    this.shortAnswerQuestionUtil.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion) &&
                     this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots) &&
                     this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings) &&
                     shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim() === '').length === 0 &&
@@ -901,7 +901,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (!this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion)) {
+                if (!this.shortAnswerQuestionUtil.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping',
                         translateValues: { index: index + 1 },

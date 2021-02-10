@@ -27,4 +27,6 @@ public class ParticipantScoreAverageDTO {
         this.averageRatedScore = averageRatedScore;
     }
 
+    public ParticipantScoreAverageDTO() {
+    }
 }

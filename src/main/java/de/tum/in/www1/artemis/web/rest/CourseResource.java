@@ -5,6 +5,9 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 import static java.time.ZonedDateTime.now;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
@@ -22,6 +25,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -468,6 +474,7 @@ public class CourseResource {
 
     /**
      * GET /courses/{courseId}/for-dashboard
+     *
      * @param courseId the courseId for which exercises and lectures should be fetched
      * @return a course wich all exercises and lectures visible to the student
      */
@@ -484,8 +491,9 @@ public class CourseResource {
 
     /**
      * Note: The number of courses should not change
-     * @param courses the courses for which the participations should be fetched
-     * @param user  the user for which the participations should be fetched
+     *
+     * @param courses           the courses for which the participations should be fetched
+     * @param user              the user for which the participations should be fetched
      * @param startTimeInMillis start time for logging purposes
      */
     public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, long startTimeInMillis) {
@@ -834,6 +842,100 @@ public class CourseResource {
 
         courseService.delete(course);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, course.getTitle())).build();
+    }
+
+    /**
+     * PUT /courses/{courseId} : archive an existing course asynchronously. This method starts the process of archiving all course exercises, submissions and results in a large
+     * zip file. It immediately returns and runs this task asynchronously. When the task is done, the course is marked as archived, which means the zip file can be downloaded.
+     *
+     * @param courseId the id of the course
+     * @return empty
+     */
+    @PutMapping("/courses/{courseId}/archive")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<Void> archiveCourse(@PathVariable Long courseId) {
+        log.info("REST request to archive Course : {}", courseId);
+
+        // Get the course with all exercises
+        final Course course = courseService.findOneWithExercisesAndLectures(courseId);
+
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        // Archiving a course is only possible after the course is over
+        if (now().isBefore(course.getEndDate())) {
+            throw new BadRequestAlertException("You cannot archive a course that is not over.", ENTITY_NAME, "courseNotOver", true);
+        }
+
+        courseService.archiveCourse(course);
+
+        // Note: in the first version, we do not store the results with feedback and other meta data, as those will stay available in Artemis, the main focus is to allow
+        // instructors to download student repos in order to delete those on Bitbucket/Gitlab
+
+        // Note: Lectures are not part of the archive at the moment and will be included in a future version
+        // 1) Get all lectures (attachments) of the course and store them in a folder
+
+        // Note: Questions and answers are not part of the archive at the moment and will be included in a future version
+        // 1) Get all questions and answers for exercises and lectures and store those in structured text files
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, course.getId().toString())).build();
+    }
+
+    /**
+     * Downloads the zip file of the archived course if it exists. Throws a 404 if the course doesn't exist
+     *
+     * @param courseId The course id of the archived course
+     * @return ResponseEntity with status
+     */
+    @GetMapping("/courses/{courseId}/download-archive")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<Resource> downloadCourseArchive(@PathVariable Long courseId) throws FileNotFoundException {
+        log.info("REST request to download archive of Course : {}", courseId);
+
+        final Course course = courseService.findOne(courseId);
+
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        if (!course.hasCourseArchive()) {
+            return notFound();
+        }
+
+        // The path is stored in the course table
+        File zipFile = new File(course.getCourseArchivePath());
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+    }
+
+    /**
+     * DELETE /courses/:course/cleanup : Cleans up a course by deleting all student submissions.
+     *
+     * @param courseId Id of the course to clean up
+     * @return ResponseEntity with status
+     */
+    @DeleteMapping("/courses/{courseId}/cleanup")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Resource> cleanup(@PathVariable Long courseId) {
+        log.info("REST request to cleanup the Course : {}", courseId);
+
+        final Course course = courseService.findOne(courseId);
+
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        // Forbid cleaning the course if no archive has been created
+        if (!course.hasCourseArchive()) {
+            throw new BadRequestAlertException("Failed to clean up course " + courseId + " because it needs to be archived first.", ENTITY_NAME, "archivenonexistant");
+        }
+
+        courseService.cleanupCourse(courseId);
+        return ResponseEntity.ok().build();
     }
 
     /**

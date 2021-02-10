@@ -51,15 +51,15 @@
     <jhi-code-editor-instructions *ngIf="showEditorInstructions" editorSidebarRight (onToggleCollapse)="onToggleCollapse($event)" (onError)="onError($event)">
         <ng-content select="[editorSidebar]"></ng-content>
     </jhi-code-editor-instructions>
-    <div *ngIf="isTutorAssessment" editorBottom>
-        <ng-content select="[editorBottom]"></ng-content>
-    </div>
     <jhi-code-editor-build-output
         editorBottomArea
-        *ngIf="buildable && !isTutorAssessment"
+        *ngIf="buildable"
         [participation]="participation"
         (onAnnotations)="onAnnotations($event)"
         (onError)="onError($event)"
         (onToggleCollapse)="onToggleCollapse($event)"
     ></jhi-code-editor-build-output>
+    <div *ngIf="isTutorAssessment" editorBottom>
+        <ng-content select="[editorBottom]"></ng-content>
+    </div>
 </jhi-code-editor-grid>

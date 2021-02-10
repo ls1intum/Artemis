@@ -20,6 +20,4 @@ export class ParticipantScoresTablesContainerComponent {
     reload = new EventEmitter<void>();
 
     mode: 'individual' | 'average' = 'individual';
-
-    constructor() {}
 }

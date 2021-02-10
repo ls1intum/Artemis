@@ -29,6 +29,7 @@ import { ExamTimerComponent } from './timer/exam-timer.component';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 
 const ENTITY_STATES = [...examParticipationState];
 
@@ -62,6 +63,7 @@ const ENTITY_STATES = [...examParticipationState];
         ProgrammingExamSubmissionComponent,
         TextExamSubmissionComponent,
         ModelingExamSubmissionComponent,
+        FileUploadExamSubmissionComponent,
         ExamNavigationBarComponent,
         ExamTimerComponent,
     ],

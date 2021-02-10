@@ -37,6 +37,12 @@
                                     [exercise]="exercise"
                                     [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                                 ></jhi-quiz-submission-exam>
+                                <jhi-file-upload-submission-exam
+                                    *ngSwitchCase="FILEUPLOAD"
+                                    [exercise]="exercise"
+                                    [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
+                                    (onExerciseChanged)="saveFileUpload($event)"
+                                ></jhi-file-upload-submission-exam>
                                 <jhi-text-editor-exam
                                     *ngSwitchCase="TEXT"
                                     [exercise]="exercise"
@@ -118,6 +124,7 @@
             [studentExam]="studentExam"
             [handInEarly]="handInEarly"
             [handInPossible]="handInPossible"
+            [submitInProgress]="submitInProgress"
             (onExamEnded)="onExamEndConfirmed()"
             (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
         ></jhi-exam-participation-cover>
