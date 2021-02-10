@@ -221,7 +221,8 @@ public class ParticipationService {
         else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
             if (participation.getInitializationState() == null || participation.getInitializationState() == UNINITIALIZED
                     || participation.getInitializationState() == FINISHED && !(exercise instanceof QuizExercise)) {
-                // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side
+                // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side.
+                // Only for quiz exercises, the participation status FINISHED should not be overwritten since the user must not change his submission once submitted
                 participation.setInitializationState(INITIALIZED);
             }
 
