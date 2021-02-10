@@ -7,6 +7,7 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
+import { ProgrammingAssessmentDashboardComponent } from 'app/exercises/programming/assess/programming-assessment-dashboard/programming-assessment-dashboard.component';
 
 @Injectable({ providedIn: 'root' })
 export class NewStudentParticipationResolver implements Resolve<number | undefined> {
@@ -65,6 +66,16 @@ export class StudentParticipationResolver implements Resolve<number | undefined>
 }
 
 export const routes: Routes = [
+    {
+        path: ':courseId/programming-exercises/:exerciseId/assessment',
+        component: ProgrammingAssessmentDashboardComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            usePathForBreadcrumbs: true,
+            pageTitle: 'assessmentDashboard.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
     {
         path: ':courseId/programming-exercises/:exerciseId/code-editor/new/assessment',
         component: CodeEditorTutorAssessmentContainerComponent,

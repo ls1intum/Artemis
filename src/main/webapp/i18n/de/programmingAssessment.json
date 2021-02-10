@@ -1,0 +1,10 @@
+{
+    "artemisApp": {
+        "programmingAssessment": {
+            "dashboard": {
+                "heading": "Einreichungen und Bewertungen der Textaufgabe \"{{exerciseTitle}}\""
+            },
+            "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutoren wieder zur Verfügung."
+        }
+    }
+}
