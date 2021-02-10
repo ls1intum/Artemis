@@ -191,7 +191,7 @@ Exercise Creation
 
 - The **Test** repository contains files for the configuration of static code analysis tools, if static code analysis was activated during the creation/import of the exercise
 - The folder *staticCodeAnalysisConfig* contains configuration files for each used static code analysis tool
-- On exercise creation, Artemis generates a default configuration for each tool, which contain a predefined set of parameterized activated/excluded rules. The configuration files serve as a documented template that instructors can freely tailor to their needs.
+- On exercise creation, Artemis generates a default configuration for each tool, which contains a predefined set of parameterized activated/excluded rules. The configuration files serve as a documented template that instructors can freely tailor to their needs.
 - On exercise import, Artemis copies the configuration files from the imported exercise
 - The following table depicts the supported static code analysis tools for each programming language, the dependency mechanism used to execute the tools and the name of their respective configuration files
 
