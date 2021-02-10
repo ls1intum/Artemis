@@ -1110,8 +1110,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         assertThat(numOfUnlockedExercises).isEqualTo(2);
 
-        verify(programmingExerciseScheduleService, times(1)).unlockAllStudentRepositoriesForExam(programmingExercise);
-        verify(programmingExerciseScheduleService, times(1)).unlockAllStudentRepositoriesForExam(programmingExercise2);
+        verify(programmingExerciseScheduleService, times(1)).unlockAllStudentRepositories(programmingExercise);
+        verify(programmingExerciseScheduleService, times(1)).unlockAllStudentRepositories(programmingExercise2);
     }
 
     @Test
