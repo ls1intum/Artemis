@@ -419,9 +419,7 @@ On exercise import, Artemis copies the repositories, build plans, interactive pr
               :align: center
 
     - **Recreate Build Plans**: Create new build plans instead of copying them from the imported exercise
-    - **Update Template**: Update the template files in the repositories. This can be useful if the imported exercise is old and contains outdated dependencies
-
-    .. note::
+    - **Update Template**: Update the template files in the repositories. This can be useful if the imported exercise is old and contains outdated dependencies.
       For Java, Artemis replaces JUnit4 by Ares (which includes JUnit5) and updates the dependencies and plugins with the versions found in the latest template. Afterwards you might need to adapt the test cases.
 
 - Instructors are able to activate/deactivate static code analysis. Changing this option from the original value, requires the activation of **Recreate Build Plans** and **Update Template**.
