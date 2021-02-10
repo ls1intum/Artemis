@@ -25,10 +25,8 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         return this.http.get<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/student-participation-with-latest-result-and-feedbacks');
     }
 
-    getStudentParticipationWithResultOfCorrectionRound(participationId: number, correctionRound: number) {
-        return this.http.get<ProgrammingExerciseStudentParticipation>(
-            this.resourceUrl + participationId + '/student-participation-with-result-and-feedbacks-for/' + correctionRound + '/correction-round',
-        );
+    getStudentParticipationWithLatestManualResult(participationId: number) {
+        return this.http.get<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/student-participation-with-latest-manual-result-and-feedbacks');
     }
 
     checkIfParticipationHasResult(participationId: number): Observable<boolean> {

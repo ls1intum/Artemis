@@ -152,6 +152,11 @@ public class ProgrammingExerciseParticipationService {
         return studentParticipationRepository.findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
     }
 
+    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestManualOrSemiAutomaticResultAndFeedbacksAndRelatedSubmissionAndAssessor(
+            Long participationId) {
+        return studentParticipationRepository.findByIdWithLatestManualOrSemiAutomaticResultAndFeedbacksAndRelatedSubmissionAndAssessor(participationId);
+    }
+
     /**
      * Try to find a programming exercise participation for the given id.
      *
@@ -329,12 +334,17 @@ public class ProgrammingExerciseParticipationService {
     public void stashChangesInStudentRepositoryAfterDueDateHasPassed(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             try {
-                // Note: exam exercise do not have a due date, this method should only be invoked directly after the due date so now check is needed here
-                Repository repo = gitService.getOrCheckoutRepository(participation);
-                gitService.stashChanges(repo);
+                if (programmingExercise.getDueDate().isBefore(ZonedDateTime.now())) {
+                    Repository repo = gitService.getOrCheckoutRepository(participation);
+                    gitService.stashChanges(repo);
+                }
+                else {
+                    log.warn("Cannot stash student repository for participation " + participation.getId() + " because the due date has not passed yet!");
+                }
+
             }
             catch (InterruptedException | GitAPIException e) {
-                log.error("Stashing student repository for participation " + participation.getId() + " in exercise '" + programmingExercise.getTitle()
+                log.error("Stashing student repository for participation" + participation.getId() + " in exercise '" + programmingExercise.getTitle()
                         + "' did not work as expected: " + e.getMessage());
             }
         }
