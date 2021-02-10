@@ -290,7 +290,7 @@ public class ProgrammingSubmissionResource {
     }
 
     /**
-     * POST /programming-exercises/test-cases-changed/:exerciseId : informs Artemis about changed test cases for the "id" programmingExercise.
+     * POST /programming-exercises/test-cases-changed/:exerciseId : informs Artemis about changed test cases for the "exerciseId" programmingExercise.
      *
      * Problem with legacy programming exercises:
      * The repositories (solution, template, student) are built automatically when a commit is pushed into the test repository.
