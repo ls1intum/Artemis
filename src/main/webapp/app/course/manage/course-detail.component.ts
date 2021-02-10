@@ -145,6 +145,10 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         return !!this.course.isAtLeastInstructor && isCourseOver;
     }
 
+    /**
+     * Open a modal that requires the user's confirmation.
+     * @param content the modal content
+     */
     openArchieCourseModal(content: any) {
         this.modalService.open(content).result.then(
             (result: string) => {
