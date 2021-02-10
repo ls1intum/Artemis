@@ -110,7 +110,7 @@ public class ProgrammingExerciseParticipationResource {
         // Set exercise back to participation
         participation.get().setExercise(exercise);
 
-        // get the result which belongs to the specific correctionround and set it as the single result in the participation
+        // get the result which belongs to the specific correctionround and save it as the single result in the participation
         List<Result> results = new ArrayList<>(participation.get().getResults());
 
         // usually this should not be necessary, but just in case the participation's results come in a wrong order this is important
