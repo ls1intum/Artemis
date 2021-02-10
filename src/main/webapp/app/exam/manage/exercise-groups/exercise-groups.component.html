@@ -43,6 +43,17 @@
                             <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addQuizExercise' | translate }}</span>
                         </a>
                     </div>
+                    <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" style="justify-content: end">
+                        <a
+                            *ngIf="course?.isAtLeastInstructor"
+                            [routerLink]="[exerciseGroup.id, 'file-upload-exercises', 'new']"
+                            class="btn btn-info btn-sm mr-1 mb-1"
+                            style="max-height: 44%"
+                        >
+                            <fa-icon [icon]="'plus'"></fa-icon>
+                            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addFileUploadExercise' | translate }}</span>
+                        </a>
+                    </div>
                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                         <a *ngIf="course?.isAtLeastInstructor" (click)="openImportModal(exerciseGroup, exerciseType.TEXT)" class="btn btn-info btn-sm mr-1 mb-1">
                             <fa-icon [icon]="'plus'"></fa-icon>
@@ -168,6 +179,9 @@
                         </th>
                         <th *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING)">
                             <span>{{ 'artemisApp.modelingExercise.diagramType' | translate }}</span>
+                        </th>
+                        <th *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.FILE_UPLOAD)">
+                            <span>{{ 'artemisApp.fileUploadExercise.filePattern' | translate }}</span>
                         </th>
                         <th
                             *ngIf="
@@ -320,6 +334,13 @@
                             <td class="align-middle">
                                 <ng-container *ngIf="exercise.type === exerciseType.MODELING">
                                     {{ 'artemisApp.DiagramType.' + exercise.diagramType | translate }}
+                                </ng-container>
+                            </td>
+                        </ng-container>
+                        <ng-container *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.FILE_UPLOAD)">
+                            <td class="align-middle">
+                                <ng-container *ngIf="exercise.type === exerciseType.FILE_UPLOAD">
+                                    {{ exercise.filePattern }}
                                 </ng-container>
                             </td>
                         </ng-container>

@@ -30,6 +30,8 @@ import { Moment } from 'moment';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash';
 import { Course } from 'app/entities/course.model';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -46,6 +48,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly QUIZ = ExerciseType.QUIZ;
     readonly MODELING = ExerciseType.MODELING;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly FILEUPLOAD = ExerciseType.FILE_UPLOAD;
 
     courseId: number;
     examId: number;
@@ -453,6 +456,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
+     * update the current exercise from the navigation
+     * @param exerciseChange
+     */
+    saveFileUpload(exerciseChange: { exercise: Exercise; force: boolean }): void {
+        this.triggerSave(exerciseChange.force);
+        this.initializeExercise(exerciseChange.exercise);
+    }
+
+    /**
      * sets active exercise and checks if participation is valid for exercise
      * if not -> initialize participation and in case of programming exercises subscribe to latestSubmissions
      * @param exercise to initialize
@@ -556,9 +568,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                             () => this.onSaveSubmissionError(),
                         );
                         break;
-                    case ExerciseType.FILE_UPLOAD:
-                        // nothing to do
-                        break;
                     case ExerciseType.MODELING:
                         this.modelingSubmissionService.update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id!).subscribe(
                             () => this.onSaveSubmissionSuccess(submissionToSync.submission),
@@ -573,6 +582,23 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                             () => this.onSaveSubmissionSuccess(submissionToSync.submission),
                             () => this.onSaveSubmissionError(),
                         );
+                        break;
+                    case ExerciseType.FILE_UPLOAD:
+                        const fileUploadComponent = activeComponent as FileUploadExamSubmissionComponent;
+                        if (!fileUploadComponent.submissionFile) {
+                            return;
+                        }
+                        this.fileUploadSubmissionService
+                            .update(submissionToSync.submission as FileUploadSubmission, submissionToSync.exercise.id!, fileUploadComponent.submissionFile)
+                            .subscribe(
+                                (res) => {
+                                    const submissionFromServer = res.body!;
+                                    (submissionToSync.submission as FileUploadSubmission).filePath = submissionFromServer.filePath;
+                                    this.onSaveSubmissionSuccess(submissionToSync.submission);
+                                    activeComponent!.updateViewFromSubmission();
+                                },
+                                () => this.onSaveSubmissionError(),
+                            );
                         break;
                 }
             });
