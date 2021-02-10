@@ -233,7 +233,7 @@ Exercise Creation
 - **General Actions**
 
   - |grading-save| Save the current grading configuration of the open tab
-  - |grading-reset| Reset the current grading configuration of the open tab to the default values. For **Test Case Tab**, all test cases are set to weight 1, bonus multiplier 1 and bonus points 0. For the **Cody Analysis Tab**, the default configuration depends on the selected programming language.
+  - |grading-reset| Reset the current grading configuration of the open tab to the default values. For **Test Case Tab**, all test cases are set to weight 1, bonus multiplier 1 and bonus points 0. For the **Code Analysis Tab**, the default configuration depends on the selected programming language.
   - |grading-reevaluate-all| Re-evaluates all scores according to the currently saved settings using the individual feedback stored in the database
   - |grading-trigger-all| Trigger all build plans. This leads to the creation of new results using the updated grading configuration
   - Two badges display if the current configuration has been saved yet and if the grading was changed. The following graphic visualizes how each action affects the grading page state:
@@ -280,7 +280,7 @@ Exercise Creation
     - **Weight Distribution**: The distribution of test case weights. Visualizes the impact of each test case for the score calculation
     - **Total Points**: The percentage of points given to students according to a specific test case. 100% in the chart represents full scores (100%) of **all** students
 
-- **Cody Analysis Tab**: Configure the visibility and grading of code quality issues on a category-level
+- **Code Analysis Tab**: Configure the visibility and grading of code quality issues on a category-level
 
   .. figure:: programming/configure-grading-code-analysis.png
             :align: center
