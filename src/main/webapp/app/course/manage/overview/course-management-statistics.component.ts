@@ -99,7 +99,7 @@ export class CourseManagementStatisticsComponent implements OnChanges {
                             beginAtZero: true,
                             min: 0,
                             max: this.amountOfStudentsInCourse ? this.amountOfStudentsInCourse : undefined,
-                            maxTicksLimit: 4,
+                            autoSkip: true,
                             precision: 0,
                         },
                     },
