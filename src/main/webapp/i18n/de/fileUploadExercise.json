@@ -22,7 +22,7 @@
             "submitDeadlineMissed": "Deine Antwort wurde erfolgreich abgesendet! Du kannst es ändern oder auf dein Feedback warten. Da du die Deadline verpasst hast wird deine Bewertung nicht gezählt.",
             "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
             "assessedSubmission": "Deine bewertete Abgabe",
-            "supportedFileExtensions": "Unterstützte Dateierweiterungen: "
+            "supportedFileExtensions": "Unterstützte Dateiendung: "
         }
     }
 }
