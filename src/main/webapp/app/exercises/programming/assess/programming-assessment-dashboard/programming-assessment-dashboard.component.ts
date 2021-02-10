@@ -80,9 +80,9 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
                     setLatestSubmissionResult(submission, tmpResult);
                     if (tmpResult) {
                         // reconnect some associations
-                        tmpResult!.submission = submission;
-                        tmpResult!.participation = submission.participation;
-                        submission.participation!.results = [tmpResult!];
+                        tmpResult.submission = submission;
+                        tmpResult.participation = submission.participation;
+                        submission.participation!.results = [tmpResult];
                     }
 
                     return submission;
