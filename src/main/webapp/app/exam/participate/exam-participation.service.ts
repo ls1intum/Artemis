@@ -106,23 +106,20 @@ export class ExamParticipationService {
         const studentExamCopy = cloneDeep(studentExam);
         ExamParticipationService.breakCircularDependency(studentExamCopy);
 
-        return this.httpClient
-            .post<StudentExam>(url, studentExamCopy)
-            .pipe(
-                map((submittedStudentExam: StudentExam) => {
-                    return this.convertStudentExamFromServer(submittedStudentExam);
-                }),
-                catchError((error: HttpErrorResponse) => {
-                    if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
-                        return throwError(new Error('studentExam.submissionNotInTime'));
-                    } else if (error.status === 409 && error.headers.get('x-null-error') === 'error.alreadySubmitted') {
-                        return throwError(new Error('studentExam.alreadySubmitted'));
-                    } else {
-                        return throwError(new Error('studentExam.handInFailed'));
-                    }
-                }),
-            )
-            .delay(30000);
+        return this.httpClient.post<StudentExam>(url, studentExamCopy).pipe(
+            map((submittedStudentExam: StudentExam) => {
+                return this.convertStudentExamFromServer(submittedStudentExam);
+            }),
+            catchError((error: HttpErrorResponse) => {
+                if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
+                    return throwError(new Error('studentExam.submissionNotInTime'));
+                } else if (error.status === 409 && error.headers.get('x-null-error') === 'error.alreadySubmitted') {
+                    return throwError(new Error('studentExam.alreadySubmitted'));
+                } else {
+                    return throwError(new Error('studentExam.handInFailed'));
+                }
+            }),
+        );
     }
 
     private static breakCircularDependency(studentExam: StudentExam) {
