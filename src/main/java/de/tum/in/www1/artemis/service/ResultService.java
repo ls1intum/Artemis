@@ -89,10 +89,16 @@ public class ResultService {
      * Get the latest result from the database by participation id together with the list of feedback items.
      *
      * @param participationId the id of the participation to load from the database
+     * @param withSubmission determines whether the submission should also be fetched
      * @return an optional result (might exist or not).
      */
-    public Optional<Result> findLatestResultWithFeedbacksForParticipation(Long participationId) {
-        return resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+    public Optional<Result> findLatestResultWithFeedbacksForParticipation(Long participationId, boolean withSubmission) {
+        if (withSubmission) {
+            return resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+        }
+        else {
+            return resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+        }
     }
 
     /**

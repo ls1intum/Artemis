@@ -176,12 +176,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         var releaseDate = getExamProgrammingExerciseReleaseDate(exercise);
         if (releaseDate.isAfter(ZonedDateTime.now())) {
             // Use the custom date from the exam rather than the of the exercise's lifecycle
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(releaseDate, unlockAllStudentRepositoriesForExam(exercise))));
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(releaseDate, unlockAllStudentRepositories(exercise))));
         }
         else if (examService.getLatestIndividualExamEndDate(exam).isBefore(ZonedDateTime.now())) {
             // This is only a backup (e.g. a crash of this node and restart during the exam)
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE,
-                    Set.of(new Tuple<>(ZonedDateTime.now().plusSeconds(5), unlockAllStudentRepositoriesForExam(exercise))));
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(ZonedDateTime.now().plusSeconds(5), unlockAllStudentRepositories(exercise))));
         }
 
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && exercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
@@ -285,7 +284,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @return a Runnable that will unlock the repositories once it is executed
      */
     @NotNull
-    public Runnable unlockAllStudentRepositoriesForExam(ProgrammingExercise exercise) {
+    public Runnable unlockAllStudentRepositories(ProgrammingExercise exercise) {
         Long programmingExerciseId = exercise.getId();
         return () -> {
             SecurityUtils.setAuthorizationObject();
@@ -316,8 +315,15 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                             Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION);
                 }
 
-                // Schedule the lock operations here, this is also done here because the working times might change often before the exam start
-                scheduleIndividualRepositoryLockTasks(exercise, individualDueDates);
+                if (exercise.needsLockOperation()) {
+                    // Schedule the lock operations here, this is also done here because the working times might change often before the exam start
+                    // Note: this only makes sense before the due date of a course exercise or before the end date of an exam, because for individual dates in the past
+                    // the scheduler would execute the lock operation immediately, making the unlock obsolete, therefore we filter out all individual due dates in the past
+                    // one use case is that the unlock all operation is invoked directly after exam start
+                    Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> futureIndividualDueDates = individualDueDates.stream()
+                            .filter(tuple -> ZonedDateTime.now().isBefore(tuple.x)).collect(Collectors.toSet());
+                    scheduleIndividualRepositoryLockTasks(exercise, futureIndividualDueDates);
+                }
             }
             catch (EntityNotFoundException ex) {
                 log.error("Programming exercise with id " + programmingExerciseId + " is no longer available in database for use in scheduled task.");
@@ -341,7 +347,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     /**
-     * this method is used for exam exercises
+     * this method schedules individual lock tasks for programming exercises (mostly in the context of exams)
      * @param exercise the programming exercise for which the lock is executed
      * @param individualDueDates these are the individual due dates for students taking individual workingTimes of student exams into account
      */
