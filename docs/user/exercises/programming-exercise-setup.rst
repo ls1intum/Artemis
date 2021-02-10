@@ -291,10 +291,10 @@ Exercise Creation
   - Code quality issues found during the automatic assessment of a submission are grouped into categories. Artemis maps categories defined by the static code analysis tools to Artemis categories according to the following table:
 
 +-----------------+----------------------------------------+--------------------------+-----------------------+
-|                 |                                        | Mapping                  |                       |
+|                 |                                        | Mapping                                          |
 +-----------------+----------------------------------------+--------------------------+-----------------------+
 | Category        | Description                            | Java                     | Swift                 |
-+-----------------+----------------------------------------+--------------------------+-----------------------+
++=================+========================================+==========================+=======================+
 | Bad Practice    | Code that violates recommended         | Spotbugs BAD_PRACTICE    |                       |
 |                 | and essential coding practices         +--------------------------+                       |
 |                 |                                        | Spotbugs I18N            |                       |
