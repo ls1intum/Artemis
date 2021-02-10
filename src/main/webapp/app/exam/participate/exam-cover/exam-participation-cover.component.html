@@ -114,7 +114,7 @@
                 <div class="mb-2 font-weight-bold">
                     {{ 'artemisApp.examParticipation.continueAfterHandInEarlyDescription' | translate }}
                 </div>
-                <button class="btn btn-secondary mt-2" (click)="continueAfterHandInEarly()">
+                <button [disabled]="submitInProgress" class="btn btn-secondary mt-2" (click)="continueAfterHandInEarly()">
                     <fa-icon [icon]="'arrow-left'"></fa-icon>
                     {{ 'artemisApp.examParticipation.continueAfterHandInEarly' | translate }}
                 </button>
