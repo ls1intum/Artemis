@@ -21,6 +21,8 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock-participation-websocket.service';
+import { IProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { MockProgrammingExerciseParticipationService } from '../helpers/mocks/service/mock-programming-exercise-participation.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -30,6 +32,7 @@ describe('ProgrammingSubmissionService', () => {
     let httpService: MockHttpService;
     let participationWebsocketService: IParticipationWebsocketService;
     let alertService: MockAlertService;
+    let participationService: IProgrammingExerciseParticipationService;
     let submissionService: IProgrammingSubmissionService;
 
     let httpGetStub: SinonStub;
@@ -37,6 +40,7 @@ describe('ProgrammingSubmissionService', () => {
     let wsUnsubscribeStub: SinonStub;
     let wsReceiveStub: SinonStub;
     let participationWsLatestResultStub: SinonStub;
+    let getLatestResultStub: SinonStub;
 
     let wsSubmissionSubject: Subject<Submission | undefined>;
     let wsLatestResultSubject: Subject<Result | undefined>;
@@ -53,6 +57,7 @@ describe('ProgrammingSubmissionService', () => {
         httpService = new MockHttpService();
         participationWebsocketService = new MockParticipationWebsocketService();
         alertService = new MockAlertService();
+        participationService = new MockProgrammingExerciseParticipationService();
 
         httpGetStub = stub(httpService, 'get');
         wsSubscribeStub = stub(websocketService, 'subscribe');
@@ -61,9 +66,10 @@ describe('ProgrammingSubmissionService', () => {
         wsReceiveStub = stub(websocketService, 'receive').returns(wsSubmissionSubject);
         wsLatestResultSubject = new Subject<Result | undefined>();
         participationWsLatestResultStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(wsLatestResultSubject as any);
+        getLatestResultStub = stub(participationService, 'getLatestResultWithFeedback');
 
         // @ts-ignore
-        submissionService = new ProgrammingSubmissionService(websocketService, httpService, participationWebsocketService, alertService);
+        submissionService = new ProgrammingSubmissionService(websocketService, httpService, participationWebsocketService, participationService, alertService);
     });
 
     afterEach(() => {
@@ -154,6 +160,9 @@ describe('ProgrammingSubmissionService', () => {
         const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
         httpGetStub.returns(of(undefined));
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
+        // We simulate that the latest result from the server does not belong the pending submission
+        getLatestResultStub = getLatestResultStub.returns(of(result));
+
         expect(returnedSubmissions).to.deep.equal([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
         wsSubmissionSubject.next(currentSubmission2);
         expect(returnedSubmissions).to.deep.equal([
@@ -162,6 +171,11 @@ describe('ProgrammingSubmissionService', () => {
         ]);
         // Wait 10ms.
         await new Promise<void>((resolve) => setTimeout(() => resolve(), 10));
+
+        // Expect the fallback mechanism to kick in after the timeout
+        expect(getLatestResultStub).to.have.been.calledOnceWithExactly(participationId, true);
+
+        // HAS_FAILED_SUBMISSION is expected as the result provided by getLatestResult does not match the pending submision
         expect(returnedSubmissions).to.deep.equal([
             { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },

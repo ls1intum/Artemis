@@ -7,7 +7,7 @@ import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 export interface IProgrammingExerciseParticipationService {
-    getLatestResultWithFeedback: (participationId: number) => Observable<Result | undefined>;
+    getLatestResultWithFeedback: (participationId: number, withSubmission: boolean) => Observable<Result | undefined>;
     getStudentParticipationWithLatestResult: (participationId: number) => Observable<ProgrammingExerciseStudentParticipation>;
     checkIfParticipationHasResult: (participationId: number) => Observable<boolean>;
 }
