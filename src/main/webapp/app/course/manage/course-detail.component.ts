@@ -160,7 +160,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         );
     }
 
-    archiveCourse() {
+    private archiveCourse() {
         this.courseService.archiveCourse(this.course.id!).subscribe();
     }
 
