@@ -49,11 +49,20 @@ export class CourseScoreCalculationService {
                         if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                             reachableMaxPointsInCourse += maxPointsReachableInExercise;
                         }
+                        // Quizzes should automatically have a result after due date but can have one that is not rated, this should still count into reachable scores
+                    } else if (exercise.type === ExerciseType.QUIZ) {
+                        if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                            reachableMaxPointsInCourse += maxPointsReachableInExercise;
+                        }
                     }
                     presentationScore += participation.presentationScore ? participation.presentationScore : 0;
 
-                    // programming exercises can be excluded here because their state is INITIALIZED even after the exercise is over
-                    if (participation.initializationState === InitializationState.INITIALIZED && exercise.type !== ExerciseType.PROGRAMMING) {
+                    // programming exercises and quiz can be excluded here because their state is INITIALIZED even after the exercise is over
+                    if (
+                        participation.initializationState === InitializationState.INITIALIZED &&
+                        exercise.type !== ExerciseType.PROGRAMMING &&
+                        exercise.type !== ExerciseType.QUIZ
+                    ) {
                         if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                             reachableMaxPointsInCourse += maxPointsReachableInExercise;
                         }

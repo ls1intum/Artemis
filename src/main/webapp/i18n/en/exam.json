@@ -307,7 +307,8 @@
                 "linkDescription": "Instructors Guide",
                 "checklistItem": "Task",
                 "description": "Description",
-                "goTo": "Go to",
+                "status": "Current status",
+                "goTo": "Page",
                 "tableItem": {
                     "register": "Register students to the exam",
                     "exerciseGroups": "Create at least one exercise group with exercises",
@@ -323,18 +324,37 @@
                     "exportResults": "Export the exam results"
                 },
                 "descriptionItem": {
-                    "register": "At least one student has to be registered to the exam",
-                    "exerciseGroups": "You can create exercise groups with multiple exercise variants to make cheating for students more difficult. The Points in all exercises within a given exercise group must be identical, and the number of exercise groups must equal the exam's number of exercises.",
-                    "generateStudentExams": "Student exams must be generated for all registered students before starting the exam.",
+                    "register": "You can register students to the exam in three different ways: via a .csv file, by hand or you can import all students registered to the exam's course.",
+                    "exerciseGroups": "You can create exercise groups with multiple exercise variants to make cheating for students more difficult. The points in all exercises within a given exercise group must be identical, and the number of exercise groups must equal the exam's number of exercises.",
+                    "generateStudentExams": "Student exams must be generated for all registered students before starting the exam. Their working time can be adjusted individually.",
                     "prepareExerciseStart": "Preparing the exercises can reduce load on the server during the exam.",
-                    "examDetails": "Before conducting an exam, please make sure to have filled out all exam details. (Start text, dates etc)",
-                    "conductExam": "On the student exam page it can be seen which students already submitted their exam.",
+                    "examDetails": "Before conducting an exam, please make sure to have filled out all exam details. (Start text, dates, etc.)",
+                    "conductExam": "On the student exam page you can see which students already submitted their exam.",
                     "assessAllSubmissions": "The number of correction rounds per exercise depends on the exam's number of correction rounds.",
                     "publishResults": "Publishing the results makes them available to students. Student exams are published on the publishing date for results within the exam.",
                     "examReview": "Make sure to have all dates specified correctly.",
                     "resolveComplaints": "Complaints can be resolved within the Assessment Dashboard.",
                     "testRun": "Try out different combinations of exercise variants from the student perspective.",
                     "exportResults": "Exports the exam results as a .csv file."
+                },
+                "textitems": {
+                    "leastoneexercisegroup": "At least one exercise group",
+                    "numberofexercisegroupsequal": "Number of exercise groups equals number of exercises in exam",
+                    "eachexercisegroup": "Each exercise group contains at least one exercise",
+                    "pointsexercisegroupequal": "Points in exercises of each exercise group are identical",
+                    "totalpointspossible": "Maximum number of points in exam can be realized with the exercise groups configuration",
+                    "hasExercises": "has",
+                    "zeroexercises": "0",
+                    "exerciseStart": "Exercise group",
+                    "exercise": "exercise variant.",
+                    "exercises": "exercise variants.",
+                    "leastonestudent": "At least one student registered",
+                    "studentsregistered": "Current number of students registered:",
+                    "allexamsgenerated": "All exams generated for registered students",
+                    "pulishingdateset": "Publishing date for results set",
+                    "startdatereviewset": "Start date of exam review set",
+                    "enddatereviewset": "End date of exam review set",
+                    "testruns": "Current number of test runs:"
                 }
             }
         },

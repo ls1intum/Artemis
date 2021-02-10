@@ -535,6 +535,10 @@ public class ProgrammingExercise extends Exercise {
         return super.getAssessmentType();
     }
 
+    public boolean needsLockOperation() {
+        return isExamExercise() || !AssessmentType.AUTOMATIC.equals(getAssessmentType()) || getBuildAndTestStudentSubmissionsAfterDueDate() != null;
+    }
+
     @Nullable
     public ProjectType getProjectType() {
         return projectType;
