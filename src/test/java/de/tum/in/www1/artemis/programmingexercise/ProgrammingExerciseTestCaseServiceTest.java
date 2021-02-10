@@ -139,6 +139,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         database.addProgrammingParticipationWithResultForExercise(programmingExercise, "student1");
         new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50.0);
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
+        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getTemplateParticipation());
 
         assertThat(programmingExercise.getTestCasesChanged()).isFalse();
 
@@ -162,6 +163,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     @WithMockUser(value = "tutor1", roles = "TA")
     public void shouldUpdateTestWeight() throws Exception {
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
+        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getTemplateParticipation());
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
 
