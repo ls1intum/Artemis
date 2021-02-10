@@ -57,7 +57,6 @@ describe('ExamParticipationComponent', () => {
     let courseExerciseService: CourseExerciseService;
     let textSubmissionService: TextSubmissionService;
     let modelingSubmissionService: ModelingSubmissionService;
-    let fileUploadSubmissionService: FileUploadSubmissionService;
     let alertService: JhiAlertService;
     let artemisServerDateService: ArtemisServerDateService;
 
@@ -109,7 +108,6 @@ describe('ExamParticipationComponent', () => {
                 courseExerciseService = TestBed.inject(CourseExerciseService);
                 textSubmissionService = TestBed.inject(TextSubmissionService);
                 modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
-                fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
                 alertService = fixture.debugElement.injector.get(JhiAlertService);
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
                 fixture.detectChanges();
