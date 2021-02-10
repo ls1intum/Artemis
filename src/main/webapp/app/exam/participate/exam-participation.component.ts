@@ -273,7 +273,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
-            if (this.autoSaveTimer >= 300 && !this.isOver()) {
+            if (this.autoSaveTimer >= 30 && !this.isOver()) {
                 this.triggerSave(false);
             }
         }, 1000);
