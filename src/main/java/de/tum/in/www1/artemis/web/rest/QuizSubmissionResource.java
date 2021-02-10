@@ -136,8 +136,8 @@ public class QuizSubmissionResource {
 
         // update and save submission
         Result result = quizSubmissionService.submitForPractice(quizSubmission, quizExercise, participation);
-        // The quizScheduler is usually responsible for updating the participation to FINISHED in the database. If quizzes where the student did not participate are used for practice,
-        // the QuizScheduler does not update the participation, that's why we update it manually here
+        // The quizScheduler is usually responsible for updating the participation to FINISHED in the database. If quizzes where the student did not participate are used for
+        // practice, the QuizScheduler does not update the participation, that's why we update it manually here
         participation.setInitializationState(InitializationState.FINISHED);
         participationService.save(participation);
 
