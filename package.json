@@ -7,11 +7,6 @@
     "cacheDirectories": [
         "node_modules"
     ],
-    "husky": {
-        "hooks": {
-            "pre-commit": "lint-staged --shell"
-        }
-    },
     "dependencies": {
         "@angular/animations": "11.1.2",
         "@angular/common": "11.1.2",

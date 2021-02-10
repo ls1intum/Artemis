@@ -1095,6 +1095,7 @@ public class ParticipationService {
         // ignore participations without repository URL
         if (participation.getRepositoryUrl() != null) {
             versionControlService.get().deleteRepository(participation.getVcsRepositoryUrl());
+            gitService.deleteLocalRepository(participation.getVcsRepositoryUrl());
             participation.setRepositoryUrl(null);
             participation.setInitializationState(InitializationState.FINISHED);
             save(participation);
@@ -1290,17 +1291,6 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findTestRunParticipationForExerciseWithEagerSubmissionsResult(Long userId, List<Exercise> exercises) {
         return studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(userId, exercises);
-    }
-
-    /**
-     * Get all participations for the given student and individual-mode exercises
-     *
-     * @param studentId the id of the student for which the participations should be found
-     * @param exercises the individual-mode exercises for which participations should be found
-     * @return student's participations
-     */
-    public List<StudentParticipation> findByStudentIdAndIndividualExercises(Long studentId, List<Exercise> exercises) {
-        return studentParticipationRepository.findByStudentIdAndIndividualExercises(studentId, exercises);
     }
 
     /**
