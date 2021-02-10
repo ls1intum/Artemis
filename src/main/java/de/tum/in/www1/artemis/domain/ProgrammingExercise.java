@@ -529,7 +529,6 @@ public class ProgrammingExercise extends Exercise {
     }
 
     @Override
-    @NotNull
     public AssessmentType getAssessmentType() {
         if (super.getAssessmentType() == null) {
             return AssessmentType.AUTOMATIC;
