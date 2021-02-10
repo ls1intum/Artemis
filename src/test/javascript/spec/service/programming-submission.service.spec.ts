@@ -48,12 +48,17 @@ describe('ProgrammingSubmissionService', () => {
 
     const participationId = 1;
     const submissionTopic = `/user/topic/newSubmissions`;
-    const currentSubmission = { id: 11, submissionDate: moment().subtract(20, 'seconds'), participation: { id: participationId } } as any;
-    const currentSubmission2 = { id: 12, submissionDate: moment().subtract(20, 'seconds'), participation: { id: participationId } } as any;
-    const result = { id: 31, submission: currentSubmission } as any;
-    const result2 = { id: 32, submission: currentSubmission2 } as any;
+    let currentSubmission: Submission;
+    let currentSubmission2: Submission;
+    let result: Result;
+    let result2: Result;
 
     beforeEach(() => {
+        currentSubmission = { id: 11, submissionDate: moment().subtract(20, 'seconds'), participation: { id: participationId } } as any;
+        currentSubmission2 = { id: 12, submissionDate: moment().subtract(20, 'seconds'), participation: { id: participationId } } as any;
+        result = { id: 31, submission: currentSubmission } as any;
+        result2 = { id: 32, submission: currentSubmission2 } as any;
+
         websocketService = new MockWebsocketService();
         httpService = new MockHttpService();
         participationWebsocketService = new MockParticipationWebsocketService();
@@ -80,6 +85,8 @@ describe('ProgrammingSubmissionService', () => {
         wsUnsubscribeStub.restore();
         wsReceiveStub.restore();
         participationWsLatestResultStub.restore();
+        getLatestResultStub.restore();
+        notifyAllResultSubscribersStub.restore();
     });
 
     it('should return cached subject as Observable for provided participation if exists', () => {
