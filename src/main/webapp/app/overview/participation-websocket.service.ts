@@ -19,6 +19,7 @@ export interface IParticipationWebsocketService {
     subscribeForParticipationChanges: () => BehaviorSubject<Participation | undefined>;
     subscribeForLatestResultOfParticipation: (participationId: number, personal: boolean, exerciseId?: number) => BehaviorSubject<Result | undefined>;
     unsubscribeForLatestResultOfParticipation: (participationId: number, exercise: Exercise) => void;
+    notifyAllResultSubscribers: (result: Result) => void;
 }
 
 @Injectable({ providedIn: 'root' })
