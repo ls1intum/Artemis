@@ -125,7 +125,7 @@
                 "popup": {
                     "title": "Kurs Archivieren",
                     "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich archivieren?",
-                    "statement1": "Der Prozess komprimiert alle Repositories, Übungen zum Hochladen von Dateien, Modellierungsübungen und Textübungen für Übungen und Prüfungen.",
+                    "statement1": "Der Prozess komprimiert alle Repositories, Übungen zum Hochladen von Dateien, Modellierungsübungen und Textübungen im Kursen und in allen Prüfungen.",
                     "statement2": "<strong class='text-danger'>Dieser Vorgang kann je nach Anzahl der Studenten und Programmierübungen mehrere Stunden dauern und beansprucht viele Serverressourcen. Bitte starten Sie diesen Vorgang nur einmal, wenn die Serverlast niedrig ist (z.b. am frühen Morgen).</strong>",
                     "footerStatement": "Sie erhalten eine Benachrichtigung, wenn der Vorgang abgeschlossen ist. Anschließend können Sie das Archiv als Zip-Datei auf dieser Seite herunterladen."
                 }
