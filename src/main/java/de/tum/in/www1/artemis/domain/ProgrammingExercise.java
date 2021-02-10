@@ -561,9 +561,14 @@ public class ProgrammingExercise extends Exercise {
         super.filterSensitiveInformation();
     }
 
+    /**
+     * Get all results of a student participation which are rated or unrated
+     * @param participation The current participation
+     * @return all results which are completed and are either automatic or manually assessed
+     */
     @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
-        return participation.getResults().stream().filter(result -> checkForRatedAndAssessedResult(result)).collect(Collectors.toSet());
+        return participation.getResults().stream().filter(result -> checkForAssessedResult(result)).collect(Collectors.toSet());
     }
 
     /**
@@ -576,10 +581,23 @@ public class ProgrammingExercise extends Exercise {
         return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
     }
 
+    /**
+     * This checks if the current result is rated and has a completion date.  
+     * @param result The current result
+     * @return true if the result is manual and assessed, false otherwise
+     */
     private boolean checkForRatedAndAssessedResult(Result result) {
+        return Boolean.TRUE.equals(result.isRated()) && checkForAssessedResult(result);
+    }
+
+    /**
+     * This checks if the current result has a completion date and if the assessment is over
+     * @param result The current result
+     * @return true if the result is manual and the assessment is over or it is an automatic result, false otherwise
+     */
+    private boolean checkForAssessedResult(Result result) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-        return Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null
-                && ((result.isManual() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC));
+        return result.getCompletionDate() != null && ((result.isManual() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC));
     }
 
     @Override

@@ -44,6 +44,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "feedbacks")
     Optional<Result> findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
+    Optional<Result> findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(Long participationId);
+
     @Query("select r from Result r where r.completionDate = (select min(rr.completionDate) from Result rr where rr.participation.exercise.id = r.participation.exercise.id and rr.participation.student.id = r.participation.student.id and rr.successful = true) and r.participation.exercise.course.id = :courseId and r.successful = true order by r.completionDate asc")
     List<Result> findEarliestSuccessfulResultsForCourse(@Param("courseId") Long courseId);
 
