@@ -14,12 +14,13 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import * as sinon from 'sinon';
 import { HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Course Management Detail Component', () => {
     let comp: CourseDetailComponent;
@@ -38,6 +39,7 @@ describe('Course Management Detail Component', () => {
                 MockComponent(AlertErrorComponent),
                 MockDirective(AlertComponent),
                 MockPipe(ArtemisDatePipe),
+                MockDirective(JhiTranslateDirective),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
@@ -45,6 +47,7 @@ describe('Course Management Detail Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(JhiAlertService),
+                MockProvider(NgbModal),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(CourseDetailComponent);
