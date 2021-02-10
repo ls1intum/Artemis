@@ -158,7 +158,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         assertThat(result.getFeedbacks().stream().filter(f -> f.getType() == FeedbackType.MANUAL_UNREFERENCED)).isNotEmpty();
-        assertThat(result.getResultString()).isEqualTo("1 of 1 passed, 10.5 of 42 points");
+        assertThat(result.getResultString()).isEqualTo(String.format("1 of 1 passed, %.1f of 42 points", 10.5));
     }
 
     @Test
