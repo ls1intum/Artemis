@@ -96,7 +96,6 @@
 
     <a
         *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.QUIZ"
-        type="submit"
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"
         class="btn btn-primary btn-sm mr-1"
     >
