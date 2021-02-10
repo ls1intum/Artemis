@@ -219,8 +219,10 @@ public class ParticipationService {
             participation = startProgrammingExercise((ProgrammingExercise) exercise, (ProgrammingExerciseStudentParticipation) participation);
         }
         else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
-            if (participation.getInitializationState() == null || participation.getInitializationState() == UNINITIALIZED || participation.getInitializationState() == FINISHED) {
-                // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side
+            if (participation.getInitializationState() == null || participation.getInitializationState() == UNINITIALIZED
+                    || participation.getInitializationState() == FINISHED && !(exercise instanceof QuizExercise)) {
+                // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side.
+                // Only for quiz exercises, the participation status FINISHED should not be overwritten since the user must not change his submission once submitted
                 participation.setInitializationState(INITIALIZED);
             }
 
@@ -1288,17 +1290,6 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findTestRunParticipationForExerciseWithEagerSubmissionsResult(Long userId, List<Exercise> exercises) {
         return studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(userId, exercises);
-    }
-
-    /**
-     * Get all participations for the given student and individual-mode exercises
-     *
-     * @param studentId the id of the student for which the participations should be found
-     * @param exercises the individual-mode exercises for which participations should be found
-     * @return student's participations
-     */
-    public List<StudentParticipation> findByStudentIdAndIndividualExercises(Long studentId, List<Exercise> exercises) {
-        return studentParticipationRepository.findByStudentIdAndIndividualExercises(studentId, exercises);
     }
 
     /**

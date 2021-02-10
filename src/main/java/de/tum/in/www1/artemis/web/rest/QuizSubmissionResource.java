@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -135,6 +136,10 @@ public class QuizSubmissionResource {
 
         // update and save submission
         Result result = quizSubmissionService.submitForPractice(quizSubmission, quizExercise, participation);
+        // The quizScheduler is usually responsible for updating the participation to FINISHED in the database. If quizzes where the student did not participate are used for
+        // practice, the QuizScheduler does not update the participation, that's why we update it manually here
+        participation.setInitializationState(InitializationState.FINISHED);
+        participationService.save(participation);
 
         // remove some redundant or unnecessary data that is not needed on client side
         for (SubmittedAnswer answer : quizSubmission.getSubmittedAnswers()) {
