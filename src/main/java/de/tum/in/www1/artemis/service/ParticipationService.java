@@ -1293,17 +1293,6 @@ public class ParticipationService {
     }
 
     /**
-     * Get all participations for the given student and individual-mode exercises
-     *
-     * @param studentId the id of the student for which the participations should be found
-     * @param exercises the individual-mode exercises for which participations should be found
-     * @return student's participations
-     */
-    public List<StudentParticipation> findByStudentIdAndIndividualExercises(Long studentId, List<Exercise> exercises) {
-        return studentParticipationRepository.findByStudentIdAndIndividualExercises(studentId, exercises);
-    }
-
-    /**
      * Get all participations for the given student and team-mode exercises combined with their submissions with a result
      *
      * @param studentId the id of the student for which the participations should be found
