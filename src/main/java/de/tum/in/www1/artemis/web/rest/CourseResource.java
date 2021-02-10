@@ -844,19 +844,8 @@ public class CourseResource {
 
         courseService.archiveCourse(course);
 
-        // TODOs Course Exercises
-        // 1) Get the course with all exercises and iterate over each exercise
-        // 2) Fetch all student participations for the exercise
-        // 3) For programming exercises: Download all source code repositories (those will be deleted in the VCS repository in a second step when the zip file was downloaded)
-        // and zip each repository, also download exercise, tests and solution repos (we will not delete those), but add them for consistency
-        // 4) For other exercises: Store the submissions (e.g. model --> json, text --> txt, file --> file, quiz --> json) in the file system
         // Note: in the first version, we do not store the results with feedback and other meta data, as those will stay available in Artemis, the main focus is to allow
         // instructors to download student repos in order to delete those on Bitbucket/Gitlab
-
-        // TODO: send websocket updates about the progress of this operation to the user
-
-        // TODOs Exams
-        // 1) Get all exams with their exercises of the course and do the same as above
 
         // Note: Lectures are not part of the archive at the moment and will be included in a future version
         // 1) Get all lectures (attachments) of the course and store them in a folder
