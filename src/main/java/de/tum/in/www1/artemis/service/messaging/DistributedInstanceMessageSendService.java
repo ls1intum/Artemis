@@ -23,7 +23,7 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
 
     private final ScheduledExecutorService exec = Executors.newScheduledThreadPool(1);
 
-    private HazelcastInstance hazelcastInstance;
+    private final HazelcastInstance hazelcastInstance;
 
     public DistributedInstanceMessageSendService(HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;

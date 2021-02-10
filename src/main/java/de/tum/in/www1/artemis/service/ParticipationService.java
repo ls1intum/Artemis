@@ -605,15 +605,14 @@ public class ParticipationService {
      * @return the time from which on submissions are not allowed, for exercises that are not part of an exam, this is just the due date.
      */
     public ZonedDateTime getIndividualDueDate(Exercise exercise, StudentParticipation participation) {
-        var studentExam = findStudentExam(exercise, participation).orElse(null);
-        // this is the case for all non-exam exercises
-        if (studentExam == null) {
-            return exercise.getDueDate();
+        if (exercise.isExamExercise()) {
+            var studentExam = findStudentExam(exercise, participation).orElse(null);
+            if (studentExam == null) {
+                return exercise.getDueDate();
+            }
+            return studentExam.getExam().getStartDate().plusSeconds(studentExam.getWorkingTime());
         }
-        // TODO scale all exercise working times depending on the settings of the exercise, for now, this is just
-        // the individual end date of the exam
-        var examEndDate = studentExam.getExam().getStartDate().plusSeconds(studentExam.getWorkingTime());
-        return examEndDate;
+        return exercise.getDueDate();
     }
 
     /**
