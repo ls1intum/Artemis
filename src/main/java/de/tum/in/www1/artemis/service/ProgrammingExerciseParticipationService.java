@@ -344,7 +344,7 @@ public class ProgrammingExerciseParticipationService {
                 gitService.stashChanges(repo);
             }
             catch (InterruptedException | GitAPIException e) {
-                log.error("Stashing student repository for participation" + participation.getId() + " in exercise '" + programmingExercise.getTitle()
+                log.error("Stashing student repository for participation " + participation.getId() + " in exercise '" + programmingExercise.getTitle()
                         + "' did not work as expected: " + e.getMessage());
             }
         }
