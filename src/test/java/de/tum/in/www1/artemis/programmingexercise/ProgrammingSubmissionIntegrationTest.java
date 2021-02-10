@@ -361,9 +361,12 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     public void testLockAndGetProgrammingSubmission_withManualResult() throws Exception {
         ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
         submission = database.addProgrammingSubmission(exercise, submission, "student1");
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise = programmingExerciseRepository.save(exercise);
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
         Result result = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30),
                 programmingExerciseStudentParticipation);
+
         result.setSubmission(submission);
         submission.addResult(result);
         submission.setParticipation(programmingExerciseStudentParticipation);
@@ -382,14 +385,12 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     public void testLockAndGetProgrammingSubmission_withoutManualResult() throws Exception {
         var result = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), programmingExerciseStudentParticipation);
         database.addProgrammingSubmissionToResultAndParticipation(result, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        exercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        exercise = programmingExerciseRepository.save(exercise);
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
         var submissions = submissionRepository.findAll();
 
-        Participation response = request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.OK, Participation.class);
-        var participation = programmingExerciseStudentParticipationRepository
-                .findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(response.getId());
-        var newManualResult = participation.get().getResults().stream().filter(Result::isManual).collect(Collectors.toList()).get(0);
-        assertThat(newManualResult.getAssessor().getLogin()).isEqualTo("tutor1");
+        Participation response = request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.FORBIDDEN, Participation.class);
 
         // Make sure no new submissions are created
         var latestSubmissions = submissionRepository.findAll();
