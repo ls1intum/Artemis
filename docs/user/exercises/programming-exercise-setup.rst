@@ -278,7 +278,7 @@ Exercise Creation
     - **Weight Distribution**: The distribution of test case weights. Visualizes the impact of each test case for the score calculation
     - **Total Points**: The percentage of points given to students according to a specific test case. 100% in the chart represents full scores (100%) of **all** students
 
-- **Cody Analysis Tab**: Configure the visibility and grading of issues belonging to categories
+- **Cody Analysis Tab**: Configure the visibility and grading of code quality issues on a category-level
 
   .. figure:: programming/configure-grading-code-analysis.png
             :align: center
@@ -376,7 +376,7 @@ Exercise Creation
 - The solution result should have a score of **100%** with **X of X passed** or **X of X passed, 0 issues** (if static code analysis is enabled)
 
 .. note::
-  If static code analysis is enabled and issues are found in the template/solution result, instructors should improve the template/solution or disable the rule, which produced the unwanted/unimportant issue
+  If static code analysis is enabled and issues are found in the template/solution result, instructors should improve the template/solution or disable the rule, which produced the unwanted/unimportant issue.
 
 - Click on |edit|
 
@@ -385,6 +385,54 @@ Exercise Creation
   .. figure:: programming/programming-edit-status.png
             :align: center
 
+Exercise Import
+^^^^^^^^^^^^^^^
+
+On exercise import, Artemis copies the repositories, build plans, interactive problem statement and grading configuration from the imported exercise.
+
+1. **Open Course Management**
+
+- Open |course-management|
+- Navigate into **Exercises** of your preferred course
+
+    .. figure:: programming/course-management-course-dashboard.png
+              :align: center
+
+2. **Import programming exercise**
+
+- Click on **Import Programming Exercise**
+
+    .. figure:: programming/course-management-exercise-dashboard-import.png
+              :align: center
+
+- Select an exercise to import
+
+    .. figure:: programming/course-management-exercise-dashboard-import-modal.png
+              :align: center
+
+.. note::
+  Instructors can import exercises from courses, where they are registered as instructors
+
+- Artemis provides special options to update the assessment process
+
+    .. figure:: programming/programming-import-options.png
+              :align: center
+
+    - **Recreate Build Plans**: Create new build plans instead of copying them from the imported exercise
+    - **Update Template**: Update the template files in the repositories. This can be useful if the imported exercise is old and contains outdated dependencies
+
+    .. note::
+      For Java, Artemis replaces JUnit4 by Ares (which includes JUnit5) and updates the dependencies and plugins with the versions found in the latest template. Afterwards you might need to adapt the test cases.
+
+- Instructors are able to activate/deactivate static code analysis. Changing this option from the original value, requires the activation of **Recreate Build Plans** and **Update Template**.
+
+.. note::
+  **Recreate Build Plans** and **Update Template** are automatically set if the static code analysis option changes compared to the imported exercise. The plugins, dependencies and static code analysis tool configurations are added/deleted/copied depending on the new and the original state of this option.
+
+- Fill out all mandatory values and click on |import|
+
+.. note::
+  The interactive problem statement can be edited after finishing the import. Some options such as **Sequential Test Runs** cannot be changed on exercise import.
 
 .. |build_failed| image:: ../exams/student/buttons/build_failed.png
 .. |edit| image:: programming/edit.png
@@ -398,3 +446,4 @@ Exercise Creation
 .. |grading-reset| image:: programming/configure-grading-reset.png
 .. |grading-reevaluate-all| image:: programming/configure-grading-reevaluate-all.png
 .. |grading-trigger-all| image:: programming/configure-grading-trigger-all.png
+.. |import| image:: programming/programming-exercise-import-button.png
