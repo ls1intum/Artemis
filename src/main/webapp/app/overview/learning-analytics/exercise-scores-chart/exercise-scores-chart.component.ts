@@ -75,10 +75,13 @@ export class ExerciseScoresChartComponent implements OnInit, AfterViewInit {
                         labelString: 'Exercises',
                     },
                     ticks: {
+                        autoSkip: false,
+                        maxRotation: 45,
+                        minRotation: 45,
                         callback(exerciseTitle: string) {
-                            if (exerciseTitle.length > 10) {
+                            if (exerciseTitle.length > 20) {
                                 // shorten exercise title if too long (will be displayed in full in tooltip)
-                                return exerciseTitle.substr(0, 10) + '...';
+                                return exerciseTitle.substr(0, 20) + '...';
                             } else {
                                 return exerciseTitle;
                             }
@@ -117,36 +120,28 @@ export class ExerciseScoresChartComponent implements OnInit, AfterViewInit {
 
     loadData() {
         // ToDo sort date first by release date and then by id
-        const data = [];
-        data.push(new ExerciseScoresDTO(1, 'This is a really long exercise title that is far too long to be displayed', 50, 79, moment()));
-        data.push(new ExerciseScoresDTO(2, 'test2', 30, 100, moment()));
-        data.push(new ExerciseScoresDTO(3, 'test3', 0, 200, moment()));
-        data.push(new ExerciseScoresDTO(4, 'test4', 35, 180, moment()));
-        data.push(new ExerciseScoresDTO(5, 'test5', 11, 34, moment()));
-        data.push(new ExerciseScoresDTO(6, 'test6', 0, 0, moment()));
+        this.exerciseScores.push(new ExerciseScoresDTO(1, 'This is a really long exercise title that is far too long to be displayed', 50, 79, moment()));
+        this.exerciseScores.push(new ExerciseScoresDTO(2, 'test2', 30, 100, moment()));
+        this.exerciseScores.push(new ExerciseScoresDTO(3, 'test3', 0, 200, moment()));
+        this.exerciseScores.push(new ExerciseScoresDTO(4, 'test4', 35, 180, moment()));
+        this.exerciseScores.push(new ExerciseScoresDTO(5, 'test5', 11, 34, moment()));
+        this.exerciseScores.push(new ExerciseScoresDTO(6, 'test6', 0, 0, moment()));
+        this.exerciseScores.push(new ExerciseScoresDTO(7, 'This is a really long exercise title that is far too long to be displayed', 50, 79, moment()));
+        this.exerciseScores.push(new ExerciseScoresDTO(8, 'test2', 30, 100, moment()));
+        this.exerciseScores.push(new ExerciseScoresDTO(9, 'test3', 0, 200, moment()));
+        this.exerciseScores.push(new ExerciseScoresDTO(10, 'test4', 35, 180, moment()));
+        this.exerciseScores.push(new ExerciseScoresDTO(11, 'test5', 11, 34, moment()));
+        this.exerciseScores.push(new ExerciseScoresDTO(12, 'test6', 0, 0, moment()));
 
-        const sortedExerciseScores = _.sortBy(data, ['releaseDate', 'exerciseId']);
+        const sortedExerciseScores = _.sortBy(this.exerciseScores, ['releaseDate', 'exerciseId']);
 
         this.addData(this.chartInstance, sortedExerciseScores);
     }
 
     ngAfterViewInit() {
-        // Todo: Calculate this width depending on the number of exercises to make graph scrollable
-        this.chartDiv.nativeElement.setAttribute('style', `width: 1000px`);
         this.chartInstance = this.chartDirective.chart;
         this.loadData();
-    }
-
-    private calculateTickMax() {
-        const maxStudentScore = Math.max(...this.exerciseScores.map((exerciseScoreDTO) => exerciseScoreDTO.studentScore));
-        console.log(maxStudentScore);
-        const maxAverageScore = Math.max(...this.exerciseScores.map((exerciseScoreDTO) => exerciseScoreDTO.averageScore));
-        console.log(maxAverageScore);
-        let max = maxStudentScore;
-        if (maxAverageScore > maxStudentScore) {
-            max = maxAverageScore;
-        }
-        console.log(max);
-        return Math.ceil((max + 1) / 10) * 10 + 20;
+        const chartWidth = 500 + 100 * this.exerciseScores.length;
+        this.chartDiv.nativeElement.setAttribute('style', `width: ${chartWidth}px`);
     }
 }
