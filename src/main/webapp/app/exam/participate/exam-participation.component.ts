@@ -291,14 +291,47 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             .submitStudentExam(this.courseId, this.examId, this.studentExam)
             .timeoutWith(20000, Observable.throw(new Error('Submission request timed out. Please check your connection and try again.')))
             .subscribe(
-                (studentExam) => {
+                (studentExam: StudentExam) => {
                     this.studentExam = studentExam;
                 },
                 (error: Error) => {
-                    this.alertService.error(error.message);
                     // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible
-                    this.handInPossible = error.message !== 'studentExam.submissionNotInTime' && error.message !== 'studentExam.alreadySubmitted';
-                    this.submitInProgress = false;
+                    const alreadySubmitted = error.message === 'studentExam.alreadySubmitted';
+
+                    // When we have already submitted load the existing submission
+                    if (alreadySubmitted) {
+                        if (!!this.testRunId) {
+                            this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe(
+                                (studentExam: StudentExam) => {
+                                    this.studentExam = studentExam;
+                                },
+                                (loadError: Error) => {
+                                    this.alertService.error(loadError.message);
+
+                                    // Allow the user to try to reload the exam from the server
+                                    this.submitInProgress = false;
+                                    this.handInPossible = true;
+                                },
+                            );
+                        } else {
+                            this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe(
+                                (existingExam: StudentExam) => {
+                                    this.studentExam = existingExam;
+                                },
+                                (loadError: Error) => {
+                                    this.alertService.error(loadError.message);
+
+                                    // Allow the user to try to reload the exam from the server
+                                    this.submitInProgress = false;
+                                    this.handInPossible = true;
+                                },
+                            );
+                        }
+                    } else {
+                        this.alertService.error(error.message);
+                        this.submitInProgress = false;
+                        this.handInPossible = error.message !== 'studentExam.submissionNotInTime';
+                    }
                 },
             );
     }
