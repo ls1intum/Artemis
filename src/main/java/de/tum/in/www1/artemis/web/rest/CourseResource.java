@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import de.tum.in.www1.artemis.web.rest.dto.CourseScoresDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
@@ -130,6 +131,32 @@ public class CourseResource {
         this.auditEventRepository = auditEventRepository;
         this.env = env;
         this.assessmentDashboardService = assessmentDashboardService;
+    }
+
+    /**
+     * This method represents a server implementation of the score calculation in course-score-calculation.service.ts
+     *
+     * @param courseId
+     * @return
+     */
+    @GetMapping("/courses/{courseId}/student-score")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<CourseScoresDTO> getStudentsAchievedPointsInCourse(@PathVariable Long courseId) {
+        Optional<User> userOptional = Optional.ofNullable(userService.getUserWithGroupsAndAuthorities());
+        if (userOptional.isEmpty()) {
+            return forbidden();
+        }
+        User student = userOptional.get();
+        Optional<Course> existingCourse = courseRepository.findWithExercises(courseId);
+        if (existingCourse.isEmpty()) {
+            return notFound();
+        }
+        Course course = existingCourse.get();
+        if (!authCheckService.isAtLeastStudentInCourse(course, student)) {
+            return forbidden();
+        }
+        CourseScoresDTO courseScoresDTO = courseService.calculateCourseScoresForStudent(course, student);
+        return ResponseEntity.ok(courseScoresDTO);
     }
 
     /**

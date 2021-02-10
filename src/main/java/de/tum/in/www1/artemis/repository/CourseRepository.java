@@ -54,6 +54,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
     Course findWithEagerExercisesById(long courseId);
 
+    @Query("""
+                SELECT  c
+                FROM Course c LEFT JOIN FETCH c.exercises
+                WHERE c.id = :courseId
+            """)
+    Optional<Course> findWithExercises(long courseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "learningGoals" })
     Optional<Course> findWithEagerLearningGoalsById(long courseId);
 

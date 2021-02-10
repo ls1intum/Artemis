@@ -31,10 +31,10 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
     List<TeamScore> findAllByExerciseIn(Set<Exercise> exercises, Pageable pageable);
 
     @Query("""
-                    SELECT new de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO(t.team, AVG(t.lastScore), AVG(t.lastRatedScore))
-                    FROM TeamScore t
-                    WHERE t.exercise IN :exercises
-                    GROUP BY t.team
+                        SELECT new de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO(t.team, AVG(t.lastScore), AVG(t.lastRatedScore))
+                        FROM TeamScore t
+                        WHERE t.exercise IN :exercises
+                        GROUP BY t.team
 
             """)
     List<ParticipantScoreAverageDTO> getAvgScoreOfTeamInExercises(@Param("exercises") Set<Exercise> exercises);
@@ -45,4 +45,11 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
                   WHERE t.exercise = :exercise AND :user MEMBER OF t.team.students
             """)
     Optional<TeamScore> findTeamScoreByExerciseAndUserLazy(@Param("exercise") Exercise exercise, @Param("user") User user);
+
+    @Query("""
+                  SELECT DISTINCT t
+                  FROM TeamScore t LEFT JOIN FETCH t.team LEFT JOIN FETCH t.lastRatedResult LEFT JOIN FETCH t.lastResult LEFT JOIN FETCH t.exercise
+                  WHERE t.exercise = :exercise AND :user MEMBER OF t.team.students
+            """)
+    Optional<TeamScore> findTeamScoreByExerciseAndUserEager(@Param("exercise") Exercise exercise, @Param("user") User user);
 }

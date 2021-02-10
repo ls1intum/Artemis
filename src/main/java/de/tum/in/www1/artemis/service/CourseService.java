@@ -18,14 +18,16 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.LearningGoalRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.web.rest.dto.CourseScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -61,9 +63,16 @@ public class CourseService {
 
     private final LearningGoalRepository learningGoalRepository;
 
+    private final StudentScoreRepository studentScoreRepository;
+
+    private final TeamScoreRepository teamScoreRepository;
+
+    private final ParticipationRepository participationRepository;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
-            ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository) {
+            ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository,
+            StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, ParticipationRepository participationRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -75,6 +84,58 @@ public class CourseService {
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
         this.learningGoalRepository = learningGoalRepository;
+        this.studentScoreRepository = studentScoreRepository;
+        this.teamScoreRepository = teamScoreRepository;
+        this.participationRepository = participationRepository;
+    }
+
+    /**
+     * This method represents a server implementation of the score calculation in course-score-calculation.service.ts
+     *
+     * @param course course with exercises for which to get the scores
+     * @param user   student for which to get the scores
+     * @return courseScoresDTO containing the scores of the student in the course
+     */
+    public CourseScoresDTO calculateCourseScoresForStudent(Course course, User user) {
+
+        Set<Exercise> courseExercises = course.getExercises().stream().filter(Exercise::isVisibleToStudents)
+                .filter(exercise -> exercise.getDueDate() == null || exercise.getDueDate().isBefore(ZonedDateTime.now()))
+                .filter(exercise -> exercise.getAssessmentDueDate() == null || exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now()))
+                .filter(exercise -> exercise.getIncludedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED).collect(Collectors.toSet());
+
+        double maxPointsInCourse = 0.0;
+        double pointsAchievedByStudentInCourse = 0.0;
+        double presentationScore = 0.0;
+
+        for (Exercise exercise : courseExercises) {
+            if (exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_COMPLETELY)) {
+                maxPointsInCourse += exercise.getMaxPoints();
+            }
+
+            ParticipantScore participantScore;
+
+            if (exercise.isTeamMode()) {
+                participantScore = teamScoreRepository.findTeamScoreByExerciseAndUserEager(exercise, user).orElse(null);
+            }
+            else {
+                participantScore = studentScoreRepository.findStudentScoreByExerciseAndUser(exercise, user).orElse(null);
+            }
+
+            if (participantScore != null && participantScore.getLastRatedResult() != null) {
+                // get last rated result
+                Result lastRatedResult = participantScore.getLastRatedResult();
+                StudentParticipation studentParticipation = (StudentParticipation) lastRatedResult.getParticipation();
+
+                if (studentParticipation.getPresentationScore() != null) {
+                    presentationScore += studentParticipation.getPresentationScore();
+                }
+                pointsAchievedByStudentInCourse += lastRatedResult.getScore() * 0.01 * exercise.getMaxPoints();
+            }
+        }
+
+        return new CourseScoresDTO(pointsAchievedByStudentInCourse, (pointsAchievedByStudentInCourse / maxPointsInCourse) * 100.0, maxPointsInCourse, presentationScore,
+                maxPointsInCourse, (pointsAchievedByStudentInCourse / maxPointsInCourse) * 100.0);
+
     }
 
     @Autowired
