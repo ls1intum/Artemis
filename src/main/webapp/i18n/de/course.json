@@ -132,7 +132,7 @@
             },
             "cleanup": {
                 "title": "Aufräumen",
-                "question": "Möchten Sie den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studenten Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
+                "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studenten Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
             }
         }
     }
