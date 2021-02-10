@@ -120,7 +120,7 @@
                                             </span>
                                         </a>
                                         <!-- button for existing result with lock-->
-                                        <span *ngIf="submission.results && !submission?.results[correctionRound].completionDate">
+                                        <span *ngIf="submission.results && !submission.results[correctionRound].completionDate">
                                             <a
                                                 [class.disabled]="busy"
                                                 [queryParams]="{ 'correction-round': correctionRound }"
