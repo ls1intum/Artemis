@@ -3,21 +3,21 @@
         <div class="quiz-navigation-content">
             <div class="stepwizardquiz">
                 <div *ngFor="let question of exercise.quizQuestions; let i = index" class="stepwizardquiz__step">
-                    <div
+                    <span
                         *ngIf="question.type === DRAG_AND_DROP"
                         class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"
                         (click)="navigateToQuestion(question.id)"
                         [ngbTooltip]="dragAndDropMappings[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                        [ngClass]="{ 'changed-question': dragAndDropMappings[question.id]?.length }"
+                        [ngClass]="{ 'changed-question': dragAndDropMappings.get(question.id)?.length }"
                     >
                         <b class="fa">DD</b>
-                    </div>
+                    </span>
                     <span
                         *ngIf="question.type === MULTIPLE_CHOICE"
                         class="btn btn-light btn-circle stepbutton stepwizardquiz-circle multiplechoicecolor-question"
                         (click)="navigateToQuestion(question.id)"
                         [ngbTooltip]="selectedAnswerOptions[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                        [ngClass]="{ 'changed-question': selectedAnswerOptions[question.id]?.length }"
+                        [ngClass]="{ 'changed-question': selectedAnswerOptions.get(question.id)?.length }"
                     >
                         <b class="fa">MC</b>
                     </span>
@@ -26,7 +26,7 @@
                         class="btn btn-light btn-circle stepbutton stepwizardquiz-circle shortanswercolor-question"
                         (click)="navigateToQuestion(question.id)"
                         [ngbTooltip]="shortAnswerSubmittedTexts[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                        [ngClass]="{ 'changed-question': shortAnswerSubmittedTexts[question.id]?.length }"
+                        [ngClass]="{ 'changed-question': shortAnswerSubmittedTexts.get(question.id)?.length }"
                     >
                         <b class="fa">SA</b>
                     </span>
