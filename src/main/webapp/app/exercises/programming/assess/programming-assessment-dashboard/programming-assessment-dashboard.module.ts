@@ -21,5 +21,7 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
         ArtemisAssessmentSharedModule,
     ],
     declarations: [ProgrammingAssessmentDashboardComponent],
+    entryComponents: [],
+    exports: [],
 })
 export class ArtemisProgrammingAssessmentDashboardModule {}
