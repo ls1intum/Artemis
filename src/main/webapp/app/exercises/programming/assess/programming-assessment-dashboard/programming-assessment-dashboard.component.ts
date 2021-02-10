@@ -13,6 +13,7 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { ProgrammingAssessmentManualResultService } from '../manual-result/programming-assessment-manual-result.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     templateUrl: './programming-assessment-dashboard.component.html',
@@ -26,7 +27,7 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
     predicate = 'id';
     reverse = false;
     numberOfCorrectionrounds = 1;
-
+    newManualResultAllowed: boolean;
     automaticType = AssessmentType.AUTOMATIC;
     private cancelConfirmationText: string;
 
@@ -61,6 +62,8 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
                 this.getSubmissions();
                 this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
                 this.setPermissions();
+                this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
+                console.log(this.newManualResultAllowed);
             });
     }
 

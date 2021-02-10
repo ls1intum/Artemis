@@ -390,6 +390,10 @@ public class ProgrammingSubmissionResource {
             return forbidden();
         }
 
+        if (!((ProgrammingExercise) participation.getExercise()).areManualResultsAllowed()) {
+            return forbidden("assessment", "assessmentSaveNotAllowed", "Creating manual results is disabled for this exercise!");
+        }
+
         int numberOfManualResults = participation.getResults().stream().filter(Result::isManual).collect(Collectors.toList()).size();
         if (numberOfManualResults == correctionRound + 1) {
             return ResponseEntity.ok(participation);
