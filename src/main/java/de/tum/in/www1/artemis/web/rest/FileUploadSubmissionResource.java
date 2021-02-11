@@ -164,6 +164,13 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         studentParticipation.setExercise(fileUploadExercise);
         fileUploadSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         this.fileUploadSubmissionService.hideDetails(fileUploadSubmission, user);
+
+        if (correctionRound == 0 && fileUploadSubmission.getResults().size() == 2) {
+            var resultList = new ArrayList<Result>();
+            resultList.add(fileUploadSubmission.getFirstResult());
+            fileUploadSubmission.setResults(resultList);
+        }
+
         return ResponseEntity.ok(fileUploadSubmission);
     }
 

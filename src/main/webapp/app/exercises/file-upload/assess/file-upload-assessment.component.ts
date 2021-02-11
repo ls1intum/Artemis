@@ -151,7 +151,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
     private loadSubmission(submissionId: number): void {
         this.fileUploadSubmissionService
-            .get(submissionId)
+            .get(submissionId, this.correctionRound)
             .pipe(filter((res) => !!res))
             .subscribe(
                 (res) => {
