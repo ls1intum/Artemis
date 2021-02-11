@@ -930,15 +930,23 @@ public class GitService {
     public Path zipRepositoryWithParticipation(Repository repo, String targetPath, boolean hideStudentName) throws IOException {
         var exercise = repo.getParticipation().getProgrammingExercise();
         var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        var studentOrEmpty = ((ProgrammingExerciseStudentParticipation) repo.getParticipation()).getStudent();
+        var participation = ((ProgrammingExerciseStudentParticipation) repo.getParticipation());
+
+        // The zip filename is either the student login, team name or some default string.
+        var studentTeamOrDefault = "-student-submission" + repo.getParticipation().getId();
+        if (participation.getStudent().isPresent()) {
+            studentTeamOrDefault = participation.getStudent().get().getLogin();
+        }
+        else if (participation.getTeam().isPresent()) {
+            studentTeamOrDefault = participation.getTeam().get().getName();
+        }
 
         String zipRepoName = courseShortName + "-" + exercise.getTitle();
         if (hideStudentName) {
             zipRepoName += "-student-submission.git.zip";
         }
         else {
-            var studentLoginOrDefault = studentOrEmpty.isPresent() ? studentOrEmpty.get().getLogin() : "-student-submission-" + repo.getParticipation().getId();
-            zipRepoName += "-" + studentLoginOrDefault + ".zip";
+            zipRepoName += "-" + studentTeamOrDefault + ".zip";
         }
         return zipRepository(repo.getLocalPath(), zipRepoName, targetPath);
     }
