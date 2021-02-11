@@ -215,6 +215,7 @@ public class ExamService {
 
     /**
      * Get the exam of a course with exercise groups and student exams
+     *
      * @param examId {Long} The courseId of the course which contains the exam
      * @return The exam
      */
@@ -234,6 +235,7 @@ public class ExamService {
      *     <li>All StudentExams</li>
      * </ul>
      * Note: StudentExams and ExerciseGroups are not explicitly deleted as the delete operation of the exam is cascaded by the database.
+     *
      * @param examId the ID of the exam to be deleted
      */
     public void delete(@NotNull long examId) {
@@ -361,8 +363,8 @@ public class ExamService {
     /**
      * Checks whether one of the submissions is not empty
      *
-     * @param submissions Submissions to check
-     * @param exercise Exercise of the submissions
+     * @param submissions         Submissions to check
+     * @param exercise            Exercise of the submissions
      * @param jacksonObjectMapper Mapper to parse a modeling exercise model string to JSON
      * @return true if at least one submission is not empty else false
      */
@@ -539,8 +541,8 @@ public class ExamService {
     /**
      * Generates random exams for each user in the given users set and saves them.
      *
-     * @param exam exam for which the individual student exams will be generated
-     * @param users users for which the individual exams will be generated
+     * @param exam                      exam for which the individual student exams will be generated
+     * @param users                     users for which the individual exams will be generated
      * @param numberOfOptionalExercises number of optional exercises in the exam
      * @return List of StudentExams generated for the given users
      */
@@ -594,7 +596,7 @@ public class ExamService {
      * Add multiple users to the students of the exam so that they can access the exam
      * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
      * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
-     *
+     * <p>
      * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      *
@@ -718,6 +720,7 @@ public class ExamService {
 
     /**
      * Finds an exam based on the id with all student exams which are not marked as test runs.
+     *
      * @param examId the id of the exam
      * @return the exam with student exams loaded
      */
@@ -779,8 +782,9 @@ public class ExamService {
 
     /**
      * Sets up the participations and submissions for all the exercises of the student exam.
+     *
      * @param generatedParticipations List of generatedParticipations
-     * @param studentExam The studentExam
+     * @param studentExam             The studentExam
      */
     public void setUpExerciseParticipationsAndSubmissions(List<StudentParticipation> generatedParticipations, StudentExam studentExam) {
         User student = studentExam.getUser();
@@ -1025,8 +1029,8 @@ public class ExamService {
      * Registers student to the exam. In order to do this,  we add the user the the course group, because the user only has access to the exam of a course if the student also has access to the course of the exam.
      * We only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course).
      *
-     * @param course the course containing the exam
-     * @param exam the exam for which we want to register a student
+     * @param course  the course containing the exam
+     * @param exam    the exam for which we want to register a student
      * @param student the student to be registered to the exam
      */
     public void registerStudentToExam(Course course, Exam exam, User student) {
@@ -1080,6 +1084,22 @@ public class ExamService {
         log.info("User " + currentUser.getLogin() + " has removed user " + student.getLogin() + " from the exam " + exam.getTitle() + " with id " + exam.getId()
                 + ". This also deleted a potentially existing student exam with all its participations and submissions.");
     }
+
+    /**
+     * Returns a set containing all exercises that are defined in the
+     * specified exam.
+     *
+     * @param examId The id of the exam
+     * @return A set containing the exercises
+     */
+    public Set<Exercise> getAllExercisesOfExam(long examId) {
+        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId);
+        if (exam.isEmpty()) {
+            return Set.of();
+        }
+
+        return exam.get().getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
+    };
 
     /**
      * Adds all students registered in the course to the given exam

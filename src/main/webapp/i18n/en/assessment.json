@@ -42,7 +42,7 @@
                 "loading": "Loading..",
                 "columns": {
                     "submissionDate": "Submission date",
-                    "result": "Result",
+                    "result": "Latest Result",
                     "submissionCount": "Submissions",
                     "score": "Points",
                     "duration": "Duration",

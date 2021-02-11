@@ -5,7 +5,7 @@
     </a>
 
     <a
-        *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.PROGRAMMING && exercise.type !== exerciseType.QUIZ"
+        *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.QUIZ"
         [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'assessment']"
         class="btn btn-primary btn-sm mr-1"
     >

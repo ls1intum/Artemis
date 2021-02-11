@@ -117,6 +117,7 @@
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
+            "uploadFile": "Upload",
             "greeting": "Willkommen zu {{ title }}.",
             "finish": "Das ist das Ende von {{ title }}.",
             "nameDisplay": "Dein voller Name ist: {{ fullName }}",
