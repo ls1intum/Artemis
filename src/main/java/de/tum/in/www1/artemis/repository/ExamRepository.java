@@ -66,4 +66,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("select exam.id, count(registeredUsers) from Exam exam left join exam.registeredUsers registeredUsers where exam.id in :#{#examIds} group by exam.id")
     List<long[]> countRegisteredUsersByExamIds(@Param("examIds") List<Long> examIds);
 
+    @Query("select count(studentExam) from StudentExam studentExam where studentExam.testRun = FALSE AND studentExam.exam.id = :#{#examId}")
+    long countGeneratedStudentExamsByExamWithoutTestruns(@Param("examId") Long examId);
+
 }

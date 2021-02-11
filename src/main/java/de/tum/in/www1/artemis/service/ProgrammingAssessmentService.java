@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.springframework.stereotype.Service;
 
@@ -102,10 +99,10 @@ public class ProgrammingAssessmentService extends AssessmentService {
                  * automatic SCA feedback (automatic test feedback has to be capped)
                  */
                 if (feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()) {
-                    scoreAutomaticTests += feedback.getCredits();
+                    scoreAutomaticTests += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
                 }
                 else {
-                    totalScore += feedback.getCredits();
+                    totalScore += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
                 }
             }
         }

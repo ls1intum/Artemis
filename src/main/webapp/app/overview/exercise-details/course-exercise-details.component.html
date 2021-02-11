@@ -18,7 +18,7 @@
             [showInOrionWindow]="false"
             [courseId]="courseId"
             [exercise]="exercise"
-            [showResult]="showResults && currentResult !== null"
+            [showResult]="showResults && latestRatedResult != undefined"
         >
         </jhi-exercise-details-student-actions>
         <!-- These buttons will be only shown in dev environment and if the programming exercise has no
@@ -129,7 +129,7 @@
             </ng-template>
             <!-- PROBLEM STATEMENT END -->
             <!-- RESULTS START -->
-            <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex" *ngIf="showResults && (sortedHistoryResult?.length > 1 || !currentResult?.rated)">
+            <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex" *ngIf="showResults && (sortedHistoryResult?.length > 1 || !latestRatedResult?.rated)">
                 <div class="col-auto">
                     <h3>{{ 'artemisApp.courseOverview.exerciseDetails.recentResults' | translate }}</h3>
                 </div>
@@ -139,7 +139,7 @@
                     <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults" [maxScore]="exercise.maxPoints"></jhi-result-history>
                 </div>
             </div>
-            <div class="row justify-content-between" *ngIf="showResults && !currentResult?.rated && studentParticipation?.results?.length === 1">
+            <div class="row justify-content-between" *ngIf="showResults && !latestRatedResult?.rated && studentParticipation?.results?.length === 1">
                 <div class="col">
                     <h4>
                         <span class="badge w-100 badge-info">
@@ -207,13 +207,13 @@
                     exercise &&
                     exercise.type === PROGRAMMING &&
                     studentParticipation &&
-                    currentResult &&
-                    (currentResult.assessmentType === AssessmentType.MANUAL || currentResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
+                    latestRatedResult &&
+                    (latestRatedResult.assessmentType === AssessmentType.MANUAL || latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
                 "
                 class="mb-2 mt-2 ml-3"
                 [exercise]="exercise"
                 [participation]="studentParticipation"
-                [result]="currentResult"
+                [result]="latestRatedResult"
             >
             </jhi-complaint-interactions>
             <div
@@ -221,11 +221,11 @@
                 *ngIf="
                     exercise?.type === PROGRAMMING &&
                     studentParticipation &&
-                    currentResult &&
-                    (currentResult.assessmentType === AssessmentType.MANUAL || currentResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
+                    latestRatedResult &&
+                    (latestRatedResult.assessmentType === AssessmentType.MANUAL || latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
                 "
             >
-                <jhi-rating class="mt-2 alert alert-info" [result]="currentResult"></jhi-rating>
+                <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult"></jhi-rating>
             </div>
         </div>
         <router-outlet *ngIf="exercise.course && exercise.course.studentQuestionsEnabled" class="ml-3" (activate)="onChildActivate($event)"></router-outlet>

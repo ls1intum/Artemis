@@ -146,6 +146,8 @@ export class ResultComponent implements OnInit, OnChanges {
             this.resultTooltip = this.buildResultTooltip();
         } else {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
+            // this state is only possible if no rated results are available at all, so we show the info that no graded result is available
+            this.templateStatus = ResultTemplateStatus.NO_RESULT;
             this.result = undefined;
         }
     }

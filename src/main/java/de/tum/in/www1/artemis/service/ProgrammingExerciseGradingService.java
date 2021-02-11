@@ -188,7 +188,8 @@ public class ProgrammingExerciseGradingService {
      */
     private void triggerTemplateBuildIfTestCasesChanged(long programmingExerciseId, ProgrammingSubmission submission) {
         // We only trigger the template build when the test repository was changed.
-        if (!submission.getType().equals(SubmissionType.TEST)) {
+        // If the submission is from type TEST but already has a result, this build was not triggered by a test repository change
+        if (!submission.belongsToTestRepository() || (submission.belongsToTestRepository() && submission.getResults() != null && !submission.getResults().isEmpty())) {
             return;
         }
         // We use the last commitHash of the test repository.
