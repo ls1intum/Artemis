@@ -1,9 +1,13 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, ViewChild } from '@angular/core';
 import * as Chart from 'chart.js';
 import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Color, Label } from 'ng2-charts';
-import { ExerciseScoresDTO } from 'app/overview/learning-analytics/exercise-scores-chart/exercise-scores-dto.model';
-import * as moment from 'moment';
+import { ExerciseScoresDTO, LearningAnalyticsService } from 'app/overview/learning-analytics/learning-analytics.service';
+import { JhiAlertService } from 'ng-jhipster';
+import { onError } from 'app/shared/util/global.utils';
+import { finalize } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 import * as _ from 'lodash';
 
 @Component({
@@ -11,7 +15,10 @@ import * as _ from 'lodash';
     templateUrl: './exercise-scores-chart.component.html',
     styleUrls: ['./exercise-scores-chart.component.scss'],
 })
-export class ExerciseScoresChartComponent implements OnInit, AfterViewInit {
+export class ExerciseScoresChartComponent implements AfterViewInit {
+    @Input()
+    courseId: number;
+    isLoading = false;
     public exerciseScores: ExerciseScoresDTO[] = [];
 
     @ViewChild(BaseChartDirective)
@@ -37,10 +44,20 @@ export class ExerciseScoresChartComponent implements OnInit, AfterViewInit {
             pointStyle: 'rect',
             borderWidth: 5,
             lineTension: 0,
-            borderDash: [10, 5],
+            borderDash: [1, 1],
+        },
+        {
+            fill: false,
+            data: [],
+            label: 'Maximum Score',
+            pointRadius: 8,
+            pointStyle: 'triangle',
+            borderWidth: 5,
+            lineTension: 0,
+            borderDash: [15, 3, 3, 3],
         },
     ];
-    public lineChartLabels: Label[] = this.exerciseScores.map((exerciseScoreDTO) => exerciseScoreDTO.exerciseTitle);
+    public lineChartLabels: Label[] = this.exerciseScores.map((exerciseScoreDTO) => exerciseScoreDTO.exercise.title!);
     public lineChartOptions: ChartOptions = {
         responsive: true,
         maintainAspectRatio: false,
@@ -59,12 +76,14 @@ export class ExerciseScoresChartComponent implements OnInit, AfterViewInit {
                     scaleLabel: {
                         display: true,
                         labelString: 'Score (%)',
+                        fontSize: 12,
                     },
                     ticks: {
                         suggestedMax: 100,
                         suggestedMin: 0,
                         beginAtZero: true,
                         precision: 0,
+                        fontSize: 12,
                     },
                 },
             ],
@@ -73,11 +92,11 @@ export class ExerciseScoresChartComponent implements OnInit, AfterViewInit {
                     scaleLabel: {
                         display: true,
                         labelString: 'Exercises',
+                        fontSize: 12,
                     },
                     ticks: {
                         autoSkip: false,
-                        maxRotation: 45,
-                        minRotation: 45,
+                        fontSize: 12,
                         callback(exerciseTitle: string) {
                             if (exerciseTitle.length > 20) {
                                 // shorten exercise title if too long (will be displayed in full in tooltip)
@@ -100,48 +119,59 @@ export class ExerciseScoresChartComponent implements OnInit, AfterViewInit {
             borderColor: 'salmon',
             backgroundColor: 'salmon',
         },
+        {
+            borderColor: 'limeGreen',
+            backgroundColor: 'limeGreen',
+        },
     ];
     public lineChartLegend = true;
     public lineChartType: ChartType = 'line';
     public lineChartPlugins = [];
 
-    constructor() {}
-
-    ngOnInit() {}
-
-    addData(chart: Chart, exerciseScoresDTOS: ExerciseScoresDTO[]) {
-        for (const exerciseScoreDTO of exerciseScoresDTOS) {
-            chart.data.labels!.push(exerciseScoreDTO.exerciseTitle);
-            chart.data.datasets![0].data!.push(exerciseScoreDTO.studentScore);
-            chart.data.datasets![1].data!.push(exerciseScoreDTO.averageScore);
-        }
-        chart.update();
-    }
-
-    loadData() {
-        // ToDo sort date first by release date and then by id
-        this.exerciseScores.push(new ExerciseScoresDTO(1, 'This is a really long exercise title that is far too long to be displayed', 50, 79, moment()));
-        this.exerciseScores.push(new ExerciseScoresDTO(2, 'test2', 30, 100, moment()));
-        this.exerciseScores.push(new ExerciseScoresDTO(3, 'test3', 0, 200, moment()));
-        this.exerciseScores.push(new ExerciseScoresDTO(4, 'test4', 35, 180, moment()));
-        this.exerciseScores.push(new ExerciseScoresDTO(5, 'test5', 11, 34, moment()));
-        this.exerciseScores.push(new ExerciseScoresDTO(6, 'test6', 0, 0, moment()));
-        this.exerciseScores.push(new ExerciseScoresDTO(7, 'This is a really long exercise title that is far too long to be displayed', 50, 79, moment()));
-        this.exerciseScores.push(new ExerciseScoresDTO(8, 'test2', 30, 100, moment()));
-        this.exerciseScores.push(new ExerciseScoresDTO(9, 'test3', 0, 200, moment()));
-        this.exerciseScores.push(new ExerciseScoresDTO(10, 'test4', 35, 180, moment()));
-        this.exerciseScores.push(new ExerciseScoresDTO(11, 'test5', 11, 34, moment()));
-        this.exerciseScores.push(new ExerciseScoresDTO(12, 'test6', 0, 0, moment()));
-
-        const sortedExerciseScores = _.sortBy(this.exerciseScores, ['releaseDate', 'exerciseId']);
-
-        this.addData(this.chartInstance, sortedExerciseScores);
-    }
+    constructor(private activatedRoute: ActivatedRoute, private alertService: JhiAlertService, private learningAnalyticsService: LearningAnalyticsService) {}
 
     ngAfterViewInit() {
         this.chartInstance = this.chartDirective.chart;
-        this.loadData();
-        const chartWidth = 500 + 100 * this.exerciseScores.length;
+        this.activatedRoute.parent!.params.subscribe((params) => {
+            this.courseId = +params['courseId'];
+            if (this.courseId) {
+                this.loadData();
+            }
+        });
+    }
+
+    private loadData() {
+        this.isLoading = true;
+        this.learningAnalyticsService
+            .getCourseExerciseScores(this.courseId)
+            .pipe(
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe(
+                (exerciseScoresResponse) => {
+                    this.exerciseScores = exerciseScoresResponse.body!;
+                    this.initializeChart();
+                },
+                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            );
+    }
+
+    private initializeChart() {
+        const sortedExerciseScores = _.sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.exercise.releaseDate);
+        this.addData(this.chartInstance, sortedExerciseScores);
+    }
+
+    private addData(chart: Chart, exerciseScoresDTOS: ExerciseScoresDTO[]) {
+        for (const exerciseScoreDTO of exerciseScoresDTOS) {
+            chart.data.labels!.push(exerciseScoreDTO.exercise.title!);
+            chart.data.datasets![0].data!.push(exerciseScoreDTO.scoreOfStudent);
+            chart.data.datasets![1].data!.push(exerciseScoreDTO.averageScoreAchieved);
+            chart.data.datasets![2].data!.push(exerciseScoreDTO.maxScoreAchieved);
+        }
+        chart.update();
+        const chartWidth = 150 * this.exerciseScores.length;
         this.chartDiv.nativeElement.setAttribute('style', `width: ${chartWidth}px`);
     }
 }

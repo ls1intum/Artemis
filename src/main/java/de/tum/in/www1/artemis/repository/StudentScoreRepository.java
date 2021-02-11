@@ -33,9 +33,16 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
                     SELECT new de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO(s.user, AVG(s.lastScore), AVG(s.lastRatedScore))
                     FROM StudentScore s
                     WHERE s.exercise IN :exercises
-                    GROUP BY s.user
+                    GROUP BY s.user, s.exercise
 
             """)
     List<ParticipantScoreAverageDTO> getAvgScoreOfStudentsInExercises(@Param("exercises") Set<Exercise> exercises);
+
+    @Query("""
+                    SELECT s
+                    FROM StudentScore s LEFT JOIN FETCH s.exercise
+                    WHERE s.exercise IN :exercises AND s.user = :user
+            """)
+    List<StudentScore> findAllByExerciseAndUserWithEagerExercise(@Param("exercises") Set<Exercise> exercises, @Param("user") User user);
 
 }

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation;
 
 @Repository
 public interface ParticipantScoreRepository extends JpaRepository<ParticipantScore, Long> {
@@ -39,8 +40,8 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     List<ParticipantScore> findAllEagerly();
 
     @Query("""
-            SELECT AVG(p.lastRatedScore)
-            FROM ParticipantScore p
+                SELECT AVG(p.lastRatedScore)
+                FROM ParticipantScore p
             WHERE p.exercise IN :exercises
             """)
     Long findAvgRatedScore(@Param("exercises") Set<Exercise> exercises);
@@ -51,4 +52,14 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             WHERE p.exercise IN :exercises
             """)
     Long findAvgScore(@Param("exercises") Set<Exercise> exercises);
+
+    @Query("""
+                    SELECT new de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation(p.exercise.id, AVG(p.lastRatedScore), MAX(p.lastRatedScore))
+                    FROM ParticipantScore p
+                    WHERE p.exercise IN :exercises
+                    GROUP BY p.exercise
+
+            """)
+    List<ExerciseScoresAggregatedInformation> getAggregatedExerciseScoresInformation(@Param("exercises") Set<Exercise> exercises);
+
 }
