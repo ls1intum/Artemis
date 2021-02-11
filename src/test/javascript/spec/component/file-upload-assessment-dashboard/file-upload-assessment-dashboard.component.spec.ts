@@ -94,6 +94,8 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
     it('should set parameters and call functions on init', fakeAsync(() => {
         // setup
+        const exerciseServiceFind = stub(exerciseService, 'find');
+        exerciseServiceFind.returns(of(new HttpResponse({ body: fileUploadExercise1 })));
         const getFileUploadSubmissionStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
         getFileUploadSubmissionStub.returns(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
         spyOn<any>(component, 'setPermissions');
@@ -116,6 +118,8 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
     it('should get Submissions', fakeAsync(() => {
         // test getSubmissions
+        const exerciseServiceFind = stub(exerciseService, 'find');
+        exerciseServiceFind.returns(of(new HttpResponse({ body: fileUploadExercise1 })));
         const getFileUploadSubmissionStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
         getFileUploadSubmissionStub.returns(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
         const isAtLeastInstructorInCourseStub = stub(accountService, 'isAtLeastInstructorInCourse');
@@ -138,7 +142,6 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         const isAtLeastInstructorInCourseStub = stub(accountService, 'isAtLeastInstructorInCourse');
         isAtLeastInstructorInCourseStub.returns(true);
         const findExerciseStub = stub(exerciseService, 'find');
-        // findExerciseStub.returns(of(new HttpResponse({ body: fileUploadExercise, headers: new HttpHeaders() })));
         findExerciseStub.returns(of(new HttpResponse({ body: fileUploadExercise2, headers: new HttpHeaders() })));
         const spy = spyOn<any>(component, 'getExercise');
         spy.and.callThrough();
