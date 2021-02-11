@@ -195,6 +195,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      *
      * @param submissionId       the id of the file upload submission
      * @param fileUploadExercise the corresponding exercise
+     * @param correctionRound the correctionRound for which the submission should lock a result
      * @return the locked file upload submission
      */
     public FileUploadSubmission lockAndGetFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise, int correctionRound) {
