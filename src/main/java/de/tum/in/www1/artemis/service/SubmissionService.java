@@ -460,7 +460,7 @@ public class SubmissionService {
      */
     protected Result lockSubmission(Submission submission, int correctionRound) {
         Result result = submission.getResultForCorrectionRound(correctionRound);
-        if (result == null && correctionRound > 0L) {
+        if (result == null && correctionRound > 0) {
             // copy the result of the previous correction round
             result = copyResultFromPreviousRoundAndSave(submission, submission.getResultForCorrectionRound(correctionRound - 1));
         }

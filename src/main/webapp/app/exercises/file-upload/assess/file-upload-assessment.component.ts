@@ -44,6 +44,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     // TODO: rename this, because right now there is no reference
     referencedFeedback: Feedback[] = [];
     exercise: FileUploadExercise;
+    exerciseId: number;
     totalScore = 0;
     assessmentsAreValid: boolean;
     invalidError?: string;
@@ -59,6 +60,8 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     isTestRun = false;
     courseId: number;
     hasAssessmentDueDatePassed: boolean;
+    correctionRound = 0;
+    hasNewSubmissions = true;
 
     private cancelConfirmationText: string;
 
@@ -97,11 +100,15 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
+            if (queryParams.get('correction-round')) {
+                this.correctionRound = parseInt(queryParams.get('correction-round')!, 10);
+            }
         });
 
         this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
+            this.exerciseId = exerciseId;
             const submissionValue = params['submissionId'];
             const submissionId = Number(submissionValue);
             if (submissionValue === 'new') {
@@ -121,7 +128,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     private loadOptimalSubmission(exerciseId: number): void {
-        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true).subscribe(
+        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound).subscribe(
             (submission: FileUploadSubmission) => {
                 this.initializePropertiesFromSubmission(submission);
                 // Update the url with the new id, without reloading the page, to make the history consistent
@@ -211,7 +218,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     assessNext() {
         this.generalFeedback = new Feedback();
         this.referencedFeedback = [];
-        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!).subscribe(
+        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, false, this.correctionRound).subscribe(
             (response: FileUploadSubmission) => {
                 this.unassessedSubmission = response;
                 this.router.onSameUrlNavigation = 'reload';
@@ -225,6 +232,8 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
                     this.jhiAlertService.error('artemisApp.exerciseAssessmentDashboard.noSubmissions');
+                    this.isLoading = true;
+                    this.hasNewSubmissions = false;
                 } else {
                     this.onError(error.message);
                 }

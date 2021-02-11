@@ -17,7 +17,11 @@
     (cancel)="onCancelAssessment()"
     (nextSubmission)="assessNext()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
+    [hidden]="!hasNewSubmissions"
 >
+</jhi-assessment-layout>
+<ng-container *ngIf="hasNewSubmissions; then assessment; else noSubmission"></ng-container>
+<ng-template #assessment>
     <jhi-resizeable-container *ngIf="!busy && exercise">
         <!--region Left Panel-->
         <span *ngIf="exercise.title" left-header>{{ exercise.title }}</span>
@@ -64,4 +68,13 @@
         <jhi-assessment-instructions right-body [exercise]="exercise" class="markdown-preview"></jhi-assessment-instructions>
         <!--endregion-->
     </jhi-resizeable-container>
-</jhi-assessment-layout>
+</ng-template>
+
+<ng-template #noSubmission>
+    <div class="alert alert-warning text-center mt-4" role="alert">
+        <p jhiTranslate="artemisApp.textAssessment.notFound">We haven't found any new text submission without an assessment, please go back.</p>
+        <button type="submit" [routerLink]="['../../../../../exercises', exerciseId, 'tutor-dashboard']" class="btn btn-info btn-sm mr-1 mb-1 tutor-dashboard">
+            <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+        </button>
+    </div>
+</ng-template>
