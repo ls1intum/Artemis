@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -45,10 +47,7 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -132,8 +131,8 @@ public class ProgrammingExerciseExportService {
 
         try {
             // Zip the student and instructor repos together.
-            // The filename of the zip is: {Exercise_Short_Name}-{Exercise_Title}.zip
-            var filename = exercise.getShortName() + "-" + exercise.getTitle() + ".zip";
+            var timestamp = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyyMMdd-Hms"));
+            var filename = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + timestamp + ".zip";
             var pathToZippedExercise = Path.of(pathToStoreZipFile, filename);
             zipFileService.createZipFile(pathToZippedExercise, zipFilePathsNonNull, false);
             return pathToZippedExercise;
@@ -174,14 +173,22 @@ public class ProgrammingExerciseExportService {
 
         // Construct the name of the zip file
         String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        String zippedRepoName = courseShortName + "-" + exercise.getShortName() + "-" + exercise.getTitle() + "-" + repositoryType.getName();
+        String zippedRepoName = courseShortName + "-" + exercise.getTitle() + "-" + repositoryType.getName();
 
         try {
             // Get the url to the repository and zip it.
             var repositoryUrl = exercise.getRepositoryURL(repositoryType);
+
+            // It's not guaranteed that the repository url is defined (old courses).
+            if (repositoryUrl == null) {
+                var error = "Failed to export instructor repository " + repositoryType + " because the repository url is not defined.";
+                log.info(error);
+                exportErrors.add(error);
+                return null;
+            }
+
             Path zippedRepo = createZipForRepository(repositoryUrl, zippedRepoName);
             if (zippedRepo != null) {
-                fileService.scheduleForDeletion(zippedRepo, 5);
                 return new File(zippedRepo.toString());
             }
         }
@@ -197,9 +204,6 @@ public class ProgrammingExerciseExportService {
             exportErrors.add(error);
         }
 
-        // Delete all files
-        var repoProjectPath = fileService.getUniquePathString(repoDownloadClonePath);
-        deleteReposDownloadProjectRootDirectory(exercise, repoProjectPath);
         return null;
     }
 
@@ -263,6 +267,17 @@ public class ProgrammingExerciseExportService {
         return zippedRepos;
     }
 
+    /**
+     * Creates a zip file with the contents of the git repository. Note that the zip file is deleted in 5 minutes.
+     *
+     * @param repositoryUrl The url of the repository to zip
+     * @param zipFilename   The name of the zip file
+     * @return The path to the zip file.
+     * @throws GitAPIException      if the repos don't exist
+     * @throws GitException if the repos don't exist
+     * @throws InterruptedException something went wrong
+     * @throws IOException something went wrong
+     */
     private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename) throws GitAPIException, GitException, InterruptedException, IOException {
         var repoProjectPath = fileService.getUniquePathString(repoDownloadClonePath);
         Repository repository = null;
@@ -282,6 +297,7 @@ public class ProgrammingExerciseExportService {
         }
         finally {
             deleteTempLocalRepository(repository);
+            fileService.scheduleForDirectoryDeletion(Path.of(repoProjectPath), 5);
         }
     }
 
@@ -376,6 +392,7 @@ public class ProgrammingExerciseExportService {
         }
         finally {
             deleteTempLocalRepository(repository);
+            fileService.scheduleForDirectoryDeletion(Path.of(targetPath), 5);
         }
     }
 
@@ -637,7 +654,6 @@ public class ProgrammingExerciseExportService {
         // We can always delete the repository as it won't be used by the student (separate path)
         if (repository != null) {
             try {
-                log.info("Delete temporary repository " + repository.getLocalPath().toString());
                 gitService.deleteLocalRepository(repository);
             }
             catch (Exception ex) {

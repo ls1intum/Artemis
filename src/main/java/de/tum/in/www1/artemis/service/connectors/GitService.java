@@ -46,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.service.ZipFileService;
@@ -927,33 +928,27 @@ public class GitService {
      * @throws IOException if the zipping process failed.
      */
     public Path zipRepositoryWithParticipation(Repository repo, String targetPath, boolean hideStudentName) throws IOException {
-        /*
-         * This will split the repositoryUrl e.g. http://artemis-admin@localhost:7990/scm/TC1SCHEDULER1/tc1scheduler1-artemis-admin.git into a string array e.g. ["http", "",
-         * "artemis-admin@localhost:7990", "scm", "TC1SCHEDULER1", "tc1scheduler1-artemis-admin.git"]
-         */
-        // TODO: rework this implementation, we should instead use java URL to handle this better
-        String[] repositoryUrlComponents = repo.getParticipation().getRepositoryUrl().split("/");
-        ProgrammingExercise exercise = repo.getParticipation().getProgrammingExercise();
-        String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        String zipRepoName;
+        var exercise = repo.getParticipation().getProgrammingExercise();
+        var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
+        var studentOrEmpty = ((ProgrammingExerciseStudentParticipation) repo.getParticipation()).getStudent();
+
+        String zipRepoName = courseShortName + "-" + exercise.getTitle();
         if (hideStudentName) {
-            // Take the last but one component, which does not contain the students name
-            zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 2].toLowerCase() + "-student-submission.git" + ".zip";
+            zipRepoName += "-student-submission.git.zip";
         }
         else {
-            // Take the last component, which contains the students name
-            zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".zip";
+            var studentLoginOrDefault = studentOrEmpty.isPresent() ? studentOrEmpty.get().getLogin() : "-student-submission-" + repo.getParticipation().getId();
+            zipRepoName += "-" + studentLoginOrDefault + ".zip";
         }
-
         return zipRepository(repo.getLocalPath(), zipRepoName, targetPath);
     }
 
     /**
      * Zips the contents of a git repository.
      *
-     * @param repoLocalPath  The local path to the repository contents (e.g Repository::getLocalPath())
-     * @param zipFilename the name of the zipped file
-     * @param targetPath  path where the repo is located on disk
+     * @param repoLocalPath The local path to the repository contents (e.g Repository::getLocalPath())
+     * @param zipFilename   the name of the zipped file
+     * @param targetPath    path where the repo is located on disk
      * @return path to the zip file
      * @throws IOException if the zipping process failed.
      */
