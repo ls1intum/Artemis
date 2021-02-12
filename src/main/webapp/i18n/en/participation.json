@@ -36,6 +36,8 @@
             "student": "Student",
             "team": "Team",
             "students": "Students",
+            "templateParticipation": "Template Participation",
+            "solutionParticipation": "Solution Participation",
             "exercise": "Exercise",
             "deleteRepository": "Delete repository",
             "deleteBuildPlan": "Delete build plan",
