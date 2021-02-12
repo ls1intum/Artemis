@@ -25,13 +25,13 @@ plugins {
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
-    id "com.diffplug.spotless" version "5.10.0"
+    id "com.diffplug.spotless" version "5.10.1"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.35.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.9.6"
+version = "4.10.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -178,7 +178,7 @@ dependencies {
     implementation "io.sentry:sentry-logback:4.1.0"
     implementation "org.jsoup:jsoup:1.13.1"
 
-    implementation "org.springdoc:springdoc-openapi-ui:1.5.3"
+    implementation "org.springdoc:springdoc-openapi-ui:1.5.4"
 
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
@@ -203,7 +203,7 @@ dependencies {
     implementation "org.hibernate:hibernate-jcache:${hibernate_version}"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
     implementation "org.hibernate.validator:hibernate-validator:6.2.0.Final"
-    implementation "org.liquibase:liquibase-core:4.3.0"
+    implementation "org.liquibase:liquibase-core:4.2.2"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"

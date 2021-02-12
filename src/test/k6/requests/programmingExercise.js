@@ -207,7 +207,7 @@ export function simulateSubmission(artemis, participationSimulation, expectedRes
     artemis.websocket(function (socket) {
         // Subscribe to new results and participations
         socket.setTimeout(function () {
-            subscribe(participationSimulation.exerciseId, participationSimulation.participationId);
+            subscribe(socket, participationSimulation.exerciseId);
         }, 5 * 1000);
 
         socket.setTimeout(function () {
