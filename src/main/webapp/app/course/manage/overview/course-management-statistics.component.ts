@@ -3,7 +3,6 @@ import { Graphs } from 'app/entities/statistics.model';
 import { ChartDataSets, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
-import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 
 @Component({
     selector: 'jhi-course-management-statistics',
@@ -34,7 +33,7 @@ export class CourseManagementStatisticsComponent implements OnChanges {
     // Data
     barChartLabels: Label[] = [];
     chartData: ChartDataSets[] = [];
-    dataForSpanType: number[];
+    dataForSpanType: number[] = [];
 
     constructor(private translateService: TranslateService) {}
 
@@ -42,7 +41,7 @@ export class CourseManagementStatisticsComponent implements OnChanges {
         this.amountOfStudents = this.translateService.instant('courseStatistics.amountOfStudents');
 
         // Only use the pre-loaded stats once
-        if (this.initialStatsReceived || !this.initialStats) {
+        if (this.initialStatsReceived || !this.initialStats || this.amountOfStudentsInCourse < 1) {
             return;
         }
 
@@ -52,7 +51,9 @@ export class CourseManagementStatisticsComponent implements OnChanges {
             this.barChartLabels[i] = this.translateService.instant(`overview.${3 - i}_weeks_ago`);
         }
 
-        this.dataForSpanType = this.initialStats;
+        for (const value of this.initialStats) {
+            this.dataForSpanType.push((value * 100) / this.amountOfStudentsInCourse);
+        }
         this.chartData = [
             {
                 label: this.amountOfStudents,
@@ -64,7 +65,7 @@ export class CourseManagementStatisticsComponent implements OnChanges {
                 pointHoverBorderColor: 'rgba(53,61,71,1)',
             },
         ];
-        // const graphTopPadding = this.amountOfStudentsInCourse >= 1000 ? 100 : this.amountOfStudentsInCourse >= 50 ? 10 : 2;
+        const self = this;
         this.barChartOptions = {
             layout: {
                 padding: {
@@ -77,20 +78,6 @@ export class CourseManagementStatisticsComponent implements OnChanges {
             },
             animation: {
                 duration: 1,
-                onComplete() {
-                    const chartInstance = this.chart,
-                        ctx = chartInstance.ctx;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'bottom';
-
-                    this.data.datasets.forEach(function (dataset: DataSet, j: number) {
-                        const meta = chartInstance.controller.getDatasetMeta(j);
-                        meta.data.forEach(function (bar: any, index: number) {
-                            const data = dataset.data[index];
-                            ctx.fillText(String(data), bar._model.x, bar._model.y - 5);
-                        });
-                    });
-                },
             },
             scales: {
                 yAxes: [
@@ -98,12 +85,23 @@ export class CourseManagementStatisticsComponent implements OnChanges {
                         ticks: {
                             beginAtZero: true,
                             min: 0,
-                            max: this.amountOfStudentsInCourse ? this.amountOfStudentsInCourse : undefined,
+                            max: 100,
                             autoSkip: true,
                             precision: 0,
+                            callback(value: number) {
+                                return value + '%';
+                            },
                         },
                     },
                 ],
+            },
+            tooltips: {
+                enabled: true,
+                callbacks: {
+                    label(tooltipItem: any) {
+                        return ' ' + self.initialStats[tooltipItem.index];
+                    },
+                },
             },
         };
     }
