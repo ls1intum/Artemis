@@ -724,23 +724,12 @@ public class ExamService {
         long numberOfTestRuns = studentExamRepository.countTestRunsByExamId(exam.getId());
         examChecklistDTO.setNumberOfTestRuns(numberOfTestRuns);
 
-        List<Long[]> numberOfParticipationsForExercise = new ArrayList<>();
-
-        numberOfParticipationsForExercise = studentParticipationRepository.countParticipationsIgnoreTestRunsByExamId(exam.getId());
-
-        long totalNumberOfParticipations = 0;
-        for (Long[] numberOfParticipations : numberOfParticipationsForExercise) {
-            totalNumberOfParticipations += numberOfParticipations[0];
-        }
-
-        // check if all exercises have been prepared for all students;
-        boolean exercisesPrepared = (exam.getNumberOfExercisesInExam() * numberOfGeneratedStudentExams) == totalNumberOfParticipations;
-        examChecklistDTO.setAllExamExercisesAllStudentsPrepared(exercisesPrepared);
-
         List<Long> numberOfComplaintsOpenByExercise = new ArrayList<>();
         List<Long> numberOfComplaintResponsesByExercise = new ArrayList<>();
         List<DueDateStat[]> numberOfAssessmentsDoneOfCorrectionRounds = new ArrayList<>();
         List<Long> numberOfSubmissionsByExercise = new ArrayList<>();
+        List<Long> numberOfParticipationsByExercise = new ArrayList<>();
+
 
         exam.getExerciseGroups().forEach(exerciseGroup -> {
             exerciseGroup.getExercises().forEach(exercise -> {
@@ -761,16 +750,26 @@ public class ExamService {
                 else {
                     numberOfSubmissionsByExercise.add(submissionRepository.countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exercise.getId()));
                 }
+
+                numberOfParticipationsByExercise.add(studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId()));
+
             });
         });
 
         long totalNumberOfComplaints = 0;
         long totalNumberOfComplaintResponse = 0;
         long totalNumberOfAssessmentsDone = 0;
-        long totalNumberOfTotalExamAssessments = 0;
+        long totalNumberOfExamAssessments = 0;
+        long totalNumberOfParticipations = 0;
+        for (Long numberOfParticipations : numberOfParticipationsByExercise) {
+            totalNumberOfParticipations += numberOfParticipations != null ? numberOfParticipations : 0;
+        }
+        // check if all exercises have been prepared for all students;
+        boolean exercisesPrepared = (exam.getNumberOfExercisesInExam() * numberOfGeneratedStudentExams) == totalNumberOfParticipations;
+        examChecklistDTO.setAllExamExercisesAllStudentsPrepared(exercisesPrepared);
 
         for (Long numberOfAssessmentsOpen : numberOfSubmissionsByExercise) {
-            totalNumberOfTotalExamAssessments += numberOfAssessmentsOpen;
+            totalNumberOfExamAssessments += numberOfAssessmentsOpen;
         }
 
         for (DueDateStat[] dateStats : numberOfAssessmentsDoneOfCorrectionRounds) {
@@ -785,7 +784,7 @@ public class ExamService {
             totalNumberOfComplaintResponse += numberOfComplaintResponse;
         }
 
-        examChecklistDTO.setNumberOfTotalExamParticipations(totalNumberOfTotalExamAssessments * exam.getNumberOfCorrectionRoundsInExam());
+        examChecklistDTO.setNumberOfTotalExamParticipations(totalNumberOfExamAssessments);
         examChecklistDTO.setNumberOfTotalExamAssessmentsDone(totalNumberOfAssessmentsDone);
         examChecklistDTO.setNumberOfAllComplaints(totalNumberOfComplaints);
         examChecklistDTO.setNumberOfAllComplaintsDone(totalNumberOfComplaintResponse);
