@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -107,7 +106,7 @@ public abstract class SubmissionExportService {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
         String zipGroupName = course.getShortName() + "-" + exercise.getTitle();
-        String zipFileName = zipGroupName + "-" + ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss")) + ".zip";
+        String zipFileName = zipGroupName + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss")) + ".zip";
 
         Path submissionsFolderPath = Paths.get(submissionExportPath, "zippedSubmissions", zipGroupName);
         Path zipFilePath = Paths.get(submissionExportPath, "zippedSubmissions", zipFileName);

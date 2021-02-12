@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -131,7 +130,7 @@ public class ProgrammingExerciseExportService {
 
         try {
             // Zip the student and instructor repos together.
-            var timestamp = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
+            var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
             var filename = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + timestamp + ".zip";
             var pathToZippedExercise = Path.of(pathToStoreZipFile, filename);
             zipFileService.createZipFile(pathToZippedExercise, zipFilePathsNonNull, false);
