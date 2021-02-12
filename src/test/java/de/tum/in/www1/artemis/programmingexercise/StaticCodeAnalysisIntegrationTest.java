@@ -156,6 +156,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         ProgrammingExercise exerciseWithSolutionParticipation = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExSCAEnabled.getId()).get();
         bambooRequestMockProvider.mockTriggerBuild(exerciseWithSolutionParticipation.getSolutionParticipation());
+        bambooRequestMockProvider.mockTriggerBuild(exerciseWithSolutionParticipation.getTemplateParticipation());
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExSCAEnabled);
         // Change the first category
         var categoryIterator = programmingExSCAEnabled.getStaticCodeAnalysisCategories().iterator();
@@ -206,6 +207,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         ProgrammingExercise exercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(course.getExercises().iterator().next().getId()).get();
         bambooRequestMockProvider.mockTriggerBuild(exercise.getSolutionParticipation());
+        bambooRequestMockProvider.mockTriggerBuild(exercise.getTemplateParticipation());
         staticCodeAnalysisService.createDefaultCategories(exercise);
         var originalCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(exercise.getId());
 

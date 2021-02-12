@@ -177,7 +177,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 repositoryFileService = debugElement.injector.get(CodeEditorRepositoryFileService);
 
                 updateAfterComplaintStub = stub(programmingAssessmentManualResultService, 'updateAfterComplaint').returns(of(afterComplaintResult));
-                getStudentParticipationWithResultsStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithLatestManualResult').returns(
+                getStudentParticipationWithResultsStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithResultOfCorrectionRound').returns(
                     of(participation).pipe(delay(100)),
                 );
                 findByResultIdStub = stub(complaintService, 'findByResultId').returns(of({ body: complaint } as HttpResponse<Complaint>));

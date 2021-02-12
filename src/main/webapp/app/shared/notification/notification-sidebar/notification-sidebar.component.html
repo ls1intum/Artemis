@@ -34,9 +34,7 @@
                         {{ notification.title }}
                         <span class="badge ml-1 badge-primary" *ngIf="lastNotificationRead && notification.notificationDate.isAfter(lastNotificationRead)"> new </span>
                     </h5>
-                    <div class="mb-1">
-                        {{ notification.text }}
-                    </div>
+                    <div class="mb-1 text-break" [innerHTML]="notification.text"></div>
                     <div class="info text-muted text-right">
                         {{ notification.notificationDate | date: 'dd.MM.yy HH:mm' }}
                         {{ 'artemisApp.notification.by' | translate }}
