@@ -2,7 +2,7 @@
     <div class="container">
         <div class="row">
             <div class="col row details-container">
-                <div class="col-4 row-flex pointer-row">
+                <div class="col-5 row-flex pointer-row">
                     <div class="ml-2 mr-1" *ngIf="hasLeftoverAssessments">
                         <fa-icon
                             [icon]="'exclamation-triangle'"
@@ -32,7 +32,7 @@
                     </div>
                 </div>
 
-                <div class="col-5 row-flex hide-1400 exercise-date-container">
+                <div class="col-4 row-flex hide-1400 exercise-date-container">
                     <div [ngClass]="!!details.releaseDate ? 'exercise-date' : 'exercise-date exercise-no-date'">
                         <div class="exercise-date-timeline"></div>
                         <span class="small">{{ 'artemisApp.course.releaseDate' | translate }}</span>
@@ -85,7 +85,7 @@
                     </div>
                 </div>
 
-                <div class="col-3 row-flex hide-1680 exercise-score-container">
+                <div class="col-2 row-flex hide-1680 exercise-score-container">
                     <div class="exercise-score" *ngIf="statistic && rowType == exerciseRowType.CURRENT">
                         <span class="bold">{{ 'artemisApp.course.participations' | translate }}</span>
                         <jhi-progress-bar

@@ -76,16 +76,17 @@
     }
 
     .exercise-date-container {
-        justify-content: end;
+        justify-content: center;
         min-width: 340px;
         max-width: max-content;
         padding: 0;
+        margin: auto;
     }
 
     .exercise-date {
         text-align: center;
         z-index: 1;
-        min-width: 130px;
+        min-width: 95px;
     }
 
     .exercise-no-date {
@@ -94,7 +95,6 @@
 
     .exercise-score-container {
         padding-left: 0;
-        margin: auto;
     }
 
     .exercise-score {
@@ -135,10 +135,6 @@
 
     .pointer-row {
         min-width: 45%;
-    }
-
-    .details-container {
-        justify-content: space-between !important;
     }
 
     .exercise-date-container {
