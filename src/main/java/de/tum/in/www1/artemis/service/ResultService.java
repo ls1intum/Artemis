@@ -1,26 +1,29 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.util.Arrays.asList;
-
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
-import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import static java.util.Arrays.asList;
 
 @Service
 public class ResultService {
@@ -269,12 +272,11 @@ public class ResultService {
      * @param correctionRounds - the correction round we want finished assessments for
      * @return an array of the number of assessments for the exercise for a given correction round
      */
-    public DueDateStat[] countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(Exercise exercise, int correctionRounds) {
+    public DueDateStat[] countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(Exercise exercise, int correctionRounds) {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds];
 
         for (int i = 0; i < correctionRounds; i++) {
             correctionRoundsDataStats[i] = new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), i), 0L);
-
         }
 
         return correctionRoundsDataStats;
