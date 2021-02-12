@@ -763,7 +763,7 @@ public class ExamService {
                 }
             });
         });
-        
+
         long totalNumberOfComplaints = 0;
         long totalNumberOfComplaintResponse = 0;
         long totalNumberOfAssessmentsDone = 0;

@@ -92,7 +92,6 @@
                     <hr />
                     <!-- Exercise Group table -->
                     <jhi-exam-checklist-exercisegroup-table [exerciseGroups]="exam.exerciseGroups"></jhi-exam-checklist-exercisegroup-table>
-
                 </td>
                 <td class="d-none d-md-table-cell">
                     <a
@@ -187,7 +186,8 @@
                     <span>{{ 'artemisApp.examManagement.checklist.tableItem.prepareExerciseStart' | translate }}</span>
                 </td>
                 <td class="d-none d-md-table-cell">
-                    <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.prepareExerciseStart' | translate }}
+                    <span
+                        >{{ 'artemisApp.examManagement.checklist.descriptionItem.prepareExerciseStart' | translate }}
                         <hr />
                         <ul class="list-unstyled">
                             <li *ngIf="examChecklist" class="list-group-item border-1">
@@ -243,12 +243,15 @@
                     <hr />
 
                     <div *ngIf="examChecklist.numberOfTotalExamAssessmentsDone !== null && examChecklist.numberOfTotalExamParticipations !== 0">
-                        <jhi-progress-bar [denominator]="examChecklist.numberOfTotalExamParticipations" [numerator]="examChecklist.numberOfTotalExamAssessmentsDone"
-                                          [percentage]="(examChecklist.numberOfTotalExamAssessmentsDone! / examChecklist.numberOfTotalExamParticipations!)*100">
+                        <jhi-progress-bar
+                            [denominator]="examChecklist.numberOfTotalExamParticipations"
+                            [numerator]="examChecklist.numberOfTotalExamAssessmentsDone"
+                            [percentage]="(examChecklist.numberOfTotalExamAssessmentsDone! / examChecklist.numberOfTotalExamParticipations!) * 100"
+                        >
                         </jhi-progress-bar>
                     </div>
 
-                    <br>
+                    <br />
                 </td>
                 <td class="d-none d-md-table-cell">
                     <a
@@ -323,12 +326,15 @@
                     <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.resolveComplaints' | translate }}</span>
                     <hr />
                     <div *ngIf="examChecklist.numberOfAllComplaintsDone !== null && examChecklist.numberOfAllComplaints !== 0">
-                        <jhi-progress-bar [denominator]="examChecklist.numberOfAllComplaints!" [numerator]="examChecklist.numberOfAllComplaintsDone!"
-                                          [percentage]="(examChecklist.numberOfAllComplaintsDone! / examChecklist.numberOfAllComplaints!)*100">
+                        <jhi-progress-bar
+                            [denominator]="examChecklist.numberOfAllComplaints!"
+                            [numerator]="examChecklist.numberOfAllComplaintsDone!"
+                            [percentage]="(examChecklist.numberOfAllComplaintsDone! / examChecklist.numberOfAllComplaints!) * 100"
+                        >
                         </jhi-progress-bar>
                     </div>
 
-                    <br>
+                    <br />
                 </td>
                 <td class="d-none d-md-table-cell">
                     <a
