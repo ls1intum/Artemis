@@ -303,7 +303,7 @@
                 </dd>
                 <dd *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastInstructor && programmingExercise?.templateParticipation">
                     <a [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'participations', programmingExercise.templateParticipation?.id, 'submissions']">
-                        Show Submissions
+                        <span jhiTranslate="artemisApp.programmingExercise.detail.showTemplateSubmissions">Show Submissions</span>
                     </a>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionResult">Solution Result</span></dt>
@@ -334,7 +334,7 @@
                 </dd>
                 <dd *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastInstructor && programmingExercise?.solutionParticipation">
                     <a [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'participations', programmingExercise.solutionParticipation?.id, 'submissions']">
-                        Show Submissions
+                        <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions">Show Submissions</span>
                     </a>
                 </dd>
             </dl>

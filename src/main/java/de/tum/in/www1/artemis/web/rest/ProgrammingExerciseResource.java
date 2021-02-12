@@ -846,7 +846,8 @@ public class ProgrammingExerciseResource {
      */
     @GetMapping(Endpoints.PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean withSubmissionResults) {
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId,
+            @RequestParam(defaultValue = "false") boolean withSubmissionResults) {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();

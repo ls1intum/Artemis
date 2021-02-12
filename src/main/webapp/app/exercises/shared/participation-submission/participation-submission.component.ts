@@ -19,6 +19,9 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { take, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -34,6 +37,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     submissions: Submission[];
     eventSubscriber: Subscription;
     isLoading = true;
+    activeProfiles: string[];
 
     constructor(
         private route: ActivatedRoute,
@@ -43,6 +47,7 @@ export class ParticipationSubmissionComponent implements OnInit {
         private programmingExerciseService: ProgrammingExerciseService,
         private eventManager: JhiEventManager,
         private translate: TranslateService,
+        private profileService: ProfileService,
     ) {}
 
     /**
@@ -83,6 +88,18 @@ export class ParticipationSubmissionComponent implements OnInit {
                 }
             });
         });
+
+        // Get active profiles, to distinguish between Bitbucket and GitLab
+        this.profileService
+            .getProfileInfo()
+            .pipe(
+                take(1),
+                tap((info: ProfileInfo) => {
+                    console.log('++info', info);
+                    this.activeProfiles = info.activeProfiles;
+                }),
+            )
+            .subscribe();
     }
 
     fetchParticipationAndSubmissionsForStudent() {
@@ -98,7 +115,6 @@ export class ParticipationSubmissionComponent implements OnInit {
                     this.isLoading = false;
                 }
             });
-
         this.submissionService
             .findAllSubmissionsOfParticipation(this.participationId)
             .pipe(
@@ -141,17 +157,21 @@ export class ParticipationSubmissionComponent implements OnInit {
             repoUrl = (this.participation as TemplateProgrammingExerciseParticipation).repositoryUrl;
         }
         if (repoUrl) {
-            let baseUrl = repoUrl.replace('.git', '');
-            // TODO: find a better way to distinguish between Bitbucket and GitLab urls
-            if (repoUrl.includes('/scm/')) {
-                // Bitbucket Repository
-                const position = baseUrl.lastIndexOf('/');
-                baseUrl = [baseUrl.slice(0, position), '/repos', baseUrl.slice(position)].join('');
-                repoUrl = baseUrl + '/commits/' + submission.commitHash;
-                repoUrl = repoUrl.replace('scm', 'projects');
-            } else {
-                // GitLab Repository
-                repoUrl = baseUrl + '/-/commit/' + submission.commitHash;
+            if (this.activeProfiles) {
+                // Remove ".git" suffix
+                const baseUrl = repoUrl.replace('.git', '');
+                if (this.activeProfiles.includes('bitbucket')) {
+                    // Bitbucket Repository
+                    const positionOfCourseIdDirectory = baseUrl.lastIndexOf('/');
+                    // The bitbucket repo url needs to be changed to navigate to the commit page
+                    // this will result in bitbucket.com/scm/{projectKey}/repos/{buildPlanId}/commits/{commitHash}
+                    repoUrl = [baseUrl.slice(0, positionOfCourseIdDirectory), '/repos', baseUrl.slice(positionOfCourseIdDirectory), '/commits/', submission.commitHash].join('');
+                    // at last replace '/scm' with '/projects'
+                    repoUrl = repoUrl.replace('scm', 'projects');
+                } else if (this.activeProfiles.includes('gitlab')) {
+                    // GitLab Repository
+                    repoUrl = baseUrl + '/-/commit/' + submission.commitHash;
+                }
             }
             return repoUrl;
         }
