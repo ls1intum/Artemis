@@ -81,7 +81,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("""
             select s.submissionDate as day, u.login as username
             from User u, Submission s, StudentParticipation p
-            where s.participation.exercise.course.id = :#{#courseId} and s.participation.id = p.id and p.student.id = u.id and s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate} and u.login not like '%test%'
+            where s.participation.exercise.course.id = :#{#courseId}
+                and s.participation.id = p.id
+                and p.student.id = u.id
+                and s.submissionDate >= :#{#startDate}
+                and s.submissionDate <= :#{#endDate}
+                and s.participation.exercise.course.studentGroupName member of u.groups
             order by s.submissionDate asc
             """)
     List<Map<String, Object>> getActiveStudents(@Param("courseId") Long courseId, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
