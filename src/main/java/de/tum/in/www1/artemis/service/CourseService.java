@@ -5,11 +5,11 @@ import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.ZonedDateTime;
-import java.util.*;
 import java.time.*;
+import java.time.ZonedDateTime;
 import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
