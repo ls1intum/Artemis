@@ -930,7 +930,7 @@ public class GitService {
     public Path zipRepositoryWithParticipation(Repository repo, String targetPath, boolean hideStudentName) throws IOException {
         var exercise = repo.getParticipation().getProgrammingExercise();
         var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        var participation = ((ProgrammingExerciseStudentParticipation) repo.getParticipation());
+        var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
 
         // The zip filename is either the student login, team name or some default string.
         var studentTeamOrDefault = "-student-submission" + repo.getParticipation().getId();
