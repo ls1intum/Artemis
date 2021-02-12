@@ -42,8 +42,8 @@ public class JenkinsJobService {
         var document = Jsoup.parse(jobXml, "", Parser.xmlParser());
         document.outputSettings().indentAmount(0).prettyPrint(false);
 
-        // Job permissions are stored in the <com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
-        // node.
+        // The authorization matrix is an element that holds the permissions for a specific
+        // job.
         var authorizationMatrixElement = getOrCreateAuthorizationMatrixPropertyElement(document);
 
         addPermissionsToAuthorizationMatrix(authorizationMatrixElement, permissions, userLogin);
@@ -67,6 +67,8 @@ public class JenkinsJobService {
         var document = Jsoup.parse(jobXml, "", Parser.xmlParser());
         document.outputSettings().indentAmount(0).prettyPrint(false);
 
+        // The authorization matrix is an element that holds the permissions for a specific
+        // job.
         removePermissionsFromAuthorizationMatrix(document, permissionsToRemove, userLogin);
 
         jenkinsServer.updateJob(jobName, document.toString(), useCrumb);

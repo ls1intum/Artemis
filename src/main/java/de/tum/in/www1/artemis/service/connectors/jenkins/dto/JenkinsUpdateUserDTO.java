@@ -117,7 +117,6 @@ class UserProperty2 {
     private String address;
 
     UserProperty2() {
-        address = "";
     }
 
     public String getAddress() {
@@ -134,7 +133,6 @@ class UserProperty5 {
     private String primaryViewName;
 
     public UserProperty5() {
-        primaryViewName = "";
     }
 
     public String getPrimaryViewName() {
@@ -151,7 +149,7 @@ class UserProperty6 {
     private String providerId;
 
     public UserProperty6() {
-        providerId = "";
+
     }
 
     public String getProviderId() {
@@ -173,7 +171,6 @@ class UserProperty8 {
     private List<String> redact;
 
     public UserProperty8() {
-        password = password2 = "";
         redact = List.of("password", "password2");
     }
 
@@ -207,7 +204,7 @@ class UserProperty9 {
     private String authorizedKeys;
 
     public UserProperty9() {
-        authorizedKeys = "";
+
     }
 
     public void setAuthorizedKeys(String authorizedKeys) {
@@ -241,7 +238,7 @@ class UserProperty12 {
     private String timeZoneName;
 
     public UserProperty12() {
-        timeZoneName = "";
+
     }
 
     public void setTimeZoneName(String timeZoneName) {
