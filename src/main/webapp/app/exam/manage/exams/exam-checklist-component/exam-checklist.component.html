@@ -229,13 +229,11 @@
                         <jhi-progress-bar
                             [denominator]="examChecklist.numberOfGeneratedStudentExams"
                             [numerator]="examChecklist.numberOfTotalExamParticipations! / exam.numberOfExercisesInExam!"
-                            [percentage]="((examChecklist.numberOfTotalExamParticipations! / (examChecklist.numberOfGeneratedStudentExams! * exam.numberOfExercisesInExam!)) * 100)"
+                            [percentage]="(examChecklist.numberOfTotalExamParticipations! / (examChecklist.numberOfGeneratedStudentExams! * exam.numberOfExercisesInExam!)) * 100"
                         >
                         </jhi-progress-bar>
                     </div>
-                    <div *ngI="examChecklist.numberOfTotalExamParticipations === 0">
-                        No students have submitted their exam yet.
-                    </div>
+                    <div *ngI="examChecklist.numberOfTotalExamParticipations === 0">No students have submitted their exam yet.</div>
                 </td>
                 <td class="d-none d-md-table-cell">
                     <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
@@ -257,14 +255,14 @@
                         <jhi-progress-bar
                             [denominator]="examChecklist.numberOfTotalExamParticipations! * exam.numberOfCorrectionRoundsInExam!"
                             [numerator]="examChecklist.numberOfTotalExamAssessmentsDone!"
-                            [percentage]="(examChecklist.numberOfTotalExamAssessmentsDone! / (examChecklist.numberOfTotalExamParticipations! * exam.numberOfCorrectionRoundsInExam!)) * 100"
+                            [percentage]="
+                                (examChecklist.numberOfTotalExamAssessmentsDone! / (examChecklist.numberOfTotalExamParticipations! * exam.numberOfCorrectionRoundsInExam!)) * 100
+                            "
                         >
                         </jhi-progress-bar>
                     </div>
 
-                    <div *ngI="examChecklist.numberOfTotalExamParticipations === 0">
-                        No students have submitted their exam yet.
-                    </div>
+                    <div *ngI="examChecklist.numberOfTotalExamParticipations === 0">No students have submitted their exam yet.</div>
 
                     <br />
                 </td>
@@ -348,9 +346,7 @@
                         >
                         </jhi-progress-bar>
                     </div>
-                    <div *ngIf="examChecklist.numberOfAllComplaints === 0">
-                        There are currently no complaints!
-                    </div>
+                    <div *ngIf="examChecklist.numberOfAllComplaints === 0">There are currently no complaints!</div>
 
                     <br />
                 </td>
