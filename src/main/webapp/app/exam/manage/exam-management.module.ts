@@ -36,6 +36,8 @@ import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-te
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.component';
 import { ExamChecklistCheckComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-check/exam-checklist-check.component';
+import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
+import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -60,6 +62,7 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisProgrammingExerciseStatusModule,
         ProgrammingExerciseUtilsModule,
         ArtemisMarkdownModule,
+        ArtemisTutorParticipationGraphModule,
     ],
     declarations: [
         ExamManagementComponent,
@@ -79,6 +82,7 @@ const ENTITY_STATES = [...examManagementState];
         DurationPipe,
         StudentExamSummaryComponent,
         ExamChecklistComponent,
+        ExamChecklistExerciseGroupTableComponent,
         ExamChecklistCheckComponent,
     ],
 })
