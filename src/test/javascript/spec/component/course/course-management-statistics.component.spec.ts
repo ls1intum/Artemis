@@ -49,6 +49,13 @@ describe('CourseManagementExerciseStatisticsComponent', () => {
 
     it('should change component on changes', () => {
         fixture.detectChanges();
+
+        // Test that nothing breaks when no data is present yet
+        component.ngOnChanges();
+        fixture.detectChanges();
+        expect(component).to.be.ok;
+
+        // Provide the @Input data
         component.courseId = courseId;
         component.amountOfStudentsInCourse = amountOfStudentsInCourse;
         component.initialStats = initialStats;
@@ -58,5 +65,9 @@ describe('CourseManagementExerciseStatisticsComponent', () => {
         expect(component.dataForSpanType).to.deep.equal([0, 44, 36, 92]);
         expect(component.chartData[0].label).to.equal(component.amountOfStudents);
         expect(component.chartData[0].data).to.deep.equal([0, 44, 36, 92]);
+
+        // Test formatting
+        expect(component.barChartOptions.scales.yAxes[0].ticks.callback(44)).to.equal('44%');
+        expect(component.barChartOptions.tooltips.callbacks.label({ index: 2 })).to.equal(' ' + initialStats[2]);
     });
 });
