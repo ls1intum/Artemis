@@ -186,8 +186,15 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             GROUP BY e.id
             ) as averageScore,
             (SELECT COUNT(DISTINCT p.student.id)
-            FROM e.studentParticipations p JOIN p.submissions s
-            WHERE e.course.id = :courseId AND e.course.studentGroupName member of p.student.groups
+            FROM e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            WHERE e.course.id = :courseId
+                AND e.course.studentGroupName member of p.student.groups
+                AND s.id = (
+                    SELECT max(s2.id)
+                    FROM Submission s2 JOIN s2.results r2
+                    WHERE s2.participation.id = s.participation.id
+                    AND r2.score IS NOT NULL
+                )
             GROUP BY e.id
             ) as participations
             FROM Exercise e
