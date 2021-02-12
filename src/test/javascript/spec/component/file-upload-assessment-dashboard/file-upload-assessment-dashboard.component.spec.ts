@@ -136,7 +136,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         expect(component.filteredSubmissions).toEqual([fileUploadSubmission1]);
     }));
 
-    it('should not get Submissions', fakeAsync(() => {
+    it('should not get Submissions', () => {
         const getFileUploadSubmissionStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
         getFileUploadSubmissionStub.returns(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
         const isAtLeastInstructorInCourseStub = stub(accountService, 'isAtLeastInstructorInCourse');
@@ -149,13 +149,12 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         // call
         component.ngOnInit();
 
-        tick(100);
         // check
-        expect(component['getExercise']).toHaveBeenCalled();
+        expect(findExerciseStub).toHaveBeenCalled();
         expect(getFileUploadSubmissionStub).toHaveBeenCalledWith(fileUploadExercise2.id, { submittedOnly: true });
         expect(component.submissions).toEqual([]);
         expect(component.filteredSubmissions).toEqual([]);
-    }));
+    });
 
     it('should update filtered submissions', () => {
         // test updateFilteredSubmissions
