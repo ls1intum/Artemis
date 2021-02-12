@@ -127,8 +127,7 @@
             "assessmentProgress": "Bewertungsfortschritt",
             "releaseDate": "Veröffentlichung",
             "dueDate": "Einreichungsfrist",
-            "assessmentDueDate": "Bewertungsfrist"
-            },
+            "assessmentDueDate": "Bewertungsfrist",
             "archive": {
                 "archiveCourse": "Kurs Archivieren",
                 "archiveCourseSuccess": "Der Kurs wurde archiviert!",
@@ -149,3 +148,4 @@
             }
         }
     }
+}

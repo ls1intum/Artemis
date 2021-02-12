@@ -127,8 +127,7 @@
             "assessmentProgress": "Assessment progress",
             "releaseDate": "Release",
             "dueDate": "Due",
-            "assessmentDueDate": "Assessment Due"
-            },
+            "assessmentDueDate": "Assessment Due",
             "archive": {
                 "archiveCourse": "Archive Course",
                 "archiveCourseSuccess": "The course has been archived!",
@@ -149,3 +148,4 @@
             }
         }
     }
+}
