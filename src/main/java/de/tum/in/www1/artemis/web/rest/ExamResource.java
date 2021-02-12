@@ -13,9 +13,9 @@ import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
-import de.tum.in.www1.artemis.web.rest.dto.ExamStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -227,16 +227,16 @@ public class ExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/statistics")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    public ResponseEntity<ExamStatisticsDTO> getExamStatistics(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<ExamChecklistDTO> getExamStatistics(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam statistics: {}", examId);
-        Optional<ResponseEntity<ExamStatisticsDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        Optional<ResponseEntity<ExamChecklistDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
-        Exam exam = examService.findOneWithRegisteredUsers(examId);
-        ExamStatisticsDTO examStatisticsDTO = examService.getStatsForChecklist(exam);
+        Exam exam = examService.findOneWithRegisteredUsersAndExerciseGroupsAndExercises(examId);
+        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam);
 
-        return ResponseEntity.ok(examStatisticsDTO);
+        return ResponseEntity.ok(examChecklistDTO);
     }
 
 
