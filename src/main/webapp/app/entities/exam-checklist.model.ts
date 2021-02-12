@@ -1,5 +1,6 @@
 export class ExamChecklist {
     public numberOfGeneratedStudentExams?: number; // transient
+
     public numberOfTestRuns?: number; // transient
 
     public numberOfStudentsExamStarted?: number;

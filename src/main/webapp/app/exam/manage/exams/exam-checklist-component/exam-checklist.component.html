@@ -225,6 +225,17 @@
                 </td>
                 <td class="d-none d-md-table-cell">
                     <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.conductExam' | translate }}</span>
+                    <div *ngIf="examChecklist && examChecklist.numberOfGeneratedStudentExams !== null && examChecklist.numberOfTotalExamParticipations !== 0">
+                        <jhi-progress-bar
+                            [denominator]="examChecklist.numberOfGeneratedStudentExams"
+                            [numerator]="examChecklist.numberOfTotalExamParticipations! / exam.numberOfExercisesInExam!"
+                            [percentage]="((examChecklist.numberOfTotalExamParticipations! / (examChecklist.numberOfGeneratedStudentExams! * exam.numberOfExercisesInExam!)) * 100)"
+                        >
+                        </jhi-progress-bar>
+                    </div>
+                    <div *ngI="examChecklist.numberOfTotalExamParticipations === 0">
+                        No students have submitted their exam yet.
+                    </div>
                 </td>
                 <td class="d-none d-md-table-cell">
                     <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
@@ -242,13 +253,17 @@
                     <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.assessAllSubmissions' | translate }}</span>
                     <hr />
 
-                    <div *ngIf="examChecklist.numberOfTotalExamAssessmentsDone !== null && examChecklist.numberOfTotalExamParticipations !== 0">
+                    <div *ngIf="examChecklist && examChecklist.numberOfTotalExamAssessmentsDone !== null && examChecklist.numberOfTotalExamParticipations !== 0">
                         <jhi-progress-bar
-                            [denominator]="examChecklist.numberOfTotalExamParticipations"
-                            [numerator]="examChecklist.numberOfTotalExamAssessmentsDone"
-                            [percentage]="(examChecklist.numberOfTotalExamAssessmentsDone! / examChecklist.numberOfTotalExamParticipations!) * 100"
+                            [denominator]="examChecklist.numberOfTotalExamParticipations! * exam.numberOfCorrectionRoundsInExam!"
+                            [numerator]="examChecklist.numberOfTotalExamAssessmentsDone!"
+                            [percentage]="(examChecklist.numberOfTotalExamAssessmentsDone! / (examChecklist.numberOfTotalExamParticipations! * exam.numberOfCorrectionRoundsInExam!)) * 100"
                         >
                         </jhi-progress-bar>
+                    </div>
+
+                    <div *ngI="examChecklist.numberOfTotalExamParticipations === 0">
+                        No students have submitted their exam yet.
                     </div>
 
                     <br />
@@ -325,13 +340,16 @@
                 <td class="d-none d-md-table-cell">
                     <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.resolveComplaints' | translate }}</span>
                     <hr />
-                    <div *ngIf="examChecklist.numberOfAllComplaintsDone !== null && examChecklist.numberOfAllComplaints !== 0">
+                    <div *ngIf="examChecklist && examChecklist.numberOfAllComplaintsDone !== null && examChecklist.numberOfAllComplaints !== 0">
                         <jhi-progress-bar
                             [denominator]="examChecklist.numberOfAllComplaints!"
                             [numerator]="examChecklist.numberOfAllComplaintsDone!"
                             [percentage]="(examChecklist.numberOfAllComplaintsDone! / examChecklist.numberOfAllComplaints!) * 100"
                         >
                         </jhi-progress-bar>
+                    </div>
+                    <div *ngIf="examChecklist.numberOfAllComplaints === 0">
+                        There are currently no complaints!
                     </div>
 
                     <br />
