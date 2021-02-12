@@ -30,7 +30,7 @@ describe('StatisticsGraphComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MomentModule, ChartsModule],
-            declarations: [StatisticsGraphComponent, MockComponent(StatisticsGraphComponent), MockPipe(TranslatePipe)],
+            declarations: [StatisticsGraphComponent, MockPipe(TranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
