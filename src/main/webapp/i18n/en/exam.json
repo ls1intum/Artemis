@@ -354,7 +354,8 @@
                     "pulishingdateset": "Publishing date for results set",
                     "startdatereviewset": "Start date of exam review set",
                     "enddatereviewset": "End date of exam review set",
-                    "testruns": "Current number of test runs:"
+                    "testruns": "Current number of test runs:",
+                    "allExercisesPrepared": "All exercises prepared for all students"
                 }
             }
         },
