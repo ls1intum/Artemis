@@ -1,18 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import javax.annotation.Nullable;
-import javax.persistence.*;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.DiscriminatorOptions;
-
 import com.fasterxml.jackson.annotation.*;
-
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -22,6 +10,15 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.DiscriminatorOptions;
+
+import javax.annotation.Nullable;
+import javax.persistence.*;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A Exercise.
@@ -188,6 +185,9 @@ public abstract class Exercise extends DomainObject {
 
     @Transient
     private boolean studentAssignedTeamIdComputedTransient = false; // set to true if studentAssignedTeamIdTransient was computed for the exercise
+
+    @Transient
+    private Long numberOfParticipationsTransient; // used for instructor exam checklist
 
     public String getTitle() {
         return title;
@@ -496,6 +496,15 @@ public abstract class Exercise extends DomainObject {
 
     public boolean isTeamMode() {
         return mode == ExerciseMode.TEAM;
+    }
+
+
+    public Long getNumberOfParticipations() {
+        return numberOfParticipationsTransient;
+    }
+
+    public void setNumberOfParticipations(Long numberOfParticipationsTransient) {
+        this.numberOfParticipationsTransient = numberOfParticipationsTransient;
     }
 
     /**
