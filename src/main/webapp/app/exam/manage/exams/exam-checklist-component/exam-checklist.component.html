@@ -88,6 +88,11 @@
                             </span>
                         </li>
                     </ul>
+
+                    <hr />
+                    <!-- Exercise Group table -->
+                    <jhi-exam-checklist-exercisegroup-table [exerciseGroups]="exam.exerciseGroups"></jhi-exam-checklist-exercisegroup-table>
+
                 </td>
                 <td class="d-none d-md-table-cell">
                     <a
@@ -111,9 +116,9 @@
                     <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.testRun' | translate }}</span>
                     <hr />
                     <ul class="list-unstyled">
-                        <li class="list-group-item border-1">
+                        <li *ngIf="examChecklist" class="list-group-item border-1">
                             <span>{{ 'artemisApp.examManagement.checklist.textitems.testruns' | translate }}</span>
-                            {{ exam.numberOfTestRuns }}
+                            {{ examChecklist.numberOfTestRuns }}
                         </li>
                     </ul>
                 </td>
@@ -182,7 +187,15 @@
                     <span>{{ 'artemisApp.examManagement.checklist.tableItem.prepareExerciseStart' | translate }}</span>
                 </td>
                 <td class="d-none d-md-table-cell">
-                    <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.prepareExerciseStart' | translate }}</span>
+                    <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.prepareExerciseStart' | translate }}
+                        <hr />
+                        <ul class="list-unstyled">
+                            <li *ngIf="examChecklist" class="list-group-item border-1">
+                                <jhi-exam-checklist-check [checkAttribute]="examChecklist.allExamExercisesAllStudentsPrepared"></jhi-exam-checklist-check>
+                                <span>{{ 'artemisApp.examManagement.checklist.textitems.allExercisesPrepared' | translate }}</span>
+                            </li>
+                        </ul>
+                    </span>
                 </td>
                 <td class="d-none d-md-table-cell">
                     <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
@@ -227,6 +240,15 @@
                 </td>
                 <td class="d-none d-md-table-cell">
                     <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.assessAllSubmissions' | translate }}</span>
+                    <hr />
+
+                    <div *ngIf="examChecklist.numberOfTotalExamAssessmentsDone !== null && examChecklist.numberOfTotalExamParticipations !== 0">
+                        <jhi-progress-bar [denominator]="examChecklist.numberOfTotalExamParticipations" [numerator]="examChecklist.numberOfTotalExamAssessmentsDone"
+                                          [percentage]="(examChecklist.numberOfTotalExamAssessmentsDone! / examChecklist.numberOfTotalExamParticipations!)*100">
+                        </jhi-progress-bar>
+                    </div>
+
+                    <br>
                 </td>
                 <td class="d-none d-md-table-cell">
                     <a
@@ -288,7 +310,7 @@
                 </td>
                 <td class="d-none d-md-table-cell">
                     <a id="editButton_review" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-primary">
-                        <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+                        <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
                     </a>
                 </td>
             </tr>
@@ -299,6 +321,14 @@
                 </td>
                 <td class="d-none d-md-table-cell">
                     <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.resolveComplaints' | translate }}</span>
+                    <hr />
+                    <div *ngIf="examChecklist.numberOfAllComplaintsDone !== null && examChecklist.numberOfAllComplaints !== 0">
+                        <jhi-progress-bar [denominator]="examChecklist.numberOfAllComplaints!" [numerator]="examChecklist.numberOfAllComplaintsDone!"
+                                          [percentage]="(examChecklist.numberOfAllComplaintsDone! / examChecklist.numberOfAllComplaints!)*100">
+                        </jhi-progress-bar>
+                    </div>
+
+                    <br>
                 </td>
                 <td class="d-none d-md-table-cell">
                     <a

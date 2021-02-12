@@ -1,10 +1,11 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { ExamChecklist } from 'app/entities/exam-checklist.model';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -15,6 +16,7 @@ export class ExamChecklistComponent implements OnInit {
     @Input() getExamRoutesByIdentifier: any;
     @Input() isAtLeastInstructor = false;
 
+    examChecklist: ExamChecklist;
     isLoading = false;
     pointsExercisesEqual = false;
     allExamsGenerated = false;
@@ -31,8 +33,14 @@ export class ExamChecklistComponent implements OnInit {
             .subscribe((exGroups) => {
                 this.exam.exerciseGroups = exGroups;
                 this.checkPointsExercisesEqual();
-                this.checkAllGroupContainsExercise();
                 this.checkTotalPointsMandatory();
+                this.checkAllGroupContainsExercise();
+            });
+        this.examService
+            .getExamStatistics(this.exam.course!.id!, this.exam.id!)
+            .map((examStatistics: HttpResponse<ExamChecklist>) => examStatistics.body!)
+            .subscribe((examStats) => {
+                this.examChecklist = examStats;
                 this.checkAllExamsGenerated();
             });
     }
@@ -41,7 +49,7 @@ export class ExamChecklistComponent implements OnInit {
      * Set allExamsGenerated to true if all registered students have a student exam
      */
     checkAllExamsGenerated() {
-        this.allExamsGenerated = this.exam.numberOfGeneratedStudentExams === this.exam.numberOfRegisteredUsers;
+        this.allExamsGenerated = this.examChecklist.numberOfGeneratedStudentExams === this.exam.numberOfRegisteredUsers;
     }
 
     /**
