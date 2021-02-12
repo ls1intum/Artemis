@@ -23,7 +23,6 @@ public class ExamChecklistDTO {
 
     private boolean allExamExercisesAllStudentsPrepared;
 
-
     public Long getNumberOfTotalExamParticipations() {
         return numberOfTotalExamParticipations;
     }

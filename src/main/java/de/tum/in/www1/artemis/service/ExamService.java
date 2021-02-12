@@ -1,6 +1,28 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
+
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.validation.constraints.NotNull;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.stereotype.Service;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
@@ -25,25 +47,6 @@ import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.stereotype.Service;
-
-import javax.validation.constraints.NotNull;
-import java.security.SecureRandom;
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 
 /**
  * Service Implementation for managing Course.
@@ -88,8 +91,10 @@ public class ExamService {
     private final SubmissionRepository submissionRepository;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
-                       ProgrammingExerciseService programmingExerciseService, ExamQuizService examQuizService, ExerciseService exerciseService,
-                       InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultService resultService, SubmissionService submissionService, SubmissionRepository submissionRepository) {
+            ProgrammingExerciseService programmingExerciseService, ExamQuizService examQuizService, ExerciseService exerciseService,
+            InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService, AuditEventRepository auditEventRepository,
+            StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            ResultService resultService, SubmissionService submissionService, SubmissionRepository submissionRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
@@ -732,8 +737,7 @@ public class ExamService {
         }
 
         // check if all exercises have been prepared for all students;
-        boolean exercisesPrepared =
-            (exam.getNumberOfExercisesInExam() * numberOfGeneratedStudentExams) == totalNumberOfParticipations;
+        boolean exercisesPrepared = (exam.getNumberOfExercisesInExam() * numberOfGeneratedStudentExams) == totalNumberOfParticipations;
         examChecklistDTO.setAllExamExercisesAllStudentsPrepared(exercisesPrepared);
 
         List<Long> numberOfComplaintsOpenByExercise = new ArrayList<>();
@@ -744,16 +748,15 @@ public class ExamService {
         exam.getExerciseGroups().forEach(exerciseGroup -> {
             exerciseGroup.getExercises().forEach(exercise -> {
                 // number of complaints open
-                numberOfComplaintsOpenByExercise.add(
-                    complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(
-                        exercise.getId(), ComplaintType.COMPLAINT));
+                numberOfComplaintsOpenByExercise
+                        .add(complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exercise.getId(), ComplaintType.COMPLAINT));
 
                 // number of complaints finished
                 numberOfComplaintResponsesByExercise.add(complaintResponseRepository
-                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(
-                        exercise.getId(), ComplaintType.COMPLAINT));
+                        .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT));
 
-                numberOfAssessmentsDoneOfCorrectionRounds.add(resultService.countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(exercise, exam.getNumberOfCorrectionRoundsInExam()));
+                numberOfAssessmentsDoneOfCorrectionRounds
+                        .add(resultService.countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(exercise, exam.getNumberOfCorrectionRoundsInExam()));
 
                 if (exercise instanceof ProgrammingExercise) {
                     numberOfSubmissionsByExercise.add(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId(), true));
@@ -769,11 +772,11 @@ public class ExamService {
         long totalNumberOfAssessmentsDone = 0;
         long totalNumberOfTotalExamAssessments = 0;
 
-        for(Long numberOfAssessmentsOpen : numberOfSubmissionsByExercise){
+        for (Long numberOfAssessmentsOpen : numberOfSubmissionsByExercise) {
             totalNumberOfTotalExamAssessments += numberOfAssessmentsOpen;
         }
 
-        for(DueDateStat[] dateStats: numberOfAssessmentsDoneOfCorrectionRounds){
+        for (DueDateStat[] dateStats : numberOfAssessmentsDoneOfCorrectionRounds) {
             for (DueDateStat dateStat : dateStats) {
                 totalNumberOfAssessmentsDone += dateStat.getInTime();
             }

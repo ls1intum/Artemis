@@ -1,16 +1,18 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.List;
+
+import javax.validation.constraints.NotNull;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
-import javax.validation.constraints.NotNull;
-import java.util.List;
 
 /**
  * Service Implementation for managing ExerciseGroup.
@@ -96,7 +98,7 @@ public class ExerciseGroupService {
      *
      * @param exerciseGroupList list of exercisegroups
      */
-    public void addNumberOfExamExerciseParticipations(List<ExerciseGroup> exerciseGroupList){
+    public void addNumberOfExamExerciseParticipations(List<ExerciseGroup> exerciseGroupList) {
         exerciseGroupList.forEach((exerciseGroup -> {
             exerciseGroup.getExercises().forEach(exercise -> {
                 Long numberOfParticipations = studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId());
@@ -104,7 +106,6 @@ public class ExerciseGroupService {
             });
         }));
     }
-
 
     /**
      * Delete the exercise group by id.
