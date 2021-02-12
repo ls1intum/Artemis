@@ -93,16 +93,26 @@ public class CourseExportService {
             return Optional.empty();
         }
 
-        // Export course exercises and exams
-        exportCourseExercises(course, courseDirPath.toString(), exportErrors);
-        exportCourseExams(course, courseDirPath.toString(), exportErrors);
+        try {
+            // Export course exercises and exams
+            exportCourseExercises(course, courseDirPath.toString(), exportErrors);
+            exportCourseExams(course, courseDirPath.toString(), exportErrors);
 
-        // Zip them together
-        var exportedCoursePath = createCourseZipFile(courseDirPath.getParent(), Path.of(outputDir), exportErrors);
+            // Zip them together
+            var exportedCoursePath = createCourseZipFile(courseDirPath.getParent(), Path.of(outputDir), exportErrors);
 
-        notifyUserAboutCourseExportState(course.getId(), CourseExportState.COMPLETED, "");
-        log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCoursePath);
-        return exportedCoursePath;
+            log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCoursePath);
+            return exportedCoursePath;
+        }
+        catch (Exception e) {
+            var error = "Failed to export the entire course " + course.getTitle();
+            exportErrors.add(error);
+            log.info(error);
+            return Optional.empty();
+        }
+        finally {
+            notifyUserAboutCourseExportState(course.getId(), CourseExportState.COMPLETED, "");
+        }
     }
 
     /**
