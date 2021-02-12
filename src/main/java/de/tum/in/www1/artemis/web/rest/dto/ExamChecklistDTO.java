@@ -3,40 +3,33 @@ package de.tum.in.www1.artemis.web.rest.dto;
 /**
  * This is a dto for providing statistics for the exam instructor dashboard
  */
-public class ExamStatisticsDTO {
+public class ExamChecklistDTO {
 
-    private Long numberOfGeneratedStudentExamsTransient;
+    private Long numberOfGeneratedStudentExams;
 
-    private Long numberOfTestRunsTransient;
+    private Long numberOfTestRuns;
 
     private Long numberOfStudentsExamStarted;
 
     private Long numberOfStudentsExamSubmitted;
 
-    private Long numberOfTotalExamAssessmentsOpen;
-
     private Long numberOfTotalExamAssessmentsDone;
 
-    private Long numberOfAllComplaintsOpen;
+    private Long numberOfTotalExamParticipations;
+
+    private Long numberOfAllComplaints;
 
     private Long numberOfAllComplaintsDone;
 
     private boolean allExamExercisesAllStudentsPrepared;
 
-    public Long getNumberOfGeneratedStudentExamsTransient() {
-        return numberOfGeneratedStudentExamsTransient;
+
+    public Long getNumberOfTotalExamParticipations() {
+        return numberOfTotalExamParticipations;
     }
 
-    public void setNumberOfGeneratedStudentExamsTransient(Long numberOfGeneratedStudentExamsTransient) {
-        this.numberOfGeneratedStudentExamsTransient = numberOfGeneratedStudentExamsTransient;
-    }
-
-    public Long getNumberOfTestRunsTransient() {
-        return numberOfTestRunsTransient;
-    }
-
-    public void setNumberOfTestRunsTransient(Long numberOfTestRunsTransient) {
-        this.numberOfTestRunsTransient = numberOfTestRunsTransient;
+    public void setNumberOfTotalExamParticipations(Long numberOfTotalExamParticipations) {
+        this.numberOfTotalExamParticipations = numberOfTotalExamParticipations;
     }
 
     public Long getNumberOfStudentsExamStarted() {
@@ -55,14 +48,6 @@ public class ExamStatisticsDTO {
         this.numberOfStudentsExamSubmitted = numberOfStudentsExamSubmitted;
     }
 
-    public Long getNumberOfTotalExamAssessmentsOpen() {
-        return numberOfTotalExamAssessmentsOpen;
-    }
-
-    public void setNumberOfTotalExamAssessmentsOpen(Long numberOfTotalExamAssessmentsOpen) {
-        this.numberOfTotalExamAssessmentsOpen = numberOfTotalExamAssessmentsOpen;
-    }
-
     public Long getNumberOfTotalExamAssessmentsDone() {
         return numberOfTotalExamAssessmentsDone;
     }
@@ -71,12 +56,12 @@ public class ExamStatisticsDTO {
         this.numberOfTotalExamAssessmentsDone = numberOfTotalExamAssessmentsDone;
     }
 
-    public Long getNumberOfAllComplaintsOpen() {
-        return numberOfAllComplaintsOpen;
+    public Long getNumberOfAllComplaints() {
+        return numberOfAllComplaints;
     }
 
-    public void setNumberOfAllComplaintsOpen(Long numberOfAllComplaintsOpen) {
-        this.numberOfAllComplaintsOpen = numberOfAllComplaintsOpen;
+    public void setNumberOfAllComplaints(Long numberOfAllComplaints) {
+        this.numberOfAllComplaints = numberOfAllComplaints;
     }
 
     public Long getNumberOfAllComplaintsDone() {
@@ -100,19 +85,19 @@ public class ExamStatisticsDTO {
     }
 
     public Long getNumberOfGeneratedStudentExams() {
-        return this.numberOfGeneratedStudentExamsTransient;
+        return this.numberOfGeneratedStudentExams;
     }
 
     public void setNumberOfGeneratedStudentExams(Long numberOfGeneratedStudentExams) {
-        this.numberOfGeneratedStudentExamsTransient = numberOfGeneratedStudentExams;
+        this.numberOfGeneratedStudentExams = numberOfGeneratedStudentExams;
     }
 
     public Long getNumberOfTestRuns() {
-        return this.numberOfTestRunsTransient;
+        return this.numberOfTestRuns;
     }
 
     public void setNumberOfTestRuns(Long numberOfTestRuns) {
-        this.numberOfTestRunsTransient = numberOfTestRuns;
+        this.numberOfTestRuns = numberOfTestRuns;
     }
 
 }
