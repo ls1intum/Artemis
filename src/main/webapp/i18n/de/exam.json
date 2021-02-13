@@ -354,7 +354,10 @@
                     "startdatereviewset": "Startdatum der Klausureinsicht gesetzt",
                     "enddatereviewset": "Enddatum der Klausureinsicht gesetzt",
                     "testruns": "Aktuelle Anzahl an Testläufen:",
-                    "allExercisesPrepared": "Alle Aufgaben vorbereitet für alle Studierenden"
+                    "allExercisesPrepared": "Alle Aufgaben vorbereitet für alle Studierenden",
+                    "noSubmissions": "Es gibt aktuell keine abgegebenen Klausuren.",
+                    "noComplaints": "Es gibt aktuell keine Beschwerden",
+                    "correctionRound": "Korrektur Runde"
                 }
             }
         },

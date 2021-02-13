@@ -355,7 +355,10 @@
                     "startdatereviewset": "Start date of exam review set",
                     "enddatereviewset": "End date of exam review set",
                     "testruns": "Current number of test runs:",
-                    "allExercisesPrepared": "All exercises prepared for all students"
+                    "allExercisesPrepared": "All exercises prepared for all students",
+                    "noSubmissions": "There are currently no submitted exams.",
+                    "noComplaints": "There are currently no complaints.",
+                    "correctionRound": "Correction Round"
                 }
             }
         },
