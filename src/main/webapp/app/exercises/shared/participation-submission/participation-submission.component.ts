@@ -69,16 +69,20 @@ export class ParticipationSubmissionComponent implements OnInit {
                 this.exercise = exerciseResponse.body!;
                 this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
                 if (this.exercise.type === ExerciseType.PROGRAMMING) {
+                    // Get template and solution participation and submission for prog. exercise
                     this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!, true).subscribe((response) => {
                         const programmingExercise = response.body!;
                         const templateParticipation = programmingExercise.templateParticipation;
                         const solutionParticipation = programmingExercise.solutionParticipation;
+                        // Check if requested participationId belongs to the template or solution participation
                         if (templateParticipation?.id === this.participationId) {
                             this.participation = templateParticipation;
                             this.submissions = templateParticipation.submissions!;
+                            this.isLoading = false;
                         } else if (solutionParticipation?.id === this.participationId) {
                             this.participation = solutionParticipation;
                             this.submissions = solutionParticipation.submissions!;
+                            this.isLoading = false;
                         } else {
                             this.fetchParticipationAndSubmissionsForStudent();
                         }
@@ -94,10 +98,7 @@ export class ParticipationSubmissionComponent implements OnInit {
             .getProfileInfo()
             .pipe(
                 take(1),
-                tap((info: ProfileInfo) => {
-                    console.log('++info', info);
-                    this.activeProfiles = info.activeProfiles;
-                }),
+                tap((info: ProfileInfo) => (this.activeProfiles = info?.activeProfiles)),
             )
             .subscribe();
     }
@@ -124,36 +125,35 @@ export class ParticipationSubmissionComponent implements OnInit {
             .subscribe((submissions) => {
                 if (submissions) {
                     this.submissions = submissions;
-                    console.log('this.submissions', this.submissions);
                     this.isLoading = false;
                 }
             });
     }
 
     getName() {
-        if (this.participation.type === ParticipationType.STUDENT) {
+        if (this.participation?.type === ParticipationType.STUDENT) {
             return (this.participation as StudentParticipation).student?.name || (this.participation as StudentParticipation).team?.name;
-        } else if (this.participation.type === ParticipationType.SOLUTION) {
+        } else if (this.participation?.type === ParticipationType.SOLUTION) {
             return this.translate.instant('artemisApp.participation.solutionParticipation');
-        } else if (this.participation.type === ParticipationType.TEMPLATE) {
+        } else if (this.participation?.type === ParticipationType.TEMPLATE) {
             return this.translate.instant('artemisApp.participation.templateParticipation');
         }
         return 'N/A';
     }
 
     isTemplateOrSolutionParticipation(): boolean {
-        return this.participation.type === ParticipationType.TEMPLATE || this.participation.type === ParticipationType.SOLUTION;
+        return this.participation?.type === ParticipationType.TEMPLATE || this.participation?.type === ParticipationType.SOLUTION;
     }
 
     getCommitUrl(submission: ProgrammingSubmission): string | undefined {
         let repoUrl: string | undefined;
-        if (submission.type === SubmissionType.TEST) {
+        if (submission?.type === SubmissionType.TEST) {
             repoUrl = (this.exercise as ProgrammingExercise).testRepositoryUrl;
-        } else if (this.participation.type === ParticipationType.PROGRAMMING) {
+        } else if (this.participation?.type === ParticipationType.PROGRAMMING) {
             repoUrl = (this.participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
-        } else if (this.participation.type === ParticipationType.SOLUTION) {
+        } else if (this.participation?.type === ParticipationType.SOLUTION) {
             repoUrl = (this.participation as SolutionProgrammingExerciseParticipation).repositoryUrl;
-        } else if (this.participation.type === ParticipationType.TEMPLATE) {
+        } else if (this.participation?.type === ParticipationType.TEMPLATE) {
             repoUrl = (this.participation as TemplateProgrammingExerciseParticipation).repositoryUrl;
         }
         if (repoUrl) {
@@ -167,7 +167,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                     // this will result in bitbucket.com/scm/{projectKey}/repos/{buildPlanId}/commits/{commitHash}
                     repoUrl = [baseUrl.slice(0, positionOfCourseIdDirectory), '/repos', baseUrl.slice(positionOfCourseIdDirectory), '/commits/', submission.commitHash].join('');
                     // at last replace '/scm' with '/projects'
-                    repoUrl = repoUrl.replace('scm', 'projects');
+                    repoUrl = repoUrl.replace('/scm', '/projects');
                 } else if (this.activeProfiles.includes('gitlab')) {
                     // GitLab Repository
                     repoUrl = baseUrl + '/-/commit/' + submission.commitHash;
