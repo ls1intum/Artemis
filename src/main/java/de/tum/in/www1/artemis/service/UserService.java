@@ -643,7 +643,7 @@ public class UserService {
         final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
         final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(oldUserLogin, user, removedGroups, addedGroups, true));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUserAndGroups(user, addedGroups, removedGroups));
 
         removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group)); // e.g. Jira
         try {
@@ -672,7 +672,7 @@ public class UserService {
     }
 
     @Transactional // ok because entities are deleted
-    private void deleteUser(User user) {
+    void deleteUser(User user) {
         // TODO: before we can delete the user, we need to make sure that all associated objects are deleted as well (or the connection to user is set to null)
         // 1) All participation connected to the user (as student)
         // 2) All notifications connected to the user
@@ -1025,6 +1025,7 @@ public class UserService {
         }
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, Set.of(), Set.of(group), false)); // e.g.
                                                                                                                                                                             // Gitlab
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.addUserToGroups(user, Set.of(group)));
     }
 
     /**
@@ -1106,6 +1107,7 @@ public class UserService {
         artemisAuthenticationProvider.removeUserFromGroup(user, group); // e.g. JIRA
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, Set.of(group), Set.of(), false)); // e.g.
                                                                                                                                                                             // Gitlab
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.removeUserFromGroups(user, Set.of(group)));
     }
 
     /**

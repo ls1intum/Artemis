@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
+import java.io.IOException;
 import java.net.URL;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.JenkinsUpdateUserDTO;
@@ -37,13 +40,17 @@ public class JenkinsUserManagementService implements CIUserManagementService {
 
     private final RestTemplate restTemplate;
 
-    private final JenkinsJobService jenkinsJobService;
+    private final JenkinsJobPermissionsService jenkinsJobPermissionsService;
 
     private UserService userService;
 
-    public JenkinsUserManagementService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsJobService jenkinsJobService) {
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    public JenkinsUserManagementService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsJobPermissionsService jenkinsJobPermissionsService,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.restTemplate = restTemplate;
-        this.jenkinsJobService = jenkinsJobService;
+        this.jenkinsJobPermissionsService = jenkinsJobPermissionsService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     @Autowired // break the cycle
@@ -122,6 +129,93 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     }
 
     /**
+     * Adds the Artemis user to a group in Jenkins. Jenkins does not support
+     * groups so we fetch all programming exercises that are in the group
+     * and grant the user access to them.
+     *
+     * @param user The Artemis user to add to the group
+     * @param groups The groups
+     */
+    @Override
+    public void addUserToGroups(User user, Set<String> groups) {
+        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
+        exercises.forEach(exercise -> {
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            // The exercise's project key is also the name of the Jenkins job that groups all build plans
+            // for students, solution, and template.
+            var jobName = exercise.getProjectKey();
+
+            var instructorGroup = course.getInstructorGroupName();
+            if (groups.contains(instructorGroup)) {
+                try {
+                    jenkinsJobPermissionsService.assignUserInstructorPermissionsForJob(user.getLogin(), jobName);
+                    return;
+                }
+                catch (IOException e) {
+                    throw new JenkinsException("Cannot assign instructor permissions to user: " + user.getLogin(), e);
+                }
+            }
+
+            var teachingAssistantGroup = course.getTeachingAssistantGroupName();
+            if (groups.contains(teachingAssistantGroup)) {
+                try {
+                    jenkinsJobPermissionsService.assignUserTeachingAssistantPermissionsForJob(user.getLogin(), jobName);
+                }
+                catch (IOException e) {
+                    throw new JenkinsException("Cannot assign teaching assistant permissions to user: " + user.getLogin(), e);
+                }
+            }
+        });
+    }
+
+    /**
+     *
+     * @param user The Artemis user to remove from the group
+     * @param groups The groups
+     */
+    @Override
+    public void removeUserFromGroups(User user, Set<String> groups) {
+        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
+        exercises.forEach(exercise -> {
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            // The exercise's project key is also the name of the Jenkins job that groups all build plans
+            // for students, solution, and template.
+            var jobName = exercise.getProjectKey();
+
+            var instructorGroup = course.getInstructorGroupName();
+            if (groups.contains(instructorGroup)) {
+                try {
+                    jenkinsJobPermissionsService.revokeUserInstructorPermissionsForJob(user.getLogin(), jobName);
+                    return;
+                }
+                catch (IOException e) {
+                    throw new JenkinsException("Cannot revoke instructor permissions from user: " + user.getLogin(), e);
+                }
+            }
+
+            var teachingAssistantGroup = course.getTeachingAssistantGroupName();
+            if (groups.contains(teachingAssistantGroup)) {
+                try {
+                    jenkinsJobPermissionsService.revokeUserTeachingAssistantPermissionsForJob(user.getLogin(), jobName);
+                }
+                catch (IOException e) {
+                    throw new JenkinsException("Cannot revoke teaching assistant permissions from user: " + user.getLogin(), e);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void updateOrCreateUser(User user) {
+        if (getUser(user.getLogin()) == null) {
+            createUser(user);
+        }
+        else {
+            updateUser(user);
+        }
+    }
+
+    /**
      * Updates the user in Jenkins with the user data from Artemis.
      *
      * Note that it's not possible to change the username of the Jenkins user.
@@ -143,6 +237,13 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         catch (RestClientException | JsonProcessingException e) {
             throw new JenkinsException("Cannot update user: " + user.getLogin(), e);
         }
+    }
+
+    @Override
+    public void updateUserAndGroups(User user, Set<String> groupsToAdd, Set<String> groupsToRemove) {
+        updateUser(user);
+        addUserToGroups(user, groupsToAdd);
+        removeUserFromGroups(user, groupsToRemove);
     }
 
     /**

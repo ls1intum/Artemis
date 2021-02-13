@@ -15,15 +15,64 @@ import com.offbytwo.jenkins.JenkinsServer;
 
 @Service
 @Profile("jenkins")
-public class JenkinsJobService {
+public class JenkinsJobPermissionsService {
 
     @Value("${jenkins.use-crumb:#{true}}")
     private boolean useCrumb;
 
     private final JenkinsServer jenkinsServer;
 
-    public JenkinsJobService(JenkinsServer jenkinsServer) {
+    public JenkinsJobPermissionsService(JenkinsServer jenkinsServer) {
         this.jenkinsServer = jenkinsServer;
+    }
+
+    /**
+     * Assigns instructor permissions to the user. Instructors have admin access to build plans.
+     *
+     * @param userLogin the login of the user that will have the permissions
+     * @param jobName the name of the job where the permissions will take affect
+     * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
+     */
+    public void assignUserInstructorPermissionsForJob(String userLogin, String jobName) throws IOException {
+        var allPermissions = List.of(JenkinsJobPermission.values());
+        addPermissionsForUserToJob(userLogin, jobName, allPermissions);
+    }
+
+    /**
+     * Assigns teaching assistant permissions to the user. Teaching assistants only have write access to
+     * build plans.
+     *
+     * @param userLogin the login of the user that will have the permissions
+     * @param jobName the name of the job where the permissions will take affect
+     * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
+     */
+    public void assignUserTeachingAssistantPermissionsForJob(String userLogin, String jobName) throws IOException {
+        var permissions = List.of(JenkinsJobPermission.JOB_READ, JenkinsJobPermission.JOB_BUILD, JenkinsJobPermission.JOB_CANCEL, JenkinsJobPermission.RUN_UPDATE);
+        addPermissionsForUserToJob(userLogin, jobName, permissions);
+    }
+
+    /**
+     * Revokes instructor permissions from the user.
+     *
+     * @param userLogin the login of the user that will have the permissions revoked
+     * @param jobName the name of the job where the permissions will take affect
+     * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
+     */
+    public void revokeUserInstructorPermissionsForJob(String userLogin, String jobName) throws IOException {
+        var allPermissions = List.of(JenkinsJobPermission.values());
+        removePermissionsFromUserOfJob(userLogin, jobName, allPermissions);
+    }
+
+    /**
+     * Revokes teaching assistant permissions from the user.
+     *
+     * @param userLogin the login of the user that will have the permissions revoked
+     * @param jobName the name of the job where the permissions will take affect
+     * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
+     */
+    public void revokeUserTeachingAssistantPermissionsForJob(String userLogin, String jobName) throws IOException {
+        var permissions = List.of(JenkinsJobPermission.JOB_READ, JenkinsJobPermission.JOB_BUILD, JenkinsJobPermission.JOB_CANCEL, JenkinsJobPermission.RUN_UPDATE);
+        removePermissionsFromUserOfJob(userLogin, jobName, permissions);
     }
 
     /**
@@ -75,10 +124,13 @@ public class JenkinsJobService {
     }
 
     /**
+     * Removes the specified permissions belonging to the user from the xml document. Permission
+     * elements must be children of the AuthorizationMatrixProperty element. Doesn't do anything
+     * if AuthorizationMatrixProperty is missing.
      *
-     * @param document
-     * @param permissionsToRemove
-     * @param userLogin
+     * @param document The xml document
+     * @param permissionsToRemove  a list of permissions to remove from the user
+     * @param userLogin  the login of the user to remove the permissions from
      */
     private void removePermissionsFromAuthorizationMatrix(Document document, List<JenkinsJobPermission> permissionsToRemove, String userLogin) {
         var authorizationMatrixTagName = "com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty";
