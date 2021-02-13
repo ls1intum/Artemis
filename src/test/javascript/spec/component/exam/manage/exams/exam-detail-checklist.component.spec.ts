@@ -24,6 +24,17 @@ import { HttpResponse } from '@angular/common/http';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.component';
+import { ExamChecklist } from 'app/entities/exam-checklist.model';
+import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
+import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { ArtemisTestModule } from '../../../../test.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
+import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,6 +49,7 @@ describe('ExamChecklistComponent', () => {
     let examDetailComponent: ExamChecklistComponent;
     let findAllForExamStub;
     const exam = new Exam();
+    const examChecklist = new ExamChecklist();
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
     let exerciseGroupService: ExerciseGroupService;
     const exerciseGroupsExercisePointsEqual = [
@@ -82,10 +94,13 @@ describe('ExamChecklistComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockComponent(AlertComponent),
                 MockComponent(AlertErrorComponent),
-                MockComponent(FaIconComponent),
                 MockDirective(JhiTranslateDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 ExamChecklistCheckComponent,
+                ExamChecklistExerciseGroupTableComponent,
+                ProgressBarComponent,
+                MockDirective(NgbTooltip),
+                MockComponent(FaIconComponent),
             ],
             providers: [
                 {
@@ -120,12 +135,13 @@ describe('ExamChecklistComponent', () => {
         // reset exam
         exam.id = 1;
         exam.title = 'Example Exam';
-        exam.numberOfGeneratedStudentExams = 1;
         exam.numberOfRegisteredUsers = 3;
         exam.maxPoints = 100;
         exam.course = new Course();
         exam.course.id = 1;
         examDetailComponent.exam = exam;
+
+        examChecklist.numberOfGeneratedStudentExams = 1;
     });
 
     afterEach(function () {
@@ -162,13 +178,15 @@ describe('ExamChecklistComponent', () => {
 
     describe('test checkAllExamsGenerated', () => {
         it('should set allExamsGenerated to true', () => {
-            exam.numberOfGeneratedStudentExams = 3;
+            examChecklist.numberOfGeneratedStudentExams = 3;
+            examDetailComponent.examChecklist = examChecklist;
             examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsEqual;
             examDetailComponent.checkAllExamsGenerated();
             expect(examDetailComponent.allExamsGenerated).to.be.equal(true);
         });
 
         it('should set allExamsGenerated to false', () => {
+            examDetailComponent.examChecklist = examChecklist;
             examDetailComponent.exam.exerciseGroups = exerciseGroupsExercisePointsEqual;
             examDetailComponent.checkAllExamsGenerated();
             expect(examDetailComponent.allExamsGenerated).to.be.equal(false);
