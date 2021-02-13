@@ -230,7 +230,7 @@
                         <jhi-progress-bar
                             [denominator]="examChecklist.numberOfGeneratedStudentExams"
                             [numerator]="examChecklist.numberOfTotalExamParticipations! / exam.numberOfExercisesInExam!"
-                            [percentage]="((examChecklist.numberOfTotalExamParticipations! / (examChecklist.numberOfGeneratedStudentExams! * exam.numberOfExercisesInExam!)) * 100)"
+                            [percentage]="(examChecklist.numberOfTotalExamParticipations! / (examChecklist.numberOfGeneratedStudentExams! * exam.numberOfExercisesInExam!)) * 100"
                         >
                         </jhi-progress-bar>
                     </div>
@@ -256,15 +256,11 @@
                     <div *ngIf="examChecklist && examChecklist.numberOfTotalExamAssessmentsFinished !== null && examChecklist.numberOfTotalExamParticipations !== 0">
                         <div *ngFor="let finishedByCorrectionRound of examChecklist.numberOfTotalExamAssessmentsFinished; let index = index">
                             <hr *ngIf="index > 0" />
-                            <span>
-                                {{ 'artemisApp.examManagement.checklist.textitems.correctionRound' | translate }} {{index}}:
-                            </span>
+                            <span> {{ 'artemisApp.examManagement.checklist.textitems.correctionRound' | translate }} {{ index }}: </span>
                             <jhi-progress-bar
                                 [denominator]="examChecklist.numberOfTotalExamParticipations!"
                                 [numerator]="finishedByCorrectionRound!"
-                                [percentage]="
-                                    (finishedByCorrectionRound! / (examChecklist.numberOfTotalExamParticipations!)) * 100
-                                "
+                                [percentage]="(finishedByCorrectionRound! / examChecklist.numberOfTotalExamParticipations!) * 100"
                             >
                             </jhi-progress-bar>
                         </div>
