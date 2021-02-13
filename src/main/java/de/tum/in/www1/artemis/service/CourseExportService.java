@@ -118,7 +118,7 @@ public class CourseExportService {
      * Exports all exercises of the course and adds them into the directory
      * outputDir/exercises/
      *
-     * @param course       The course where the exercises are locat
+     * @param course       The course where the exercises are located
      * @param outputDir    The directory that will be used to store the exercises subdirectory
      * @param exportErrors List of failures that occurred during the export
      */

@@ -105,7 +105,7 @@ public abstract class SubmissionExportService {
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
-        String zipGroupName = course.getShortName() + "-" + exercise.getTitle();
+        String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
         String zipFileName = zipGroupName + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss")) + ".zip";
 
         Path submissionsFolderPath = Paths.get(submissionExportPath, "zippedSubmissions", zipGroupName);

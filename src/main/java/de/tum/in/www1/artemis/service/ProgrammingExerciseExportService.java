@@ -131,7 +131,7 @@ public class ProgrammingExerciseExportService {
         try {
             // Zip the student and instructor repos together.
             var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
-            var filename = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + timestamp + ".zip";
+            var filename = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
             var pathToZippedExercise = Path.of(pathToStoreZipFile, filename);
             zipFileService.createZipFile(pathToZippedExercise, zipFilePathsNonNull, false);
             return pathToZippedExercise;
