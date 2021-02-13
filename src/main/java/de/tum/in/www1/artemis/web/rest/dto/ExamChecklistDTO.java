@@ -9,11 +9,7 @@ public class ExamChecklistDTO {
 
     private Long numberOfTestRuns;
 
-    private Long numberOfStudentsExamStarted;
-
-    private Long numberOfStudentsExamSubmitted;
-
-    private Long numberOfTotalExamAssessmentsDone;
+    private Long[] numberOfTotalExamAssessmentsFinished;
 
     private Long numberOfTotalExamParticipations;
 
@@ -31,28 +27,12 @@ public class ExamChecklistDTO {
         this.numberOfTotalExamParticipations = numberOfTotalExamParticipations;
     }
 
-    public Long getNumberOfStudentsExamStarted() {
-        return numberOfStudentsExamStarted;
+    public Long[] getNumberOfTotalExamAssessmentsFinished() {
+        return numberOfTotalExamAssessmentsFinished;
     }
 
-    public void setNumberOfStudentsExamStarted(Long numberOfStudentsExamStarted) {
-        this.numberOfStudentsExamStarted = numberOfStudentsExamStarted;
-    }
-
-    public Long getNumberOfStudentsExamSubmitted() {
-        return numberOfStudentsExamSubmitted;
-    }
-
-    public void setNumberOfStudentsExamSubmitted(Long numberOfStudentsExamSubmitted) {
-        this.numberOfStudentsExamSubmitted = numberOfStudentsExamSubmitted;
-    }
-
-    public Long getNumberOfTotalExamAssessmentsDone() {
-        return numberOfTotalExamAssessmentsDone;
-    }
-
-    public void setNumberOfTotalExamAssessmentsDone(Long numberOfTotalExamAssessmentsDone) {
-        this.numberOfTotalExamAssessmentsDone = numberOfTotalExamAssessmentsDone;
+    public void setNumberOfTotalExamAssessmentsFinished(Long[] numberOfTotalExamAssessmentsFinished) {
+        this.numberOfTotalExamAssessmentsFinished = numberOfTotalExamAssessmentsFinished;
     }
 
     public Long getNumberOfAllComplaints() {
