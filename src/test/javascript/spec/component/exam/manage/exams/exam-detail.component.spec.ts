@@ -1,6 +1,7 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { TranslatePipe } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -23,6 +24,8 @@ import { ExamChecklistCheckComponent } from 'app/exam/manage/exams/exam-checklis
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.component';
+import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
+import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -65,6 +68,9 @@ describe('ExamDetailComponent', () => {
                 MockDirective(HasAnyAuthorityDirective),
                 ExamChecklistComponent,
                 ExamChecklistCheckComponent,
+                ExamChecklistExerciseGroupTableComponent,
+                ProgressBarComponent,
+                MockDirective(NgbTooltip),
             ],
             providers: [
                 {
