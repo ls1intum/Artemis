@@ -27,14 +27,7 @@ import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-com
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { ArtemisTestModule } from '../../../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
-import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 chai.use(sinonChai);
 const expect = chai.expect;
