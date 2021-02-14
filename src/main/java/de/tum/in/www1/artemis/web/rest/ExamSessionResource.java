@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.service.ExamSessionService;
 import de.tum.in.www1.artemis.service.StudentExamService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.user.UserService;
 
 /**
  * REST controller for managing ExamSessions.

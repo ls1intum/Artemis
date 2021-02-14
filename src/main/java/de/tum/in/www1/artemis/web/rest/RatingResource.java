@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 /**
  * REST controller for managing Rating.

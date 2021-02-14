@@ -27,13 +27,13 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.UserRetrievalService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
+import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 @Service
 @Profile("bitbucket")
@@ -52,7 +52,7 @@ public class BitbucketService extends AbstractVersionControlService {
     @Value("${artemis.git.name}")
     private String artemisGitName;
 
-    private final UserService userService;
+    private final PasswordService passwordService;
 
     private final UserRetrievalService userRetrievalService;
 
@@ -60,10 +60,10 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    public BitbucketService(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UserRetrievalService userRetrievalService,
+    public BitbucketService(PasswordService passwordService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UserRetrievalService userRetrievalService,
             @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, UrlService urlService, GitService gitService) {
         super(urlService, gitService);
-        this.userService = userService;
+        this.passwordService = passwordService;
         this.userRetrievalService = userRetrievalService;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
@@ -82,7 +82,7 @@ public class BitbucketService extends AbstractVersionControlService {
                 if (!userExists(username)) {
                     log.debug("Bitbucket user {} does not exist yet", username);
                     String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
-                    createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
+                    createUser(username, passwordService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
 
                     try {
                         // NOTE: we need to refetch the user here to make sure that the groups are not lazy loaded.

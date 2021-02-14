@@ -16,8 +16,9 @@ import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.UserRetrievalService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 @Component
 @ConditionalOnProperty(value = "artemis.user-management.use-external", havingValue = "false")
@@ -25,8 +26,8 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
 
     private final Logger log = LoggerFactory.getLogger(ArtemisInternalAuthenticationProvider.class);
 
-    public ArtemisInternalAuthenticationProvider(UserRepository userRepository, UserRetrievalService userRetrievalService) {
-        super(userRepository, userRetrievalService);
+    public ArtemisInternalAuthenticationProvider(UserRepository userRepository, UserRetrievalService userRetrievalService, PasswordService passwordService) {
+        super(userRepository, userRetrievalService, passwordService);
     }
 
     @Override
@@ -38,7 +39,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         if (!user.get().getActivated()) {
             throw new UserNotActivatedException("User " + user.get().getLogin() + " was not activated");
         }
-        final var storedPassword = userService.decryptPassword(user.get());
+        final var storedPassword = passwordService.decryptPassword(user.get());
         if (!authentication.getCredentials().toString().equals(storedPassword)) {
             throw new AuthenticationServiceException("Invalid password for user " + user.get().getLogin());
         }
@@ -58,7 +59,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         else {
             user = optionalUser.get();
             if (!skipPasswordCheck) {
-                final var storedPassword = userService.decryptPassword(user);
+                final var storedPassword = passwordService.decryptPassword(user);
                 if (!password.equals(storedPassword)) {
                     throw new InternalAuthenticationServiceException("Authentication failed for user " + user.getLogin());
                 }

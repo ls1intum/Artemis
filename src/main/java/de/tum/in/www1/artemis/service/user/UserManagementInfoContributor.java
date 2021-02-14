@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.user;
 
 import java.util.Optional;
 import java.util.regex.Pattern;

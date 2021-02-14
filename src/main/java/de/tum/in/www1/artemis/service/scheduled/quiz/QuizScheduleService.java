@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
-import de.tum.in.www1.artemis.service.UserRetrievalService;
+import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 @Service
 public class QuizScheduleService {

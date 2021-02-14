@@ -22,10 +22,11 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.MailService;
-import de.tum.in.www1.artemis.service.UserRetrievalService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.user.UserRetrievalService;
+import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -56,15 +57,19 @@ public class AccountResource {
 
     private final UserService userService;
 
+    private final PasswordService passwordService;
+
     private final MailService mailService;
 
     private final UserRepository userRepository;
 
-    public AccountResource(UserRepository userRepository, UserRetrievalService userRetrievalService, UserService userService, MailService mailService) {
+    public AccountResource(UserRepository userRepository, UserRetrievalService userRetrievalService, UserService userService, MailService mailService,
+            PasswordService passwordService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userRetrievalService = userRetrievalService;
         this.mailService = mailService;
+        this.passwordService = passwordService;
     }
 
     /**
@@ -159,7 +164,7 @@ public class AccountResource {
         // This method is used to show the password for users that have been generated automatically based on LTI
         // It only allows to decrypt and return the password of internal users and only of the currently logged in user
         Map<String, String> body = new HashMap<>();
-        body.put("password", userService.decryptPasswordOfCurrentUser());
+        body.put("password", passwordService.decryptPasswordOfCurrentUser());
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 

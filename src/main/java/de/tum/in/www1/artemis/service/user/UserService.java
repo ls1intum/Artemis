@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.user;
 
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +33,6 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
@@ -60,9 +58,6 @@ public class UserService {
     @Value("${artemis.user-management.use-external}")
     private Boolean useExternalUserManagement;
 
-    @Value("${artemis.encryption-password}")
-    private String encryptionPassword;
-
     @Value("${artemis.user-management.internal-admin.username:#{null}}")
     private Optional<String> artemisInternalAdminUsername;
 
@@ -79,6 +74,8 @@ public class UserService {
     private Optional<String> tutorialGroupInstructors;
 
     private final UserRetrievalService userRetrievalService;
+
+    private final PasswordService passwordService;
 
     private final Optional<LdapUserService> ldapUserService;
 
@@ -97,7 +94,8 @@ public class UserService {
     private final GuidedTourSettingsRepository guidedTourSettingsRepository;
 
     public UserService(UserRetrievalService userRetrievalService, UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager,
-            Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, CourseRepository courseRepository) {
+            Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, CourseRepository courseRepository,
+            PasswordService passwordService) {
         this.userRetrievalService = userRetrievalService;
         this.userRepository = userRepository;
         this.authorityRepository = authorityRepository;
@@ -105,6 +103,7 @@ public class UserService {
         this.ldapUserService = ldapUserService;
         this.guidedTourSettingsRepository = guidedTourSettingsRepository;
         this.courseRepository = courseRepository;
+        this.passwordService = passwordService;
     }
 
     @Autowired
@@ -132,7 +131,7 @@ public class UserService {
                 Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(artemisInternalAdminUsername.get());
                 if (existingInternalAdmin.isPresent()) {
                     log.info("Update internal admin user " + artemisInternalAdminUsername.get());
-                    existingInternalAdmin.get().setPassword(passwordEncoder().encode(artemisInternalAdminPassword.get()));
+                    existingInternalAdmin.get().setPassword(passwordService.encodePassword(artemisInternalAdminPassword.get()));
                     // needs to be mutable --> new HashSet<>(Set.of(...))
                     existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(USER))));
                     saveUser(existingInternalAdmin.get());
@@ -187,38 +186,6 @@ public class UserService {
         return null;
     }
 
-    private PBEPasswordEncoder passwordEncoder;
-
-    private StandardPBEStringEncryptor encryptor;
-
-    /**
-     * Get the encoder for password encryption
-     *
-     * @return existing password encoder or newly created password encryptor
-     */
-    public PBEPasswordEncoder passwordEncoder() {
-        if (passwordEncoder != null) {
-            return passwordEncoder;
-        }
-        passwordEncoder = new PBEPasswordEncoder(encryptor());
-        return passwordEncoder;
-    }
-
-    /**
-     * Get the the password encryptor with MD5 and DES encryption algorithm
-     *
-     * @return existing encryptor or newly created encryptor
-     */
-    public StandardPBEStringEncryptor encryptor() {
-        if (encryptor != null) {
-            return encryptor;
-        }
-        encryptor = new StandardPBEStringEncryptor();
-        encryptor.setAlgorithm("PBEWithMD5AndDES");
-        encryptor.setPassword(encryptionPassword);
-        return encryptor;
-    }
-
     /**
      * Activate user registration
      *
@@ -256,7 +223,7 @@ public class UserService {
     public Optional<User> completePasswordReset(String newPassword, String key) {
         log.debug("Reset user password for reset key {}", key);
         return userRepository.findOneByResetKey(key).filter(user -> user.getResetDate().isAfter(Instant.now().minusSeconds(86400))).map(user -> {
-            user.setPassword(passwordEncoder().encode(newPassword));
+            user.setPassword(passwordService.encodePassword(newPassword));
             user.setResetKey(null);
             user.setResetDate(null);
             saveUser(user);
@@ -312,7 +279,7 @@ public class UserService {
             }
         });
         User newUser = new User();
-        String encryptedPassword = passwordEncoder().encode(password);
+        String encryptedPassword = passwordService.encodePassword(password);
         newUser.setLogin(userDTO.getLogin().toLowerCase());
         // new user gets initially a generated password
         newUser.setPassword(encryptedPassword);
@@ -448,7 +415,7 @@ public class UserService {
         if (password == null) {
             password = RandomUtil.generatePassword();
         }
-        String encryptedPassword = passwordEncoder().encode(password);
+        String encryptedPassword = passwordService.encodePassword(password);
         // new user gets initially a generated password
         newUser.setPassword(encryptedPassword);
 
@@ -502,7 +469,7 @@ public class UserService {
                     .collect(Collectors.toSet());
             user.setAuthorities(authorities);
         }
-        String encryptedPassword = passwordEncoder().encode(userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword());
+        String encryptedPassword = passwordService.encodePassword(userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword());
         user.setPassword(encryptedPassword);
         user.setResetKey(RandomUtil.generateResetKey());
         user.setResetDate(Instant.now());
@@ -571,7 +538,7 @@ public class UserService {
         user.setLangKey(updatedUserDTO.getLangKey());
         user.setGroups(updatedUserDTO.getGroups());
         if (updatedUserDTO.getPassword() != null) {
-            user.setPassword(passwordEncoder().encode(updatedUserDTO.getPassword()));
+            user.setPassword(passwordService.encodePassword(updatedUserDTO.getPassword()));
         }
         Set<Authority> managedAuthorities = user.getAuthorities();
         managedAuthorities.clear();
@@ -649,50 +616,15 @@ public class UserService {
     public void changePassword(String currentClearTextPassword, String newPassword) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
             String currentEncryptedPassword = user.getPassword();
-            if (!passwordEncoder().matches(currentClearTextPassword, currentEncryptedPassword)) {
+            if (!passwordService.checkPasswordMatch(currentClearTextPassword, currentEncryptedPassword)) {
                 throw new InvalidPasswordException();
             }
-            String encryptedPassword = passwordEncoder().encode(newPassword);
+            String encryptedPassword = passwordService.encodePassword(newPassword);
             user.setPassword(encryptedPassword);
             saveUser(user);
             optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, null, null, true));
             log.debug("Changed password for User: {}", user);
         });
-    }
-
-    /**
-     * Get decrypted password for the current user
-     *
-     * @return decrypted password or empty string
-     */
-    public String decryptPasswordOfCurrentUser() {
-        User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin().get()).get();
-        try {
-            return encryptor().decrypt(user.getPassword());
-        }
-        catch (Exception e) {
-            return "";
-        }
-    }
-
-    /**
-     * Get decrypted password for given user
-     *
-     * @param user the user
-     * @return decrypted password or empty string
-     */
-    public String decryptPassword(User user) {
-        return encryptor().decrypt(user.getPassword());
-    }
-
-    /**
-     * Get decrypted password for given user login
-     *
-     * @param login of a user
-     * @return decrypted password or empty string
-     */
-    public Optional<String> decryptPasswordByLogin(String login) {
-        return userRepository.findOneByLogin(login).map(user -> encryptor().decrypt(user.getPassword()));
     }
 
     private void clearUserCaches(User user) {
@@ -748,21 +680,6 @@ public class UserService {
     }
 
     /**
-     * Finds all users that are part of the specified group, but are not contained in the collection of excluded users
-     *
-     * @param groupName     The group by which all users should get filtered
-     * @param excludedUsers The users that should get ignored/excluded
-     * @return A list of filtered users
-     */
-    public List<User> findAllUserInGroupAndNotIn(String groupName, Collection<User> excludedUsers) {
-        // For an empty list, we have to use another query, because Hibernate builds an invalid query with empty lists
-        if (!excludedUsers.isEmpty()) {
-            return userRepository.findAllInGroupContainingAndNotIn(groupName, new HashSet<>(excludedUsers));
-        }
-        return userRepository.findAllInGroupWithAuthorities(groupName);
-    }
-
-    /**
      * removes the passed group from all users in the Artemis database, e.g. when the group was deleted
      *
      * @param groupName the group that should be removed from all existing users
@@ -791,8 +708,8 @@ public class UserService {
         catch (ArtemisAuthenticationException e) {
             // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
         }
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, Set.of(), Set.of(group), false)); // e.g.
-                                                                                                                                                                            // Gitlab
+        // e.g. Gitlab
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, Set.of(), Set.of(group), false));
     }
 
     /**
@@ -872,8 +789,8 @@ public class UserService {
     public void removeUserFromGroup(User user, String group) {
         removeUserFromGroupInternal(user, group); // internal Artemis database
         artemisAuthenticationProvider.removeUserFromGroup(user, group); // e.g. JIRA
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, Set.of(group), Set.of(), false)); // e.g.
-                                                                                                                                                                            // Gitlab
+        // e.g. Gitlab
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, Set.of(group), Set.of(), false));
     }
 
     /**

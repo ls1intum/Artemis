@@ -1,8 +1,6 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.user;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -240,6 +238,21 @@ public class UserRetrievalService {
      * @return A list of all users that belong to the group
      */
     public List<User> findAllUsersInGroupWithAuthorities(String groupName) {
+        return userRepository.findAllInGroupWithAuthorities(groupName);
+    }
+
+    /**
+     * Finds all users that are part of the specified group, but are not contained in the collection of excluded users
+     *
+     * @param groupName     The group by which all users should get filtered
+     * @param excludedUsers The users that should get ignored/excluded
+     * @return A list of filtered users
+     */
+    public List<User> findAllUserInGroupAndNotIn(String groupName, Collection<User> excludedUsers) {
+        // For an empty list, we have to use another query, because Hibernate builds an invalid query with empty lists
+        if (!excludedUsers.isEmpty()) {
+            return userRepository.findAllInGroupContainingAndNotIn(groupName, new HashSet<>(excludedUsers));
+        }
         return userRepository.findAllInGroupWithAuthorities(groupName);
     }
 
