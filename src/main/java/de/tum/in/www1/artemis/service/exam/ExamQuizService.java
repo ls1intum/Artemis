@@ -32,17 +32,17 @@ public class ExamQuizService {
 
     static final Logger log = LoggerFactory.getLogger(ExamQuizService.class);
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
-    private final ResultRepository resultRepository;
-
-    private final SubmissionRepository submissionRepository;
-
     private final QuizExerciseService quizExerciseService;
 
     private final QuizStatisticService quizStatisticService;
 
     private final ResultService resultService;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final ResultRepository resultRepository;
+
+    private final SubmissionRepository submissionRepository;
 
     public ExamQuizService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
             QuizExerciseService quizExerciseService, QuizStatisticService quizStatisticService, ResultService resultService) {

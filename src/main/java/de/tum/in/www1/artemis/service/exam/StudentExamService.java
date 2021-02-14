@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.repository.RepositoryHelper.findStudentExamByIdElseThrow;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -57,6 +59,8 @@ public class StudentExamService {
 
     private final ExamQuizService examQuizService;
 
+    private final SubmissionVersionService submissionVersionService;
+
     private final StudentExamRepository studentExamRepository;
 
     private final QuizSubmissionRepository quizSubmissionRepository;
@@ -64,8 +68,6 @@ public class StudentExamService {
     private final TextSubmissionRepository textSubmissionRepository;
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
-
-    private final SubmissionVersionService submissionVersionService;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
@@ -103,7 +105,7 @@ public class StudentExamService {
     @NotNull
     public StudentExam findOne(Long studentExamId) {
         log.debug("Request to get student exam : {}", studentExamId);
-        return studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam with id \"" + studentExamId + "\" does not exist"));
+        return findStudentExamByIdElseThrow(studentExamRepository, studentExamId);
     }
 
     /**
@@ -400,20 +402,6 @@ public class StudentExamService {
     }
 
     /**
-     * Get one student exam by exercise and user
-     *
-     * @param exerciseId the id of an exam exercise
-     * @param userId     the id of the student taking the exam
-     * @return the student exam without associated entities
-     */
-    @NotNull
-    public StudentExam findOneByExerciseIdAndUserId(Long exerciseId, Long userId) {
-        log.debug("Request to get student exam with exercise {} for user {}", exerciseId, userId);
-        return studentExamRepository.findByExerciseIdAndUserId(exerciseId, userId)
-                .orElseThrow(() -> new EntityNotFoundException("Student exam for exercise " + exerciseId + " and user " + userId + " does not exist"));
-    }
-
-    /**
      * Get the maximal working time of all student exams for the exam with the given id.
      *
      * @param examId the id of the exam
@@ -490,7 +478,7 @@ public class StudentExamService {
      * @return number of generated Participations
      */
     public int startExercises(Long examId) {
-        var exam = examRepository.findWithStudentExamsExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        var exam = examRepository.findWithStudentExamsExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
         var studentExams = exam.getStudentExams();
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations)));

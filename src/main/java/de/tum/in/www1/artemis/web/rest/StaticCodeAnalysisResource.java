@@ -61,7 +61,7 @@ public class StaticCodeAnalysisResource {
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> getStaticCodeAnalysisCategories(@PathVariable Long exerciseId) {
         log.debug("REST request to get static code analysis categories for programming exercise {}", exerciseId);
 
-        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findOne(exerciseId);
 
         if (!Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
             return badRequest();
@@ -88,7 +88,7 @@ public class StaticCodeAnalysisResource {
             @RequestBody Set<StaticCodeAnalysisCategory> categories) {
         log.debug("REST request to update static code analysis categories for programming exercise {}", exerciseId);
 
-        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findOne(exerciseId);
 
         if (!Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
             return badRequest();
@@ -118,7 +118,7 @@ public class StaticCodeAnalysisResource {
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> resetStaticCodeAnalysisCategories(@PathVariable Long exerciseId) {
         log.debug("REST request to reset static code analysis categories for programming exercise {}", exerciseId);
 
-        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findOne(exerciseId);
 
         if (!Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
             return badRequest();

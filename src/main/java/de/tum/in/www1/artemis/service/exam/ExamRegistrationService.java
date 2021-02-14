@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
+import static de.tum.in.www1.artemis.repository.RepositoryHelper.findCourseByIdElseThrow;
 
 import java.util.*;
 
@@ -71,8 +72,8 @@ public class ExamRegistrationService {
      * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
     public List<StudentDTO> registerStudentsForExam(Long courseId, Long examId, List<StudentDTO> studentDTOs) {
-        var course = courseRepository.findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
-        var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        var course = findCourseByIdElseThrow(courseRepository, courseId);
+        var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         for (var studentDto : studentDTOs) {
             var registrationNumber = studentDto.getRegistrationNumber();
@@ -192,7 +193,7 @@ public class ExamRegistrationService {
      * @param student the user object that should be unregistered
      */
     public void unregisterStudentFromExam(Long examId, boolean deleteParticipationsAndSubmission, User student) {
-        var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
         exam.removeRegisteredUser(student);
 
         // Note: we intentionally do not remove the user from the course, because the student might just have "unregistered" from the exam, but should
@@ -230,7 +231,7 @@ public class ExamRegistrationService {
      * @param examId Id of the exam
      */
     public void addAllStudentsOfCourseToExam(Long courseId, Long examId) {
-        Course course = courseRepository.findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
+        Course course = findCourseByIdElseThrow(courseRepository, courseId);
         var students = userRetrievalService.getStudents(course);
         var examOpt = examRepository.findWithRegisteredUsersById(examId);
 

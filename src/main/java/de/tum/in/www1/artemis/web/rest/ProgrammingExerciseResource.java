@@ -955,7 +955,7 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportInstructorRepositoryForProgrammingExercise(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType)
             throws IOException {
-        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findOne(exerciseId);
 
         User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {

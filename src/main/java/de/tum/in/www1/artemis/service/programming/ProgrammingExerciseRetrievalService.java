@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.repository.RepositoryHelper.findProgrammingExerciseByIdElseThrow;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -70,9 +72,8 @@ public class ProgrammingExerciseRetrievalService {
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      */
-    public ProgrammingExercise findById(Long programmingExerciseId) {
-        return programmingExerciseRepository.findById(programmingExerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("Programming exercise not found with id " + programmingExerciseId));
+    public ProgrammingExercise findOne(Long programmingExerciseId) {
+        return findProgrammingExerciseByIdElseThrow(programmingExerciseRepository, programmingExerciseId);
     }
 
     /**
@@ -85,12 +86,7 @@ public class ProgrammingExerciseRetrievalService {
     public ProgrammingExercise findWithTemplateParticipationAndSolutionParticipationById(Long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
-        if (programmingExercise.isPresent()) {
-            return programmingExercise.get();
-        }
-        else {
-            throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
-        }
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 
     /**
@@ -102,12 +98,7 @@ public class ProgrammingExerciseRetrievalService {
      */
     public ProgrammingExercise findWithTemplateAndSolutionParticipationWithResultsById(Long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationLatestResultById(programmingExerciseId);
-        if (programmingExercise.isPresent()) {
-            return programmingExercise.get();
-        }
-        else {
-            throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
-        }
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 
     /**
@@ -119,12 +110,7 @@ public class ProgrammingExerciseRetrievalService {
      */
     public ProgrammingExercise findByIdWithEagerStudentParticipationsAndSubmissions(long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(programmingExerciseId);
-        if (programmingExercise.isPresent()) {
-            return programmingExercise.get();
-        }
-        else {
-            throw new EntityNotFoundException("programming exercise not found");
-        }
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 
     /**

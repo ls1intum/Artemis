@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.in.www1.artemis.repository.RepositoryHelper.findCourseByIdElseThrow;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 import static java.time.ZonedDateTime.now;
@@ -228,32 +229,28 @@ public class CourseResource {
         if (updatedCourse.getId() == null) {
             return createCourse(updatedCourse);
         }
-        Optional<Course> existingCourse = courseRepository.findById(updatedCourse.getId());
-        if (existingCourse.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        if (!Objects.equals(existingCourse.get().getShortName(), updatedCourse.getShortName())) {
+        var existingCourse = findCourseByIdElseThrow(courseRepository, updatedCourse.getId());
+        if (!Objects.equals(existingCourse.getShortName(), updatedCourse.getShortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", ENTITY_NAME, "shortNameCannotChange", true);
         }
 
         User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         // only allow admins or instructors of the existing course to change it
         // this is important, otherwise someone could put himself into the instructor group of the updated course
-        if (!authCheckService.isAtLeastInstructorInCourse(existingCourse.get(), user)) {
+        if (!authCheckService.isAtLeastInstructorInCourse(existingCourse, user)) {
             return forbidden();
         }
 
         if (authCheckService.isAdmin(user)) {
             // if an admin changes a group, we need to check that the changed group exists
             try {
-                if (!Objects.equals(existingCourse.get().getStudentGroupName(), updatedCourse.getStudentGroupName())) {
+                if (!Objects.equals(existingCourse.getStudentGroupName(), updatedCourse.getStudentGroupName())) {
                     checkIfGroupsExists(updatedCourse.getStudentGroupName());
                 }
-                if (!Objects.equals(existingCourse.get().getTeachingAssistantGroupName(), updatedCourse.getTeachingAssistantGroupName())) {
+                if (!Objects.equals(existingCourse.getTeachingAssistantGroupName(), updatedCourse.getTeachingAssistantGroupName())) {
                     checkIfGroupsExists(updatedCourse.getTeachingAssistantGroupName());
                 }
-                if (!Objects.equals(existingCourse.get().getInstructorGroupName(), updatedCourse.getInstructorGroupName())) {
+                if (!Objects.equals(existingCourse.getInstructorGroupName(), updatedCourse.getInstructorGroupName())) {
                     checkIfGroupsExists(updatedCourse.getInstructorGroupName());
                 }
             }
@@ -266,13 +263,13 @@ public class CourseResource {
             // this means the user must be an instructor, who has NOT Admin rights.
             // instructors are not allowed to change group names, because this would lead to security problems
 
-            if (!Objects.equals(existingCourse.get().getStudentGroupName(), updatedCourse.getStudentGroupName())) {
+            if (!Objects.equals(existingCourse.getStudentGroupName(), updatedCourse.getStudentGroupName())) {
                 throw new BadRequestAlertException("The student group name cannot be changed", ENTITY_NAME, "studentGroupNameCannotChange", true);
             }
-            if (!Objects.equals(existingCourse.get().getTeachingAssistantGroupName(), updatedCourse.getTeachingAssistantGroupName())) {
+            if (!Objects.equals(existingCourse.getTeachingAssistantGroupName(), updatedCourse.getTeachingAssistantGroupName())) {
                 throw new BadRequestAlertException("The teaching assistant group name cannot be changed", ENTITY_NAME, "teachingAssistantGroupNameCannotChange", true);
             }
-            if (!Objects.equals(existingCourse.get().getInstructorGroupName(), updatedCourse.getInstructorGroupName())) {
+            if (!Objects.equals(existingCourse.getInstructorGroupName(), updatedCourse.getInstructorGroupName())) {
                 throw new BadRequestAlertException("The instructor group name cannot be changed", ENTITY_NAME, "instructorGroupNameCannotChange", true);
             }
         }
@@ -285,8 +282,8 @@ public class CourseResource {
         // Based on the old instructors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors and TAs, so that the VCS user management service can determine which
         // users no longer have TA or instructor rights in the related exercise repositories.
-        final var oldInstructorGroup = existingCourse.get().getInstructorGroupName();
-        final var oldTeachingAssistantGroup = existingCourse.get().getTeachingAssistantGroupName();
+        final var oldInstructorGroup = existingCourse.getInstructorGroupName();
+        final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
         Course result = courseService.save(updatedCourse);
         vcsUserManagementService.ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldTeachingAssistantGroup));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedCourse.getTitle())).body(result);

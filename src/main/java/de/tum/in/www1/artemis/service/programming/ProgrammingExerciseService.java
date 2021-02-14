@@ -29,10 +29,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
@@ -377,7 +374,7 @@ public class ProgrammingExerciseService {
      * @param templateName         The name of the template
      * @param programmingExercise  the programming exercise
      * @param user                 The user that triggered the action (used as Git commit author)
-     * @throws Exception
+     * @throws Exception           An exception in case something went wrong
      */
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, @Nullable Resource[] projectTypeResources, String projectTypePrefix,
             String templateName, ProgrammingExercise programmingExercise, User user) throws Exception {
@@ -600,19 +597,13 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
 
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(updatedProgrammingExercise.getId());
-        if (programmingExercise.isPresent()) {
-            programmingExercise.get().setReleaseDate(updatedProgrammingExercise.getReleaseDate());
-            programmingExercise.get().setDueDate(updatedProgrammingExercise.getDueDate());
-            programmingExercise.get().setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
-            programmingExercise.get().setAssessmentType(updatedProgrammingExercise.getAssessmentType());
-            programmingExercise.get().setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
-        }
-        else {
-            throw new EntityNotFoundException("Programming exercise not found with id: " + updatedProgrammingExercise.getId());
-        }
-
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise.get());
+        var programmingExercise = RepositoryHelper.findProgrammingExerciseByIdElseThrow(programmingExerciseRepository, updatedProgrammingExercise.getId());
+        programmingExercise.setReleaseDate(updatedProgrammingExercise.getReleaseDate());
+        programmingExercise.setDueDate(updatedProgrammingExercise.getDueDate());
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+        programmingExercise.setAssessmentType(updatedProgrammingExercise.getAssessmentType());
+        programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
         }
@@ -631,12 +622,8 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement, @Nullable String notificationText)
             throws EntityNotFoundException, IllegalAccessException {
-        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
-        if (programmingExerciseOpt.isEmpty()) {
-            throw new EntityNotFoundException("Programming exercise not found with id: " + programmingExerciseId);
-        }
-        ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
         User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -736,8 +723,8 @@ public class ProgrammingExerciseService {
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
         // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .get();
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
         final var templateRepositoryUrlAsUrl = programmingExercise.getVcsTemplateRepositoryUrl();
         final var solutionRepositoryUrlAsUrl = programmingExercise.getVcsSolutionRepositoryUrl();
         final var testRepositoryUrlAsUrl = programmingExercise.getVcsTestRepositoryUrl();

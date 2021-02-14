@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC;
+import static de.tum.in.www1.artemis.repository.RepositoryHelper.findCourseByIdElseThrow;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -216,7 +217,7 @@ public class CourseService {
     @NotNull
     public Course findOne(Long courseId) {
         log.debug("Request to get Course : {}", courseId);
-        return courseRepository.findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
+        return findCourseByIdElseThrow(courseRepository, courseId);
     }
 
     /**

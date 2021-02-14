@@ -392,7 +392,7 @@ public class StudentExamResource {
     public ResponseEntity<Void> assessUnsubmittedStudentExamsAndEmptySubmissions(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to automatically assess the not submitted student exams of the exam with id {}", examId);
 
-        final var exam = examRepository.findById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        final var exam = examRepository.findById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, exam);
         if (courseAndExamAccessFailure.isPresent()) {

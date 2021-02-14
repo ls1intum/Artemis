@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.repository.RepositoryHelper.findExamByIdElseThrow;
+
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -106,7 +108,7 @@ public class ExamService {
     @NotNull
     public Exam findOne(Long examId) {
         log.debug("Request to get exam : {}", examId);
-        return examRepository.findById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        return findExamByIdElseThrow(examRepository, examId);
     }
 
     /**
@@ -118,7 +120,7 @@ public class ExamService {
     @NotNull
     public Exam findOneWithExerciseGroups(Long examId) {
         log.debug("Request to get exam with exercise groups : {}", examId);
-        return examRepository.findWithExerciseGroupsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        return examRepository.findWithExerciseGroupsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
     /**
@@ -131,7 +133,7 @@ public class ExamService {
     @NotNull
     public Exam findOneWithExerciseGroupsAndExercises(Long examId) {
         log.debug("Request to get exam with exercise groups : {}", examId);
-        Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             for (Exercise exercise : exerciseGroup.getExercises()) {
                 if (exercise instanceof ProgrammingExercise) {
@@ -158,7 +160,7 @@ public class ExamService {
     @NotNull
     public Exam findOneWithRegisteredUsers(Long examId) {
         log.debug("Request to get exam with registered users : {}", examId);
-        return examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        return examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
     /**
@@ -170,8 +172,7 @@ public class ExamService {
     @NotNull
     public Exam findOneWithRegisteredUsersAndExerciseGroupsAndExercises(Long examId) {
         log.debug("Request to get exam with registered users and registered students : {}", examId);
-        return examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId)
-                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        return examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
     /**
@@ -255,7 +256,7 @@ public class ExamService {
      * @return return ExamScoresDTO with students, scores and exerciseGroups for exam
      */
     public ExamScoresDTO getExamScore(Long examId) {
-        Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         List<StudentParticipation> studentParticipations = participationService.findByExamIdWithSubmissionRelevantResult(examId); // without test run participations
 
@@ -660,7 +661,7 @@ public class ExamService {
      * @return number of evaluated exercises
      */
     public Integer evaluateQuizExercises(Long examId) {
-        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         // Collect all quiz exercises for the given exam
         Set<QuizExercise> quizExercises = new HashSet<>();
@@ -688,7 +689,7 @@ public class ExamService {
      * @return number of exercises for which the repositories are unlocked
      */
     public Integer unlockAllRepositories(Long examId) {
-        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         // Collect all programming exercises for the given exam
         Set<ProgrammingExercise> programmingExercises = new HashSet<>();
@@ -715,7 +716,7 @@ public class ExamService {
      * @return number of exercises for which the repositories are locked
      */
     public Integer lockAllRepositories(Long examId) {
-        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         // Collect all programming exercises for the given exam
         Set<ProgrammingExercise> programmingExercises = new HashSet<>();

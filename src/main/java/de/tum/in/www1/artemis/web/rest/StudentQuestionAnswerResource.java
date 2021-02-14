@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.repository.RepositoryHelper.findCourseByIdElseThrow;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
@@ -84,11 +85,8 @@ public class StudentQuestionAnswerResource {
         if (studentQuestionAnswer.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestionAnswer cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        Optional<Course> optionalCourse = courseRepository.findById(courseId);
-        if (optionalCourse.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        if (!this.authorizationCheckService.isAtLeastStudentInCourse(optionalCourse.get(), user)) {
+        var course = findCourseByIdElseThrow(courseRepository, courseId);
+        if (!this.authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
         Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(studentQuestionAnswer.getQuestion().getId());
@@ -99,7 +97,7 @@ public class StudentQuestionAnswerResource {
             return forbidden();
         }
         // answer to approved if written by an instructor
-        studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(optionalCourse.get(), user));
+        studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
         if (result.getQuestion().getExercise() != null) {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewAnswerForExercise(result);
@@ -129,10 +127,7 @@ public class StudentQuestionAnswerResource {
         if (studentQuestionAnswer.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        Optional<Course> optionalCourse = courseRepository.findById(courseId);
-        if (optionalCourse.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        findCourseByIdElseThrow(courseRepository, courseId);
         Optional<StudentQuestionAnswer> optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findById(studentQuestionAnswer.getId());
         if (optionalStudentQuestionAnswer.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -161,11 +156,8 @@ public class StudentQuestionAnswerResource {
     public ResponseEntity<StudentQuestionAnswer> getStudentQuestionAnswer(@PathVariable Long courseId, @PathVariable Long id) {
         log.debug("REST request to get StudentQuestionAnswer : {}", id);
         User user = this.userRetrievalService.getUserWithGroupsAndAuthorities();
-        Optional<Course> optionalCourse = courseRepository.findById(courseId);
-        if (optionalCourse.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        if (!this.authorizationCheckService.isAtLeastStudentInCourse(optionalCourse.get(), user)) {
+        var course = findCourseByIdElseThrow(courseRepository, courseId);
+        if (!this.authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
         Optional<StudentQuestionAnswer> questionAnswer = studentQuestionAnswerRepository.findById(id);
@@ -193,10 +185,7 @@ public class StudentQuestionAnswerResource {
         if (optionalStudentQuestionAnswer.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        Optional<Course> optionalCourse = courseRepository.findById(courseId);
-        if (optionalCourse.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        findCourseByIdElseThrow(courseRepository, courseId);
         StudentQuestionAnswer studentQuestionAnswer = optionalStudentQuestionAnswer.get();
         Course course = studentQuestionAnswer.getQuestion().getCourse();
         String entity = "";

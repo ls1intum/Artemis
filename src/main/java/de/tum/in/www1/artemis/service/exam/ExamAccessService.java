@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.repository.RepositoryHelper.findCourseByIdElseThrow;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
@@ -19,13 +20,16 @@ import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service implementation to check exam access.
  */
 @Service
 public class ExamAccessService {
+
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final UserRetrievalService userRetrievalService;
 
     private final ExamRepository examRepository;
 
@@ -34,10 +38,6 @@ public class ExamAccessService {
     private final StudentExamRepository studentExamRepository;
 
     private final CourseRepository courseRepository;
-
-    private final AuthorizationCheckService authorizationCheckService;
-
-    private final UserRetrievalService userRetrievalService;
 
     public ExamAccessService(ExamRepository examRepository, ExerciseGroupRepository exerciseGroupRepository, StudentExamRepository studentExamRepository,
             AuthorizationCheckService authorizationCheckService, UserRetrievalService userRetrievalService, CourseRepository courseRepository) {
@@ -60,7 +60,7 @@ public class ExamAccessService {
         User currentUser = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         // Check that the current user is at least student in the course.
-        Course course = courseRepository.findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
+        Course course = findCourseByIdElseThrow(courseRepository, courseId);
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, currentUser)) {
             return forbidden();
         }
@@ -99,7 +99,7 @@ public class ExamAccessService {
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <T> Optional<ResponseEntity<T>> checkCourseAccessForInstructor(Long courseId) {
-        Course course = courseRepository.findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
+        Course course = findCourseByIdElseThrow(courseRepository, courseId);
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
             return Optional.of(forbidden());
         }
@@ -114,7 +114,7 @@ public class ExamAccessService {
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <T> Optional<ResponseEntity<T>> checkCourseAccessForTeachingAssistant(Long courseId) {
-        Course course = courseRepository.findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
+        Course course = findCourseByIdElseThrow(courseRepository, courseId);
         if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return Optional.of(forbidden());
         }

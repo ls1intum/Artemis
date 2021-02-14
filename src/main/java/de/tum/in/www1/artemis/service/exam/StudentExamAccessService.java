@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.repository.RepositoryHelper.findCourseByIdElseThrow;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
@@ -12,10 +13,10 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 /**
@@ -24,19 +25,19 @@ import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 @Service
 public class StudentExamAccessService {
 
-    private final CourseService courseService;
-
     private final UserRetrievalService userRetrievalService;
 
     private final AuthorizationCheckService authorizationCheckService;
+
+    private final CourseRepository courseRepository;
 
     private final ExamRepository examRepository;
 
     private final StudentExamRepository studentExamRepository;
 
-    public StudentExamAccessService(CourseService courseService, UserRetrievalService userRetrievalService, AuthorizationCheckService authorizationCheckService,
+    public StudentExamAccessService(CourseRepository courseRepository, UserRetrievalService userRetrievalService, AuthorizationCheckService authorizationCheckService,
             ExamRepository examRepository, StudentExamRepository studentExamRepository) {
-        this.courseService = courseService;
+        this.courseRepository = courseRepository;
         this.userRetrievalService = userRetrievalService;
         this.authorizationCheckService = authorizationCheckService;
         this.examRepository = examRepository;
@@ -119,7 +120,7 @@ public class StudentExamAccessService {
             return Optional.of(conflict());
         }
 
-        Course course = courseService.findOne(courseId);
+        Course course = findCourseByIdElseThrow(courseRepository, courseId);
         if (isTestRun) {
             // Check that the current user is at least instructor in the course.
             if (!authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {

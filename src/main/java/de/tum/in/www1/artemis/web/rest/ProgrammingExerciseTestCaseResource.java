@@ -126,7 +126,7 @@ public class ProgrammingExerciseTestCaseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ProgrammingExerciseTestCase>> resetTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the test case weights of exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findOne(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
