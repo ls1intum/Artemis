@@ -106,30 +106,6 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Fetch Exercise by id.
-     * @param exerciseId
-     * @return Resolve Promise once call is complete.
-     * @throws Error if exercise id is of other type.
-     */
-    private getExercise(exerciseId: number): Promise<void> {
-        return new Promise((resolve) => {
-            this.exerciseService
-                .find(exerciseId)
-                .pipe(
-                    map((exerciseResponse) => {
-                        const exercise = exerciseResponse.body!;
-                        FileUploadAssessmentDashboardComponent.verifyFileUploadExercise(exercise);
-                        return <FileUploadExercise>exercise;
-                    }),
-                )
-                .subscribe((exercise: FileUploadExercise) => {
-                    this.exercise = exercise;
-                    resolve();
-                });
-        });
-    }
-
-    /**
      * Cancel the current assessment and reload the submissions to reflect the change.
      */
     cancelAssessment(submission: Submission) {
