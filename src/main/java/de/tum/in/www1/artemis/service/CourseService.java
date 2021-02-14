@@ -48,33 +48,33 @@ public class CourseService {
 
     private final Logger log = LoggerFactory.getLogger(CourseService.class);
 
-    private final CourseRepository courseRepository;
-
     private final ExerciseService exerciseService;
 
     private final AuthorizationCheckService authCheckService;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    private final UserRepository userRepository;
-
     private final LectureService lectureService;
 
     private final NotificationService notificationService;
 
-    private ExamService examService;
+    private final UserService userService;
 
     private final ExerciseGroupService exerciseGroupService;
 
-    private final AuditEventRepository auditEventRepository;
-
-    private final UserService userService;
-
-    private final LearningGoalRepository learningGoalRepository;
-
     private CourseExportService courseExportService;
 
+    private ExamService examService;
+
     private final GroupNotificationService groupNotificationService;
+
+    private final CourseRepository courseRepository;
+
+    private final UserRepository userRepository;
+
+    private final AuditEventRepository auditEventRepository;
+
+    private final LearningGoalRepository learningGoalRepository;
 
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
@@ -261,11 +261,11 @@ public class CourseService {
      * <ul>
      *     <li>The Course</li>
      *     <li>All Exercises including:
-     *      Submissions, Participations, Results, Repositories and Buildplans, see {@link ExerciseService#delete}</li>
+     *      submissions, participations, results, repositories and build plans, see {@link ExerciseService#delete}</li>
      *     <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
      *     <li>All GroupNotifications of the course, see {@link NotificationService#deleteGroupNotification}</li>
      *     <li>All default groups created by Artemis, see {@link ArtemisAuthenticationProvider#deleteGroup}</li>
-     *     <li>All Exams, see {@link ExamService#deleteById}</li>
+     *     <li>All Exams, see {@link ExamService#delete}</li>
      * </ul>
      *
      * @param course the course to be deleted
@@ -379,7 +379,6 @@ public class CourseService {
      */
     public void registerUserForCourse(User user, Course course) {
         userService.addUserToGroup(user, course.getStudentGroupName());
-
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
@@ -460,5 +459,13 @@ public class CourseService {
         });
 
         log.info("The course {} has been cleaned up!", courseId);
+    }
+
+    public void addUserToGroup(User user, String group) {
+        userService.addUserToGroup(user, group);
+    }
+
+    public void removeUserFromGroup(User user, String group) {
+        userService.removeUserFromGroup(user, group);
     }
 }

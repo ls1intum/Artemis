@@ -47,7 +47,6 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
-import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
@@ -75,7 +74,7 @@ public class CourseResource {
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
     private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
 
-    private final UserService userService;
+    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final UserRetrievalService userRetrievalService;
 
@@ -85,17 +84,9 @@ public class CourseResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final CourseRepository courseRepository;
-
     private final ExerciseService exerciseService;
 
-    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
-
     private final TutorParticipationService tutorParticipationService;
-
-    private final ComplaintRepository complaintRepository;
-
-    private final ComplaintResponseRepository complaintResponseRepository;
 
     private final SubmissionService submissionService;
 
@@ -109,19 +100,24 @@ public class CourseResource {
 
     private final AssessmentDashboardService assessmentDashboardService;
 
-    private final AuditEventRepository auditEventRepository;
-
     private final Optional<VcsUserManagementService> vcsUserManagementService;
 
     private final Environment env;
 
-    public CourseResource(UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
+    private final CourseRepository courseRepository;
+
+    private final ComplaintRepository complaintRepository;
+
+    private final ComplaintResponseRepository complaintResponseRepository;
+
+    private final AuditEventRepository auditEventRepository;
+
+    public CourseResource(UserRetrievalService userRetrievalService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
             ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
-            AssessmentDashboardService assessmentDashboardService, UserRetrievalService userRetrievalService) {
-        this.userService = userService;
+            AssessmentDashboardService assessmentDashboardService) {
         this.courseService = courseService;
         this.participationService = participationService;
         this.courseRepository = courseRepository;
@@ -1057,7 +1053,7 @@ public class CourseResource {
             if (userToAddToGroup.isEmpty()) {
                 return notFound();
             }
-            userService.addUserToGroup(userToAddToGroup.get(), group);
+            courseService.addUserToGroup(userToAddToGroup.get(), group);
             return ResponseEntity.ok().body(null);
         }
         else {
@@ -1126,7 +1122,7 @@ public class CourseResource {
             if (userToRemoveFromGroup.isEmpty()) {
                 return notFound();
             }
-            userService.removeUserFromGroup(userToRemoveFromGroup.get(), group);
+            courseService.removeUserFromGroup(userToRemoveFromGroup.get(), group);
             return ResponseEntity.ok().body(null);
         }
         else {
