@@ -143,8 +143,6 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         isAtLeastInstructorInCourseStub.returns(true);
         const findExerciseStub = stub(exerciseService, 'find');
         findExerciseStub.returns(of(new HttpResponse({ body: fileUploadExercise2, headers: new HttpHeaders() })));
-        const spy = spyOn<any>(component, 'getExercise');
-        spy.and.callThrough();
         component.exercise = fileUploadExercise2;
         // call
         component.ngOnInit();
