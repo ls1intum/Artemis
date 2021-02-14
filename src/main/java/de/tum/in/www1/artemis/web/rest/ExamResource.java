@@ -489,31 +489,6 @@ public class ExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/student-exams/start-exercises : Generate the participation objects
-     * for all the student exams belonging to the exam
-     *
-     * @param courseId the course to which the exam belongs to
-     * @param examId   the exam to which the student exam belongs to
-     * @return ResponsEntity containing the list of generated participations
-     */
-    @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/start-exercises")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Integer> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
-        long start = System.nanoTime();
-        log.info("REST request to start exercises for student exams of exam {}", examId);
-
-        Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
-        if (courseAndExamAccessFailure.isPresent())
-            return courseAndExamAccessFailure.get();
-
-        int numberOfGeneratedParticipations = examService.startExercises(examId);
-
-        log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
-
-        return ResponseEntity.ok().body(numberOfGeneratedParticipations);
-    }
-
-    /**
      * POST /courses/{courseId}/exams/{examId}/student-exams/evaluate-quiz-exercises : Evaluate the quiz exercises of the exam
      *
      * @param courseId the course to which the exam belongs to

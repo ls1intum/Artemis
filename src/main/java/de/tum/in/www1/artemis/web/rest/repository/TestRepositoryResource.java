@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
@@ -39,31 +40,28 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
 public class TestRepositoryResource extends RepositoryResource {
 
-    private final ExerciseService exerciseService;
-
     public TestRepositoryResource(UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService, GitService gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ExerciseService exerciseService,
-            Optional<VersionControlService> versionControlService, ProgrammingExerciseService programmingExerciseService) {
-        super(userRetrievalService, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseService);
-        this.exerciseService = exerciseService;
+            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
+            ProgrammingExerciseRetrievalService programmingExerciseRetrievalService) {
+        super(userRetrievalService, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRetrievalService);
     }
 
     @Override
     Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws IllegalAccessException, InterruptedException, GitAPIException {
-        final var exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
+        final var exercise = (ProgrammingExercise) programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         final var repoUrl = exercise.getVcsTestRepositoryUrl();
         return repositoryService.checkoutRepositoryByName(exercise, repoUrl, pullOnGet);
     }
 
     @Override
     VcsRepositoryUrl getRepositoryUrl(Long exerciseId) {
-        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
+        ProgrammingExercise exercise = (ProgrammingExercise) programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         return exercise.getVcsTestRepositoryUrl();
     }
 
     @Override
     boolean canAccessRepository(Long exerciseId) {
-        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
+        ProgrammingExercise exercise = (ProgrammingExercise) programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         return authCheckService.isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), userRetrievalService.getUserWithGroupsAndAuthorities());
     }
 
@@ -145,7 +143,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @PutMapping("/test-repository/{exerciseId}/files")
     public ResponseEntity<Map<String, String>> updateTestFiles(@PathVariable("exerciseId") Long exerciseId, @RequestBody List<FileSubmission> submissions,
             @RequestParam Boolean commit, Principal principal) {
-        ProgrammingExercise exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
 
         if (versionControlService.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "VCSNotPresent");

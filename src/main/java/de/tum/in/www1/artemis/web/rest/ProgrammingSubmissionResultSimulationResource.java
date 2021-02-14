@@ -24,6 +24,9 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionResultSimulationService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -51,7 +54,7 @@ public class ProgrammingSubmissionResultSimulationResource {
 
     private final WebsocketMessagingService messagingService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
 
     private final ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService;
 
@@ -60,14 +63,14 @@ public class ProgrammingSubmissionResultSimulationResource {
     private final AuthorizationCheckService authCheckService;
 
     public ProgrammingSubmissionResultSimulationResource(ProgrammingSubmissionService programmingSubmissionService, UserRetrievalService userRetrievalService,
-            ParticipationService participationService, WebsocketMessagingService messagingService, ProgrammingExerciseService programmingExerciseService,
+            ParticipationService participationService, WebsocketMessagingService messagingService, ProgrammingExerciseRetrievalService programmingExerciseRetrievalService,
             ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.userRetrievalService = userRetrievalService;
         this.participationService = participationService;
         this.messagingService = messagingService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
         this.programmingSubmissionResultSimulationService = programmingSubmissionResultSimulationService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -120,7 +123,7 @@ public class ProgrammingSubmissionResultSimulationResource {
         log.debug("Received result notify (NEW)");
         User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Participant participant = user;
-        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
         Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise, participant);
 
         if (optionalStudentParticipation.isEmpty()) {

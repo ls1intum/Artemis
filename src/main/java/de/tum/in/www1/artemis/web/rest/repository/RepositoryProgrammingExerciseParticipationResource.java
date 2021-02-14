@@ -29,6 +29,8 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
@@ -50,9 +52,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     public RepositoryProgrammingExerciseParticipationResource(UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
-            ProgrammingExerciseParticipationService participationService, ProgrammingExerciseService programmingExerciseService, ExamSubmissionService examSubmissionService,
-            BuildLogEntryService buildLogService) {
-        super(userRetrievalService, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseService);
+            ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRetrievalService programmingExerciseRetrievalService,
+            ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService) {
+        super(userRetrievalService, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRetrievalService);
         this.participationService = participationService;
         this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
@@ -72,7 +74,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalAccessException();
         }
         // Error case 3: The user's participation repository is locked.
-        if (repositoryAction == RepositoryActionType.WRITE && programmingExerciseService.isParticipationRepositoryLocked(programmingParticipation)) {
+        if (repositoryAction == RepositoryActionType.WRITE && programmingExerciseRetrievalService.isParticipationRepositoryLocked(programmingParticipation)) {
             throw new IllegalAccessException();
         }
         // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
@@ -126,7 +128,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
             var participation = participationService.findParticipation(participationId);
-            var exercise = super.programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(participation.getExercise().getId());
+            var exercise = programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(participation.getExercise().getId());
 
             Repository templateRepository = getRepository(exercise.getTemplateParticipation().getId(), RepositoryActionType.READ, true);
             var filesWithInformationAboutChange = super.repositoryService.getFilesWithInformationAboutChange(repository, templateRepository);
@@ -219,7 +221,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
         // User must have the necessary permissions to update a file.
         // When the buildAndTestAfterDueDate is set, the student can't change the repository content anymore after the due date.
-        boolean repositoryIsLocked = programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseParticipation) participation);
+        boolean repositoryIsLocked = programmingExerciseRetrievalService.isParticipationRepositoryLocked((ProgrammingExerciseParticipation) participation);
         if (repositoryIsLocked || !participationService.canAccessParticipation(programmingExerciseParticipation, principal)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.programming;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,16 +27,16 @@ public class ProgrammingExerciseTestCaseService {
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
     private final CustomAuditEventRepository auditEventRepository;
 
-    public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseService programmingExerciseService,
+    public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseRetrievalService programmingExerciseRetrievalService,
             ProgrammingSubmissionService programmingSubmissionService, CustomAuditEventRepository auditEventRepository) {
         this.testCaseRepository = testCaseRepository;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.auditEventRepository = auditEventRepository;
     }
@@ -72,7 +72,7 @@ public class ProgrammingExerciseTestCaseService {
      */
     public Set<ProgrammingExerciseTestCase> update(Long exerciseId, Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS)
             throws EntityNotFoundException, IllegalAccessException {
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTestCasesById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findWithTestCasesById(exerciseId);
         Set<ProgrammingExerciseTestCase> existingTestCases = programmingExercise.getTestCases();
 
         Set<ProgrammingExerciseTestCase> updatedTests = new HashSet<>();

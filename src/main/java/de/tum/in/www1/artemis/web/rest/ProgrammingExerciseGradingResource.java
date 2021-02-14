@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 
@@ -32,7 +34,7 @@ public class ProgrammingExerciseGradingResource {
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -40,10 +42,11 @@ public class ProgrammingExerciseGradingResource {
 
     private final ResultRepository resultRepository;
 
-    public ProgrammingExerciseGradingResource(ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingExerciseService programmingExerciseService,
-            AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService, ResultRepository resultRepository) {
+    public ProgrammingExerciseGradingResource(ProgrammingExerciseGradingService programmingExerciseGradingService,
+            ProgrammingExerciseRetrievalService programmingExerciseRetrievalService, AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService,
+            ResultRepository resultRepository) {
         this.programmingExerciseGradingService = programmingExerciseGradingService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
         this.authCheckService = authCheckService;
         this.userRetrievalService = userRetrievalService;
         this.resultRepository = resultRepository;
@@ -59,7 +62,7 @@ public class ProgrammingExerciseGradingResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Integer> reEvaluateGradedResults(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the weights of exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findWithTemplateAndSolutionParticipationWithResultsById(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
@@ -84,7 +87,7 @@ public class ProgrammingExerciseGradingResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExerciseGradingStatisticsDTO> getGradingStatistics(@PathVariable Long exerciseId) {
         log.debug("REST request to get test case statistics for programming exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
 
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userRetrievalService.getUserWithGroupsAndAuthorities();

@@ -25,6 +25,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -47,6 +49,8 @@ public class ExerciseService {
     private final AuthorizationCheckService authCheckService;
 
     private final ProgrammingExerciseService programmingExerciseService;
+
+    private final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
 
     private final QuizExerciseService quizExerciseService;
 
@@ -71,7 +75,8 @@ public class ExerciseService {
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
-            AuditEventRepository auditEventRepository, TeamRepository teamRepository, StudentExamRepository studentExamRepository, ExamRepository examRepository) {
+            AuditEventRepository auditEventRepository, TeamRepository teamRepository, StudentExamRepository studentExamRepository, ExamRepository examRepository,
+            ProgrammingExerciseRetrievalService programmingExerciseRetrievalService) {
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
         this.participationService = participationService;
@@ -85,6 +90,7 @@ public class ExerciseService {
         this.quizScheduleService = quizScheduleService;
         this.studentExamRepository = studentExamRepository;
         this.exerciseUnitRepository = exerciseUnitRepository;
+        this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
     }
 
     /**
@@ -209,7 +215,7 @@ public class ExerciseService {
         }
         else if (exercise instanceof ProgrammingExercise) {
             // eagerly load template participation and solution participation
-            exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+            exercise = programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         }
         return exercise;
     }

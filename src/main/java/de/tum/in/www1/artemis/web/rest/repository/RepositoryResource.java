@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
@@ -57,19 +58,19 @@ public abstract class RepositoryResource {
 
     protected final RepositoryService repositoryService;
 
-    protected final ProgrammingExerciseService programmingExerciseService;
+    protected final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
 
     protected final Optional<VersionControlService> versionControlService;
 
     public RepositoryResource(UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseService programmingExerciseService) {
+            ProgrammingExerciseRetrievalService programmingExerciseRetrievalService) {
         this.userRetrievalService = userRetrievalService;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.repositoryService = repositoryService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
         this.versionControlService = versionControlService;
     }
 

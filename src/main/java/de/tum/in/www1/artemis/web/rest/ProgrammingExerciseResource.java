@@ -48,10 +48,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
-import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
-import de.tum.in.www1.artemis.service.programming.TemplateUpgradePolicy;
-import de.tum.in.www1.artemis.service.programming.TemplateUpgradeService;
+import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -91,6 +88,8 @@ public class ProgrammingExerciseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
+
     private final ProgrammingExerciseImportService programmingExerciseImportService;
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
@@ -128,7 +127,8 @@ public class ProgrammingExerciseResource {
             Optional<VersionControlService> versionControlService, ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService,
             StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService,
-            GradingCriterionService gradingCriterionService, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy) {
+            GradingCriterionService gradingCriterionService, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
+            ProgrammingExerciseRetrievalService programmingExerciseRetrievalService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRetrievalService = userRetrievalService;
         this.courseService = courseService;
@@ -145,6 +145,7 @@ public class ProgrammingExerciseResource {
         this.gradingCriterionService = gradingCriterionService;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.templateUpgradePolicy = templateUpgradePolicy;
+        this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
     }
 
     /**
@@ -954,7 +955,7 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportInstructorRepositoryForProgrammingExercise(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType)
             throws IOException {
-        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findById(exerciseId);
 
         User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
@@ -990,7 +991,7 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
         User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
@@ -1040,7 +1041,7 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
             return forbidden();

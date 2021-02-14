@@ -40,8 +40,8 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
@@ -61,7 +61,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     @Autowired
-    ProgrammingExerciseService programmingExerciseService;
+    ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -142,7 +142,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         Files.createDirectory(templateFolderPath).toFile();
 
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
+        programmingExercise = programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(), true);
@@ -270,7 +270,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         Files.createDirectory(solutionFolderPath).toFile();
 
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
+        programmingExercise = programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(programmingExercise.getSolutionParticipation().getVcsRepositoryUrl(), true);
@@ -744,7 +744,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
 
         assertThat(((ProgrammingExercise) participation.getExercise()).getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
-        assertThat(programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseStudentParticipation) participation)).isFalse();
+        assertThat(programmingExerciseRetrievalService.isParticipationRepositoryLocked((ProgrammingExerciseStudentParticipation) participation)).isFalse();
     }
 
     @Test
@@ -769,7 +769,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
                 programmingExercise.getProjectKey(), participation.getStudents());
 
         programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
-        assertThat(programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseStudentParticipation) participation)).isTrue();
+        assertThat(programmingExerciseRetrievalService.isParticipationRepositoryLocked((ProgrammingExerciseStudentParticipation) participation)).isTrue();
     }
 
     @Test
@@ -785,7 +785,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     }
 
     private List<FileSubmission> getFileSubmissions(String fileContent) {
-        List<FileSubmission> fileSubmissions = new ArrayList();
+        List<FileSubmission> fileSubmissions = new ArrayList<>();
         FileSubmission fileSubmission = new FileSubmission();
         fileSubmission.setFileName(currentLocalFileName);
         fileSubmission.setFileContent(fileContent);
