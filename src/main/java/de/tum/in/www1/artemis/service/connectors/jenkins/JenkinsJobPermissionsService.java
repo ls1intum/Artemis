@@ -47,6 +47,9 @@ public class JenkinsJobPermissionsService {
      * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
      */
     public void assignUserTeachingAssistantPermissionsForJob(String userLogin, String jobName) throws IOException {
+        // Revoke previously-assigned permissions
+        removePermissionsFromUserOfJob(userLogin, jobName, List.of(JenkinsJobPermission.values()));
+        // Assign read-only permissions.
         var permissions = List.of(JenkinsJobPermission.JOB_READ, JenkinsJobPermission.JOB_BUILD, JenkinsJobPermission.JOB_CANCEL, JenkinsJobPermission.RUN_UPDATE);
         addPermissionsForUserToJob(userLogin, jobName, permissions);
     }
