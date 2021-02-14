@@ -1,0 +1,11 @@
+{
+    "artemisApp": {
+        "exercise-scores-chart": {
+            "yourScoreLabel": "Dein Ergebnis",
+            "averageScoreLabel": "Durchschnittliches Ergebnis",
+            "maximumScoreLabel": "Bestes Ergebnis",
+            "yAxis": "Ergebnis (%)",
+            "xAxis": "Aufgaben"
+        }
+    }
+}

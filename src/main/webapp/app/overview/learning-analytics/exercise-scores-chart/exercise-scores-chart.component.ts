@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, Input, ViewChild } from '@angular/core';
 import * as Chart from 'chart.js';
-import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
+import { ChartDataSets, ChartOptions, ChartPoint, ChartType } from 'chart.js';
 import { BaseChartDirective, Color, Label } from 'ng2-charts';
 import { ExerciseScoresDTO, LearningAnalyticsService } from 'app/overview/learning-analytics/learning-analytics.service';
 import { JhiAlertService } from 'ng-jhipster';
@@ -9,6 +9,7 @@ import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import * as _ from 'lodash';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-exercise-scores-chart',
@@ -30,7 +31,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
         {
             fill: false,
             data: [],
-            label: 'Your Score',
+            label: this.translateService.instant('artemisApp.exercise-scores-chart.yourScoreLabel'),
             pointRadius: 8,
             pointStyle: 'circle',
             borderWidth: 5,
@@ -39,7 +40,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
         {
             fill: false,
             data: [],
-            label: 'Average Score',
+            label: this.translateService.instant('artemisApp.exercise-scores-chart.averageScoreLabel'),
             pointRadius: 8,
             pointStyle: 'rect',
             borderWidth: 5,
@@ -49,7 +50,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
         {
             fill: false,
             data: [],
-            label: 'Maximum Score',
+            label: this.translateService.instant('artemisApp.exercise-scores-chart.maximumScoreLabel'),
             pointRadius: 8,
             pointStyle: 'triangle',
             borderWidth: 5,
@@ -59,13 +60,29 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     ];
     public lineChartLabels: Label[] = this.exerciseScores.map((exerciseScoreDTO) => exerciseScoreDTO.exercise.title!);
     public lineChartOptions: ChartOptions = {
+        tooltips: {
+            callbacks: {
+                label(tooltipItem, data) {
+                    let label = data.datasets![tooltipItem.datasetIndex!].label || '';
+
+                    if (label) {
+                        label += ': ';
+                    }
+                    label += Math.round((tooltipItem.yLabel as number) * 100) / 100;
+                    return label;
+                },
+                footer(tooltipItem, data) {
+                    const dataset = data.datasets![tooltipItem[0].datasetIndex!].data![tooltipItem[0].index!];
+                    const exercise = (dataset as any).exercise;
+                    // damit translate funktioniert muss ich die strings schon im objekt speichern
+                    return [`Exercise Type: ${exercise.type}`];
+                },
+            },
+        },
         responsive: true,
         maintainAspectRatio: false,
         title: {
-            display: true,
-            text: 'Scores',
-            position: 'top',
-            fontSize: 20,
+            display: false,
         },
         legend: {
             position: 'bottom',
@@ -75,7 +92,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
                 {
                     scaleLabel: {
                         display: true,
-                        labelString: 'Score (%)',
+                        labelString: this.translateService.instant('artemisApp.exercise-scores-chart.yAxis'),
                         fontSize: 12,
                     },
                     ticks: {
@@ -91,7 +108,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
                 {
                     scaleLabel: {
                         display: true,
-                        labelString: 'Exercises',
+                        labelString: this.translateService.instant('artemisApp.exercise-scores-chart.xAxis'),
                         fontSize: 12,
                     },
                     ticks: {
@@ -128,7 +145,12 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     public lineChartType: ChartType = 'line';
     public lineChartPlugins = [];
 
-    constructor(private activatedRoute: ActivatedRoute, private alertService: JhiAlertService, private learningAnalyticsService: LearningAnalyticsService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private alertService: JhiAlertService,
+        private learningAnalyticsService: LearningAnalyticsService,
+        private translateService: TranslateService,
+    ) {}
 
     ngAfterViewInit() {
         this.chartInstance = this.chartDirective.chart;
@@ -163,15 +185,25 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
         this.addData(this.chartInstance, sortedExerciseScores);
     }
 
-    private addData(chart: Chart, exerciseScoresDTOS: ExerciseScoresDTO[]) {
-        for (const exerciseScoreDTO of exerciseScoresDTOS) {
+    private addData(chart: Chart, exerciseScoresDTOs: ExerciseScoresDTO[]) {
+        for (const exerciseScoreDTO of exerciseScoresDTOs) {
             chart.data.labels!.push(exerciseScoreDTO.exercise.title!);
-            chart.data.datasets![0].data!.push(exerciseScoreDTO.scoreOfStudent);
-            chart.data.datasets![1].data!.push(exerciseScoreDTO.averageScoreAchieved);
-            chart.data.datasets![2].data!.push(exerciseScoreDTO.maxScoreAchieved);
+            (chart.data.datasets![0].data as ChartPoint[])!.push({
+                y: exerciseScoreDTO.scoreOfStudent,
+                exercise: exerciseScoreDTO.exercise,
+            } as Chart.ChartPoint);
+            (chart.data.datasets![1].data as ChartPoint[])!.push({
+                y: exerciseScoreDTO.averageScoreAchieved,
+                exercise: exerciseScoreDTO.exercise,
+            } as Chart.ChartPoint);
+            (chart.data.datasets![2].data as ChartPoint[])!.push({
+                y: exerciseScoreDTO.maxScoreAchieved,
+                exercise: exerciseScoreDTO.exercise,
+            } as Chart.ChartPoint);
         }
-        chart.update();
+
         const chartWidth = 150 * this.exerciseScores.length;
-        this.chartDiv.nativeElement.setAttribute('style', `width: ${chartWidth}px`);
+        this.chartDiv.nativeElement.setAttribute('style', `width: ${chartWidth}px;`);
+        chart.update();
     }
 }
