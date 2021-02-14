@@ -242,10 +242,9 @@ public class JenkinsUserManagementService implements CIUserManagementService {
             throw new JenkinsException("Cannot update user: " + user.getLogin() + " because it doesn't exist.");
         }
 
-        var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", user.getLogin(), "configSubmit").build().toUri();
         try {
+            var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", user.getLogin(), "configSubmit").build().toUri();
             restTemplate.exchange(uri, HttpMethod.POST, getUpdateUserFormHttpEntity(user), String.class);
-
         }
         catch (RestClientException | JsonProcessingException e) {
             throw new JenkinsException("Cannot update user: " + user.getLogin(), e);
