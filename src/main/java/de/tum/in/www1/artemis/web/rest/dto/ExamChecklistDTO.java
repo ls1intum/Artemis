@@ -9,9 +9,11 @@ public class ExamChecklistDTO {
 
     private Long numberOfTestRuns;
 
-    private Long[] numberOfTotalExamAssessmentsFinished;
+    private Long[] numberOfTotalExamAssessmentsFinishedByCorrectionRound; // all exercises summed up
 
-    private Long numberOfTotalExamParticipations;
+    private Long numberOfExamsSubmitted;
+
+    private Long numberOfExamsStarted;
 
     private Long numberOfAllComplaints;
 
@@ -19,20 +21,28 @@ public class ExamChecklistDTO {
 
     private boolean allExamExercisesAllStudentsPrepared;
 
-    public Long getNumberOfTotalExamParticipations() {
-        return numberOfTotalExamParticipations;
+    public Long getNumberOfExamsStarted() {
+        return numberOfExamsStarted;
     }
 
-    public void setNumberOfTotalExamParticipations(Long numberOfTotalExamParticipations) {
-        this.numberOfTotalExamParticipations = numberOfTotalExamParticipations;
+    public void setNumberOfExamsStarted(Long numberOfExamsStarted) {
+        this.numberOfExamsStarted = numberOfExamsStarted;
     }
 
-    public Long[] getNumberOfTotalExamAssessmentsFinished() {
-        return numberOfTotalExamAssessmentsFinished;
+    public Long getNumberOfExamsSubmitted() {
+        return numberOfExamsSubmitted;
     }
 
-    public void setNumberOfTotalExamAssessmentsFinished(Long[] numberOfTotalExamAssessmentsFinished) {
-        this.numberOfTotalExamAssessmentsFinished = numberOfTotalExamAssessmentsFinished;
+    public void setNumberOfExamsSubmitted(Long numberOfExamsSubmitted) {
+        this.numberOfExamsSubmitted = numberOfExamsSubmitted;
+    }
+
+    public Long[] getNumberOfTotalExamAssessmentsFinishedByCorrectionRound() {
+        return numberOfTotalExamAssessmentsFinishedByCorrectionRound;
+    }
+
+    public void setNumberOfTotalExamAssessmentsFinishedByCorrectionRound(Long[] numberOfTotalExamAssessmentsFinishedByCorrectionRound) {
+        this.numberOfTotalExamAssessmentsFinishedByCorrectionRound = numberOfTotalExamAssessmentsFinishedByCorrectionRound;
     }
 
     public Long getNumberOfAllComplaints() {
