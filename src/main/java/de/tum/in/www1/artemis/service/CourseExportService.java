@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.io.FileUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,10 +77,11 @@ public class CourseExportService {
      * @return Path to the zip file
      */
     public Optional<Path> exportCourse(Course course, String outputDir, List<String> exportErrors) {
-        var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
+        var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + timestamp;
 
         // Create a temporary directory that will contain the files that will be zipped
-        var courseDirPath = Path.of("./exports", courseDirName);
+        var courseDirPath = Path.of("./exports", courseDirName, courseDirName);
         try {
             Files.createDirectories(courseDirPath);
         }
@@ -90,16 +92,26 @@ public class CourseExportService {
             return Optional.empty();
         }
 
-        // Export course exercises and exams
-        exportCourseExercises(course, courseDirPath.toString(), exportErrors);
-        exportCourseExams(course, courseDirPath.toString(), exportErrors);
+        try {
+            // Export course exercises and exams
+            exportCourseExercises(course, courseDirPath.toString(), exportErrors);
+            exportCourseExams(course, courseDirPath.toString(), exportErrors);
 
-        // Zip them together
-        var exportedCoursePath = createCourseZipFile(courseDirPath, Path.of(outputDir), exportErrors);
+            // Zip them together
+            var exportedCoursePath = createCourseZipFile(courseDirPath.getParent(), Path.of(outputDir), exportErrors);
 
-        notifyUserAboutCourseExportState(course.getId(), CourseExportState.COMPLETED, "");
-        log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCoursePath);
-        return exportedCoursePath;
+            log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCoursePath);
+            return exportedCoursePath;
+        }
+        catch (Exception e) {
+            var error = "Failed to export the entire course " + course.getTitle();
+            exportErrors.add(error);
+            log.info(error);
+            return Optional.empty();
+        }
+        finally {
+            notifyUserAboutCourseExportState(course.getId(), CourseExportState.COMPLETED, "");
+        }
     }
 
     /**
@@ -111,7 +123,7 @@ public class CourseExportService {
      * @param exportErrors List of failures that occurred during the export
      */
     private void exportCourseExercises(Course course, String outputDir, List<String> exportErrors) {
-        Path exercisesDir = Path.of(outputDir, "exercises");
+        Path exercisesDir = Path.of(outputDir, "course-exercises");
         try {
             Files.createDirectory(exercisesDir);
             exportExercises(course.getId(), course.getExercises(), exercisesDir.toString(), exportErrors);
@@ -241,6 +253,8 @@ public class CourseExportService {
                 var exportedSubmissionsFile = exportedSubmissionsFileOrEmpty.get();
                 try {
                     Files.move(exportedSubmissionsFile.toPath(), Path.of(outputDir, exportedSubmissionsFile.getName()));
+                    // Delete the directory where the zip was located before it was moved
+                    FileUtils.deleteDirectory(Path.of(exportedSubmissionsFile.getParent()).toFile());
                 }
                 catch (IOException e) {
                     var error = "Failed to move file " + exportedSubmissionsFile.toPath() + " to " + outputDir + ".";
