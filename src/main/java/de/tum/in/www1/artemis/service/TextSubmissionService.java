@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -38,8 +39,9 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, TextClusterRepository textClusterRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository,
             UserRetrievalService userRetrievalService, Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService,
-            SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository) {
-        super(submissionRepository, userRetrievalService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
+            SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository) {
+        super(submissionRepository, userRetrievalService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
+                examDateService, courseRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.textClusterRepository = textClusterRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;

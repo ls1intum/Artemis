@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 /**

@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -21,10 +22,10 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
-            SubmissionRepository submissionRepository, ExamService examService, UserRetrievalService userRetrievalService, GradingCriterionService gradingCriterionService,
+            SubmissionRepository submissionRepository, ExamDateService examDateService, UserRetrievalService userRetrievalService, GradingCriterionService gradingCriterionService,
             LtiService ltiService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examService, gradingCriterionService, userRetrievalService, ltiService);
+                submissionRepository, examDateService, gradingCriterionService, userRetrievalService, ltiService);
     }
 
     /**

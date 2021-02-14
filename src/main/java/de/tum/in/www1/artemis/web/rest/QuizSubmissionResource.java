@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 

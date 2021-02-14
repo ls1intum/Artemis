@@ -27,8 +27,10 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * REST controller for managing ExerciseGroup.
@@ -49,7 +51,7 @@ public class StudentExamResource {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final ExamService examService;
+    private final ExamDateService examDateService;
 
     private final ExamSessionService examSessionService;
 
@@ -62,7 +64,7 @@ public class StudentExamResource {
     private final AuthorizationCheckService authorizationCheckService;
 
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
-            UserRetrievalService userRetrievalService, StudentExamRepository studentExamRepository, ExamService examService, ExamSessionService examSessionService,
+            UserRetrievalService userRetrievalService, StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
             ParticipationService participationService, QuizExerciseService quizExerciseService, ExamRepository examRepository,
             AuthorizationCheckService authorizationCheckService) {
         this.examAccessService = examAccessService;
@@ -70,7 +72,7 @@ public class StudentExamResource {
         this.studentExamAccessService = studentExamAccessService;
         this.userRetrievalService = userRetrievalService;
         this.studentExamRepository = studentExamRepository;
-        this.examService = examService;
+        this.examDateService = examDateService;
         this.examSessionService = examSessionService;
         this.participationService = participationService;
         this.quizExerciseService = quizExerciseService;
@@ -389,14 +391,14 @@ public class StudentExamResource {
     public ResponseEntity<Void> assessUnsubmittedStudentExamsAndEmptySubmissions(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to automatically assess the not submitted student exams of the exam with id {}", examId);
 
-        final var exam = examService.findOne(examId);
+        final var exam = examRepository.findById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
         Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, exam);
         if (courseAndExamAccessFailure.isPresent()) {
             return forbidden();
         }
 
-        if (!this.examService.isExamOver(exam)) {
+        if (!this.examDateService.isExamOver(exam)) {
             // you can only grade not submitted exams if the exam is over
             return badRequest();
         }

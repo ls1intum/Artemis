@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.exam.ExamService;
 
 public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 

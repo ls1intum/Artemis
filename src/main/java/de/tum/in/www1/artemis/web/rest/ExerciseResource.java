@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
@@ -62,7 +63,7 @@ public class ExerciseResource {
 
     private final SubmissionService submissionService;
 
-    private final ExamService examService;
+    private final ExamDateService examDateService;
 
     private final ResultService resultService;
 
@@ -78,11 +79,10 @@ public class ExerciseResource {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserRetrievalService userRetrievalService,
+    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserRetrievalService userRetrievalService, ExamDateService examDateService,
             AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
             ComplaintRepository complaintRepository, SubmissionService submissionService, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
-            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseService programmingExerciseService, GradingCriterionService gradingCriterionService,
-            ExamService examService) {
+            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseService programmingExerciseService, GradingCriterionService gradingCriterionService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userRetrievalService = userRetrievalService;
@@ -96,7 +96,7 @@ public class ExerciseResource {
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.programmingExerciseService = programmingExerciseService;
         this.gradingCriterionService = gradingCriterionService;
-        this.examService = examService;
+        this.examDateService = examDateService;
     }
 
     /**
@@ -123,7 +123,7 @@ public class ExerciseResource {
             }
             else if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                 // tutors should only be able to see exam exercises when the exercise has finished
-                ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndividualExamEndDate(exam);
+                ZonedDateTime latestIndiviudalExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
                 if (latestIndiviudalExamEndDate == null || latestIndiviudalExamEndDate.isAfter(ZonedDateTime.now())) {
                     // When there is no due date or the due date is in the future, we return forbidden here
                     return forbidden();

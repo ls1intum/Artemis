@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.EmptyFileException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -36,8 +37,10 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserRetrievalService userRetrievalService, StudentParticipationRepository studentParticipationRepository,
-            FileService fileService, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository) {
-        super(submissionRepository, userRetrievalService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
+            FileService fileService, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, ExamDateService examDateService,
+            CourseRepository courseRepository) {
+        super(submissionRepository, userRetrievalService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
+                examDateService, courseRepository);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileService = fileService;
     }

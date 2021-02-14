@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -38,8 +39,10 @@ public class ModelingSubmissionService extends SubmissionService {
 
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             CompassService compassService, UserRetrievalService userRetrievalService, SubmissionVersionService submissionVersionService, ParticipationService participationService,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository) {
-        super(submissionRepository, userRetrievalService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository,
+            ExamDateService examDateService, CourseRepository courseRepository) {
+        super(submissionRepository, userRetrievalService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
+                examDateService, courseRepository);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.compassService = compassService;
         this.submissionVersionService = submissionVersionService;

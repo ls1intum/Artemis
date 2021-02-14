@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -64,7 +65,7 @@ public class CourseService {
 
     private CourseExportService courseExportService;
 
-    private ExamService examService;
+    private final ExamService examService;
 
     private final GroupNotificationService groupNotificationService;
 
@@ -79,7 +80,7 @@ public class CourseService {
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
             ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository,
-            GroupNotificationService groupNotificationService) {
+            GroupNotificationService groupNotificationService, ExamService examService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -92,11 +93,6 @@ public class CourseService {
         this.userService = userService;
         this.learningGoalRepository = learningGoalRepository;
         this.groupNotificationService = groupNotificationService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setExamService(ExamService examService) {
         this.examService = examService;
     }
 

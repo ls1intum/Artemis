@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -63,7 +64,7 @@ public class ResultResource {
 
     private final ResultService resultService;
 
-    private final ExamService examService;
+    private final ExamDateService examDateService;
 
     private final ExerciseService exerciseService;
 
@@ -83,7 +84,7 @@ public class ResultResource {
 
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-            ResultRepository resultRepository, WebsocketMessagingService messagingService, UserRetrievalService userRetrievalService, ExamService examService,
+            ResultRepository resultRepository, WebsocketMessagingService messagingService, UserRetrievalService userRetrievalService, ExamDateService examDateService,
             ProgrammingExerciseGradingService programmingExerciseGradingService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
@@ -95,7 +96,7 @@ public class ResultResource {
         this.messagingService = messagingService;
         this.ltiService = ltiService;
         this.userRetrievalService = userRetrievalService;
-        this.examService = examService;
+        this.examDateService = examDateService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
     }
 
@@ -401,7 +402,7 @@ public class ResultResource {
         }
         else {
             Exam exam = exercise.getExerciseGroup().getExam();
-            ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndividualExamEndDate(exam);
+            ZonedDateTime latestIndiviudalExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
             if (latestIndiviudalExamEndDate == null || ZonedDateTime.now().isBefore(latestIndiviudalExamEndDate)) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
                         "External submissions are not supported before the end of the exam.")).build();

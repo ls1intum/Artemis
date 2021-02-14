@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.util.Tuple;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import io.github.jhipster.config.JHipsterConstants;
@@ -48,17 +49,17 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final ParticipationService participationService;
 
-    private final ExamService examService;
+    private final ExamDateService examDateService;
 
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository, Environment env,
             ProgrammingSubmissionService programmingSubmissionService, GroupNotificationService groupNotificationService, ParticipationService participationService,
-            ExamService examService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ExamDateService examDateService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.groupNotificationService = groupNotificationService;
         this.participationService = participationService;
-        this.examService = examService;
+        this.examDateService = examDateService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.env = env;
     }
@@ -178,7 +179,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             // Use the custom date from the exam rather than the of the exercise's lifecycle
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(releaseDate, unlockAllStudentRepositories(exercise))));
         }
-        else if (examService.getLatestIndividualExamEndDate(exam).isBefore(ZonedDateTime.now())) {
+        else if (examDateService.getLatestIndividualExamEndDate(exam).isBefore(ZonedDateTime.now())) {
             // This is only a backup (e.g. a crash of this node and restart during the exam)
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(ZonedDateTime.now().plusSeconds(5), unlockAllStudentRepositories(exercise))));
         }

@@ -13,13 +13,13 @@ import org.apache.commons.io.FileUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
 /**
@@ -44,13 +44,13 @@ public class CourseExportService {
 
     private final ModelingSubmissionExportService modelingSubmissionExportService;
 
-    private ExamService examService;
+    private final ExamService examService;
 
     private final WebsocketMessagingService websocketMessagingService;
 
     public CourseExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
             CourseRepository courseRepository, FileUploadSubmissionExportService fileUploadSubmissionExportService, TextSubmissionExportService textSubmissionExportService,
-            ModelingSubmissionExportService modelingSubmissionExportService, WebsocketMessagingService websocketMessagingService) {
+            ModelingSubmissionExportService modelingSubmissionExportService, WebsocketMessagingService websocketMessagingService, ExamService examService) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
         this.fileService = fileService;
@@ -59,11 +59,6 @@ public class CourseExportService {
         this.textSubmissionExportService = textSubmissionExportService;
         this.modelingSubmissionExportService = modelingSubmissionExportService;
         this.websocketMessagingService = websocketMessagingService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setExamService(ExamService examService) {
         this.examService = examService;
     }
 

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.exam;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -8,7 +8,6 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -22,6 +21,10 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.service.SubmissionVersionService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -42,9 +45,9 @@ public class StudentExamService {
 
     private final UserRetrievalService userRetrievalService;
 
-    private ExamService examService;
+    private final ExamService examService;
 
-    private SubmissionService submissionService;
+    private final SubmissionService submissionService;
 
     private final ExamQuizService examQuizService;
 
@@ -64,8 +67,9 @@ public class StudentExamService {
 
     public StudentExamService(StudentExamRepository studentExamRepository, UserRetrievalService userRetrievalService, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
-            SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService) {
+            SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExamService examService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
+            SubmissionService submissionService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRetrievalService = userRetrievalService;
@@ -77,17 +81,7 @@ public class StudentExamService {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.examQuizService = examQuizService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setExamService(ExamService examService) {
         this.examService = examService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setSubmissionService(SubmissionService submissionService) {
         this.submissionService = submissionService;
     }
 

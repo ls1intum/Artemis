@@ -28,6 +28,10 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.service.exam.ExamAccessService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
+import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
@@ -56,6 +60,8 @@ public class ExamResource {
 
     private final ExamService examService;
 
+    private final ExamDateService examDateService;
+
     private final ExamRegistrationService examRegistrationService;
 
     private final ExamRepository examRepository;
@@ -71,11 +77,12 @@ public class ExamResource {
     private final AssessmentDashboardService assessmentDashboardService;
 
     public ExamResource(UserRetrievalService userRetrievalService, CourseService courseService, ExamService examService, ExamAccessService examAccessService,
-            InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, AuthorizationCheckService authCheckService,
+            InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, AuthorizationCheckService authCheckService, ExamDateService examDateService,
             TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService) {
         this.userRetrievalService = userRetrievalService;
         this.courseService = courseService;
         this.examService = examService;
+        this.examDateService = examDateService;
         this.examRegistrationService = examRegistrationService;
         this.examRepository = examRepository;
         this.examAccessService = examAccessService;
@@ -522,7 +529,7 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
-        if (examService.getLatestIndividualExamEndDate(examId).isAfter(ZonedDateTime.now())) {
+        if (examDateService.getLatestIndividualExamEndDate(examId).isAfter(ZonedDateTime.now())) {
             // Quizzes should only be evaluated if no exams are running
             return forbidden(applicationName, ENTITY_NAME, "quizevaluationPendingExams",
                     "There are still exams running, quizzes can only be evaluated once all exams are finished.");
@@ -736,7 +743,7 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        ZonedDateTime latestIndividualEndDateOfExam = examService.getLatestIndividualExamEndDate(examId);
+        ZonedDateTime latestIndividualEndDateOfExam = examDateService.getLatestIndividualExamEndDate(examId);
 
         if (latestIndividualEndDateOfExam == null) {
             return ResponseEntity.notFound().build();

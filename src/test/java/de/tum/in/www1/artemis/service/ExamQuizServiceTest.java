@@ -25,6 +25,9 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.exam.ExamQuizService;
+import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {

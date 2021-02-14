@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -18,10 +17,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -33,9 +30,9 @@ public class SubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(SubmissionService.class);
 
-    private ExamService examService;
+    private final ExamDateService examDateService;
 
-    private CourseService courseService;
+    private final CourseRepository courseRepository;
 
     protected final SubmissionRepository submissionRepository;
 
@@ -53,7 +50,7 @@ public class SubmissionService {
 
     public SubmissionService(SubmissionRepository submissionRepository, UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
-            FeedbackRepository feedbackRepository) {
+            FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository) {
         this.submissionRepository = submissionRepository;
         this.userRetrievalService = userRetrievalService;
         this.authCheckService = authCheckService;
@@ -61,18 +58,8 @@ public class SubmissionService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.feedbackRepository = feedbackRepository;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setExamService(ExamService examService) {
-        this.examService = examService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setCourseService(CourseService courseService) {
-        this.courseService = courseService;
+        this.examDateService = examDateService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -87,7 +74,8 @@ public class SubmissionService {
      */
     public <T> Optional<ResponseEntity<T>> checkSubmissionAllowance(Exercise exercise, Submission submission, User currentUser) {
         // Fetch course from database to make sure client didn't change groups
-        final Course course = courseService.findOne(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        final var courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        final var course = courseRepository.findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
         if (!authCheckService.isAtLeastStudentInCourse(course, currentUser)) {
             return Optional.of(forbidden());
         }
@@ -535,7 +523,7 @@ public class SubmissionService {
         final boolean isExamMode = exercise.isExamExercise();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (isExamMode) {
-            ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
+            ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                 log.debug("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");

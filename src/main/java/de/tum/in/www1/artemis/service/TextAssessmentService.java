@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 @Service
@@ -26,10 +27,10 @@ public class TextAssessmentService extends AssessmentService {
     public TextAssessmentService(UserRetrievalService userRetrievalService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
             SubmissionRepository submissionRepository, TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService,
-            ExamService examService, FeedbackConflictRepository feedbackConflictRepository, GradingCriterionService gradingCriterionService, SubmissionService submissionService,
-            LtiService ltiService) {
+            ExamDateService examDateService, FeedbackConflictRepository feedbackConflictRepository, GradingCriterionService gradingCriterionService,
+            SubmissionService submissionService, LtiService ltiService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examService, gradingCriterionService, userRetrievalService, ltiService);
+                submissionRepository, examDateService, gradingCriterionService, userRetrievalService, ltiService);
         this.textBlockService = textBlockService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
         this.feedbackConflictRepository = feedbackConflictRepository;

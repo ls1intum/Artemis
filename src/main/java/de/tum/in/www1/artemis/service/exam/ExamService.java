@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.exam;
 
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -36,6 +36,10 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -806,91 +810,6 @@ public class ExamService {
         }
 
         return programmingExercises.size();
-    }
-
-    /**
-     * Returns if the exam is over by checking if the latest individual exam end date plus grace period has passed.
-     * See {@link ExamService#getLatestIndividualExamEndDate}
-     * <p>
-     *
-     * @param examId the id of the exam
-     * @return true if the exam is over and the students cannot submit anymore
-     * @throws EntityNotFoundException if no exam with the given examId can be found
-     */
-    public boolean isExamOver(Long examId) {
-        return isExamOver(findOne(examId));
-    }
-
-    /**
-     * Returns if the exam is over by checking if the latest individual exam end date plus grace period has passed.
-     * See {@link ExamService#getLatestIndividualExamEndDate}
-     * <p>
-     *
-     * @param exam the exam
-     * @return true if the exam is over and the students cannot submit anymore
-     * @throws EntityNotFoundException if no exam with the given examId can be found
-     */
-    public boolean isExamOver(Exam exam) {
-        var now = ZonedDateTime.now();
-        return getLatestIndividualExamEndDate(exam).plusSeconds(exam.getGracePeriod()).isBefore(now);
-    }
-
-    /**
-     * Returns the latest individual exam end date as determined by the working time of the student exams.
-     * <p>
-     * If no student exams are available, the exam end date is returned.
-     *
-     * @param examId the id of the exam
-     * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
-     * @throws EntityNotFoundException if no exam with the given examId can be found
-     */
-    public ZonedDateTime getLatestIndividualExamEndDate(Long examId) {
-        return getLatestIndividualExamEndDate(findOne(examId));
-    }
-
-    /**
-     * Returns the latest individual exam end date as determined by the working time of the student exams.
-     * <p>
-     * If no student exams are available, the exam end date is returned.
-     *
-     * @param exam the exam
-     * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
-     */
-    public ZonedDateTime getLatestIndividualExamEndDate(Exam exam) {
-        if (exam.getStartDate() == null) {
-            return null;
-        }
-        var maxWorkingTime = studentExamRepository.findMaxWorkingTimeByExamId(exam.getId());
-        return maxWorkingTime.map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).orElse(exam.getEndDate());
-    }
-
-    /**
-     * Returns all individual exam end dates as determined by the working time of the student exams.
-     * <p>
-     * If no student exams are available, an empty set returned.
-     *
-     * @param examId the id of the exam
-     * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
-     * @throws EntityNotFoundException if no exam with the given examId can be found
-     */
-    public Set<ZonedDateTime> getAllIndividualExamEndDates(Long examId) {
-        return getAllIndividualExamEndDates(findOne(examId));
-    }
-
-    /**
-     * Returns all individual exam end dates as determined by the working time of the student exams.
-     * <p>
-     * If no student exams are available, an empty set returned.
-     *
-     * @param exam the exam
-     * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
-     */
-    public Set<ZonedDateTime> getAllIndividualExamEndDates(Exam exam) {
-        if (exam.getStartDate() == null) {
-            return null;
-        }
-        var workingTimes = studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId());
-        return workingTimes.stream().map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).collect(Collectors.toSet());
     }
 
     /**

@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -40,7 +41,7 @@ public class AssessmentService {
 
     protected final ResultService resultService;
 
-    private final ExamService examService;
+    private final ExamDateService examDateService;
 
     protected final SubmissionRepository submissionRepository;
 
@@ -56,7 +57,7 @@ public class AssessmentService {
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
-            SubmissionRepository submissionRepository, ExamService examService, GradingCriterionService gradingCriterionService, UserRetrievalService userRetrievalService,
+            SubmissionRepository submissionRepository, ExamDateService examDateService, GradingCriterionService gradingCriterionService, UserRetrievalService userRetrievalService,
             LtiService ltiService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
@@ -66,7 +67,7 @@ public class AssessmentService {
         this.resultService = resultService;
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
-        this.examService = examService;
+        this.examDateService = examDateService;
         this.gradingCriterionService = gradingCriterionService;
         this.userRetrievalService = userRetrievalService;
         this.ltiService = ltiService;
@@ -179,7 +180,7 @@ public class AssessmentService {
             // Tutors can assess exam exercises only after the last student has finished the exam and before the publish result date
             if (isExamMode && !isAtLeastInstructor) {
                 final Exam exam = exercise.getExerciseGroup().getExam();
-                ZonedDateTime latestExamDueDate = examService.getLatestIndividualExamEndDate(exam.getId());
+                ZonedDateTime latestExamDueDate = examDateService.getLatestIndividualExamEndDate(exam.getId());
                 if (latestExamDueDate.isAfter(ZonedDateTime.now()) || (exam.getPublishResultsDate() != null && exam.getPublishResultsDate().isBefore(ZonedDateTime.now()))) {
                     return false;
                 }

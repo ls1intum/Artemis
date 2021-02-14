@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -74,8 +75,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
             AuthorizationCheckService authCheckService, WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService,
             ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService,
             SimpMessageSendingOperations messagingTemplate, ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService,
-            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository) {
-        super(submissionRepository, userRetrievalService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
+            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository,
+            ExamDateService examDateService, CourseRepository courseRepository) {
+        super(submissionRepository, userRetrievalService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
+                examDateService, courseRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.groupNotificationService = groupNotificationService;
