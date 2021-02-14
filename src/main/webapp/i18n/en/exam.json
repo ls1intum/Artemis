@@ -358,7 +358,9 @@
                     "allExercisesPrepared": "All exercises prepared for all students",
                     "noSubmissions": "There are currently no submitted exams.",
                     "noComplaints": "There are currently no complaints.",
-                    "correctionRound": "Correction Round"
+                    "correctionRound": "Correction Round",
+                    "startedExam": "Started Exam",
+                    "submittedExam": "Submitted Exam"
                 }
             }
         },

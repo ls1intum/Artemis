@@ -357,7 +357,9 @@
                     "allExercisesPrepared": "Alle Aufgaben vorbereitet für alle Studierenden",
                     "noSubmissions": "Es gibt aktuell keine abgegebenen Klausuren.",
                     "noComplaints": "Es gibt aktuell keine Beschwerden",
-                    "correctionRound": "Korrektur Runde"
+                    "correctionRound": "Korrektur Runde",
+                    "startedExam": "Klausur gestarted",
+                    "submittedExam": "Klausur abgegeben"
                 }
             }
         },
