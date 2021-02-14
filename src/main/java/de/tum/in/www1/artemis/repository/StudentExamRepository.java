@@ -1,19 +1,18 @@
 package de.tum.in.www1.artemis.repository;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 /**
  * Spring Data JPA repository for the StudentExam entity.
@@ -42,11 +41,11 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @Query("select count(se) from StudentExam se where se.exam.id = :#{#examId} and se.testRun = true")
     long countTestRunsByExamId(@Param("examId") Long examId);
 
-    @Query("select count(se) from StudentExam se where se.exam.id = :#{#examId} and se.started = true")
-    long countStudentExamsStartedByExamId(@Param("examId") Long examId);
+    @Query("select count(se) from StudentExam se where se.exam.id = :#{#examId} and se.started = true and se.testRun = false")
+    long countStudentExamsStartedByExamIdIgnoreTestRuns(@Param("examId") Long examId);
 
-    @Query("select count(se) from StudentExam se where se.exam.id = :#{#examId} and se.submitted = true")
-    long countStudentExamsSubmittedByExamId(@Param("examId") Long examId);
+    @Query("select count(se) from StudentExam se where se.exam.id = :#{#examId} and se.submitted = true and se.testRun = false")
+    long countStudentExamsSubmittedByExamIdIgnoreTestRuns(@Param("examId") Long examId);
 
     @Query("select distinct se from StudentExam se left join fetch se.exercises e left join fetch e.studentParticipations sp left join fetch sp.submissions s left join fetch s.results r left join fetch r.assessor a where se.exam.id = :#{#examId} and se.testRun = true and se.user.id = sp.student.id")
     List<StudentExam> findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(@Param("examId") Long examId);
