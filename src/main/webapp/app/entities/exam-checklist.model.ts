@@ -3,9 +3,11 @@ export class ExamChecklist {
 
     public numberOfTestRuns?: number; // transient
 
-    public numberOfTotalExamParticipations?: number;
+    public numberOfExamsSubmitted: number;
 
-    public numberOfTotalExamAssessmentsFinished?: number[];
+    public numberOfExamsStarted: number;
+
+    public numberOfTotalExamAssessmentsFinishedByCorrectionRound?: number[]; // all exercises summed up
 
     public numberOfAllComplaints?: number;
 
