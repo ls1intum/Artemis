@@ -117,12 +117,6 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         }
     }
 
-    private static verifyFileUploadExercise(exercise: Exercise): void {
-        if (exercise.type !== ExerciseType.FILE_UPLOAD) {
-            throw new Error('Cannot use File Upload Assessment Dashboard with different Exercise type.');
-        }
-    }
-
     private setPermissions() {
         if (this.exercise.course) {
             this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
