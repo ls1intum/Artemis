@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -30,24 +31,27 @@ public class ComplaintService {
 
     private final ComplaintRepository complaintRepository;
 
+    private final ComplaintResponseRepository complaintResponseRepository;
+
     private final ResultRepository resultRepository;
 
     private final ResultService resultService;
 
     private final CourseService courseService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final ExamService examService;
 
-    public ComplaintService(ComplaintRepository complaintRepository, ResultRepository resultRepository, ResultService resultService, CourseService courseService,
-            ExamService examService, UserService userService) {
+    public ComplaintService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository,
+            ResultService resultService, CourseService courseService, ExamService examService, UserRetrievalService userRetrievalService) {
         this.complaintRepository = complaintRepository;
+        this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
         this.resultService = resultService;
         this.courseService = courseService;
         this.examService = examService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
     }
 
     /**
@@ -68,7 +72,7 @@ public class ComplaintService {
 
         if (examId.isPresent()) {
             final Exam exam = examService.findOne(examId.getAsLong());
-            final List<User> instructors = userService.getInstructors(exam.getCourse());
+            final List<User> instructors = userRetrievalService.getInstructors(exam.getCourse());
             boolean examTestRun = instructors.stream().anyMatch(instructor -> instructor.getLogin().equals(principal.getName()));
             if (!examTestRun && !isTimeOfComplaintValid(exam)) {
                 throw new BadRequestAlertException("You cannot submit a complaint after the student review period", ENTITY_NAME, "afterStudentReviewPeriod");
@@ -153,6 +157,39 @@ public class ComplaintService {
 
     public long countMoreFeedbackRequestsByExerciseId(long exerciseId) {
         return complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+    }
+
+    /**
+     * Calculates the number of unevaluated complaints and feedback requests for assessment dashboard participation graph
+     *
+     * @param examMode should be set to ignore the test run submissions
+     * @param exercise the exercise for which the number of unevaluated complaints should be calculated
+     */
+    public void calculateNrOfOpenComplaints(Exercise exercise, boolean examMode) {
+        long numberOfComplaints;
+        long numberOfComplaintResponses;
+        long numberOfMoreFeedbackRequests;
+        long numberOfMoreFeedbackComplaintResponses;
+        if (examMode) {
+            numberOfComplaints = complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exercise.getId(), ComplaintType.COMPLAINT);
+            numberOfComplaintResponses = complaintResponseRepository.countByComplaintResultParticipationExerciseIdAndComplaintComplaintTypeIgnoreTestRuns(exercise.getId(),
+                    ComplaintType.COMPLAINT);
+            numberOfMoreFeedbackRequests = 0;
+            numberOfMoreFeedbackComplaintResponses = 0;
+        }
+        else {
+            numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
+            numberOfComplaintResponses = complaintResponseRepository
+                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT);
+            numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
+            numberOfMoreFeedbackComplaintResponses = complaintResponseRepository
+                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.MORE_FEEDBACK);
+        }
+
+        exercise.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
+        exercise.setNumberOfComplaints(numberOfComplaints);
+        exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
+        exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
     }
 
     /**

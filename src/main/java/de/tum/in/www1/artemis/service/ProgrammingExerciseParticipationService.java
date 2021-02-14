@@ -46,14 +46,14 @@ public class ProgrammingExerciseParticipationService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final GitService gitService;
 
     public ProgrammingExerciseParticipationService(ParticipationService participationService, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ParticipationRepository participationRepository, TeamRepository teamRepository,
-            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, Optional<VersionControlService> versionControlService, UserService userService,
-            AuthorizationCheckService authCheckService, GitService gitService) {
+            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, Optional<VersionControlService> versionControlService,
+            UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService, GitService gitService) {
         this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
@@ -62,7 +62,7 @@ public class ProgrammingExerciseParticipationService {
         this.teamRepository = teamRepository;
         this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.gitService = gitService;
     }
 
@@ -200,13 +200,13 @@ public class ProgrammingExerciseParticipationService {
     }
 
     private boolean canAccessParticipation(@NotNull ProgrammingExerciseStudentParticipation participation) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         return participation.isOwnedBy(user) || authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }
 
     private boolean canAccessParticipation(@NotNull SolutionProgrammingExerciseParticipation participation) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
         // To prevent null pointer exceptions, we therefore retrieve it again as concrete solution programming exercise participation
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
@@ -217,7 +217,7 @@ public class ProgrammingExerciseParticipationService {
     }
 
     private boolean canAccessParticipation(@NotNull TemplateProgrammingExerciseParticipation participation) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
         // To prevent null pointer exceptions, we therefore retrieve it again as concrete template programming exercise participation
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
@@ -255,12 +255,12 @@ public class ProgrammingExerciseParticipationService {
     }
 
     private boolean canAccessParticipation(SolutionProgrammingExerciseParticipation participation, Principal principal) {
-        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities(principal.getName());
         return authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user);
     }
 
     private boolean canAccessParticipation(TemplateProgrammingExerciseParticipation participation, Principal principal) {
-        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities(principal.getName());
         return authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user);
     }
 

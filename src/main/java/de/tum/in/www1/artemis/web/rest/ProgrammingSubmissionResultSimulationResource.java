@@ -44,7 +44,7 @@ public class ProgrammingSubmissionResultSimulationResource {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final ParticipationService participationService;
 
@@ -58,12 +58,12 @@ public class ProgrammingSubmissionResultSimulationResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    public ProgrammingSubmissionResultSimulationResource(ProgrammingSubmissionService programmingSubmissionService, UserService userService,
+    public ProgrammingSubmissionResultSimulationResource(ProgrammingSubmissionService programmingSubmissionService, UserRetrievalService userRetrievalService,
             ParticipationService participationService, WebsocketMessagingService messagingService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService) {
         this.programmingSubmissionService = programmingSubmissionService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.participationService = participationService;
         this.messagingService = messagingService;
         this.programmingExerciseService = programmingExerciseService;
@@ -85,7 +85,7 @@ public class ProgrammingSubmissionResultSimulationResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingSubmission> createParticipationAndSubmissionSimulation(@PathVariable Long exerciseId) {
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             return forbidden();
@@ -117,7 +117,7 @@ public class ProgrammingSubmissionResultSimulationResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> createNewProgrammingExerciseResult(@PathVariable Long exerciseId) {
         log.debug("Received result notify (NEW)");
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Participant participant = user;
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
         Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise, participant);

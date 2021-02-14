@@ -45,7 +45,7 @@ public class AssessmentService {
 
     protected final GradingCriterionService gradingCriterionService;
 
-    private final UserService userService;
+    protected final UserRetrievalService userRetrievalService;
 
     private final SubmissionService submissionService;
 
@@ -55,7 +55,8 @@ public class AssessmentService {
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
-            SubmissionRepository submissionRepository, ExamService examService, GradingCriterionService gradingCriterionService, UserService userService, LtiService ltiService) {
+            SubmissionRepository submissionRepository, ExamService examService, GradingCriterionService gradingCriterionService, UserRetrievalService userRetrievalService,
+            LtiService ltiService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -66,7 +67,7 @@ public class AssessmentService {
         this.submissionRepository = submissionRepository;
         this.examService = examService;
         this.gradingCriterionService = gradingCriterionService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.ltiService = ltiService;
     }
 
@@ -347,7 +348,7 @@ public class AssessmentService {
 
         result.setExampleResult(submission.isExampleSubmission());
         result.setAssessmentType(AssessmentType.MANUAL);
-        User user = userService.getUser();
+        User user = userRetrievalService.getUser();
         result.setAssessor(user);
         // first save the feedback (that is not yet in the database) to prevent null index exception
         var savedFeedbackList = saveFeedbacks(feedbackList);

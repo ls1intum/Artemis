@@ -51,7 +51,7 @@ public class ExerciseResource {
 
     private final ExerciseService exerciseService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final ParticipationService participationService;
 
@@ -59,15 +59,9 @@ public class ExerciseResource {
 
     private final TutorParticipationService tutorParticipationService;
 
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
-
-    private final ComplaintRepository complaintRepository;
-
     private final SubmissionService submissionService;
 
     private final ExamService examService;
-
-    private final ComplaintResponseRepository complaintResponseRepository;
 
     private final ResultService resultService;
 
@@ -77,14 +71,20 @@ public class ExerciseResource {
 
     private final GradingCriterionService gradingCriterionService;
 
-    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
-            TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository,
-            SubmissionService submissionService, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
+    private final ComplaintRepository complaintRepository;
+
+    private final ComplaintResponseRepository complaintResponseRepository;
+
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
+
+    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserRetrievalService userRetrievalService,
+            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
+            ComplaintRepository complaintRepository, SubmissionService submissionService, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
             ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseService programmingExerciseService, GradingCriterionService gradingCriterionService,
             ExamService examService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
@@ -110,7 +110,7 @@ public class ExerciseResource {
 
         log.debug("REST request to get Exercise : {}", exerciseId);
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
 
         // Exam exercise
@@ -159,7 +159,7 @@ public class ExerciseResource {
     public ResponseEntity<Exercise> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
         log.debug("REST request to get Exercise for assessment dashboard : {}", exerciseId);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
@@ -252,7 +252,7 @@ public class ExerciseResource {
         stats.setNumberOfSubmissions(numberOfSubmissions);
         stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
-        final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = exerciseService.calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
+        final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultService.calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
                 totalNumberOfAssessments);
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
@@ -365,7 +365,7 @@ public class ExerciseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
         long start = System.currentTimeMillis();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         log.debug(user.getLogin() + " requested access for exercise with exerciseId " + exerciseId, exerciseId);
 
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);

@@ -54,7 +54,7 @@ public class ResultResource {
     private String applicationName;
 
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
-    private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE = "";
+    private String artemisAuthenticationTokenValue = "";
 
     private final ResultRepository resultRepository;
 
@@ -68,7 +68,7 @@ public class ResultResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
@@ -82,7 +82,7 @@ public class ResultResource {
 
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-            ResultRepository resultRepository, WebsocketMessagingService messagingService, UserService userService, ExamService examService,
+            ResultRepository resultRepository, WebsocketMessagingService messagingService, UserRetrievalService userRetrievalService, ExamService examService,
             ProgrammingExerciseGradingService programmingExerciseGradingService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
@@ -93,7 +93,7 @@ public class ResultResource {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.messagingService = messagingService;
         this.ltiService = ltiService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.examService = examService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
     }
@@ -113,7 +113,7 @@ public class ResultResource {
     @PostMapping(value = Constants.NEW_RESULT_RESOURCE_PATH)
     public ResponseEntity<?> notifyNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
         log.debug("Received result notify (NEW)");
-        if (token == null || !token.equals(ARTEMIS_AUTHENTICATION_TOKEN_VALUE)) {
+        if (token == null || !token.equals(artemisAuthenticationTokenValue)) {
             log.info("Cancelling request with invalid token {}", token);
             return forbidden(); // Only allow endpoint when using correct token
         }
@@ -412,8 +412,8 @@ public class ResultResource {
                     "External submissions are not supported for Quiz exercises.")).build();
         }
 
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Optional<User> student = userService.getUserWithAuthoritiesByLogin(studentLogin);
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        Optional<User> student = userRetrievalService.getUserWithAuthoritiesByLogin(studentLogin);
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");

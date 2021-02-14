@@ -24,7 +24,7 @@ public class AssessmentDashboardService {
 
     private final Logger log = LoggerFactory.getLogger(ExamService.class);
 
-    private final ExerciseService exerciseService;
+    private final ComplaintService complaintService;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -34,9 +34,9 @@ public class AssessmentDashboardService {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    public AssessmentDashboardService(ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, SubmissionService submissionService,
+    public AssessmentDashboardService(ComplaintService complaintService, ProgrammingExerciseService programmingExerciseService, SubmissionService submissionService,
             ResultService resultService, ExampleSubmissionRepository exampleSubmissionRepository) {
-        this.exerciseService = exerciseService;
+        this.complaintService = complaintService;
         this.programmingExerciseService = programmingExerciseService;
         this.submissionService = submissionService;
         this.resultService = resultService;
@@ -68,13 +68,13 @@ public class AssessmentDashboardService {
             exercise.setNumberOfSubmissions(numberOfSubmissions);
             exercise.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
-            final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = exerciseService.calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
+            final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultService.calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
                     totalNumberOfAssessments);
             exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
-            exerciseService.calculateNrOfOpenComplaints(exercise, examMode);
+            complaintService.calculateNrOfOpenComplaints(exercise, examMode);
 
-            Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exercise.getId());
+            Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exercise.getId());
 
             // Do not provide example submissions without any assessment
             exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getLatestResult() == null);

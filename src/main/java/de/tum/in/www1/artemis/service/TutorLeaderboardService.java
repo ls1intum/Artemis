@@ -27,19 +27,19 @@ public class TutorLeaderboardService {
 
     private final TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     public TutorLeaderboardService(TutorLeaderboardAssessmentViewRepository tutorLeaderboardAssessmentViewRepository,
             TutorLeaderboardComplaintsViewRepository tutorLeaderboardComplaintsViewRepository,
             TutorLeaderboardMoreFeedbackRequestsViewRepository tutorLeaderboardMoreFeedbackRequestsViewRepository,
             TutorLeaderboardComplaintResponsesViewRepository tutorLeaderboardComplaintResponsesViewRepository,
-            TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository, UserService userService) {
+            TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository, UserRetrievalService userRetrievalService) {
         this.tutorLeaderboardAssessmentViewRepository = tutorLeaderboardAssessmentViewRepository;
         this.tutorLeaderboardComplaintsViewRepository = tutorLeaderboardComplaintsViewRepository;
         this.tutorLeaderboardMoreFeedbackRequestsViewRepository = tutorLeaderboardMoreFeedbackRequestsViewRepository;
         this.tutorLeaderboardComplaintResponsesViewRepository = tutorLeaderboardComplaintResponsesViewRepository;
         this.tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository = tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
     }
 
     /**
@@ -50,7 +50,7 @@ public class TutorLeaderboardService {
      */
     public List<TutorLeaderboardDTO> getCourseLeaderboard(Course course) {
 
-        List<User> tutors = userService.getTutors(course);
+        List<User> tutors = userRetrievalService.getTutors(course);
 
         List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = tutorLeaderboardAssessmentViewRepository.findAllByCourseId(course.getId());
         List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByCourseId(course.getId());
@@ -71,7 +71,7 @@ public class TutorLeaderboardService {
      */
     public List<TutorLeaderboardDTO> getExerciseLeaderboard(Exercise exercise) {
 
-        List<User> tutors = userService.getTutors(exercise.getCourseViaExerciseGroupOrCourseMember());
+        List<User> tutors = userRetrievalService.getTutors(exercise.getCourseViaExerciseGroupOrCourseMember());
 
         List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = tutorLeaderboardAssessmentViewRepository.findAllByLeaderboardId_ExerciseId(exercise.getId());
         List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByLeaderboardId_ExerciseId(exercise.getId());

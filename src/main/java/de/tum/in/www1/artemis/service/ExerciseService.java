@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -28,7 +27,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
-import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -44,10 +42,6 @@ public class ExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseService.class);
 
-    private final ExerciseRepository exerciseRepository;
-
-    private final TutorParticipationRepository tutorParticipationRepository;
-
     private final ParticipationService participationService;
 
     private final AuthorizationCheckService authCheckService;
@@ -58,41 +52,35 @@ public class ExerciseService {
 
     private final QuizScheduleService quizScheduleService;
 
-    private final ResultService resultService;
+    private final ExampleSubmissionService exampleSubmissionService;
+
+    private final TeamRepository teamRepository;
 
     private final ExamRepository examRepository;
 
     private final StudentExamRepository studentExamRepository;
 
-    private final ExampleSubmissionService exampleSubmissionService;
-
     private final AuditEventRepository auditEventRepository;
-
-    private final ComplaintRepository complaintRepository;
-
-    private final ComplaintResponseRepository complaintResponseRepository;
-
-    private final TeamService teamService;
 
     private final ExerciseUnitRepository exerciseUnitRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
+    private final TutorParticipationRepository tutorParticipationRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
-            QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ResultService resultService,
-            ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamRepository studentExamRepository, ExamRepository exampRepository) {
+            QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
+            AuditEventRepository auditEventRepository, TeamRepository teamRepository, StudentExamRepository studentExamRepository, ExamRepository examRepository) {
         this.exerciseRepository = exerciseRepository;
-        this.resultService = resultService;
-        this.examRepository = exampRepository;
+        this.examRepository = examRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.programmingExerciseService = programmingExerciseService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionService = exampleSubmissionService;
         this.auditEventRepository = auditEventRepository;
-        this.complaintRepository = complaintRepository;
-        this.complaintResponseRepository = complaintResponseRepository;
-        this.teamService = teamService;
+        this.teamRepository = teamRepository;
         this.quizExerciseService = quizExerciseService;
         this.quizScheduleService = quizScheduleService;
         this.studentExamRepository = studentExamRepository;
@@ -373,61 +361,6 @@ public class ExerciseService {
     }
 
     /**
-     * Calculates the number of unevaluated complaints and feedback requests for assessment dashboard participation graph
-     *
-     * @param examMode should be set to ignore the test run submissions
-     * @param exercise the exercise for which the number of unevaluated complaints should be calculated
-     */
-    public void calculateNrOfOpenComplaints(Exercise exercise, boolean examMode) {
-        long numberOfComplaints;
-        long numberOfComplaintResponses;
-        long numberOfMoreFeedbackRequests;
-        long numberOfMoreFeedbackComplaintResponses;
-        if (examMode) {
-            numberOfComplaints = complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exercise.getId(), ComplaintType.COMPLAINT);
-            numberOfComplaintResponses = complaintResponseRepository.countByComplaintResultParticipationExerciseIdAndComplaintComplaintTypeIgnoreTestRuns(exercise.getId(),
-                    ComplaintType.COMPLAINT);
-            numberOfMoreFeedbackRequests = 0;
-            numberOfMoreFeedbackComplaintResponses = 0;
-        }
-        else {
-            numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
-            numberOfComplaintResponses = complaintResponseRepository
-                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT);
-            numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
-            numberOfMoreFeedbackComplaintResponses = complaintResponseRepository
-                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.MORE_FEEDBACK);
-        }
-
-        exercise.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
-        exercise.setNumberOfComplaints(numberOfComplaints);
-        exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
-        exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
-    }
-
-    /**
-     * Calculates the number of assessments done for each correction round.
-     *
-     * @param exercise the exercise for which we want to calculate the # of assessments for each correction round
-     * @param examMode states whether or not the the function is called in the exam mode
-     * @param totalNumberOfAssessments so total number of assessments sum up over all correction rounds
-     * @return the number of assessments for each correction rounds
-     */
-    public DueDateStat[] calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(Exercise exercise, boolean examMode, DueDateStat totalNumberOfAssessments) {
-        DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
-        if (examMode) {
-            // set number of corrections specific to each correction round
-            int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
-            numberOfAssessmentsOfCorrectionRounds = resultService.countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(exercise, numberOfCorrectionRounds);
-        }
-        else {
-            // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
-            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
-        }
-        return numberOfAssessmentsOfCorrectionRounds;
-    }
-
-    /**
      * Check whether the exercise has either a course or an exerciseGroup.
      *
      * @param exercise   the Exercise to be validated
@@ -538,7 +471,7 @@ public class ExerciseService {
     private void setAssignedTeamIdForExerciseAndUser(Exercise exercise, User user) {
         // if the exercise is not team-based, there is nothing to do here
         if (exercise.isTeamMode()) {
-            Optional<Team> team = teamService.findOneByExerciseAndUser(exercise, user);
+            Optional<Team> team = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId());
             exercise.setStudentAssignedTeamId(team.map(Team::getId).orElse(null));
             exercise.setStudentAssignedTeamIdComputed(true);
         }

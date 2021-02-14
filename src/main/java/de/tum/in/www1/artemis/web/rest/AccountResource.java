@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.MailService;
+import de.tum.in.www1.artemis.service.UserRetrievalService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
@@ -51,15 +52,18 @@ public class AccountResource {
 
     private final Logger log = LoggerFactory.getLogger(AccountResource.class);
 
-    private final UserRepository userRepository;
+    private final UserRetrievalService userRetrievalService;
 
     private final UserService userService;
 
     private final MailService mailService;
 
-    public AccountResource(UserRepository userRepository, UserService userService, MailService mailService) {
+    private final UserRepository userRepository;
+
+    public AccountResource(UserRepository userRepository, UserRetrievalService userRetrievalService, UserService userService, MailService mailService) {
         this.userRepository = userRepository;
         this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.mailService = mailService;
     }
 
@@ -139,7 +143,7 @@ public class AccountResource {
     @GetMapping("/account")
     public UserDTO getAccount() {
         long start = System.currentTimeMillis();
-        User user = userService.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
+        User user = userRetrievalService.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
         UserDTO userDTO = new UserDTO(user);
         log.info("GET /account " + user.getLogin() + " took " + (System.currentTimeMillis() - start) + "ms");
         return userDTO;

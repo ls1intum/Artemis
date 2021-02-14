@@ -60,7 +60,7 @@ public class ProgrammingExerciseImportService {
 
     private final FileService fileService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
@@ -68,7 +68,7 @@ public class ProgrammingExerciseImportService {
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService,
-            UserService userService, StaticCodeAnalysisService staticCodeAnalysisService) {
+            UserRetrievalService userRetrievalService, StaticCodeAnalysisService staticCodeAnalysisService) {
         this.exerciseHintService = exerciseHintService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -79,7 +79,7 @@ public class ProgrammingExerciseImportService {
         this.programmingExerciseService = programmingExerciseService;
         this.gitService = gitService;
         this.fileService = fileService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
     }
 
@@ -337,7 +337,7 @@ public class ProgrammingExerciseImportService {
         // Used in .project
         replacements.put("<name>" + templateExercise.getTitle(), "<name>" + newExercise.getTitle());
 
-        final var user = userService.getUser();
+        final var user = userRetrievalService.getUser();
 
         adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TEMPLATE), user);
         adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TESTS), user);

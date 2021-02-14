@@ -34,15 +34,15 @@ public class ExamAccessService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     public ExamAccessService(ExamRepository examRepository, ExerciseGroupRepository exerciseGroupRepository, StudentExamRepository studentExamRepository,
-            AuthorizationCheckService authorizationCheckService, UserService userService) {
+            AuthorizationCheckService authorizationCheckService, UserRetrievalService userRetrievalService) {
         this.examRepository = examRepository;
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.studentExamRepository = studentExamRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
     }
 
     @Autowired
@@ -59,7 +59,7 @@ public class ExamAccessService {
      * @return a ResponseEntity with the exam
      */
     public ResponseEntity<StudentExam> checkAndGetCourseAndExamAccessForConduction(Long courseId, Long examId) {
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        User currentUser = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         // Check that the current user is at least student in the course.
         Course course = courseService.findOne(courseId);

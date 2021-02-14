@@ -52,7 +52,7 @@ public class ParticipationTeamWebsocketService {
 
     private final Map<String, Instant> lastActionTracker;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final ParticipationService participationService;
 
@@ -62,19 +62,16 @@ public class ParticipationTeamWebsocketService {
 
     private final ModelingSubmissionService modelingSubmissionService;
 
-    private final HazelcastInstance hazelcastInstance;
-
-    public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry, UserService userService,
+    public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry, UserRetrievalService userRetrievalService,
             ParticipationService participationService, ExerciseService exerciseService, TextSubmissionService textSubmissionService,
             ModelingSubmissionService modelingSubmissionService, HazelcastInstance hazelcastInstance) {
         this.messagingTemplate = messagingTemplate;
         this.simpUserRegistry = simpUserRegistry;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.participationService = participationService;
         this.exerciseService = exerciseService;
         this.textSubmissionService = textSubmissionService;
         this.modelingSubmissionService = modelingSubmissionService;
-        this.hazelcastInstance = hazelcastInstance;
 
         // participationId-username -> timestamp
         this.lastTypingTracker = hazelcastInstance.getMap("lastTypingTracker");
@@ -170,7 +167,7 @@ public class ParticipationTeamWebsocketService {
             return;
         }
 
-        final User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        final User user = userRetrievalService.getUserWithGroupsAndAuthorities(principal.getName());
         final Exercise exercise = exerciseService.findOne(participation.getExercise().getId());
 
         if (submission instanceof ModelingSubmission && exercise instanceof ModelingExercise) {

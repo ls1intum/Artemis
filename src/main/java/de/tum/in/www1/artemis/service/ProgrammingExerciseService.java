@@ -68,7 +68,7 @@ public class ProgrammingExerciseService {
 
     private final ResultRepository resultRepository;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -82,7 +82,7 @@ public class ProgrammingExerciseService {
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
-            ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService, ResourceLoaderService resourceLoaderService,
+            ResultRepository resultRepository, UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService, ResourceLoaderService resourceLoaderService,
             GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
@@ -93,7 +93,7 @@ public class ProgrammingExerciseService {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.authCheckService = authCheckService;
         this.resourceLoaderService = resourceLoaderService;
         this.groupNotificationService = groupNotificationService;
@@ -128,7 +128,7 @@ public class ProgrammingExerciseService {
     @Transactional // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
-        final var user = userService.getUser();
+        final var user = userRetrievalService.getUser();
 
         createRepositoriesForNewExercise(programmingExercise);
         initParticipations(programmingExercise);
@@ -672,7 +672,7 @@ public class ProgrammingExerciseService {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTestCasesById(exerciseId);
         if (programmingExercise.isPresent()) {
             Course course = programmingExercise.get().getCourseViaExerciseGroupOrCourseMember();
-            User user = userService.getUserWithGroupsAndAuthorities();
+            User user = userRetrievalService.getUserWithGroupsAndAuthorities();
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 throw new IllegalAccessException();
             }
@@ -740,7 +740,7 @@ public class ProgrammingExerciseService {
             throw new EntityNotFoundException("Programming exercise not found with id: " + programmingExerciseId);
         }
         ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {

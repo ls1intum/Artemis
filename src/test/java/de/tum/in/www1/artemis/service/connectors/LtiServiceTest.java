@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.service.UserRetrievalService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
@@ -34,6 +35,9 @@ public class LtiServiceTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private UserRetrievalService userRetrievalService;
 
     @Mock
     private UserRepository userRepository;
@@ -63,7 +67,7 @@ public class LtiServiceTest {
 
     private LtiUserId ltiUserId;
 
-    private String courseStudentGroupName = "courseStudentGroupName";
+    private final String courseStudentGroupName = "courseStudentGroupName";
 
     private LtiOutcomeUrl ltiOutcomeUrl;
 
@@ -71,7 +75,8 @@ public class LtiServiceTest {
     public void init() {
         MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiService = new LtiService(userService, userRepository, ltiOutcomeUrlRepository, resultRepository, artemisAuthenticationProvider, ltiUserIdRepository, response);
+        ltiService = new LtiService(userService, userRepository, ltiOutcomeUrlRepository, resultRepository, artemisAuthenticationProvider, ltiUserIdRepository,
+                userRetrievalService, response);
         Course course = new Course();
         course.setStudentGroupName(courseStudentGroupName);
         exercise = new TextExercise();
@@ -118,7 +123,7 @@ public class LtiServiceTest {
     @Test
     public void handleLaunchRequest_existingMappingForLtiUserId() {
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.of(ltiUserId));
-        when(userService.getUserWithGroupsAndAuthorities()).thenReturn(user);
+        when(userRetrievalService.getUserWithGroupsAndAuthorities()).thenReturn(user);
 
         onSuccessfulAuthenticationSetup(user, ltiUserId);
 
@@ -202,7 +207,7 @@ public class LtiServiceTest {
     }
 
     private void onSuccessfulAuthenticationSetup(User user, LtiUserId ltiUserId) {
-        when(userService.getUserWithGroupsAndAuthorities()).thenReturn(user);
+        when(userRetrievalService.getUserWithGroupsAndAuthorities()).thenReturn(user);
         when(ltiUserIdRepository.findByUser(user)).thenReturn(Optional.of(ltiUserId));
         ltiOutcomeUrlRepositorySetup(user);
     }

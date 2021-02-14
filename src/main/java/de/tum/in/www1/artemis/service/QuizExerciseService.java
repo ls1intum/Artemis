@@ -42,7 +42,7 @@ public class QuizExerciseService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final ObjectMapper objectMapper;
 
@@ -54,11 +54,11 @@ public class QuizExerciseService {
 
     private SimpMessageSendingOperations messagingTemplate;
 
-    public QuizExerciseService(UserService userService, QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository,
+    public QuizExerciseService(UserRetrievalService userRetrievalService, QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
             QuizSubmissionRepository quizSubmissionRepository, MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter,
             GroupNotificationService groupNotificationService) {
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.shortAnswerMappingRepository = shortAnswerMappingRepository;
@@ -223,7 +223,7 @@ public class QuizExerciseService {
     public List<QuizExercise> findAll() {
         log.debug("REST request to get all QuizExercises");
         List<QuizExercise> quizExercises = quizExerciseRepository.findAll();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(exercise -> {
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
             return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin(user);
@@ -287,7 +287,7 @@ public class QuizExerciseService {
     public List<QuizExercise> findByCourseId(Long courseId) {
         log.debug("Request to find all Quiz Exercises in Course : {}", courseId);
         List<QuizExercise> quizExercises = quizExerciseRepository.findByCourseId(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (quizExercises.size() > 0) {
             Course course = quizExercises.get(0).getCourseViaExerciseGroupOrCourseMember();
             if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
@@ -380,7 +380,7 @@ public class QuizExerciseService {
      */
     public boolean userHasTAPermissions(QuizExercise quizExercise) {
         Course course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin(user);
     }
 

@@ -28,10 +28,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -55,7 +52,7 @@ public abstract class RepositoryResource {
 
     protected final GitService gitService;
 
-    protected final UserService userService;
+    protected final UserRetrievalService userRetrievalService;
 
     protected final RepositoryService repositoryService;
 
@@ -63,10 +60,10 @@ public abstract class RepositoryResource {
 
     protected final Optional<VersionControlService> versionControlService;
 
-    public RepositoryResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService,
+    public RepositoryResource(UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
             ProgrammingExerciseService programmingExerciseService) {
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -234,7 +231,7 @@ public abstract class RepositoryResource {
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<Void> commitChanges(Long domainId) {
-        User user = userService.getUser();
+        User user = userRetrievalService.getUser();
         log.debug("REST request to commit Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {

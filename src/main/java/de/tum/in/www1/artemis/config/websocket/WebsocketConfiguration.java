@@ -49,10 +49,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -72,7 +69,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final ExerciseService exerciseService;
 
@@ -87,12 +84,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private String brokerPassword;
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler,
-            AuthorizationCheckService authorizationCheckService, @Lazy ExerciseService exerciseService, UserService userService) {
+            AuthorizationCheckService authorizationCheckService, @Lazy ExerciseService exerciseService, UserRetrievalService userRetrievalService) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseService = exerciseService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
     }
 
     // Break the cycle
@@ -292,12 +289,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     }
 
     private boolean isUserInstructorOrHigherForExercise(Principal principal, Exercise exercise) {
-        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities(principal.getName());
         return authorizationCheckService.isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
     private boolean isUserTAOrHigherForExercise(Principal principal, Exercise exercise) {
-        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities(principal.getName());
         return authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
     }
 }

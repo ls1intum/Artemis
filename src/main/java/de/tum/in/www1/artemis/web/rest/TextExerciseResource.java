@@ -70,7 +70,7 @@ public class TextExerciseResource {
 
     private final TextSubmissionExportService textSubmissionExportService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final CourseService courseService;
 
@@ -93,7 +93,7 @@ public class TextExerciseResource {
     private final TextPlagiarismDetectionService textPlagiarismDetectionService;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
-            UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
+            UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService,
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionService gradingCriterionService, TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService,
@@ -102,7 +102,7 @@ public class TextExerciseResource {
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
         this.textExerciseRepository = textExerciseRepository;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.participationService = participationService;
@@ -155,7 +155,7 @@ public class TextExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
 
         // Check that the user is authorized to create the exercise
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
@@ -204,7 +204,7 @@ public class TextExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
 
         // Check that the user is authorized to update the exercise
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
@@ -326,7 +326,7 @@ public class TextExerciseResource {
             course = textExercise.getCourseViaExerciseGroupOrCourseMember();
         }
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
@@ -348,7 +348,7 @@ public class TextExerciseResource {
     @GetMapping("/text-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         StudentParticipation participation = participationService.findOneStudentParticipationWithEagerSubmissionsResultsFeedbacks(participationId);
         if (participation == null) {
             return ResponseEntity.badRequest()
@@ -449,7 +449,7 @@ public class TextExerciseResource {
     @GetMapping("/text-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR, ADMIN')")
     public ResponseEntity<SearchResultPageDTO<TextExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search) {
-        final var user = userService.getUserWithGroupsAndAuthorities();
+        final var user = userRetrievalService.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(textExerciseService.getAllOnPageWithSize(search, user));
     }
 
@@ -474,7 +474,7 @@ public class TextExerciseResource {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
             return badRequest();
         }
-        final var user = userService.getUserWithGroupsAndAuthorities();
+        final var user = userRetrievalService.getUserWithGroupsAndAuthorities();
         final var optionalOriginalTextExercise = textExerciseRepository.findByIdWithEagerExampleSubmissionsAndResults(sourceExerciseId);
         if (optionalOriginalTextExercise.isEmpty()) {
             log.debug("Cannot find original exercise to import from {}", sourceExerciseId);

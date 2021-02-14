@@ -41,19 +41,19 @@ public class SubmissionResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final ExerciseService exerciseService;
 
     public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, ResultService resultService,
-            ParticipationService participationService, AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService) {
+            ParticipationService participationService, AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService, ExerciseService exerciseService) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.resultService = resultService;
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
     }
 
     /**
@@ -104,7 +104,7 @@ public class SubmissionResource {
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         var testRunParticipations = participationService.findTestRunParticipationForExerciseWithEagerSubmissionsResult(user.getId(), List.of(exercise));
         if (!testRunParticipations.isEmpty() && testRunParticipations.get(0).findLatestSubmission().isPresent()) {
@@ -122,7 +122,7 @@ public class SubmissionResource {
 
     private void checkAccessPermissionAtInstructor(Submission submission) {
         Course course = findCourseFromSubmission(submission);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");

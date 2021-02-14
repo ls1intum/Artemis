@@ -37,7 +37,7 @@ public class ProgrammingSubmissionResultSimulationService {
 
     private final ParticipationRepository participationRepository;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -49,11 +49,11 @@ public class ProgrammingSubmissionResultSimulationService {
 
     private final ProgrammingExerciseSimulationService programmingExerciseSimulationService;
 
-    public ProgrammingSubmissionResultSimulationService(ParticipationRepository participationRepository, UserService userService,
+    public ProgrammingSubmissionResultSimulationService(ParticipationRepository participationRepository, UserRetrievalService userRetrievalService,
             ProgrammingExerciseService programmingExerciseService, ParticipationService participationService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ResultRepository resultRepository, ProgrammingExerciseSimulationService programmingExerciseSimulationService) {
         this.participationRepository = participationRepository;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.programmingExerciseService = programmingExerciseService;
@@ -89,7 +89,7 @@ public class ProgrammingSubmissionResultSimulationService {
      * @return the newly created and stored submission
      */
     public ProgrammingSubmission createSubmission(Long exerciseId) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Participant participant = user;
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);

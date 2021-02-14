@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UserRetrievalService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -53,14 +54,17 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private final UserService userService;
 
+    private final UserRetrievalService userRetrievalService;
+
     private final RestTemplate restTemplate;
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    public BitbucketService(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate,
+    public BitbucketService(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UserRetrievalService userRetrievalService,
             @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, UrlService urlService, GitService gitService) {
         super(urlService, gitService);
         this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
@@ -82,7 +86,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
                     try {
                         // NOTE: we need to refetch the user here to make sure that the groups are not lazy loaded.
-                        user = userService.getUserWithGroupsAndAuthorities(user.getLogin());
+                        user = userRetrievalService.getUserWithGroupsAndAuthorities(user.getLogin());
                         addUserToGroups(username, user.getGroups());
                     }
                     catch (BitbucketException e) {
@@ -293,7 +297,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
                     if (e.getResponseBodyAsString().contains("No such user")) {
                         if (user == null) {
-                            user = userService.getUser();
+                            user = userRetrievalService.getUser();
                         }
                         if (user.getCreatedDate().plusSeconds(90).isAfter(Instant.now())) {
                             log.warn("Could not give write permissions to user " + username + ", because the user does not yet exist in Bitbucket. Trying again in 5s");

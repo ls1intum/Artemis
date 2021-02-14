@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LearningGoalService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -43,7 +43,7 @@ public class LearningGoalResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final LearningGoalRepository learningGoalRepository;
 
@@ -51,12 +51,12 @@ public class LearningGoalResource {
 
     private final LearningGoalService learningGoalService;
 
-    public LearningGoalResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserService userService,
+    public LearningGoalResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRetrievalService userRetrievalService,
             LearningGoalRepository learningGoalRepository, LectureUnitRepository lectureUnitRepository, LearningGoalService learningGoalService) {
         this.courseRepository = courseRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.learningGoalRepository = learningGoalRepository;
         this.learningGoalService = learningGoalService;
     }
@@ -82,7 +82,7 @@ public class LearningGoalResource {
         if (!learningGoal.getCourse().getId().equals(courseId)) {
             return conflict();
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authorizationCheckService.isAtLeastInstructorInCourse(learningGoal.getCourse(), user)) {
             return forbidden();
         }
@@ -112,7 +112,7 @@ public class LearningGoalResource {
         if (!learningGoal.getCourse().getId().equals(courseId)) {
             return conflict();
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authorizationCheckService.isAtLeastStudentInCourse(learningGoal.getCourse(), user)) {
             return forbidden();
         }
@@ -160,7 +160,7 @@ public class LearningGoalResource {
             return notFound();
         }
         Course course = courseOptional.get();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();

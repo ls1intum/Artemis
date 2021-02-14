@@ -62,8 +62,9 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseService modelingExerciseService, ParticipationService participationService, AuthorizationCheckService authCheckService, CompassService compassService,
-            ExerciseService exerciseService, UserService userService, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
-        super(submissionRepository, resultService, participationService, authCheckService, userService, exerciseService, modelingSubmissionService);
+            ExerciseService exerciseService, UserRetrievalService userRetrievalService, GradingCriterionService gradingCriterionService,
+            ExamSubmissionService examSubmissionService) {
+        super(submissionRepository, resultService, participationService, authCheckService, userRetrievalService, exerciseService, modelingSubmissionService);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.compassService = compassService;
@@ -118,7 +119,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @NotNull
     private ResponseEntity<ModelingSubmission> handleModelingSubmission(Long exerciseId, Principal principal, ModelingSubmission modelingSubmission) {
         final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         // Apply further checks if it is an exam submission
         Optional<ResponseEntity<ModelingSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(modelingExercise, user);
@@ -185,7 +186,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
         var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
         modelingExercise.setGradingCriteria(gradingCriteria);
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user)) {
             return forbidden();
         }
@@ -213,7 +214,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         log.debug("REST request to get a modeling submission without assessment");
         final var exercise = exerciseService.findOne(exerciseId);
-        final var user = userService.getUserWithGroupsAndAuthorities();
+        final var user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
@@ -256,7 +257,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         checkAuthorization(modelingExercise, user);
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -299,7 +300,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
         final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         checkAuthorization(modelingExercise, user);
         if (compassService.isSupported(modelingExercise)) {
             compassService.resetModelsWaitingForAssessment(exerciseId);
@@ -317,7 +318,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getLatestSubmissionForModelingEditor(@PathVariable long participationId) {
         StudentParticipation participation = participationService.findOneWithEagerSubmissionsResultsFeedback(participationId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         ModelingExercise modelingExercise;
 
         if (participation.getExercise() == null) {

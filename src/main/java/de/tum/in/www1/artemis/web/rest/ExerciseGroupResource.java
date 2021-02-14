@@ -45,18 +45,18 @@ public class ExerciseGroupResource {
 
     private final ExamAccessService examAccessService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final ExerciseService exerciseService;
 
     private final AuditEventRepository auditEventRepository;
 
-    public ExerciseGroupResource(ExerciseGroupService exerciseGroupService, ExamAccessService examAccessService, UserService userService, ExerciseService exerciseService,
-            AuditEventRepository auditEventRepository, ExamService examService) {
+    public ExerciseGroupResource(ExerciseGroupService exerciseGroupService, ExamAccessService examAccessService, UserRetrievalService userRetrievalService,
+            ExerciseService exerciseService, AuditEventRepository auditEventRepository, ExamService examService) {
         this.exerciseGroupService = exerciseGroupService;
         this.examService = examService;
         this.examAccessService = examAccessService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.exerciseService = exerciseService;
         this.auditEventRepository = auditEventRepository;
     }
@@ -187,7 +187,7 @@ public class ExerciseGroupResource {
 
         ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExercises(exerciseGroupId);
 
-        User user = userService.getUser();
+        User user = userRetrievalService.getUser();
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE_GROUP, "exerciseGroup=" + exerciseGroup.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete the exercise group {}", exerciseGroup.getTitle());

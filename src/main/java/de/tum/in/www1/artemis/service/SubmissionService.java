@@ -46,14 +46,15 @@ public class SubmissionService {
 
     protected final ParticipationService participationService;
 
-    protected final UserService userService;
+    protected final UserRetrievalService userRetrievalService;
 
     protected final FeedbackRepository feedbackRepository;
 
-    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
-            StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, FeedbackRepository feedbackRepository) {
+    public SubmissionService(SubmissionRepository submissionRepository, UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService,
+            ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
+            FeedbackRepository feedbackRepository) {
         this.submissionRepository = submissionRepository;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -123,7 +124,7 @@ public class SubmissionService {
      * @param courseId the id of the course
      */
     public void checkSubmissionLockLimit(long courseId) {
-        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRetrievalService.getUserWithGroupsAndAuthorities().getId(), courseId);
         if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
             throw new BadRequestAlertException("The limit of locked submissions has been reached", "submission", "lockedSubmissionsLimitReached");
         }
@@ -136,7 +137,7 @@ public class SubmissionService {
      * @return number of locked submissions for the current user in the given course
      */
     public long countSubmissionLocks(long courseId) {
-        return submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        return submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRetrievalService.getUserWithGroupsAndAuthorities().getId(), courseId);
     }
 
     /**
@@ -146,7 +147,7 @@ public class SubmissionService {
      * @return number of locked submissions for the current user in the given course
      */
     public List<Submission> getLockedSubmissions(long courseId) {
-        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userRetrievalService.getUserWithGroupsAndAuthorities().getId(), courseId);
     }
 
     /**
@@ -203,7 +204,8 @@ public class SubmissionService {
             // remove submission if user already assessed first correction round
             // if disabled, please switch tutorAssessUnique within the tests
             submissionsWithoutResult = submissionsWithoutResult.stream()
-                    .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1).getAssessor().equals(userService.getUser())).collect(Collectors.toList());
+                    .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1).getAssessor().equals(userRetrievalService.getUser()))
+                    .collect(Collectors.toList());
         }
 
         if (submissionsWithoutResult.isEmpty()) {
@@ -469,7 +471,7 @@ public class SubmissionService {
         }
 
         if (result.getAssessor() == null) {
-            result.setAssessor(userService.getUser());
+            result.setAssessor(userRetrievalService.getUser());
         }
 
         result.setAssessmentType(AssessmentType.MANUAL);

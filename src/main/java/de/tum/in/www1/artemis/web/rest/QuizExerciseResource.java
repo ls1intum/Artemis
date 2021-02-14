@@ -43,7 +43,7 @@ public class QuizExerciseResource {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final CourseService courseService;
 
@@ -61,10 +61,10 @@ public class QuizExerciseResource {
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
             QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService,
-            GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserService userService, ExamService examService) {
+            GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserRetrievalService userRetrievalService, ExamService examService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.courseService = courseService;
         this.quizScheduleService = quizScheduleService;
         this.quizStatisticService = quizStatisticService;
@@ -109,7 +109,7 @@ public class QuizExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
 
         // Check that the user is authorized to create the exercise
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
@@ -164,7 +164,7 @@ public class QuizExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
 
         // Check that the user is authorized to update the exercise
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
@@ -388,7 +388,7 @@ public class QuizExerciseResource {
             return notFound();
         }
         Course course = quizExerciseOptional.get().getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }

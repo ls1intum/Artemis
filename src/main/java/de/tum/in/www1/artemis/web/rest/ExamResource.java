@@ -49,11 +49,13 @@ public class ExamResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final CourseService courseService;
 
     private final ExamService examService;
+
+    private final ExamRegistrationService examRegistrationService;
 
     private final ExamRepository examRepository;
 
@@ -67,12 +69,13 @@ public class ExamResource {
 
     private final AssessmentDashboardService assessmentDashboardService;
 
-    public ExamResource(UserService userService, CourseService courseService, ExamService examService, ExamAccessService examAccessService,
+    public ExamResource(UserRetrievalService userRetrievalService, CourseService courseService, ExamService examService, ExamAccessService examAccessService,
             InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, AuthorizationCheckService authCheckService,
-            TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService) {
-        this.userService = userService;
+            TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService) {
+        this.userRetrievalService = userRetrievalService;
         this.courseService = courseService;
         this.examService = examService;
+        this.examRegistrationService = examRegistrationService;
         this.examRepository = examRepository;
         this.examAccessService = examAccessService;
         this.instanceMessageSendService = instanceMessageSendService;
@@ -258,7 +261,7 @@ public class ExamResource {
             return conflict();
         }
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -300,7 +303,7 @@ public class ExamResource {
             return conflict();
         }
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
@@ -392,7 +395,7 @@ public class ExamResource {
         var course = courseService.findOne(courseId);
         var exam = examService.findOneWithRegisteredUsers(examId);
 
-        Optional<User> student = userService.getUserWithGroupsAndAuthoritiesByLogin(studentLogin);
+        Optional<User> student = userRetrievalService.getUserWithGroupsAndAuthoritiesByLogin(studentLogin);
         if (student.isEmpty()) {
             return notFound();
         }
@@ -401,7 +404,7 @@ public class ExamResource {
             return forbidden("exam", "cannotRegisterInstructor", "You cannot register instructors or administrators to exams.");
         }
 
-        examService.registerStudentToExam(course, exam, student.get());
+        examRegistrationService.registerStudentToExam(course, exam, student.get());
         return ResponseEntity.ok().body(null);
     }
 
@@ -600,7 +603,7 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        List<StudentDTO> notFoundStudentsDtos = examService.registerStudentsForExam(courseId, examId, studentDtos);
+        List<StudentDTO> notFoundStudentsDtos = examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
     }
 
@@ -621,7 +624,7 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
-        examService.addAllStudentsOfCourseToExam(courseId, examId);
+        examRegistrationService.addAllStudentsOfCourseToExam(courseId, examId);
         return ResponseEntity.ok().body(null);
     }
 
@@ -647,12 +650,12 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        Optional<User> optionalStudent = userService.getUserWithGroupsAndAuthoritiesByLogin(studentLogin);
+        Optional<User> optionalStudent = userRetrievalService.getUserWithGroupsAndAuthoritiesByLogin(studentLogin);
         if (optionalStudent.isEmpty()) {
             return notFound();
         }
 
-        examService.unregisterStudentFromExam(examId, withParticipationsAndSubmission, optionalStudent.get());
+        examRegistrationService.unregisterStudentFromExam(examId, withParticipationsAndSubmission, optionalStudent.get());
         return ResponseEntity.ok().body(null);
     }
 

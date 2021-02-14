@@ -39,10 +39,11 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final ParticipationService participationService;
 
-    public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ProgrammingAssessmentService programmingAssessmentService,
-            ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService, ResultRepository resultRepository, ExamService examService,
-            WebsocketMessagingService messagingService, LtiService ltiService, ParticipationService participationService, ExampleSubmissionService exampleSubmissionService) {
-        super(authCheckService, userService, exerciseService, programmingSubmissionService, programmingAssessmentService, resultRepository, examService, messagingService,
+    public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService,
+            ProgrammingAssessmentService programmingAssessmentService, ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
+            ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService, LtiService ltiService,
+            ParticipationService participationService, ExampleSubmissionService exampleSubmissionService) {
+        super(authCheckService, userRetrievalService, exerciseService, programmingSubmissionService, programmingAssessmentService, resultRepository, examService, messagingService,
                 exampleSubmissionService);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -62,7 +63,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateProgrammingManualResultAfterComplaint(@RequestBody AssessmentUpdate assessmentUpdate, @PathVariable long submissionId) {
         log.debug("REST request to update the assessment of manual result for submission {} after complaint.", submissionId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         ProgrammingSubmission programmingSubmission = programmingSubmissionService.findByIdWithEagerResultsFeedbacksAssessor(submissionId);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
@@ -115,7 +116,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         log.debug("REST request to save a new result : {}", newManualResult);
         final var participation = participationService.findOneWithEagerSubmissionsResultsFeedback(participationId);
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         // based on the locking mechanism we take the most recent manual result
         Result existingManualResult = participation.getResults().stream().filter(Result::isManual).max(Comparator.comparing(Result::getId))

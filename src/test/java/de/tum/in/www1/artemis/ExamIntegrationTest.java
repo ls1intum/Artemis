@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ExamRegistrationService;
 import de.tum.in.www1.artemis.service.ExamService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
@@ -57,6 +58,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     ExamService examService;
+
+    @Autowired
+    ExamRegistrationService examRegistrationService;
 
     @Autowired
     ExerciseGroupRepository exerciseGroupRepository;
@@ -1528,8 +1532,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testIsUserRegisteredForExam() {
         exam1.addRegisteredUser(users.get(0));
         final var exam = examRepository.save(exam1);
-        final var isUserRegistered = examService.isUserRegisteredForExam(exam.getId(), users.get(0).getId());
-        final var isCurrentUserRegistered = examService.isCurrentUserRegisteredForExam(exam.getId());
+        final var isUserRegistered = examRegistrationService.isUserRegisteredForExam(exam.getId(), users.get(0).getId());
+        final var isCurrentUserRegistered = examRegistrationService.isCurrentUserRegisteredForExam(exam.getId());
         assertThat(isUserRegistered).isTrue();
         assertThat(isCurrentUserRegistered).isFalse();
     }

@@ -44,7 +44,7 @@ public class StudentExamResource {
 
     private final StudentExamAccessService studentExamAccessService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final StudentExamRepository studentExamRepository;
 
@@ -61,13 +61,13 @@ public class StudentExamResource {
     private final AuthorizationCheckService authorizationCheckService;
 
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
-            UserService userService, StudentExamRepository studentExamRepository, ExamService examService, ExamSessionService examSessionService,
+            UserRetrievalService userRetrievalService, StudentExamRepository studentExamRepository, ExamService examService, ExamSessionService examSessionService,
             ParticipationService participationService, QuizExerciseService quizExerciseService, ExamRepository examRepository,
             AuthorizationCheckService authorizationCheckService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.studentExamRepository = studentExamRepository;
         this.examService = examService;
         this.examSessionService = examSessionService;
@@ -177,7 +177,7 @@ public class StudentExamResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam) {
         log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        User currentUser = userRetrievalService.getUserWithGroupsAndAuthorities();
         boolean isTestRun = studentExam.isTestRun();
         Optional<ResponseEntity<StudentExam>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId(), currentUser, isTestRun);
         if (accessFailure.isPresent()) {
@@ -215,7 +215,7 @@ public class StudentExamResource {
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, HttpServletRequest request) {
         // NOTE: it is important that this method has the same logic (except really small differences) as getTestRunForConduction
         long start = System.currentTimeMillis();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
 
         // 1st: load the studentExam with all associated exercises
@@ -254,7 +254,7 @@ public class StudentExamResource {
     public ResponseEntity<StudentExam> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId, HttpServletRequest request) {
         // NOTE: it is important that this method has the same logic (except really small differences) as getStudentExamForConduction
         long start = System.currentTimeMillis();
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        User currentUser = userRetrievalService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the test run for exam {} with id {}", examId, testRunId);
 
         // 1st: load the testRun with all associated exercises
@@ -293,7 +293,7 @@ public class StudentExamResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
 
         // 1st: load the studentExam with all associated exercises
@@ -406,7 +406,7 @@ public class StudentExamResource {
             studentExamService.deleteTestRun(testRun.getId());
         }
 
-        final var instructor = userService.getUser();
+        final var instructor = userRetrievalService.getUser();
         var assessedUnsubmittedStudentExams = studentExamService.assessUnsubmittedStudentExams(exam, instructor);
         log.info("Graded {} unsubmitted student exams of exam {}", assessedUnsubmittedStudentExams.size(), examId);
 

@@ -35,14 +35,14 @@ public class RepositoryService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService, AuthorizationCheckService authCheckService, UserService userService) {
+    public RepositoryService(GitService gitService, AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService) {
         this.gitService = gitService;
         this.authCheckService = authCheckService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
     }
 
     /**
@@ -295,7 +295,7 @@ public class RepositoryService {
      */
     public Repository checkoutRepositoryByName(Exercise exercise, VcsRepositoryUrl repoUrl, boolean pullOnCheckout)
             throws IllegalAccessException, InterruptedException, GitAPIException {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         if (!hasPermissions) {
@@ -317,7 +317,7 @@ public class RepositoryService {
      */
     public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, VcsRepositoryUrl repoUrl)
             throws IllegalAccessException, InterruptedException, GitAPIException {
-        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities(principal.getName());
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         boolean hasPermissions = authCheckService.isAtLeastInstructorInCourse(course, user);
         if (!hasPermissions) {

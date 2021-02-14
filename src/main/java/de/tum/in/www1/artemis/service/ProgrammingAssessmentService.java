@@ -18,14 +18,12 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ProgrammingAssessmentService extends AssessmentService {
 
-    private final UserService userService;
-
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
-            SubmissionRepository submissionRepository, ExamService examService, UserService userService, GradingCriterionService gradingCriterionService, LtiService ltiService) {
+            SubmissionRepository submissionRepository, ExamService examService, UserRetrievalService userRetrievalService, GradingCriterionService gradingCriterionService,
+            LtiService ltiService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examService, gradingCriterionService, userService, ltiService);
-        this.userService = userService;
+                submissionRepository, examService, gradingCriterionService, userRetrievalService, ltiService);
     }
 
     /**
@@ -38,7 +36,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
     public Result saveManualAssessment(Result result) {
         result.setHasFeedback(!result.getFeedbacks().isEmpty());
         var participation = result.getParticipation();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         result.setHasComplaint(false);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);

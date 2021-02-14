@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.UserRetrievalService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
@@ -54,7 +54,7 @@ public class LtiResource {
 
     private final LtiService ltiService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -62,10 +62,10 @@ public class LtiResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    public LtiResource(LtiService ltiService, UserService userService, ExerciseRepository exerciseRepository, TokenProvider tokenProvider,
+    public LtiResource(LtiService ltiService, UserRetrievalService userRetrievalService, ExerciseRepository exerciseRepository, TokenProvider tokenProvider,
             AuthorizationCheckService authCheckService) {
         this.ltiService = ltiService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.exerciseRepository = exerciseRepository;
         this.tokenProvider = tokenProvider;
         this.authCheckService = authCheckService;
@@ -137,7 +137,7 @@ public class LtiResource {
         // If the current user was created within the last 15 seconds, we just created the user
         // Display a welcome message to the user
         boolean isNewUser = SecurityUtils.isAuthenticated()
-                && TimeUnit.SECONDS.toMinutes(ZonedDateTime.now().toEpochSecond() - userService.getUser().getCreatedDate().toEpochMilli() * 1000) < 15;
+                && TimeUnit.SECONDS.toMinutes(ZonedDateTime.now().toEpochSecond() - userRetrievalService.getUser().getCreatedDate().toEpochMilli() * 1000) < 15;
 
         log.info("isNewUser: " + isNewUser);
 

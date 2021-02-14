@@ -39,7 +39,7 @@ public class StudentExamService {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private ExamService examService;
 
@@ -61,13 +61,13 @@ public class StudentExamService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    public StudentExamService(StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
+    public StudentExamService(StudentExamRepository studentExamRepository, UserRetrievalService userRetrievalService, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
@@ -457,7 +457,7 @@ public class StudentExamService {
         testRun.setExercises(testRunConfiguration.getExercises());
         testRun.setExam(testRunConfiguration.getExam());
         testRun.setWorkingTime(testRunConfiguration.getWorkingTime());
-        testRun.setUser(userService.getUser());
+        testRun.setUser(userRetrievalService.getUser());
         testRun.setTestRun(true);
         testRun.setSubmitted(false);
         testRun = studentExamRepository.save(testRun);

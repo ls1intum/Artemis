@@ -23,7 +23,7 @@ public abstract class AssessmentResource {
 
     protected final AuthorizationCheckService authCheckService;
 
-    protected final UserService userService;
+    protected final UserRetrievalService userRetrievalService;
 
     protected final ExerciseService exerciseService;
 
@@ -39,11 +39,11 @@ public abstract class AssessmentResource {
 
     protected final ExampleSubmissionService exampleSubmissionService;
 
-    public AssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, SubmissionService submissionService,
-            AssessmentService assessmentService, ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService,
-            ExampleSubmissionService exampleSubmissionService) {
+    public AssessmentResource(AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService, ExerciseService exerciseService,
+            SubmissionService submissionService, AssessmentService assessmentService, ResultRepository resultRepository, ExamService examService,
+            WebsocketMessagingService messagingService, ExampleSubmissionService exampleSubmissionService) {
         this.authCheckService = authCheckService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.exerciseService = exerciseService;
         this.submissionService = submissionService;
         this.assessmentService = assessmentService;
@@ -97,7 +97,7 @@ public abstract class AssessmentResource {
      * @return result after saving/submitting modeling assessment
      */
     ResponseEntity<Result> saveAssessment(Submission submission, boolean submit, List<Feedback> feedbackList, Long resultId) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -130,7 +130,7 @@ public abstract class AssessmentResource {
      * @return result after saving example assessment
      */
     protected ResponseEntity<Result> saveExampleAssessment(long exampleSubmissionId, List<Feedback> feedbacks) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(exampleSubmissionId);
         Submission submission = exampleSubmission.getSubmission();
         Exercise exercise = exampleSubmission.getExercise();
@@ -197,13 +197,13 @@ public abstract class AssessmentResource {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
         Exercise exercise = exerciseService.findOne(exerciseId);
         checkAuthorization(exercise, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        if (!(isAtLeastInstructor || userService.getUser().getId().equals(submission.getLatestResult().getAssessor().getId()))) {
+        if (!(isAtLeastInstructor || userRetrievalService.getUser().getId().equals(submission.getLatestResult().getAssessor().getId()))) {
             // tutors cannot cancel the assessment of other tutors (only instructors can)
             return forbidden();
         }

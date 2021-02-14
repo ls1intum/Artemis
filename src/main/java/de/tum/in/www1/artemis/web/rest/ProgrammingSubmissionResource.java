@@ -25,8 +25,6 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -57,30 +55,25 @@ public class ProgrammingSubmissionResource {
 
     private final ParticipationService participationService;
 
-    private final ResultRepository resultRepository;
-
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
-    private StudentParticipationRepository studentParticipationRepository;
-
-    public ProgrammingSubmissionResource(StudentParticipationRepository studentParticipationRepository, ProgrammingSubmissionService programmingSubmissionService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService, UserService userService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, ResultRepository resultRepository) {
+    public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
+            ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            Optional<VersionControlService> versionControlService, UserRetrievalService userRetrievalService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            ParticipationService participationService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
         this.authCheckService = authCheckService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.versionControlService = versionControlService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.participationService = participationService;
-        this.resultRepository = resultRepository;
     }
 
     /**
@@ -225,7 +218,7 @@ public class ProgrammingSubmissionResource {
         try {
             Exercise exercise = exerciseService.findOne(exerciseId);
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            User user = userService.getUserWithGroupsAndAuthorities();
+            User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
             if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
                 return forbidden();
@@ -355,7 +348,7 @@ public class ProgrammingSubmissionResource {
         final boolean examMode = exercise.isExamExercise();
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
-            User user = userService.getUserWithGroupsAndAuthorities();
+            User user = userRetrievalService.getUserWithGroupsAndAuthorities();
             programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user, examMode,
                     correctionRound);
         }
@@ -384,7 +377,7 @@ public class ProgrammingSubmissionResource {
         log.debug("REST request to get ProgrammingSubmission of Participation with id: {}", participationId);
         final var participation = participationService.findOneWithEagerResults(participationId);
         final var exercise = participation.getExercise();
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
@@ -424,7 +417,7 @@ public class ProgrammingSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a programming submission without assessment");
         final ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             return forbidden();
         }

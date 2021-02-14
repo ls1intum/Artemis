@@ -31,24 +31,20 @@ public class ProgrammingExerciseGradingResource {
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
-    private final ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
-
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final ResultRepository resultRepository;
 
-    public ProgrammingExerciseGradingResource(ProgrammingExerciseGradingService programmingExerciseGradingService,
-            ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseService programmingExerciseService,
-            AuthorizationCheckService authCheckService, UserService userService, ResultRepository resultRepository) {
+    public ProgrammingExerciseGradingResource(ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingExerciseService programmingExerciseService,
+            AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService, ResultRepository resultRepository) {
         this.programmingExerciseGradingService = programmingExerciseGradingService;
-        this.programmingExerciseTestCaseService = programmingExerciseTestCaseService;
         this.programmingExerciseService = programmingExerciseService;
         this.authCheckService = authCheckService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.resultRepository = resultRepository;
     }
 
@@ -64,7 +60,7 @@ public class ProgrammingExerciseGradingResource {
         log.debug("REST request to reset the weights of exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
@@ -90,7 +86,7 @@ public class ProgrammingExerciseGradingResource {
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
 
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();

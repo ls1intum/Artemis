@@ -40,10 +40,10 @@ public class TestRepositoryResource extends RepositoryResource {
 
     private final ExerciseService exerciseService;
 
-    public TestRepositoryResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService,
+    public TestRepositoryResource(UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ExerciseService exerciseService,
             Optional<VersionControlService> versionControlService, ProgrammingExerciseService programmingExerciseService) {
-        super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseService);
+        super(userRetrievalService, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseService);
         this.exerciseService = exerciseService;
     }
 
@@ -63,7 +63,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @Override
     boolean canAccessRepository(Long exerciseId) {
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
-        return authCheckService.isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), userService.getUserWithGroupsAndAuthorities());
+        return authCheckService.isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), userRetrievalService.getUserWithGroupsAndAuthorities());
     }
 
     @Override

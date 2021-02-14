@@ -38,16 +38,16 @@ public class ExerciseHintResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final ExerciseService exerciseService;
 
     public ExerciseHintResource(ExerciseHintService exerciseHintService, AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService,
-            UserService userService, ExerciseService exerciseService) {
+            UserRetrievalService userRetrievalService, ExerciseService exerciseService) {
         this.exerciseHintService = exerciseHintService;
         this.programmingExerciseService = programmingExerciseService;
         this.authCheckService = authCheckService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.exerciseService = exerciseService;
     }
 
@@ -146,7 +146,7 @@ public class ExerciseHintResource {
     public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isAtLeastTeachingAssistantInCourse(course, user))

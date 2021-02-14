@@ -34,6 +34,9 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     UserService userService;
 
     @Autowired
+    UserRetrievalService userRetrievalService;
+
+    @Autowired
     GroupNotificationRepository groupNotificationRepository;
 
     @Autowired
@@ -115,7 +118,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetNotifications_recipientEvaluation() throws Exception {
-        User recipient = userService.getUser();
+        User recipient = userRetrievalService.getUser();
         SingleUserNotification notification1 = ModelFactory.generateSingleUserNotification(ZonedDateTime.now(), recipient);
         notificationRepository.save(notification1);
         SingleUserNotification notification2 = ModelFactory.generateSingleUserNotification(ZonedDateTime.now(), users.get(1));

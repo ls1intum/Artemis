@@ -40,25 +40,22 @@ public class AttachmentResource {
 
     private final AttachmentRepository attachmentRepository;
 
-    private final AttachmentService attachmentService;
-
     private final GroupNotificationService groupNotificationService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final FileService fileService;
 
     private final CacheManager cacheManager;
 
-    public AttachmentResource(AttachmentRepository attachmentRepository, AttachmentService attachmentService, GroupNotificationService groupNotificationService,
-            AuthorizationCheckService authorizationCheckService, UserService userService, FileService fileService, CacheManager cacheManager) {
+    public AttachmentResource(AttachmentRepository attachmentRepository, GroupNotificationService groupNotificationService, AuthorizationCheckService authorizationCheckService,
+            UserRetrievalService userRetrievalService, FileService fileService, CacheManager cacheManager) {
         this.attachmentRepository = attachmentRepository;
-        this.attachmentService = attachmentService;
         this.groupNotificationService = groupNotificationService;
         this.authorizationCheckService = authorizationCheckService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.fileService = fileService;
         this.cacheManager = cacheManager;
     }
@@ -149,7 +146,7 @@ public class AttachmentResource {
     @DeleteMapping("/attachments/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Optional<Attachment> optionalAttachment = attachmentRepository.findById(id);
         if (optionalAttachment.isEmpty()) {
             return ResponseEntity.notFound().build();

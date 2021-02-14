@@ -43,11 +43,11 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final ModelingSubmissionService modelingSubmissionService;
 
-    public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
+    public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService, CompassService compassService,
             ModelingExerciseService modelingExerciseService, AssessmentService assessmentService, ModelingSubmissionService modelingSubmissionService,
             ExampleSubmissionService exampleSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository,
             ExamService examService) {
-        super(authCheckService, userService, exerciseService, modelingSubmissionService, assessmentService, resultRepository, examService, messagingService,
+        super(authCheckService, userRetrievalService, exerciseService, modelingSubmissionService, assessmentService, resultRepository, examService, messagingService,
                 exampleSubmissionService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
@@ -141,7 +141,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();

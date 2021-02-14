@@ -24,20 +24,20 @@ public abstract class AbstractSubmissionResource {
 
     protected final AuthorizationCheckService authCheckService;
 
-    protected final UserService userService;
+    protected final UserRetrievalService userRetrievalService;
 
     protected final ExerciseService exerciseService;
 
     protected final SubmissionService submissionService;
 
     public AbstractSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ParticipationService participationService,
-            AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, SubmissionService submissionService) {
+            AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService, ExerciseService exerciseService, SubmissionService submissionService) {
         this.submissionRepository = submissionRepository;
         this.resultService = resultService;
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.submissionService = submissionService;
     }
 
@@ -51,7 +51,7 @@ public abstract class AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of submissions in body
      */
     protected ResponseEntity<List<Submission>> getAllSubmissions(Long exerciseId, boolean submittedOnly, boolean assessedByTutor, int correctionRound) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(exerciseId);
 
         if (assessedByTutor) {

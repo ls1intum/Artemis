@@ -76,7 +76,7 @@ public class ProgrammingExerciseResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final CourseService courseService;
 
@@ -122,14 +122,14 @@ public class ProgrammingExerciseResource {
 
     private final Pattern packageNamePatternForSwift = Pattern.compile(packageNameRegexForSwift);
 
-    public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
-            CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
-            ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionService gradingCriterionService,
-            ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy) {
+    public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRetrievalService userRetrievalService,
+            AuthorizationCheckService authCheckService, CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<VersionControlService> versionControlService, ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService,
+            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseImportService programmingExerciseImportService,
+            ProgrammingExerciseExportService programmingExerciseExportService, ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService,
+            GradingCriterionService gradingCriterionService, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy) {
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -537,7 +537,7 @@ public class ProgrammingExerciseResource {
         }
 
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
-        final var user = userService.getUserWithGroupsAndAuthorities();
+        final var user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             log.debug("User {} is not allowed to import exercises for course {}", user.getId(), course.getId());
             return forbidden();
@@ -702,7 +702,7 @@ public class ProgrammingExerciseResource {
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update the timeline of ProgrammingExercise : {}", updatedProgrammingExercise);
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Course course = updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
@@ -753,7 +753,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<List<ProgrammingExercise>> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
@@ -818,7 +818,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithSetupParticipations(@PathVariable long exerciseId) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationLatestResultById(exerciseId);
         if (programmingExerciseOpt.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
@@ -849,7 +849,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId) {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId);
         if (programmingExerciseOpt.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
@@ -894,7 +894,7 @@ public class ProgrammingExerciseResource {
             course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         }
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
@@ -926,7 +926,7 @@ public class ProgrammingExerciseResource {
         ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
 
         Course course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
             return forbidden();
         }
@@ -955,7 +955,7 @@ public class ProgrammingExerciseResource {
             throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             return forbidden();
         }
@@ -990,7 +990,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             return forbidden();
@@ -1105,7 +1105,7 @@ public class ProgrammingExerciseResource {
 
         ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
         Course course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
             return forbidden();
         }
@@ -1178,7 +1178,7 @@ public class ProgrammingExerciseResource {
     @GetMapping(Endpoints.PROGRAMMING_EXERCISES)
     @PreAuthorize("hasAnyRole('INSTRUCTOR, ADMIN')")
     public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search) {
-        final var user = userService.getUserWithGroupsAndAuthorities();
+        final var user = userRetrievalService.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, user));
     }
 

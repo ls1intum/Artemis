@@ -38,9 +38,24 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * Service Implementation for managing Participation.
  */
 @Service
+// TODO: this class is way to large. We need to split it into muliple smaller classes with fewer dependencies
 public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
+
+    private final UserRetrievalService userRetrievalService;
+
+    private final GitService gitService;
+
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
+    private final Optional<VersionControlService> versionControlService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final QuizScheduleService quizScheduleService;
+
+    private final UrlService urlService;
 
     private final ParticipationRepository participationRepository;
 
@@ -68,26 +83,12 @@ public class ParticipationService {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final UserService userService;
-
-    private final GitService gitService;
-
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
-    private final Optional<VersionControlService> versionControlService;
-
-    private final AuthorizationCheckService authCheckService;
-
-    private final QuizScheduleService quizScheduleService;
-
-    private final UrlService urlService;
-
     public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-            TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserService userService, GitService gitService,
+            TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserRetrievalService userRetrievalService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService,
             @Lazy QuizScheduleService quizScheduleService, RatingRepository ratingRepository, UrlService urlService) {
         this.participationRepository = participationRepository;
@@ -102,7 +103,7 @@ public class ParticipationService {
         this.complaintRepository = complaintRepository;
         this.teamRepository = teamRepository;
         this.studentExamRepository = studentExamRepository;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -1227,7 +1228,7 @@ public class ParticipationService {
             return true;
         // if the user is not the owner of the participation, the user can only see it in case he is
         // a teaching assistant or an instructor of the course, or in case he is admin
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }

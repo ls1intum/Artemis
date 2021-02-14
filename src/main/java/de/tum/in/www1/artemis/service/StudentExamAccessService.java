@@ -23,7 +23,7 @@ public class StudentExamAccessService {
 
     private final CourseService courseService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -31,10 +31,10 @@ public class StudentExamAccessService {
 
     private final StudentExamRepository studentExamRepository;
 
-    public StudentExamAccessService(CourseService courseService, UserService userService, AuthorizationCheckService authorizationCheckService, ExamRepository examRepository,
-            StudentExamRepository studentExamRepository) {
+    public StudentExamAccessService(CourseService courseService, UserRetrievalService userRetrievalService, AuthorizationCheckService authorizationCheckService,
+            ExamRepository examRepository, StudentExamRepository studentExamRepository) {
         this.courseService = courseService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.authorizationCheckService = authorizationCheckService;
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
@@ -52,7 +52,7 @@ public class StudentExamAccessService {
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <T> Optional<ResponseEntity<T>> checkStudentExamAccess(Long courseId, Long examId, Long studentExamId, boolean isTestRun) {
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        User currentUser = userRetrievalService.getUserWithGroupsAndAuthorities();
         return checkStudentExamAccess(courseId, examId, studentExamId, currentUser, isTestRun);
     }
 

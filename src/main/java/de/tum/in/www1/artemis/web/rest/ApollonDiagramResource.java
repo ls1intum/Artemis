@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -42,15 +42,15 @@ public class ApollonDiagramResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final CourseService courseService;
 
-    public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository, AuthorizationCheckService authCheckService, UserService userService,
+    public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository, AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService,
             CourseService courseService) {
         this.apollonDiagramRepository = apollonDiagramRepository;
         this.authCheckService = authCheckService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.courseService = courseService;
     }
 
@@ -68,7 +68,7 @@ public class ApollonDiagramResource {
         log.debug("REST request to save ApollonDiagram : {}", apollonDiagram);
 
         Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -97,7 +97,7 @@ public class ApollonDiagramResource {
         log.debug("REST request to update ApollonDiagram : {}", apollonDiagram);
 
         Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -134,7 +134,7 @@ public class ApollonDiagramResource {
         log.debug("REST request to get ApollonDiagrams matching current course");
 
         Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -157,7 +157,7 @@ public class ApollonDiagramResource {
 
         if (apollonDiagram.isPresent()) {
             Course course = courseService.findOne(courseId);
-            User user = userService.getUserWithGroupsAndAuthorities();
+            User user = userRetrievalService.getUserWithGroupsAndAuthorities();
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 throw new AccessForbiddenException("You are not allowed to access this resource");
             }
@@ -181,7 +181,7 @@ public class ApollonDiagramResource {
         Optional<ApollonDiagram> apollonDiagram = apollonDiagramRepository.findById(id);
 
         Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }

@@ -40,7 +40,7 @@ public class QuizSubmissionResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final QuizExerciseService quizExerciseService;
 
@@ -55,12 +55,13 @@ public class QuizSubmissionResource {
     private final ExamSubmissionService examSubmissionService;
 
     public QuizSubmissionResource(QuizExerciseService quizExerciseService, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
-            WebsocketMessagingService messagingService, UserService userService, AuthorizationCheckService authCheckService, ExamSubmissionService examSubmissionService) {
+            WebsocketMessagingService messagingService, UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService,
+            ExamSubmissionService examSubmissionService) {
         this.quizExerciseService = quizExerciseService;
         this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
         this.messagingService = messagingService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.authCheckService = authCheckService;
         this.examSubmissionService = examSubmissionService;
     }
@@ -117,7 +118,7 @@ public class QuizSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
             return ResponseEntity.status(403)
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
@@ -223,7 +224,7 @@ public class QuizSubmissionResource {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         // Apply further checks if it is an exam submission
         Optional<ResponseEntity<QuizSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(quizExercise, user);

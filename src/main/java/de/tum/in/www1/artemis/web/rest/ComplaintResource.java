@@ -49,7 +49,7 @@ public class ComplaintResource {
 
     private final ExerciseService exerciseService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final TeamService teamService;
 
@@ -57,11 +57,11 @@ public class ComplaintResource {
 
     private final CourseService courseService;
 
-    public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseService exerciseService, UserService userService, TeamService teamService,
+    public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseService exerciseService, UserRetrievalService userRetrievalService, TeamService teamService,
             ComplaintService complaintService, CourseService courseService) {
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.teamService = teamService;
         this.complaintService = complaintService;
         this.courseService = courseService;
@@ -154,7 +154,7 @@ public class ComplaintResource {
             return ResponseEntity.ok().build();
         }
         var complaint = optionalComplaint.get();
-        var user = userService.getUserWithGroupsAndAuthorities();
+        var user = userRetrievalService.getUserWithGroupsAndAuthorities();
         var participation = (StudentParticipation) complaint.getResult().getParticipation();
         var exercise = participation.getExercise();
         var isOwner = authCheckService.isOwnerOfParticipation(participation, user);
@@ -193,7 +193,7 @@ public class ComplaintResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean teamMode) {
         log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
-        User user = userService.getUser();
+        User user = userRetrievalService.getUser();
         Participant participant = user;
         Course course = courseService.findOne(courseId);
         if (!course.getComplaintsEnabled()) {
@@ -286,7 +286,7 @@ public class ComplaintResource {
         // to filter by at least exerciseId or courseId, to be sure they are really instructors for that course /
         // exercise.
         // Of course tutors cannot ask for complaints about other tutors.
-        User user = userService.getUser();
+        User user = userRetrievalService.getUser();
         List<Complaint> complaints = complaintService.getAllComplaintsByTutorId(user.getId());
         filterOutUselessDataFromComplaints(complaints, true);
         return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
@@ -308,7 +308,7 @@ public class ComplaintResource {
         // Filtering by courseId
         Course course = courseService.findOne(courseId);
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
 
@@ -349,7 +349,7 @@ public class ComplaintResource {
             @RequestParam(required = false) Long tutorId) {
         // Filtering by exerciseId
         Exercise exercise = exerciseService.findOne(exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         if (exercise == null) {
             throw new BadRequestAlertException("The requested exercise does not exist", ENTITY_NAME, "wrongExerciseId");
@@ -364,7 +364,7 @@ public class ComplaintResource {
 
         // Only instructors can access all complaints about a exercise without filtering by tutorId
         if (!isAtLeastInstructor) {
-            tutorId = userService.getUser().getId();
+            tutorId = userRetrievalService.getUser().getId();
         }
 
         List<Complaint> complaints;

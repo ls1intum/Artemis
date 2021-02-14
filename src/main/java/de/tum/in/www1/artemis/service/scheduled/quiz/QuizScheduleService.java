@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.UserRetrievalService;
 
 @Service
 public class QuizScheduleService {
@@ -55,7 +55,7 @@ public class QuizScheduleService {
 
     private final ResultRepository resultRepository;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
@@ -68,11 +68,11 @@ public class QuizScheduleService {
     private QuizCache quizCache;
 
     public QuizScheduleService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            UserService userService, QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance) {
+            UserRetrievalService userRetrievalService, QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance) {
         this.messagingTemplate = messagingTemplate;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.scheduledProcessQuizSubmissions = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
@@ -562,7 +562,7 @@ public class QuizScheduleService {
                 StudentParticipation participation = new StudentParticipation();
                 // TODO: when this is set earlier for the individual quiz start of a student, we don't need to set this here anymore
                 participation.setInitializationDate(quizSubmission.getSubmissionDate());
-                Optional<User> user = userService.getUserByLogin(username);
+                Optional<User> user = userRetrievalService.getUserByLogin(username);
                 user.ifPresent(participation::setParticipant);
                 // add the quizExercise to the participation
                 participation.setExercise(quizExercise);

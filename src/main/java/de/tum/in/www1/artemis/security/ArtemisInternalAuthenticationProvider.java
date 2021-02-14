@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.UserRetrievalService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 
 @Component
@@ -24,13 +25,13 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
 
     private final Logger log = LoggerFactory.getLogger(ArtemisInternalAuthenticationProvider.class);
 
-    public ArtemisInternalAuthenticationProvider(UserRepository userRepository) {
-        super(userRepository);
+    public ArtemisInternalAuthenticationProvider(UserRepository userRepository, UserRetrievalService userRetrievalService) {
+        super(userRepository, userRetrievalService);
     }
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        final var user = userService.getUserWithAuthoritiesByLogin(authentication.getName());
+        final var user = userRetrievalService.getUserWithAuthoritiesByLogin(authentication.getName());
         if (user.isEmpty()) {
             throw new AuthenticationServiceException(String.format("User %s does not exist in the Artemis database!", authentication.getName()));
         }
@@ -49,7 +50,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
     @Override
     public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, boolean skipPasswordCheck) {
         final var password = authentication.getCredentials().toString();
-        final var optionalUser = userService.getUserByLogin(authentication.getName().toLowerCase());
+        final var optionalUser = userRetrievalService.getUserByLogin(authentication.getName().toLowerCase());
         final User user;
         if (optionalUser.isEmpty()) {
             user = userService.createUser(authentication.getName(), password, firstName, lastName, email, null, null, "en");

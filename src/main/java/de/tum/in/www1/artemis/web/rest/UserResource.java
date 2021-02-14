@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.service.UserRetrievalService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -67,14 +68,18 @@ public class UserResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final UserRepository userRepository;
-
     private final UserService userService;
+
+    private final UserRetrievalService userRetrievalService;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    public UserResource(UserRepository userRepository, UserService userService, ArtemisAuthenticationProvider artemisAuthenticationProvider) {
+    private final UserRepository userRepository;
+
+    public UserResource(UserRepository userRepository, UserRetrievalService userRetrievalService, UserService userService,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider) {
         this.userRepository = userRepository;
+        this.userRetrievalService = userRetrievalService;
         this.userService = userService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
@@ -163,7 +168,7 @@ public class UserResource {
     @GetMapping("/users")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<List<UserDTO>> getAllUsers(@ApiParam PageableSearchDTO<String> userSearch) {
-        final Page<UserDTO> page = userService.getAllManagedUsers(userSearch);
+        final Page<UserDTO> page = userRetrievalService.getAllManagedUsers(userSearch);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -183,7 +188,7 @@ public class UserResource {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
         }
         // limit search results to 25 users (larger result sizes would impact performance and are not useful for specific user searches)
-        final Page<UserDTO> page = userService.searchAllUsersByLoginOrName(PageRequest.of(0, 25), loginOrName);
+        final Page<UserDTO> page = userRetrievalService.searchAllUsersByLoginOrName(PageRequest.of(0, 25), loginOrName);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -194,7 +199,7 @@ public class UserResource {
     @GetMapping("/users/authorities")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public List<String> getAuthorities() {
-        return userService.getAuthorities();
+        return userRetrievalService.getAuthorities();
     }
 
     /**
@@ -207,7 +212,7 @@ public class UserResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<UserDTO> getUser(@PathVariable String login) {
         log.debug("REST request to get User : {}", login);
-        return ResponseUtil.wrapOrNotFound(userService.getUserWithAuthoritiesByLogin(login).map(UserDTO::new));
+        return ResponseUtil.wrapOrNotFound(userRetrievalService.getUserWithAuthoritiesByLogin(login).map(UserDTO::new));
     }
 
     /**
@@ -228,7 +233,7 @@ public class UserResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> updateUserNotificationDate() {
         log.debug("REST request to update notification date for logged in user");
-        User user = userService.getUser();
+        User user = userRetrievalService.getUser();
         userService.updateUserNotificationReadDate(user.getId());
         return ResponseEntity.ok().build();
     }

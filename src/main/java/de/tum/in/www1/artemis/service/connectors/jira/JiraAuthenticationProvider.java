@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProviderImpl;
+import de.tum.in.www1.artemis.service.UserRetrievalService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGroupDTO;
@@ -70,9 +71,9 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     private final Optional<LdapUserService> ldapUserService;
 
-    public JiraAuthenticationProvider(UserRepository userRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate,
+    public JiraAuthenticationProvider(UserRetrievalService userRetrievalService, UserRepository userRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutJiraRestTemplate") RestTemplate shortTimeoutRestTemplate, Optional<LdapUserService> ldapUserService) {
-        super(userRepository);
+        super(userRepository, userRetrievalService);
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.restTemplate = restTemplate;
         this.ldapUserService = ldapUserService;

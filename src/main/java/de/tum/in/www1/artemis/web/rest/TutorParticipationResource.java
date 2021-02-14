@@ -17,10 +17,7 @@ import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.TutorParticipationService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -45,16 +42,16 @@ public class TutorParticipationResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final GuidedTourConfiguration guidedTourConfiguration;
 
     public TutorParticipationResource(TutorParticipationService tutorParticipationService, AuthorizationCheckService authorizationCheckService, ExerciseService exerciseService,
-            UserService userService, GuidedTourConfiguration guidedTourConfiguration) {
+            UserRetrievalService userRetrievalService, GuidedTourConfiguration guidedTourConfiguration) {
         this.tutorParticipationService = tutorParticipationService;
         this.exerciseService = exerciseService;
         this.authorizationCheckService = authorizationCheckService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.guidedTourConfiguration = guidedTourConfiguration;
     }
 
@@ -72,7 +69,7 @@ public class TutorParticipationResource {
     public ResponseEntity<TutorParticipation> initTutorParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start tutor participation : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
@@ -102,7 +99,7 @@ public class TutorParticipationResource {
     public ResponseEntity<TutorParticipation> addExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to add example submission to exercise id : {}", exerciseId);
         Exercise exercise = this.exerciseService.findOne(exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
@@ -130,7 +127,7 @@ public class TutorParticipationResource {
     public ResponseEntity<TutorParticipation> deleteTutorParticipationForGuidedTour(@PathVariable Long exerciseId) {
         log.debug("REST request to remove tutor participation of the example submission for exercise id : {}", exerciseId);
         Exercise exercise = this.exerciseService.findOne(exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
 
         // Allow all tutors to delete their own participation if it's for a tutorial
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {

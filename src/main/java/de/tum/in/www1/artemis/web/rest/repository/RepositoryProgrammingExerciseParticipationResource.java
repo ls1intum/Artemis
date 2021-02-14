@@ -46,11 +46,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final BuildLogEntryService buildLogService;
 
-    public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService,
+    public RepositoryProgrammingExerciseParticipationResource(UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseService programmingExerciseService, ExamSubmissionService examSubmissionService,
             BuildLogEntryService buildLogService) {
-        super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseService);
+        super(userRetrievalService, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseService);
         this.participationService = participationService;
         this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
@@ -74,7 +74,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalAccessException();
         }
         // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         var programmingExercise = programmingParticipation.getProgrammingExercise();
         // This must be a student participation as hasPermissions would have been false and an error already thrown
         var isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
@@ -242,7 +242,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         }
         // Apply checks for exam (submission is in time & user's student exam has the exercise)
         // Checks only apply to students and tutors, otherwise template, solution and assignment participation can't be edited using the code editor
-        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities(principal.getName());
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExerciseParticipation.getProgrammingExercise())
                 && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExerciseParticipation.getProgrammingExercise(), user)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "notAllowedExam");

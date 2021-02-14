@@ -48,7 +48,7 @@ public class FileUploadExerciseResource {
 
     private final ExerciseService exerciseService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final CourseService courseService;
 
@@ -62,12 +62,13 @@ public class FileUploadExerciseResource {
 
     private final FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
-    public FileUploadExerciseResource(FileUploadExerciseService fileUploadExerciseService, FileUploadExerciseRepository fileUploadExerciseRepository, UserService userService,
-            AuthorizationCheckService authCheckService, CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
-            FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionService gradingCriterionService, ExerciseGroupService exerciseGroupService) {
+    public FileUploadExerciseResource(FileUploadExerciseService fileUploadExerciseService, FileUploadExerciseRepository fileUploadExerciseRepository,
+            UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService, CourseService courseService, GroupNotificationService groupNotificationService,
+            ExerciseService exerciseService, FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionService gradingCriterionService,
+            ExerciseGroupService exerciseGroupService) {
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
@@ -105,7 +106,7 @@ public class FileUploadExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
 
         // Check that the user is authorized to create the exercise
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
@@ -181,7 +182,7 @@ public class FileUploadExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
 
         // Check that the user is authorized to update the exercise
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
@@ -210,7 +211,7 @@ public class FileUploadExerciseResource {
     public ResponseEntity<List<FileUploadExercise>> getFileUploadExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
@@ -288,7 +289,7 @@ public class FileUploadExerciseResource {
             course = fileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
         }
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }

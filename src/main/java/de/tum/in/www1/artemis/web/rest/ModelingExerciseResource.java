@@ -51,7 +51,7 @@ public class ModelingExerciseResource {
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
     private final CourseService courseService;
 
@@ -75,7 +75,7 @@ public class ModelingExerciseResource {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
+    public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService,
             CourseService courseService, ModelingExerciseService modelingExerciseService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService, CompassService compassService,
             ExerciseService exerciseService, GradingCriterionService gradingCriterionService, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
@@ -84,7 +84,7 @@ public class ModelingExerciseResource {
         this.modelingExerciseService = modelingExerciseService;
         this.modelingExerciseImportService = modelingExerciseImportService;
         this.modelingSubmissionExportService = modelingSubmissionExportService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.compassService = compassService;
@@ -163,7 +163,7 @@ public class ModelingExerciseResource {
     @GetMapping("/modeling-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR, ADMIN')")
     public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search) {
-        final var user = userService.getUserWithGroupsAndAuthorities();
+        final var user = userRetrievalService.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, user));
     }
 
@@ -224,7 +224,7 @@ public class ModelingExerciseResource {
     public ResponseEntity<List<ModelingExercise>> getModelingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ModelingExercises for the course with id : {}", courseId);
         Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
@@ -311,7 +311,7 @@ public class ModelingExerciseResource {
             return notFound();
         }
         Course course = modelingExercise.get().getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
@@ -343,7 +343,7 @@ public class ModelingExerciseResource {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
             return badRequest();
         }
-        final var user = userService.getUserWithGroupsAndAuthorities();
+        final var user = userRetrievalService.getUserWithGroupsAndAuthorities();
         final var optionalOriginalModelingExercise = modelingExerciseRepository.findByIdWithEagerExampleSubmissionsAndResults(sourceExerciseId);
         if (optionalOriginalModelingExercise.isEmpty()) {
             log.debug("Cannot find original exercise to import from {}", sourceExerciseId);

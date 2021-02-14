@@ -29,10 +29,10 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
     private final FileUploadSubmissionService fileUploadSubmissionService;
 
-    public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserService userService,
+    public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserRetrievalService userRetrievalService,
             FileUploadExerciseService fileUploadExerciseService, FileUploadSubmissionService fileUploadSubmissionService, WebsocketMessagingService messagingService,
             ExerciseService exerciseService, ResultRepository resultRepository, ExamService examService, ExampleSubmissionService exampleSubmissionService) {
-        super(authCheckService, userService, exerciseService, fileUploadSubmissionService, assessmentService, resultRepository, examService, messagingService,
+        super(authCheckService, userRetrievalService, exerciseService, fileUploadSubmissionService, assessmentService, resultRepository, examService, messagingService,
                 exampleSubmissionService);
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
@@ -81,7 +81,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateFileUploadAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();

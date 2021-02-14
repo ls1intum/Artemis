@@ -20,10 +20,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.service.StudentQuestionService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -54,18 +51,18 @@ public class StudentQuestionResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserService userService;
+    private final UserRetrievalService userRetrievalService;
 
-    GroupNotificationService groupNotificationService;
+    private final GroupNotificationService groupNotificationService;
 
     public StudentQuestionResource(StudentQuestionRepository studentQuestionRepository, GroupNotificationService groupNotificationService, LectureRepository lectureRepository,
-            StudentQuestionService studentQuestionService, AuthorizationCheckService authorizationCheckService, UserService userService, ExerciseRepository exerciseRepository,
-            CourseRepository courseRepository) {
+            StudentQuestionService studentQuestionService, AuthorizationCheckService authorizationCheckService, UserRetrievalService userRetrievalService,
+            ExerciseRepository exerciseRepository, CourseRepository courseRepository) {
         this.studentQuestionRepository = studentQuestionRepository;
         this.studentQuestionService = studentQuestionService;
         this.groupNotificationService = groupNotificationService;
         this.authorizationCheckService = authorizationCheckService;
-        this.userService = userService;
+        this.userRetrievalService = userRetrievalService;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepository = lectureRepository;
         this.courseRepository = courseRepository;
@@ -83,7 +80,7 @@ public class StudentQuestionResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentQuestion> createStudentQuestion(@PathVariable Long courseId, @RequestBody StudentQuestion studentQuestion) throws URISyntaxException {
         log.debug("REST request to save StudentQuestion : {}", studentQuestion);
-        User user = this.userService.getUserWithGroupsAndAuthorities();
+        User user = this.userRetrievalService.getUserWithGroupsAndAuthorities();
         if (studentQuestion.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestion cannot already have an ID", ENTITY_NAME, "idexists");
         }
@@ -119,7 +116,7 @@ public class StudentQuestionResource {
     @PutMapping("courses/{courseId}/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentQuestion> updateStudentQuestion(@PathVariable Long courseId, @RequestBody StudentQuestion studentQuestion) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to update StudentQuestion : {}", studentQuestion);
         if (studentQuestion.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
@@ -162,7 +159,7 @@ public class StudentQuestionResource {
         if (voteChange < -2 || voteChange > 2) {
             return forbidden();
         }
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(questionId);
         if (optionalStudentQuestion.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -196,7 +193,7 @@ public class StudentQuestionResource {
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<StudentQuestion>> getAllQuestionsForExercise(@PathVariable Long courseId, @PathVariable Long exerciseId) {
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
         if (exercise.isEmpty()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
@@ -227,7 +224,7 @@ public class StudentQuestionResource {
     @GetMapping("courses/{courseId}/lectures/{lectureId}/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<StudentQuestion>> getAllQuestionsForLecture(@PathVariable Long courseId, @PathVariable Long lectureId) {
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Optional<Lecture> lecture = lectureRepository.findById(lectureId);
         if (lecture.isEmpty()) {
             throw new EntityNotFoundException("Lecture with lectureId " + lectureId + " does not exist!");
@@ -257,7 +254,7 @@ public class StudentQuestionResource {
     @GetMapping("courses/{courseId}/student-questions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<StudentQuestion>> getAllQuestionsForCourse(@PathVariable Long courseId) {
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Optional<Course> course = courseRepository.findById(courseId);
         if (course.isEmpty()) {
             throw new EntityNotFoundException("Course with courseId " + courseId + " does not exist!");
@@ -291,7 +288,7 @@ public class StudentQuestionResource {
     @DeleteMapping("courses/{courseId}/student-questions/{id}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteStudentQuestion(@PathVariable Long courseId, @PathVariable Long id) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         Optional<Course> optionalCourse = courseRepository.findById(courseId);
         if (optionalCourse.isEmpty()) {
             return ResponseEntity.notFound().build();

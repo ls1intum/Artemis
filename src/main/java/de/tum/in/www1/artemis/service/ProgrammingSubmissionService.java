@@ -69,12 +69,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private final AuditEventRepository auditEventRepository;
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            GroupNotificationService groupNotificationService, SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService,
-            WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
-            FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository) {
-        super(submissionRepository, userService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
+            GroupNotificationService groupNotificationService, SubmissionRepository submissionRepository, UserRetrievalService userRetrievalService,
+            AuthorizationCheckService authCheckService, WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService,
+            ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService,
+            SimpMessageSendingOperations messagingTemplate, ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService,
+            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository) {
+        super(submissionRepository, userRetrievalService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.groupNotificationService = groupNotificationService;
@@ -708,7 +708,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);
         Result newResult = saveNewEmptyResult(existingSubmission);
-        newResult.setAssessor(userService.getUser());
+        newResult.setAssessor(userRetrievalService.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         // Copy automatic feedbacks into the manual result
         for (Feedback feedback : automaticFeedbacks) {

@@ -48,9 +48,10 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     private final ExamSubmissionService examSubmissionService;
 
     public FileUploadSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService,
-            FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService,
-            ParticipationService participationService, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
-        super(submissionRepository, resultService, participationService, authCheckService, userService, exerciseService, fileUploadSubmissionService);
+            FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService,
+            ExerciseService exerciseService, ParticipationService participationService, GradingCriterionService gradingCriterionService,
+            ExamSubmissionService examSubmissionService) {
+        super(submissionRepository, resultService, participationService, authCheckService, userRetrievalService, exerciseService, fileUploadSubmissionService);
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.gradingCriterionService = gradingCriterionService;
@@ -76,7 +77,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         long start = System.currentTimeMillis();
 
         final var exercise = fileUploadExerciseService.findOne(exerciseId);
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastStudentForExercise(exercise, user)) {
             return forbidden();
         }
@@ -153,7 +154,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
         var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(fileUploadExercise.getId());
         fileUploadExercise.setGradingCriteria(gradingCriteria);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
             return forbidden();
         }
@@ -201,7 +202,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         final Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
             return forbidden();
         }
