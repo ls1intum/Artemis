@@ -2,10 +2,14 @@
     <thead>
         <tr>
             <th style="max-width: 100px">
-                <span>Exercise Group</span>
+                <span>
+                    {{ 'artemisApp.examManagement.checklist.textitems.exerciseStart' | translate }}
+                </span>
             </th>
             <th>
-                <span>Exercise</span>
+                <span>
+                    {{ 'artemisApp.examManagement.checklist.textitems.exerciseTable' | translate }}
+                </span>
             </th>
         </tr>
     </thead>
@@ -19,16 +23,26 @@
                     <thead>
                         <tr>
                             <th>
-                                <span>Exercise</span>
+                               <span>
+                                    {{ 'artemisApp.examManagement.checklist.textitems.exerciseTable' | translate }}
+                               </span>
                             </th>
                             <th>
-                                <span>Number of participations </span>
+                                <span>
+                                    {{ 'artemisApp.examManagement.checklist.textitems.points' | translate }}
+                                </span>
+                            </th>
+                            <th>
+                                <span>
+                                      {{ 'artemisApp.examManagement.checklist.textitems.numberParticipants' | translate }}
+                                </span>
                             </th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr *ngFor="let exercise of exerciseGroup.exercises">
                             <td class="d-none d-md-table-cell">{{ exercise.title }}</td>
+                            <td class="d-none d-md-table-cell">{{ exercise.maxPoints }}</td>
                             <td class="d-none d-md-table-cell">{{ exercise.numberOfParticipations }}</td>
                         </tr>
                     </tbody>
