@@ -345,7 +345,7 @@
                     "totalpointspossible": "Maximum number of points in exam can be realized with the exercise groups configuration",
                     "hasExercises": "has",
                     "zeroexercises": "0",
-                    "exerciseStart": "Exercise group",
+                    "exerciseStart": "Exercise Group",
                     "exercise": "exercise variant.",
                     "exercises": "exercise variants.",
                     "leastonestudent": "At least one student registered",
@@ -360,7 +360,10 @@
                     "noComplaints": "There are currently no complaints.",
                     "correctionRound": "Correction Round",
                     "startedExam": "Started Exam",
-                    "submittedExam": "Submitted Exam"
+                    "submittedExam": "Submitted Exam",
+                    "exerciseTable": "Exercise",
+                    "points": "Points",
+                    "numberParticipants": "Number of participants"
                 }
             }
         },

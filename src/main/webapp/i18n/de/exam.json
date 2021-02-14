@@ -359,7 +359,11 @@
                     "noComplaints": "Es gibt aktuell keine Beschwerden",
                     "correctionRound": "Korrektur Runde",
                     "startedExam": "Klausur gestarted",
-                    "submittedExam": "Klausur abgegeben"
+                    "submittedExam": "Klausur abgegeben",
+                    "exerciseTable": "Aufgabe",
+                    "points": "Punkte",
+                    "numberParticipants": "Anzahl der Teilnehmenden"
+
                 }
             }
         },
