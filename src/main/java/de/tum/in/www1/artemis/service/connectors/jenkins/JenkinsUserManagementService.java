@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
@@ -65,7 +66,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * @param user The user to create
      */
     @Override
-    public void createUser(User user) {
+    public void createUser(User user) throws ContinuousIntegrationException {
         // Only create a user if it doesn't already exist.
         if (getUser(user.getLogin()) != null) {
             throw new JenkinsException("Cannot create user: " + user.getLogin() + " because the login already exists");
@@ -117,7 +118,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * @param userLogin the login of the user to delete
      */
     @Override
-    public void deleteUser(String userLogin) {
+    public void deleteUser(String userLogin) throws ContinuousIntegrationException {
         // Only delete a user if it exists.
         if (getUser(userLogin) == null) {
             return;
@@ -141,7 +142,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * @param groups The groups to add the user to
      */
     @Override
-    public void addUserToGroups(User user, Set<String> groups) {
+    public void addUserToGroups(User user, Set<String> groups) throws ContinuousIntegrationException {
         var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
         exercises.forEach(exercise -> {
             // The exercise's project key is also the name of the Jenkins job that groups all build plans
@@ -181,7 +182,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * @param groups The groups to remove the user from
      */
     @Override
-    public void removeUserFromGroups(User user, Set<String> groups) {
+    public void removeUserFromGroups(User user, Set<String> groups) throws ContinuousIntegrationException {
         var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
         exercises.forEach(exercise -> {
             // The exercise's project key is also the name of the Jenkins job that groups all build plans
@@ -218,16 +219,6 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         addUserToGroups(user, user.getGroups());
     }
 
-    @Override
-    public void updateOrCreateUser(User user) {
-        if (getUser(user.getLogin()) == null) {
-            createUser(user);
-        }
-        else {
-            updateUser(user);
-        }
-    }
-
     /**
      * Updates the user in Jenkins with the user data from Artemis.
      * <p>
@@ -236,7 +227,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * @param user The user to update.
      */
     @Override
-    public void updateUser(User user) {
+    public void updateUser(User user) throws ContinuousIntegrationException {
         // Only update a user if it exists.
         if (getUser(user.getLogin()) == null) {
             throw new JenkinsException("Cannot update user: " + user.getLogin() + " because it doesn't exist.");
@@ -252,7 +243,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     }
 
     @Override
-    public void updateUserAndGroups(User user, Set<String> groupsToAdd, Set<String> groupsToRemove) {
+    public void updateUserAndGroups(User user, Set<String> groupsToAdd, Set<String> groupsToRemove) throws ContinuousIntegrationException {
         updateUser(user);
         addUserToGroups(user, groupsToAdd);
         removeUserFromGroups(user, groupsToRemove);
@@ -320,7 +311,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * @param userLogin the username of the user to look up
      * @return the user or null if the user doesn't exist
      */
-    private JenkinsUserDTO getUser(String userLogin) {
+    private JenkinsUserDTO getUser(String userLogin) throws ContinuousIntegrationException {
         try {
             var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", userLogin, "api", "json").build().toUri();
             return restTemplate.exchange(uri, HttpMethod.GET, null, JenkinsUserDTO.class).getBody();
