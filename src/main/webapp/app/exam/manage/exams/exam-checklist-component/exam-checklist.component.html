@@ -227,29 +227,41 @@
                     <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.conductExam' | translate }}</span>
                     <hr />
                     <!-- Display started exams-->
-                    <div *ngIf="examChecklist && examChecklist.numberOfGeneratedStudentExams !== null
-                    && examChecklist.numberOfGeneratedStudentExams !== 0 && examChecklist.numberOfExamsStarted > 0">
+                    <div
+                        *ngIf="
+                            examChecklist &&
+                            examChecklist.numberOfGeneratedStudentExams !== null &&
+                            examChecklist.numberOfGeneratedStudentExams !== 0 &&
+                            examChecklist.numberOfExamsStarted > 0
+                        "
+                    >
                         <!-- -->
                         <span>{{ 'artemisApp.examManagement.checklist.textitems.startedExam' | translate }}:</span>
                         <div style="padding-top: 5px">
                             <jhi-progress-bar
                                 [denominator]="examChecklist.numberOfGeneratedStudentExams"
                                 [numerator]="examChecklist.numberOfExamsStarted!"
-                                [percentage]="100 * examChecklist.numberOfExamsStarted! / examChecklist.numberOfGeneratedStudentExams!"
+                                [percentage]="(100 * examChecklist.numberOfExamsStarted!) / examChecklist.numberOfGeneratedStudentExams!"
                             >
                             </jhi-progress-bar>
                         </div>
                         <hr />
                     </div>
                     <!-- Display submitted exams-->
-                    <div *ngIf="examChecklist && examChecklist.numberOfGeneratedStudentExams !== null
-                    && examChecklist.numberOfGeneratedStudentExams !== 0 && examChecklist.numberOfExamsSubmitted > 0">
+                    <div
+                        *ngIf="
+                            examChecklist &&
+                            examChecklist.numberOfGeneratedStudentExams !== null &&
+                            examChecklist.numberOfGeneratedStudentExams !== 0 &&
+                            examChecklist.numberOfExamsSubmitted > 0
+                        "
+                    >
                         <span>{{ 'artemisApp.examManagement.checklist.textitems.submittedExam' | translate }}:</span>
                         <div style="padding-top: 5px">
                             <jhi-progress-bar
                                 [denominator]="examChecklist.numberOfExamsStarted"
                                 [numerator]="examChecklist.numberOfExamsSubmitted!"
-                                [percentage]="100 * examChecklist.numberOfExamsSubmitted! / examChecklist.numberOfExamsStarted!"
+                                [percentage]="(100 * examChecklist.numberOfExamsSubmitted!) / examChecklist.numberOfExamsStarted!"
                             >
                             </jhi-progress-bar>
                         </div>
@@ -284,7 +296,7 @@
                                 <jhi-progress-bar
                                     [denominator]="examChecklist.numberOfGeneratedStudentExams! * exam.numberOfExercisesInExam!"
                                     [numerator]="finishedByCorrectionRound!"
-                                    [percentage]="(finishedByCorrectionRound! / (examChecklist.numberOfGeneratedStudentExams!*exam.numberOfExercisesInExam!)) * 100"
+                                    [percentage]="(finishedByCorrectionRound! / (examChecklist.numberOfGeneratedStudentExams! * exam.numberOfExercisesInExam!)) * 100"
                                 >
                                 </jhi-progress-bar>
                             </div>
