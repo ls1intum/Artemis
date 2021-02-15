@@ -20,12 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseSimulationService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseSimulationService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -46,19 +46,19 @@ public class ProgrammingExerciseSimulationResource {
 
     private static final String ENTITY_NAME = "programmingExercise";
 
-    private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
     private final ProgrammingExerciseSimulationService programmingExerciseSimulationService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final AuthorizationCheckService authCheckService;
 
-    public ProgrammingExerciseSimulationResource(CourseService courseService, ProgrammingExerciseSimulationService programmingExerciseSimulationService, UserService userService,
-            AuthorizationCheckService authCheckService) {
-        this.courseService = courseService;
+    public ProgrammingExerciseSimulationResource(CourseRepository courseRepository, ProgrammingExerciseSimulationService programmingExerciseSimulationService,
+            UserRepository userRepository, AuthorizationCheckService authCheckService) {
+        this.courseRepository = courseRepository;
         this.programmingExerciseSimulationService = programmingExerciseSimulationService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
     }
 
@@ -78,8 +78,8 @@ public class ProgrammingExerciseSimulationResource {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
 
         // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }

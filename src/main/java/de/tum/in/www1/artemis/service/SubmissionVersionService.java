@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 
 @Service
 public class SubmissionVersionService {
@@ -22,13 +23,13 @@ public class SubmissionVersionService {
 
     protected final SubmissionVersionRepository submissionVersionRepository;
 
-    protected final UserService userService;
+    protected final UserRepository userRepository;
 
     private final ObjectMapper objectMapper;
 
-    public SubmissionVersionService(SubmissionVersionRepository submissionVersionRepository, UserService userService, ObjectMapper objectMapper) {
+    public SubmissionVersionService(SubmissionVersionRepository submissionVersionRepository, UserRepository userRepository, ObjectMapper objectMapper) {
         this.submissionVersionRepository = submissionVersionRepository;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -43,7 +44,7 @@ public class SubmissionVersionService {
      * @return created/updated submission version
      */
     public SubmissionVersion saveVersionForTeam(Submission submission, String username) {
-        User user = userService.getUserByLogin(username).orElseThrow();
+        User user = userRepository.findOneByLogin(username).orElseThrow();
 
         return submissionVersionRepository.findLatestVersion(submission.getId()).map(latestVersion -> {
             if (latestVersion.getAuthor().equals(user)) {
@@ -63,7 +64,7 @@ public class SubmissionVersionService {
      * @return created/updated submission version
      */
     public SubmissionVersion saveVersionForIndividual(Submission submission, String username) {
-        User user = userService.getUserByLogin(username).orElseThrow();
+        User user = userRepository.findOneByLogin(username).orElseThrow();
         return createNewVersion(submission, user);
     }
 

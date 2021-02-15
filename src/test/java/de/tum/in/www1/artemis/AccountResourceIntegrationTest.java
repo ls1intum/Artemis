@@ -15,9 +15,10 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -29,6 +30,9 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    private PasswordService passwordService;
 
     @AfterEach
     public void resetDatabase() {
@@ -146,13 +150,13 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         // Password Data
         String updatedPassword = "12345678password-reset-init.component.spec.ts";
 
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(userService.encryptor().decrypt(createdUser.getPassword()), updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
         // make request
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.OK, null);
 
         // check if update successful
         User updatedUser = userRepo.findOneByLogin("authenticateduser").get();
-        assertThat(userService.encryptor().decrypt(updatedUser.getPassword())).isEqualTo(updatedPassword);
+        assertThat(passwordService.decryptPassword(updatedUser.getPassword())).isEqualTo(updatedPassword);
     }
 
     @Test
@@ -162,7 +166,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         User createdUser = userService.createUser(new ManagedUserVM(user));
         String updatedPassword = "123";
 
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(userService.encryptor().decrypt(createdUser.getPassword()), updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
         // make request
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
 
@@ -192,7 +196,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
         // get updated user
         User userPasswordResetFinished = userRepo.findOneByLogin("authenticateduser").get();
-        assertThat(userService.encryptor().decrypt(userPasswordResetFinished.getPassword())).isEqualTo(newPassword);
+        assertThat(passwordService.decryptPassword(userPasswordResetFinished.getPassword())).isEqualTo(newPassword);
     }
 
 }

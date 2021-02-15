@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the ExamRepository entity.
@@ -67,7 +68,11 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     List<long[]> countRegisteredUsersByExamIds(@Param("examIds") List<Long> examIds);
 
     @Query("select count(studentExam) from StudentExam studentExam where studentExam.testRun = FALSE AND studentExam.exam.id = :#{#examId}")
-    long countGeneratedStudentExamsByExamWithoutTestruns(@Param("examId") Long examId);
+    long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") Long examId);
+
+    default Exam findExamByIdElseThrow(Long examId) throws EntityNotFoundException {
+        return findById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+    }
 
     @Query("""
             select e

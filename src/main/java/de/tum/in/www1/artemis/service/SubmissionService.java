@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -18,10 +17,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -32,9 +30,9 @@ public class SubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(SubmissionService.class);
 
-    private ExamService examService;
+    private final ExamDateService examDateService;
 
-    private CourseService courseService;
+    private final CourseRepository courseRepository;
 
     protected final SubmissionRepository submissionRepository;
 
@@ -46,31 +44,22 @@ public class SubmissionService {
 
     protected final ParticipationService participationService;
 
-    protected final UserService userService;
+    protected final UserRepository userRepository;
 
     protected final FeedbackRepository feedbackRepository;
 
-    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
-            StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, FeedbackRepository feedbackRepository) {
+    public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
+            ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
+            FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository) {
         this.submissionRepository = submissionRepository;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.feedbackRepository = feedbackRepository;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setExamService(ExamService examService) {
-        this.examService = examService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setCourseService(CourseService courseService) {
-        this.courseService = courseService;
+        this.examDateService = examDateService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -85,7 +74,8 @@ public class SubmissionService {
      */
     public <T> Optional<ResponseEntity<T>> checkSubmissionAllowance(Exercise exercise, Submission submission, User currentUser) {
         // Fetch course from database to make sure client didn't change groups
-        final Course course = courseService.findOne(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        final var courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        final var course = courseRepository.findByIdElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, currentUser)) {
             return Optional.of(forbidden());
         }
@@ -123,7 +113,7 @@ public class SubmissionService {
      * @param courseId the id of the course
      */
     public void checkSubmissionLockLimit(long courseId) {
-        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
         if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
             throw new BadRequestAlertException("The limit of locked submissions has been reached", "submission", "lockedSubmissionsLimitReached");
         }
@@ -136,7 +126,7 @@ public class SubmissionService {
      * @return number of locked submissions for the current user in the given course
      */
     public long countSubmissionLocks(long courseId) {
-        return submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        return submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
     }
 
     /**
@@ -146,7 +136,7 @@ public class SubmissionService {
      * @return number of locked submissions for the current user in the given course
      */
     public List<Submission> getLockedSubmissions(long courseId) {
-        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
     }
 
     /**
@@ -203,7 +193,7 @@ public class SubmissionService {
             // remove submission if user already assessed first correction round
             // if disabled, please switch tutorAssessUnique within the tests
             submissionsWithoutResult = submissionsWithoutResult.stream()
-                    .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1).getAssessor().equals(userService.getUser())).collect(Collectors.toList());
+                    .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1).getAssessor().equals(userRepository.getUser())).collect(Collectors.toList());
         }
 
         if (submissionsWithoutResult.isEmpty()) {
@@ -469,7 +459,7 @@ public class SubmissionService {
         }
 
         if (result.getAssessor() == null) {
-            result.setAssessor(userService.getUser());
+            result.setAssessor(userRepository.getUser());
         }
 
         result.setAssessmentType(AssessmentType.MANUAL);
@@ -532,7 +522,7 @@ public class SubmissionService {
         final boolean isExamMode = exercise.isExamExercise();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (isExamMode) {
-            ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
+            ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                 log.debug("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
