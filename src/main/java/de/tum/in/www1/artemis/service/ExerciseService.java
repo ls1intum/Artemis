@@ -102,17 +102,6 @@ public class ExerciseService {
     }
 
     /**
-     * Save a exercise.
-     *
-     * @param exercise the entity to save
-     * @return the persisted entity
-     */
-    public Exercise save(Exercise exercise) {
-        log.debug("Request to save Exercise : {}", exercise);
-        return exerciseRepository.save(exercise);
-    }
-
-    /**
      * Finds all Exercises for a given Course
      *
      * @param course corresponding course

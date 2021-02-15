@@ -169,11 +169,11 @@ public class CourseService {
      * <ul>
      *     <li>The Course</li>
      *     <li>All Exercises including:
-     *      submissions, participations, results, repositories and build plans, see {@link de.tum.in.www1.artemis.repository.ExamRepository#deleteById}</li>
+     *      submissions, participations, results, repositories and build plans, see {@link ExamService#delete}</li>
      *     <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
      *     <li>All GroupNotifications of the course, see {@link NotificationService#deleteGroupNotification}</li>
      *     <li>All default groups created by Artemis, see {@link ArtemisAuthenticationProvider#deleteGroup}</li>
-     *     <li>All Exams, see {@link de.tum.in.www1.artemis.repository.ExamRepository#deleteById}</li>
+     *     <li>All Exams, see {@link ExamService#delete}</li>
      * </ul>
      *
      * @param course the course to be deleted
