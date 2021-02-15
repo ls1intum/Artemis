@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 
@@ -21,10 +22,10 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 @Service
 public class AuthorizationCheckService {
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
-    public AuthorizationCheckService(UserService userService) {
-        this.userService = userService;
+    public AuthorizationCheckService(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     /**
@@ -63,7 +64,7 @@ public class AuthorizationCheckService {
     public boolean isAtLeastTeachingAssistantForExercise(Exercise exercise, User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userService.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithGroupsAndAuthorities();
         }
         return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
@@ -88,7 +89,7 @@ public class AuthorizationCheckService {
     public boolean isAtLeastStudentForExercise(Exercise exercise, User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userService.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithGroupsAndAuthorities();
         }
         return isStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || isAtLeastTeachingAssistantForExercise(exercise, user);
     }
@@ -103,7 +104,7 @@ public class AuthorizationCheckService {
     public boolean isAtLeastTeachingAssistantInCourse(Course course, User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userService.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithGroupsAndAuthorities();
         }
         return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getTeachingAssistantGroupName()) || isAdmin(user);
     }
@@ -118,7 +119,7 @@ public class AuthorizationCheckService {
     public boolean isAtLeastStudentInCourse(Course course, User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userService.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithGroupsAndAuthorities();
         }
         return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getTeachingAssistantGroupName())
                 || user.getGroups().contains(course.getStudentGroupName()) || isAdmin(user);
@@ -156,7 +157,7 @@ public class AuthorizationCheckService {
     public boolean isAtLeastInstructorInCourse(Course course, User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userService.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithGroupsAndAuthorities();
         }
         return user.getGroups().contains(course.getInstructorGroupName()) || isAdmin(user);
     }
@@ -171,7 +172,7 @@ public class AuthorizationCheckService {
     public boolean isInstructorInCourse(Course course, User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userService.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithGroupsAndAuthorities();
         }
         return user.getGroups().contains(course.getInstructorGroupName());
     }
@@ -186,7 +187,7 @@ public class AuthorizationCheckService {
     public boolean isTeachingAssistantInCourse(Course course, User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userService.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithGroupsAndAuthorities();
         }
         return user.getGroups().contains(course.getTeachingAssistantGroupName());
     }
@@ -201,7 +202,7 @@ public class AuthorizationCheckService {
     public boolean isOnlyStudentInCourse(Course course, User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userService.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithGroupsAndAuthorities();
         }
         return user.getGroups().contains(course.getStudentGroupName()) && !isAtLeastTeachingAssistantInCourse(course, user);
     }
@@ -216,7 +217,7 @@ public class AuthorizationCheckService {
     public boolean isStudentInCourse(Course course, User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userService.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithGroupsAndAuthorities();
         }
         return user.getGroups().contains(course.getStudentGroupName());
     }
@@ -246,7 +247,7 @@ public class AuthorizationCheckService {
     public boolean isOwnerOfParticipation(StudentParticipation participation, User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userService.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithGroupsAndAuthorities();
         }
         if (participation.getParticipant() == null) {
             return false;
@@ -276,7 +277,7 @@ public class AuthorizationCheckService {
      * @return true, if user is student is owner of this team, otherwise false
      */
     public boolean isStudentInTeam(Course course, String teamShortName, User user) {
-        return userService.findAllUsersInTeam(course, teamShortName).contains(user);
+        return userRepository.findAllInTeam(course.getId(), teamShortName).contains(user);
     }
 
     /**
@@ -299,7 +300,7 @@ public class AuthorizationCheckService {
      */
     public boolean isAllowedToSeeExercise(Exercise exercise, User user) {
         if (user == null || user.getGroups() == null) {
-            user = userService.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithGroupsAndAuthorities();
         }
         if (isAdmin(user)) {
             return true;
@@ -317,7 +318,7 @@ public class AuthorizationCheckService {
      */
     public boolean isAllowedToSeeLectureUnit(LectureUnit lectureUnit, User user) {
         if (user == null || user.getGroups() == null) {
-            user = userService.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithGroupsAndAuthorities();
         }
         if (isAdmin(user)) {
             return true;

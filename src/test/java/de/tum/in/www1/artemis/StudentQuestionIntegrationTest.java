@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.StudentQuestion;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.StudentQuestionService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -37,9 +36,6 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
     @Autowired
     StudentQuestionRepository studentQuestionRepository;
-
-    @Autowired
-    StudentQuestionService studentQuestionService;
 
     @BeforeEach
     public void initTestCase() {

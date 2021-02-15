@@ -16,9 +16,9 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintResponseService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -42,15 +42,15 @@ public class ComplaintResponseResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     public ComplaintResponseResource(ComplaintResponseRepository complaintResponseRepository, ComplaintResponseService complaintResponseService,
-            AuthorizationCheckService authorizationCheckService, UserService userService, ComplaintRepository complaintRepository) {
+            AuthorizationCheckService authorizationCheckService, UserRepository userRepository, ComplaintRepository complaintRepository) {
         this.complaintResponseRepository = complaintResponseRepository;
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -140,7 +140,7 @@ public class ComplaintResponseResource {
         if (optionalComplaintResponse.isEmpty()) {
             throw new EntityNotFoundException("ComplaintResponse with " + complaintId + " was not found!");
         }
-        var user = userService.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithGroupsAndAuthorities();
         var complaintResponse = optionalComplaintResponse.get();
         // All tutors and higher can see this, and also the students who first open the complaint
         Participant originalAuthor = complaintResponse.getComplaint().getParticipant();
@@ -190,7 +190,7 @@ public class ComplaintResponseResource {
             throw new IllegalArgumentException("Complaint was not found in database");
         }
         Complaint complaint = complaintFromDatabaseOptional.get();
-        User user = this.userService.getUser();
+        User user = this.userRepository.getUser();
         if (!complaintResponseService.isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for modifying the lock on the complaint");
         }

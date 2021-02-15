@@ -16,8 +16,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseImportService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 

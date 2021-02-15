@@ -1,19 +1,22 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.exam;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -22,6 +25,12 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.service.SubmissionVersionService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -37,15 +46,19 @@ public class StudentExamService {
 
     private final ParticipationService participationService;
 
-    private final StudentExamRepository studentExamRepository;
+    private final UserRepository userRepository;
 
-    private final UserService userService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private ExamService examService;
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private SubmissionService submissionService;
+    private final SubmissionService submissionService;
 
     private final ExamQuizService examQuizService;
+
+    private final SubmissionVersionService submissionVersionService;
+
+    private final StudentExamRepository studentExamRepository;
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
@@ -53,21 +66,20 @@ public class StudentExamService {
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
-    private final SubmissionVersionService submissionVersionService;
-
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
-
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    public StudentExamService(StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
+    private final ExamRepository examRepository;
+
+    public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
-            SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService) {
+            SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
+            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
@@ -76,30 +88,9 @@ public class StudentExamService {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.examQuizService = examQuizService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setExamService(ExamService examService) {
-        this.examService = examService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setSubmissionService(SubmissionService submissionService) {
         this.submissionService = submissionService;
-    }
-
-    /**
-     * Get one student exam by id.
-     *
-     * @param studentExamId the id of the student exam
-     * @return the student exam
-     */
-    @NotNull
-    public StudentExam findOne(Long studentExamId) {
-        log.debug("Request to get student exam : {}", studentExamId);
-        return studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam with id \"" + studentExamId + "\" does not exist"));
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.examRepository = examRepository;
     }
 
     /**
@@ -396,20 +387,6 @@ public class StudentExamService {
     }
 
     /**
-     * Get one student exam by exercise and user
-     *
-     * @param exerciseId the id of an exam exercise
-     * @param userId     the id of the student taking the exam
-     * @return the student exam without associated entities
-     */
-    @NotNull
-    public StudentExam findOneByExerciseIdAndUserId(Long exerciseId, Long userId) {
-        log.debug("Request to get student exam with exercise {} for user {}", exerciseId, userId);
-        return studentExamRepository.findByExerciseIdAndUserId(exerciseId, userId)
-                .orElseThrow(() -> new EntityNotFoundException("Student exam for exercise " + exerciseId + " and user " + userId + " does not exist"));
-    }
-
-    /**
      * Get the maximal working time of all student exams for the exam with the given id.
      *
      * @param examId the id of the exam
@@ -457,7 +434,7 @@ public class StudentExamService {
         testRun.setExercises(testRunConfiguration.getExercises());
         testRun.setExam(testRunConfiguration.getExam());
         testRun.setWorkingTime(testRunConfiguration.getWorkingTime());
-        testRun.setUser(userService.getUser());
+        testRun.setUser(userRepository.getUser());
         testRun.setTestRun(true);
         testRun.setSubmitted(false);
         testRun = studentExamRepository.save(testRun);
@@ -466,17 +443,88 @@ public class StudentExamService {
 
     /**
      * Sets up the participations and submissions for all the exercises of the test run.
-     * Calls {@link ExamService#setUpExerciseParticipationsAndSubmissions} to set up the exercise participations.
+     * Calls {@link StudentExamService#setUpExerciseParticipationsAndSubmissions} to set up the exercise participations.
      *
      */
     private void setUpTestRunExerciseParticipationsAndSubmissions(Long testRunId) {
         StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true)
                 .orElseThrow(() -> new EntityNotFoundException("StudentExam with id:" + testRunId + "does not exist"));
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
-        examService.setUpExerciseParticipationsAndSubmissions(generatedParticipations, testRun);
+        setUpExerciseParticipationsAndSubmissions(testRun, generatedParticipations);
         // use the flag test run for all participations of the created test run
         generatedParticipations.forEach(studentParticipation -> studentParticipation.setTestRun(true));
         studentParticipationRepository.saveAll(generatedParticipations);
+    }
+
+    /**
+     * Starts all the exercises of all the student exams of an exam
+     *
+     * @param examId exam to which the student exams belong
+     * @return number of generated Participations
+     */
+    public int startExercises(Long examId) {
+        var exam = examRepository.findWithStudentExamsExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        var studentExams = exam.getStudentExams();
+        List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
+        executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations)));
+        return generatedParticipations.size();
+    }
+
+    private void executeInParallel(Runnable task) {
+        final int numberOfParallelThreads = 10;
+        ForkJoinPool forkJoinPool = new ForkJoinPool(numberOfParallelThreads);
+        Future<?> future = forkJoinPool.submit(task);
+        // Wait for the operation to complete
+        try {
+            future.get();
+        }
+        catch (InterruptedException e) {
+            log.error("Execute in parallel got interrupted while waiting for task to complete", e);
+        }
+        catch (ExecutionException e) {
+            log.error("Execute in parallel failed, an exception was thrown", e.getCause());
+        }
+        finally {
+            forkJoinPool.shutdown();
+        }
+    }
+
+    /**
+     * Sets up the participations and submissions for all the exercises of the student exam.
+     *
+     * @param studentExam             The studentExam for which the participations and submissions should be created
+     * @param generatedParticipations List of generated participations to track how many participations have been generated
+     */
+    public void setUpExerciseParticipationsAndSubmissions(StudentExam studentExam, List<StudentParticipation> generatedParticipations) {
+        User student = studentExam.getUser();
+
+        for (Exercise exercise : studentExam.getExercises()) {
+            SecurityUtils.setAuthorizationObject();
+            // NOTE: it is not ideal to invoke the next line several times (e.g. 2000 student exams with 10 exercises would lead to 20.000 database calls to find a participation).
+            // One optimization could be that we load all participations per exercise once (or per exercise) into a large list (10 * 2000 = 20.000 participations) and then check if
+            // those participations exist in Java, however this might lead to memory issues and might be more difficult to program (and more difficult to understand)
+            // TODO: directly check in the database if the entry exists for the student, exercise and InitializationState.INITIALIZED
+            var studentParticipations = participationService.findByExerciseAndStudentId(exercise, student.getId());
+            // we start the exercise if no participation was found that was already fully initialized
+            if (studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
+                    && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
+                try {
+                    if (exercise instanceof ProgrammingExercise) {
+                        // TODO: we should try to move this out of the for-loop into the method which calls this method.
+                        // Load lazy property
+                        final var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exercise.getId());
+                        ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
+                    }
+                    // this will also create initial (empty) submissions for quiz, text, modeling and file upload
+                    var participation = participationService.startExercise(exercise, student, true);
+                    generatedParticipations.add(participation);
+                }
+                catch (Exception ex) {
+                    log.warn("Start exercise for student exam {} and exercise {} and student {} failed with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),
+                            ex.getMessage(), ex);
+                }
+            }
+        }
     }
 
     /**
