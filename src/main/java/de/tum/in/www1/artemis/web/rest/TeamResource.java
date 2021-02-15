@@ -23,12 +23,11 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.TeamScoreRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -71,8 +70,8 @@ public class TeamResource {
 
     private final TeamScoreRepository teamScoreRepository;
 
-    public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseService courseService,
-            ExerciseRepository exerciseRepository, UserService userService, AuthorizationCheckService authCheckService, ParticipationService participationService,
+    public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseRepository courseRepository,
+            ExerciseRepository exerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ParticipationService participationService,
             SubmissionService submissionService, AuditEventRepository auditEventRepository, TeamScoreRepository teamScoreRepository) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;

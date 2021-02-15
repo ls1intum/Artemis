@@ -4,7 +4,10 @@ import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -88,8 +91,6 @@ public class UserService {
     private final CourseRepository courseRepository;
 
     private final AuthorityRepository authorityRepository;
-
-    private final GuidedTourSettingsRepository guidedTourSettingsRepository;
 
     public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService,
             GuidedTourSettingsRepository guidedTourSettingsRepository, CourseRepository courseRepository, PasswordService passwordService,
