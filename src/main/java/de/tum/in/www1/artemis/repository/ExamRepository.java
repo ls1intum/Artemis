@@ -69,4 +69,11 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("select count(studentExam) from StudentExam studentExam where studentExam.testRun = FALSE AND studentExam.exam.id = :#{#examId}")
     long countGeneratedStudentExamsByExamWithoutTestruns(@Param("examId") Long examId);
 
+    @Query("""
+            select e
+            from Exam e, User u
+            where u.id = :#{#userId} and e.course.instructorGroupName member of u.groups
+            """)
+    List<Exam> getExamsForWhichUserHasInstructorAccess(@Param("userId") Long userId);
+
 }

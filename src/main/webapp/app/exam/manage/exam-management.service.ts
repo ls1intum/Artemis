@@ -80,6 +80,16 @@ export class ExamManagementService {
     }
 
     /**
+     * Find all exams where the in the course they are conducted the user has instructor rights
+     * @param courseId The course id where the quiz should be created
+     */
+    findAllExamsAccessibleToUser(courseId: number): Observable<HttpResponse<Exam[]>> {
+        return this.http
+            .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams-for-user`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
+    }
+
+    /**
      * Find all exams that are held today and in the future.
      */
     findAllCurrentAndUpcomingExams(): Observable<HttpResponse<Exam[]>> {

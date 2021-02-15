@@ -424,7 +424,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         }
         // If exams are not populated, then populate list of exams
         if (this.exams.length === 0) {
-            this.examRepository.findAllExamsForCourse(this.courseId!).subscribe((res: HttpResponse<Exam[]>) => {
+            this.examRepository.findAllExamsAccessibleToUser(this.courseId!).subscribe((res: HttpResponse<Exam[]>) => {
                 this.exams = res.body!;
             });
         }

@@ -332,6 +332,27 @@ public class ExamResource {
     }
 
     /**
+     * GET /courses/{courseId}/exams-for-user : Find all exams the user is allowed to access (Is at least Instructor)
+     *
+     * @param courseId the course to which the exam belongs
+     * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
+     */
+    @GetMapping("/courses/{courseId}/exams-for-user")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<List<Exam>> getExamsForUser(@PathVariable Long courseId) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (authCheckService.isAdmin(user)) {
+            return ResponseEntity.ok(examRepository.findAll());
+        }
+        Course course = courseService.findOne(courseId);
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            return forbidden();
+        }
+        List<Exam> exams = examRepository.getExamsForWhichUserHasInstructorAccess(user.getId());
+        return ResponseEntity.ok(exams);
+    }
+
+    /**
      * GET /exams/upcoming : Find all current and upcoming exams.
      *
      * @return the ResponseEntity with status 200 (OK) and a list of exams.
