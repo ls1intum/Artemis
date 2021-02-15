@@ -9,6 +9,8 @@ import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -48,17 +50,21 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
 
+    private final Environment env;
+
     @Value("${spring.prometheus.monitoringIp:#{null}}")
     private Optional<String> monitoringIpAddress;
 
     public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
-                                 CorsFilter corsFilter, SecurityProblemSupport problemSupport, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
+                                 CorsFilter corsFilter, SecurityProblemSupport problemSupport, Optional<AuthenticationProvider> remoteUserAuthenticationProvider,
+                                 Environment env) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDetailsService = userDetailsService;
         this.tokenProvider = tokenProvider;
         this.corsFilter = corsFilter;
         this.problemSupport = problemSupport;
         this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
+        this.env = env;
     }
 
     /**
@@ -169,6 +175,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/time").permitAll()
             .and()
                 .apply(securityConfigurerAdapter());
+            
+            if (env.acceptsProfiles(Profiles.of("saml2"))) { // saml2 Profile is active
+                http.saml2Login();
+            }
     }
 
     private JWTConfigurer securityConfigurerAdapter() {
