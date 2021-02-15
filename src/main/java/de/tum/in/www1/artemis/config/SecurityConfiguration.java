@@ -175,10 +175,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/time").permitAll()
             .and()
                 .apply(securityConfigurerAdapter());
-            
-            if (env.acceptsProfiles(Profiles.of("saml2"))) { // saml2 Profile is active
-                http.saml2Login();
-            }
     }
 
     private JWTConfigurer securityConfigurerAdapter() {

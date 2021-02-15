@@ -41,11 +41,12 @@ public class SAML2Service {
     /**
      * Handles an authentication via SAML2.
      * 
-     * Registers new users and logs in existing users, by the specified identifier.
+     * Registers new users and returns a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user.
      *
      * @param      principal  The principal
+     * @return a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user
      */
-    public void handleAuthentication(final Saml2AuthenticatedPrincipal principal) {
+    public Authentication handleAuthentication(final Saml2AuthenticatedPrincipal principal) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         log.debug("User {} logged in with SAML2", auth.getName());
@@ -69,11 +70,10 @@ public class SAML2Service {
         //SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
         //        user.getLogin(), user.getPassword(), toGrantedAuthorities(user.getAuthorities())));
         
-        // only register for now
-        // auth = new UsernamePasswordAuthenticationToken(
-        //         user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER)));
+        auth = new UsernamePasswordAuthenticationToken(
+                 user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER)));
         // SecurityContextHolder.getContext().setAuthentication(auth);
-
+        return auth;
     }
 
     private static Collection<GrantedAuthority> toGrantedAuthorities(final Collection<Authority> authorities) {

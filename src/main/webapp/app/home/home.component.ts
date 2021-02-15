@@ -88,6 +88,11 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             }
         });
         this.registerAuthenticationSuccess();
+
+        // If SAML2 flow was started, retry login.
+        if (document.cookie.indexOf('SAML2flow=') >= 0) {
+            this.loginSAML2();
+        }
     }
 
     registerAuthenticationSuccess() {
@@ -160,6 +165,55 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 this.captchaRequired = error.headers.get('X-artemisApp-error') === 'CAPTCHA required';
                 this.authenticationError = true;
                 this.authenticationAttempts++;
+            })
+            .finally(() => (this.isSubmittingLogin = false));
+    }
+
+    loginSAML2() {
+        this.isSubmittingLogin = true;
+        if (document.cookie.indexOf('SAML2flow=') < 0) {
+            document.cookie = 'SAML2flow=true';
+        } else {
+            // remove cookie
+            document.cookie = 'SAML2flow=; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
+        }
+        this.loginService
+            .loginSAML2()
+            .then(() => {
+                this.authenticationError = false;
+                this.authenticationAttempts = 0;
+                this.captchaRequired = false;
+
+                this.eventManager.broadcast({
+                    name: 'authenticationSuccess',
+                    content: 'Sending Authentication Success',
+                });
+
+                // previousState was set in the authExpiredInterceptor before being redirected to login modal.
+                // since login is successful, go to stored previousState and clear previousState
+                const redirect = this.stateStorageService.getUrl();
+                if (redirect) {
+                    this.stateStorageService.storeUrl(null);
+                    this.router.navigate([redirect]);
+                }
+
+                // Log in to Orion
+                if (isOrion) {
+                    const modalRef: NgbModalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, { size: 'lg', backdrop: 'static' });
+                    modalRef.componentInstance.text = 'login.ide.confirmation';
+                    modalRef.componentInstance.title = 'login.ide.title';
+                    modalRef.result.then(
+                        (result) => {
+                            this.javaBridge.login(this.username, this.password);
+                        },
+                        (reason) => {},
+                    );
+                }
+            })
+            .catch((error: HttpErrorResponse) => {
+                if (error.status === 401) {
+                    window.location.replace('/saml2/authenticate'); // arbitrary by SAML2 HTTP Filter Chain secured URL
+                }
             })
             .finally(() => (this.isSubmittingLogin = false));
     }

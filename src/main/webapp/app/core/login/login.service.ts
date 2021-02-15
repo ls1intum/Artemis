@@ -46,6 +46,31 @@ export class LoginService {
     }
 
     /**
+     * Login the user with SAML2.
+     * 
+     * @param callback The callback function to use (optional)
+     */
+    loginSAML2(callback?: any) {
+        const cb = callback || function () {};
+
+        return new Promise((resolve, reject) => {
+            this.authServerProvider.loginSAML2().subscribe(
+                (data) => {
+                    this.accountService.identity(true).then(() => {
+                        resolve(data);
+                    });
+                    return cb();
+                },
+                (err) => {
+                    this.logout();
+                    reject(err);
+                    return cb(err);
+                },
+            );
+        });
+    }
+
+    /**
      * Login with JWT token.
      * @param jwt {string} The JWT token.
      * @param rememberMe {boolean} True to save JWT in localStorage, false to save it in sessionStorage.

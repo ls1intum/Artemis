@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.util.Optional;
+
 import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -12,12 +15,15 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.service.connectors.SAML2Service;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
@@ -34,9 +40,13 @@ public class UserJWTController {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
-    public UserJWTController(TokenProvider tokenProvider, AuthenticationManagerBuilder authenticationManagerBuilder) {
+    private final Optional<SAML2Service> saml2Service;
+
+    public UserJWTController(TokenProvider tokenProvider, AuthenticationManagerBuilder authenticationManagerBuilder,
+            Optional<SAML2Service> saml2Service) {
         this.tokenProvider = tokenProvider;
         this.authenticationManagerBuilder = authenticationManagerBuilder;
+        this.saml2Service = saml2Service;
     }
 
     /**
@@ -65,6 +75,34 @@ public class UserJWTController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", ex.getMessage()).build();
         }
     }
+
+    /**
+     * Authorizes an User logged in with SAML2
+     * 
+     * @return a JWT Token if the authorization is successful
+     */
+    @GetMapping("/saml2")
+    public ResponseEntity<JWTToken> authorizeSAML2() {
+        if (saml2Service.isEmpty()) {
+            throw new AccessForbiddenException("SAML2 is disabled");
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof Saml2AuthenticatedPrincipal)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+
+        log.debug("SAML2 authentication: {}", authentication);
+
+        Saml2AuthenticatedPrincipal principal = (Saml2AuthenticatedPrincipal) authentication.getPrincipal();
+        authentication = saml2Service.get().handleAuthentication(principal);
+
+        final String jwt = tokenProvider.createToken(authentication, false);
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
+        return new ResponseEntity<>(new JWTToken(jwt), httpHeaders, HttpStatus.OK);
+    }
+
 
     /**
      * Object to return as body in JWT Authentication.
