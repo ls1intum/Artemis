@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { catchError, map } from 'rxjs/operators';
 import { combineLatest, of } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { Submission, SubmissionType } from 'app/entities/submission.model';
+import { Submission } from 'app/entities/submission.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -38,7 +38,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     submissions?: Submission[];
     eventSubscriber: Subscription;
     isLoading = true;
-    activeProfiles: string[];
+    commitHashURLTemplate?: string;
 
     constructor(
         private route: ActivatedRoute,
@@ -106,7 +106,7 @@ export class ParticipationSubmissionComponent implements OnInit {
             .getProfileInfo()
             .pipe(
                 take(1),
-                tap((info: ProfileInfo) => (this.activeProfiles = info?.activeProfiles)),
+                tap((info: ProfileInfo) => (this.commitHashURLTemplate = info?.commitHashURLTemplate)),
             )
             .subscribe();
     }
@@ -150,35 +150,20 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     getCommitUrl(submission: ProgrammingSubmission): string | undefined {
-        let repoUrl: string | undefined;
-        if (submission?.type === SubmissionType.TEST) {
-            repoUrl = (this.exercise as ProgrammingExercise).testRepositoryUrl;
-        } else if (this.participation?.type === ParticipationType.PROGRAMMING) {
-            repoUrl = (this.participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
+        let participation;
+        if (this.participation?.type === ParticipationType.PROGRAMMING) {
+            participation = this.participation as ProgrammingExerciseStudentParticipation;
         } else if (this.participation?.type === ParticipationType.SOLUTION) {
-            repoUrl = (this.participation as SolutionProgrammingExerciseParticipation).repositoryUrl;
+            participation = this.participation as SolutionProgrammingExerciseParticipation;
         } else if (this.participation?.type === ParticipationType.TEMPLATE) {
-            repoUrl = (this.participation as TemplateProgrammingExerciseParticipation).repositoryUrl;
+            participation = this.participation as TemplateProgrammingExerciseParticipation;
         }
-        if (repoUrl) {
-            if (this.activeProfiles) {
-                // Remove ".git" suffix
-                const baseUrl = repoUrl.replace('.git', '');
-                if (this.activeProfiles.includes('bitbucket')) {
-                    // Bitbucket Repository
-                    const positionOfCourseIdDirectory = baseUrl.lastIndexOf('/');
-                    // The bitbucket repo url needs to be changed to navigate to the commit page
-                    // this will result in bitbucket.com/scm/{projectKey}/repos/{buildPlanId}/commits/{commitHash}
-                    repoUrl = [baseUrl.slice(0, positionOfCourseIdDirectory), '/repos', baseUrl.slice(positionOfCourseIdDirectory), '/commits/', submission.commitHash].join('');
-                    // at last replace '/scm' with '/projects'
-                    repoUrl = repoUrl.replace('/scm', '/projects');
-                } else if (this.activeProfiles.includes('gitlab')) {
-                    // GitLab Repository
-                    repoUrl = baseUrl + '/-/commit/' + submission.commitHash;
-                }
-            }
-            return repoUrl;
+        if (participation && this.commitHashURLTemplate) {
+            return this.commitHashURLTemplate
+                .replace('{projectKey}', (this.exercise as ProgrammingExercise).projectKey!)
+                .replace('{buildPlanId}', participation?.buildPlanId!)
+                .replace('{commitHash}', submission.commitHash ?? '');
         }
-        return undefined;
+        return '';
     }
 }
