@@ -652,6 +652,7 @@ public class GitService {
 
             if (originHead == null) {
                 log.error("Cannot hard reset the repo " + repo.getLocalPath() + " to origin/HEAD because it is empty.");
+                return;
             }
 
             reset(repo, "origin/" + originHead);
