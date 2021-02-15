@@ -11,8 +11,8 @@ import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.TextExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.AtheneScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
@@ -27,17 +27,17 @@ public class InstanceMessageReceiveService {
 
     private final Logger log = LoggerFactory.getLogger(InstanceMessageReceiveService.class);
 
-    protected ProgrammingExerciseService programmingExerciseService;
+    protected final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private ProgrammingExerciseScheduleService programmingExerciseScheduleService;
+    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
-    protected TextExerciseService textExerciseService;
+    protected final TextExerciseService textExerciseService;
 
-    private Optional<AtheneScheduleService> atheneScheduleService;
+    private final Optional<AtheneScheduleService> atheneScheduleService;
 
-    public InstanceMessageReceiveService(ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
+    public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             TextExerciseService textExerciseService, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance) {
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.textExerciseService = textExerciseService;
         this.atheneScheduleService = atheneScheduleService;
@@ -70,7 +70,7 @@ public class InstanceMessageReceiveService {
 
     public void processScheduleProgrammingExercise(Long exerciseId) {
         log.info("Received schedule update for programming exercise " + exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
         programmingExerciseScheduleService.updateScheduling(programmingExercise);
     }
 
@@ -93,14 +93,14 @@ public class InstanceMessageReceiveService {
 
     public void processUnlockAllRepositories(Long exerciseId) {
         log.info("Received unlock all repositories for programming exercise " + exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are unlocked as fast as possible
         programmingExerciseScheduleService.unlockAllStudentRepositories(programmingExercise).run();
     }
 
     public void processLockAllRepositories(Long exerciseId) {
         log.info("Received lock all repositories for programming exercise " + exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are locked as fast as possible
         programmingExerciseScheduleService.lockAllStudentRepositories(programmingExercise).run();
     }

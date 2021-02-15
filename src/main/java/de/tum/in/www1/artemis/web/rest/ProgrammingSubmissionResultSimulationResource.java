@@ -19,11 +19,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionResultSimulationService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -44,31 +48,31 @@ public class ProgrammingSubmissionResultSimulationResource {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final ParticipationService participationService;
 
     private final WebsocketMessagingService messagingService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
-    public ProgrammingSubmissionResultSimulationResource(ProgrammingSubmissionService programmingSubmissionService, UserService userService,
-            ParticipationService participationService, WebsocketMessagingService messagingService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService, ExerciseService exerciseService,
+    public ProgrammingSubmissionResultSimulationResource(ProgrammingSubmissionService programmingSubmissionService, UserRepository userRepository,
+            ParticipationService participationService, WebsocketMessagingService messagingService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authCheckService) {
         this.programmingSubmissionService = programmingSubmissionService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.participationService = participationService;
         this.messagingService = messagingService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionResultSimulationService = programmingSubmissionResultSimulationService;
-        this.exerciseService = exerciseService;
+        this.exerciseRepository = exerciseRepository;
         this.authCheckService = authCheckService;
     }
 
@@ -85,8 +89,8 @@ public class ProgrammingSubmissionResultSimulationResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingSubmission> createParticipationAndSubmissionSimulation(@PathVariable Long exerciseId) {
 
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             return forbidden();
         }
@@ -117,10 +121,9 @@ public class ProgrammingSubmissionResultSimulationResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> createNewProgrammingExerciseResult(@PathVariable Long exerciseId) {
         log.debug("Received result notify (NEW)");
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Participant participant = user;
-        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
-        Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise, participant);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithStudentParticipationsAndSubmissionsByIdElseThrow(exerciseId);
+        Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise, user);
 
         if (optionalStudentParticipation.isEmpty()) {
             return forbidden();

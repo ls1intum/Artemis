@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the StudentExam entity.
@@ -65,4 +66,8 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
 
     @Query("SELECT studentExam FROM StudentExam studentExam LEFT JOIN FETCH studentExam.exercises exercises WHERE studentExam.exam.id = :#{#examId} AND studentExam.submitted = FALSE AND studentExam.testRun = FALSE")
     Set<StudentExam> findAllUnsubmittedWithExercisesByExamId(Long examId);
+
+    default StudentExam findByIdElseThrow(Long studentExamId) throws EntityNotFoundException {
+        return findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student Exam", studentExamId));
+    }
 }

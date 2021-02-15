@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 
 @Service
 public class GroupNotificationService {
@@ -22,12 +23,12 @@ public class GroupNotificationService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
-    public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserService userService) {
+    public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository) {
         this.groupNotificationRepository = groupNotificationRepository;
         this.messagingTemplate = messagingTemplate;
-        this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -42,7 +43,7 @@ public class GroupNotificationService {
             return;
         }
         // Create and send the notification.
-        saveAndSend(createNotification(attachment, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.ATTACHMENT_CHANGE, notificationText));
+        saveAndSend(createNotification(attachment, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.ATTACHMENT_CHANGE, notificationText));
     }
 
     /**
@@ -51,7 +52,7 @@ public class GroupNotificationService {
      * @param exercise that has been opened for practice
      */
     public void notifyStudentGroupAboutExercisePractice(Exercise exercise) {
-        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_PRACTICE, null));
+        saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_PRACTICE, null));
     }
 
     /**
@@ -75,7 +76,7 @@ public class GroupNotificationService {
             return;
         }
         // Create and send the notification.
-        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_UPDATED, notificationText));
+        saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_UPDATED, notificationText));
     }
 
     /**
@@ -84,7 +85,7 @@ public class GroupNotificationService {
      * @param exercise that has been created
      */
     public void notifyTutorGroupAboutExerciseCreated(Exercise exercise) {
-        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
+        saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
     }
 
     /**
@@ -103,8 +104,8 @@ public class GroupNotificationService {
      * @param studentQuestion that has been posted
      */
     public void notifyTutorAndInstructorGroupAboutNewQuestionForExercise(StudentQuestion studentQuestion) {
-        saveAndSend(createNotification(studentQuestion, userService.getUser(), GroupNotificationType.TA, NotificationType.NEW_QUESTION_FOR_EXERCISE));
-        saveAndSend(createNotification(studentQuestion, userService.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_QUESTION_FOR_EXERCISE));
+        saveAndSend(createNotification(studentQuestion, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_QUESTION_FOR_EXERCISE));
+        saveAndSend(createNotification(studentQuestion, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_QUESTION_FOR_EXERCISE));
     }
 
     /**
@@ -113,8 +114,8 @@ public class GroupNotificationService {
      * @param studentQuestion that has been posted
      */
     public void notifyTutorAndInstructorGroupAboutNewQuestionForLecture(StudentQuestion studentQuestion) {
-        saveAndSend(createNotification(studentQuestion, userService.getUser(), GroupNotificationType.TA, NotificationType.NEW_QUESTION_FOR_LECTURE));
-        saveAndSend(createNotification(studentQuestion, userService.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_QUESTION_FOR_LECTURE));
+        saveAndSend(createNotification(studentQuestion, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_QUESTION_FOR_LECTURE));
+        saveAndSend(createNotification(studentQuestion, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_QUESTION_FOR_LECTURE));
     }
 
     /**
@@ -123,8 +124,8 @@ public class GroupNotificationService {
      * @param studentQuestionAnswer that has been submitted for a question
      */
     public void notifyTutorAndInstructorGroupAboutNewAnswerForExercise(StudentQuestionAnswer studentQuestionAnswer) {
-        saveAndSend(createNotification(studentQuestionAnswer, userService.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_FOR_EXERCISE));
-        saveAndSend(createNotification(studentQuestionAnswer, userService.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_FOR_EXERCISE));
+        saveAndSend(createNotification(studentQuestionAnswer, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_FOR_EXERCISE));
+        saveAndSend(createNotification(studentQuestionAnswer, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_FOR_EXERCISE));
     }
 
     /**
@@ -133,8 +134,8 @@ public class GroupNotificationService {
      * @param studentQuestionAnswer that has been submitted for a question
      */
     public void notifyTutorAndInstructorGroupAboutNewAnswerForLecture(StudentQuestionAnswer studentQuestionAnswer) {
-        saveAndSend(createNotification(studentQuestionAnswer, userService.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_FOR_LECTURE));
-        saveAndSend(createNotification(studentQuestionAnswer, userService.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_FOR_LECTURE));
+        saveAndSend(createNotification(studentQuestionAnswer, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_FOR_LECTURE));
+        saveAndSend(createNotification(studentQuestionAnswer, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_FOR_LECTURE));
     }
 
     /**
