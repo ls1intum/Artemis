@@ -65,11 +65,14 @@ export class ParticipationSubmissionComponent implements OnInit {
     setupPage() {
         this.isLoading = true;
 
+        console.log('++route.queryParams', this.route.queryParams);
         combineLatest([this.route.params, this.route.queryParams ?? of(undefined)]).subscribe(([params, queryParams]) => {
             this.participationId = +params['participationId'];
+            console.log('++queryParams', typeof queryParams?.['isTmpOrSolutionProgrParticipation']);
             if (queryParams?.['isTmpOrSolutionProgrParticipation'] != undefined) {
                 this.isTmpOrSolutionProgrParticipation = queryParams['isTmpOrSolutionProgrParticipation'];
             }
+            console.log('++isTmpOrSolutionProgrParticipation', this.isTmpOrSolutionProgrParticipation);
 
             if (this.isTmpOrSolutionProgrParticipation) {
                 // Find programming exercise of template and solution programming participation
