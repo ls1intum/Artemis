@@ -813,10 +813,10 @@ public class CourseResource {
     @GetMapping("/courses/exercises-for-management-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<CourseManagementOverviewDTO>> getExercisesForCourseOverview(@RequestParam("courseIds[]") Long[] courseIds) {
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
         final List<CourseManagementOverviewDTO> courseDTOS = new ArrayList<>();
         for (final var courseId : courseIds) {
-            final Course course = courseService.findOne(courseId);
+            final Course course = courseRepository.findByIdElseThrow(courseId);
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 continue;
             }
@@ -839,10 +839,10 @@ public class CourseResource {
     @GetMapping("/courses/stats-for-management-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<CourseManagementOverviewStatisticsDTO>> getExerciseStatsForCourseOverview(@RequestParam("courseIds[]") Long[] courseIds) {
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
         final List<CourseManagementOverviewStatisticsDTO> courseDTOS = new ArrayList<>();
         for (final var courseId : courseIds) {
-            final Course course = courseService.findOne(courseId);
+            final Course course = courseRepository.findByIdElseThrow(courseId);
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 continue;
             }
@@ -850,7 +850,7 @@ public class CourseResource {
             final var courseDTO = new CourseManagementOverviewStatisticsDTO();
             courseDTO.setCourseId(courseId);
             var studentsGroup = courseService.findStudentGroupName(courseId);
-            var amountOfStudentsInCourse = Math.toIntExact(userService.countUserInGroup(studentsGroup));
+            var amountOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(studentsGroup));
             courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
             courseDTO.setActiveStudents(courseService.getActiveStudents(courseId));
             courseDTOS.add(courseDTO);
