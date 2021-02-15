@@ -90,6 +90,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         gitlabRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);
         gitlabRequestMockProvider.mockCreateRepository(exercise, testRepoName);
         gitlabRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
+        gitlabRequestMockProvider.mockGetDefaultBranch("master", exercise.getVcsTemplateRepositoryUrl());
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise);
         jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey);
@@ -172,6 +173,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         // Step 2b)
         jenkinsRequestMockProvider.mockConfigureBuildPlan(exercise, username);
         // Note: Step 2c) is not needed in the Jenkins setup
+
+        gitlabRequestMockProvider.mockGetDefaultBranch("master", exercise.getVcsTemplateRepositoryUrl());
     }
 
     @Override

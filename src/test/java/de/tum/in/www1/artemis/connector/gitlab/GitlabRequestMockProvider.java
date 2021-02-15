@@ -229,7 +229,7 @@ public class GitlabRequestMockProvider {
         doReturn(new Member()).when(projectApi).addMember(repositoryId, mockedUserId, DEVELOPER);
     }
 
-    private void mockGetDefaultBranch(String defaultBranch, VcsRepositoryUrl repositoryUrl) throws GitLabApiException {
+    public void mockGetDefaultBranch(String defaultBranch, VcsRepositoryUrl repositoryUrl) throws GitLabApiException {
         // TODO: Use explicit repositoryId when we supply it from the user Participation
         // var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         var mockProject = new Project();
