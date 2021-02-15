@@ -14,6 +14,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
 /**
@@ -24,9 +26,9 @@ public class AssessmentDashboardService {
 
     private final Logger log = LoggerFactory.getLogger(ExamService.class);
 
-    private final ExerciseService exerciseService;
+    private final ComplaintService complaintService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final SubmissionService submissionService;
 
@@ -34,10 +36,10 @@ public class AssessmentDashboardService {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    public AssessmentDashboardService(ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, SubmissionService submissionService,
+    public AssessmentDashboardService(ComplaintService complaintService, ProgrammingExerciseRepository programmingExerciseRepository, SubmissionService submissionService,
             ResultService resultService, ExampleSubmissionRepository exampleSubmissionRepository) {
-        this.exerciseService = exerciseService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.complaintService = complaintService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionService = submissionService;
         this.resultService = resultService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
@@ -57,8 +59,8 @@ public class AssessmentDashboardService {
             DueDateStat totalNumberOfAssessments;
 
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
-                totalNumberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
+                numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
+                totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
             }
             else {
                 numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId(), examMode);
@@ -68,13 +70,13 @@ public class AssessmentDashboardService {
             exercise.setNumberOfSubmissions(numberOfSubmissions);
             exercise.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
-            final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = exerciseService.calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
+            final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultService.calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
                     totalNumberOfAssessments);
             exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
-            exerciseService.calculateNrOfOpenComplaints(exercise, examMode);
+            complaintService.calculateNrOfOpenComplaints(exercise, examMode);
 
-            Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exercise.getId());
+            Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exercise.getId());
 
             // Do not provide example submissions without any assessment
             exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getLatestResult() == null);

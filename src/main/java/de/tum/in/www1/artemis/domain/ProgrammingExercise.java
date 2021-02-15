@@ -582,7 +582,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * This checks if the current result is rated and has a completion date.  
+     * This checks if the current result is rated and has a completion date.
      * @param result The current result
      * @return true if the result is manual and assessed, false otherwise
      */
@@ -622,5 +622,17 @@ public class ProgrammingExercise extends Exercise {
 
     public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
         this.checkoutSolutionRepository = checkoutSolutionRepository;
+    }
+
+    /**
+     * Sets the transient attribute "isLocalSimulation" if the exercises is a programming exercise
+     * and the testRepositoryUrl contains the String "artemislocalhost" which is the indicator that the programming exercise has
+     * no connection to a version control and continuous integration server
+     *
+     */
+    public void checksAndSetsIfProgrammingExerciseIsLocalSimulation() {
+        if (getTestRepositoryUrl().contains("artemislocalhost")) {
+            setIsLocalSimulation(true);
+        }
     }
 }

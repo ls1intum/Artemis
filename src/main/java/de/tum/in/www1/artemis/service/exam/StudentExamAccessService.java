@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.exam;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
@@ -12,8 +12,11 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 /**
  * Service implementation to check student exam access.
@@ -21,20 +24,20 @@ import de.tum.in.www1.artemis.repository.StudentExamRepository;
 @Service
 public class StudentExamAccessService {
 
-    private final CourseService courseService;
-
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
+
+    private final CourseRepository courseRepository;
 
     private final ExamRepository examRepository;
 
     private final StudentExamRepository studentExamRepository;
 
-    public StudentExamAccessService(CourseService courseService, UserService userService, AuthorizationCheckService authorizationCheckService, ExamRepository examRepository,
-            StudentExamRepository studentExamRepository) {
-        this.courseService = courseService;
-        this.userService = userService;
+    public StudentExamAccessService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
+            ExamRepository examRepository, StudentExamRepository studentExamRepository) {
+        this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
@@ -52,7 +55,7 @@ public class StudentExamAccessService {
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <T> Optional<ResponseEntity<T>> checkStudentExamAccess(Long courseId, Long examId, Long studentExamId, boolean isTestRun) {
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         return checkStudentExamAccess(courseId, examId, studentExamId, currentUser, isTestRun);
     }
 
@@ -116,7 +119,7 @@ public class StudentExamAccessService {
             return Optional.of(conflict());
         }
 
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         if (isTestRun) {
             // Check that the current user is at least instructor in the course.
             if (!authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {
