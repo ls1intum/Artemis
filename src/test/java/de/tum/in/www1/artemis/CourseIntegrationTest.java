@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;

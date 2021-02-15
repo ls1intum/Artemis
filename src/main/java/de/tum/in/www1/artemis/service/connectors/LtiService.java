@@ -42,7 +42,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
 @Service
@@ -160,7 +160,7 @@ public class LtiService {
      */
     public void onSuccessfulLtiAuthentication(LtiLaunchRequestDTO launchRequest, Exercise exercise) {
         // Auth was successful
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Make sure user is added to group for this exercise
         addUserToExerciseGroup(user, exercise.getCourseViaExerciseGroupOrCourseMember());

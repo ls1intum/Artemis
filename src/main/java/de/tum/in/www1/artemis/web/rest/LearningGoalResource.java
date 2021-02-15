@@ -21,9 +21,9 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LearningGoalService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -43,7 +43,7 @@ public class LearningGoalResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final LearningGoalRepository learningGoalRepository;
 
@@ -51,12 +51,12 @@ public class LearningGoalResource {
 
     private final LearningGoalService learningGoalService;
 
-    public LearningGoalResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserService userService,
+    public LearningGoalResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             LearningGoalRepository learningGoalRepository, LectureUnitRepository lectureUnitRepository, LearningGoalService learningGoalService) {
         this.courseRepository = courseRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.learningGoalRepository = learningGoalRepository;
         this.learningGoalService = learningGoalService;
     }
@@ -82,7 +82,7 @@ public class LearningGoalResource {
         if (!learningGoal.getCourse().getId().equals(courseId)) {
             return conflict();
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authorizationCheckService.isAtLeastInstructorInCourse(learningGoal.getCourse(), user)) {
             return forbidden();
         }
@@ -112,7 +112,7 @@ public class LearningGoalResource {
         if (!learningGoal.getCourse().getId().equals(courseId)) {
             return conflict();
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authorizationCheckService.isAtLeastStudentInCourse(learningGoal.getCourse(), user)) {
             return forbidden();
         }
@@ -155,12 +155,8 @@ public class LearningGoalResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<LearningGoal>> getLearningGoals(@PathVariable Long courseId) {
         log.debug("REST request to get learning goals for course with id: {}", courseId);
-        Optional<Course> courseOptional = courseRepository.findById(courseId);
-        if (courseOptional.isEmpty()) {
-            return notFound();
-        }
-        Course course = courseOptional.get();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();

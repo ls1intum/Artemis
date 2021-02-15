@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.service;
 
 import java.io.IOException;
 import java.util.ArrayList;

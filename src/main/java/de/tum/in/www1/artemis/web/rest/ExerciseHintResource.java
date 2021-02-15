@@ -15,6 +15,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import io.github.jhipster.web.util.HeaderUtil;
 
@@ -34,21 +37,21 @@ public class ExerciseHintResource {
 
     private final ExerciseHintService exerciseHintService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
-    public ExerciseHintResource(ExerciseHintService exerciseHintService, AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService,
-            UserService userService, ExerciseService exerciseService) {
+    public ExerciseHintResource(ExerciseHintService exerciseHintService, AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
+            UserRepository userRepository, ExerciseRepository exerciseRepository) {
         this.exerciseHintService = exerciseHintService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
-        this.userService = userService;
-        this.exerciseService = exerciseService;
+        this.userRepository = userRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -66,7 +69,7 @@ public class ExerciseHintResource {
             return badRequest();
         }
         // Reload the exercise from the database as we can't trust data from the client
-        Exercise exercise = exerciseService.findOne(exerciseHint.getExercise().getId());
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseHint.getExercise().getId());
 
         // Hints for exam exercises are not supported at the moment
         if (exercise.isExamExercise()) {
@@ -102,7 +105,7 @@ public class ExerciseHintResource {
             return notFound();
         }
         // Reload the exercise from the database as we can't trust data from the client
-        Exercise exercise = exerciseService.findOne(exerciseHint.getExercise().getId());
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseHint.getExercise().getId());
 
         // Hints for exam exercises are not supported at the moment
         if (exercise.isExamExercise()) {
@@ -145,8 +148,8 @@ public class ExerciseHintResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isAtLeastTeachingAssistantInCourse(course, user))

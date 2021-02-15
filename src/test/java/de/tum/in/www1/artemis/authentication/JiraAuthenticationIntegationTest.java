@@ -31,8 +31,9 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
+import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
@@ -62,6 +63,9 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private PasswordService passwordService;
 
     @Autowired
     protected ProgrammingExerciseRepository programmingExerciseRepository;
@@ -143,7 +147,7 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
         assertThat(mrrobotUser.getGroups()).contains(course.getStudentGroupName());
         assertThat(mrrobotUser.getAuthorities()).containsAll(authorityRepository.findAll());
 
-        final var password = userService.encryptor().decrypt(mrrobotUser.getPassword());
+        final var password = passwordService.decryptPassword(mrrobotUser.getPassword());
         final var auth = new TestingAuthenticationToken(username, password);
         final var responseAuth = jiraAuthenticationProvider.authenticate(auth);
 

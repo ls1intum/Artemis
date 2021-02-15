@@ -25,6 +25,9 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.exam.ExamQuizService;
+import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -151,7 +154,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
         assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
-        assertThat(examService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
+        assertThat(studentExamService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
             database.changeUser("student" + (i + 1));
@@ -247,7 +250,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
         assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
-        assertThat(examService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
+        assertThat(studentExamService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
             final var user = database.getUserByLogin("student" + (i + 1));
@@ -301,7 +304,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
         assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
-        assertThat(examService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
+        assertThat(studentExamService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
             database.changeUser("student" + (i + 1));

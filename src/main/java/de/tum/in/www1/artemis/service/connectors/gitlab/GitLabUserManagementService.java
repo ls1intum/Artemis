@@ -14,7 +14,6 @@ import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.AccessLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +22,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Service
 @Profile("gitlab")
@@ -32,23 +31,20 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     private final Logger log = LoggerFactory.getLogger(GitLabUserManagementService.class);
 
-    private UserService userService;
-
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private final PasswordService passwordService;
 
     private final UserRepository userRepository;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     private final GitLabApi gitlab;
 
-    public GitLabUserManagementService(ProgrammingExerciseRepository programmingExerciseRepository, GitLabApi gitlab, UserRepository userRepository) {
+    public GitLabUserManagementService(ProgrammingExerciseRepository programmingExerciseRepository, GitLabApi gitlab, UserRepository userRepository,
+            PasswordService passwordService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitlab = gitlab;
         this.userRepository = userRepository;
-    }
-
-    @Autowired // break the cycle
-    public void setUserService(UserService userService) {
-        this.userService = userService;
+        this.passwordService = passwordService;
     }
 
     @Override
@@ -85,7 +81,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
             if (shouldSynchronizePassword) {
                 // update the user password in Gitlab with the one stored in the Artemis database
-                userApi.updateUser(gitlabUser, userService.decryptPassword(user));
+                userApi.updateUser(gitlabUser, passwordService.decryptPassword(user));
             }
             else {
                 userApi.updateUser(gitlabUser, null);
@@ -160,14 +156,14 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         final var processedUsers = new HashSet<>(oldInstructors);
 
         // Update the old teaching assistant of the group
-        final var oldTeachingAssistants = userService.findAllUserInGroupAndNotIn(oldTeachingAssistantGroup, oldInstructors);
+        final var oldTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(oldTeachingAssistantGroup, oldInstructors);
         // doUpgrade=true, because these users should be upgraded from TA to instructor, if possible.
         updateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), MAINTAINER, true);
         processedUsers.addAll(oldTeachingAssistants);
 
         // Now, we only have to add all users that have not been updated yet AND that are part of one of the new groups
         // Find all NEW instructors, that did not belong to the old TAs or instructors
-        final var remainingInstructors = userService.findAllUserInGroupAndNotIn(updatedCourse.getInstructorGroupName(), processedUsers);
+        final var remainingInstructors = userRepository.findAllUserInGroupAndNotIn(updatedCourse.getInstructorGroupName(), processedUsers);
         remainingInstructors.forEach(user -> {
             final var userId = getUserId(user.getLogin());
             addUserToGroups(userId, exercises, MAINTAINER);
@@ -175,7 +171,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         processedUsers.addAll(remainingInstructors);
 
         // Find all NEW TAs that did not belong to the old TAs or instructors
-        final var remainingTeachingAssistants = userService.findAllUserInGroupAndNotIn(updatedCourse.getTeachingAssistantGroupName(), processedUsers);
+        final var remainingTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(updatedCourse.getTeachingAssistantGroupName(), processedUsers);
         remainingTeachingAssistants.forEach(user -> {
             final var userId = getUserId(user.getLogin());
             addUserToGroups(userId, exercises, GUEST);
@@ -312,7 +308,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(user.getName()).withCanCreateGroup(false)
                 .withCanCreateProject(false).withSkipConfirmation(true);
         try {
-            return gitlab.getUserApi().createUser(gitlabUser, userService.decryptPassword(user), false);
+            return gitlab.getUserApi().createUser(gitlabUser, passwordService.decryptPassword(user), false);
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to create new user in GitLab " + user.getLogin(), e);

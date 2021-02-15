@@ -27,7 +27,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Lecture;
@@ -41,6 +40,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ResourceLoaderService;
 
 /**
  * REST controller for managing Course.
