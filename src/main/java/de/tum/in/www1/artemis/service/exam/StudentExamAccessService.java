@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import static de.tum.in.www1.artemis.repository.RepositoryHelper.findCourseByIdElseThrow;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
@@ -120,7 +119,7 @@ public class StudentExamAccessService {
             return Optional.of(conflict());
         }
 
-        Course course = findCourseByIdElseThrow(courseRepository, courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         if (isTestRun) {
             // Check that the current user is at least instructor in the course.
             if (!authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {

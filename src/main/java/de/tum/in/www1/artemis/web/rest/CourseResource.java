@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
-import static de.tum.in.www1.artemis.repository.RepositoryHelper.findCourseByIdElseThrow;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 import static java.time.ZonedDateTime.now;
@@ -225,7 +224,7 @@ public class CourseResource {
         if (updatedCourse.getId() == null) {
             return createCourse(updatedCourse);
         }
-        var existingCourse = findCourseByIdElseThrow(courseRepository, updatedCourse.getId());
+        var existingCourse = courseRepository.findByIdElseThrow(updatedCourse.getId());
         if (!Objects.equals(existingCourse.getShortName(), updatedCourse.getShortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", ENTITY_NAME, "shortNameCannotChange", true);
         }

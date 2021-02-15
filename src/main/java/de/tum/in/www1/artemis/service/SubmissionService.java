@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
-import static de.tum.in.www1.artemis.repository.RepositoryHelper.findCourseByIdElseThrow;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toList;
 
@@ -76,7 +75,7 @@ public class SubmissionService {
     public <T> Optional<ResponseEntity<T>> checkSubmissionAllowance(Exercise exercise, Submission submission, User currentUser) {
         // Fetch course from database to make sure client didn't change groups
         final var courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
-        final var course = findCourseByIdElseThrow(courseRepository, courseId);
+        final var course = courseRepository.findByIdElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, currentUser)) {
             return Optional.of(forbidden());
         }

@@ -593,7 +593,7 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
 
-        var programmingExercise = RepositoryHelper.findProgrammingExerciseByIdElseThrow(programmingExerciseRepository, updatedProgrammingExercise.getId());
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
         programmingExercise.setReleaseDate(updatedProgrammingExercise.getReleaseDate());
         programmingExercise.setDueDate(updatedProgrammingExercise.getDueDate());
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());

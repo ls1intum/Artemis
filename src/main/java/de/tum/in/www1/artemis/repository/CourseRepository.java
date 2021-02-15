@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Course entity.
@@ -69,4 +70,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> findAllByShortName(String shortName);
 
     Optional<Course> findById(long courseId);
+
+    default Course findByIdElseThrow(Long courseId) throws EntityNotFoundException {
+        return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
 }

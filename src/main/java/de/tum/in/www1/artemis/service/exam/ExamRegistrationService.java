@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.exam;
 
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.in.www1.artemis.repository.RepositoryHelper.findCourseByIdElseThrow;
 
 import java.util.*;
 
@@ -72,7 +71,7 @@ public class ExamRegistrationService {
      * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
     public List<StudentDTO> registerStudentsForExam(Long courseId, Long examId, List<StudentDTO> studentDTOs) {
-        var course = findCourseByIdElseThrow(courseRepository, courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         for (var studentDto : studentDTOs) {
@@ -231,7 +230,7 @@ public class ExamRegistrationService {
      * @param examId Id of the exam
      */
     public void addAllStudentsOfCourseToExam(Long courseId, Long examId) {
-        Course course = findCourseByIdElseThrow(courseRepository, courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         var students = userRepository.getStudents(course);
         var examOpt = examRepository.findWithRegisteredUsersById(examId);
 

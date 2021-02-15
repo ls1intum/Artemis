@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import static de.tum.in.www1.artemis.repository.RepositoryHelper.findStudentExamByIdElseThrow;
-
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -93,18 +91,6 @@ public class StudentExamService {
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examRepository = examRepository;
-    }
-
-    /**
-     * Get one student exam by id.
-     *
-     * @param studentExamId the id of the student exam
-     * @return the student exam
-     */
-    @NotNull
-    public StudentExam findOne(Long studentExamId) {
-        log.debug("Request to get student exam : {}", studentExamId);
-        return findStudentExamByIdElseThrow(studentExamRepository, studentExamId);
     }
 
     /**

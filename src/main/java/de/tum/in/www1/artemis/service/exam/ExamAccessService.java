@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import static de.tum.in.www1.artemis.repository.RepositoryHelper.findCourseByIdElseThrow;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
@@ -60,7 +59,7 @@ public class ExamAccessService {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
 
         // Check that the current user is at least student in the course.
-        Course course = findCourseByIdElseThrow(courseRepository, courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, currentUser)) {
             return forbidden();
         }
@@ -99,7 +98,7 @@ public class ExamAccessService {
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <T> Optional<ResponseEntity<T>> checkCourseAccessForInstructor(Long courseId) {
-        Course course = findCourseByIdElseThrow(courseRepository, courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
             return Optional.of(forbidden());
         }
@@ -114,7 +113,7 @@ public class ExamAccessService {
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <T> Optional<ResponseEntity<T>> checkCourseAccessForTeachingAssistant(Long courseId) {
-        Course course = findCourseByIdElseThrow(courseRepository, courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return Optional.of(forbidden());
         }

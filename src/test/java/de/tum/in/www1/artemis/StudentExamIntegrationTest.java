@@ -132,9 +132,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testFindOne() {
         assertThrows(EntityNotFoundException.class, () -> {
-            studentExamService.findOne(Long.MAX_VALUE);
+            studentExamRepository.findByIdElseThrow(Long.MAX_VALUE);
         });
-        assertThat(studentExamService.findOne(studentExam1.getId())).isEqualTo(studentExam1);
+        assertThat(studentExamRepository.findByIdElseThrow(studentExam1.getId())).isEqualTo(studentExam1);
     }
 
     @Test

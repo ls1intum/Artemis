@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.repository.RepositoryHelper.findCourseByIdElseThrow;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
@@ -85,7 +84,7 @@ public class StudentQuestionAnswerResource {
         if (studentQuestionAnswer.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestionAnswer cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        var course = findCourseByIdElseThrow(courseRepository, courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
         if (!this.authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
@@ -127,7 +126,7 @@ public class StudentQuestionAnswerResource {
         if (studentQuestionAnswer.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        findCourseByIdElseThrow(courseRepository, courseId);
+        courseRepository.findByIdElseThrow(courseId);
         Optional<StudentQuestionAnswer> optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findById(studentQuestionAnswer.getId());
         if (optionalStudentQuestionAnswer.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -156,7 +155,7 @@ public class StudentQuestionAnswerResource {
     public ResponseEntity<StudentQuestionAnswer> getStudentQuestionAnswer(@PathVariable Long courseId, @PathVariable Long id) {
         log.debug("REST request to get StudentQuestionAnswer : {}", id);
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
-        var course = findCourseByIdElseThrow(courseRepository, courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
         if (!this.authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
@@ -185,7 +184,7 @@ public class StudentQuestionAnswerResource {
         if (optionalStudentQuestionAnswer.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        findCourseByIdElseThrow(courseRepository, courseId);
+        courseRepository.findByIdElseThrow(courseId);
         StudentQuestionAnswer studentQuestionAnswer = optionalStudentQuestionAnswer.get();
         Course course = studentQuestionAnswer.getQuestion().getCourse();
         String entity = "";

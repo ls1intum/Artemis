@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.repository.RepositoryHelper.findCourseByIdElseThrow;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
@@ -156,7 +155,7 @@ public class LearningGoalResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<LearningGoal>> getLearningGoals(@PathVariable Long courseId) {
         log.debug("REST request to get learning goals for course with id: {}", courseId);
-        Course course = findCourseByIdElseThrow(courseRepository, courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
