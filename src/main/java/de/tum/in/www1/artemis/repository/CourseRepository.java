@@ -9,6 +9,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -87,5 +89,48 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     default Set<Exercise> getInterestingExercisesForAssessmentDashboards(Set<Exercise> exercises) {
         return exercises.stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
                 || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType() != AUTOMATIC)).collect(Collectors.toSet());
+    }
+
+    /**
+     * Get all the courses.
+     *
+     * @return the list of entities
+     */
+    default List<Course> findAllActiveWithLecturesAndExams() {
+        return findAllActiveWithLecturesAndExams(ZonedDateTime.now());
+    }
+
+    /**
+     * Get all the courses.
+     *
+     * @return the list of entities
+     */
+    default List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabled() {
+        return findAllCurrentlyActiveNotOnlineAndRegistrationEnabled(ZonedDateTime.now());
+    }
+
+    /**
+     * Get one course by id.
+     *
+     * @param courseId the id of the entity
+     * @return the entity
+     */
+    @NotNull
+    default Course findOneWithLecturesAndExams(Long courseId) {
+        return findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
+    }
+
+    /**
+     * Get one course by id with all its exercises.
+     *
+     * @param courseId the id of the entity
+     * @return the entity
+     */
+    default Course findOneWithExercises(long courseId) {
+        return findWithEagerExercisesById(courseId);
+    }
+
+    default Course findOneWithExercisesAndLectures(long courseId) {
+        return findWithEagerExercisesAndLecturesById(courseId);
     }
 }

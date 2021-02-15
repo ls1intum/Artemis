@@ -8,8 +8,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +31,6 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service Implementation for managing Course.
@@ -100,47 +97,6 @@ public class CourseService {
     }
 
     /**
-     * Save a course.
-     *
-     * @param course the entity to save
-     * @return the persisted entity
-     */
-    public Course save(Course course) {
-        log.debug("Request to save Course : {}", course);
-        return courseRepository.save(course);
-    }
-
-    /**
-     * Get all the courses.
-     *
-     * @return the list of entities
-     */
-    public List<Course> findAll() {
-        log.debug("Request to get all courses");
-        return courseRepository.findAll();
-    }
-
-    /**
-     * Get all the courses.
-     *
-     * @return the list of entities
-     */
-    public List<Course> findAllActiveWithLecturesAndExams() {
-        log.debug("Request to get all active courses");
-        return courseRepository.findAllActiveWithLecturesAndExams(ZonedDateTime.now());
-    }
-
-    /**
-     * Get all the courses.
-     *
-     * @return the list of entities
-     */
-    public List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabled() {
-        log.debug("Request to get all active courses which are not online and enabled");
-        return courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabled(ZonedDateTime.now());
-    }
-
-    /**
      * Get one course with exercises and lectures (filtered for given user)
      *
      * @param courseId the course to fetch
@@ -148,7 +104,7 @@ public class CourseService {
      * @return the course including exercises and lectures for the user
      */
     public Course findOneWithExercisesAndLecturesForUser(Long courseId, User user) {
-        Course course = findOneWithLecturesAndExams(courseId);
+        Course course = courseRepository.findOneWithLecturesAndExams(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -178,7 +134,7 @@ public class CourseService {
      * @return the list of all courses including exercises and lectures for the user
      */
     public List<Course> findAllActiveWithExercisesAndLecturesForUser(User user) {
-        return findAllActiveWithLecturesAndExams().stream()
+        return courseRepository.findAllActiveWithLecturesAndExams().stream()
                 // filter old courses and courses the user should not be able to see
                 // skip old courses that have already finished
                 .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now())).filter(course -> isActiveCourseVisibleForUser(user, course))
@@ -202,39 +158,6 @@ public class CourseService {
         }
 
         return false;
-    }
-
-    /**
-     * Get one course by id.
-     *
-     * @param courseId the id of the entity
-     * @return the entity
-     */
-    @NotNull
-    public Course findOneWithLecturesAndExams(Long courseId) {
-        log.debug("Request to get Course : {}", courseId);
-        return courseRepository.findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
-    }
-
-    /**
-     * Get one course by id with all its exercises.
-     *
-     * @param courseId the id of the entity
-     * @return the entity
-     */
-    public Course findOneWithExercises(long courseId) {
-        log.debug("Request to get Course : {}", courseId);
-        return courseRepository.findWithEagerExercisesById(courseId);
-    }
-
-    public Course findOneWithExercisesAndLectures(long courseId) {
-        log.debug("Request to get Course : {}", courseId);
-        return courseRepository.findWithEagerExercisesAndLecturesById(courseId);
-    }
-
-    public Course findOneWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(long courseId) {
-        log.debug("Request to get Course : {}", courseId);
-        return courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(courseId);
     }
 
     /**
@@ -409,14 +332,14 @@ public class CourseService {
      */
     public void cleanupCourse(Long courseId) {
         // Get the course with all exercises
-        var course = findOneWithExercisesAndLectures(courseId);
+        var course = courseRepository.findOneWithExercisesAndLectures(courseId);
         if (!course.hasCourseArchive()) {
             log.info("Cannot clean up course {} because it hasn't been archived.", courseId);
             return;
         }
 
         // Clean up exams
-        var exams = findOneWithLecturesAndExams(course.getId()).getExams();
+        var exams = courseRepository.findOneWithLecturesAndExams(course.getId()).getExams();
         var examExercises = exams.stream().map(exam -> examService.getAllExercisesOfExam(exam.getId())).flatMap(Collection::stream).collect(Collectors.toSet());
 
         var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());

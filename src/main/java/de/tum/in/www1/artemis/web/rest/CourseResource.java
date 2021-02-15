@@ -205,7 +205,7 @@ public class CourseResource {
             // a specified group does not exist, notify the client
             throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "groupNotFound", true);
         }
-        Course result = courseService.save(course);
+        Course result = courseRepository.save(course);
         return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
@@ -279,7 +279,7 @@ public class CourseResource {
         // users no longer have TA or instructor rights in the related exercise repositories.
         final var oldInstructorGroup = existingCourse.getInstructorGroupName();
         final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
-        Course result = courseService.save(updatedCourse);
+        Course result = courseRepository.save(updatedCourse);
         vcsUserManagementService.ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldTeachingAssistantGroup));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedCourse.getTitle())).body(result);
     }
@@ -395,7 +395,7 @@ public class CourseResource {
     public List<Course> getAllCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("REST request to get all Courses the user has access to");
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        List<Course> courses = courseService.findAll();
+        List<Course> courses = courseRepository.findAll();
         Stream<Course> userCourses = courses.stream().filter(course -> user.getGroups().contains(course.getTeachingAssistantGroupName())
                 || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin(user));
         if (onlyActive) {
@@ -436,7 +436,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCoursesToRegister() {
         log.debug("REST request to get all currently active Courses that are not online courses");
-        return courseService.findAllCurrentlyActiveNotOnlineAndRegistrationEnabled();
+        return courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabled();
     }
 
     /**
@@ -542,7 +542,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseForAssessmentDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
-        Course course = courseService.findOneWithExercises(courseId);
+        Course course = courseRepository.findOneWithExercises(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -637,7 +637,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
-        Course course = courseService.findOneWithExercises(courseId);
+        Course course = courseRepository.findOneWithExercises(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -658,7 +658,7 @@ public class CourseResource {
     public ResponseEntity<Course> getCourseWithExercisesAndRelevantParticipations(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request to get Course with exercises and relevant participations : {}", courseId);
         long start = System.currentTimeMillis();
-        Course course = courseService.findOneWithExercises(courseId);
+        Course course = courseRepository.findOneWithExercises(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -707,7 +707,7 @@ public class CourseResource {
     public ResponseEntity<List<Submission>> getLockedSubmissionsForCourse(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
         long start = System.currentTimeMillis();
-        Course course = courseService.findOneWithExercises(courseId);
+        Course course = courseRepository.findOneWithExercises(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -798,7 +798,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
-        Course course = courseService.findOneWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(courseId);
+        Course course = courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (course == null) {
             return notFound();
@@ -824,7 +824,7 @@ public class CourseResource {
         log.info("REST request to archive Course : {}", courseId);
 
         // Get the course with all exercises
-        final Course course = courseService.findOneWithExercisesAndLectures(courseId);
+        final Course course = courseRepository.findOneWithExercisesAndLectures(courseId);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {

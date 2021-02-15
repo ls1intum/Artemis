@@ -136,7 +136,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         GroupNotification notification1 = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
         notificationRepository.save(notification1);
         course2.setStudentGroupName("some-group");
-        courseService.save(course2);
+        courseRepository.save(course2);
         GroupNotification notification2 = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course2, GroupNotificationType.STUDENT);
         notificationRepository.save(notification2);
 
