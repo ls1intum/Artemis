@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -55,7 +56,7 @@ public class ExamResource {
 
     private final UserRepository userRepository;
 
-    private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
     private final ExamService examService;
 
@@ -75,11 +76,11 @@ public class ExamResource {
 
     private final AssessmentDashboardService assessmentDashboardService;
 
-    public ExamResource(UserRepository userRepository, CourseService courseService, ExamService examService, ExamAccessService examAccessService,
+    public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamAccessService examAccessService,
             InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, AuthorizationCheckService authCheckService, ExamDateService examDateService,
             TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService) {
         this.userRepository = userRepository;
-        this.courseService = courseService;
+        this.courseRepository = courseRepository;
         this.examService = examService;
         this.examDateService = examDateService;
         this.examRegistrationService = examRegistrationService;
@@ -282,7 +283,7 @@ public class ExamResource {
         Set<Exercise> exercises = new HashSet<>();
         // extract all exercises for all the exam
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            exerciseGroup.setExercises(courseService.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
+            exerciseGroup.setExercises(courseRepository.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
             exercises.addAll(exerciseGroup.getExercises());
         }
 
@@ -317,7 +318,7 @@ public class ExamResource {
         }
 
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            exerciseGroup.setExercises(courseService.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
+            exerciseGroup.setExercises(courseRepository.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
         }
 
         return ResponseEntity.ok(exam);
@@ -399,7 +400,7 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        var course = courseService.findOne(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examService.findOneWithRegisteredUsers(examId);
 
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);

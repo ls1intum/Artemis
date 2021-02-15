@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.Rating;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 
@@ -51,15 +52,15 @@ public class RatingResource {
 
     private final ResultService resultService;
 
-    private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
     public RatingResource(RatingService ratingService, UserRepository userRepository, AuthorizationCheckService authCheckService, ResultService resultService,
-            CourseService courseService) {
+            CourseRepository courseRepository) {
         this.ratingService = ratingService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.resultService = resultService;
-        this.courseService = courseService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -129,7 +130,7 @@ public class RatingResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Rating>> getRatingForInstructorDashboard(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();

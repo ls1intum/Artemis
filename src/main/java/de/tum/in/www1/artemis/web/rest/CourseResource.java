@@ -358,7 +358,7 @@ public class CourseResource {
     @PostMapping("/courses/{courseId}/register")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) {
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to register {} for Course {}", user.getName(), course.getTitle());
         if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
@@ -548,7 +548,7 @@ public class CourseResource {
             return forbidden();
         }
 
-        Set<Exercise> interestingExercises = courseService.getInterestingExercisesForAssessmentDashboards(course.getExercises());
+        Set<Exercise> interestingExercises = courseRepository.getInterestingExercisesForAssessmentDashboards(course.getExercises());
         course.setExercises(interestingExercises);
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
@@ -570,7 +570,7 @@ public class CourseResource {
     public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/stats-for-tutor-dashboard");
 
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -615,7 +615,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
         course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
         course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
@@ -664,7 +664,7 @@ public class CourseResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        Set<Exercise> interestingExercises = courseService.getInterestingExercisesForAssessmentDashboards(course.getExercises());
+        Set<Exercise> interestingExercises = courseRepository.getInterestingExercisesForAssessmentDashboards(course.getExercises());
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
@@ -739,7 +739,7 @@ public class CourseResource {
     public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForInstructorDashboard(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request /courses/{courseId}/stats-for-instructor-dashboard");
         final long start = System.currentTimeMillis();
-        final Course course = courseService.findOne(courseId);
+        final Course course = courseRepository.findByIdElseThrow(courseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -861,7 +861,7 @@ public class CourseResource {
     public ResponseEntity<Resource> downloadCourseArchive(@PathVariable Long courseId) throws FileNotFoundException {
         log.info("REST request to download archive of Course : {}", courseId);
 
-        final Course course = courseService.findOne(courseId);
+        final Course course = courseRepository.findByIdElseThrow(courseId);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
@@ -889,7 +889,7 @@ public class CourseResource {
     public ResponseEntity<Resource> cleanup(@PathVariable Long courseId) {
         log.info("REST request to cleanup the Course : {}", courseId);
 
-        final Course course = courseService.findOne(courseId);
+        final Course course = courseRepository.findByIdElseThrow(courseId);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
@@ -917,7 +917,7 @@ public class CourseResource {
         log.debug("REST request to get categories of Course : {}", courseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         if (authCheckService.isAdmin(user) || authCheckService.isInstructorInCourse(course, user)) {
             Set<String> categories = exerciseService.findAllExerciseCategoriesForCourse(course);
             return ResponseEntity.ok().body(categories);
@@ -937,7 +937,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<User>> getAllStudentsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all students in course : {}", courseId);
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         return getAllUsersInGroup(course, course.getStudentGroupName());
     }
 
@@ -951,7 +951,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<User>> getAllTutorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutors in course : {}", courseId);
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         return getAllUsersInGroup(course, course.getTeachingAssistantGroupName());
     }
 
@@ -965,7 +965,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<User>> getAllInstructorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all instructors in course : {}", courseId);
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         return getAllUsersInGroup(course, course.getInstructorGroupName());
     }
 
@@ -996,7 +996,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> addStudentToCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to add {} as student to course : {}", studentLogin, courseId);
-        var course = courseService.findOne(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
         return addUserToCourseGroup(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName());
     }
 
@@ -1011,7 +1011,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> addTutorToCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to add {} as tutors to course : {}", tutorLogin, courseId);
-        var course = courseService.findOne(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
         return addUserToCourseGroup(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
     }
 
@@ -1026,7 +1026,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> addInstructorToCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to add {} as instructors to course : {}", instructorLogin, courseId);
-        var course = courseService.findOne(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
         return addUserToCourseGroup(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName());
     }
 
@@ -1065,7 +1065,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> removeStudentFromCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to remove {} as student from course : {}", studentLogin, courseId);
-        var course = courseService.findOne(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
         return removeUserFromCourseGroup(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName());
     }
 
@@ -1080,7 +1080,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> removeTutorFromCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to remove {} as tutor from course : {}", tutorLogin, courseId);
-        var course = courseService.findOne(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
         return removeUserFromCourseGroup(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
     }
 
@@ -1095,7 +1095,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> removeInstructorFromCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to remove {} as instructor from course : {}", instructorLogin, courseId);
-        var course = courseService.findOne(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
         return removeUserFromCourseGroup(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName());
     }
 

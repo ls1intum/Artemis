@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -47,7 +48,7 @@ public class LectureResource {
 
     private final LectureService lectureService;
 
-    private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -55,11 +56,11 @@ public class LectureResource {
 
     private final CourseResource courseResource;
 
-    public LectureResource(LectureRepository lectureRepository, LectureService lectureService, CourseService courseService, UserRepository userRepository,
+    public LectureResource(LectureRepository lectureRepository, LectureService lectureService, CourseRepository courseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseResource courseResource) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
-        this.courseService = courseService;
+        this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.courseResource = courseResource;
@@ -131,7 +132,7 @@ public class LectureResource {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
             return forbidden();
         }

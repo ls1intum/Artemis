@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -56,16 +57,16 @@ public class ComplaintResource {
 
     private final ComplaintService complaintService;
 
-    private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
     public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseService exerciseService, UserRepository userRepository, TeamService teamService,
-            ComplaintService complaintService, CourseService courseService) {
+            ComplaintService complaintService, CourseRepository courseRepository) {
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
         this.userRepository = userRepository;
         this.teamService = teamService;
         this.complaintService = complaintService;
-        this.courseService = courseService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -196,7 +197,7 @@ public class ComplaintResource {
         log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
         User user = userRepository.getUser();
         Participant participant = user;
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         if (!course.getComplaintsEnabled()) {
             throw new BadRequestAlertException("Complaints are disabled for this course", ENTITY_NAME, "complaintsDisabled");
         }
@@ -307,7 +308,7 @@ public class ComplaintResource {
     public ResponseEntity<List<Complaint>> getComplaintsByCourseId(@PathVariable Long courseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId) {
         // Filtering by courseId
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);

@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -104,6 +105,8 @@ public class ProgrammingExerciseResource {
 
     private final TemplateUpgradePolicy templateUpgradePolicy;
 
+    private final CourseRepository courseRepository;
+
     /**
      * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -125,7 +128,7 @@ public class ProgrammingExerciseResource {
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
             ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionService gradingCriterionService,
-            ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy) {
+            ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy, CourseRepository courseRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -142,6 +145,7 @@ public class ProgrammingExerciseResource {
         this.gradingCriterionService = gradingCriterionService;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.templateUpgradePolicy = templateUpgradePolicy;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -750,7 +754,7 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ProgrammingExercise>> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -923,7 +927,7 @@ public class ProgrammingExerciseResource {
         }
         ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
 
-        Course course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        Course course = courseRepository.findByIdElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
             return forbidden();
@@ -1102,7 +1106,7 @@ public class ProgrammingExerciseResource {
         }
 
         ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
-        Course course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        Course course = courseRepository.findByIdElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
             return forbidden();

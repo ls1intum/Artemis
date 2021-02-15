@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -52,7 +53,7 @@ public class TeamResource {
 
     private final TeamWebsocketService teamWebsocketService;
 
-    private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
     private final ExerciseService exerciseService;
 
@@ -66,13 +67,13 @@ public class TeamResource {
 
     private final AuditEventRepository auditEventRepository;
 
-    public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseService courseService,
+    public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseRepository courseRepository,
             ExerciseService exerciseService, UserRepository userRepository, AuthorizationCheckService authCheckService, ParticipationService participationService,
             SubmissionService submissionService, AuditEventRepository auditEventRepository) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.teamWebsocketService = teamWebsocketService;
-        this.courseService = courseService;
+        this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -287,7 +288,7 @@ public class TeamResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Boolean> existsTeamByShortName(@PathVariable long courseId, @RequestParam("shortName") String shortName) {
         log.debug("REST request to check Team existence for course with id {} for shortName : {}", courseId, shortName);
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -313,7 +314,7 @@ public class TeamResource {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
@@ -422,7 +423,7 @@ public class TeamResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseWithExercisesAndParticipationsForTeam(@PathVariable Long courseId, @PathVariable String teamShortName) {
         log.debug("REST request to get Course {} with exercises and participations for Team with short name {}", courseId, teamShortName);
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!(authCheckService.isAtLeastTeachingAssistantInCourse(course, user) || authCheckService.isStudentInTeam(course, teamShortName, user))) {
             throw new AccessForbiddenException("You are not allowed to access this resource");

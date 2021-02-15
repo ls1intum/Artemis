@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -54,7 +55,7 @@ public class ModelingExerciseResource {
 
     private final UserRepository userRepository;
 
-    private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -77,7 +78,7 @@ public class ModelingExerciseResource {
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            CourseService courseService, ModelingExerciseService modelingExerciseService, ModelingExerciseImportService modelingExerciseImportService,
+            CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService, CompassService compassService,
             ExerciseService exerciseService, GradingCriterionService gradingCriterionService, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
             ExampleSubmissionRepository exampleSubmissionRepository) {
@@ -86,7 +87,7 @@ public class ModelingExerciseResource {
         this.modelingExerciseImportService = modelingExerciseImportService;
         this.modelingSubmissionExportService = modelingSubmissionExportService;
         this.userRepository = userRepository;
-        this.courseService = courseService;
+        this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.compassService = compassService;
         this.groupNotificationService = groupNotificationService;
@@ -142,7 +143,7 @@ public class ModelingExerciseResource {
     private ResponseEntity<ModelingExercise> checkModelingExercise(@RequestBody ModelingExercise modelingExercise) {
         if (modelingExercise.getCourseViaExerciseGroupOrCourseMember() != null) {
             // fetch course from database to make sure client didn't change groups
-            Course course = courseService.findOne(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            Course course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
             if (authCheckService.isAtLeastInstructorInCourse(course, null)) {
                 if (modelingExercise.isCourseExercise() && modelingExercise.isExamExercise()) {
                     return badRequest();
@@ -224,7 +225,7 @@ public class ModelingExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ModelingExercise>> getModelingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ModelingExercises for the course with id : {}", courseId);
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();

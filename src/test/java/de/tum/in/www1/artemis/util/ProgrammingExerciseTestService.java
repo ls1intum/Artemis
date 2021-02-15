@@ -756,7 +756,7 @@ public class ProgrammingExerciseTestService {
         request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
         await().until(() -> courseRepository.findById(course.getId()).get().getCourseArchivePath() != null);
 
-        var updatedCourse = courseService.findOne(course.getId());
+        var updatedCourse = courseRepository.findByIdElseThrow(course.getId());
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
     }
 

@@ -15,10 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -39,19 +36,19 @@ public class ComplaintService {
 
     private final ResultService resultService;
 
-    private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
     private final UserRepository userRepository;
 
     private final ExamService examService;
 
     public ComplaintService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository,
-            ResultService resultService, CourseService courseService, ExamService examService, UserRepository userRepository) {
+            ResultService resultService, CourseRepository courseRepository, ExamService examService, UserRepository userRepository) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
         this.resultService = resultService;
-        this.courseService = courseService;
+        this.courseRepository = courseRepository;
         this.examService = examService;
         this.userRepository = userRepository;
     }
@@ -82,7 +79,7 @@ public class ComplaintService {
         }
         else {
             // Retrieve course to get Max Complaints, Max Team Complaints and Max Complaint Time
-            final Course course = courseService.findOne(courseId);
+            final Course course = courseRepository.findByIdElseThrow(courseId);
 
             if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
                 long numberOfUnacceptedComplaints = countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);

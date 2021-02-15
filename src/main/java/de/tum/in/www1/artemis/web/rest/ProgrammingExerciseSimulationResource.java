@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -45,7 +46,7 @@ public class ProgrammingExerciseSimulationResource {
 
     private static final String ENTITY_NAME = "programmingExercise";
 
-    private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
     private final ProgrammingExerciseSimulationService programmingExerciseSimulationService;
 
@@ -53,9 +54,9 @@ public class ProgrammingExerciseSimulationResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    public ProgrammingExerciseSimulationResource(CourseService courseService, ProgrammingExerciseSimulationService programmingExerciseSimulationService,
+    public ProgrammingExerciseSimulationResource(CourseRepository courseRepository, ProgrammingExerciseSimulationService programmingExerciseSimulationService,
             UserRepository userRepository, AuthorizationCheckService authCheckService) {
-        this.courseService = courseService;
+        this.courseRepository = courseRepository;
         this.programmingExerciseSimulationService = programmingExerciseSimulationService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -77,7 +78,7 @@ public class ProgrammingExerciseSimulationResource {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
 
         // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        Course course = courseRepository.findByIdElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();

@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -53,6 +54,8 @@ public class FileUploadExerciseResource {
 
     private final CourseService courseService;
 
+    private final CourseRepository courseRepository;
+
     private final AuthorizationCheckService authCheckService;
 
     private final GroupNotificationService groupNotificationService;
@@ -65,7 +68,8 @@ public class FileUploadExerciseResource {
 
     public FileUploadExerciseResource(FileUploadExerciseService fileUploadExerciseService, FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
-            FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionService gradingCriterionService, ExerciseGroupService exerciseGroupService) {
+            FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionService gradingCriterionService, ExerciseGroupService exerciseGroupService,
+            CourseRepository courseRepository) {
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
@@ -76,6 +80,7 @@ public class FileUploadExerciseResource {
         this.gradingCriterionService = gradingCriterionService;
         this.exerciseGroupService = exerciseGroupService;
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -210,7 +215,7 @@ public class FileUploadExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<FileUploadExercise>> getFileUploadExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
