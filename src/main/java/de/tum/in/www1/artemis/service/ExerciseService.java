@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -29,7 +31,6 @@ import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseDetailsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
-import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -73,19 +74,15 @@ public class ExerciseService {
 
     private final TutorParticipationRepository tutorParticipationRepository;
 
-    private final UserService userService;
-
     private final SubmissionRepository submissionRepository;
+
+    private final ResultService resultService;
 
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, StudentExamRepository studentExamRepository, ExamRepository examRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
-            QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ResultService resultService,
-            ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamRepository studentExamRepository, ExamRepository examRepository,
-            UserService userService, SubmissionRepository submissionRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ResultService resultService, SubmissionRepository submissionRepository) {
         this.exerciseRepository = exerciseRepository;
         this.resultService = resultService;
         this.examRepository = examRepository;
@@ -95,16 +92,13 @@ public class ExerciseService {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionService = exampleSubmissionService;
         this.auditEventRepository = auditEventRepository;
-        this.complaintRepository = complaintRepository;
-        this.complaintResponseRepository = complaintResponseRepository;
-        this.teamService = teamService;
         this.quizExerciseService = quizExerciseService;
         this.quizScheduleService = quizScheduleService;
         this.studentExamRepository = studentExamRepository;
         this.exerciseUnitRepository = exerciseUnitRepository;
-        this.userService = userService;
         this.submissionRepository = submissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -116,17 +110,6 @@ public class ExerciseService {
     public Exercise save(Exercise exercise) {
         log.debug("Request to save Exercise : {}", exercise);
         return exerciseRepository.save(exercise);
-    }
-
-    /**
-     * Get all exercises for a given course including their categories.
-     *
-     * @param course for return of exercises in course
-     * @return the set of categories of all exercises in this course
-     */
-    public Set<String> findAllExerciseCategoriesForCourse(Course course) {
-        return exerciseRepository.findAllCategoryNames(course.getId());
-        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -497,7 +480,7 @@ public class ExerciseService {
             dto.setNoOfParticipatingStudentsOrTeams(participations);
 
             if (listElement.get("mode") == ExerciseMode.TEAM) {
-                Integer teams = teamService.getAmountByExerciseId(exerciseId);
+                Integer teams = teamRepository.getAmountByExerciseId(exerciseId);
                 dto.setNoOfTeamsInCourse(teams);
 
                 dto.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : Math.round(participations * 1000.0 / teams) / 10.0);
@@ -608,9 +591,9 @@ public class ExerciseService {
         List<Exercise> individualExercises = exercisesFromDb.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.INDIVIDUAL)).collect(Collectors.toList());
         List<Exercise> teamExercises = exercisesFromDb.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.TEAM)).collect(Collectors.toList());
         List<Object[]> statisticForIndividualExercises = this.exerciseRepository
-                .calculateExerciseStatisticsForIndividualCourseExercises(individualExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
+                .calculateStatisticsForIndividualCourseExercises(individualExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
         List<Object[]> statisticTeamExercises = this.exerciseRepository
-                .calculateExerciseStatisticsForTeamCourseExercises(teamExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
+                .calculateStatisticsForTeamCourseExercises(teamExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
 
         List<Object[]> combinedStatistics = new ArrayList<>();
         combinedStatistics.addAll(statisticForIndividualExercises);

@@ -293,7 +293,7 @@ public class CourseService {
      */
     public List<CourseManagementOverviewDetailsDTO> getAllDTOsForOverview(Boolean isOnlyActive) {
         ZonedDateTime now = isOnlyActive ? ZonedDateTime.now() : null;
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         var isAdmin = authCheckService.isAdmin(user);
 
         List<Map<String, Object>> courses = this.courseRepository.getAllDTOsForOverview(now);
