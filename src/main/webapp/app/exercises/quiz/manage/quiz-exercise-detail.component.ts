@@ -35,6 +35,8 @@ import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.mode
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
 import * as Sentry from '@sentry/browser';
 import { cloneDeep } from 'lodash';
+import { Exam } from 'app/entities/exam.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 // False-positives:
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -92,6 +94,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
     showExistingQuestionsFromCourse = true;
+    showExistingQuestionsFromExam = false;
+    showExistingQuestionsFromFile = false;
+
+    exams: Exam[] = [];
+    selectedExamId?: number;
+
     courses: Course[] = [];
     selectedCourseId?: number;
     quizExercises: QuizExercise[];
@@ -131,6 +139,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
+        private examRepository: ExamManagementService,
         private quizExerciseService: QuizExerciseService,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
         private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
@@ -152,7 +161,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         /** Initialize local constants **/
         this.showExistingQuestions = false;
         this.showExistingQuestionsFromCourse = true;
+        this.showExistingQuestionsFromExam = false;
+        this.showExistingQuestionsFromFile = false;
         this.courses = [];
+        this.exams = [];
         this.quizExercises = [];
         this.allExistingQuestions = [];
         this.existingQuestions = [];
@@ -404,14 +416,20 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             this.quizExercise = this.entity;
         }
 
-        // If courses are not populated, then populate list of courses,
+        // If courses are not populated, then populate list of courses
         if (this.courses.length === 0) {
             this.courseRepository.getAll().subscribe((res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
             });
         }
+        // If exams are not populated, then populate list of exams
+        if (this.exams.length === 0) {
+            this.examRepository.findAllExamsForCourse(this.courseId!).subscribe((res: HttpResponse<Exam[]>) => {
+                this.exams = res.body!;
+            });
+        }
         this.showExistingQuestions = !this.showExistingQuestions;
-        this.setExistingQuestionSourceToCourse(true);
+        this.setExistingQuestionSourceToCourse();
     }
 
     /**
@@ -430,6 +448,38 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         // TODO: the following code seems duplicated (see quiz-exercise-export.component.ts in the method loadForCourse). Try to avoid duplication!
         // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
         this.quizExerciseService.findForCourse(selectedCourse.id!).subscribe(
+            (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
+                if (quizExercisesResponse.body) {
+                    const quizExercises = quizExercisesResponse.body!;
+                    for (const quizExercise of quizExercises) {
+                        this.quizExerciseService.find(quizExercise.id!).subscribe((response: HttpResponse<QuizExercise>) => {
+                            const quizExerciseResponse = response.body!;
+                            if (quizExerciseResponse.quizQuestions && quizExerciseResponse.quizQuestions.length > 0) {
+                                for (const question of quizExerciseResponse.quizQuestions) {
+                                    question.exercise = quizExercise;
+                                    this.allExistingQuestions.push(question);
+                                }
+                            }
+                            this.applyFilter();
+                        });
+                    }
+                }
+            },
+            (res: HttpErrorResponse) => this.onError(res),
+        );
+    }
+
+    onExamSelect(): void {
+        this.allExistingQuestions = this.existingQuestions = [];
+        if (!this.selectedExamId) {
+            return;
+        }
+
+        /** Search the selected exam by id in all available exams **/
+        const selectedExam = this.exams.find((exam) => exam.id === Number(this.selectedExamId))!;
+
+        // For the given exam, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise
+        this.quizExerciseService.findForExam(selectedExam.id!).subscribe(
             (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
                     const quizExercises = quizExercisesResponse.body!;
@@ -507,7 +557,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.verifyAndImportQuestions(questions);
         this.showExistingQuestions = !this.showExistingQuestions;
         this.showExistingQuestionsFromCourse = true;
+        this.showExistingQuestionsFromExam = false;
+        this.showExistingQuestionsFromFile = false;
         this.selectedCourseId = undefined;
+        this.selectedExamId = undefined;
         this.allExistingQuestions = this.existingQuestions = [];
         this.cacheValidation();
     }
@@ -1259,10 +1312,51 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * Update adding existing questions from a file or course
+     * Update adding existing questions from a file or course or exam
      */
-    setExistingQuestionSourceToCourse(setToCourse: boolean): void {
-        this.showExistingQuestionsFromCourse = setToCourse;
+    setExistingQuestionSourceToCourse(): void {
+        this.showExistingQuestionsFromCourse = true;
+        this.showExistingQuestionsFromExam = false;
+        this.showExistingQuestionsFromFile = false;
+
+        this.selectedCourseId = undefined;
+        this.allExistingQuestions = this.existingQuestions = [];
+        this.importFile = undefined;
+        this.importFileName = '';
+        const control = document.getElementById('importFileInput') as HTMLInputElement;
+        if (control) {
+            control.value = '';
+        }
+        this.changeDetector.detectChanges();
+    }
+
+    /**
+     * Update adding existing questions from an exam
+     */
+    setExistingQuestionSourceToExam(): void {
+        this.showExistingQuestionsFromCourse = false;
+        this.showExistingQuestionsFromExam = true;
+        this.showExistingQuestionsFromFile = false;
+
+        this.selectedCourseId = undefined;
+        this.allExistingQuestions = this.existingQuestions = [];
+        this.importFile = undefined;
+        this.importFileName = '';
+        const control = document.getElementById('importFileInput') as HTMLInputElement;
+        if (control) {
+            control.value = '';
+        }
+        this.changeDetector.detectChanges();
+    }
+
+    /**
+     * Update adding existing questions from a file
+     */
+    setExistingQuestionSourceToFile(): void {
+        this.showExistingQuestionsFromCourse = false;
+        this.showExistingQuestionsFromExam = false;
+        this.showExistingQuestionsFromFile = true;
+
         this.selectedCourseId = undefined;
         this.allExistingQuestions = this.existingQuestions = [];
         this.importFile = undefined;

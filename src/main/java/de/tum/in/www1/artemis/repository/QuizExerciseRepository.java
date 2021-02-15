@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -20,6 +21,13 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long> {
 
     List<QuizExercise> findByCourseId(Long courseId);
+
+    @Query("""
+            SELECT qe
+            FROM QuizExercise qe
+            WHERE qe.exerciseGroup.exam.id = :#{#examId}
+            """)
+    List<QuizExercise> findByExamId(Long examId);
 
     List<QuizExercise> findByIsPlannedToStartAndReleaseDateIsAfter(Boolean plannedToStart, ZonedDateTime earliestReleaseDate);
 

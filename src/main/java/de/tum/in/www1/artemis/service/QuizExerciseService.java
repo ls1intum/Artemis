@@ -298,6 +298,24 @@ public class QuizExerciseService {
     }
 
     /**
+     * Get all quiz exercises for the given exam.
+     *
+     * @param examId the id of the exam
+     * @return the entity
+     */
+    public List<QuizExercise> findByExamId(Long examId) {
+        List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (quizExercises.size() > 0) {
+            Course course = quizExercises.get(0).getCourseViaExerciseGroupOrCourseMember();
+            if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
+                return new LinkedList<>();
+            }
+        }
+        return quizExercises;
+    }
+
+    /**
      * Get all quiz exercises that are planned to start in the future
      *
      * @return the list of quiz exercises

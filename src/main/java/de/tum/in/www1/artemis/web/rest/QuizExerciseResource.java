@@ -202,7 +202,7 @@ public class QuizExerciseResource {
      * GET /courses/:courseId/quiz-exercises : get all the exercises.
      *
      * @param courseId id of the course of which all exercises should be fetched
-     * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
+     * @return the ResponseEntity with status 200 (OK) and the list of quiz exercises in body
      */
     @GetMapping(value = "/courses/{courseId}/quiz-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -215,6 +215,27 @@ public class QuizExerciseResource {
             // not required in the returned json body
             quizExercise.setStudentParticipations(null);
             quizExercise.setCourse(null);
+        }
+        return result;
+    }
+
+    /**
+     * GET /:examId/quiz-exercises : get all the quiz exercises of an exam.
+     *
+     * @param examId id of the exam of which all exercises should be fetched
+     * @return the ResponseEntity with status 200 (OK) and the list of quiz exercises in body
+     */
+    @GetMapping(value = "/{examId}/quiz-exercises")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public List<QuizExercise> getQuizExercisesForExam(@PathVariable Long examId) {
+        List<QuizExercise> result = quizExerciseService.findByExamId(examId);
+
+        for (QuizExercise quizExercise : result) {
+            quizExercise.setQuizQuestions(null);
+            // not required in the returned json body
+            quizExercise.setStudentParticipations(null);
+            quizExercise.setCourse(null);
+            quizExercise.setExerciseGroup(null);
         }
         return result;
     }

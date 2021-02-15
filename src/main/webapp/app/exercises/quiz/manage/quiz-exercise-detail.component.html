@@ -192,8 +192,9 @@
             <!--Integrate the template for existingQuestions if the button is clicked-->
             <ng-container *ngIf="showExistingQuestions; then existingQuestionsTemplate"></ng-container>
             <ng-container *ngIf="showExistingQuestions && showExistingQuestionsFromCourse; then existingQuestionsFromCourseTemplate"></ng-container>
+            <ng-container *ngIf="showExistingQuestions && showExistingQuestionsFromExam; then existingQuestionsFromExamTemplate"></ng-container>
 
-            <div class="question-options row d-flex justify-content-start" *ngIf="showExistingQuestions && !showExistingQuestionsFromCourse">
+            <div class="question-options row d-flex justify-content-start" *ngIf="showExistingQuestions && showExistingQuestionsFromFile">
                 <div class="mr-2 col flex-grow-0" style="white-space: nowrap">
                     <span jhiTranslate="artemisApp.quizExercise.importJSON" class="font-weight-bold colon-suffix no-flex-shrink"> </span>
                 </div>
@@ -325,14 +326,21 @@
                     <div
                         class="btn"
                         [ngClass]="{ 'btn-primary': showExistingQuestionsFromCourse, 'btn-default': !showExistingQuestionsFromCourse }"
-                        (click)="setExistingQuestionSourceToCourse(true)"
+                        (click)="setExistingQuestionSourceToCourse()"
                     >
                         <span jhiTranslate="artemisApp.quizExercise.fromACourse"></span>
                     </div>
                     <div
                         class="btn"
-                        [ngClass]="{ 'btn-primary': !showExistingQuestionsFromCourse, 'btn-default': showExistingQuestionsFromCourse }"
-                        (click)="setExistingQuestionSourceToCourse(false)"
+                        [ngClass]="{ 'btn-primary': showExistingQuestionsFromExam, 'btn-default': !showExistingQuestionsFromExam }"
+                        (click)="setExistingQuestionSourceToExam()"
+                    >
+                        <span jhiTranslate="artemisApp.quizExercise.fromAnExam"></span>
+                    </div>
+                    <div
+                        class="btn"
+                        [ngClass]="{ 'btn-primary': showExistingQuestionsFromFile, 'btn-default': !showExistingQuestionsFromFile }"
+                        (click)="setExistingQuestionSourceToFile()"
                     >
                         <span jhiTranslate="artemisApp.quizExercise.fromAFile"></span>
                     </div>
@@ -414,6 +422,91 @@
                 </div>
                 <div
                     *ngIf="allExistingQuestions.length !== 0 && existingQuestions.length === 0 && selectedCourseId != null"
+                    jhiTranslate="artemisApp.quizExercise.noMatchingQuestionsFound"
+                    class="ml-3"
+                ></div>
+                <button
+                    class="btn btn-outline-primary"
+                    (click)="addExistingQuestions()"
+                    *ngIf="existingQuestions.length !== 0"
+                    jhiTranslate="artemisApp.quizExercise.addSelectedQuestions"
+                ></button>
+            </div>
+        </ng-template>
+        <ng-template #existingQuestionsFromExamTemplate>
+            <div class="form-group question-options existing-question-container">
+                <div class="existing-question-select-course w-100">
+                    <span jhiTranslate="artemisApp.quizExercise.selectExam" class="font-weight-bold align-middle"></span>
+                    <select class="form-control ml-5" [(ngModel)]="selectedExamId" (change)="onExamSelect()" style="flex: 1">
+                        <option *ngFor="let exam of exams" [value]="exam.id">{{ exam.title }}</option>
+                    </select>
+                </div>
+                <div class="existing-question-filter w-100" *ngIf="allExistingQuestions.length !== 0">
+                    <input class="form-control search-query" [(ngModel)]="searchQueryText" placeholder="Search Query" />
+                    <div class="checkboxes">
+                        <div class="form-check custom-control custom-checkbox">
+                            <input type="checkbox" id="cbDnDFilterExam" class="form-check-input custom-control-input" [(ngModel)]="dndFilterEnabled" />
+                            <label class="form-check-label custom-control-label" for="cbDnDFilterExam" jhiTranslate="artemisApp.quizExercise.filter.dnd"> </label>
+                        </div>
+                        <div class="form-check custom-control custom-checkbox">
+                            <input type="checkbox" id="cbMCFilterExam" class="form-check-input custom-control-input" [(ngModel)]="mcqFilterEnabled" />
+                            <label class="form-check-label custom-control-label" for="cbMCFilterExam" jhiTranslate="artemisApp.quizExercise.filter.mcq"> </label>
+                        </div>
+                        <div class="form-check custom-control custom-checkbox">
+                            <input type="checkbox" id="cbShortAnswerFilterExam" class="form-check-input custom-control-input" [(ngModel)]="shortAnswerFilterEnabled" />
+                            <label class="form-check-label custom-control-label" for="cbShortAnswerFilterExam" jhiTranslate="artemisApp.quizExercise.filter.sa"> </label>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-dark" (click)="applyFilter()" jhiTranslate="artemisApp.quizExercise.filter.applyFilter">eq</button>
+                </div>
+                <div *ngIf="allExistingQuestions.length === 0 && selectedExamId != null">
+                    <div>&nbsp;</div>
+                    <span jhiTranslate="artemisApp.quizExercise.noQuestionsFound"></span>
+                </div>
+                <div class="table-responsive existing-question-table" *ngIf="existingQuestions.length !== 0">
+                    <table class="table table-striped">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th width="55%">
+                                    <span jhiTranslate="artemisApp.quizExercise.export.questionTitle">Short Question Title</span>
+                                </th>
+                                <th width="30%">
+                                    <span jhiTranslate="artemisApp.quizExercise.export.quizExerciseTitle">Quiz Exercise Title</span>
+                                </th>
+                                <th width="10%">
+                                    <span jhiTranslate="artemisApp.exercise.type">Type</span>
+                                </th>
+                                <th width="5%">
+                                    <span jhiTranslate="entity.action.add">Add</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let question of existingQuestions">
+                                <td width="55%">{{ question.title }}</td>
+                                <td width="30%">{{ question.exercise.title }}</td>
+                                <td width="10%" class="mb-0">
+                                    <h5><span *ngIf="question.type === MULTIPLE_CHOICE" class="badge badge-info align-text-top">MC</span></h5>
+                                    <h5><span *ngIf="question.type === DRAG_AND_DROP" class="badge badge-warning align-text-top">DnD</span></h5>
+                                    <h5><span *ngIf="question.type === SHORT_ANSWER" class="badge badge-success align-text-top">SA</span></h5>
+                                </td>
+                                <td width="5%">
+                                    <div class="form-check custom-control custom-checkbox">
+                                        <input
+                                            type="checkbox"
+                                            id="cbExportExamQuizQuestion{{ question.id }}"
+                                            class="form-check-input custom-control-input"
+                                            [(ngModel)]="question.exportQuiz"
+                                        />
+                                        <label class="form-check-label custom-control-label" for="cbExportExamQuizQuestion{{ question.id }}">&nbsp;</label>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div
+                    *ngIf="allExistingQuestions.length !== 0 && existingQuestions.length === 0 && selectedExamId != null"
                     jhiTranslate="artemisApp.quizExercise.noMatchingQuestionsFound"
                     class="ml-3"
                 ></div>
