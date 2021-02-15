@@ -1,20 +1,18 @@
-<h2
-    *ngIf="participation"
-    jhiTranslate="artemisApp.participation.participationSubmission.submissionsForParticipation"
-    [translateValues]="{ participant: getName(), exercise: exercise.title }"
-></h2>
-<h4 *ngIf="exercise?.releaseDate">
-    <span class="mr-2"> {{ 'artemisApp.exercise.releaseDate' | translate }}: {{ (exercise.releaseDate | artemisDate) || 'N/A' }} </span>
-    <span [ngClass]="exerciseStatusBadge" class="badge">{{ exercise.releaseDate | amTimeAgo }} </span>
-</h4>
-<h4 *ngIf="exercise?.dueDate">
-    <span class="mr-2"> {{ 'artemisApp.exercise.dueDate' | translate }}: {{ (exercise.dueDate | artemisDate) || 'N/A' }} </span>
-    <span [ngClass]="exerciseStatusBadge" class="badge"> {{ exercise.dueDate | amTimeAgo }} </span>
-</h4>
-<h4 *ngIf="exercise?.assessmentDueDate">
-    <span class="mr-2"> {{ 'artemisApp.exercise.assessmentDueDate' | translate }}: {{ (exercise.assessmentDueDate | artemisDate) || 'N/A' }} </span>
-    <span [ngClass]="exerciseStatusBadge" class="badge">{{ exercise.assessmentDueDate | amTimeAgo }}</span>
-</h4>
+<div *ngIf="participation">
+    <h2 jhiTranslate="artemisApp.participation.participationSubmission.submissionsForParticipation" [translateValues]="{ participant: getName(), exercise: exercise.title }"></h2>
+    <h4 *ngIf="exercise.releaseDate">
+        <span class="mr-2"> {{ 'artemisApp.exercise.releaseDate' | translate }}: {{ (exercise.releaseDate | artemisDate) || 'N/A' }} </span>
+        <span [ngClass]="exerciseStatusBadge" class="badge">{{ exercise.releaseDate | amTimeAgo }} </span>
+    </h4>
+    <h4 *ngIf="exercise.dueDate">
+        <span class="mr-2"> {{ 'artemisApp.exercise.dueDate' | translate }}: {{ (exercise.dueDate | artemisDate) || 'N/A' }} </span>
+        <span [ngClass]="exerciseStatusBadge" class="badge"> {{ exercise.dueDate | amTimeAgo }} </span>
+    </h4>
+    <h4 *ngIf="exercise.assessmentDueDate">
+        <span class="mr-2"> {{ 'artemisApp.exercise.assessmentDueDate' | translate }}: {{ (exercise.assessmentDueDate | artemisDate) || 'N/A' }} </span>
+        <span [ngClass]="exerciseStatusBadge" class="badge">{{ exercise.assessmentDueDate | amTimeAgo }}</span>
+    </h4>
+</div>
 <br />
 <jhi-alert></jhi-alert>
 <div class="table-responsive" *ngIf="submissions">

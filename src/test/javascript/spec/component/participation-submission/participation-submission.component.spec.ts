@@ -145,7 +145,7 @@ describe('ParticipationSubmissionComponent', () => {
 
     it('Template Submission is correctly loaded', fakeAsync(() => {
         TestBed.get(ActivatedRoute).params = of({ participationId: 2, exerciseId: 42 });
-        TestBed.get(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: true });
+        TestBed.get(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
         const templateParticipation = new TemplateProgrammingExerciseParticipation();
         templateParticipation.id = 2;
         templateParticipation.repositoryUrl = 'https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git';
@@ -182,7 +182,7 @@ describe('ParticipationSubmissionComponent', () => {
 
     it('Solution Submission is correctly loaded', fakeAsync(() => {
         TestBed.get(ActivatedRoute).params = of({ participationId: 3, exerciseId: 42 });
-        TestBed.get(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: true });
+        TestBed.get(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
         const solutionParticipation = new SolutionProgrammingExerciseParticipation();
         solutionParticipation.id = 3;
         solutionParticipation.submissions = [

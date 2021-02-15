@@ -65,12 +65,12 @@ export class ParticipationSubmissionComponent implements OnInit {
     setupPage() {
         this.isLoading = true;
 
+        // If no query parameters are set, this.route.queryParams will be undefined so we need a fallback dummy observable
         combineLatest([this.route.params, this.route.queryParams ?? of(undefined)]).subscribe(([params, queryParams]) => {
             this.participationId = +params['participationId'];
             if (queryParams?.['isTmpOrSolutionProgrParticipation'] != undefined) {
-                this.isTmpOrSolutionProgrParticipation = queryParams['isTmpOrSolutionProgrParticipation'];
+                this.isTmpOrSolutionProgrParticipation = queryParams['isTmpOrSolutionProgrParticipation'] === 'true';
             }
-
             if (this.isTmpOrSolutionProgrParticipation) {
                 // Find programming exercise of template and solution programming participation
                 this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
@@ -139,7 +139,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     getName() {
-        if (this.participation?.type === ParticipationType.STUDENT) {
+        if (this.participation?.type === ParticipationType.STUDENT || this.participation?.type === ParticipationType.PROGRAMMING) {
             return (this.participation as StudentParticipation).student?.name || (this.participation as StudentParticipation).team?.name;
         } else if (this.participation?.type === ParticipationType.SOLUTION) {
             return this.translate.instant('artemisApp.participation.solutionParticipation');
