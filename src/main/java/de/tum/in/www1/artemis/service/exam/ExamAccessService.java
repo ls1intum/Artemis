@@ -1,11 +1,10 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.exam;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -14,9 +13,12 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 /**
  * Service implementation to check exam access.
@@ -24,31 +26,26 @@ import de.tum.in.www1.artemis.repository.StudentExamRepository;
 @Service
 public class ExamAccessService {
 
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final UserRepository userRepository;
+
     private final ExamRepository examRepository;
 
     private final ExerciseGroupRepository exerciseGroupRepository;
 
     private final StudentExamRepository studentExamRepository;
 
-    private CourseService courseService;
-
-    private final AuthorizationCheckService authorizationCheckService;
-
-    private final UserService userService;
+    private final CourseRepository courseRepository;
 
     public ExamAccessService(ExamRepository examRepository, ExerciseGroupRepository exerciseGroupRepository, StudentExamRepository studentExamRepository,
-            AuthorizationCheckService authorizationCheckService, UserService userService) {
+            AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository) {
         this.examRepository = examRepository;
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.studentExamRepository = studentExamRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.userService = userService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setCourseService(CourseService courseService) {
-        this.courseService = courseService;
+        this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -59,10 +56,10 @@ public class ExamAccessService {
      * @return a ResponseEntity with the exam
      */
     public ResponseEntity<StudentExam> checkAndGetCourseAndExamAccessForConduction(Long courseId, Long examId) {
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
 
         // Check that the current user is at least student in the course.
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, currentUser)) {
             return forbidden();
         }
@@ -101,7 +98,7 @@ public class ExamAccessService {
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <T> Optional<ResponseEntity<T>> checkCourseAccessForInstructor(Long courseId) {
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
             return Optional.of(forbidden());
         }
@@ -116,7 +113,7 @@ public class ExamAccessService {
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <T> Optional<ResponseEntity<T>> checkCourseAccessForTeachingAssistant(Long courseId) {
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return Optional.of(forbidden());
         }

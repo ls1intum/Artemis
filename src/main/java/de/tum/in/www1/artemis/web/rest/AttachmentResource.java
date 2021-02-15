@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -40,25 +41,22 @@ public class AttachmentResource {
 
     private final AttachmentRepository attachmentRepository;
 
-    private final AttachmentService attachmentService;
-
     private final GroupNotificationService groupNotificationService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final FileService fileService;
 
     private final CacheManager cacheManager;
 
-    public AttachmentResource(AttachmentRepository attachmentRepository, AttachmentService attachmentService, GroupNotificationService groupNotificationService,
-            AuthorizationCheckService authorizationCheckService, UserService userService, FileService fileService, CacheManager cacheManager) {
+    public AttachmentResource(AttachmentRepository attachmentRepository, GroupNotificationService groupNotificationService, AuthorizationCheckService authorizationCheckService,
+            UserRepository userRepository, FileService fileService, CacheManager cacheManager) {
         this.attachmentRepository = attachmentRepository;
-        this.attachmentService = attachmentService;
         this.groupNotificationService = groupNotificationService;
         this.authorizationCheckService = authorizationCheckService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.fileService = fileService;
         this.cacheManager = cacheManager;
     }
@@ -149,7 +147,7 @@ public class AttachmentResource {
     @DeleteMapping("/attachments/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<Attachment> optionalAttachment = attachmentRepository.findById(id);
         if (optionalAttachment.isEmpty()) {
             return ResponseEntity.notFound().build();
