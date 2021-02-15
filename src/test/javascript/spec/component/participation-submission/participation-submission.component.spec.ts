@@ -58,7 +58,7 @@ describe('ParticipationSubmissionComponent', () => {
     let router: Router;
     const route = { params: of({ participationId: 1, exerciseId: 42 }) };
     // Template for Bitbucket commit hash url
-    const commitHashURLTemplate = 'https://bitbucket.ase.in.tum.de/projects/{projectKey}/repos/{buildPlanId}/commits/{commitHash}';
+    const commitHashURLTemplate = 'https://bitbucket.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -150,7 +150,6 @@ describe('ParticipationSubmissionComponent', () => {
         TestBed.get(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
         const templateParticipation = new TemplateProgrammingExerciseParticipation();
         templateParticipation.id = 2;
-        templateParticipation.buildPlanId = 'submission1-exercise';
         templateParticipation.submissions = [
             {
                 submissionExerciseType: SubmissionExerciseType.PROGRAMMING,
@@ -177,7 +176,7 @@ describe('ParticipationSubmissionComponent', () => {
 
         // Create correct url for commit hash
         const submission = templateParticipation.submissions[0] as ProgrammingSubmission;
-        checkForCorrectCommitHashUrl(submission, programmingExercise, templateParticipation);
+        checkForCorrectCommitHashUrl(submission, programmingExercise, '-exercise');
 
         fixture.destroy();
         flush();
@@ -188,7 +187,6 @@ describe('ParticipationSubmissionComponent', () => {
         TestBed.get(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
         const solutionParticipation = new SolutionProgrammingExerciseParticipation();
         solutionParticipation.id = 3;
-        solutionParticipation.buildPlanId = 'submission1-solution';
         solutionParticipation.submissions = [
             {
                 submissionExerciseType: SubmissionExerciseType.PROGRAMMING,
@@ -214,21 +212,18 @@ describe('ParticipationSubmissionComponent', () => {
 
         // Create correct url for commit hash
         const submission = solutionParticipation.submissions[0] as ProgrammingSubmission;
-        checkForCorrectCommitHashUrl(submission, programmingExercise, solutionParticipation);
+        checkForCorrectCommitHashUrl(submission, programmingExercise, '-solution');
 
         fixture.destroy();
         flush();
     }));
 
-    function checkForCorrectCommitHashUrl(
-        submission: ProgrammingSubmission,
-        programmingExercise: ProgrammingExercise,
-        participation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation,
-    ) {
+    function checkForCorrectCommitHashUrl(submission: ProgrammingSubmission, programmingExercise: ProgrammingExercise, repoSlug: string) {
+        const projectKey = programmingExercise.projectKey!.toLowerCase();
         const receivedCommitHashUrl = comp.getCommitUrl(submission);
         const commitHashUrl = commitHashURLTemplate
-            .replace('{projectKey}', programmingExercise.projectKey!)
-            .replace('{buildPlanId}', participation.buildPlanId!)
+            .replace('{projectKey}', projectKey)
+            .replace('{repoSlug}', projectKey + repoSlug)
             .replace('{commitHash}', submission.commitHash!);
         expect(receivedCommitHashUrl).to.equal(commitHashUrl);
     }
