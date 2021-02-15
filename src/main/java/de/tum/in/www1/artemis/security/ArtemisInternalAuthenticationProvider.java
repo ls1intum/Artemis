@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 @Component
 @ConditionalOnProperty(value = "artemis.user-management.use-external", havingValue = "false")
@@ -26,8 +25,8 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
 
     private final Logger log = LoggerFactory.getLogger(ArtemisInternalAuthenticationProvider.class);
 
-    public ArtemisInternalAuthenticationProvider(UserRepository userRepository, UserRetrievalService userRetrievalService, PasswordService passwordService) {
-        super(userRepository, userRetrievalService, passwordService);
+    public ArtemisInternalAuthenticationProvider(UserRepository userRepository, PasswordService passwordService) {
+        super(userRepository, passwordService);
     }
 
     @Override

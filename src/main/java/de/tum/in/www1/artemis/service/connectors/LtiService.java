@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
@@ -75,8 +74,6 @@ public class LtiService {
 
     private final UserService userService;
 
-    private final UserRetrievalService userRetrievalService;
-
     private final UserRepository userRepository;
 
     private final LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
@@ -94,10 +91,8 @@ public class LtiService {
     public final Map<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
 
     public LtiService(UserService userService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, UserRetrievalService userRetrievalService,
-            HttpServletResponse response) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, HttpServletResponse response) {
         this.userService = userService;
-        this.userRetrievalService = userRetrievalService;
         this.userRepository = userRepository;
         this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
         this.resultRepository = resultRepository;
@@ -165,7 +160,7 @@ public class LtiService {
      */
     public void onSuccessfulLtiAuthentication(LtiLaunchRequestDTO launchRequest, Exercise exercise) {
         // Auth was successful
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Make sure user is added to group for this exercise
         addUserToExerciseGroup(user, exercise.getCourseViaExerciseGroupOrCourseMember());

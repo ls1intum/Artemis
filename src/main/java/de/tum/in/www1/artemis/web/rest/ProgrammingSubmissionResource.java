@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -34,7 +35,6 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -63,11 +63,11 @@ public class ProgrammingSubmissionResource {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseRetrievalService programmingExerciseRetrievalService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            Optional<VersionControlService> versionControlService, UserRetrievalService userRetrievalService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<VersionControlService> versionControlService, UserRepository userRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             ParticipationService participationService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
@@ -75,7 +75,7 @@ public class ProgrammingSubmissionResource {
         this.authCheckService = authCheckService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.versionControlService = versionControlService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.continuousIntegrationService = continuousIntegrationService;
         this.participationService = participationService;
     }
@@ -222,7 +222,7 @@ public class ProgrammingSubmissionResource {
         try {
             Exercise exercise = exerciseService.findOne(exerciseId);
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+            User user = userRepository.getUserWithGroupsAndAuthorities();
 
             if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
                 return forbidden();
@@ -352,7 +352,7 @@ public class ProgrammingSubmissionResource {
         final boolean examMode = exercise.isExamExercise();
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
-            User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+            User user = userRepository.getUserWithGroupsAndAuthorities();
             programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user, examMode,
                     correctionRound);
         }
@@ -381,7 +381,7 @@ public class ProgrammingSubmissionResource {
         log.debug("REST request to get ProgrammingSubmission of Participation with id: {}", participationId);
         final var participation = participationService.findOneWithEagerResults(participationId);
         final var exercise = participation.getExercise();
-        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
@@ -421,7 +421,7 @@ public class ProgrammingSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a programming submission without assessment");
         final ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
-        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             return forbidden();
         }

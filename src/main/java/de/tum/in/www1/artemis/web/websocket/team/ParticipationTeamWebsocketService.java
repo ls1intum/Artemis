@@ -32,9 +32,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.websocket.dto.OnlineTeamStudentDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.SubmissionSyncPayload;
 
@@ -53,7 +53,7 @@ public class ParticipationTeamWebsocketService {
 
     private final Map<String, Instant> lastActionTracker;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final ParticipationService participationService;
 
@@ -63,12 +63,12 @@ public class ParticipationTeamWebsocketService {
 
     private final ModelingSubmissionService modelingSubmissionService;
 
-    public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry, UserRetrievalService userRetrievalService,
+    public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
             ParticipationService participationService, ExerciseService exerciseService, TextSubmissionService textSubmissionService,
             ModelingSubmissionService modelingSubmissionService, HazelcastInstance hazelcastInstance) {
         this.messagingTemplate = messagingTemplate;
         this.simpUserRegistry = simpUserRegistry;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.participationService = participationService;
         this.exerciseService = exerciseService;
         this.textSubmissionService = textSubmissionService;
@@ -168,7 +168,7 @@ public class ParticipationTeamWebsocketService {
             return;
         }
 
-        final User user = userRetrievalService.getUserWithGroupsAndAuthorities(principal.getName());
+        final User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         final Exercise exercise = exerciseService.findOne(participation.getExercise().getId());
 
         if (submission instanceof ModelingSubmission && exercise instanceof ModelingExercise) {

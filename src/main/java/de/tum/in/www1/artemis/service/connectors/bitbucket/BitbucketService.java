@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -33,7 +34,6 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 @Service
 @Profile("bitbucket")
@@ -54,17 +54,17 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private final PasswordService passwordService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final RestTemplate restTemplate;
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    public BitbucketService(PasswordService passwordService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UserRetrievalService userRetrievalService,
+    public BitbucketService(PasswordService passwordService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UserRepository userRepository,
             @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, UrlService urlService, GitService gitService) {
         super(urlService, gitService);
         this.passwordService = passwordService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
@@ -86,7 +86,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
                     try {
                         // NOTE: we need to refetch the user here to make sure that the groups are not lazy loaded.
-                        user = userRetrievalService.getUserWithGroupsAndAuthorities(user.getLogin());
+                        user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
                         addUserToGroups(username, user.getGroups());
                     }
                     catch (BitbucketException e) {
@@ -297,7 +297,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
                     if (e.getResponseBodyAsString().contains("No such user")) {
                         if (user == null) {
-                            user = userRetrievalService.getUser();
+                            user = userRepository.getUser();
                         }
                         if (user.getCreatedDate().plusSeconds(90).isAfter(Instant.now())) {
                             log.warn("Could not give write permissions to user " + username + ", because the user does not yet exist in Bitbucket. Trying again in 5s");

@@ -19,10 +19,10 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -48,7 +48,7 @@ public class AssessmentService {
 
     protected final GradingCriterionService gradingCriterionService;
 
-    protected final UserRetrievalService userRetrievalService;
+    protected final UserRepository userRepository;
 
     private final SubmissionService submissionService;
 
@@ -58,7 +58,7 @@ public class AssessmentService {
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
-            SubmissionRepository submissionRepository, ExamDateService examDateService, GradingCriterionService gradingCriterionService, UserRetrievalService userRetrievalService,
+            SubmissionRepository submissionRepository, ExamDateService examDateService, GradingCriterionService gradingCriterionService, UserRepository userRepository,
             LtiService ltiService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
@@ -70,7 +70,7 @@ public class AssessmentService {
         this.submissionRepository = submissionRepository;
         this.examDateService = examDateService;
         this.gradingCriterionService = gradingCriterionService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.ltiService = ltiService;
     }
 
@@ -351,7 +351,7 @@ public class AssessmentService {
 
         result.setExampleResult(submission.isExampleSubmission());
         result.setAssessmentType(AssessmentType.MANUAL);
-        User user = userRetrievalService.getUser();
+        User user = userRepository.getUser();
         result.setAssessor(user);
         // first save the feedback (that is not yet in the database) to prevent null index exception
         var savedFeedbackList = saveFeedbacks(feedbackList);

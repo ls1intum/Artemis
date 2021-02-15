@@ -22,10 +22,10 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -45,7 +45,7 @@ public class QuizExerciseResource {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final CourseService courseService;
 
@@ -63,10 +63,10 @@ public class QuizExerciseResource {
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
             QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService,
-            GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserRetrievalService userRetrievalService, ExamDateService examDateService) {
+            GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserRepository userRepository, ExamDateService examDateService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.courseService = courseService;
         this.quizScheduleService = quizScheduleService;
         this.quizStatisticService = quizStatisticService;
@@ -111,7 +111,7 @@ public class QuizExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
 
         // Check that the user is authorized to create the exercise
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
@@ -166,7 +166,7 @@ public class QuizExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
 
         // Check that the user is authorized to update the exercise
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
@@ -390,7 +390,7 @@ public class QuizExerciseResource {
             return notFound();
         }
         Course course = quizExerciseOptional.get().getCourseViaExerciseGroupOrCourseMember();
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }

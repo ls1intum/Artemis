@@ -28,11 +28,11 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -44,7 +44,7 @@ public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final GitService gitService;
 
@@ -89,7 +89,7 @@ public class ParticipationService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-            TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserRetrievalService userRetrievalService, GitService gitService,
+            TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserRepository userRepository, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService,
             @Lazy QuizScheduleService quizScheduleService, RatingRepository ratingRepository, UrlService urlService) {
         this.participationRepository = participationRepository;
@@ -104,7 +104,7 @@ public class ParticipationService {
         this.complaintRepository = complaintRepository;
         this.teamRepository = teamRepository;
         this.studentExamRepository = studentExamRepository;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -1229,7 +1229,7 @@ public class ParticipationService {
             return true;
         // if the user is not the owner of the participation, the user can only see it in case he is
         // a teaching assistant or an instructor of the course, or in case he is admin
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }

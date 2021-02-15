@@ -22,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -31,7 +32,6 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -50,11 +50,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final BuildLogEntryService buildLogService;
 
-    public RepositoryProgrammingExerciseParticipationResource(UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService, GitService gitService,
+    public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRetrievalService programmingExerciseRetrievalService,
             ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService) {
-        super(userRetrievalService, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRetrievalService);
+        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRetrievalService);
         this.participationService = participationService;
         this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
@@ -78,7 +78,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalAccessException();
         }
         // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         var programmingExercise = programmingParticipation.getProgrammingExercise();
         // This must be a student participation as hasPermissions would have been false and an error already thrown
         var isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
@@ -246,7 +246,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         }
         // Apply checks for exam (submission is in time & user's student exam has the exercise)
         // Checks only apply to students and tutors, otherwise template, solution and assignment participation can't be edited using the code editor
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities(principal.getName());
+        User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExerciseParticipation.getProgrammingExercise())
                 && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExerciseParticipation.getProgrammingExercise(), user)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "notAllowedExam");

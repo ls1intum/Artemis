@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.ComplaintResponseResource;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ComplaintResponseLockedException;
@@ -29,15 +29,15 @@ public class ComplaintResponseService {
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public ComplaintResponseService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRetrievalService userRetrievalService,
+    public ComplaintResponseService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
             AuthorizationCheckService authorizationCheckService) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
 
@@ -55,7 +55,7 @@ public class ComplaintResponseService {
         }
         ComplaintResponse complaintResponseRepresentingLock = getComplaintResponseRepresentingALock(complaint);
 
-        User user = this.userRetrievalService.getUser();
+        User user = this.userRepository.getUser();
         if (!isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for removing the lock on the complaint");
         }
@@ -101,7 +101,7 @@ public class ComplaintResponseService {
         }
         ComplaintResponse complaintResponseRepresentingLock = getComplaintResponseRepresentingALock(complaint);
 
-        User user = this.userRetrievalService.getUser();
+        User user = this.userRepository.getUser();
         if (!isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for refreshing the lock on the complaint");
         }
@@ -141,7 +141,7 @@ public class ComplaintResponseService {
         if (complaint.getComplaintResponse() != null) {
             throw new IllegalArgumentException("Complaint response already exists for given complaint");
         }
-        User user = this.userRetrievalService.getUser();
+        User user = this.userRepository.getUser();
         if (!isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for creating the empty complaint response");
         }
@@ -187,7 +187,7 @@ public class ComplaintResponseService {
             throw new IllegalArgumentException("You need to either accept or reject a complaint");
         }
 
-        User user = this.userRetrievalService.getUser();
+        User user = this.userRepository.getUser();
         if (!isUserAuthorizedToRespondToComplaint(originalComplaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for resolving the complaint");
         }

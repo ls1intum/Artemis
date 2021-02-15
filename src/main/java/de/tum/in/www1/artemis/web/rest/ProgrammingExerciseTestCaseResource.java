@@ -17,10 +17,10 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -44,16 +44,16 @@ public class ProgrammingExerciseTestCaseResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     public ProgrammingExerciseTestCaseResource(ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseRetrievalService programmingExerciseRetrievalService,
-            AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService) {
+            AuthorizationCheckService authCheckService, UserRepository userRepository) {
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.programmingExerciseTestCaseService = programmingExerciseTestCaseService;
         this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
         this.authCheckService = authCheckService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -69,7 +69,7 @@ public class ProgrammingExerciseTestCaseResource {
         ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
 
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -94,7 +94,7 @@ public class ProgrammingExerciseTestCaseResource {
         log.debug("REST request to update the weights {} of the exercise {}", testCaseProgrammingExerciseTestCaseDTOS, exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
@@ -128,7 +128,7 @@ public class ProgrammingExerciseTestCaseResource {
         log.debug("REST request to reset the test case weights of exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findOne(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();

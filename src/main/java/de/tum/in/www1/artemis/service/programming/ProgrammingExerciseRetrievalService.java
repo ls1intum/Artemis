@@ -17,22 +17,22 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ProgrammingExerciseRetrievalService {
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final AuthorizationCheckService authCheckService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public ProgrammingExerciseRetrievalService(ProgrammingExerciseRepository programmingExerciseRepository, UserRetrievalService userRetrievalService,
+    public ProgrammingExerciseRetrievalService(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService) {
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
@@ -125,7 +125,7 @@ public class ProgrammingExerciseRetrievalService {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTestCasesById(exerciseId);
         if (programmingExercise.isPresent()) {
             Course course = programmingExercise.get().getCourseViaExerciseGroupOrCourseMember();
-            User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+            User user = userRepository.getUserWithGroupsAndAuthorities();
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 throw new IllegalAccessException();
             }

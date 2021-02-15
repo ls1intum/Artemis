@@ -8,8 +8,8 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -25,20 +25,20 @@ public abstract class AbstractSubmissionResource {
 
     protected final AuthorizationCheckService authCheckService;
 
-    protected final UserRetrievalService userRetrievalService;
+    protected final UserRepository userRepository;
 
     protected final ExerciseService exerciseService;
 
     protected final SubmissionService submissionService;
 
     public AbstractSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ParticipationService participationService,
-            AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService, ExerciseService exerciseService, SubmissionService submissionService) {
+            AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseService exerciseService, SubmissionService submissionService) {
         this.submissionRepository = submissionRepository;
         this.resultService = resultService;
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.submissionService = submissionService;
     }
 
@@ -52,7 +52,7 @@ public abstract class AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of submissions in body
      */
     protected ResponseEntity<List<Submission>> getAllSubmissions(Long exerciseId, boolean submittedOnly, boolean assessedByTutor, int correctionRound) {
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(exerciseId);
 
         if (assessedByTutor) {

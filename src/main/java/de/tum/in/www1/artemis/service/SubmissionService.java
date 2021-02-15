@@ -19,8 +19,8 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -45,15 +45,15 @@ public class SubmissionService {
 
     protected final ParticipationService participationService;
 
-    protected final UserRetrievalService userRetrievalService;
+    protected final UserRepository userRepository;
 
     protected final FeedbackRepository feedbackRepository;
 
-    public SubmissionService(SubmissionRepository submissionRepository, UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService,
+    public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
             FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository) {
         this.submissionRepository = submissionRepository;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -114,7 +114,7 @@ public class SubmissionService {
      * @param courseId the id of the course
      */
     public void checkSubmissionLockLimit(long courseId) {
-        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRetrievalService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
         if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
             throw new BadRequestAlertException("The limit of locked submissions has been reached", "submission", "lockedSubmissionsLimitReached");
         }
@@ -127,7 +127,7 @@ public class SubmissionService {
      * @return number of locked submissions for the current user in the given course
      */
     public long countSubmissionLocks(long courseId) {
-        return submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRetrievalService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        return submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
     }
 
     /**
@@ -137,7 +137,7 @@ public class SubmissionService {
      * @return number of locked submissions for the current user in the given course
      */
     public List<Submission> getLockedSubmissions(long courseId) {
-        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userRetrievalService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
     }
 
     /**
@@ -194,8 +194,7 @@ public class SubmissionService {
             // remove submission if user already assessed first correction round
             // if disabled, please switch tutorAssessUnique within the tests
             submissionsWithoutResult = submissionsWithoutResult.stream()
-                    .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1).getAssessor().equals(userRetrievalService.getUser()))
-                    .collect(Collectors.toList());
+                    .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1).getAssessor().equals(userRepository.getUser())).collect(Collectors.toList());
         }
 
         if (submissionsWithoutResult.isEmpty()) {
@@ -461,7 +460,7 @@ public class SubmissionService {
         }
 
         if (result.getAssessor() == null) {
-            result.setAssessor(userRetrievalService.getUser());
+            result.setAssessor(userRepository.getUser());
         }
 
         result.setAssessmentType(AssessmentType.MANUAL);

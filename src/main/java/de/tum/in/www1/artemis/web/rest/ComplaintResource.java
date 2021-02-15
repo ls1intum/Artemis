@@ -24,8 +24,8 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -50,7 +50,7 @@ public class ComplaintResource {
 
     private final ExerciseService exerciseService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final TeamService teamService;
 
@@ -58,11 +58,11 @@ public class ComplaintResource {
 
     private final CourseService courseService;
 
-    public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseService exerciseService, UserRetrievalService userRetrievalService, TeamService teamService,
+    public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseService exerciseService, UserRepository userRepository, TeamService teamService,
             ComplaintService complaintService, CourseService courseService) {
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.teamService = teamService;
         this.complaintService = complaintService;
         this.courseService = courseService;
@@ -155,7 +155,7 @@ public class ComplaintResource {
             return ResponseEntity.ok().build();
         }
         var complaint = optionalComplaint.get();
-        var user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithGroupsAndAuthorities();
         var participation = (StudentParticipation) complaint.getResult().getParticipation();
         var exercise = participation.getExercise();
         var isOwner = authCheckService.isOwnerOfParticipation(participation, user);
@@ -194,7 +194,7 @@ public class ComplaintResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean teamMode) {
         log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
-        User user = userRetrievalService.getUser();
+        User user = userRepository.getUser();
         Participant participant = user;
         Course course = courseService.findOne(courseId);
         if (!course.getComplaintsEnabled()) {
@@ -287,7 +287,7 @@ public class ComplaintResource {
         // to filter by at least exerciseId or courseId, to be sure they are really instructors for that course /
         // exercise.
         // Of course tutors cannot ask for complaints about other tutors.
-        User user = userRetrievalService.getUser();
+        User user = userRepository.getUser();
         List<Complaint> complaints = complaintService.getAllComplaintsByTutorId(user.getId());
         filterOutUselessDataFromComplaints(complaints, true);
         return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
@@ -309,7 +309,7 @@ public class ComplaintResource {
         // Filtering by courseId
         Course course = courseService.findOne(courseId);
 
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
 
@@ -350,7 +350,7 @@ public class ComplaintResource {
             @RequestParam(required = false) Long tutorId) {
         // Filtering by exerciseId
         Exercise exercise = exerciseService.findOne(exerciseId);
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (exercise == null) {
             throw new BadRequestAlertException("The requested exercise does not exist", ENTITY_NAME, "wrongExerciseId");
@@ -365,7 +365,7 @@ public class ComplaintResource {
 
         // Only instructors can access all complaints about a exercise without filtering by tutorId
         if (!isAtLeastInstructor) {
-            tutorId = userRetrievalService.getUser().getId();
+            tutorId = userRepository.getUser().getId();
         }
 
         List<Complaint> complaints;

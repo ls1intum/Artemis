@@ -20,11 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseSimulationService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -49,15 +49,15 @@ public class ProgrammingExerciseSimulationResource {
 
     private final ProgrammingExerciseSimulationService programmingExerciseSimulationService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final AuthorizationCheckService authCheckService;
 
     public ProgrammingExerciseSimulationResource(CourseService courseService, ProgrammingExerciseSimulationService programmingExerciseSimulationService,
-            UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService) {
+            UserRepository userRepository, AuthorizationCheckService authCheckService) {
         this.courseService = courseService;
         this.programmingExerciseSimulationService = programmingExerciseSimulationService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
     }
 
@@ -78,7 +78,7 @@ public class ProgrammingExerciseSimulationResource {
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }

@@ -22,10 +22,10 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -70,18 +70,18 @@ public class UserResource {
 
     private final UserService userService;
 
-    private final UserRetrievalService userRetrievalService;
-
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final UserRepository userRepository;
 
-    public UserResource(UserRepository userRepository, UserRetrievalService userRetrievalService, UserService userService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider) {
+    private final AuthorityRepository authorityRepository;
+
+    public UserResource(UserRepository userRepository, UserService userService, ArtemisAuthenticationProvider artemisAuthenticationProvider,
+            AuthorityRepository authorityRepository) {
         this.userRepository = userRepository;
-        this.userRetrievalService = userRetrievalService;
         this.userService = userService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
+        this.authorityRepository = authorityRepository;
     }
 
     /**
@@ -188,7 +188,7 @@ public class UserResource {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
         }
         // limit search results to 25 users (larger result sizes would impact performance and are not useful for specific user searches)
-        final Page<UserDTO> page = userRetrievalService.searchAllUsersByLoginOrName(PageRequest.of(0, 25), loginOrName);
+        final Page<UserDTO> page = userRepository.searchAllUsersByLoginOrName(PageRequest.of(0, 25), loginOrName);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -199,7 +199,7 @@ public class UserResource {
     @GetMapping("/users/authorities")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public List<String> getAuthorities() {
-        return userRetrievalService.getAuthorities();
+        return authorityRepository.getAuthorities();
     }
 
     /**
@@ -233,7 +233,7 @@ public class UserResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> updateUserNotificationDate() {
         log.debug("REST request to update notification date for logged in user");
-        User user = userRetrievalService.getUser();
+        User user = userRepository.getUser();
         userService.updateUserNotificationReadDate(user.getId());
         return ResponseEntity.ok().build();
     }

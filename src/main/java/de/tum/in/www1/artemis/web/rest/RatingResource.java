@@ -28,8 +28,8 @@ import de.tum.in.www1.artemis.domain.Rating;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 /**
  * REST controller for managing Rating.
@@ -45,7 +45,7 @@ public class RatingResource {
 
     private final RatingService ratingService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -53,10 +53,10 @@ public class RatingResource {
 
     private final CourseService courseService;
 
-    public RatingResource(RatingService ratingService, UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService, ResultService resultService,
+    public RatingResource(RatingService ratingService, UserRepository userRepository, AuthorizationCheckService authCheckService, ResultService resultService,
             CourseService courseService) {
         this.ratingService = ratingService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.resultService = resultService;
         this.courseService = courseService;
@@ -128,7 +128,7 @@ public class RatingResource {
     @GetMapping("/course/{courseId}/rating")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Rating>> getRatingForInstructorDashboard(@PathVariable Long courseId) {
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOne(courseId);
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
@@ -147,7 +147,7 @@ public class RatingResource {
      * @return False if User is not Owner, True otherwise
      */
     private boolean checkIfUserIsOwnerOfSubmission(Long resultId) {
-        User user = userRetrievalService.getUser();
+        User user = userRepository.getUser();
         Result result = resultService.findOne(resultId);
         return authCheckService.isOwnerOfParticipation((StudentParticipation) result.getParticipation(), user);
     }

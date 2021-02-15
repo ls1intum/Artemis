@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 @Service
 public class SubmissionVersionService {
@@ -24,18 +23,14 @@ public class SubmissionVersionService {
 
     protected final SubmissionVersionRepository submissionVersionRepository;
 
-    protected final UserRetrievalService userRetrievalService;
+    protected final UserRepository userRepository;
 
     private final ObjectMapper objectMapper;
 
-    private final UserRepository userRepository;
-
-    public SubmissionVersionService(SubmissionVersionRepository submissionVersionRepository, UserRetrievalService userRetrievalService, ObjectMapper objectMapper,
-            UserRepository userRepository) {
+    public SubmissionVersionService(SubmissionVersionRepository submissionVersionRepository, UserRepository userRepository, ObjectMapper objectMapper) {
         this.submissionVersionRepository = submissionVersionRepository;
-        this.userRetrievalService = userRetrievalService;
-        this.objectMapper = objectMapper;
         this.userRepository = userRepository;
+        this.objectMapper = objectMapper;
     }
 
     /**

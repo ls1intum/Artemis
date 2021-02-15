@@ -28,12 +28,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
@@ -54,7 +54,7 @@ public abstract class RepositoryResource {
 
     protected final GitService gitService;
 
-    protected final UserRetrievalService userRetrievalService;
+    protected final UserRepository userRepository;
 
     protected final RepositoryService repositoryService;
 
@@ -62,10 +62,10 @@ public abstract class RepositoryResource {
 
     protected final Optional<VersionControlService> versionControlService;
 
-    public RepositoryResource(UserRetrievalService userRetrievalService, AuthorizationCheckService authCheckService, GitService gitService,
+    public RepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
             ProgrammingExerciseRetrievalService programmingExerciseRetrievalService) {
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -233,7 +233,7 @@ public abstract class RepositoryResource {
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<Void> commitChanges(Long domainId) {
-        User user = userRetrievalService.getUser();
+        User user = userRepository.getUser();
         log.debug("REST request to commit Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {

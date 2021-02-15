@@ -48,9 +48,9 @@ import com.google.common.collect.Iterables;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -70,7 +70,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final ExerciseService exerciseService;
 
@@ -85,12 +85,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private String brokerPassword;
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler,
-            AuthorizationCheckService authorizationCheckService, @Lazy ExerciseService exerciseService, UserRetrievalService userRetrievalService) {
+            AuthorizationCheckService authorizationCheckService, @Lazy ExerciseService exerciseService, UserRepository userRepository) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseService = exerciseService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
     }
 
     // Break the cycle
@@ -290,12 +290,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     }
 
     private boolean isUserInstructorOrHigherForExercise(Principal principal, Exercise exercise) {
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities(principal.getName());
+        User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         return authorizationCheckService.isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
     private boolean isUserTAOrHigherForExercise(Principal principal, Exercise exercise) {
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities(principal.getName());
+        User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         return authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
     }
 }

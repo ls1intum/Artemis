@@ -49,7 +49,6 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
@@ -79,7 +78,7 @@ public class CourseResource {
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final CourseService courseService;
 
@@ -115,14 +114,12 @@ public class CourseResource {
 
     private final AuditEventRepository auditEventRepository;
 
-    private final UserRepository userRepository;
-
-    public CourseResource(UserRetrievalService userRetrievalService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
+    public CourseResource(UserRepository userRepository, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
             ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
-            AssessmentDashboardService assessmentDashboardService, UserRepository userRepository) {
+            AssessmentDashboardService assessmentDashboardService) {
         this.courseService = courseService;
         this.participationService = participationService;
         this.courseRepository = courseRepository;
@@ -141,7 +138,6 @@ public class CourseResource {
         this.auditEventRepository = auditEventRepository;
         this.env = env;
         this.assessmentDashboardService = assessmentDashboardService;
-        this.userRetrievalService = userRetrievalService;
         this.userRepository = userRepository;
     }
 
@@ -238,7 +234,7 @@ public class CourseResource {
             throw new BadRequestAlertException("The course short name cannot be changed", ENTITY_NAME, "shortNameCannotChange", true);
         }
 
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         // only allow admins or instructors of the existing course to change it
         // this is important, otherwise someone could put himself into the instructor group of the updated course
         if (!authCheckService.isAtLeastInstructorInCourse(existingCourse, user)) {
@@ -368,7 +364,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) {
         Course course = courseService.findOne(courseId);
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to register {} for Course {}", user.getName(), course.getTitle());
         if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationNotAllowed",
@@ -403,7 +399,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("REST request to get all Courses the user has access to");
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         List<Course> courses = courseService.findAll();
         Stream<Course> userCourses = courses.stream().filter(course -> user.getGroups().contains(course.getTeachingAssistantGroupName())
                 || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin(user));
@@ -427,9 +423,9 @@ public class CourseResource {
         long start = System.currentTimeMillis();
         List<Course> courses = getAllCourses(onlyActive);
         for (Course course : courses) {
-            course.setNumberOfInstructors(userRetrievalService.countUserInGroup(course.getInstructorGroupName()));
-            course.setNumberOfTeachingAssistants(userRetrievalService.countUserInGroup(course.getTeachingAssistantGroupName()));
-            course.setNumberOfStudents(userRetrievalService.countUserInGroup(course.getStudentGroupName()));
+            course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
+            course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
+            course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
         }
         long end = System.currentTimeMillis();
         log.debug("getAllCoursesWithUserStats took " + (end - start) + "ms for " + courses.size() + " courses");
@@ -458,7 +454,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public Course getCourseForDashboard(@PathVariable long courseId) {
         long start = System.currentTimeMillis();
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         Course course = courseService.findOneWithExercisesAndLecturesForUser(courseId, user);
         fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, start);
@@ -519,7 +515,7 @@ public class CourseResource {
     public List<Course> getAllCoursesForDashboard() {
         long start = System.currentTimeMillis();
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
@@ -536,7 +532,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCoursesForNotifications() {
         log.debug("REST request to get all Courses the user has access to");
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         return courseService.findAllActiveForUser(user);
     }
@@ -552,7 +548,7 @@ public class CourseResource {
     public ResponseEntity<Course> getCourseForAssessmentDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
         Course course = courseService.findOneWithExercises(courseId);
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
@@ -580,7 +576,7 @@ public class CourseResource {
         log.debug("REST request /courses/{courseId}/stats-for-tutor-dashboard");
 
         Course course = courseService.findOne(courseId);
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
@@ -625,10 +621,10 @@ public class CourseResource {
     public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseService.findOne(courseId);
-        course.setNumberOfInstructors(userRetrievalService.countUserInGroup(course.getInstructorGroupName()));
-        course.setNumberOfTeachingAssistants(userRetrievalService.countUserInGroup(course.getTeachingAssistantGroupName()));
-        course.setNumberOfStudents(userRetrievalService.countUserInGroup(course.getStudentGroupName()));
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
+        course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
+        course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
@@ -647,7 +643,7 @@ public class CourseResource {
     public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseService.findOneWithExercises(courseId);
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
@@ -668,7 +664,7 @@ public class CourseResource {
         log.debug("REST request to get Course with exercises and relevant participations : {}", courseId);
         long start = System.currentTimeMillis();
         Course course = courseService.findOneWithExercises(courseId);
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -717,7 +713,7 @@ public class CourseResource {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
         long start = System.currentTimeMillis();
         Course course = courseService.findOneWithExercises(courseId);
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -749,7 +745,7 @@ public class CourseResource {
         log.debug("REST request /courses/{courseId}/stats-for-instructor-dashboard");
         final long start = System.currentTimeMillis();
         final Course course = courseService.findOne(courseId);
-        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -808,7 +804,7 @@ public class CourseResource {
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
         Course course = courseService.findOneWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(courseId);
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (course == null) {
             return notFound();
         }
@@ -835,7 +831,7 @@ public class CourseResource {
         // Get the course with all exercises
         final Course course = courseService.findOneWithExercisesAndLectures(courseId);
 
-        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -872,7 +868,7 @@ public class CourseResource {
 
         final Course course = courseService.findOne(courseId);
 
-        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -900,7 +896,7 @@ public class CourseResource {
 
         final Course course = courseService.findOne(courseId);
 
-        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -925,7 +921,7 @@ public class CourseResource {
     public ResponseEntity<Set<String>> getCategoriesInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get categories of Course : {}", courseId);
 
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOne(courseId);
         if (authCheckService.isAdmin(user) || authCheckService.isInstructorInCourse(course, user)) {
             Set<String> categories = exerciseService.findAllExerciseCategoriesForCourse(course);
@@ -987,11 +983,11 @@ public class CourseResource {
      */
     @NotNull
     public ResponseEntity<List<User>> getAllUsersInGroup(Course course, String groupName) {
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-        return ResponseEntity.ok().body(userRetrievalService.findAllUsersInGroupWithAuthorities(groupName));
+        return ResponseEntity.ok().body(userRepository.findAllInGroupWithAuthorities(groupName));
     }
 
     /**
@@ -1006,7 +1002,7 @@ public class CourseResource {
     public ResponseEntity<Void> addStudentToCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to add {} as student to course : {}", studentLogin, courseId);
         var course = courseService.findOne(courseId);
-        return addUserToCourseGroup(studentLogin, userRetrievalService.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName());
+        return addUserToCourseGroup(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName());
     }
 
     /**
@@ -1021,7 +1017,7 @@ public class CourseResource {
     public ResponseEntity<Void> addTutorToCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to add {} as tutors to course : {}", tutorLogin, courseId);
         var course = courseService.findOne(courseId);
-        return addUserToCourseGroup(tutorLogin, userRetrievalService.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
+        return addUserToCourseGroup(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
     }
 
     /**
@@ -1036,7 +1032,7 @@ public class CourseResource {
     public ResponseEntity<Void> addInstructorToCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to add {} as instructors to course : {}", instructorLogin, courseId);
         var course = courseService.findOne(courseId);
-        return addUserToCourseGroup(instructorLogin, userRetrievalService.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName());
+        return addUserToCourseGroup(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName());
     }
 
     /**
@@ -1075,7 +1071,7 @@ public class CourseResource {
     public ResponseEntity<Void> removeStudentFromCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to remove {} as student from course : {}", studentLogin, courseId);
         var course = courseService.findOne(courseId);
-        return removeUserFromCourseGroup(studentLogin, userRetrievalService.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName());
+        return removeUserFromCourseGroup(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName());
     }
 
     /**
@@ -1090,7 +1086,7 @@ public class CourseResource {
     public ResponseEntity<Void> removeTutorFromCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to remove {} as tutor from course : {}", tutorLogin, courseId);
         var course = courseService.findOne(courseId);
-        return removeUserFromCourseGroup(tutorLogin, userRetrievalService.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
+        return removeUserFromCourseGroup(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
     }
 
     /**
@@ -1105,7 +1101,7 @@ public class CourseResource {
     public ResponseEntity<Void> removeInstructorFromCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to remove {} as instructor from course : {}", instructorLogin, courseId);
         var course = courseService.findOne(courseId);
-        return removeUserFromCourseGroup(instructorLogin, userRetrievalService.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName());
+        return removeUserFromCourseGroup(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName());
     }
 
     /**

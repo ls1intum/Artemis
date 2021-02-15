@@ -12,10 +12,10 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -23,10 +23,10 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
-            SubmissionRepository submissionRepository, ExamDateService examDateService, UserRetrievalService userRetrievalService, GradingCriterionService gradingCriterionService,
+            SubmissionRepository submissionRepository, ExamDateService examDateService, UserRepository userRepository, GradingCriterionService gradingCriterionService,
             LtiService ltiService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examDateService, gradingCriterionService, userRetrievalService, ltiService);
+                submissionRepository, examDateService, gradingCriterionService, userRepository, ltiService);
     }
 
     /**
@@ -39,7 +39,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
     public Result saveManualAssessment(Result result) {
         result.setHasFeedback(!result.getFeedbacks().isEmpty());
         var participation = result.getParticipation();
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         result.setHasComplaint(false);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);

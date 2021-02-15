@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
@@ -53,7 +52,7 @@ public class AccountResource {
 
     private final Logger log = LoggerFactory.getLogger(AccountResource.class);
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final UserService userService;
 
@@ -61,13 +60,9 @@ public class AccountResource {
 
     private final MailService mailService;
 
-    private final UserRepository userRepository;
-
-    public AccountResource(UserRepository userRepository, UserRetrievalService userRetrievalService, UserService userService, MailService mailService,
-            PasswordService passwordService) {
+    public AccountResource(UserRepository userRepository, UserService userService, MailService mailService, PasswordService passwordService) {
         this.userRepository = userRepository;
         this.userService = userService;
-        this.userRetrievalService = userRetrievalService;
         this.mailService = mailService;
         this.passwordService = passwordService;
     }
@@ -148,7 +143,7 @@ public class AccountResource {
     @GetMapping("/account")
     public UserDTO getAccount() {
         long start = System.currentTimeMillis();
-        User user = userRetrievalService.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
+        User user = userRepository.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
         UserDTO userDTO = new UserDTO(user);
         log.info("GET /account " + user.getLogin() + " took " + (System.currentTimeMillis() - start) + "ms");
         return userDTO;

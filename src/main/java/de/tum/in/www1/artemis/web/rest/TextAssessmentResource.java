@@ -23,10 +23,10 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.FeedbackConflictRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -69,12 +69,12 @@ public class TextAssessmentResource extends AssessmentResource {
     private final FeedbackConflictRepository feedbackConflictRepository;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockService textBlockService,
-            TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository, UserRetrievalService userRetrievalService,
-            TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository,
-            GradingCriterionService gradingCriterionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
+            TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository, TextSubmissionService textSubmissionService,
+            WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService,
+            Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
             Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository,
             ExampleSubmissionService exampleSubmissionService) {
-        super(authCheckService, userRetrievalService, exerciseService, textSubmissionService, textAssessmentService, resultRepository, examService, messagingService,
+        super(authCheckService, userRepository, exerciseService, textSubmissionService, textAssessmentService, resultRepository, examService, messagingService,
                 exampleSubmissionService);
 
         this.textAssessmentService = textAssessmentService;
@@ -149,7 +149,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteTextExampleAssessment(@PathVariable long exampleSubmissionId) {
         log.debug("REST request to delete text example assessment : {}", exampleSubmissionId);
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(exampleSubmissionId);
         Submission submission = exampleSubmission.getSubmission();
         Exercise exercise = exampleSubmission.getExercise();
@@ -218,7 +218,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody TextAssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
@@ -275,7 +275,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final TextExercise exercise = (TextExercise) participation.getExercise();
         Result result = textSubmission.getResultForCorrectionRound(correctionRound);
 
-        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAuthorization(exercise, user);
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 
@@ -321,7 +321,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/example-result")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getExampleResultForTutor(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         final var textExercise = textExerciseService.findOne(exerciseId);
 
@@ -380,7 +380,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final TextExercise textExercise = (TextExercise) textSubmission.get().getParticipation().getExercise();
         final Result result = textSubmission.get().getLatestResult();
 
-        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
         checkTextExerciseForRequest(textExercise, user);
 
         if (!textExercise.isAutomaticAssessmentEnabled() || automaticTextAssessmentConflictService.isEmpty()) {
@@ -419,7 +419,7 @@ public class TextAssessmentResource extends AssessmentResource {
                     "AutomaticTextAssessmentConflictServiceNotFound");
         }
 
-        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
         final var textExercise = textExerciseService.findOne(exerciseId);
 
         Optional<FeedbackConflict> optionalFeedbackConflict = this.feedbackConflictRepository.findByFeedbackConflictId(feedbackConflictId);

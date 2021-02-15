@@ -73,7 +73,7 @@ public class UserService {
     @Value("${info.guided-tour.course-group-instructors:#{null}}")
     private Optional<String> tutorialGroupInstructors;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final PasswordService passwordService;
 
@@ -85,18 +85,14 @@ public class UserService {
 
     private final CacheManager cacheManager;
 
-    private final UserRepository userRepository;
-
     private final CourseRepository courseRepository;
 
     private final AuthorityRepository authorityRepository;
 
     private final GuidedTourSettingsRepository guidedTourSettingsRepository;
 
-    public UserService(UserRetrievalService userRetrievalService, UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager,
-            Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, CourseRepository courseRepository,
-            PasswordService passwordService) {
-        this.userRetrievalService = userRetrievalService;
+    public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService,
+            GuidedTourSettingsRepository guidedTourSettingsRepository, CourseRepository courseRepository, PasswordService passwordService) {
         this.userRepository = userRepository;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
@@ -651,7 +647,7 @@ public class UserService {
      * @return the updated user object with the changed guided tour settings
      */
     public User updateGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
-        User loggedInUser = userRetrievalService.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
+        User loggedInUser = userRepository.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
         loggedInUser.getGuidedTourSettings().clear();
         for (GuidedTourSetting setting : guidedTourSettings) {
             loggedInUser.addGuidedTourSetting(setting);
@@ -668,7 +664,7 @@ public class UserService {
      * @return the updated user object without the deleted guided tour setting
      */
     public User deleteGuidedTourSetting(String guidedTourSettingsKey) {
-        User loggedInUser = userRetrievalService.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
+        User loggedInUser = userRepository.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
         Set<GuidedTourSetting> guidedTourSettings = loggedInUser.getGuidedTourSettings();
         for (GuidedTourSetting setting : guidedTourSettings) {
             if (setting.getGuidedTourKey().equals(guidedTourSettingsKey)) {

@@ -18,8 +18,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -28,7 +28,7 @@ public class ResultService {
 
     private final Logger log = LoggerFactory.getLogger(ResultService.class);
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final ResultRepository resultRepository;
 
@@ -48,10 +48,10 @@ public class ResultService {
 
     private final ComplaintRepository complaintRepository;
 
-    public ResultService(UserRetrievalService userRetrievalService, ResultRepository resultRepository, LtiService ltiService, ObjectMapper objectMapper,
-            FeedbackRepository feedbackRepository, WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository,
-            SubmissionRepository submissionRepository, ComplaintRepository complaintRepository, RatingRepository ratingRepository) {
-        this.userRetrievalService = userRetrievalService;
+    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiService ltiService, ObjectMapper objectMapper, FeedbackRepository feedbackRepository,
+            WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
+            ComplaintRepository complaintRepository, RatingRepository ratingRepository) {
+        this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
         this.objectMapper = objectMapper;
@@ -129,7 +129,7 @@ public class ResultService {
      * @param result Result for which current user is set as an assessor
      */
     public void setAssessor(Result result) {
-        User currentUser = userRetrievalService.getUser();
+        User currentUser = userRepository.getUser();
         result.setAssessor(currentUser);
     }
 
@@ -170,7 +170,7 @@ public class ResultService {
             result.setHasFeedback(isProgrammingExerciseWithFeedback);
         }
 
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         result.setAssessmentType(AssessmentType.MANUAL);
         result.setAssessor(user);

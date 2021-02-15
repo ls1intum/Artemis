@@ -28,13 +28,13 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ExerciseHintService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 @Service
 public class ProgrammingExerciseImportService {
@@ -64,7 +64,7 @@ public class ProgrammingExerciseImportService {
 
     private final FileService fileService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
@@ -72,7 +72,7 @@ public class ProgrammingExerciseImportService {
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService,
-            UserRetrievalService userRetrievalService, StaticCodeAnalysisService staticCodeAnalysisService) {
+            UserRepository userRepository, StaticCodeAnalysisService staticCodeAnalysisService) {
         this.exerciseHintService = exerciseHintService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -83,7 +83,7 @@ public class ProgrammingExerciseImportService {
         this.programmingExerciseService = programmingExerciseService;
         this.gitService = gitService;
         this.fileService = fileService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
     }
 
@@ -341,7 +341,7 @@ public class ProgrammingExerciseImportService {
         // Used in .project
         replacements.put("<name>" + templateExercise.getTitle(), "<name>" + newExercise.getTitle());
 
-        final var user = userRetrievalService.getUser();
+        final var user = userRepository.getUser();
 
         adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TEMPLATE), user);
         adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TESTS), user);

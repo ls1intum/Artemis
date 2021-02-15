@@ -22,9 +22,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.EmptyFileException;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -50,10 +50,9 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     private final ExamSubmissionService examSubmissionService;
 
     public FileUploadSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService,
-            FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService,
-            ExerciseService exerciseService, ParticipationService participationService, GradingCriterionService gradingCriterionService,
-            ExamSubmissionService examSubmissionService) {
-        super(submissionRepository, resultService, participationService, authCheckService, userRetrievalService, exerciseService, fileUploadSubmissionService);
+            FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseService exerciseService,
+            ParticipationService participationService, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
+        super(submissionRepository, resultService, participationService, authCheckService, userRepository, exerciseService, fileUploadSubmissionService);
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.gradingCriterionService = gradingCriterionService;
@@ -79,7 +78,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         long start = System.currentTimeMillis();
 
         final var exercise = fileUploadExerciseService.findOne(exerciseId);
-        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastStudentForExercise(exercise, user)) {
             return forbidden();
         }
@@ -156,7 +155,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
         var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(fileUploadExercise.getId());
         fileUploadExercise.setGradingCriteria(gradingCriteria);
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
             return forbidden();
         }
@@ -204,7 +203,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         final Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
-        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
             return forbidden();
         }

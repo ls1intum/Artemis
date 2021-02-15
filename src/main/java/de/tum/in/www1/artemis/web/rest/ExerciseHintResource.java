@@ -15,9 +15,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import io.github.jhipster.web.util.HeaderUtil;
 
 /**
@@ -40,16 +40,16 @@ public class ExerciseHintResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final ExerciseService exerciseService;
 
     public ExerciseHintResource(ExerciseHintService exerciseHintService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseRetrievalService programmingExerciseRetrievalService, UserRetrievalService userRetrievalService, ExerciseService exerciseService) {
+            ProgrammingExerciseRetrievalService programmingExerciseRetrievalService, UserRepository userRepository, ExerciseService exerciseService) {
         this.exerciseHintService = exerciseHintService;
         this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
         this.authCheckService = authCheckService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.exerciseService = exerciseService;
     }
 
@@ -148,7 +148,7 @@ public class ExerciseHintResource {
     public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isAtLeastTeachingAssistantInCourse(course, user))

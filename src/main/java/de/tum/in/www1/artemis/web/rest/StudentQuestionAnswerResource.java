@@ -21,8 +21,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -49,14 +49,14 @@ public class StudentQuestionAnswerResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     GroupNotificationService groupNotificationService;
 
     SingleUserNotificationService singleUserNotificationService;
 
     public StudentQuestionAnswerResource(StudentQuestionAnswerRepository studentQuestionAnswerRepository, GroupNotificationService groupNotificationService,
-            SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authorizationCheckService, UserRetrievalService userRetrievalService,
+            SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CourseRepository courseRepository, StudentQuestionRepository studentQuestionRepository) {
         this.studentQuestionAnswerRepository = studentQuestionAnswerRepository;
         this.courseRepository = courseRepository;
@@ -64,7 +64,7 @@ public class StudentQuestionAnswerResource {
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.authorizationCheckService = authorizationCheckService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -81,7 +81,7 @@ public class StudentQuestionAnswerResource {
     public ResponseEntity<StudentQuestionAnswer> createStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer)
             throws URISyntaxException {
         log.debug("REST request to save StudentQuestionAnswer : {}", studentQuestionAnswer);
-        User user = this.userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (studentQuestionAnswer.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestionAnswer cannot already have an ID", ENTITY_NAME, "idexists");
         }
@@ -122,7 +122,7 @@ public class StudentQuestionAnswerResource {
     @PutMapping("courses/{courseId}/student-question-answers")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentQuestionAnswer> updateStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer) {
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to update StudentQuestionAnswer : {}", studentQuestionAnswer);
         if (studentQuestionAnswer.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
@@ -155,7 +155,7 @@ public class StudentQuestionAnswerResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentQuestionAnswer> getStudentQuestionAnswer(@PathVariable Long courseId, @PathVariable Long id) {
         log.debug("REST request to get StudentQuestionAnswer : {}", id);
-        User user = this.userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
         var course = findCourseByIdElseThrow(courseRepository, courseId);
         if (!this.authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
@@ -180,7 +180,7 @@ public class StudentQuestionAnswerResource {
     @DeleteMapping("courses/{courseId}/student-question-answers/{id}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteStudentQuestionAnswer(@PathVariable Long courseId, @PathVariable Long id) {
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<StudentQuestionAnswer> optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findById(id);
         if (optionalStudentQuestionAnswer.isEmpty()) {
             return ResponseEntity.notFound().build();

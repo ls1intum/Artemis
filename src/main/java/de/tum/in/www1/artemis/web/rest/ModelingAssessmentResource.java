@@ -16,10 +16,10 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -45,11 +45,11 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final ModelingSubmissionService modelingSubmissionService;
 
-    public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService, CompassService compassService,
+    public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, CompassService compassService,
             ModelingExerciseService modelingExerciseService, AssessmentService assessmentService, ModelingSubmissionService modelingSubmissionService,
             ExampleSubmissionService exampleSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository,
             ExamService examService) {
-        super(authCheckService, userRetrievalService, exerciseService, modelingSubmissionService, assessmentService, resultRepository, examService, messagingService,
+        super(authCheckService, userRepository, exerciseService, modelingSubmissionService, assessmentService, resultRepository, examService, messagingService,
                 exampleSubmissionService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
@@ -143,7 +143,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();

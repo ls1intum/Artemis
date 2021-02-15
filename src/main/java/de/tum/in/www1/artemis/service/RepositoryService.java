@@ -22,8 +22,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 
 /**
@@ -36,14 +36,14 @@ public class RepositoryService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService, AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService) {
+    public RepositoryService(GitService gitService, AuthorizationCheckService authCheckService, UserRepository userRepository) {
         this.gitService = gitService;
         this.authCheckService = authCheckService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -296,7 +296,7 @@ public class RepositoryService {
      */
     public Repository checkoutRepositoryByName(Exercise exercise, VcsRepositoryUrl repoUrl, boolean pullOnCheckout)
             throws IllegalAccessException, InterruptedException, GitAPIException {
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         if (!hasPermissions) {
@@ -318,7 +318,7 @@ public class RepositoryService {
      */
     public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, VcsRepositoryUrl repoUrl)
             throws IllegalAccessException, InterruptedException, GitAPIException {
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities(principal.getName());
+        User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         boolean hasPermissions = authCheckService.isAtLeastInstructorInCourse(course, user);
         if (!hasPermissions) {

@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 
 @Service
@@ -28,19 +28,19 @@ public class TutorLeaderboardService {
 
     private final TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     public TutorLeaderboardService(TutorLeaderboardAssessmentViewRepository tutorLeaderboardAssessmentViewRepository,
             TutorLeaderboardComplaintsViewRepository tutorLeaderboardComplaintsViewRepository,
             TutorLeaderboardMoreFeedbackRequestsViewRepository tutorLeaderboardMoreFeedbackRequestsViewRepository,
             TutorLeaderboardComplaintResponsesViewRepository tutorLeaderboardComplaintResponsesViewRepository,
-            TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository, UserRetrievalService userRetrievalService) {
+            TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository, UserRepository userRepository) {
         this.tutorLeaderboardAssessmentViewRepository = tutorLeaderboardAssessmentViewRepository;
         this.tutorLeaderboardComplaintsViewRepository = tutorLeaderboardComplaintsViewRepository;
         this.tutorLeaderboardMoreFeedbackRequestsViewRepository = tutorLeaderboardMoreFeedbackRequestsViewRepository;
         this.tutorLeaderboardComplaintResponsesViewRepository = tutorLeaderboardComplaintResponsesViewRepository;
         this.tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository = tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -51,7 +51,7 @@ public class TutorLeaderboardService {
      */
     public List<TutorLeaderboardDTO> getCourseLeaderboard(Course course) {
 
-        List<User> tutors = userRetrievalService.getTutors(course);
+        List<User> tutors = userRepository.getTutors(course);
 
         List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = tutorLeaderboardAssessmentViewRepository.findAllByCourseId(course.getId());
         List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByCourseId(course.getId());
@@ -72,7 +72,7 @@ public class TutorLeaderboardService {
      */
     public List<TutorLeaderboardDTO> getExerciseLeaderboard(Exercise exercise) {
 
-        List<User> tutors = userRetrievalService.getTutors(exercise.getCourseViaExerciseGroupOrCourseMember());
+        List<User> tutors = userRepository.getTutors(exercise.getCourseViaExerciseGroupOrCourseMember());
 
         List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = tutorLeaderboardAssessmentViewRepository.findAllByLeaderboardId_ExerciseId(exercise.getId());
         List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByLeaderboardId_ExerciseId(exercise.getId());

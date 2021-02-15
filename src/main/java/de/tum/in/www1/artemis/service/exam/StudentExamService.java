@@ -27,13 +27,13 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionVersionService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -49,7 +49,7 @@ public class StudentExamService {
 
     private final ParticipationService participationService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
 
@@ -75,14 +75,14 @@ public class StudentExamService {
 
     private final ExamRepository examRepository;
 
-    public StudentExamService(StudentExamRepository studentExamRepository, UserRetrievalService userRetrievalService, ParticipationService participationService,
+    public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
             ProgrammingExerciseRetrievalService programmingExerciseRetrievalService, ExamRepository examRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
@@ -449,7 +449,7 @@ public class StudentExamService {
         testRun.setExercises(testRunConfiguration.getExercises());
         testRun.setExam(testRunConfiguration.getExam());
         testRun.setWorkingTime(testRunConfiguration.getWorkingTime());
-        testRun.setUser(userRetrievalService.getUser());
+        testRun.setUser(userRepository.getUser());
         testRun.setTestRun(true);
         testRun.setSubmitted(false);
         testRun = studentExamRepository.save(testRun);

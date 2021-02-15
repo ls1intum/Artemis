@@ -31,9 +31,9 @@ import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 /**
  * Service for upgrading of Java template files
@@ -55,7 +55,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
     private final GitService gitService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final ResourceLoaderService resourceLoaderService;
 
@@ -64,10 +64,10 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
     private final FileService fileService;
 
     public JavaTemplateUpgradeService(ProgrammingExerciseService programmingExerciseService, GitService gitService, ResourceLoaderService resourceLoaderService,
-            UserRetrievalService userRetrievalService, RepositoryService repositoryService, FileService fileService) {
+            UserRepository userRepository, RepositoryService repositoryService, FileService fileService) {
         this.programmingExerciseService = programmingExerciseService;
         this.gitService = gitService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.resourceLoaderService = resourceLoaderService;
         this.repositoryService = repositoryService;
         this.fileService = fileService;
@@ -124,7 +124,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
                     deleteFileIfPresent(repository, SCA_CONFIG_FOLDER);
                 }
             }
-            programmingExerciseService.commitAndPushRepository(repository, "Template upgraded by Artemis", userRetrievalService.getUser());
+            programmingExerciseService.commitAndPushRepository(repository, "Template upgraded by Artemis", userRepository.getUser());
         }
         catch (IOException | GitAPIException | InterruptedException | XmlPullParserException exception) {
             log.error("Updating of template files of repository " + repositoryType.name() + " for exercise " + exercise.getId() + " failed with error:" + exception.getMessage());

@@ -18,8 +18,8 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 /**
  * Service implementation to check exam access.
@@ -29,7 +29,7 @@ public class ExamAccessService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final ExamRepository examRepository;
 
@@ -40,12 +40,12 @@ public class ExamAccessService {
     private final CourseRepository courseRepository;
 
     public ExamAccessService(ExamRepository examRepository, ExerciseGroupRepository exerciseGroupRepository, StudentExamRepository studentExamRepository,
-            AuthorizationCheckService authorizationCheckService, UserRetrievalService userRetrievalService, CourseRepository courseRepository) {
+            AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository) {
         this.examRepository = examRepository;
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.studentExamRepository = studentExamRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.courseRepository = courseRepository;
     }
 
@@ -57,7 +57,7 @@ public class ExamAccessService {
      * @return a ResponseEntity with the exam
      */
     public ResponseEntity<StudentExam> checkAndGetCourseAndExamAccessForConduction(Long courseId, Long examId) {
-        User currentUser = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
 
         // Check that the current user is at least student in the course.
         Course course = findCourseByIdElseThrow(courseRepository, courseId);

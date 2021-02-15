@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 @Service
 @Profile("gitlab")
@@ -34,20 +33,17 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     private final PasswordService passwordService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
-
-    private final UserRepository userRepository;
 
     private final GitLabApi gitlab;
 
     public GitLabUserManagementService(ProgrammingExerciseRepository programmingExerciseRepository, GitLabApi gitlab, UserRepository userRepository,
-            UserRetrievalService userRetrievalService, PasswordService passwordService) {
+            PasswordService passwordService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitlab = gitlab;
         this.userRepository = userRepository;
-        this.userRetrievalService = userRetrievalService;
         this.passwordService = passwordService;
     }
 
@@ -160,14 +156,14 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         final var processedUsers = new HashSet<>(oldInstructors);
 
         // Update the old teaching assistant of the group
-        final var oldTeachingAssistants = userRetrievalService.findAllUserInGroupAndNotIn(oldTeachingAssistantGroup, oldInstructors);
+        final var oldTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(oldTeachingAssistantGroup, oldInstructors);
         // doUpgrade=true, because these users should be upgraded from TA to instructor, if possible.
         updateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), MAINTAINER, true);
         processedUsers.addAll(oldTeachingAssistants);
 
         // Now, we only have to add all users that have not been updated yet AND that are part of one of the new groups
         // Find all NEW instructors, that did not belong to the old TAs or instructors
-        final var remainingInstructors = userRetrievalService.findAllUserInGroupAndNotIn(updatedCourse.getInstructorGroupName(), processedUsers);
+        final var remainingInstructors = userRepository.findAllUserInGroupAndNotIn(updatedCourse.getInstructorGroupName(), processedUsers);
         remainingInstructors.forEach(user -> {
             final var userId = getUserId(user.getLogin());
             addUserToGroups(userId, exercises, MAINTAINER);
@@ -175,7 +171,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         processedUsers.addAll(remainingInstructors);
 
         // Find all NEW TAs that did not belong to the old TAs or instructors
-        final var remainingTeachingAssistants = userRetrievalService.findAllUserInGroupAndNotIn(updatedCourse.getTeachingAssistantGroupName(), processedUsers);
+        final var remainingTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(updatedCourse.getTeachingAssistantGroupName(), processedUsers);
         remainingTeachingAssistants.forEach(user -> {
             final var userId = getUserId(user.getLogin());
             addUserToGroups(userId, exercises, GUEST);

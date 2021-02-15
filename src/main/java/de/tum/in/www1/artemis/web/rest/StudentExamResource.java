@@ -27,9 +27,9 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.*;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -48,7 +48,7 @@ public class StudentExamResource {
 
     private final StudentExamAccessService studentExamAccessService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final StudentExamRepository studentExamRepository;
 
@@ -65,13 +65,13 @@ public class StudentExamResource {
     private final AuthorizationCheckService authorizationCheckService;
 
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
-            UserRetrievalService userRetrievalService, StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
+            UserRepository userRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
             ParticipationService participationService, QuizExerciseService quizExerciseService, ExamRepository examRepository,
             AuthorizationCheckService authorizationCheckService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.studentExamRepository = studentExamRepository;
         this.examDateService = examDateService;
         this.examSessionService = examSessionService;
@@ -181,7 +181,7 @@ public class StudentExamResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam) {
         log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
-        User currentUser = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         boolean isTestRun = studentExam.isTestRun();
         Optional<ResponseEntity<StudentExam>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId(), currentUser, isTestRun);
         if (accessFailure.isPresent()) {
@@ -219,7 +219,7 @@ public class StudentExamResource {
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, HttpServletRequest request) {
         // NOTE: it is important that this method has the same logic (except really small differences) as getTestRunForConduction
         long start = System.currentTimeMillis();
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
 
         // 1st: load the studentExam with all associated exercises
@@ -258,7 +258,7 @@ public class StudentExamResource {
     public ResponseEntity<StudentExam> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId, HttpServletRequest request) {
         // NOTE: it is important that this method has the same logic (except really small differences) as getStudentExamForConduction
         long start = System.currentTimeMillis();
-        User currentUser = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the test run for exam {} with id {}", examId, testRunId);
 
         // 1st: load the testRun with all associated exercises
@@ -297,7 +297,7 @@ public class StudentExamResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
 
         // 1st: load the studentExam with all associated exercises
@@ -410,7 +410,7 @@ public class StudentExamResource {
             studentExamService.deleteTestRun(testRun.getId());
         }
 
-        final var instructor = userRetrievalService.getUser();
+        final var instructor = userRepository.getUser();
         var assessedUnsubmittedStudentExams = studentExamService.assessUnsubmittedStudentExams(exam, instructor);
         log.info("Graded {} unsubmitted student exams of exam {}", assessedUnsubmittedStudentExams.size(), examId);
 

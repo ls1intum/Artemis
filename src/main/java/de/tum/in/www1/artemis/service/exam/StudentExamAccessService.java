@@ -16,8 +16,8 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 /**
  * Service implementation to check student exam access.
@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 @Service
 public class StudentExamAccessService {
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -35,10 +35,10 @@ public class StudentExamAccessService {
 
     private final StudentExamRepository studentExamRepository;
 
-    public StudentExamAccessService(CourseRepository courseRepository, UserRetrievalService userRetrievalService, AuthorizationCheckService authorizationCheckService,
+    public StudentExamAccessService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
             ExamRepository examRepository, StudentExamRepository studentExamRepository) {
         this.courseRepository = courseRepository;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
@@ -56,7 +56,7 @@ public class StudentExamAccessService {
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <T> Optional<ResponseEntity<T>> checkStudentExamAccess(Long courseId, Long examId, Long studentExamId, boolean isTestRun) {
-        User currentUser = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         return checkStudentExamAccess(courseId, examId, studentExamId, currentUser, isTestRun);
     }
 

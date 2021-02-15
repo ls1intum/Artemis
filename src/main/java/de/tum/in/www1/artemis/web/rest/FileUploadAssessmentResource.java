@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 /**
  * REST controller for managing FileUploadAssessment.
@@ -31,10 +31,10 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
     private final FileUploadSubmissionService fileUploadSubmissionService;
 
-    public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserRetrievalService userRetrievalService,
+    public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserRepository userRepository,
             FileUploadExerciseService fileUploadExerciseService, FileUploadSubmissionService fileUploadSubmissionService, WebsocketMessagingService messagingService,
             ExerciseService exerciseService, ResultRepository resultRepository, ExamService examService, ExampleSubmissionService exampleSubmissionService) {
-        super(authCheckService, userRetrievalService, exerciseService, fileUploadSubmissionService, assessmentService, resultRepository, examService, messagingService,
+        super(authCheckService, userRepository, exerciseService, fileUploadSubmissionService, assessmentService, resultRepository, examService, messagingService,
                 exampleSubmissionService);
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
@@ -83,7 +83,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateFileUploadAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();

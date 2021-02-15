@@ -31,12 +31,12 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -50,7 +50,7 @@ public class ExamService {
 
     private final Logger log = LoggerFactory.getLogger(ExamService.class);
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final ExerciseService exerciseService;
 
@@ -72,11 +72,11 @@ public class ExamService {
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ParticipationService participationService,
             ProgrammingExerciseRetrievalService programmingExerciseRetrievalService, ExamQuizService examQuizService, ExerciseService exerciseService,
-            UserRetrievalService userRetrievalService, InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService,
+            UserRepository userRepository, InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService,
             AuditEventRepository auditEventRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.participationService = participationService;
         this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
         this.examQuizService = examQuizService;
@@ -221,7 +221,7 @@ public class ExamService {
      * @param examId the ID of the exam to be deleted
      */
     public void delete(@NotNull long examId) {
-        User user = userRetrievalService.getUser();
+        User user = userRepository.getUser();
         Exam exam = findOneWithExercisesGroupsAndStudentExamsByExamId(examId);
         log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());

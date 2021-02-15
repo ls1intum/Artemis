@@ -21,8 +21,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.service.util.VCSSimulationUtils;
 
 /**
@@ -39,7 +39,7 @@ public class ProgrammingSubmissionResultSimulationService {
 
     private final ParticipationRepository participationRepository;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
 
@@ -51,12 +51,12 @@ public class ProgrammingSubmissionResultSimulationService {
 
     private final ProgrammingExerciseSimulationService programmingExerciseSimulationService;
 
-    public ProgrammingSubmissionResultSimulationService(ParticipationRepository participationRepository, UserRetrievalService userRetrievalService,
+    public ProgrammingSubmissionResultSimulationService(ParticipationRepository participationRepository, UserRepository userRepository,
             ProgrammingExerciseRetrievalService programmingExerciseRetrievalService, ParticipationService participationService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ResultRepository resultRepository,
             ProgrammingExerciseSimulationService programmingExerciseSimulationService) {
         this.participationRepository = participationRepository;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
@@ -92,7 +92,7 @@ public class ProgrammingSubmissionResultSimulationService {
      * @return the newly created and stored submission
      */
     public ProgrammingSubmission createSubmission(Long exerciseId) {
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Participant participant = user;
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
         ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);

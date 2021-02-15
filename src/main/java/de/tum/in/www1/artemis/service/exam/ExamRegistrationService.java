@@ -19,9 +19,9 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -33,7 +33,7 @@ public class ExamRegistrationService {
 
     private final Logger log = LoggerFactory.getLogger(ExamRegistrationService.class);
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final UserService userService;
 
@@ -47,11 +47,11 @@ public class ExamRegistrationService {
 
     private final CourseRepository courseRepository;
 
-    public ExamRegistrationService(ExamRepository examRepository, UserService userService, ParticipationService participationService, UserRetrievalService userRetrievalService,
+    public ExamRegistrationService(ExamRepository examRepository, UserService userService, ParticipationService participationService, UserRepository userRepository,
             AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamService studentExamService) {
         this.examRepository = examRepository;
         this.userService = userService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.participationService = participationService;
         this.auditEventRepository = auditEventRepository;
         this.courseRepository = courseRepository;
@@ -80,7 +80,7 @@ public class ExamRegistrationService {
             var login = studentDto.getLogin();
             try {
                 // 1) we use the registration number and try to find the student in the Artemis user database
-                var optionalStudent = userRetrievalService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+                var optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
                 if (optionalStudent.isPresent()) {
                     var student = optionalStudent.get();
                     // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the
@@ -105,7 +105,7 @@ public class ExamRegistrationService {
                 }
 
                 // 3) if we cannot find the user in the (TUM) LDAP or the registration number was not set properly, try again using the login
-                optionalStudent = userRetrievalService.findUserWithGroupsAndAuthoritiesByLogin(login);
+                optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
                 if (optionalStudent.isPresent()) {
                     var student = optionalStudent.get();
                     // the newly created student needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
@@ -125,7 +125,7 @@ public class ExamRegistrationService {
         examRepository.save(exam);
 
         try {
-            User currentUser = userRetrievalService.getUserWithGroupsAndAuthorities();
+            User currentUser = userRepository.getUserWithGroupsAndAuthorities();
             Map<String, Object> userData = new HashMap<>();
             userData.put("exam", exam.getTitle());
             for (var i = 0; i < studentDTOs.size(); i++) {
@@ -150,7 +150,7 @@ public class ExamRegistrationService {
      * @return <code>true</code> if the user if registered for the exam, false if this is not the case or the exam does not exist
      */
     public boolean isCurrentUserRegisteredForExam(Long examId) {
-        return isUserRegisteredForExam(examId, userRetrievalService.getUser().getId());
+        return isUserRegisteredForExam(examId, userRepository.getUser().getId());
     }
 
     /**
@@ -180,7 +180,7 @@ public class ExamRegistrationService {
         }
         examRepository.save(exam);
 
-        User currentUser = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "student=" + student.getLogin());
         auditEventRepository.add(auditEvent);
         log.info("User " + currentUser.getLogin() + " has added user " + student.getLogin() + " to the exam " + exam.getTitle() + " with id " + exam.getId());
@@ -217,7 +217,7 @@ public class ExamRegistrationService {
             studentExamService.deleteStudentExam(studentExam.getId());
         }
 
-        User currentUser = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_USER_FROM_EXAM, "exam=" + exam.getTitle(), "user=" + student.getLogin());
         auditEventRepository.add(auditEvent);
         log.info("User " + currentUser.getLogin() + " has removed user " + student.getLogin() + " from the exam " + exam.getTitle() + " with id " + exam.getId()
@@ -232,7 +232,7 @@ public class ExamRegistrationService {
      */
     public void addAllStudentsOfCourseToExam(Long courseId, Long examId) {
         Course course = findCourseByIdElseThrow(courseRepository, courseId);
-        var students = userRetrievalService.getStudents(course);
+        var students = userRepository.getStudents(course);
         var examOpt = examRepository.findWithRegisteredUsersById(examId);
 
         if (examOpt.isPresent()) {

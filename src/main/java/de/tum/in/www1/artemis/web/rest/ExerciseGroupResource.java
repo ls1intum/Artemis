@@ -21,10 +21,10 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -48,18 +48,18 @@ public class ExerciseGroupResource {
 
     private final ExamAccessService examAccessService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final ExerciseService exerciseService;
 
     private final AuditEventRepository auditEventRepository;
 
-    public ExerciseGroupResource(ExerciseGroupService exerciseGroupService, ExamAccessService examAccessService, UserRetrievalService userRetrievalService,
-            ExerciseService exerciseService, AuditEventRepository auditEventRepository, ExamService examService) {
+    public ExerciseGroupResource(ExerciseGroupService exerciseGroupService, ExamAccessService examAccessService, UserRepository userRepository, ExerciseService exerciseService,
+            AuditEventRepository auditEventRepository, ExamService examService) {
         this.exerciseGroupService = exerciseGroupService;
         this.examService = examService;
         this.examAccessService = examAccessService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.exerciseService = exerciseService;
         this.auditEventRepository = auditEventRepository;
     }
@@ -190,7 +190,7 @@ public class ExerciseGroupResource {
 
         ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExercises(exerciseGroupId);
 
-        User user = userRetrievalService.getUser();
+        User user = userRepository.getUser();
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE_GROUP, "exerciseGroup=" + exerciseGroup.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete the exercise group {}", exerciseGroup.getTitle());

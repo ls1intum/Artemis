@@ -39,7 +39,6 @@ import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -73,7 +72,7 @@ public class ResultResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
@@ -85,12 +84,10 @@ public class ResultResource {
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
-    private final UserRepository userRepository;
-
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-            ResultRepository resultRepository, WebsocketMessagingService messagingService, UserRetrievalService userRetrievalService, ExamDateService examDateService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, UserRepository userRepository) {
+            ResultRepository resultRepository, WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
+            ProgrammingExerciseGradingService programmingExerciseGradingService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -100,10 +97,9 @@ public class ResultResource {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.messagingService = messagingService;
         this.ltiService = ltiService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.examDateService = examDateService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
-        this.userRepository = userRepository;
     }
 
     /**
@@ -420,7 +416,7 @@ public class ResultResource {
                     "External submissions are not supported for Quiz exercises.")).build();
         }
 
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {

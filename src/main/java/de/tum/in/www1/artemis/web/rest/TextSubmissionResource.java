@@ -17,11 +17,11 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.scheduled.AtheneScheduleService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -48,7 +48,7 @@ public class TextSubmissionResource {
 
     private final TextAssessmentService textAssessmentService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final GradingCriterionService gradingCriterionService;
 
@@ -59,7 +59,7 @@ public class TextSubmissionResource {
     private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
-            AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserRetrievalService userRetrievalService,
+            AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
             GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<AtheneScheduleService> atheneScheduleService,
             ExamSubmissionService examSubmissionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
         this.textSubmissionRepository = textSubmissionRepository;
@@ -67,7 +67,7 @@ public class TextSubmissionResource {
         this.textExerciseService = textExerciseService;
         this.authorizationCheckService = authorizationCheckService;
         this.textSubmissionService = textSubmissionService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.gradingCriterionService = gradingCriterionService;
         this.atheneScheduleService = atheneScheduleService;
         this.textAssessmentService = textAssessmentService;
@@ -122,7 +122,7 @@ public class TextSubmissionResource {
     @NotNull
     private ResponseEntity<TextSubmission> handleTextSubmission(Long exerciseId, Principal principal, TextSubmission textSubmission) {
         long start = System.currentTimeMillis();
-        final User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
         final TextExercise textExercise = textExerciseService.findOne(exerciseId);
 
         // Apply further checks if it is an exam submission
@@ -196,7 +196,7 @@ public class TextSubmissionResource {
     public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all TextSubmissions");
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = textExerciseService.findOne(exerciseId);
         if (assessedByTutor) {
             if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
@@ -296,7 +296,7 @@ public class TextSubmissionResource {
         studentParticipation.setExercise(exercise);
         textSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         // Remove sensitive information of submission depending on user
-        textSubmissionService.hideDetails(textSubmission, userRetrievalService.getUserWithGroupsAndAuthorities());
+        textSubmissionService.hideDetails(textSubmission, userRepository.getUserWithGroupsAndAuthorities());
 
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
 

@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -42,19 +42,19 @@ public class SubmissionResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final ExerciseService exerciseService;
 
     public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, ResultService resultService,
-            ParticipationService participationService, AuthorizationCheckService authCheckService, UserRetrievalService userRetrievalService, ExerciseService exerciseService) {
+            ParticipationService participationService, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseService exerciseService) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.resultService = resultService;
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -105,7 +105,7 @@ public class SubmissionResource {
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         var testRunParticipations = participationService.findTestRunParticipationForExerciseWithEagerSubmissionsResult(user.getId(), List.of(exercise));
         if (!testRunParticipations.isEmpty() && testRunParticipations.get(0).findLatestSubmission().isPresent()) {
@@ -123,7 +123,7 @@ public class SubmissionResource {
 
     private void checkAccessPermissionAtInstructor(Submission submission) {
         Course course = findCourseFromSubmission(submission);
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");

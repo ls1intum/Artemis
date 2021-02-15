@@ -32,12 +32,12 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPushNotificationDTO;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
 
 @Profile("gitlab")
@@ -52,7 +52,7 @@ public class GitLabService extends AbstractVersionControlService {
     @Value("${artemis.version-control.ci-token}")
     private String ciToken;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final RestTemplate shortTimeoutRestTemplate;
 
@@ -62,10 +62,10 @@ public class GitLabService extends AbstractVersionControlService {
 
     private final ScheduledExecutorService scheduler;
 
-    public GitLabService(UserRetrievalService userRetrievalService, UrlService urlService, @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate,
-            GitLabApi gitlab, GitLabUserManagementService gitLabUserManagementService, GitService gitService) {
+    public GitLabService(UserRepository userRepository, UrlService urlService, @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab,
+            GitLabUserManagementService gitLabUserManagementService, GitService gitService) {
         super(urlService, gitService);
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.gitlab = gitlab;
         this.gitLabUserManagementService = gitLabUserManagementService;
@@ -314,8 +314,8 @@ public class GitLabService extends AbstractVersionControlService {
                 throw new GitLabException("Unable to create new group for course " + exerciseName, e);
             }
         }
-        final var instructors = userRetrievalService.getInstructors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        final var tutors = userRetrievalService.getTutors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        final var instructors = userRepository.getInstructors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        final var tutors = userRepository.getTutors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         for (final var instructor : instructors) {
             try {
                 final var userId = gitLabUserManagementService.getUserId(instructor.getLogin());

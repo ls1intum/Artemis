@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -54,7 +53,7 @@ public class ExamResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final CourseService courseService;
 
@@ -76,13 +75,10 @@ public class ExamResource {
 
     private final AssessmentDashboardService assessmentDashboardService;
 
-    private final UserRepository userRepository;
-
-    public ExamResource(UserRetrievalService userRetrievalService, CourseService courseService, ExamService examService, ExamAccessService examAccessService,
+    public ExamResource(UserRepository userRepository, CourseService courseService, ExamService examService, ExamAccessService examAccessService,
             InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, AuthorizationCheckService authCheckService, ExamDateService examDateService,
-            TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
-            UserRepository userRepository) {
-        this.userRetrievalService = userRetrievalService;
+            TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService) {
+        this.userRepository = userRepository;
         this.courseService = courseService;
         this.examService = examService;
         this.examDateService = examDateService;
@@ -93,7 +89,6 @@ public class ExamResource {
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.assessmentDashboardService = assessmentDashboardService;
-        this.userRepository = userRepository;
     }
 
     /**
@@ -273,7 +268,7 @@ public class ExamResource {
             return conflict();
         }
 
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -315,7 +310,7 @@ public class ExamResource {
             return conflict();
         }
 
-        User user = userRetrievalService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
