@@ -20,10 +20,10 @@
                     </button>
                 </div>
 
-                <div [ngbTooltip]="'artemisApp.examManagement.testRun.assessTestRunDisabled' | translate" [disableTooltip]="testRunCanBeAssessed" class="center">
+                <div [ngbTooltip]="'artemisApp.examManagement.testRun.assessTestRunDisabled' | translate" [disableTooltip]="testRunCanBeAssessed">
                     <a
                         class="btn btn-primary btn-sm mr-1 mb-1"
-                        style="text-align: center; height: 40px"
+                        style="height: 40px; display: inline-flex; align-items: center"
                         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', 'assess']"
                         *ngIf="course?.isAtLeastInstructor"
                         [class.disabled]="isLoading || !testRunCanBeAssessed"
