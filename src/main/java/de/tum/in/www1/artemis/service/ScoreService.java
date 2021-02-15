@@ -199,31 +199,35 @@ public class ScoreService {
      */
     private void createNewParticipantScore(Result newResult, StudentParticipation studentParticipation, Exercise exercise) {
         if (exercise.isTeamMode()) {
-            TeamScore newTeamScore = new TeamScore();
-            newTeamScore.setExercise(exercise);
-            newTeamScore.setTeam(studentParticipation.getTeam().get());
-            newTeamScore.setLastScore(newResult.getScore());
-            newTeamScore.setLastResult(newResult);
-            if (newResult.isRated() != null && newResult.isRated()) {
-                newTeamScore.setLastRatedScore(newResult.getScore());
-                newTeamScore.setLastRatedResult(newResult);
-            }
-            TeamScore teamScore = teamScoreRepository.saveAndFlush(newTeamScore);
-            logger.info("Saved a new team score: " + teamScore.toString());
+            createNewTeamScore(newResult, studentParticipation, exercise);
         }
         else {
-            StudentScore newStudentScore = new StudentScore();
-            newStudentScore.setExercise(exercise);
-            newStudentScore.setUser(studentParticipation.getStudent().get());
-            newStudentScore.setLastScore(newResult.getScore());
-            newStudentScore.setLastResult(newResult);
-            if (newResult.isRated() != null && newResult.isRated()) {
-                newStudentScore.setLastRatedScore(newResult.getScore());
-                newStudentScore.setLastRatedResult(newResult);
-            }
-            StudentScore studentScore = studentScoreRepository.saveAndFlush(newStudentScore);
-            logger.info("Saved a new student score: " + studentScore.toString());
+            createNewStudentScore(newResult, studentParticipation, exercise);
         }
+    }
+
+    private void createNewStudentScore(Result newResult, StudentParticipation studentParticipation, Exercise exercise) {
+        StudentScore newStudentScore = new StudentScore();
+        newStudentScore.setExercise(exercise);
+        newStudentScore.setUser(studentParticipation.getStudent().get());
+        setLastResultAttributes(newStudentScore, newResult);
+        if (newResult.isRated() != null && newResult.isRated()) {
+            setLastRatedResultAttributes(newStudentScore, newResult);
+        }
+        StudentScore studentScore = studentScoreRepository.saveAndFlush(newStudentScore);
+        logger.info("Saved a new student score: " + studentScore.toString());
+    }
+
+    private void createNewTeamScore(Result newResult, StudentParticipation studentParticipation, Exercise exercise) {
+        TeamScore newTeamScore = new TeamScore();
+        newTeamScore.setExercise(exercise);
+        newTeamScore.setTeam(studentParticipation.getTeam().get());
+        setLastResultAttributes(newTeamScore, newResult);
+        if (newResult.isRated() != null && newResult.isRated()) {
+            setLastRatedResultAttributes(newTeamScore, newResult);
+        }
+        TeamScore teamScore = teamScoreRepository.saveAndFlush(newTeamScore);
+        logger.info("Saved a new team score: " + teamScore.toString());
     }
 
     /**
