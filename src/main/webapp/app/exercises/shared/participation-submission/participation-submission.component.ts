@@ -65,9 +65,9 @@ export class ParticipationSubmissionComponent implements OnInit {
     setupPage() {
         this.isLoading = true;
 
-        combineLatest(this.route.params, this.route.queryParams).subscribe(([params, queryParams]) => {
+        combineLatest([this.route.params, this.route.queryParams ?? of(undefined)]).subscribe(([params, queryParams]) => {
             this.participationId = +params['participationId'];
-            if (queryParams['isTmpOrSolutionProgrParticipation']) {
+            if (queryParams?.['isTmpOrSolutionProgrParticipation'] != undefined) {
                 this.isTmpOrSolutionProgrParticipation = queryParams['isTmpOrSolutionProgrParticipation'];
             }
 
