@@ -75,6 +75,11 @@
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
     </a>
 
+    <button *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ" class="btn btn-primary btn-sm mr-1" (click)="exportQuizById(true)">
+        <fa-icon [icon]="'file-export'"></fa-icon>
+        <span class="d-none d-md-inline" jhiTranslate="entity.action.export">Export</span>
+    </button>
+
     <!-- Edit or re-evaluate for quizzes -->
     <ng-container *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ">
         <!-- Only show the re-evaluate button after the exam has ended -->

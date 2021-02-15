@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -7,6 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,7 +18,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Course entity.
@@ -105,4 +111,62 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             where c.endDate is null or :#{#now} is null or c.endDate >= :#{#now}
             """)
     List<Map<String, Object>> getAllDTOsForOverview(@Param("now") ZonedDateTime now);
+
+    default Course findByIdElseThrow(Long courseId) throws EntityNotFoundException {
+        return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    /**
+     * filters the passed exercises for the relevant ones that need to be manually assessed. This excludes quizzes and automatic programming exercises
+     *
+     * @param exercises all exercises (e.g. of a course or exercise group) that should be filtered
+     * @return the filtered and relevant exercises for manual assessment
+     */
+    default Set<Exercise> getInterestingExercisesForAssessmentDashboards(Set<Exercise> exercises) {
+        return exercises.stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
+                || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType() != AUTOMATIC)).collect(Collectors.toSet());
+    }
+
+    /**
+     * Get all the courses.
+     *
+     * @return the list of entities
+     */
+    default List<Course> findAllActiveWithLecturesAndExams() {
+        return findAllActiveWithLecturesAndExams(ZonedDateTime.now());
+    }
+
+    /**
+     * Get all the courses.
+     *
+     * @return the list of entities
+     */
+    default List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabled() {
+        return findAllCurrentlyActiveNotOnlineAndRegistrationEnabled(ZonedDateTime.now());
+    }
+
+    /**
+     * Get one course by id.
+     *
+     * @param courseId the id of the entity
+     * @return the entity
+     */
+    @NotNull
+    default Course findOneWithLecturesAndExams(Long courseId) {
+        return findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
+    }
+
+    /**
+     * Get one course by id with all its exercises.
+     *
+     * @param courseId the id of the entity
+     * @return the entity
+     */
+    default Course findOneWithExercises(long courseId) {
+        return findWithEagerExercisesById(courseId);
+    }
+
+    default Course findOneWithExercisesAndLectures(long courseId) {
+        return findWithEagerExercisesAndLecturesById(courseId);
+    }
 }

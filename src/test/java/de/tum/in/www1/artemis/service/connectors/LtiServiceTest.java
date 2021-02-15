@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
 public class LtiServiceTest {
@@ -63,7 +63,7 @@ public class LtiServiceTest {
 
     private LtiUserId ltiUserId;
 
-    private String courseStudentGroupName = "courseStudentGroupName";
+    private final String courseStudentGroupName = "courseStudentGroupName";
 
     private LtiOutcomeUrl ltiOutcomeUrl;
 
@@ -118,7 +118,7 @@ public class LtiServiceTest {
     @Test
     public void handleLaunchRequest_existingMappingForLtiUserId() {
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.of(ltiUserId));
-        when(userService.getUserWithGroupsAndAuthorities()).thenReturn(user);
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
 
         onSuccessfulAuthenticationSetup(user, ltiUserId);
 
@@ -202,7 +202,7 @@ public class LtiServiceTest {
     }
 
     private void onSuccessfulAuthenticationSetup(User user, LtiUserId ltiUserId) {
-        when(userService.getUserWithGroupsAndAuthorities()).thenReturn(user);
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
         when(ltiUserIdRepository.findByUser(user)).thenReturn(Optional.of(ltiUserId));
         ltiOutcomeUrlRepositorySetup(user);
     }

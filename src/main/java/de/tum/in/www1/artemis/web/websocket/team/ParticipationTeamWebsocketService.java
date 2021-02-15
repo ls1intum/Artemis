@@ -32,6 +32,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.websocket.dto.OnlineTeamStudentDTO;
@@ -52,29 +54,26 @@ public class ParticipationTeamWebsocketService {
 
     private final Map<String, Instant> lastActionTracker;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final ParticipationService participationService;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
     private final TextSubmissionService textSubmissionService;
 
     private final ModelingSubmissionService modelingSubmissionService;
 
-    private final HazelcastInstance hazelcastInstance;
-
-    public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry, UserService userService,
-            ParticipationService participationService, ExerciseService exerciseService, TextSubmissionService textSubmissionService,
+    public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
+            ParticipationService participationService, ExerciseRepository exerciseRepository, TextSubmissionService textSubmissionService,
             ModelingSubmissionService modelingSubmissionService, HazelcastInstance hazelcastInstance) {
         this.messagingTemplate = messagingTemplate;
         this.simpUserRegistry = simpUserRegistry;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.participationService = participationService;
-        this.exerciseService = exerciseService;
+        this.exerciseRepository = exerciseRepository;
         this.textSubmissionService = textSubmissionService;
         this.modelingSubmissionService = modelingSubmissionService;
-        this.hazelcastInstance = hazelcastInstance;
 
         // participationId-username -> timestamp
         this.lastTypingTracker = hazelcastInstance.getMap("lastTypingTracker");
@@ -170,8 +169,8 @@ public class ParticipationTeamWebsocketService {
             return;
         }
 
-        final User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
-        final Exercise exercise = exerciseService.findOne(participation.getExercise().getId());
+        final User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
+        final Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
 
         if (submission instanceof ModelingSubmission && exercise instanceof ModelingExercise) {
             submission = modelingSubmissionService.save((ModelingSubmission) submission, (ModelingExercise) exercise, principal.getName());

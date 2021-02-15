@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -15,8 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -27,6 +24,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseDetailsDTO;
@@ -47,37 +45,33 @@ public class ExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseService.class);
 
-    private final ExerciseRepository exerciseRepository;
-
-    private final TutorParticipationRepository tutorParticipationRepository;
-
     private final ParticipationService participationService;
 
     private final AuthorizationCheckService authCheckService;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     private final QuizExerciseService quizExerciseService;
 
     private final QuizScheduleService quizScheduleService;
 
-    private final ResultService resultService;
+    private final ExampleSubmissionService exampleSubmissionService;
+
+    private final TeamRepository teamRepository;
 
     private final ExamRepository examRepository;
 
     private final StudentExamRepository studentExamRepository;
 
-    private final ExampleSubmissionService exampleSubmissionService;
-
     private final AuditEventRepository auditEventRepository;
 
-    private final ComplaintRepository complaintRepository;
-
-    private final ComplaintResponseRepository complaintResponseRepository;
-
-    private final TeamService teamService;
-
     private final ExerciseUnitRepository exerciseUnitRepository;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final TutorParticipationRepository tutorParticipationRepository;
 
     private final UserService userService;
 
@@ -85,6 +79,9 @@ public class ExerciseService {
 
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
+            QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
+            AuditEventRepository auditEventRepository, TeamRepository teamRepository, StudentExamRepository studentExamRepository, ExamRepository examRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ResultService resultService,
             ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository,
             ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamRepository studentExamRepository, ExamRepository examRepository,
@@ -107,6 +104,7 @@ public class ExerciseService {
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.userService = userService;
         this.submissionRepository = submissionRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -128,6 +126,7 @@ public class ExerciseService {
      */
     public Set<String> findAllExerciseCategoriesForCourse(Course course) {
         return exerciseRepository.findAllCategoryNames(course.getId());
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -174,41 +173,6 @@ public class ExerciseService {
     }
 
     /**
-     * Finds all team-based exercises for a course
-     *
-     * @param course Course for which to return all team-based exercises
-     * @return set of exercises
-     */
-    public Set<Exercise> findAllTeamExercisesForCourse(Course course) {
-        return exerciseRepository.findAllTeamExercisesByCourseId(course.getId());
-    }
-
-    /**
-     * Finds all exercises where the due date is in the future
-     * (does not return exercises belonging to test courses).
-     *
-     * @return set of exercises
-     */
-    public Set<Exercise> findAllExercisesWithUpcomingDueDate() {
-        return exerciseRepository.findAllExercisesWithUpcomingDueDate(ZonedDateTime.now());
-    }
-
-    /**
-     * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
-     * NOTE: prefer #findOne if you don't need these additional details
-     *
-     * @param exerciseId the exerciseId of the entity
-     * @return the entity
-     */
-    public Exercise findOne(Long exerciseId) {
-        Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
-        if (exercise.isEmpty()) {
-            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
-        }
-        return exercise.get();
-    }
-
-    /**
      * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
      * NOTE: prefer #findOne if you don't need these additional details
      * <p>
@@ -231,56 +195,9 @@ public class ExerciseService {
         }
         else if (exercise instanceof ProgrammingExercise) {
             // eagerly load template participation and solution participation
-            exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+            exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
         }
         return exercise;
-    }
-
-    /**
-     * Get one exercise by exerciseId with its categories and its team assignment config
-     *
-     * @param exerciseId the exerciseId of the entity
-     * @return the entity
-     */
-    public Exercise findOneWithCategoriesAndTeamAssignmentConfig(Long exerciseId) {
-        Optional<Exercise> exercise = exerciseRepository.findWithEagerCategoriesAndTeamAssignmentConfigById(exerciseId);
-        if (exercise.isEmpty()) {
-            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
-        }
-        return exercise.get();
-    }
-
-    /**
-     * Get one exercise with all exercise hints and all student questions + answers and with all categories
-     *
-     * @param exerciseId the id of the exercise to find
-     * @param user       the current user
-     * @return the exercise
-     */
-    public Exercise findOneWithDetailsForStudents(Long exerciseId, User user) {
-        Optional<Exercise> optionalExercise = exerciseRepository.findByIdWithDetailsForStudent(exerciseId);
-        if (optionalExercise.isEmpty()) {
-            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
-        }
-        Exercise exercise = optionalExercise.get();
-        setAssignedTeamIdForExerciseAndUser(exercise, user);
-        return exercise;
-    }
-
-    /**
-     * Find exercise by exerciseId and load participations in this exercise.
-     *
-     * @param exerciseId the exerciseId of the exercise entity
-     * @return the exercise entity
-     */
-    public Exercise findOneWithStudentParticipations(Long exerciseId) {
-        log.debug("Request to find Exercise with participations loaded: {}", exerciseId);
-        Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerParticipations(exerciseId);
-
-        if (exercise.isEmpty()) {
-            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
-        }
-        return exercise.get();
     }
 
     /**
@@ -309,7 +226,7 @@ public class ExerciseService {
     @Transactional // ok
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
-        final var exercise = findOne(exerciseId);
+        final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         // delete all exercise units linking to the exercise
         this.exerciseUnitRepository.removeAllByExerciseId(exerciseId);
@@ -354,7 +271,7 @@ public class ExerciseService {
      * @param deleteRepositories if true, the repositories gets deleted
      */
     public void cleanup(Long exerciseId, boolean deleteRepositories) {
-        Exercise exercise = findOneWithStudentParticipations(exerciseId);
+        Exercise exercise = exerciseRepository.findOneWithStudentParticipations(exerciseId);
         log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
 
         if (exercise instanceof ProgrammingExercise) {
@@ -380,74 +297,6 @@ public class ExerciseService {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete {} {} with id {}", exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());
-    }
-
-    /**
-     * Calculates the number of unevaluated complaints and feedback requests for assessment dashboard participation graph
-     *
-     * @param examMode should be set to ignore the test run submissions
-     * @param exercise the exercise for which the number of unevaluated complaints should be calculated
-     */
-    public void calculateNrOfOpenComplaints(Exercise exercise, boolean examMode) {
-        long numberOfComplaints;
-        long numberOfComplaintResponses;
-        long numberOfMoreFeedbackRequests;
-        long numberOfMoreFeedbackComplaintResponses;
-        if (examMode) {
-            numberOfComplaints = complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exercise.getId(), ComplaintType.COMPLAINT);
-            numberOfComplaintResponses = complaintResponseRepository.countByComplaintResultParticipationExerciseIdAndComplaintComplaintTypeIgnoreTestRuns(exercise.getId(),
-                    ComplaintType.COMPLAINT);
-            numberOfMoreFeedbackRequests = 0;
-            numberOfMoreFeedbackComplaintResponses = 0;
-        }
-        else {
-            numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
-            numberOfComplaintResponses = complaintResponseRepository
-                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT);
-            numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
-            numberOfMoreFeedbackComplaintResponses = complaintResponseRepository
-                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.MORE_FEEDBACK);
-        }
-
-        exercise.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
-        exercise.setNumberOfComplaints(numberOfComplaints);
-        exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
-        exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
-    }
-
-    /**
-     * Calculates the number of assessments done for each correction round.
-     *
-     * @param exercise the exercise for which we want to calculate the # of assessments for each correction round
-     * @param examMode states whether or not the the function is called in the exam mode
-     * @param totalNumberOfAssessments so total number of assessments sum up over all correction rounds
-     * @return the number of assessments for each correction rounds
-     */
-    public DueDateStat[] calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(Exercise exercise, boolean examMode, DueDateStat totalNumberOfAssessments) {
-        DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
-        if (examMode) {
-            // set number of corrections specific to each correction round
-            int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
-            numberOfAssessmentsOfCorrectionRounds = resultService.countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(exercise, numberOfCorrectionRounds);
-        }
-        else {
-            // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
-            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
-        }
-        return numberOfAssessmentsOfCorrectionRounds;
-    }
-
-    /**
-     * Check whether the exercise has either a course or an exerciseGroup.
-     *
-     * @param exercise   the Exercise to be validated
-     * @param entityName name of the entity
-     * @throws BadRequestAlertException if course and exerciseGroup are set or course and exerciseGroup are not set
-     */
-    public void checkCourseAndExerciseGroupExclusivity(Exercise exercise, String entityName) throws BadRequestAlertException {
-        if (exercise.isCourseExercise() == exercise.isExamExercise()) {
-            throw new BadRequestAlertException("An exercise must have either a course or an exerciseGroup", entityName, "eitherCourseOrExerciseGroupSet");
-        }
     }
 
     /**
@@ -540,6 +389,19 @@ public class ExerciseService {
     }
 
     /**
+     * Get one exercise with all exercise hints and all student questions + answers and with all categories
+     *
+     * @param exerciseId the id of the exercise to find
+     * @param user       the current user
+     * @return the exercise
+     */
+    public Exercise findOneWithDetailsForStudents(Long exerciseId, User user) {
+        var exercise = exerciseRepository.findByIdWithDetailsForStudent(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+        setAssignedTeamIdForExerciseAndUser(exercise, user);
+        return exercise;
+    }
+
+    /**
      * Sets the transient attribute "studentAssignedTeamId" that contains the id of the team to which the user is assigned
      *
      * @param exercise the exercise for which to set the attribute
@@ -548,7 +410,7 @@ public class ExerciseService {
     private void setAssignedTeamIdForExerciseAndUser(Exercise exercise, User user) {
         // if the exercise is not team-based, there is nothing to do here
         if (exercise.isTeamMode()) {
-            Optional<Team> team = teamService.findOneByExerciseAndUser(exercise, user);
+            Optional<Team> team = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId());
             exercise.setStudentAssignedTeamId(team.map(Team::getId).orElse(null));
             exercise.setStudentAssignedTeamIdComputed(true);
         }
@@ -788,16 +650,5 @@ public class ExerciseService {
             exercise.setBonusPoints(0.0);
         }
         return Optional.empty();
-    }
-
-    /**
-     * Activates or deactivates the possiblility for tutors to assess within the correction round
-     *
-     * @param exercise - the exercise for which we want to toggle if the second correction round is enabled
-     * @return the new state of the second correction
-     */
-    public boolean toggleSecondCorrection(Exercise exercise) {
-        exercise.setSecondCorrectionEnabled(!exercise.getSecondCorrectionEnabled());
-        return exerciseRepository.save(exercise).getSecondCorrectionEnabled();
     }
 }
