@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
 import java.net.URL;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.info.Info;
@@ -18,14 +17,10 @@ public class GitlabCommitHashLinkInfoContributor implements InfoContributor {
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
 
-    @Value("${artemis.version-control.commit-hash-template-path:#{null}}")
-    private Optional<String> gitlabCommitHashPathTemplate;
-
     @Override
     public void contribute(Info.Builder builder) {
-        if (gitlabCommitHashPathTemplate.isPresent()) {
-            var commitHashUrlTemplate = gitlabServerUrl + gitlabCommitHashPathTemplate.get();
-            builder.withDetail(Constants.INFO_COMMIT_HASH_URL_DETAIL, commitHashUrlTemplate);
-        }
+        String commitHashPathTemplate = "/{projectKey}/{buildPlanId}/-/commit/{commitHash}";
+        String commitHashUrlTemplate = gitlabServerUrl + commitHashPathTemplate;
+        builder.withDetail(Constants.INFO_COMMIT_HASH_URL_DETAIL, commitHashUrlTemplate);
     }
 }

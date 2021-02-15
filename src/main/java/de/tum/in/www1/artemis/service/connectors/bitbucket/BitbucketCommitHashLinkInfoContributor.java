@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.bitbucket;
 
 import java.net.URL;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.info.Info;
@@ -18,14 +17,10 @@ public class BitbucketCommitHashLinkInfoContributor implements InfoContributor {
     @Value("${artemis.version-control.url}")
     private URL bitbucketServerUrl;
 
-    @Value("${artemis.version-control.commit-hash-template-path:#{null}}")
-    private Optional<String> bitbucketCommitHashPathTemplate;
-
     @Override
     public void contribute(Info.Builder builder) {
-        if (bitbucketCommitHashPathTemplate.isPresent()) {
-            var commitHashUrlTemplate = bitbucketServerUrl + bitbucketCommitHashPathTemplate.get();
-            builder.withDetail(Constants.INFO_COMMIT_HASH_URL_DETAIL, commitHashUrlTemplate);
-        }
+        String commitHashPathTemplate = "/projects/{projectKey}/repos/{buildPlanId}/commits/{commitHash}";
+        String commitHashUrlTemplate = bitbucketServerUrl + commitHashPathTemplate;
+        builder.withDetail(Constants.INFO_COMMIT_HASH_URL_DETAIL, commitHashUrlTemplate);
     }
 }
