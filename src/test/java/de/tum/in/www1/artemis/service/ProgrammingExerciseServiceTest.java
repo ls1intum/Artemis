@@ -14,15 +14,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 
 class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
 
     ProgrammingExercise programmingExercise1;
 
@@ -51,7 +47,7 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
         programmingExercise2.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise2);
 
-        List<ProgrammingExercise> programmingExercises = programmingExerciseRetrievalService.findAllWithBuildAndTestAfterDueDateInFuture();
+        List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllWithBuildAndTestAfterDueDateInFuture();
 
         assertThat(programmingExercises).hasSize(1);
         assertThat(programmingExercises.get(0)).isEqualTo(programmingExercise1);

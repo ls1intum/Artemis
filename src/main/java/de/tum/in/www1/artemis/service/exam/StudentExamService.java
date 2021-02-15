@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionVersionService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -51,7 +50,7 @@ public class StudentExamService {
 
     private final UserRepository userRepository;
 
-    private final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
@@ -79,7 +78,7 @@ public class StudentExamService {
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
-            ProgrammingExerciseRetrievalService programmingExerciseRetrievalService, ExamRepository examRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -92,7 +91,7 @@ public class StudentExamService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.examQuizService = examQuizService;
         this.submissionService = submissionService;
-        this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.examRepository = examRepository;
     }
 
@@ -527,7 +526,7 @@ public class StudentExamService {
                     if (exercise instanceof ProgrammingExercise) {
                         // TODO: we should try to move this out of the for-loop into the method which calls this method.
                         // Load lazy property
-                        final var programmingExercise = programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
+                        final var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exercise.getId());
                         ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
                     }
                     // this will also create initial (empty) submissions for quiz, text, modeling and file upload

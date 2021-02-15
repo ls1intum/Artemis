@@ -19,9 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 
 /**
  * REST controller for managing static code analysis.
@@ -39,14 +39,14 @@ public class StaticCodeAnalysisResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
-    public StaticCodeAnalysisResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRetrievalService programmingExerciseRetrievalService,
+    public StaticCodeAnalysisResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             StaticCodeAnalysisService staticCodeAnalysisService) {
         this.authCheckService = authCheckService;
-        this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
     }
 
@@ -61,7 +61,7 @@ public class StaticCodeAnalysisResource {
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> getStaticCodeAnalysisCategories(@PathVariable Long exerciseId) {
         log.debug("REST request to get static code analysis categories for programming exercise {}", exerciseId);
 
-        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findOne(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         if (!Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
             return badRequest();
@@ -88,7 +88,7 @@ public class StaticCodeAnalysisResource {
             @RequestBody Set<StaticCodeAnalysisCategory> categories) {
         log.debug("REST request to update static code analysis categories for programming exercise {}", exerciseId);
 
-        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findOne(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         if (!Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
             return badRequest();
@@ -118,7 +118,7 @@ public class StaticCodeAnalysisResource {
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> resetStaticCodeAnalysisCategories(@PathVariable Long exerciseId) {
         log.debug("REST request to reset static code analysis categories for programming exercise {}", exerciseId);
 
-        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findOne(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         if (!Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
             return badRequest();

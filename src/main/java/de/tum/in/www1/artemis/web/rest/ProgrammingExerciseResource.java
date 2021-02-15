@@ -88,8 +88,6 @@ public class ProgrammingExerciseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
-
     private final ProgrammingExerciseImportService programmingExerciseImportService;
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
@@ -127,8 +125,7 @@ public class ProgrammingExerciseResource {
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
             ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionService gradingCriterionService,
-            ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
-            ProgrammingExerciseRetrievalService programmingExerciseRetrievalService) {
+            ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -145,7 +142,6 @@ public class ProgrammingExerciseResource {
         this.gradingCriterionService = gradingCriterionService;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.templateUpgradePolicy = templateUpgradePolicy;
-        this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
     }
 
     /**
@@ -955,7 +951,7 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportInstructorRepositoryForProgrammingExercise(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType)
             throws IOException {
-        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findOne(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
@@ -991,7 +987,7 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithStudentParticipationsAndSubmissionsByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
@@ -1041,7 +1037,7 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithStudentParticipationsAndSubmissionsByIdElseThrow(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
             return forbidden();

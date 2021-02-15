@@ -234,7 +234,7 @@ public class UserResource {
     public ResponseEntity<Void> updateUserNotificationDate() {
         log.debug("REST request to update notification date for logged in user");
         User user = userRepository.getUser();
-        userService.updateUserNotificationReadDate(user.getId());
+        userRepository.updateUserNotificationReadDate(user.getId());
         return ResponseEntity.ok().build();
     }
 }

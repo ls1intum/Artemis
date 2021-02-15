@@ -18,10 +18,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.util.VCSSimulationUtils;
 
@@ -41,7 +38,7 @@ public class ProgrammingSubmissionResultSimulationService {
 
     private final UserRepository userRepository;
 
-    private final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ParticipationService participationService;
 
@@ -52,14 +49,13 @@ public class ProgrammingSubmissionResultSimulationService {
     private final ProgrammingExerciseSimulationService programmingExerciseSimulationService;
 
     public ProgrammingSubmissionResultSimulationService(ParticipationRepository participationRepository, UserRepository userRepository,
-            ProgrammingExerciseRetrievalService programmingExerciseRetrievalService, ParticipationService participationService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, ResultRepository resultRepository,
-            ProgrammingExerciseSimulationService programmingExerciseSimulationService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ParticipationService participationService, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ResultRepository resultRepository, ProgrammingExerciseSimulationService programmingExerciseSimulationService) {
         this.participationRepository = participationRepository;
         this.userRepository = userRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.resultRepository = resultRepository;
-        this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseSimulationService = programmingExerciseSimulationService;
     }
@@ -95,7 +91,7 @@ public class ProgrammingSubmissionResultSimulationService {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Participant participant = user;
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
-        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithStudentParticipationsAndSubmissionsByIdElseThrow(exerciseId);
         Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(programmingExercise,
                 user.getLogin());
         if (optionalStudentParticipation.isEmpty()) {

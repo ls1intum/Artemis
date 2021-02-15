@@ -41,14 +41,10 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
@@ -98,7 +94,7 @@ public class CourseResource {
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final AssessmentDashboardService assessmentDashboardService;
 
@@ -118,7 +114,7 @@ public class CourseResource {
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
-            ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
+            ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService) {
         this.courseService = courseService;
         this.participationService = participationService;
@@ -133,7 +129,7 @@ public class CourseResource {
         this.resultService = resultService;
         this.complaintService = complaintService;
         this.tutorLeaderboardService = tutorLeaderboardService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.vcsUserManagementService = vcsUserManagementService;
         this.auditEventRepository = auditEventRepository;
         this.env = env;
@@ -583,7 +579,7 @@ public class CourseResource {
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
         final long numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForCourse(courseId)
-                + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
+                + programmingExerciseRepository.countSubmissionsByCourseIdSubmitted(courseId);
         final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
 
         DueDateStat totalNumberOfAssessments = resultService.countNumberOfAssessments(courseId);
@@ -678,8 +674,8 @@ public class CourseResource {
             DueDateStat totalNumberOfAssessments;
 
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId(), false), 0L);
-                totalNumberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId(), false), 0L);
+                numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exercise.getId(), false), 0L);
+                totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId(), false), 0L);
             }
             else {
                 numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId(), false);
@@ -774,7 +770,7 @@ public class CourseResource {
         stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
 
         final long numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForCourse(courseId)
-                + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
+                + programmingExerciseRepository.countSubmissionsByCourseIdSubmitted(courseId);
         final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
 
         stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));

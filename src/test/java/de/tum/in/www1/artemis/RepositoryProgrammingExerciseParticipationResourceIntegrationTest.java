@@ -41,7 +41,6 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
@@ -59,9 +58,6 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Autowired
     ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
-    @Autowired
-    ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -142,7 +138,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         Files.createDirectory(templateFolderPath).toFile();
 
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(), true);
@@ -270,7 +266,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         Files.createDirectory(solutionFolderPath).toFile();
 
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(programmingExercise.getSolutionParticipation().getVcsRepositoryUrl(), true);
@@ -744,7 +740,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
 
         assertThat(((ProgrammingExercise) participation.getExercise()).getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
-        assertThat(programmingExerciseRetrievalService.isParticipationRepositoryLocked((ProgrammingExerciseStudentParticipation) participation)).isFalse();
+        assertThat(((ProgrammingExerciseStudentParticipation) participation).isLocked()).isFalse();
     }
 
     @Test
@@ -769,7 +765,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
                 programmingExercise.getProjectKey(), participation.getStudents());
 
         programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
-        assertThat(programmingExerciseRetrievalService.isParticipationRepositoryLocked((ProgrammingExerciseStudentParticipation) participation)).isTrue();
+        assertThat(((ProgrammingExerciseStudentParticipation) participation).isLocked()).isTrue();
     }
 
     @Test

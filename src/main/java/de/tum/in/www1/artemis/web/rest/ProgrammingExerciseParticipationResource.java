@@ -18,9 +18,9 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -38,20 +38,20 @@ public class ProgrammingExerciseParticipationResource {
 
     private final ProgrammingSubmissionService submissionService;
 
-    private final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
     private final GradingCriterionService gradingCriterionService;
 
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
-            ResultService resultService, ProgrammingSubmissionService submissionService, ProgrammingExerciseRetrievalService programmingExerciseRetrievalService,
+            ResultService resultService, ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository,
             AuthorizationCheckService authCheckService, GradingCriterionService gradingCriterionService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationService = participationService;
         this.resultService = resultService;
         this.submissionService = submissionService;
-        this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.gradingCriterionService = gradingCriterionService;
     }
@@ -102,7 +102,7 @@ public class ProgrammingExerciseParticipationResource {
 
         // Fetch template and solution participation into exercise of participation
         ProgrammingExercise exercise = (ProgrammingExercise) participation.get().getExercise();
-        exercise = programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
+        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exercise.getId());
 
         // Fetch grading criterion into exercise of participation
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
@@ -202,7 +202,7 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<Map<Long, Optional<ProgrammingSubmission>>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
         ProgrammingExercise programmingExercise;
         try {
-            programmingExercise = programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+            programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
         }
         catch (EntityNotFoundException ex) {
             return notFound();

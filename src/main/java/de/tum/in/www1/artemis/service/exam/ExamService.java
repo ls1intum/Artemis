@@ -30,13 +30,13 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -56,7 +56,7 @@ public class ExamService {
 
     private final ParticipationService participationService;
 
-    private final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final QuizExerciseService quizExerciseService;
 
@@ -71,14 +71,13 @@ public class ExamService {
     private final AuditEventRepository auditEventRepository;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ParticipationService participationService,
-            ProgrammingExerciseRetrievalService programmingExerciseRetrievalService, ExamQuizService examQuizService, ExerciseService exerciseService,
-            UserRepository userRepository, InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService,
-            AuditEventRepository auditEventRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ExamQuizService examQuizService, ExerciseService exerciseService, UserRepository userRepository,
+            InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService, AuditEventRepository auditEventRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
         this.participationService = participationService;
-        this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.examQuizService = examQuizService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.exerciseService = exerciseService;
@@ -135,8 +134,8 @@ public class ExamService {
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             for (Exercise exercise : exerciseGroup.getExercises()) {
                 if (exercise instanceof ProgrammingExercise) {
-                    ProgrammingExercise exerciseWithTemplateAndSolutionParticipation = programmingExerciseRetrievalService
-                            .findWithTemplateAndSolutionParticipationWithResultsById(exercise.getId());
+                    ProgrammingExercise exerciseWithTemplateAndSolutionParticipation = programmingExerciseRepository
+                            .findWithTemplateAndSolutionParticipationWithResultsByIdElseThrow(exercise.getId());
                     ((ProgrammingExercise) exercise).setTemplateParticipation(exerciseWithTemplateAndSolutionParticipation.getTemplateParticipation());
                     ((ProgrammingExercise) exercise).setSolutionParticipation(exerciseWithTemplateAndSolutionParticipation.getSolutionParticipation());
                 }

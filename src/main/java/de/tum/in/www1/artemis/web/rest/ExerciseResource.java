@@ -21,15 +21,11 @@ import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
@@ -70,7 +66,7 @@ public class ExerciseResource {
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final GradingCriterionService gradingCriterionService;
 
@@ -83,7 +79,7 @@ public class ExerciseResource {
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserRepository userRepository, ExamDateService examDateService,
             AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
             ComplaintRepository complaintRepository, SubmissionService submissionService, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
-            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseService programmingExerciseService, GradingCriterionService gradingCriterionService) {
+            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionService gradingCriterionService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userRepository = userRepository;
@@ -95,7 +91,7 @@ public class ExerciseResource {
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultService = resultService;
         this.tutorLeaderboardService = tutorLeaderboardService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.gradingCriterionService = gradingCriterionService;
         this.examDateService = examDateService;
     }
@@ -243,8 +239,8 @@ public class ExerciseResource {
         DueDateStat totalNumberOfAssessments;
 
         if (exercise instanceof ProgrammingExercise) {
-            numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId, examMode), 0L);
-            totalNumberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exerciseId, examMode), 0L);
+            numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exerciseId, examMode), 0L);
+            totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId, examMode), 0L);
         }
         else {
             numberOfSubmissions = submissionService.countSubmissionsForExercise(exerciseId, examMode);
@@ -395,7 +391,9 @@ public class ExerciseResource {
             exercise.addParticipation(participation);
         }
 
-        this.programmingExerciseService.checksAndSetsIfProgrammingExerciseIsLocalSimulation(exercise);
+        if (exercise instanceof ProgrammingExercise) {
+            ((ProgrammingExercise) exercise).checksAndSetsIfProgrammingExerciseIsLocalSimulation();
+        }
         // TODO: we should also check that the submissions do not contain sensitive data
 
         // remove sensitive information for students

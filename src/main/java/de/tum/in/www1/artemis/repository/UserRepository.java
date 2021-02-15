@@ -17,6 +17,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -303,5 +304,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     default Long countUserInGroup(String groupName) {
         return countByGroupsIsContaining(groupName);
+    }
+
+    /**
+     * Update user notification read date for current user
+     *
+     * @param userId the user for which the notification read date should be updated
+     */
+    @Transactional // ok because of modifying query
+    default void updateUserNotificationReadDate(long userId) {
+        updateUserNotificationReadDate(userId, ZonedDateTime.now());
     }
 }

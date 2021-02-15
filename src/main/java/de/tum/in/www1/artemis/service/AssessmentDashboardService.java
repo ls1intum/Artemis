@@ -14,8 +14,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.exam.ExamService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
 /**
@@ -28,7 +28,7 @@ public class AssessmentDashboardService {
 
     private final ComplaintService complaintService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final SubmissionService submissionService;
 
@@ -36,10 +36,10 @@ public class AssessmentDashboardService {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    public AssessmentDashboardService(ComplaintService complaintService, ProgrammingExerciseService programmingExerciseService, SubmissionService submissionService,
+    public AssessmentDashboardService(ComplaintService complaintService, ProgrammingExerciseRepository programmingExerciseRepository, SubmissionService submissionService,
             ResultService resultService, ExampleSubmissionRepository exampleSubmissionRepository) {
         this.complaintService = complaintService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionService = submissionService;
         this.resultService = resultService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
@@ -59,8 +59,8 @@ public class AssessmentDashboardService {
             DueDateStat totalNumberOfAssessments;
 
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
-                totalNumberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
+                numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
+                totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
             }
             else {
                 numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId(), examMode);

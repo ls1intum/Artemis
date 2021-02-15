@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.participation;
 
 import java.net.MalformedURLException;
+import java.time.ZonedDateTime;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -8,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 
 public interface ProgrammingExerciseParticipation extends ParticipationInterface {
 
@@ -42,5 +44,26 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * Check if the participation is locked.
+     * This is the case when the participation is a ProgrammingExerciseStudentParticipation, the buildAndTestAfterDueDate of the exercise is set and the due date has passed,
+     * or if manual correction is involved and the due date has passed.
+     *
+     * Locked means that the student can't make any changes to their repository anymore. While we can control this easily in the remote VCS, we need to check this manually for the local repository on the Artemis server.
+     *
+     * @return true if repository is locked, false if not.
+     */
+    default boolean isLocked() {
+        if (this instanceof ProgrammingExerciseStudentParticipation) {
+            ProgrammingExercise programmingExercise = getProgrammingExercise();
+            // Editing is allowed if build and test after due date is not set and no manual correction is involved
+            // (this should match CodeEditorStudentContainerComponent.repositoryIsLocked on the client-side)
+            boolean isEditingAfterDueAllowed = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null
+                    && programmingExercise.getAssessmentType() == AssessmentType.AUTOMATIC;
+            return programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now()) && !isEditingAfterDueAllowed;
+        }
+        return false;
     }
 }

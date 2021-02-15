@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
@@ -62,13 +61,10 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     ProgrammingExerciseTestCaseService testCaseService;
 
     @Autowired
-    ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
+    ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
     StaticCodeAnalysisService staticCodeAnalysisService;
-
-    @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
     ProgrammingExerciseGradingService gradingService;
@@ -426,7 +422,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRetrievalService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationWithResultsByIdElseThrow(programmingExercise.getId());
 
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
@@ -452,7 +448,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         // Tests
-        programmingExercise = programmingExerciseRetrievalService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationWithResultsByIdElseThrow(programmingExercise.getId());
 
         // template 0 %
         {

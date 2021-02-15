@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
 
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -628,16 +627,6 @@ public class UserService {
         if (userCache != null) {
             userCache.evict(user.getLogin());
         }
-    }
-
-    /**
-     * Update user notification read date for current user
-     *
-     * @param userId the user for which the notification read date should be updated
-     */
-    @Transactional // ok because of modifying query
-    public void updateUserNotificationReadDate(long userId) {
-        userRepository.updateUserNotificationReadDate(userId, ZonedDateTime.now());
     }
 
     /**

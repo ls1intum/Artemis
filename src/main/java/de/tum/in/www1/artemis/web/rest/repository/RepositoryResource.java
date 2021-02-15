@@ -28,12 +28,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
@@ -58,19 +58,19 @@ public abstract class RepositoryResource {
 
     protected final RepositoryService repositoryService;
 
-    protected final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
+    protected final ProgrammingExerciseRepository programmingExerciseRepository;
 
     protected final Optional<VersionControlService> versionControlService;
 
     public RepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseRetrievalService programmingExerciseRetrievalService) {
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.repositoryService = repositoryService;
-        this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.versionControlService = versionControlService;
     }
 

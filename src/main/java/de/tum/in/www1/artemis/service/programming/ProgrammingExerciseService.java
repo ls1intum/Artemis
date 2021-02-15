@@ -553,13 +553,9 @@ public class ProgrammingExerciseService {
         // there is no need in python to replace package names
 
         replacements.put("${exerciseNamePomXml}", programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
-
         replacements.put("${exerciseName}", programmingExercise.getTitle());
-
         replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
-
         replacements.put("${packaging}", programmingExercise.hasSequentialTestRuns() ? "pom" : "jar");
-
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements);
     }
 
@@ -826,69 +822,6 @@ public class ProgrammingExerciseService {
                 List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.ADMIN));
         if (teachingAssistantGroup != null) {
             continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(teachingAssistantGroup), List.of(CIPermission.READ));
-        }
-    }
-
-    /**
-     * @param exerciseId     the exercise we are interested in
-     * @param ignoreTestRuns should be set for exam exercises
-     * @return the number of programming submissions which should be assessed
-     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
-     */
-    public long countSubmissionsByExerciseIdSubmitted(Long exerciseId, boolean ignoreTestRuns) {
-        long start = System.currentTimeMillis();
-        long count;
-        if (ignoreTestRuns) {
-            count = programmingExerciseRepository.countSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
-        }
-        else {
-            count = programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exerciseId);
-        }
-        log.debug("countSubmissionsByExerciseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
-        return count;
-    }
-
-    /**
-     * @param exerciseId     the exercise we are interested in
-     * @param ignoreTestRuns should be set for exam exercises
-     * @return the number of assessed programming submissions
-     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
-     */
-    public long countAssessmentsByExerciseIdSubmitted(Long exerciseId, boolean ignoreTestRuns) {
-        long start = System.currentTimeMillis();
-        long count;
-        if (ignoreTestRuns) {
-            count = programmingExerciseRepository.countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
-        }
-        else {
-            count = programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId);
-        }
-        log.debug("countAssessmentsByExerciseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
-        return count;
-    }
-
-    /**
-     * @param courseId the course we are interested in
-     * @return the number of programming submissions which should be assessed, so we ignore exercises with only automatic assessment
-     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
-     */
-    public long countSubmissionsByCourseIdSubmitted(Long courseId) {
-        long start = System.currentTimeMillis();
-        var count = programmingExerciseRepository.countSubmissionsByCourseIdSubmitted(courseId);
-        log.debug("countSubmissionsByCourseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
-        return count;
-    }
-
-    /**
-     * Sets the transient attribute "isLocalSimulation" if the exercises is a programming exercise
-     * and the testRepositoryUrl contains the String "artemislocalhost" which is the indicator that the programming exercise has
-     * no connection to a version control and continuous integration server
-     *
-     * @param exercise the exercise for which to set if it is a local simulation
-     */
-    public void checksAndSetsIfProgrammingExerciseIsLocalSimulation(Exercise exercise) {
-        if (exercise instanceof ProgrammingExercise && (((ProgrammingExercise) exercise).getTestRepositoryUrl()).contains("artemislocalhost")) {
-            ((ProgrammingExercise) exercise).setIsLocalSimulation(true);
         }
     }
 

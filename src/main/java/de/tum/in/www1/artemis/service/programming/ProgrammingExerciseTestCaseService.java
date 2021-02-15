@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -27,16 +28,16 @@ public class ProgrammingExerciseTestCaseService {
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
-    private final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
     private final AuditEventRepository auditEventRepository;
 
-    public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseRetrievalService programmingExerciseRetrievalService,
+    public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingSubmissionService programmingSubmissionService, AuditEventRepository auditEventRepository) {
         this.testCaseRepository = testCaseRepository;
-        this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.auditEventRepository = auditEventRepository;
     }
@@ -72,9 +73,10 @@ public class ProgrammingExerciseTestCaseService {
      */
     public Set<ProgrammingExerciseTestCase> update(Long exerciseId, Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS)
             throws EntityNotFoundException, IllegalAccessException {
-        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findWithTestCasesById(exerciseId);
-        Set<ProgrammingExerciseTestCase> existingTestCases = programmingExercise.getTestCases();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTestCasesById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
 
+        Set<ProgrammingExerciseTestCase> existingTestCases = programmingExercise.getTestCases();
         Set<ProgrammingExerciseTestCase> updatedTests = new HashSet<>();
         for (ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO : testCaseProgrammingExerciseTestCaseDTOS) {
             Optional<ProgrammingExerciseTestCase> matchingTestCaseOpt = existingTestCases.stream()

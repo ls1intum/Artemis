@@ -15,9 +15,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 import io.github.jhipster.web.util.HeaderUtil;
 
 /**
@@ -36,7 +36,7 @@ public class ExerciseHintResource {
 
     private final ExerciseHintService exerciseHintService;
 
-    private final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -44,10 +44,10 @@ public class ExerciseHintResource {
 
     private final ExerciseService exerciseService;
 
-    public ExerciseHintResource(ExerciseHintService exerciseHintService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseRetrievalService programmingExerciseRetrievalService, UserRepository userRepository, ExerciseService exerciseService) {
+    public ExerciseHintResource(ExerciseHintService exerciseHintService, AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
+            UserRepository userRepository, ExerciseService exerciseService) {
         this.exerciseHintService = exerciseHintService;
-        this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.exerciseService = exerciseService;
@@ -147,7 +147,7 @@ public class ExerciseHintResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();

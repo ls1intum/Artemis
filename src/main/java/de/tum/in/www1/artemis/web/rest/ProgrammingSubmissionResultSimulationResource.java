@@ -19,13 +19,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRetrievalService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionResultSimulationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -54,7 +53,7 @@ public class ProgrammingSubmissionResultSimulationResource {
 
     private final WebsocketMessagingService messagingService;
 
-    private final ProgrammingExerciseRetrievalService programmingExerciseRetrievalService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService;
 
@@ -63,14 +62,14 @@ public class ProgrammingSubmissionResultSimulationResource {
     private final AuthorizationCheckService authCheckService;
 
     public ProgrammingSubmissionResultSimulationResource(ProgrammingSubmissionService programmingSubmissionService, UserRepository userRepository,
-            ParticipationService participationService, WebsocketMessagingService messagingService, ProgrammingExerciseRetrievalService programmingExerciseRetrievalService,
+            ParticipationService participationService, WebsocketMessagingService messagingService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.userRepository = userRepository;
         this.participationService = participationService;
         this.messagingService = messagingService;
-        this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionResultSimulationService = programmingSubmissionResultSimulationService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -122,9 +121,8 @@ public class ProgrammingSubmissionResultSimulationResource {
     public ResponseEntity<Result> createNewProgrammingExerciseResult(@PathVariable Long exerciseId) {
         log.debug("Received result notify (NEW)");
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Participant participant = user;
-        ProgrammingExercise programmingExercise = programmingExerciseRetrievalService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
-        Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise, participant);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithStudentParticipationsAndSubmissionsByIdElseThrow(exerciseId);
+        Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise, user);
 
         if (optionalStudentParticipation.isEmpty()) {
             return forbidden();
