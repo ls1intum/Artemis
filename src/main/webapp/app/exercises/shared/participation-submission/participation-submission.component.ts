@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { catchError, map } from 'rxjs/operators';
 import { combineLatest, of } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { Submission } from 'app/entities/submission.model';
+import { Submission, SubmissionType } from 'app/entities/submission.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -150,18 +150,32 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     getCommitUrl(submission: ProgrammingSubmission): string | undefined {
-        let participation;
-        if (this.participation?.type === ParticipationType.PROGRAMMING) {
-            participation = this.participation as ProgrammingExerciseStudentParticipation;
-        } else if (this.participation?.type === ParticipationType.SOLUTION) {
-            participation = this.participation as SolutionProgrammingExerciseParticipation;
-        } else if (this.participation?.type === ParticipationType.TEMPLATE) {
-            participation = this.participation as TemplateProgrammingExerciseParticipation;
+        let buildPlanId;
+        switch (this.participation?.type) {
+            case ParticipationType.PROGRAMMING:
+                buildPlanId = (this.participation as ProgrammingExerciseStudentParticipation).buildPlanId!.toLocaleLowerCase();
+                break;
+            case ParticipationType.TEMPLATE:
+                buildPlanId = (this.participation as TemplateProgrammingExerciseParticipation).buildPlanId!.toLocaleLowerCase();
+                // In case of a test submisson, we need to use the test repository
+                if (submission?.type === SubmissionType.TEST) {
+                    buildPlanId = buildPlanId.replace('exercise', 'tests');
+                }
+                break;
+            case ParticipationType.SOLUTION:
+                buildPlanId = (this.participation as SolutionProgrammingExerciseParticipation).buildPlanId!.toLocaleLowerCase();
+                // In case of a test submisson, we need to use the test repository
+                if (submission?.type === SubmissionType.TEST) {
+                    buildPlanId = buildPlanId.replace('solution', 'tests');
+                }
+                break;
+            default:
+            // do nothing
         }
-        if (participation && this.commitHashURLTemplate) {
+        if (buildPlanId && this.commitHashURLTemplate) {
             return this.commitHashURLTemplate
                 .replace('{projectKey}', (this.exercise as ProgrammingExercise).projectKey!)
-                .replace('{buildPlanId}', participation?.buildPlanId!)
+                .replace('{buildPlanId}', buildPlanId)
                 .replace('{commitHash}', submission.commitHash ?? '');
         }
         return '';
