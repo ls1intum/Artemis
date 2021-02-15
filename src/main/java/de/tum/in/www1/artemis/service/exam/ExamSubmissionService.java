@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import static de.tum.in.www1.artemis.repository.RepositoryHelper.findExamByIdElseThrow;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.time.ZonedDateTime;
@@ -162,7 +161,7 @@ public class ExamSubmissionService {
         // TODO: we might want to add a grace period here. If so we have to adjust the dueDate checks in the submission
         // services (e.g. in TextSubmissionService::handleTextSubmission())
         // The attributes of the exam (e.g. startDate) are missing. Therefore we need to load it.
-        Exam exam = findExamByIdElseThrow(examRepository, exercise.getExerciseGroup().getExam().getId());
+        Exam exam = examRepository.findExamByIdElseThrow(exercise.getExerciseGroup().getExam().getId());
         ZonedDateTime calculatedEndDate = exam.getEndDate();
         if (studentExam.getWorkingTime() != null && studentExam.getWorkingTime() > 0) {
             calculatedEndDate = exam.getStartDate().plusSeconds(studentExam.getWorkingTime());

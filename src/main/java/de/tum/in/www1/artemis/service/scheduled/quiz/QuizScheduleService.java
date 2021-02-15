@@ -36,9 +36,9 @@ import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
-import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 @Service
 public class QuizScheduleService {
@@ -47,15 +47,15 @@ public class QuizScheduleService {
 
     private static final String HAZELCAST_PROCESS_CACHE_HANDLER = QuizProcessCacheTask.HAZELCAST_PROCESS_CACHE_TASK + "-handler";
 
-    private volatile IScheduledExecutorService threadPoolTaskScheduler;
+    private final IScheduledExecutorService threadPoolTaskScheduler;
 
-    private IAtomicReference<ScheduledTaskHandler> scheduledProcessQuizSubmissions;
+    private final IAtomicReference<ScheduledTaskHandler> scheduledProcessQuizSubmissions;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final ResultRepository resultRepository;
 
-    private final UserRetrievalService userRetrievalService;
+    private final UserRepository userRepository;
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
@@ -63,16 +63,16 @@ public class QuizScheduleService {
 
     private QuizStatisticService quizStatisticService;
 
-    private SimpMessageSendingOperations messagingTemplate;
+    private final SimpMessageSendingOperations messagingTemplate;
 
-    private QuizCache quizCache;
+    private final QuizCache quizCache;
 
     public QuizScheduleService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            UserRetrievalService userRetrievalService, QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance) {
+            UserRepository userRepository, QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance) {
         this.messagingTemplate = messagingTemplate;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
-        this.userRetrievalService = userRetrievalService;
+        this.userRepository = userRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.scheduledProcessQuizSubmissions = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
@@ -562,7 +562,7 @@ public class QuizScheduleService {
                 StudentParticipation participation = new StudentParticipation();
                 // TODO: when this is set earlier for the individual quiz start of a student, we don't need to set this here anymore
                 participation.setInitializationDate(quizSubmission.getSubmissionDate());
-                Optional<User> user = userRetrievalService.getUserByLogin(username);
+                Optional<User> user = userRepository.findOneByLogin(username);
                 user.ifPresent(participation::setParticipant);
                 // add the quizExercise to the participation
                 participation.setExercise(quizExercise);

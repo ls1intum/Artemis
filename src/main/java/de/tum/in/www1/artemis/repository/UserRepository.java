@@ -8,7 +8,9 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -17,6 +19,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 /**
  * Spring Data JPA repository for the User entity.
@@ -27,8 +32,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     String USERS_CACHE = "users";
 
     Optional<User> findOneByActivationKey(String activationKey);
-
-    List<User> findAllByRegistrationNumberIsNull();
 
     Optional<User> findOneByResetKey(String resetKey);
 
@@ -133,4 +136,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("select distinct team.students from Team team where team.exercise.course.id = :#{#courseId} and team.shortName = :#{#teamShortName}")
     Set<User> findAllInTeam(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
+
+    /**
+     * Get all managed users
+     *
+     * @param userSearch used to find users
+     * @return all users
+     */
+    default Page<UserDTO> getAllManagedUsers(PageableSearchDTO<String> userSearch) {
+        final var searchTerm = userSearch.getSearchTerm();
+        var sorting = Sort.by(userSearch.getSortedColumn());
+        sorting = userSearch.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
+        final var sorted = PageRequest.of(userSearch.getPage(), userSearch.getPageSize(), sorting);
+        return searchByLoginOrNameWithGroups(searchTerm, sorted).map(UserDTO::new);
+    }
 }

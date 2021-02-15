@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import static de.tum.in.www1.artemis.repository.RepositoryHelper.findExamByIdElseThrow;
-
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -108,7 +106,7 @@ public class ExamService {
     @NotNull
     public Exam findOne(Long examId) {
         log.debug("Request to get exam : {}", examId);
-        return findExamByIdElseThrow(examRepository, examId);
+        return examRepository.findExamByIdElseThrow(examId);
     }
 
     /**
@@ -593,7 +591,7 @@ public class ExamService {
      * @param exam Exam for which to compute and set the number of generated student exams
      */
     public void setNumberOfGeneratedStudentExams(Exam exam) {
-        long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExamWithoutTestruns(exam.getId());
+        long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExamWithoutTestRuns(exam.getId());
         exam.setNumberOfGeneratedStudentExams(numberOfGeneratedStudentExams);
     }
 

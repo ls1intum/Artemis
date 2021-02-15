@@ -32,7 +32,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        final var user = userRetrievalService.getUserWithAuthoritiesByLogin(authentication.getName());
+        final var user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(authentication.getName());
         if (user.isEmpty()) {
             throw new AuthenticationServiceException(String.format("User %s does not exist in the Artemis database!", authentication.getName()));
         }
@@ -51,7 +51,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
     @Override
     public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, boolean skipPasswordCheck) {
         final var password = authentication.getCredentials().toString();
-        final var optionalUser = userRetrievalService.getUserByLogin(authentication.getName().toLowerCase());
+        final var optionalUser = userRepository.findOneByLogin(authentication.getName().toLowerCase());
         final User user;
         if (optionalUser.isEmpty()) {
             user = userService.createUser(authentication.getName(), password, firstName, lastName, email, null, null, "en");

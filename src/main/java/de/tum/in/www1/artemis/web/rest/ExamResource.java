@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.repository.RepositoryHelper.findExamByIdElseThrow;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
@@ -27,6 +26,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
@@ -76,9 +76,12 @@ public class ExamResource {
 
     private final AssessmentDashboardService assessmentDashboardService;
 
+    private final UserRepository userRepository;
+
     public ExamResource(UserRetrievalService userRetrievalService, CourseService courseService, ExamService examService, ExamAccessService examAccessService,
             InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, AuthorizationCheckService authCheckService, ExamDateService examDateService,
-            TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService) {
+            TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
+            UserRepository userRepository) {
         this.userRetrievalService = userRetrievalService;
         this.courseService = courseService;
         this.examService = examService;
@@ -90,6 +93,7 @@ public class ExamResource {
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.assessmentDashboardService = assessmentDashboardService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -372,7 +376,7 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to delete exam : {}", examId);
-        var exam = findExamByIdElseThrow(examRepository, examId);
+        var exam = examRepository.findExamByIdElseThrow(examId);
         Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
@@ -403,7 +407,7 @@ public class ExamResource {
         var course = courseService.findOne(courseId);
         var exam = examService.findOneWithRegisteredUsers(examId);
 
-        Optional<User> student = userRetrievalService.getUserWithGroupsAndAuthoritiesByLogin(studentLogin);
+        Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
         if (student.isEmpty()) {
             return notFound();
         }
@@ -633,7 +637,7 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        Optional<User> optionalStudent = userRetrievalService.getUserWithGroupsAndAuthoritiesByLogin(studentLogin);
+        Optional<User> optionalStudent = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
         if (optionalStudent.isEmpty()) {
             return notFound();
         }

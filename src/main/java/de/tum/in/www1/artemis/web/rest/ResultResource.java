@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -84,10 +85,12 @@ public class ResultResource {
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
+    private final UserRepository userRepository;
+
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
             ResultRepository resultRepository, WebsocketMessagingService messagingService, UserRetrievalService userRetrievalService, ExamDateService examDateService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService) {
+            ProgrammingExerciseGradingService programmingExerciseGradingService, UserRepository userRepository) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -100,6 +103,7 @@ public class ResultResource {
         this.userRetrievalService = userRetrievalService;
         this.examDateService = examDateService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -417,7 +421,7 @@ public class ResultResource {
         }
 
         User user = userRetrievalService.getUserWithGroupsAndAuthorities();
-        Optional<User> student = userRetrievalService.getUserWithAuthoritiesByLogin(studentLogin);
+        Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");

@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.user.UserRetrievalService;
 
 @Service
@@ -27,10 +28,14 @@ public class SubmissionVersionService {
 
     private final ObjectMapper objectMapper;
 
-    public SubmissionVersionService(SubmissionVersionRepository submissionVersionRepository, UserRetrievalService userRetrievalService, ObjectMapper objectMapper) {
+    private final UserRepository userRepository;
+
+    public SubmissionVersionService(SubmissionVersionRepository submissionVersionRepository, UserRetrievalService userRetrievalService, ObjectMapper objectMapper,
+            UserRepository userRepository) {
         this.submissionVersionRepository = submissionVersionRepository;
         this.userRetrievalService = userRetrievalService;
         this.objectMapper = objectMapper;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -44,7 +49,7 @@ public class SubmissionVersionService {
      * @return created/updated submission version
      */
     public SubmissionVersion saveVersionForTeam(Submission submission, String username) {
-        User user = userRetrievalService.getUserByLogin(username).orElseThrow();
+        User user = userRepository.findOneByLogin(username).orElseThrow();
 
         return submissionVersionRepository.findLatestVersion(submission.getId()).map(latestVersion -> {
             if (latestVersion.getAuthor().equals(user)) {
@@ -64,7 +69,7 @@ public class SubmissionVersionService {
      * @return created/updated submission version
      */
     public SubmissionVersion saveVersionForIndividual(Submission submission, String username) {
-        User user = userRetrievalService.getUserByLogin(username).orElseThrow();
+        User user = userRepository.findOneByLogin(username).orElseThrow();
         return createNewVersion(submission, user);
     }
 

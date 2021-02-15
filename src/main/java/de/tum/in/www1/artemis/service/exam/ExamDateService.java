@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import static de.tum.in.www1.artemis.repository.RepositoryHelper.findExamByIdElseThrow;
-
 import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,7 +33,7 @@ public class ExamDateService {
      * @throws EntityNotFoundException if no exam with the given examId can be found
      */
     public boolean isExamOver(Long examId) {
-        final var exam = findExamByIdElseThrow(examRepository, examId);
+        final var exam = examRepository.findExamByIdElseThrow(examId);
         return isExamOver(exam);
     }
 
@@ -63,7 +61,7 @@ public class ExamDateService {
      * @throws EntityNotFoundException if no exam with the given examId can be found
      */
     public ZonedDateTime getLatestIndividualExamEndDate(Long examId) {
-        final var exam = findExamByIdElseThrow(examRepository, examId);
+        final var exam = examRepository.findExamByIdElseThrow(examId);
         return getLatestIndividualExamEndDate(exam);
     }
 
@@ -93,7 +91,7 @@ public class ExamDateService {
      * @throws EntityNotFoundException if no exam with the given examId can be found
      */
     public Set<ZonedDateTime> getAllIndividualExamEndDates(Long examId) {
-        final var exam = findExamByIdElseThrow(examRepository, examId);
+        final var exam = examRepository.findExamByIdElseThrow(examId);
         return getAllIndividualExamEndDates(exam);
     }
 

@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -14,7 +15,6 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.CustomAuditEventRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -31,10 +31,10 @@ public class ProgrammingExerciseTestCaseService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final CustomAuditEventRepository auditEventRepository;
+    private final AuditEventRepository auditEventRepository;
 
     public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseRetrievalService programmingExerciseRetrievalService,
-            ProgrammingSubmissionService programmingSubmissionService, CustomAuditEventRepository auditEventRepository) {
+            ProgrammingSubmissionService programmingSubmissionService, AuditEventRepository auditEventRepository) {
         this.testCaseRepository = testCaseRepository;
         this.programmingExerciseRetrievalService = programmingExerciseRetrievalService;
         this.programmingSubmissionService = programmingSubmissionService;

@@ -6,21 +6,17 @@ import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -39,20 +35,6 @@ public class UserRetrievalService {
     }
 
     /**
-     * Get all managed users
-     *
-     * @param userSearch used to find users
-     * @return all users
-     */
-    public Page<UserDTO> getAllManagedUsers(PageableSearchDTO<String> userSearch) {
-        final var searchTerm = userSearch.getSearchTerm();
-        var sorting = Sort.by(userSearch.getSortedColumn());
-        sorting = userSearch.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
-        final var sorted = PageRequest.of(userSearch.getPage(), userSearch.getPageSize(), sorting);
-        return userRepository.searchByLoginOrNameWithGroups(searchTerm, sorted).map(UserDTO::new);
-    }
-
-    /**
      * Search for all users by login or name
      *
      * @param pageable    Pageable configuring paginated access (e.g. to limit the number of records returned)
@@ -63,36 +45,6 @@ public class UserRetrievalService {
         Page<User> users = userRepository.searchAllByLoginOrName(pageable, loginOrName);
         users.forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
         return users.map(UserDTO::new);
-    }
-
-    /**
-     * Get user with groups and authorities by given login string
-     *
-     * @param login user login string
-     * @return existing user with given login string or null
-     */
-    public Optional<User> getUserWithGroupsAndAuthoritiesByLogin(String login) {
-        return userRepository.findOneWithGroupsAndAuthoritiesByLogin(login);
-    }
-
-    /**
-     * Get user with authorities by given login string
-     *
-     * @param login user login string
-     * @return existing user with given login string or null
-     */
-    public Optional<User> getUserWithAuthoritiesByLogin(String login) {
-        return userRepository.findOneWithGroupsAndAuthoritiesByLogin(login);
-    }
-
-    /**
-     * Get current user for login string
-     *
-     * @param login user login string
-     * @return existing user for the given login string or null
-     */
-    public Optional<User> getUserByLogin(String login) {
-        return userRepository.findOneByLogin(login);
     }
 
     /**

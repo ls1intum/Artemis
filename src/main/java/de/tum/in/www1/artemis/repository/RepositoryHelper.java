@@ -5,7 +5,6 @@ import org.springframework.data.repository.CrudRepository;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.StudentQuestion;
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -17,10 +16,6 @@ public class RepositoryHelper {
 
     public static Course findCourseByIdElseThrow(CourseRepository repository, Long courseId) throws EntityNotFoundException {
         return findByIdElseThrow(repository, "Course", courseId);
-    }
-
-    public static Exam findExamByIdElseThrow(ExamRepository repository, Long courseId) throws EntityNotFoundException {
-        return findByIdElseThrow(repository, "Exam", courseId);
     }
 
     public static StudentExam findStudentExamByIdElseThrow(StudentExamRepository repository, Long courseId) throws EntityNotFoundException {
