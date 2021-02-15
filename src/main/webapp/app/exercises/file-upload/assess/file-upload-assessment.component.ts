@@ -42,7 +42,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     result: Result;
     generalFeedback: Feedback = new Feedback();
     // TODO: rename this, because right now there is no reference
-    referencedFeedback: Feedback[] = [];
+    unreferencedFeedback: Feedback[] = [];
     exercise: FileUploadExercise;
     exerciseId: number;
     totalScore = 0;
@@ -87,7 +87,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     get assessments(): Feedback[] {
-        return [this.generalFeedback, ...this.referencedFeedback];
+        return [this.generalFeedback, ...this.unreferencedFeedback];
     }
 
     public ngOnInit(): void {
@@ -200,13 +200,13 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
     public addFeedback(): void {
         const feedback = new Feedback();
-        this.referencedFeedback.push(feedback);
+        this.unreferencedFeedback.push(feedback);
         this.validateAssessment();
     }
 
     public deleteAssessment(assessmentToDelete: Feedback): void {
-        const indexToDelete = this.referencedFeedback.indexOf(assessmentToDelete);
-        this.referencedFeedback.splice(indexToDelete, 1);
+        const indexToDelete = this.unreferencedFeedback.indexOf(assessmentToDelete);
+        this.unreferencedFeedback.splice(indexToDelete, 1);
         this.validateAssessment();
     }
 
@@ -217,7 +217,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
      */
     assessNext() {
         this.generalFeedback = new Feedback();
-        this.referencedFeedback = [];
+        this.unreferencedFeedback = [];
         this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, false, this.correctionRound).subscribe(
             (response: FileUploadSubmission) => {
                 this.unassessedSubmission = response;
@@ -329,22 +329,22 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     /**
      * Checks if the assessment is valid:
      *   - There must be at least one referenced feedback or a general feedback.
-     *   - Each reference feedback must have either a score or a feedback text or both.
+     *   - Each feedback must have either a score or a feedback text or both.
      *   - The score must be a valid number.
      *
      * Additionally, the total score is calculated for all numerical credits.
      */
-    public validateAssessment() {
+    public validateAssessment(): void {
         this.assessmentsAreValid = true;
         this.invalidError = undefined;
 
-        if ((!this.generalFeedback.detailText || this.generalFeedback.detailText.length === 0) && this.referencedFeedback && this.referencedFeedback.length === 0) {
+        if ((!this.generalFeedback.detailText || this.generalFeedback.detailText.length === 0) && this.unreferencedFeedback && this.unreferencedFeedback.length === 0) {
             this.totalScore = 0;
             this.assessmentsAreValid = false;
             return;
         }
 
-        let credits = this.referencedFeedback.map((assessment) => assessment.credits);
+        let credits = this.unreferencedFeedback.map((assessment) => assessment.credits);
 
         if (!this.invalidError && !credits.every((credit) => credit && !isNaN(credit))) {
             this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidScoreMustBeNumber';
@@ -352,7 +352,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             credits = credits.filter((credit) => credit && !isNaN(credit));
         }
 
-        if (!this.invalidError && !this.referencedFeedback.every((feedback) => feedback.credits !== 0)) {
+        if (!this.invalidError && !this.unreferencedFeedback.every((feedback) => feedback.credits !== 0)) {
             this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidNeedScore';
             this.assessmentsAreValid = false;
         }
@@ -450,7 +450,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         } else {
             this.generalFeedback = new Feedback();
         }
-        this.referencedFeedback = feedbacks;
+        this.unreferencedFeedback = feedbacks;
     }
 
     get readOnly(): boolean {

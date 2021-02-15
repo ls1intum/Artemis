@@ -19,10 +19,10 @@
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
     [hidden]="!hasNewSubmissions"
 >
+    <ng-container *ngIf="hasNewSubmissions; then assessment; else noSubmission"></ng-container>
 </jhi-assessment-layout>
-<ng-container *ngIf="hasNewSubmissions; then assessment; else noSubmission"></ng-container>
 <ng-template #assessment>
-    <jhi-resizeable-container *ngIf="!busy && exercise">
+    <jhi-resizeable-container *ngIf="!busy && exercise" class="col-12">
         <!--region Left Panel-->
         <span *ngIf="exercise.title" left-header>{{ exercise.title }}</span>
         <jhi-score-display left-header [score]="totalScore" [maxPoints]="exercise.maxPoints" [maxBonusPoints]="exercise.bonusPoints"></jhi-score-display>
@@ -33,34 +33,7 @@
                     <span class="ml-2 badge badge-info">{{ attachmentExtension(submission.filePath!) | uppercase }}</span>
                 </div>
             </div>
-            <ng-container *ngIf="!busy && !notFound">
-                <div class="row mt-3 mb-3">
-                    <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</h4>
-                    <div *ngIf="invalidError" class="col-12 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
-                    <div *ngIf="!referencedFeedback || referencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6">
-                        <div class="alert alert-secondary text-center" role="alert">
-                            <p>{{ 'artemisApp.fileUploadAssessment.assessInstruction' | translate }}</p>
-                        </div>
-                    </div>
-                    <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-lg-6 col-xl-6">
-                        <jhi-assessment-detail
-                            [(assessment)]="referencedFeedback[i]"
-                            (assessmentChange)="updateAssessment()"
-                            (deleteAssessment)="deleteAssessment($event)"
-                            [readOnly]="readOnly"
-                        ></jhi-assessment-detail>
-                    </div>
-                    <div class="col-12">
-                        <button class="btn btn-success" (click)="addFeedback()" [disabled]="readOnly">
-                            {{ 'artemisApp.fileUploadAssessment.addFeedback' | translate }}
-                        </button>
-                    </div>
-                </div>
-                <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateAssessment()" [readOnly]="readOnly"></jhi-assessment-general-feedback>
-            </ng-container>
         </div>
-        <!--endregion-->
-
         <!--region Right Panel-->
         <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
         <span right-header jhiTranslate="assessmentInstructions.instructions.instructions">Instructions</span>
@@ -68,6 +41,14 @@
         <jhi-assessment-instructions right-body [exercise]="exercise" class="markdown-preview"></jhi-assessment-instructions>
         <!--endregion-->
     </jhi-resizeable-container>
+    <!--Feedbacks-->
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <div *ngIf="invalidError" class="col-8 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
+            <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateAssessment()" [readOnly]="readOnly"></jhi-unreferenced-feedback>
+            <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateAssessment()" [readOnly]="readOnly"></jhi-assessment-general-feedback>
+        </div>
+    </div>
 </ng-template>
 
 <ng-template #noSubmission>
