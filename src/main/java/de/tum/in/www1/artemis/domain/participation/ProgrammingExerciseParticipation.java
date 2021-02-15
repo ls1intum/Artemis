@@ -55,6 +55,7 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
      *
      * @return true if repository is locked, false if not.
      */
+    @JsonIgnore
     default boolean isLocked() {
         if (this instanceof ProgrammingExerciseStudentParticipation) {
             ProgrammingExercise programmingExercise = getProgrammingExercise();
