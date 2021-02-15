@@ -3,33 +3,25 @@ import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Observable } from 'rxjs';
 
-/**
- * Normally the use of null in the client is discouraged but in this case it is fine as the server will always send all
- * the properties but will give them the value null (a property will never be undefined here).
- */
 export class ParticipantScoreDTO {
-    public id: number | null;
-    public userId: number | null;
-    public userName: string | null;
-    public teamId: number | null;
-    public teamName: string | null;
-    public exerciseId: number | null;
-    public exerciseTitle: string | null;
-    public lastResultId: number | null;
-    public lastResultScore: number | null;
-    public lastRatedResultId: number | null;
-    public lastRatedResultScore: number | null;
+    public id?: number;
+    public userId?: number;
+    public userName?: string;
+    public teamId?: number;
+    public teamName?: string;
+    public exerciseId?: number;
+    public exerciseTitle?: string;
+    public lastResultId?: number;
+    public lastResultScore?: number;
+    public lastRatedResultId?: number;
+    public lastRatedResultScore?: number;
 }
 
-/**
- * Normally the use of null in the client is discouraged but in this case it is fine as the server will always send all
- * the properties but will give them the value null (a property will never be undefined here).
- */
 export class ParticipantScoreAverageDTO {
-    public userName: string | null;
-    public teamName: string | null;
-    public averageScore: number | null;
-    public averageRatedScore: number | null;
+    public userName?: string;
+    public teamName?: string;
+    public averageScore?: number;
+    public averageRatedScore?: number;
 }
 
 export type SortDirection = 'asc' | 'desc';

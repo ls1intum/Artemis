@@ -55,8 +55,6 @@ describe('ParticipantScoresTable', () => {
         participantScoreDTO.id = 1;
         participantScoreDTO.userId = 42;
         participantScoreDTO.userName = 'testUser';
-        participantScoreDTO.teamId = null;
-        participantScoreDTO.teamName = null;
         participantScoreDTO.exerciseId = 99;
         participantScoreDTO.exerciseTitle = 'testExercise';
         participantScoreDTO.lastResultId = 12;
@@ -86,13 +84,11 @@ describe('ParticipantScoresTable', () => {
     it('should extract participant name correctly', () => {
         let participantScoreDTO = new ParticipantScoreDTO();
         participantScoreDTO.userName = 'testUser';
-        participantScoreDTO.teamName = null;
 
         expect(component.extractParticipantName(participantScoreDTO)).to.equal(participantScoreDTO.userName);
 
         participantScoreDTO = new ParticipantScoreDTO();
         participantScoreDTO.teamName = 'testTeam';
-        participantScoreDTO.userName = null;
         expect(component.extractParticipantName(participantScoreDTO)).to.equal(participantScoreDTO.teamName);
     });
 });

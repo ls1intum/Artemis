@@ -6,6 +6,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.domain.Result;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of ParticipantScore when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = StudentScore.class, name = "studentScore"), @JsonSubTypes.Type(value = TeamScore.class, name = "teamScore") })
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class ParticipantScore extends DomainObject {
 
     @ManyToOne(fetch = FetchType.LAZY)

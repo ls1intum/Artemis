@@ -2,10 +2,12 @@ package de.tum.in.www1.artemis.domain.scores;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.User;
 
 @Entity
 @DiscriminatorValue("SS")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StudentScore extends ParticipantScore {
 
     @ManyToOne(fetch = FetchType.LAZY)
