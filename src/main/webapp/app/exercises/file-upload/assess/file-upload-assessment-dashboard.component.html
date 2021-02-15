@@ -67,15 +67,15 @@
                     </td>
                     <td>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
-                            <button
+                            <a
                                 *ngIf="submission && !submission.latestResult && exercise.course"
                                 [routerLink]="['/course-management', exercise.course?.id, 'file-upload-exercises', exercise.id, 'submissions', submission.id, 'assessment']"
-                                [disabled]="busy"
+                                [class.disabled]="busy"
                                 class="btn btn-outline-secondary btn-sm mb-1"
                             >
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
-                            </button>
-                            <button
+                            </a>
+                            <a
                                 *ngIf="submission && !submission.latestResult && exercise.exerciseGroup"
                                 [routerLink]="[
                                     '/course-management',
@@ -86,22 +86,22 @@
                                     submission.id,
                                     'assessment'
                                 ]"
-                                [disabled]="busy"
+                                [class.disabled]="busy"
                                 class="btn btn-outline-secondary btn-sm mb-1"
                             >
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
-                            </button>
+                            </a>
                         </span>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
-                            <button
+                            <a
                                 *ngIf="submission && submission.latestResult && exercise.course"
                                 [routerLink]="['/course-management', exercise.course?.id, 'file-upload-exercises', exercise.id, 'submissions', submission.id, 'assessment']"
-                                [disabled]="busy"
+                                [class.disabled]="busy"
                                 class="btn btn-outline-secondary btn-sm mb-1"
                             >
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
-                            </button>
-                            <button
+                            </a>
+                            <a
                                 *ngIf="submission && submission.latestResult && exercise.exerciseGroup"
                                 [routerLink]="[
                                     '/course-management',
@@ -112,11 +112,11 @@
                                     submission.id,
                                     'assessment'
                                 ]"
-                                [disabled]="busy"
+                                [class.disabled]="busy"
                                 class="btn btn-outline-secondary btn-sm mb-1"
                             >
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
-                            </button>
+                            </a>
                         </span>
                         <span *ngIf="exercise.isAtLeastInstructor">
                             <button
