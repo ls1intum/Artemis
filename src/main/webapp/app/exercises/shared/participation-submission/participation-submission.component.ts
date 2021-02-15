@@ -14,8 +14,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import * as moment from 'moment';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,7 +31,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     public exerciseStatusBadge = 'badge-success';
 
     isTmpOrSolutionProgrParticipation = false;
-    exercise: Exercise;
+    exercise?: Exercise;
     participation?: Participation;
     submissions?: Submission[];
     eventSubscriber: Subscription;
@@ -150,32 +148,21 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     getCommitUrl(submission: ProgrammingSubmission): string | undefined {
-        let buildPlanId;
-        switch (this.participation?.type) {
-            case ParticipationType.PROGRAMMING:
-                buildPlanId = (this.participation as ProgrammingExerciseStudentParticipation).buildPlanId!.toLocaleLowerCase();
-                break;
-            case ParticipationType.TEMPLATE:
-                buildPlanId = (this.participation as TemplateProgrammingExerciseParticipation).buildPlanId!.toLocaleLowerCase();
-                // In case of a test submisson, we need to use the test repository
-                if (submission?.type === SubmissionType.TEST) {
-                    buildPlanId = buildPlanId.replace('exercise', 'tests');
-                }
-                break;
-            case ParticipationType.SOLUTION:
-                buildPlanId = (this.participation as SolutionProgrammingExerciseParticipation).buildPlanId!.toLocaleLowerCase();
-                // In case of a test submisson, we need to use the test repository
-                if (submission?.type === SubmissionType.TEST) {
-                    buildPlanId = buildPlanId.replace('solution', 'tests');
-                }
-                break;
-            default:
-            // do nothing
+        const projectKey = (this.exercise as ProgrammingExercise)?.projectKey!.toLowerCase();
+        let repoSlug;
+        if (this.participation?.type === ParticipationType.PROGRAMMING) {
+            repoSlug = projectKey + '-' + (this.participation as ProgrammingExerciseStudentParticipation).participantIdentifier;
+        } else if (this.participation?.type === ParticipationType.TEMPLATE) {
+            // In case of a test submisson, we need to use the test repository
+            repoSlug = projectKey + (submission?.type === SubmissionType.TEST ? '-tests' : '-exercise');
+        } else if (this.participation?.type === ParticipationType.SOLUTION) {
+            // In case of a test submisson, we need to use the test repository
+            repoSlug = projectKey + (submission?.type === SubmissionType.TEST ? '-tests' : '-solution');
         }
-        if (buildPlanId && this.commitHashURLTemplate) {
+        if (repoSlug && this.commitHashURLTemplate) {
             return this.commitHashURLTemplate
-                .replace('{projectKey}', (this.exercise as ProgrammingExercise).projectKey!)
-                .replace('{buildPlanId}', buildPlanId)
+                .replace('{projectKey}', projectKey)
+                .replace('{repoSlug}', repoSlug)
                 .replace('{commitHash}', submission.commitHash ?? '');
         }
         return '';
