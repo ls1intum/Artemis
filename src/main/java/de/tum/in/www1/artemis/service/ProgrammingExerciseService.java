@@ -285,8 +285,10 @@ public class ProgrammingExerciseService {
 
         try {
             setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, projectTypeExerciseResources, projectTypeExercisePrefix, "Exercise", programmingExercise, user);
-            // The template repo can be re-written so we can unprotect the master branch.
-            versionControlService.get().unprotectBranch(programmingExercise.getVcsTemplateRepositoryUrl(), "master");
+            // The template repo can be re-written so we can unprotect the default branch.
+            var templateVcsRepositoryUrl = programmingExercise.getVcsTemplateRepositoryUrl();
+            var templateVcsRepositoryDefaultBranch = versionControlService.get().getDefaultBranch(templateVcsRepositoryUrl);
+            versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateVcsRepositoryDefaultBranch);
 
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix, "Solution", programmingExercise, user);
             setupTestTemplateAndPush(testRepo, testResources, testPrefix, projectTypeTestResources, projectTypeTestPrefix, "Test", programmingExercise, user);

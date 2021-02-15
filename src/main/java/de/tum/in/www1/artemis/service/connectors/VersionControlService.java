@@ -149,6 +149,14 @@ public interface VersionControlService {
     void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws VersionControlException;
 
     /**
+     * Get the default branch of the repository
+     *
+     * @param repositoryUrl The repository url to get the default branch for.
+     * @return the name of the default branch, e.g. 'main'
+     */
+    String getDefaultBranch(VcsRepositoryUrl repositoryUrl) throws VersionControlException;
+
+    /**
      * Unprotects a branch from the repository, so that the history can be changed (important for combine template commits).
      *
      * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.

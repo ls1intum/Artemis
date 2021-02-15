@@ -337,6 +337,12 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
+    public String getDefaultBranch(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
+        // TODO: Implement
+        return null;
+    }
+
+    @Override
     public void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) throws VersionControlException {
         // Not implemented because it's not needed in Bitbucket for the current use case, because the master branch is not protected by default
     }

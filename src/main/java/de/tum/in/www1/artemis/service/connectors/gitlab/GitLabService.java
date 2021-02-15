@@ -131,10 +131,11 @@ public class GitLabService extends AbstractVersionControlService {
     /**
      * Get the default branch of the repository
      *
-     * @param repositoryUrl The repository url of the repository to update. It contains the project key & the repository name.
+     * @param repositoryUrl The repository url to get the default branch for.
      * @return the name of the default branch, e.g. 'main'
      */
-    private String getDefaultBranch(VcsRepositoryUrl repositoryUrl) {
+    @Override
+    public String getDefaultBranch(VcsRepositoryUrl repositoryUrl) throws GitLabException {
         var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
 
         try {
