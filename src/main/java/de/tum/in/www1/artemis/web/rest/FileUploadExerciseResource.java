@@ -148,7 +148,7 @@ public class FileUploadExerciseResource {
 
     private void validateNewOrUpdatedFileUploadExercise(FileUploadExercise fileUploadExercise) throws BadRequestAlertException {
         // Valid exercises have set either a course or an exerciseGroup
-        exerciseService.checkCourseAndExerciseGroupExclusivity(fileUploadExercise, ENTITY_NAME);
+        fileUploadExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
         if (!isFilePatternValid(fileUploadExercise)) {
             throw new BadRequestAlertException("The file pattern is invalid. Please use a comma separated list with actual file endings without dots (e.g. 'png, pdf').",

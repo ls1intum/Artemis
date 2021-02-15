@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -42,15 +43,15 @@ public class ExerciseHintResource {
 
     private final UserRepository userRepository;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
     public ExerciseHintResource(ExerciseHintService exerciseHintService, AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
-            UserRepository userRepository, ExerciseService exerciseService) {
+            UserRepository userRepository, ExerciseRepository exerciseRepository) {
         this.exerciseHintService = exerciseHintService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
-        this.exerciseService = exerciseService;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -68,7 +69,7 @@ public class ExerciseHintResource {
             return badRequest();
         }
         // Reload the exercise from the database as we can't trust data from the client
-        Exercise exercise = exerciseService.findOne(exerciseHint.getExercise().getId());
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseHint.getExercise().getId());
 
         // Hints for exam exercises are not supported at the moment
         if (exercise.isExamExercise()) {
@@ -104,7 +105,7 @@ public class ExerciseHintResource {
             return notFound();
         }
         // Reload the exercise from the database as we can't trust data from the client
-        Exercise exercise = exerciseService.findOne(exerciseHint.getExercise().getId());
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseHint.getExercise().getId());
 
         // Hints for exam exercises are not supported at the moment
         if (exercise.isExamExercise()) {

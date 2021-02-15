@@ -109,12 +109,14 @@ public class CourseResource {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
             ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
-            AssessmentDashboardService assessmentDashboardService) {
+            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository) {
         this.courseService = courseService;
         this.participationService = participationService;
         this.courseRepository = courseRepository;
@@ -134,6 +136,7 @@ public class CourseResource {
         this.env = env;
         this.assessmentDashboardService = assessmentDashboardService;
         this.userRepository = userRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -919,7 +922,7 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (authCheckService.isAdmin(user) || authCheckService.isInstructorInCourse(course, user)) {
-            Set<String> categories = exerciseService.findAllExerciseCategoriesForCourse(course);
+            Set<String> categories = exerciseRepository.findAllCategoryNames(course.getId());
             return ResponseEntity.ok().body(categories);
         }
         else {

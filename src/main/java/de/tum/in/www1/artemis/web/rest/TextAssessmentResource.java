@@ -20,10 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.FeedbackConflictRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamService;
@@ -70,11 +67,11 @@ public class TextAssessmentResource extends AssessmentResource {
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockService textBlockService,
             TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository, TextSubmissionService textSubmissionService,
-            WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService,
+            WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository, GradingCriterionService gradingCriterionService,
             Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
             Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository,
             ExampleSubmissionService exampleSubmissionService) {
-        super(authCheckService, userRepository, exerciseService, textSubmissionService, textAssessmentService, resultRepository, examService, messagingService,
+        super(authCheckService, userRepository, exerciseRepository, textSubmissionService, textAssessmentService, resultRepository, examService, messagingService,
                 exampleSubmissionService);
 
         this.textAssessmentService = textAssessmentService;

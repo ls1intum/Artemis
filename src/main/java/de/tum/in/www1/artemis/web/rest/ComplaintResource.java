@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -49,7 +50,7 @@ public class ComplaintResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
     private final UserRepository userRepository;
 
@@ -59,10 +60,10 @@ public class ComplaintResource {
 
     private final CourseRepository courseRepository;
 
-    public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseService exerciseService, UserRepository userRepository, TeamService teamService,
+    public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository, TeamService teamService,
             ComplaintService complaintService, CourseRepository courseRepository) {
         this.authCheckService = authCheckService;
-        this.exerciseService = exerciseService;
+        this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.teamService = teamService;
         this.complaintService = complaintService;
@@ -222,7 +223,7 @@ public class ComplaintResource {
     @GetMapping("/exercises/{exerciseId}/complaints-for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getComplaintsForAssessmentDashboard(@PathVariable Long exerciseId, Principal principal) {
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
@@ -244,7 +245,7 @@ public class ComplaintResource {
     @GetMapping("/exercises/{exerciseId}/complaints-for-test-run-dashboard")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getComplaintsForTestRunDashboard(@PathVariable Long exerciseId, Principal principal) {
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
@@ -264,7 +265,7 @@ public class ComplaintResource {
     @GetMapping("/exercises/{exerciseId}/more-feedback-for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getMoreFeedbackRequestsForAssessmentDashboard(@PathVariable Long exerciseId, Principal principal) {
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
@@ -350,7 +351,7 @@ public class ComplaintResource {
     public ResponseEntity<List<Complaint>> getComplaintsByExerciseId(@PathVariable Long exerciseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId) {
         // Filtering by exerciseId
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (exercise == null) {

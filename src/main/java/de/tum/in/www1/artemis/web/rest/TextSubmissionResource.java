@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
@@ -38,7 +39,7 @@ public class TextSubmissionResource {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
     private final TextExerciseService textExerciseService;
 
@@ -58,12 +59,12 @@ public class TextSubmissionResource {
 
     private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
 
-    public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
+    public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository, TextExerciseService textExerciseService,
             AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
             GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<AtheneScheduleService> atheneScheduleService,
             ExamSubmissionService examSubmissionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
         this.textSubmissionRepository = textSubmissionRepository;
-        this.exerciseService = exerciseService;
+        this.exerciseRepository = exerciseRepository;
         this.textExerciseService = textExerciseService;
         this.authorizationCheckService = authorizationCheckService;
         this.textSubmissionService = textSubmissionService;
@@ -247,7 +248,7 @@ public class TextSubmissionResource {
             @RequestParam(value = "head", defaultValue = "false") boolean skipAssessmentOrderOptimization,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a text submission without assessment");
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();

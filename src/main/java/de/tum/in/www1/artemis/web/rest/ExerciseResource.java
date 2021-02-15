@@ -50,6 +50,8 @@ public class ExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final ExerciseRepository exerciseRepository;
+
     private final UserRepository userRepository;
 
     private final ParticipationService participationService;
@@ -79,7 +81,8 @@ public class ExerciseResource {
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserRepository userRepository, ExamDateService examDateService,
             AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
             ComplaintRepository complaintRepository, SubmissionService submissionService, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
-            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionService gradingCriterionService) {
+            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionService gradingCriterionService,
+            ExerciseRepository exerciseRepository) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userRepository = userRepository;
@@ -94,6 +97,7 @@ public class ExerciseResource {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gradingCriterionService = gradingCriterionService;
         this.examDateService = examDateService;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -109,7 +113,7 @@ public class ExerciseResource {
         log.debug("REST request to get Exercise : {}", exerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
+        Exercise exercise = exerciseRepository.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
 
         // Exam exercise
         if (exercise.isExamExercise()) {
@@ -159,7 +163,7 @@ public class ExerciseResource {
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
         // Programming exercises with only automatic assessment should *NOT* be available on the assessment dashboard!
@@ -198,7 +202,7 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        Set<Exercise> upcomingExercises = exerciseService.findAllExercisesWithUpcomingDueDate();
+        Set<Exercise> upcomingExercises = exerciseRepository.findAllExercisesWithUpcomingDueDate();
         return ResponseEntity.ok(upcomingExercises);
     }
 
@@ -212,7 +216,7 @@ public class ExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForExerciseAssessmentDashboard(@PathVariable Long exerciseId) {
         log.debug("REST request to get exercise statistics for assessment dashboard : {}", exerciseId);
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
@@ -324,7 +328,7 @@ public class ExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId) {
         log.debug("REST request to reset Exercise : {}", exerciseId);
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
@@ -344,7 +348,7 @@ public class ExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> cleanup(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean deleteRepositories) {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", exerciseId, deleteRepositories);
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
@@ -416,14 +420,14 @@ public class ExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Boolean> toggleSecondCorrectionEnabled(@PathVariable Long exerciseId) {
         log.debug("toggleSecondCorrectionEnabled for exercise with id:" + exerciseId);
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (exercise == null) {
             throw new EntityNotFoundException("Exercise not found with id " + exerciseId);
         }
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
-        return ResponseEntity.ok(exerciseService.toggleSecondCorrection(exercise));
+        return ResponseEntity.ok(exerciseRepository.toggleSecondCorrection(exercise));
     }
 
 }

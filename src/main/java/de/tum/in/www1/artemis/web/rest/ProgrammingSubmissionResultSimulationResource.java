@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -57,13 +58,13 @@ public class ProgrammingSubmissionResultSimulationResource {
 
     private final ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
     public ProgrammingSubmissionResultSimulationResource(ProgrammingSubmissionService programmingSubmissionService, UserRepository userRepository,
             ParticipationService participationService, WebsocketMessagingService messagingService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService, ExerciseService exerciseService,
+            ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authCheckService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.userRepository = userRepository;
@@ -71,7 +72,7 @@ public class ProgrammingSubmissionResultSimulationResource {
         this.messagingService = messagingService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionResultSimulationService = programmingSubmissionResultSimulationService;
-        this.exerciseService = exerciseService;
+        this.exerciseRepository = exerciseRepository;
         this.authCheckService = authCheckService;
     }
 
@@ -89,7 +90,7 @@ public class ProgrammingSubmissionResultSimulationResource {
     public ResponseEntity<ProgrammingSubmission> createParticipationAndSubmissionSimulation(@PathVariable Long exerciseId) {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             return forbidden();
         }

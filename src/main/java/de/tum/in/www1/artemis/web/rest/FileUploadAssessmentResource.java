@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -33,8 +34,8 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
     public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserRepository userRepository,
             FileUploadExerciseService fileUploadExerciseService, FileUploadSubmissionService fileUploadSubmissionService, WebsocketMessagingService messagingService,
-            ExerciseService exerciseService, ResultRepository resultRepository, ExamService examService, ExampleSubmissionService exampleSubmissionService) {
-        super(authCheckService, userRepository, exerciseService, fileUploadSubmissionService, assessmentService, resultRepository, examService, messagingService,
+            ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService, ExampleSubmissionService exampleSubmissionService) {
+        super(authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService, assessmentService, resultRepository, examService, messagingService,
                 exampleSubmissionService);
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;

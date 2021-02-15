@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -64,8 +65,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseService modelingExerciseService, ParticipationService participationService, AuthorizationCheckService authCheckService, CompassService compassService,
-            ExerciseService exerciseService, UserRepository userRepository, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
-        super(submissionRepository, resultService, participationService, authCheckService, userRepository, exerciseService, modelingSubmissionService);
+            ExerciseRepository exerciseRepository, UserRepository userRepository, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
+        super(submissionRepository, resultService, participationService, authCheckService, userRepository, exerciseRepository, modelingSubmissionService);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.compassService = compassService;
@@ -214,7 +215,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
 
         log.debug("REST request to get a modeling submission without assessment");
-        final var exercise = exerciseService.findOne(exerciseId);
+        final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {

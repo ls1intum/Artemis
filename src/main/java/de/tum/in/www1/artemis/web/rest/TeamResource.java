@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -55,7 +56,7 @@ public class TeamResource {
 
     private final CourseRepository courseRepository;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
     private final UserRepository userRepository;
 
@@ -68,13 +69,13 @@ public class TeamResource {
     private final AuditEventRepository auditEventRepository;
 
     public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseRepository courseRepository,
-            ExerciseService exerciseService, UserRepository userRepository, AuthorizationCheckService authCheckService, ParticipationService participationService,
+            ExerciseRepository exerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ParticipationService participationService,
             SubmissionService submissionService, AuditEventRepository auditEventRepository) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.teamWebsocketService = teamWebsocketService;
         this.courseRepository = courseRepository;
-        this.exerciseService = exerciseService;
+        this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.participationService = participationService;
@@ -98,7 +99,7 @@ public class TeamResource {
             throw new BadRequestAlertException("A new team cannot already have an ID", ENTITY_NAME, "idexists");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
@@ -153,7 +154,7 @@ public class TeamResource {
 
         // Prepare auth checks
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         final boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         final boolean isAtLeastTeachingAssistantAndOwner = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)
                 && authCheckService.isOwnerOfTeam(existingTeam.get(), user);
@@ -211,7 +212,7 @@ public class TeamResource {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) && !team.hasStudent(user)) {
             return forbidden();
         }
@@ -231,7 +232,7 @@ public class TeamResource {
     public ResponseEntity<List<Team>> getTeamsForExercise(@PathVariable long exerciseId, @RequestParam(value = "teamOwnerId", required = false) Long teamOwnerId) {
         log.debug("REST request to get all Teams for the exercise with id : {}", exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
@@ -261,7 +262,7 @@ public class TeamResource {
         if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             return forbidden();
         }
@@ -318,7 +319,7 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         return ResponseEntity.ok().body(teamService.searchByLoginOrNameInCourseForExerciseTeam(course, exercise, loginOrName));
     }
 
@@ -336,7 +337,7 @@ public class TeamResource {
         log.debug("REST request import given teams into destination exercise with id {}", exerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             return forbidden();
@@ -379,7 +380,7 @@ public class TeamResource {
         log.debug("REST request import all teams from source exercise with id {} into destination exercise with id {}", sourceExerciseId, destinationExerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Exercise destinationExercise = exerciseService.findOne(destinationExerciseId);
+        Exercise destinationExercise = exerciseRepository.findByIdElseThrow(destinationExerciseId);
 
         if (!authCheckService.isAtLeastInstructorForExercise(destinationExercise, user)) {
             return forbidden();
@@ -390,7 +391,7 @@ public class TeamResource {
         if (!destinationExercise.isTeamMode()) {
             throw new BadRequestAlertException("The destination exercise must be a team-based exercise.", ENTITY_NAME, "destinationExerciseNotTeamBased");
         }
-        Exercise sourceExercise = exerciseService.findOne(sourceExerciseId);
+        Exercise sourceExercise = exerciseRepository.findByIdElseThrow(sourceExerciseId);
         if (!sourceExercise.isTeamMode()) {
             throw new BadRequestAlertException("The source exercise must be a team-based exercise.", ENTITY_NAME, "sourceExerciseNotTeamBased");
         }
@@ -430,7 +431,7 @@ public class TeamResource {
         }
 
         // Get all team instances in course with the given team short name
-        Set<Exercise> exercises = exerciseService.findAllTeamExercisesForCourse(course);
+        Set<Exercise> exercises = exerciseRepository.findAllTeamExercisesByCourseId(course.getId());
         List<Team> teams = teamRepository.findAllByExerciseCourseIdAndShortName(course.getId(), teamShortName);
         Map<Long, Team> exerciseTeamMap = teams.stream().collect(Collectors.toMap(team -> team.getExercise().getId(), team -> team));
 

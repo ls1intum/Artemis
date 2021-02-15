@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -27,7 +28,7 @@ public abstract class AssessmentResource {
 
     protected final UserRepository userRepository;
 
-    protected final ExerciseService exerciseService;
+    protected final ExerciseRepository exerciseRepository;
 
     protected final SubmissionService submissionService;
 
@@ -41,12 +42,12 @@ public abstract class AssessmentResource {
 
     protected final ExampleSubmissionService exampleSubmissionService;
 
-    public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseService exerciseService, SubmissionService submissionService,
+    public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, SubmissionService submissionService,
             AssessmentService assessmentService, ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService,
             ExampleSubmissionService exampleSubmissionService) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
-        this.exerciseService = exerciseService;
+        this.exerciseRepository = exerciseRepository;
         this.submissionService = submissionService;
         this.assessmentService = assessmentService;
         this.resultRepository = resultRepository;
@@ -102,7 +103,7 @@ public abstract class AssessmentResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(exercise, user);
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
@@ -156,7 +157,7 @@ public abstract class AssessmentResource {
      * @return the result linked to the example submission
      */
     ResponseEntity<Result> getExampleAssessment(long exerciseId, long submissionId) {
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ExampleSubmission exampleSubmission = exampleSubmissionService.findOneBySubmissionId(submissionId);
 
         // It is allowed to get the example assessment, if the user is an instructor or
@@ -202,7 +203,7 @@ public abstract class AssessmentResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(exercise, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         if (!(isAtLeastInstructor || userRepository.getUser().getId().equals(submission.getLatestResult().getAssessor().getId()))) {

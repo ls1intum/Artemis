@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -44,14 +45,14 @@ public class SubmissionResource {
 
     private final UserRepository userRepository;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
     public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, ResultService resultService,
-            ParticipationService participationService, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseService exerciseService) {
+            ParticipationService participationService, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.resultService = resultService;
-        this.exerciseService = exerciseService;
+        this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
@@ -98,7 +99,7 @@ public class SubmissionResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Submission>> getTestRunSubmissionsForAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!exercise.isExamExercise()) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }

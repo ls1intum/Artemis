@@ -149,7 +149,7 @@ public class TextExerciseResource {
         }
 
         // Valid exercises have set either a course or an exerciseGroup
-        exerciseService.checkCourseAndExerciseGroupExclusivity(textExercise, ENTITY_NAME);
+        textExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
@@ -198,7 +198,7 @@ public class TextExerciseResource {
         }
 
         // Valid exercises have set either a course or an exerciseGroup
-        exerciseService.checkCourseAndExerciseGroupExclusivity(textExercise, ENTITY_NAME);
+        textExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);

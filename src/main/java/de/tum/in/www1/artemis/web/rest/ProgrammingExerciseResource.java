@@ -371,7 +371,7 @@ public class ProgrammingExerciseResource {
         }
 
         // Valid exercises have set either a course or an exerciseGroup
-        exerciseService.checkCourseAndExerciseGroupExclusivity(programmingExercise, ENTITY_NAME);
+        programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
 
@@ -522,7 +522,7 @@ public class ProgrammingExerciseResource {
         }
 
         // Valid exercises have set either a course or an exerciseGroup
-        exerciseService.checkCourseAndExerciseGroupExclusivity(newExercise, ENTITY_NAME);
+        newExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
@@ -636,7 +636,7 @@ public class ProgrammingExerciseResource {
         }
 
         // Valid exercises have set either a course or an exerciseGroup
-        exerciseService.checkCourseAndExerciseGroupExclusivity(updatedProgrammingExercise, ENTITY_NAME);
+        updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
         // Validate static code analysis settings
         Optional<ResponseEntity<ProgrammingExercise>> optionalStaticCodeAnalysisError = validateStaticCodeAnalysisSettings(updatedProgrammingExercise);

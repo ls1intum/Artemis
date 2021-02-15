@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -27,15 +28,15 @@ public abstract class AbstractSubmissionResource {
 
     protected final UserRepository userRepository;
 
-    protected final ExerciseService exerciseService;
+    protected final ExerciseRepository exerciseRepository;
 
     protected final SubmissionService submissionService;
 
     public AbstractSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ParticipationService participationService,
-            AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseService exerciseService, SubmissionService submissionService) {
+            AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, SubmissionService submissionService) {
         this.submissionRepository = submissionRepository;
         this.resultService = resultService;
-        this.exerciseService = exerciseService;
+        this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
@@ -53,7 +54,7 @@ public abstract class AbstractSubmissionResource {
      */
     protected ResponseEntity<List<Submission>> getAllSubmissions(Long exerciseId, boolean submittedOnly, boolean assessedByTutor, int correctionRound) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         if (assessedByTutor) {
             if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {

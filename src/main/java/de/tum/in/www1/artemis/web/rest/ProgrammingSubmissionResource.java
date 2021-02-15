@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -49,7 +50,7 @@ public class ProgrammingSubmissionResource {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -65,12 +66,12 @@ public class ProgrammingSubmissionResource {
 
     private final UserRepository userRepository;
 
-    public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            Optional<VersionControlService> versionControlService, UserRepository userRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            ParticipationService participationService) {
+    public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseRepository exerciseRepository,
+            AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService, UserRepository userRepository,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService) {
         this.programmingSubmissionService = programmingSubmissionService;
-        this.exerciseService = exerciseService;
+        this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -220,7 +221,7 @@ public class ProgrammingSubmissionResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
         try {
-            Exercise exercise = exerciseService.findOne(exerciseId);
+            Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
             User user = userRepository.getUserWithGroupsAndAuthorities();
 

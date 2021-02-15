@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -44,9 +45,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     private final ParticipationService participationService;
 
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
-            ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService, ResultRepository resultRepository, ExamService examService,
+            ProgrammingSubmissionService programmingSubmissionService, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
             WebsocketMessagingService messagingService, LtiService ltiService, ParticipationService participationService, ExampleSubmissionService exampleSubmissionService) {
-        super(authCheckService, userRepository, exerciseService, programmingSubmissionService, programmingAssessmentService, resultRepository, examService, messagingService,
+        super(authCheckService, userRepository, exerciseRepository, programmingSubmissionService, programmingAssessmentService, resultRepository, examService, messagingService,
                 exampleSubmissionService);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionService = programmingSubmissionService;

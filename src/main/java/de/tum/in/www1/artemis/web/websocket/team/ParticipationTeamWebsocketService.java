@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
@@ -57,20 +58,20 @@ public class ParticipationTeamWebsocketService {
 
     private final ParticipationService participationService;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
     private final TextSubmissionService textSubmissionService;
 
     private final ModelingSubmissionService modelingSubmissionService;
 
     public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
-            ParticipationService participationService, ExerciseService exerciseService, TextSubmissionService textSubmissionService,
+            ParticipationService participationService, ExerciseRepository exerciseRepository, TextSubmissionService textSubmissionService,
             ModelingSubmissionService modelingSubmissionService, HazelcastInstance hazelcastInstance) {
         this.messagingTemplate = messagingTemplate;
         this.simpUserRegistry = simpUserRegistry;
         this.userRepository = userRepository;
         this.participationService = participationService;
-        this.exerciseService = exerciseService;
+        this.exerciseRepository = exerciseRepository;
         this.textSubmissionService = textSubmissionService;
         this.modelingSubmissionService = modelingSubmissionService;
 
@@ -169,7 +170,7 @@ public class ParticipationTeamWebsocketService {
         }
 
         final User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-        final Exercise exercise = exerciseService.findOne(participation.getExercise().getId());
+        final Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
 
         if (submission instanceof ModelingSubmission && exercise instanceof ModelingExercise) {
             submission = modelingSubmissionService.save((ModelingSubmission) submission, (ModelingExercise) exercise, principal.getName());
