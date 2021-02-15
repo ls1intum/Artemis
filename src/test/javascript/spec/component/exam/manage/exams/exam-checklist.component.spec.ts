@@ -46,13 +46,13 @@ describe('ExamChecklistComponent', () => {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
     let exerciseGroupService: ExerciseGroupService;
 
-    function getExerciseGroups(equalPoints: boolean){
+    function getExerciseGroups(equalPoints: boolean) {
         let exerciseGroups = [
             {
                 id: 1,
                 exercises: [
-                    {id: 3, maxPoints: 100, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false},
-                    {id: 2, maxPoints: 100, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false},
+                    { id: 3, maxPoints: 100, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false },
+                    { id: 2, maxPoints: 100, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false },
                 ],
             },
         ];
@@ -139,7 +139,6 @@ describe('ExamChecklistComponent', () => {
     });
 
     describe('test checkTotalPointsMandatory', () => {
-
         beforeEach(() => {
             examDetailComponent.exam.exerciseGroups = getExerciseGroups(true);
         });
@@ -168,7 +167,6 @@ describe('ExamChecklistComponent', () => {
     });
 
     describe('test checkAllExamsGenerated', () => {
-
         beforeEach(() => {
             examDetailComponent.examChecklist = examChecklist;
             examDetailComponent.exam.exerciseGroups = getExerciseGroups(true);
