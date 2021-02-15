@@ -1,19 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Set;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.test.context.support.WithMockUser;
-
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -22,7 +8,21 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -155,6 +155,21 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertTrue(thrown.getMessage().contains("Check that you set the exam max points correctly! The max points a student can earn in the exercise groups is too low"));
     }
 
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void getChecklistStatsEmpty() {
+        // check if general method works. More sophisticated test are within the ExamIntegrationTests
+        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam1);
+        assertThat(examChecklistDTO).isNotEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfTestRuns()).isEqualTo(0);
+        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(0);
+        assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isEqualTo(0);
+        assertThat(examChecklistDTO.getNumberOfExamsStarted()).isEqualTo(0);
+        assertThat(examChecklistDTO.getNumberOfAllComplaints()).isEqualTo(0);
+        assertThat(examChecklistDTO.getNumberOfAllComplaintsDone()).isEqualTo(0);
+        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(false);
+    }
+
     private Exam createExam(int numberOfExercisesInExam, Long id, Integer maxPoints) {
         Exam exam = new Exam();
         exam.setMaxPoints(maxPoints);
@@ -162,6 +177,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         exam.setNumberOfExercisesInExam(numberOfExercisesInExam);
         exam.setStartDate(ZonedDateTime.now().plusDays(1));
         exam.setEndDate(ZonedDateTime.now().plusDays(2));
+        exam.setNumberOfCorrectionRoundsInExam(1);
         return exam;
     }
 
