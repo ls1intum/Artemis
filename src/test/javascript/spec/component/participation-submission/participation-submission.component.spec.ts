@@ -57,6 +57,8 @@ describe('ParticipationSubmissionComponent', () => {
     let debugElement: DebugElement;
     let router: Router;
     const route = { params: of({ participationId: 1, exerciseId: 42 }) };
+    // Template for Bitbucket commit hash url
+    const commitHashURLTemplate = 'https://bitbucket.ase.in.tum.de/projects/{projectKey}/repos/{buildPlanId}/commits/{commitHash}';
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -90,9 +92,9 @@ describe('ParticipationSubmissionComponent', () => {
                 programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
                 profileService = fixture.debugElement.injector.get(ProfileService);
                 findAllSubmissionsOfParticipationStub = stub(submissionService, 'findAllSubmissionsOfParticipation');
-                // set profile info
+                // Set profile info
                 const profileInfo = new ProfileInfo();
-                profileInfo.activeProfiles = ['dev', 'artemis', 'bamboo', 'bitbucket', 'jira'];
+                profileInfo.commitHashURLTemplate = commitHashURLTemplate;
                 stub(profileService, 'getProfileInfo').returns(new BehaviorSubject(profileInfo));
                 fixture.ngZone!.run(() => router.initialNavigation());
             });
@@ -148,7 +150,7 @@ describe('ParticipationSubmissionComponent', () => {
         TestBed.get(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
         const templateParticipation = new TemplateProgrammingExerciseParticipation();
         templateParticipation.id = 2;
-        templateParticipation.repositoryUrl = 'https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git';
+        templateParticipation.buildPlanId = 'submission1-exercise';
         templateParticipation.submissions = [
             {
                 submissionExerciseType: SubmissionExerciseType.PROGRAMMING,
@@ -160,7 +162,7 @@ describe('ParticipationSubmissionComponent', () => {
                 participation: templateParticipation,
             },
         ] as ProgrammingSubmission[];
-        const programmingExercise = { type: ExerciseType.PROGRAMMING, templateParticipation } as ProgrammingExercise;
+        const programmingExercise = { type: ExerciseType.PROGRAMMING, projectKey: 'SUBMISSION1', templateParticipation } as ProgrammingExercise;
         const findWithTemplateAndSolutionParticipationStub = stub(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
         findWithTemplateAndSolutionParticipationStub.returns(of(new HttpResponse({ body: programmingExercise })));
 
@@ -174,8 +176,9 @@ describe('ParticipationSubmissionComponent', () => {
         expect(comp.submissions).to.be.deep.equal(templateParticipation.submissions);
 
         // Create correct url for commit hash
-        const commitHashUrl = comp.getCommitUrl(templateParticipation.submissions[0]);
-        expect(commitHashUrl).to.equal('https://bitbucket.ase.in.tum.de/projects/ITCPLEASE1/repos/itcplease1-exercise/commits/123456789');
+        const submission = templateParticipation.submissions[0] as ProgrammingSubmission;
+        checkForCorrectCommitHashUrl(submission, programmingExercise, templateParticipation);
+
         fixture.destroy();
         flush();
     }));
@@ -185,6 +188,7 @@ describe('ParticipationSubmissionComponent', () => {
         TestBed.get(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
         const solutionParticipation = new SolutionProgrammingExerciseParticipation();
         solutionParticipation.id = 3;
+        solutionParticipation.buildPlanId = 'submission1-solution';
         solutionParticipation.submissions = [
             {
                 submissionExerciseType: SubmissionExerciseType.PROGRAMMING,
@@ -196,7 +200,7 @@ describe('ParticipationSubmissionComponent', () => {
                 participation: solutionParticipation,
             },
         ] as ProgrammingSubmission[];
-        const programmingExercise = { type: ExerciseType.PROGRAMMING, solutionParticipation } as ProgrammingExercise;
+        const programmingExercise = { type: ExerciseType.PROGRAMMING, projectKey: 'SUBMISSION1', solutionParticipation } as ProgrammingExercise;
         const findWithTemplateAndSolutionParticipationStub = stub(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
         findWithTemplateAndSolutionParticipationStub.returns(of(new HttpResponse({ body: programmingExercise })));
 
@@ -208,7 +212,24 @@ describe('ParticipationSubmissionComponent', () => {
         expect(comp.participation).to.be.deep.equal(solutionParticipation);
         expect(comp.submissions).to.be.deep.equal(solutionParticipation.submissions);
 
+        // Create correct url for commit hash
+        const submission = solutionParticipation.submissions[0] as ProgrammingSubmission;
+        checkForCorrectCommitHashUrl(submission, programmingExercise, solutionParticipation);
+
         fixture.destroy();
         flush();
     }));
+
+    function checkForCorrectCommitHashUrl(
+        submission: ProgrammingSubmission,
+        programmingExercise: ProgrammingExercise,
+        participation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation,
+    ) {
+        const receivedCommitHashUrl = comp.getCommitUrl(submission);
+        const commitHashUrl = commitHashURLTemplate
+            .replace('{projectKey}', programmingExercise.projectKey!)
+            .replace('{buildPlanId}', participation.buildPlanId!)
+            .replace('{commitHash}', submission.commitHash!);
+        expect(receivedCommitHashUrl).to.equal(commitHashUrl);
+    }
 });
