@@ -17,6 +17,9 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the ProgrammingExercise entity.
@@ -236,4 +239,109 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     long countByShortNameAndExerciseGroupExamCourse(String shortName, Course course);
 
     long countByTitleAndExerciseGroupExamCourse(String shortName, Course course);
+
+    /**
+     * Returns the list of programming exercises with a buildAndTestStudentSubmissionsAfterDueDate in future.
+     *
+     * @return List<ProgrammingExercise>
+     */
+    default List<ProgrammingExercise> findAllWithBuildAndTestAfterDueDateInFuture() {
+        return findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
+    }
+
+    /**
+     * Find the ProgrammingExercise where the given Participation is the template Participation
+     *
+     * @param participation The template participation
+     * @return The ProgrammingExercise where the given Participation is the template Participation
+     */
+    default ProgrammingExercise getExercise(TemplateProgrammingExerciseParticipation participation) {
+        return findOneByTemplateParticipationId(participation.getId());
+    }
+
+    /**
+     * Find the ProgrammingExercise where the given Participation is the solution Participation
+     *
+     * @param participation The solution participation
+     * @return The ProgrammingExercise where the given Participation is the solution Participation
+     */
+    default ProgrammingExercise getExercise(SolutionProgrammingExerciseParticipation participation) {
+        return findOneBySolutionParticipationId(participation.getId());
+    }
+
+    /**
+     * Find a programming exercise by its id and throw an EntityNotFoundException if it cannot be found
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    default ProgrammingExercise findByIdElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
+        return findById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
+     * Find a programming exercise by its id, including template and solution but without results.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    default ProgrammingExercise findWithTemplateAndSolutionParticipationByIdElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
+     * Find a programming exercise by its id, including template and solution participation and their latest results.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    default ProgrammingExercise findWithTemplateAndSolutionParticipationWithResultsByIdElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationLatestResultById(programmingExerciseId);
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
+     * Find a programming exercise by its id, with eagerly loaded studentParticipations and submissions
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    default ProgrammingExercise findWithStudentParticipationsAndSubmissionsByIdElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithEagerStudentParticipationsStudentAndSubmissionsById(programmingExerciseId);
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
+     * @param exerciseId     the exercise we are interested in
+     * @param ignoreTestRuns should be set for exam exercises
+     * @return the number of programming submissions which should be assessed
+     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
+     */
+    default long countSubmissionsByExerciseIdSubmitted(Long exerciseId, boolean ignoreTestRuns) {
+        if (ignoreTestRuns) {
+            return countSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
+        }
+        else {
+            return countSubmissionsByExerciseIdSubmitted(exerciseId);
+        }
+    }
+
+    /**
+     * @param exerciseId     the exercise we are interested in
+     * @param ignoreTestRuns should be set for exam exercises
+     * @return the number of assessed programming submissions
+     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
+     */
+    default long countAssessmentsByExerciseIdSubmitted(Long exerciseId, boolean ignoreTestRuns) {
+        if (ignoreTestRuns) {
+            return countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
+        }
+        else {
+            return countAssessmentsByExerciseIdSubmitted(exerciseId);
+        }
+    }
 }

@@ -576,10 +576,23 @@ public class ProgrammingExercise extends Exercise {
         return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
     }
 
+    /**
+     * This checks if the current result is rated and has a completion date.
+     * @param result The current result
+     * @return true if the result is manual and assessed, false otherwise
+     */
     private boolean checkForRatedAndAssessedResult(Result result) {
+        return Boolean.TRUE.equals(result.isRated()) && checkForAssessedResult(result);
+    }
+
+    /**
+     * This checks if the current result has a completion date and if the assessment is over
+     * @param result The current result
+     * @return true if the result is manual and the assessment is over or it is an automatic result, false otherwise
+     */
+    private boolean checkForAssessedResult(Result result) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-        return Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null
-                && ((result.isManual() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC));
+        return result.getCompletionDate() != null && ((result.isManual() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC));
     }
 
     @Override
@@ -604,5 +617,17 @@ public class ProgrammingExercise extends Exercise {
 
     public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
         this.checkoutSolutionRepository = checkoutSolutionRepository;
+    }
+
+    /**
+     * Sets the transient attribute "isLocalSimulation" if the exercises is a programming exercise
+     * and the testRepositoryUrl contains the String "artemislocalhost" which is the indicator that the programming exercise has
+     * no connection to a version control and continuous integration server
+     *
+     */
+    public void checksAndSetsIfProgrammingExerciseIsLocalSimulation() {
+        if (getTestRepositoryUrl().contains("artemislocalhost")) {
+            setIsLocalSimulation(true);
+        }
     }
 }

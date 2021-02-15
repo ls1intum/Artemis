@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
@@ -23,18 +23,18 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -60,15 +60,9 @@ public class ProgrammingExerciseService {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
-
-    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
     private final ParticipationService participationService;
 
-    private final ResultRepository resultRepository;
-
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -78,11 +72,17 @@ public class ProgrammingExerciseService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    private final ResultRepository resultRepository;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
-            ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService, ResourceLoaderService resourceLoaderService,
+            ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ResourceLoaderService resourceLoaderService,
             GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
@@ -93,7 +93,7 @@ public class ProgrammingExerciseService {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.resourceLoaderService = resourceLoaderService;
         this.groupNotificationService = groupNotificationService;
@@ -128,7 +128,7 @@ public class ProgrammingExerciseService {
     @Transactional // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
-        final var user = userService.getUser();
+        final var user = userRepository.getUser();
 
         createRepositoriesForNewExercise(programmingExercise);
         initParticipations(programmingExercise);
@@ -374,7 +374,7 @@ public class ProgrammingExerciseService {
      * @param templateName         The name of the template
      * @param programmingExercise  the programming exercise
      * @param user                 The user that triggered the action (used as Git commit author)
-     * @throws Exception
+     * @throws Exception           An exception in case something went wrong
      */
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, @Nullable Resource[] projectTypeResources, String projectTypePrefix,
             String templateName, ProgrammingExercise programmingExercise, User user) throws Exception {
@@ -553,13 +553,9 @@ public class ProgrammingExerciseService {
         // there is no need in python to replace package names
 
         replacements.put("${exerciseNamePomXml}", programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
-
         replacements.put("${exerciseName}", programmingExercise.getTitle());
-
         replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
-
         replacements.put("${packaging}", programmingExercise.hasSequentialTestRuns() ? "pom" : "jar");
-
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements);
     }
 
@@ -575,112 +571,6 @@ public class ProgrammingExerciseService {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, message, user);
         repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
-    }
-
-    /**
-     * Find the ProgrammingExercise where the given Participation is the template Participation
-     *
-     * @param participation The template participation
-     * @return The ProgrammingExercise where the given Participation is the template Participation
-     */
-    public ProgrammingExercise getExercise(TemplateProgrammingExerciseParticipation participation) {
-        return programmingExerciseRepository.findOneByTemplateParticipationId(participation.getId());
-    }
-
-    /**
-     * Find the ProgrammingExercise where the given Participation is the solution Participation
-     *
-     * @param participation The solution participation
-     * @return The ProgrammingExercise where the given Participation is the solution Participation
-     */
-    public ProgrammingExercise getExercise(SolutionProgrammingExerciseParticipation participation) {
-        return programmingExerciseRepository.findOneBySolutionParticipationId(participation.getId());
-    }
-
-    /**
-     * Find a programming exercise by its id.
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     */
-    public ProgrammingExercise findById(Long programmingExerciseId) {
-        return programmingExerciseRepository.findById(programmingExerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("Programming exercise not found with id " + programmingExerciseId));
-    }
-
-    /**
-     * Find a programming exercise by its id, including template and solution but without results.
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     * @throws EntityNotFoundException the programming exercise could not be found.
-     */
-    public ProgrammingExercise findWithTemplateParticipationAndSolutionParticipationById(Long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
-        if (programmingExercise.isPresent()) {
-            return programmingExercise.get();
-        }
-        else {
-            throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
-        }
-    }
-
-    /**
-     * Find a programming exercise by its id, including template and solution participation and their latest results.
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     * @throws EntityNotFoundException the programming exercise could not be found.
-     */
-    public ProgrammingExercise findWithTemplateAndSolutionParticipationWithResultsById(Long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationLatestResultById(programmingExerciseId);
-        if (programmingExercise.isPresent()) {
-            return programmingExercise.get();
-        }
-        else {
-            throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
-        }
-    }
-
-    /**
-     * Find a programming exercise by its id, with eagerly loaded studentParticipations and submissions
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     * @throws EntityNotFoundException the programming exercise could not be found.
-     */
-    public ProgrammingExercise findByIdWithEagerStudentParticipationsAndSubmissions(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(programmingExerciseId);
-        if (programmingExercise.isPresent()) {
-            return programmingExercise.get();
-        }
-        else {
-            throw new EntityNotFoundException("programming exercise not found");
-        }
-    }
-
-    /**
-     * Find a programming exercise by its exerciseId, including all test cases, also perform security checks
-     *
-     * @param exerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     * @throws EntityNotFoundException the programming exercise could not be found.
-     * @throws IllegalAccessException  the retriever does not have the permissions to fetch information related to the programming exercise.
-     */
-    public ProgrammingExercise findWithTestCasesById(Long exerciseId) throws EntityNotFoundException, IllegalAccessException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTestCasesById(exerciseId);
-        if (programmingExercise.isPresent()) {
-            Course course = programmingExercise.get().getCourseViaExerciseGroupOrCourseMember();
-            User user = userService.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-                throw new IllegalAccessException();
-            }
-            return programmingExercise.get();
-        }
-        else {
-            throw new EntityNotFoundException("programming exercise not found");
-        }
     }
 
     /**
@@ -703,19 +593,13 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
 
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(updatedProgrammingExercise.getId());
-        if (programmingExercise.isPresent()) {
-            programmingExercise.get().setReleaseDate(updatedProgrammingExercise.getReleaseDate());
-            programmingExercise.get().setDueDate(updatedProgrammingExercise.getDueDate());
-            programmingExercise.get().setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
-            programmingExercise.get().setAssessmentType(updatedProgrammingExercise.getAssessmentType());
-            programmingExercise.get().setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
-        }
-        else {
-            throw new EntityNotFoundException("Programming exercise not found with id: " + updatedProgrammingExercise.getId());
-        }
-
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise.get());
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
+        programmingExercise.setReleaseDate(updatedProgrammingExercise.getReleaseDate());
+        programmingExercise.setDueDate(updatedProgrammingExercise.getDueDate());
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+        programmingExercise.setAssessmentType(updatedProgrammingExercise.getAssessmentType());
+        programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
         }
@@ -734,13 +618,9 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement, @Nullable String notificationText)
             throws EntityNotFoundException, IllegalAccessException {
-        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
-        if (programmingExerciseOpt.isEmpty()) {
-            throw new EntityNotFoundException("Programming exercise not found with id: " + programmingExerciseId);
-        }
-        ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
@@ -839,8 +719,8 @@ public class ProgrammingExerciseService {
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
         // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .get();
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
         final var templateRepositoryUrlAsUrl = programmingExercise.getVcsTemplateRepositoryUrl();
         final var solutionRepositoryUrlAsUrl = programmingExercise.getVcsSolutionRepositoryUrl();
         final var testRepositoryUrlAsUrl = programmingExercise.getVcsTestRepositoryUrl();
@@ -894,15 +774,6 @@ public class ProgrammingExerciseService {
         programmingExerciseRepository.delete(programmingExercise);
     }
 
-    /**
-     * Returns the list of programming exercises with a buildAndTestStudentSubmissionsAfterDueDate in future.
-     *
-     * @return List<ProgrammingExercise>
-     */
-    public List<ProgrammingExercise> findAllWithBuildAndTestAfterDueDateInFuture() {
-        return programmingExerciseRepository.findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
-    }
-
     public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
         // Is true if the exercise is released and has at least one result.
         // We can't use the resultService here due to a circular dependency issue.
@@ -951,91 +822,6 @@ public class ProgrammingExerciseService {
                 List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.ADMIN));
         if (teachingAssistantGroup != null) {
             continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(teachingAssistantGroup), List.of(CIPermission.READ));
-        }
-    }
-
-    /**
-     * Check if the repository of the given participation is locked.
-     * This is the case when the participation is a ProgrammingExerciseStudentParticipation, the buildAndTestAfterDueDate of the exercise is set and the due date has passed,
-     * or if manual correction is involved and the due date has passed.
-     *
-     * Locked means that the student can't make any changes to their repository anymore. While we can control this easily in the remote VCS, we need to check this manually for the local repository on the Artemis server.
-     *
-     * @param participation ProgrammingExerciseParticipation
-     * @return true if repository is locked, false if not.
-     */
-    public boolean isParticipationRepositoryLocked(ProgrammingExerciseParticipation participation) {
-        if (participation instanceof ProgrammingExerciseStudentParticipation) {
-            ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-            // Editing is allowed if build and test after due date is not set and no manual correction is involved
-            // (this should match CodeEditorStudentContainerComponent.repositoryIsLocked on the client-side)
-            boolean isEditingAfterDueAllowed = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null
-                    && programmingExercise.getAssessmentType() == AssessmentType.AUTOMATIC;
-            return programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now()) && !isEditingAfterDueAllowed;
-        }
-        return false;
-    }
-
-    /**
-     * @param exerciseId     the exercise we are interested in
-     * @param ignoreTestRuns should be set for exam exercises
-     * @return the number of programming submissions which should be assessed
-     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
-     */
-    public long countSubmissionsByExerciseIdSubmitted(Long exerciseId, boolean ignoreTestRuns) {
-        long start = System.currentTimeMillis();
-        long count;
-        if (ignoreTestRuns) {
-            count = programmingExerciseRepository.countSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
-        }
-        else {
-            count = programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exerciseId);
-        }
-        log.debug("countSubmissionsByExerciseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
-        return count;
-    }
-
-    /**
-     * @param exerciseId     the exercise we are interested in
-     * @param ignoreTestRuns should be set for exam exercises
-     * @return the number of assessed programming submissions
-     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
-     */
-    public long countAssessmentsByExerciseIdSubmitted(Long exerciseId, boolean ignoreTestRuns) {
-        long start = System.currentTimeMillis();
-        long count;
-        if (ignoreTestRuns) {
-            count = programmingExerciseRepository.countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
-        }
-        else {
-            count = programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId);
-        }
-        log.debug("countAssessmentsByExerciseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
-        return count;
-    }
-
-    /**
-     * @param courseId the course we are interested in
-     * @return the number of programming submissions which should be assessed, so we ignore exercises with only automatic assessment
-     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
-     */
-    public long countSubmissionsByCourseIdSubmitted(Long courseId) {
-        long start = System.currentTimeMillis();
-        var count = programmingExerciseRepository.countSubmissionsByCourseIdSubmitted(courseId);
-        log.debug("countSubmissionsByCourseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
-        return count;
-    }
-
-    /**
-     * Sets the transient attribute "isLocalSimulation" if the exercises is a programming exercise
-     * and the testRepositoryUrl contains the String "artemislocalhost" which is the indicator that the programming exercise has
-     * no connection to a version control and continuous integration server
-     *
-     * @param exercise the exercise for which to set if it is a local simulation
-     */
-    public void checksAndSetsIfProgrammingExerciseIsLocalSimulation(Exercise exercise) {
-        if (exercise instanceof ProgrammingExercise && (((ProgrammingExercise) exercise).getTestRepositoryUrl()).contains("artemislocalhost")) {
-            ((ProgrammingExercise) exercise).setIsLocalSimulation(true);
         }
     }
 

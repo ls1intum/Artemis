@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * A Exercise.
@@ -853,6 +854,18 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
+     * Check whether the exercise has either a course or an exerciseGroup.
+     *
+     * @param entityName name of the entity
+     * @throws BadRequestAlertException if course and exerciseGroup are set or course and exerciseGroup are not set
+     */
+    public void checkCourseAndExerciseGroupExclusivity(String entityName) throws BadRequestAlertException {
+        if (isCourseExercise() == isExamExercise()) {
+            throw new BadRequestAlertException("An exercise must have either a course or an exerciseGroup", entityName, "eitherCourseOrExerciseGroupSet");
+        }
+    }
+
+    /**
      * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
      * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
      */
@@ -860,7 +873,7 @@ public abstract class Exercise extends DomainObject {
 
         ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
 
-        private String mappedColumnName;
+        private final String mappedColumnName;
 
         ExerciseSearchColumn(String mappedColumnName) {
             this.mappedColumnName = mappedColumnName;

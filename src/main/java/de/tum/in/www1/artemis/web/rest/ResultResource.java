@@ -31,10 +31,14 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -54,7 +58,7 @@ public class ResultResource {
     private String applicationName;
 
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
-    private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE = "";
+    private String artemisAuthenticationTokenValue = "";
 
     private final ResultRepository resultRepository;
 
@@ -62,13 +66,13 @@ public class ResultResource {
 
     private final ResultService resultService;
 
-    private final ExamService examService;
+    private final ExamDateService examDateService;
 
     private final ExerciseService exerciseService;
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
@@ -82,7 +86,7 @@ public class ResultResource {
 
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-            ResultRepository resultRepository, WebsocketMessagingService messagingService, UserService userService, ExamService examService,
+            ResultRepository resultRepository, WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
             ProgrammingExerciseGradingService programmingExerciseGradingService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
@@ -93,8 +97,8 @@ public class ResultResource {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.messagingService = messagingService;
         this.ltiService = ltiService;
-        this.userService = userService;
-        this.examService = examService;
+        this.userRepository = userRepository;
+        this.examDateService = examDateService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
     }
 
@@ -113,7 +117,7 @@ public class ResultResource {
     @PostMapping(value = Constants.NEW_RESULT_RESOURCE_PATH)
     public ResponseEntity<?> notifyNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
         log.debug("Received result notify (NEW)");
-        if (token == null || !token.equals(ARTEMIS_AUTHENTICATION_TOKEN_VALUE)) {
+        if (token == null || !token.equals(artemisAuthenticationTokenValue)) {
             log.info("Cancelling request with invalid token {}", token);
             return forbidden(); // Only allow endpoint when using correct token
         }
@@ -320,7 +324,7 @@ public class ResultResource {
         }
 
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         boolean filterForStudent = authCheckService.isStudentInCourse(course, user);
 
         if (filterForStudent) {
@@ -409,7 +413,7 @@ public class ResultResource {
         }
         else {
             Exam exam = exercise.getExerciseGroup().getExam();
-            ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndividualExamEndDate(exam);
+            ZonedDateTime latestIndiviudalExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
             if (latestIndiviudalExamEndDate == null || ZonedDateTime.now().isBefore(latestIndiviudalExamEndDate)) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
                         "External submissions are not supported before the end of the exam.")).build();
@@ -421,8 +425,8 @@ public class ResultResource {
                     "External submissions are not supported for Quiz exercises.")).build();
         }
 
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Optional<User> student = userService.getUserWithAuthoritiesByLogin(studentLogin);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
