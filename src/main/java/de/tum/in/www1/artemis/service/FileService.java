@@ -666,8 +666,10 @@ public class FileService implements DisposableBean {
     public void scheduleForDeletion(Path path, long delayInMinutes) {
         ScheduledFuture<?> future = executor.schedule(() -> {
             try {
-                log.info("Delete file " + path);
-                Files.delete(path);
+                if (Files.exists(path)) {
+                    log.info("Delete file " + path);
+                    Files.delete(path);
+                }
                 futures.remove(path);
             }
             catch (IOException e) {
@@ -687,8 +689,10 @@ public class FileService implements DisposableBean {
     public void scheduleForDirectoryDeletion(Path path, long delayInMinutes) {
         ScheduledFuture<?> future = executor.schedule(() -> {
             try {
-                log.info("Delete directory  " + path);
-                FileUtils.deleteDirectory(path.toFile());
+                if (Files.exists(path) && Files.isDirectory(path)) {
+                    log.info("Delete directory  " + path);
+                    FileUtils.deleteDirectory(path.toFile());
+                }
                 futures.remove(path);
             }
             catch (IOException e) {
