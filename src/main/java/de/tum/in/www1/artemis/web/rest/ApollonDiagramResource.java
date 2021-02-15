@@ -16,9 +16,9 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -42,16 +42,16 @@ public class ApollonDiagramResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
-    private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
-    public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository, AuthorizationCheckService authCheckService, UserService userService,
-            CourseService courseService) {
+    public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            CourseRepository courseRepository) {
         this.apollonDiagramRepository = apollonDiagramRepository;
         this.authCheckService = authCheckService;
-        this.userService = userService;
-        this.courseService = courseService;
+        this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -67,8 +67,8 @@ public class ApollonDiagramResource {
     public ResponseEntity<ApollonDiagram> createApollonDiagram(@RequestBody ApollonDiagram apollonDiagram, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to save ApollonDiagram : {}", apollonDiagram);
 
-        Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -96,8 +96,8 @@ public class ApollonDiagramResource {
     public ResponseEntity<ApollonDiagram> updateApollonDiagram(@RequestBody ApollonDiagram apollonDiagram, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to update ApollonDiagram : {}", apollonDiagram);
 
-        Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -133,8 +133,8 @@ public class ApollonDiagramResource {
     public List<ApollonDiagram> getDiagramsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagrams matching current course");
 
-        Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -156,8 +156,8 @@ public class ApollonDiagramResource {
         Optional<ApollonDiagram> apollonDiagram = apollonDiagramRepository.findById(id);
 
         if (apollonDiagram.isPresent()) {
-            Course course = courseService.findOne(courseId);
-            User user = userService.getUserWithGroupsAndAuthorities();
+            Course course = courseRepository.findByIdElseThrow(courseId);
+            User user = userRepository.getUserWithGroupsAndAuthorities();
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 throw new AccessForbiddenException("You are not allowed to access this resource");
             }
@@ -180,8 +180,8 @@ public class ApollonDiagramResource {
 
         Optional<ApollonDiagram> apollonDiagram = apollonDiagramRepository.findById(id);
 
-        Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }

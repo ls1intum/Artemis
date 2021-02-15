@@ -23,7 +23,9 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -40,7 +42,7 @@ public class QuizSubmissionResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final QuizExerciseService quizExerciseService;
 
@@ -55,12 +57,12 @@ public class QuizSubmissionResource {
     private final ExamSubmissionService examSubmissionService;
 
     public QuizSubmissionResource(QuizExerciseService quizExerciseService, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
-            WebsocketMessagingService messagingService, UserService userService, AuthorizationCheckService authCheckService, ExamSubmissionService examSubmissionService) {
+            WebsocketMessagingService messagingService, UserRepository userRepository, AuthorizationCheckService authCheckService, ExamSubmissionService examSubmissionService) {
         this.quizExerciseService = quizExerciseService;
         this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
         this.messagingService = messagingService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.examSubmissionService = examSubmissionService;
     }
@@ -117,7 +119,7 @@ public class QuizSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
             return ResponseEntity.status(403)
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
@@ -223,7 +225,7 @@ public class QuizSubmissionResource {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Apply further checks if it is an exam submission
         Optional<ResponseEntity<QuizSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(quizExercise, user);

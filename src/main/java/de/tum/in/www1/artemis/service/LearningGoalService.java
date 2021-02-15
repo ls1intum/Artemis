@@ -10,6 +10,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
@@ -19,10 +20,10 @@ public class LearningGoalService {
 
     private final ParticipationService participationService;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
-    public LearningGoalService(ParticipationService participationService, ExerciseService exerciseService) {
-        this.exerciseService = exerciseService;
+    public LearningGoalService(ParticipationService participationService, ExerciseRepository exerciseRepository) {
+        this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
     }
 
@@ -81,7 +82,7 @@ public class LearningGoalService {
                 .filter(exerciseUnit -> exerciseUnit.getExercise() != null && exerciseUnit.getExercise().isAssessmentDueDateOver()).collect(Collectors.toList());
         List<Long> exerciseIds = filteredExerciseUnits.stream().map(exerciseUnit -> exerciseUnit.getExercise().getId()).distinct().collect(Collectors.toList());
 
-        Map<Long, CourseExerciseStatisticsDTO> exerciseIdToExerciseCourseStatistics = this.exerciseService.calculateExerciseStatistics(exerciseIds).stream()
+        Map<Long, CourseExerciseStatisticsDTO> exerciseIdToExerciseCourseStatistics = exerciseRepository.calculateExerciseStatistics(exerciseIds).stream()
                 .collect(Collectors.toMap(CourseExerciseStatisticsDTO::getExerciseId, courseExerciseStatisticsDTO -> courseExerciseStatisticsDTO));
 
         // for each exercise unit, the exercise will be mapped to a freshly created lecture unit course progress.

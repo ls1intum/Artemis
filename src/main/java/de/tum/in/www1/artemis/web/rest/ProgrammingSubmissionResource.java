@@ -25,14 +25,17 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -47,9 +50,9 @@ public class ProgrammingSubmissionResource {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -57,30 +60,25 @@ public class ProgrammingSubmissionResource {
 
     private final ParticipationService participationService;
 
-    private final ResultRepository resultRepository;
-
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
-    private StudentParticipationRepository studentParticipationRepository;
-
-    public ProgrammingSubmissionResource(StudentParticipationRepository studentParticipationRepository, ProgrammingSubmissionService programmingSubmissionService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService, UserService userService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, ResultRepository resultRepository) {
+    public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseRepository exerciseRepository,
+            AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService, UserRepository userRepository,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService) {
         this.programmingSubmissionService = programmingSubmissionService;
-        this.exerciseService = exerciseService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.exerciseRepository = exerciseRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.versionControlService = versionControlService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.continuousIntegrationService = continuousIntegrationService;
         this.participationService = participationService;
-        this.resultRepository = resultRepository;
     }
 
     /**
@@ -223,9 +221,9 @@ public class ProgrammingSubmissionResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
         try {
-            Exercise exercise = exerciseService.findOne(exerciseId);
+            Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            User user = userService.getUserWithGroupsAndAuthorities();
+            User user = userRepository.getUserWithGroupsAndAuthorities();
 
             if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
                 return forbidden();
@@ -257,7 +255,7 @@ public class ProgrammingSubmissionResource {
         if (participationIds.isEmpty()) {
             return badRequest();
         }
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
         if (programmingExercise == null) {
             return notFound();
         }
@@ -346,7 +344,7 @@ public class ProgrammingSubmissionResource {
     public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all programming submissions");
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        Exercise exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -355,7 +353,7 @@ public class ProgrammingSubmissionResource {
         final boolean examMode = exercise.isExamExercise();
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
-            User user = userService.getUserWithGroupsAndAuthorities();
+            User user = userRepository.getUserWithGroupsAndAuthorities();
             programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user, examMode,
                     correctionRound);
         }
@@ -384,7 +382,7 @@ public class ProgrammingSubmissionResource {
         log.debug("REST request to get ProgrammingSubmission of Participation with id: {}", participationId);
         final var participation = participationService.findOneWithEagerResults(participationId);
         final var exercise = participation.getExercise();
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
@@ -423,8 +421,8 @@ public class ProgrammingSubmissionResource {
     public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a programming submission without assessment");
-        final ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             return forbidden();
         }

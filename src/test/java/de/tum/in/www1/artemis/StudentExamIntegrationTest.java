@@ -41,7 +41,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.StudentExamService;
+import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -131,9 +131,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testFindOne() {
         assertThrows(EntityNotFoundException.class, () -> {
-            studentExamService.findOne(Long.MAX_VALUE);
+            studentExamRepository.findByIdElseThrow(Long.MAX_VALUE);
         });
-        assertThat(studentExamService.findOne(studentExam1.getId())).isEqualTo(studentExam1);
+        assertThat(studentExamRepository.findByIdElseThrow(studentExam1.getId())).isEqualTo(studentExam1);
     }
 
     @Test

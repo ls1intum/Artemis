@@ -48,13 +48,13 @@ import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
 import com.atlassian.bamboo.specs.model.task.TestParserTaskProperties;
 import com.atlassian.bamboo.specs.util.BambooServer;
 
-import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
+import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import io.github.jhipster.config.JHipsterConstants;
 
 @Service
@@ -90,7 +90,7 @@ public class BambooBuildPlanService {
 
     /**
      * Creates a Build Plan for a Programming Exercise
-     * 
+     *
      * @param programmingExercise    programming exercise with the required
      *                               information to create the base build plan
      * @param planKey                the key of the build plan
@@ -120,7 +120,7 @@ public class BambooBuildPlanService {
 
     /**
      * Set Build Plan Permissions for admins, instructors and teaching assistants.
-     * 
+     *
      * @param programmingExercise a programming exercise with the required
      *                            information to set the needed build plan
      *                            permissions

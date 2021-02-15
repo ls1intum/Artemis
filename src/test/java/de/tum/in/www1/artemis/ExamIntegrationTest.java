@@ -30,8 +30,10 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ExamService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
+import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
@@ -56,6 +58,12 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     ExamService examService;
+
+    @Autowired
+    ExamDateService examDateService;
+
+    @Autowired
+    ExamRegistrationService examRegistrationService;
 
     @Autowired
     ExerciseGroupRepository exerciseGroupRepository;
@@ -1457,7 +1465,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam1.setStartDate(now.minusHours(2));
         exam1.setEndDate(now);
         final var exam = examRepository.save(exam1);
-        final var latestIndividualExamEndDate = examService.getLatestIndividualExamEndDate(exam.getId());
+        final var latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exam.getId());
         assertThat(latestIndividualExamEndDate.isEqual(exam.getEndDate())).isTrue();
     }
 
@@ -1468,7 +1476,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam1.setStartDate(null);
         exam1.setEndDate(now);
         final var exam = examRepository.save(exam1);
-        final var individualExamEndDates = examService.getAllIndividualExamEndDates(exam);
+        final var individualExamEndDates = examDateService.getAllIndividualExamEndDates(exam);
         assertThat(individualExamEndDates).isNull();
     }
 
@@ -1501,7 +1509,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         studentExam3.setTestRun(false);
         studentExamRepository.save(studentExam3);
 
-        final var individualWorkingTimes = examService.getAllIndividualExamEndDates(exam.getId());
+        final var individualWorkingTimes = examDateService.getAllIndividualExamEndDates(exam.getId());
         assertThat(individualWorkingTimes.size()).isEqualTo(2);
     }
 
@@ -1513,7 +1521,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam1.setEndDate(now);
         exam1.setGracePeriod(180);
         final var exam = examRepository.save(exam1);
-        final var isOver = examService.isExamOver(exam.getId());
+        final var isOver = examDateService.isExamOver(exam.getId());
         assertThat(isOver).isFalse();
     }
 
@@ -1522,8 +1530,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testIsUserRegisteredForExam() {
         exam1.addRegisteredUser(users.get(0));
         final var exam = examRepository.save(exam1);
-        final var isUserRegistered = examService.isUserRegisteredForExam(exam.getId(), users.get(0).getId());
-        final var isCurrentUserRegistered = examService.isCurrentUserRegisteredForExam(exam.getId());
+        final var isUserRegistered = examRegistrationService.isUserRegisteredForExam(exam.getId(), users.get(0).getId());
+        final var isCurrentUserRegistered = examRegistrationService.isCurrentUserRegisteredForExam(exam.getId());
         assertThat(isUserRegistered).isTrue();
         assertThat(isCurrentUserRegistered).isFalse();
     }

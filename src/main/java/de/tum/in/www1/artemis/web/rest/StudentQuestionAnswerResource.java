@@ -20,10 +20,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.service.SingleUserNotificationService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -50,14 +48,14 @@ public class StudentQuestionAnswerResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     GroupNotificationService groupNotificationService;
 
     SingleUserNotificationService singleUserNotificationService;
 
     public StudentQuestionAnswerResource(StudentQuestionAnswerRepository studentQuestionAnswerRepository, GroupNotificationService groupNotificationService,
-            SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authorizationCheckService, UserService userService,
+            SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CourseRepository courseRepository, StudentQuestionRepository studentQuestionRepository) {
         this.studentQuestionAnswerRepository = studentQuestionAnswerRepository;
         this.courseRepository = courseRepository;
@@ -65,7 +63,7 @@ public class StudentQuestionAnswerResource {
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.authorizationCheckService = authorizationCheckService;
-        this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -82,15 +80,12 @@ public class StudentQuestionAnswerResource {
     public ResponseEntity<StudentQuestionAnswer> createStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer)
             throws URISyntaxException {
         log.debug("REST request to save StudentQuestionAnswer : {}", studentQuestionAnswer);
-        User user = this.userService.getUserWithGroupsAndAuthorities();
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (studentQuestionAnswer.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestionAnswer cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        Optional<Course> optionalCourse = courseRepository.findById(courseId);
-        if (optionalCourse.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        if (!this.authorizationCheckService.isAtLeastStudentInCourse(optionalCourse.get(), user)) {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        if (!this.authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
         Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(studentQuestionAnswer.getQuestion().getId());
@@ -101,7 +96,7 @@ public class StudentQuestionAnswerResource {
             return forbidden();
         }
         // answer to approved if written by an instructor
-        studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(optionalCourse.get(), user));
+        studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
         if (result.getQuestion().getExercise() != null) {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewAnswerForExercise(result);
@@ -126,15 +121,12 @@ public class StudentQuestionAnswerResource {
     @PutMapping("courses/{courseId}/student-question-answers")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentQuestionAnswer> updateStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to update StudentQuestionAnswer : {}", studentQuestionAnswer);
         if (studentQuestionAnswer.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        Optional<Course> optionalCourse = courseRepository.findById(courseId);
-        if (optionalCourse.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        courseRepository.findByIdElseThrow(courseId);
         Optional<StudentQuestionAnswer> optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findById(studentQuestionAnswer.getId());
         if (optionalStudentQuestionAnswer.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -162,12 +154,9 @@ public class StudentQuestionAnswerResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentQuestionAnswer> getStudentQuestionAnswer(@PathVariable Long courseId, @PathVariable Long id) {
         log.debug("REST request to get StudentQuestionAnswer : {}", id);
-        User user = this.userService.getUserWithGroupsAndAuthorities();
-        Optional<Course> optionalCourse = courseRepository.findById(courseId);
-        if (optionalCourse.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        if (!this.authorizationCheckService.isAtLeastStudentInCourse(optionalCourse.get(), user)) {
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        var course = courseRepository.findByIdElseThrow(courseId);
+        if (!this.authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
         Optional<StudentQuestionAnswer> questionAnswer = studentQuestionAnswerRepository.findById(id);
@@ -190,15 +179,12 @@ public class StudentQuestionAnswerResource {
     @DeleteMapping("courses/{courseId}/student-question-answers/{id}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteStudentQuestionAnswer(@PathVariable Long courseId, @PathVariable Long id) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<StudentQuestionAnswer> optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findById(id);
         if (optionalStudentQuestionAnswer.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        Optional<Course> optionalCourse = courseRepository.findById(courseId);
-        if (optionalCourse.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        courseRepository.findByIdElseThrow(courseId);
         StudentQuestionAnswer studentQuestionAnswer = optionalStudentQuestionAnswer.get();
         Course course = studentQuestionAnswer.getQuestion().getCourse();
         String entity = "";

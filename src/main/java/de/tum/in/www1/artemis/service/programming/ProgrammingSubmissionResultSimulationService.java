@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.programming;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -18,9 +18,8 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.util.VCSSimulationUtils;
 
 /**
@@ -37,9 +36,9 @@ public class ProgrammingSubmissionResultSimulationService {
 
     private final ParticipationRepository participationRepository;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ParticipationService participationService;
 
@@ -49,14 +48,14 @@ public class ProgrammingSubmissionResultSimulationService {
 
     private final ProgrammingExerciseSimulationService programmingExerciseSimulationService;
 
-    public ProgrammingSubmissionResultSimulationService(ParticipationRepository participationRepository, UserService userService,
-            ProgrammingExerciseService programmingExerciseService, ParticipationService participationService, ProgrammingSubmissionRepository programmingSubmissionRepository,
+    public ProgrammingSubmissionResultSimulationService(ParticipationRepository participationRepository, UserRepository userRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, ParticipationService participationService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ResultRepository resultRepository, ProgrammingExerciseSimulationService programmingExerciseSimulationService) {
         this.participationRepository = participationRepository;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.resultRepository = resultRepository;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseSimulationService = programmingExerciseSimulationService;
     }
@@ -89,10 +88,10 @@ public class ProgrammingSubmissionResultSimulationService {
      * @return the newly created and stored submission
      */
     public ProgrammingSubmission createSubmission(Long exerciseId) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Participant participant = user;
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
-        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithStudentParticipationsAndSubmissionsByIdElseThrow(exerciseId);
         Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(programmingExercise,
                 user.getLogin());
         if (optionalStudentParticipation.isEmpty()) {

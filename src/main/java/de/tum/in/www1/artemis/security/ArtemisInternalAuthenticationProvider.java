@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Component
 @ConditionalOnProperty(value = "artemis.user-management.use-external", havingValue = "false")
@@ -24,20 +25,20 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
 
     private final Logger log = LoggerFactory.getLogger(ArtemisInternalAuthenticationProvider.class);
 
-    public ArtemisInternalAuthenticationProvider(UserRepository userRepository) {
-        super(userRepository);
+    public ArtemisInternalAuthenticationProvider(UserRepository userRepository, PasswordService passwordService) {
+        super(userRepository, passwordService);
     }
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        final var user = userService.getUserWithAuthoritiesByLogin(authentication.getName());
+        final var user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(authentication.getName());
         if (user.isEmpty()) {
             throw new AuthenticationServiceException(String.format("User %s does not exist in the Artemis database!", authentication.getName()));
         }
         if (!user.get().getActivated()) {
             throw new UserNotActivatedException("User " + user.get().getLogin() + " was not activated");
         }
-        final var storedPassword = userService.decryptPassword(user.get());
+        final var storedPassword = passwordService.decryptPassword(user.get());
         if (!authentication.getCredentials().toString().equals(storedPassword)) {
             throw new AuthenticationServiceException("Invalid password for user " + user.get().getLogin());
         }
@@ -49,7 +50,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
     @Override
     public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, boolean skipPasswordCheck) {
         final var password = authentication.getCredentials().toString();
-        final var optionalUser = userService.getUserByLogin(authentication.getName().toLowerCase());
+        final var optionalUser = userRepository.findOneByLogin(authentication.getName().toLowerCase());
         final User user;
         if (optionalUser.isEmpty()) {
             user = userService.createUser(authentication.getName(), password, firstName, lastName, email, null, null, "en");
@@ -57,7 +58,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         else {
             user = optionalUser.get();
             if (!skipPasswordCheck) {
-                final var storedPassword = userService.decryptPassword(user);
+                final var storedPassword = passwordService.decryptPassword(user);
                 if (!password.equals(storedPassword)) {
                     throw new InternalAuthenticationServiceException("Authentication failed for user " + user.getLogin());
                 }

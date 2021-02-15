@@ -25,14 +25,19 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.service.exam.ExamAccessService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
+import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -49,11 +54,15 @@ public class ExamResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
-    private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
     private final ExamService examService;
+
+    private final ExamDateService examDateService;
+
+    private final ExamRegistrationService examRegistrationService;
 
     private final ExamRepository examRepository;
 
@@ -67,12 +76,14 @@ public class ExamResource {
 
     private final AssessmentDashboardService assessmentDashboardService;
 
-    public ExamResource(UserService userService, CourseService courseService, ExamService examService, ExamAccessService examAccessService,
-            InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, AuthorizationCheckService authCheckService,
-            TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService) {
-        this.userService = userService;
-        this.courseService = courseService;
+    public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamAccessService examAccessService,
+            InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, AuthorizationCheckService authCheckService, ExamDateService examDateService,
+            TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService) {
+        this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
         this.examService = examService;
+        this.examDateService = examDateService;
+        this.examRegistrationService = examRegistrationService;
         this.examRepository = examRepository;
         this.examAccessService = examAccessService;
         this.instanceMessageSendService = instanceMessageSendService;
@@ -258,7 +269,7 @@ public class ExamResource {
             return conflict();
         }
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -272,7 +283,7 @@ public class ExamResource {
         Set<Exercise> exercises = new HashSet<>();
         // extract all exercises for all the exam
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            exerciseGroup.setExercises(courseService.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
+            exerciseGroup.setExercises(courseRepository.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
             exercises.addAll(exerciseGroup.getExercises());
         }
 
@@ -300,14 +311,14 @@ public class ExamResource {
             return conflict();
         }
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
 
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            exerciseGroup.setExercises(courseService.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
+            exerciseGroup.setExercises(courseRepository.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
         }
 
         return ResponseEntity.ok(exam);
@@ -361,7 +372,7 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to delete exam : {}", examId);
-        var exam = examRepository.findById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        var exam = examRepository.findExamByIdElseThrow(examId);
         Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
@@ -389,10 +400,10 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        var course = courseService.findOne(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examService.findOneWithRegisteredUsers(examId);
 
-        Optional<User> student = userService.getUserWithGroupsAndAuthoritiesByLogin(studentLogin);
+        Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
         if (student.isEmpty()) {
             return notFound();
         }
@@ -401,7 +412,7 @@ public class ExamResource {
             return forbidden("exam", "cannotRegisterInstructor", "You cannot register instructors or administrators to exams.");
         }
 
-        examService.registerStudentToExam(course, exam, student.get());
+        examRegistrationService.registerStudentToExam(course, exam, student.get());
         return ResponseEntity.ok().body(null);
     }
 
@@ -478,31 +489,6 @@ public class ExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/student-exams/start-exercises : Generate the participation objects
-     * for all the student exams belonging to the exam
-     *
-     * @param courseId the course to which the exam belongs to
-     * @param examId   the exam to which the student exam belongs to
-     * @return ResponsEntity containing the list of generated participations
-     */
-    @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/start-exercises")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Integer> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
-        long start = System.nanoTime();
-        log.info("REST request to start exercises for student exams of exam {}", examId);
-
-        Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
-        if (courseAndExamAccessFailure.isPresent())
-            return courseAndExamAccessFailure.get();
-
-        int numberOfGeneratedParticipations = examService.startExercises(examId);
-
-        log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
-
-        return ResponseEntity.ok().body(numberOfGeneratedParticipations);
-    }
-
-    /**
      * POST /courses/{courseId}/exams/{examId}/student-exams/evaluate-quiz-exercises : Evaluate the quiz exercises of the exam
      *
      * @param courseId the course to which the exam belongs to
@@ -518,7 +504,7 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
-        if (examService.getLatestIndividualExamEndDate(examId).isAfter(ZonedDateTime.now())) {
+        if (examDateService.getLatestIndividualExamEndDate(examId).isAfter(ZonedDateTime.now())) {
             // Quizzes should only be evaluated if no exams are running
             return forbidden(applicationName, ENTITY_NAME, "quizevaluationPendingExams",
                     "There are still exams running, quizzes can only be evaluated once all exams are finished.");
@@ -600,7 +586,7 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        List<StudentDTO> notFoundStudentsDtos = examService.registerStudentsForExam(courseId, examId, studentDtos);
+        List<StudentDTO> notFoundStudentsDtos = examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
     }
 
@@ -621,7 +607,7 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
-        examService.addAllStudentsOfCourseToExam(courseId, examId);
+        examRegistrationService.addAllStudentsOfCourseToExam(courseId, examId);
         return ResponseEntity.ok().body(null);
     }
 
@@ -647,12 +633,12 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        Optional<User> optionalStudent = userService.getUserWithGroupsAndAuthoritiesByLogin(studentLogin);
+        Optional<User> optionalStudent = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
         if (optionalStudent.isEmpty()) {
             return notFound();
         }
 
-        examService.unregisterStudentFromExam(examId, withParticipationsAndSubmission, optionalStudent.get());
+        examRegistrationService.unregisterStudentFromExam(examId, withParticipationsAndSubmission, optionalStudent.get());
         return ResponseEntity.ok().body(null);
     }
 
@@ -732,7 +718,7 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        ZonedDateTime latestIndividualEndDateOfExam = examService.getLatestIndividualExamEndDate(examId);
+        ZonedDateTime latestIndividualEndDateOfExam = examDateService.getLatestIndividualExamEndDate(examId);
 
         if (latestIndividualEndDateOfExam == null) {
             return ResponseEntity.notFound().build();
