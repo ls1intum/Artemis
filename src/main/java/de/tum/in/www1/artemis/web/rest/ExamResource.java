@@ -351,11 +351,11 @@ public class ExamResource {
     @GetMapping("/courses/{courseId}/exams-for-user")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<List<Exam>> getExamsForUser(@PathVariable Long courseId) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
             return ResponseEntity.ok(examRepository.findAll());
         }
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }

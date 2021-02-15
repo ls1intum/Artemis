@@ -306,7 +306,7 @@ public class QuizExerciseService {
      */
     public List<QuizExercise> findByExamId(Long examId) {
         List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (quizExercises.size() > 0) {
             Course course = quizExercises.get(0).getCourseViaExerciseGroupOrCourseMember();
             if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
