@@ -6,6 +6,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
+import { filter, map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -29,7 +30,10 @@ export class ExamChecklistComponent implements OnInit {
     ngOnInit() {
         this.exerciseGroupService
             .findAllForExam(this.exam!.course!.id!, this.exam.id!)
-            .map((exerciseGroupArray: HttpResponse<ExerciseGroup[]>) => exerciseGroupArray.body!)
+            .pipe(
+                filter((res) => !!res.body),
+                map((exerciseGroupArray: HttpResponse<ExerciseGroup[]>) => exerciseGroupArray.body!),
+            )
             .subscribe((exGroups) => {
                 this.exam.exerciseGroups = exGroups;
                 this.checkPointsExercisesEqual();
@@ -38,7 +42,10 @@ export class ExamChecklistComponent implements OnInit {
             });
         this.examService
             .getExamStatistics(this.exam.course!.id!, this.exam.id!)
-            .map((examStatistics: HttpResponse<ExamChecklist>) => examStatistics.body!)
+            .pipe(
+                filter((res) => !!res.body),
+                map((examStatistics: HttpResponse<ExamChecklist>) => examStatistics.body!),
+            )
             .subscribe((examStats) => {
                 this.examChecklist = examStats;
                 this.checkAllExamsGenerated();
