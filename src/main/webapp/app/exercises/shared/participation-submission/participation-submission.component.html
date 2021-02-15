@@ -12,7 +12,7 @@
     <span [ngClass]="exerciseStatusBadge" class="badge"> {{ exercise.dueDate | amTimeAgo }} </span>
 </h4>
 <h4 *ngIf="exercise?.assessmentDueDate">
-    <span class="mr-2"> {{ 'artemisApp.exercise.assessmentDueDate' | translate }}&nbsp;:` {{ (exercise.assessmentDueDate | artemisDate) || 'N/A' }} </span>
+    <span class="mr-2"> {{ 'artemisApp.exercise.assessmentDueDate' | translate }}: {{ (exercise.assessmentDueDate | artemisDate) || 'N/A' }} </span>
     <span [ngClass]="exerciseStatusBadge" class="badge">{{ exercise.assessmentDueDate | amTimeAgo }}</span>
 </h4>
 <br />
@@ -70,14 +70,14 @@
                         <jhi-result
                             [result]="result"
                             [participation]="participation"
-                            [showUngradedResults]="isTemplateOrSolutionParticipation() ? false : true"
-                            [showGradedBadge]="isTemplateOrSolutionParticipation() ? false : true"
+                            [showUngradedResults]="!isTmpOrSolutionProgrParticipation"
+                            [showGradedBadge]="!isTmpOrSolutionProgrParticipation"
                         ></jhi-result>
                     </div>
                 </div>
             </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column *ngIf="isTemplateOrSolutionParticipation() || participation?.type === ParticipationType.PROGRAMMING" prop="commitHash" [minWidth]="80" [width]="80">
+        <ngx-datatable-column *ngIf="isTmpOrSolutionProgrParticipation || participation?.type === ParticipationType.PROGRAMMING" prop="commitHash" [minWidth]="80" [width]="80">
             <ng-template ngx-datatable-header-template>
                 <span jhiTranslate="artemisApp.programmingSubmission.commitHash"></span>
             </ng-template>

@@ -38,6 +38,7 @@
             "students": "Students",
             "templateParticipation": "Template Participation",
             "solutionParticipation": "Solution Participation",
+            "noParticipation": "The participation could not be found!",
             "exercise": "Exercise",
             "deleteRepository": "Delete repository",
             "deleteBuildPlan": "Delete build plan",

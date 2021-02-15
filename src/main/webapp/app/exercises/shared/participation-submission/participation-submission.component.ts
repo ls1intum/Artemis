@@ -4,13 +4,13 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
 import { JhiEventManager } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, map } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { combineLatest, of } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Submission, SubmissionType } from 'app/entities/submission.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import * as moment from 'moment';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -32,9 +32,10 @@ export class ParticipationSubmissionComponent implements OnInit {
     @Input() participationId: number;
     public exerciseStatusBadge = 'badge-success';
 
-    participation: Participation;
-    exercise: Exercise;
-    submissions: Submission[];
+    isTmpOrSolutionProgrParticipation = false;
+    exercise?: Exercise;
+    participation?: Participation;
+    submissions?: Submission[];
     eventSubscriber: Subscription;
     isLoading = true;
     activeProfiles: string[];
@@ -63,34 +64,41 @@ export class ParticipationSubmissionComponent implements OnInit {
      */
     setupPage() {
         this.isLoading = true;
-        this.route.params.subscribe((params) => {
+
+        combineLatest(this.route.params, this.route.queryParams).subscribe(([params, queryParams]) => {
             this.participationId = +params['participationId'];
-            this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
-                this.exercise = exerciseResponse.body!;
-                this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
-                if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                    // Get template and solution participation and submission for prog. exercise
-                    this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!, true).subscribe((response) => {
-                        const programmingExercise = response.body!;
-                        const templateParticipation = programmingExercise.templateParticipation;
-                        const solutionParticipation = programmingExercise.solutionParticipation;
-                        // Check if requested participationId belongs to the template or solution participation
-                        if (templateParticipation?.id === this.participationId) {
-                            this.participation = templateParticipation;
-                            this.submissions = templateParticipation.submissions!;
-                            this.isLoading = false;
-                        } else if (solutionParticipation?.id === this.participationId) {
-                            this.participation = solutionParticipation;
-                            this.submissions = solutionParticipation.submissions!;
-                            this.isLoading = false;
-                        } else {
-                            this.fetchParticipationAndSubmissionsForStudent();
-                        }
-                    });
-                } else {
-                    this.fetchParticipationAndSubmissionsForStudent();
-                }
-            });
+            if (queryParams['isTmpOrSolutionProgrParticipation']) {
+                this.isTmpOrSolutionProgrParticipation = queryParams['isTmpOrSolutionProgrParticipation'];
+            }
+
+            if (this.isTmpOrSolutionProgrParticipation) {
+                // Find programming exercise of template and solution programming participation
+                this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
+                    this.exercise = exerciseResponse.body!;
+                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+                    const templateParticipation = (this.exercise as ProgrammingExercise).templateParticipation;
+                    const solutionParticipation = (this.exercise as ProgrammingExercise).solutionParticipation;
+                    // Check if requested participationId belongs to the template or solution participation
+                    if (this.participationId === templateParticipation?.id) {
+                        this.participation = templateParticipation;
+                        this.submissions = templateParticipation.submissions!;
+                    } else if (this.participationId === solutionParticipation?.id) {
+                        this.participation = solutionParticipation;
+                        this.submissions = solutionParticipation.submissions!;
+                    } else {
+                        // Should not happen
+                        alert(this.translate.instant('artemisApp.participation.noParticipation'));
+                    }
+                    this.isLoading = false;
+                });
+            } else {
+                // Get exercise for release and due dates
+                this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
+                    this.exercise = exerciseResponse.body!;
+                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+                });
+                this.fetchParticipationAndSubmissionsForStudent();
+            }
         });
 
         // Get active profiles, to distinguish between Bitbucket and GitLab
@@ -139,10 +147,6 @@ export class ParticipationSubmissionComponent implements OnInit {
             return this.translate.instant('artemisApp.participation.templateParticipation');
         }
         return 'N/A';
-    }
-
-    isTemplateOrSolutionParticipation(): boolean {
-        return this.participation?.type === ParticipationType.TEMPLATE || this.participation?.type === ParticipationType.SOLUTION;
     }
 
     getCommitUrl(submission: ProgrammingSubmission): string | undefined {

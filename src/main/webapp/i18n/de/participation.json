@@ -38,6 +38,7 @@
             "students": "Studenten",
             "templateParticipation": "Template Teilname",
             "solutionParticipation": "Lösungs Teilname",
+            "noParticipation": "Die Teilnahme konnte nicht gefunden werden!",
             "exercise": "Übung",
             "deleteRepository": "Repository löschen",
             "deleteBuildPlan": "Build Plan löschen",

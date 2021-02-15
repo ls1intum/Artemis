@@ -4,7 +4,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
-import { SinonStub, stub } from 'sinon';
+import { SinonStub, stub, restore } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent } from 'ng-mocks';
@@ -99,7 +99,7 @@ describe('ParticipationSubmissionComponent', () => {
     });
 
     afterEach(() => {
-        findAllSubmissionsOfParticipationStub.restore();
+        restore();
     });
 
     it('Submissions are correctly loaded from server', fakeAsync(() => {
@@ -114,7 +114,7 @@ describe('ParticipationSubmissionComponent', () => {
                 submitted: true,
                 type: SubmissionType.MANUAL,
                 submissionDate: moment('2019-07-09T10:47:33.244Z'),
-                text: 'asdfasdfasdfasdf',
+                text: 'My TextSubmission',
                 participation,
             },
         ] as TextSubmission[];
@@ -145,7 +145,7 @@ describe('ParticipationSubmissionComponent', () => {
 
     it('Template Submission is correctly loaded', fakeAsync(() => {
         TestBed.get(ActivatedRoute).params = of({ participationId: 2, exerciseId: 42 });
-        // set all attributes for comp
+        TestBed.get(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: true });
         const templateParticipation = new TemplateProgrammingExerciseParticipation();
         templateParticipation.id = 2;
         templateParticipation.repositoryUrl = 'https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git';
@@ -160,8 +160,6 @@ describe('ParticipationSubmissionComponent', () => {
                 participation: templateParticipation,
             },
         ] as ProgrammingSubmission[];
-        const exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
-        stub(exerciseService, 'find').returns(of(new HttpResponse({ body: exercise })));
         const programmingExercise = { type: ExerciseType.PROGRAMMING, templateParticipation } as ProgrammingExercise;
         const findWithTemplateAndSolutionParticipationStub = stub(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
         findWithTemplateAndSolutionParticipationStub.returns(of(new HttpResponse({ body: programmingExercise })));
@@ -171,6 +169,7 @@ describe('ParticipationSubmissionComponent', () => {
 
         expect(comp.isLoading).to.be.false;
         expect(findWithTemplateAndSolutionParticipationStub).to.have.been.called;
+        expect(comp.exercise).to.be.deep.equal(programmingExercise);
         expect(comp.participation).to.be.deep.equal(templateParticipation);
         expect(comp.submissions).to.be.deep.equal(templateParticipation.submissions);
 
@@ -183,7 +182,7 @@ describe('ParticipationSubmissionComponent', () => {
 
     it('Solution Submission is correctly loaded', fakeAsync(() => {
         TestBed.get(ActivatedRoute).params = of({ participationId: 3, exerciseId: 42 });
-        // set all attributes for comp
+        TestBed.get(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: true });
         const solutionParticipation = new SolutionProgrammingExerciseParticipation();
         solutionParticipation.id = 3;
         solutionParticipation.submissions = [
@@ -197,8 +196,6 @@ describe('ParticipationSubmissionComponent', () => {
                 participation: solutionParticipation,
             },
         ] as ProgrammingSubmission[];
-        const exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
-        stub(exerciseService, 'find').returns(of(new HttpResponse({ body: exercise })));
         const programmingExercise = { type: ExerciseType.PROGRAMMING, solutionParticipation } as ProgrammingExercise;
         const findWithTemplateAndSolutionParticipationStub = stub(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
         findWithTemplateAndSolutionParticipationStub.returns(of(new HttpResponse({ body: programmingExercise })));
