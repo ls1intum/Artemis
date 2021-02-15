@@ -1086,7 +1086,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.showHideExistingQuestions();
                 expect(courseManagementServiceStub).to.have.been.called;
                 expect(comp.showExistingQuestions).to.equal(true);
-                expect(setQuestionsFromCourseSpy).to.have.been.calledWith(true);
+                expect(setQuestionsFromCourseSpy).to.have.been.calledOnce;
             });
             it('should not call getAll if there are courses', () => {
                 comp.courses = [course];
@@ -1110,9 +1110,9 @@ describe('QuizExercise Management Detail Component', () => {
                 const element = document.createElement('input');
                 const control = { ...element, value: 'test' };
                 const getElementStub = stub(document, 'getElementById').returns(control);
-                comp.setExistingQuestionSourceToCourse(true);
+                comp.setExistingQuestionSourceToCourse();
                 expect(comp.showExistingQuestionsFromCourse).to.equal(true);
-                comp.setExistingQuestionSourceToCourse(false);
+                comp.setExistingQuestionSourceToFile();
                 expect(comp.showExistingQuestionsFromCourse).to.equal(false);
                 expect(getElementStub).to.have.been.called;
                 expect(control.value).to.equal('');
