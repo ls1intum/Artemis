@@ -47,7 +47,7 @@ describe('ExamChecklistComponent', () => {
     let exerciseGroupService: ExerciseGroupService;
 
     function getExerciseGroups(equalPoints: boolean) {
-        let exerciseGroups = [
+        const exerciseGroups = [
             {
                 id: 1,
                 exercises: [

@@ -1,22 +1,6 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import java.security.SecureRandom;
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.validation.constraints.NotNull;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
@@ -31,15 +15,10 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.dto.StudentDTO;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
+import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -47,6 +26,19 @@ import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.stereotype.Service;
+
+import javax.validation.constraints.NotNull;
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Service Implementation for managing exams.
@@ -76,9 +68,6 @@ public class ExamService {
 
     private final AuditEventRepository auditEventRepository;
 
-    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ParticipationService participationService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExamQuizService examQuizService, ExerciseService exerciseService, UserRepository userRepository,
-            InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService, AuditEventRepository auditEventRepository) {
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final ComplaintRepository complaintRepository;
@@ -87,11 +76,11 @@ public class ExamService {
 
     private final ResultService resultService;
 
-    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
-            ProgrammingExerciseService programmingExerciseService, ExamQuizService examQuizService, ExerciseService exerciseService,
-            InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService, AuditEventRepository auditEventRepository,
-            StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-            ResultService resultService) {
+    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ParticipationService participationService, ExamQuizService examQuizService,
+            ExerciseService exerciseService, InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService,
+            AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository,
+            ComplaintResponseRepository complaintResponseRepository, ResultService resultService, UserRepository userRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -670,7 +659,7 @@ public class ExamService {
         examChecklistDTO.setNumberOfAllComplaintsDone(totalNumberOfComplaintResponse);
 
         // set number of student exams that have been generated
-        long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExamWithoutTestruns(exam.getId());
+        long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExamWithoutTestRuns(exam.getId());
         examChecklistDTO.setNumberOfGeneratedStudentExams(numberOfGeneratedStudentExams);
 
         // set number of test runs
