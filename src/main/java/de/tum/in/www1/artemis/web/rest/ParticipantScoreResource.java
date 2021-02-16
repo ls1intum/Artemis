@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.time.ZonedDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -19,12 +18,15 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.dto.CourseScoreDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
 
@@ -44,16 +46,85 @@ public class ParticipantScoreResource {
 
     private final ExamRepository examRepository;
 
+    private final UserRepository userRepository;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     public ParticipantScoreResource(StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, AuthorizationCheckService authorizationCheckService,
-            CourseRepository courseRepository, ExamRepository examRepository, ParticipantScoreRepository participantScoreRepository) {
+            CourseRepository courseRepository, ExamRepository examRepository, ParticipantScoreRepository participantScoreRepository, UserRepository userRepository) {
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
         this.examRepository = examRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
         this.participantScoreRepository = participantScoreRepository;
+        this.userRepository = userRepository;
+    }
+
+    @GetMapping("/courses/{courseId}/course-scores")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<CourseScoreDTO>> getCourseScoresOfCourse(@PathVariable Long courseId) {
+        long start = System.currentTimeMillis();
+        log.debug("REST request to get course scores for course : {}", courseId);
+        Course course = courseRepository.findWithEagerExercisesById(courseId);
+        if (course == null) {
+            return notFound();
+        }
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+            return forbidden();
+        }
+        Set<Exercise> visibleExercisesThatCount = course.getExercises().stream().filter(Exercise::isCourseExercise)
+                .filter(exercise -> exercise.getReleaseDate() == null || exercise.getReleaseDate().isBefore(ZonedDateTime.now()))
+                .filter(exercise -> exercise.getIncludedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED).collect(Collectors.toSet());
+
+        // this is the denominator when we calculate the achieved score of a student
+        Double regularAchievablePoints = visibleExercisesThatCount.stream().filter(exercise -> exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY)
+                .map(Exercise::getMaxPoints).reduce(0.0, Double::sum);
+        // 0.0 means we can not reasonably calculate the achieved points / scores
+        if (regularAchievablePoints.equals(0.0)) {
+            return ResponseEntity.ok().body(List.of());
+        }
+
+        Set<Exercise> visibleIndividualExercisesThatCount = visibleExercisesThatCount.stream().filter(exercise -> !exercise.isTeamMode()).collect(Collectors.toSet());
+        Set<Exercise> visibleTeamExercisesThatCount = visibleExercisesThatCount.stream().filter(exercise -> exercise.isTeamMode()).collect(Collectors.toSet());
+
+        List<User> studentOfCourse = userRepository.findAllInGroupWithAuthorities(course.getStudentGroupName());
+        // For every student in the course we want to calculate course score
+        Map<Long, CourseScoreDTO> studentIdToCourseScore = studentOfCourse.stream().collect(Collectors.toMap(User::getId, user -> new CourseScoreDTO(user)));
+
+        // individual exercises
+        // [0] -> User
+        // [1] -> sum of achieved points in exercises
+        List<Object[]> studentAndAchievedPoints = studentScoreRepository.getAchievedPointsOfStudents(visibleIndividualExercisesThatCount);
+        for (Object[] rawData : studentAndAchievedPoints) {
+            User user = (User) rawData[0];
+            double achievedPoints = rawData[1] != null ? ((Number) rawData[1]).doubleValue() : 0.0;
+            if (studentIdToCourseScore.containsKey(user.getId())) {
+                studentIdToCourseScore.get(user.getId()).pointsAchieved += achievedPoints;
+            }
+        }
+
+        // team exercises
+        // [0] -> Team
+        // [1] -> sum of achieved points in exercises
+        List<Object[]> teamAndAchievedPoints = teamScoreRepository.getAchievedPointsOfTeams(visibleTeamExercisesThatCount);
+        for (Object[] rawData : teamAndAchievedPoints) {
+            Team team = (Team) rawData[0];
+            double achievedPoints = rawData[1] != null ? ((Number) rawData[1]).doubleValue() : 0.0;
+            for (User student : team.getStudents()) {
+                if (studentIdToCourseScore.containsKey(student.getId())) {
+                    studentIdToCourseScore.get(student.getId()).pointsAchieved += achievedPoints;
+                }
+            }
+        }
+
+        // calculating achieved score
+        for (CourseScoreDTO courseScoreDTO : studentIdToCourseScore.values()) {
+            courseScoreDTO.scoreAchieved = round((courseScoreDTO.pointsAchieved / regularAchievablePoints) * 100.0);
+            courseScoreDTO.regularPointsAchievable = regularAchievablePoints;
+        }
+        log.info("getCourseScoresOfCourse took " + (System.currentTimeMillis() - start) + "ms");
+        return ResponseEntity.ok().body(new ArrayList<>(studentIdToCourseScore.values()));
     }
 
     /**

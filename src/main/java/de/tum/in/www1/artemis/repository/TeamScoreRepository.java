@@ -37,4 +37,13 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
 
             """)
     List<ParticipantScoreAverageDTO> getAvgScoreOfTeamInExercises(@Param("exercises") Set<Exercise> exercises);
+
+    @Query("""
+            SELECT ts.team, SUM(ts.lastRatedPoints)
+            FROM TeamScore ts
+            WHERE ts.exercise IN :exercises
+            GROUP BY ts.team
+            """)
+    List<Object[]> getAchievedPointsOfTeams(@Param("exercises") Set<Exercise> exercises);
+
 }

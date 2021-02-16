@@ -12,6 +12,9 @@ import { CourseManagementService } from '../manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { CourseScoresDTO, ParticipantScoresService } from 'app/shared/participant-scores/participant-scores.service';
+import { forkJoin } from 'rxjs';
+import { round } from 'app/shared/util/utils';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
@@ -60,6 +63,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     averageNumberOfPointsPerExerciseTypes = new Map<ExerciseType, number>();
     averageNumberOfOverallPoints = 0;
 
+    // course score dtos
+    studentIdToCourseScoreDTOs: Map<number, CourseScoresDTO> = new Map<number, CourseScoresDTO>();
+
     private languageChangeSubscription?: Subscription;
 
     constructor(
@@ -69,6 +75,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         private changeDetector: ChangeDetectorRef,
         private languageHelper: JhiLanguageHelper,
         private localeConversionService: LocaleConversionService,
+        private participantScoresService: ParticipantScoresService,
     ) {
         this.reverse = false;
         this.predicate = 'id';
@@ -79,9 +86,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
-            this.courseService.findWithExercises(params['courseId']).subscribe((res) => {
-                this.course = res.body!;
-
+            this.courseService.findWithExercises(params['courseId']).subscribe((findWithExercisesResult) => {
+                this.course = findWithExercisesResult.body!;
                 const titleMap = new Map<string, number>();
                 if (this.course.exercises) {
                     for (const exercise of this.course.exercises) {
@@ -139,12 +145,51 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * @param courseId Id of the course
      */
     calculateCourseStatistics(courseId: number) {
-        this.courseService.findAllParticipationsWithResults(courseId).subscribe((participationsOfCourse) => {
+        const findParticipationsObservable = this.courseService.findAllParticipationsWithResults(courseId);
+        const courseScoresObservable = this.participantScoresService.findCourseScores(courseId);
+        forkJoin([findParticipationsObservable, courseScoresObservable]).subscribe(([participationsOfCourse, courseScoresResult]) => {
             this.allParticipationsOfCourse = participationsOfCourse;
             this.calculateExerciseLevelStatistics();
             this.calculateStudentLevelStatistics();
+
+            // comparing with calculation from course scores
+            const courseScoreDTOs = courseScoresResult.body!;
+            this.compareCourseScoresCalculationWithRegularCalculation(courseScoreDTOs);
             this.changeDetector.detectChanges();
         });
+    }
+
+    private compareCourseScoresCalculationWithRegularCalculation(courseScoreDTOs: any) {
+        for (const courseScoreDTO of courseScoreDTOs) {
+            this.studentIdToCourseScoreDTOs.set(courseScoreDTO.studentId!, courseScoreDTO);
+        }
+        for (const student of this.students) {
+            const overAllPoints = student.overallPoints;
+            const overallScore = round((student.overallPoints / this.maxNumberOfOverallPoints) * 100, 1);
+
+            const regularCalculation = {
+                overallScore,
+                overAllPoints,
+                userId: student.user.id,
+                userLogin: student.user.login,
+            };
+            // checking if the same as in the course scores map
+            const courseScoreDTO = this.studentIdToCourseScoreDTOs.get(student.user!.id!);
+            if (!courseScoreDTO) {
+                console.log(`No Course Score exists for regular calculation: ${JSON.stringify(regularCalculation)}`);
+            } else {
+                if (courseScoreDTO.pointsAchieved !== regularCalculation.overAllPoints) {
+                    console.log(
+                        `Different points in course scores dto. Regular Calculation: ${JSON.stringify(regularCalculation)}. Course Scores DTO : ${JSON.stringify(courseScoreDTO)}`,
+                    );
+                }
+                if (courseScoreDTO.scoreAchieved !== regularCalculation.overallScore) {
+                    console.log(
+                        `Different score in course scores dto. Regular Calculation: ${JSON.stringify(regularCalculation)}. Course Scores DTO : ${JSON.stringify(courseScoreDTO)}`,
+                    );
+                }
+            }
+        }
     }
 
     /**

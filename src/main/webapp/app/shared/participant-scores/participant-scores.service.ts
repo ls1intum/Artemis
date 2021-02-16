@@ -28,6 +28,13 @@ export class ParticipantScoreAverageDTO {
     public averageRatedPoints?: number;
 }
 
+export class CourseScoresDTO {
+    public studentId?: number;
+    public studentLogin?: string;
+    public pointsAchieved?: number;
+    public scoreAchieved?: number;
+    public regularPointsAchievable?: number;
+}
 export type SortDirection = 'asc' | 'desc';
 export type SortProperty = keyof ParticipantScoreDTO;
 export type SortingParameter = {
@@ -41,6 +48,11 @@ export class ParticipantScoresService {
 
     constructor(private http: HttpClient) {}
 
+    findCourseScores(courseId: number): Observable<HttpResponse<CourseScoresDTO[]>> {
+        return this.http.get<CourseScoresDTO[]>(`${this.resourceUrl}/courses/${courseId}/course-scores`, {
+            observe: 'response',
+        });
+    }
     findAllOfCoursePaged(courseId: number, sortingParameters: SortingParameter[], page: number, size: number): Observable<HttpResponse<ParticipantScoreDTO[]>> {
         const params = this.createPageParameters(sortingParameters, page, size);
         return this.http.get<ParticipantScoreDTO[]>(`${this.resourceUrl}/courses/${courseId}/participant-scores`, {
