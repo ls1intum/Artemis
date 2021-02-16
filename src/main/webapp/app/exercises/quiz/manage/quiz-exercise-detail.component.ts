@@ -1318,16 +1318,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.showExistingQuestionsFromCourse = true;
         this.showExistingQuestionsFromExam = false;
         this.showExistingQuestionsFromFile = false;
-
-        this.selectedCourseId = undefined;
-        this.allExistingQuestions = this.existingQuestions = [];
-        this.importFile = undefined;
-        this.importFileName = '';
-        const control = document.getElementById('importFileInput') as HTMLInputElement;
-        if (control) {
-            control.value = '';
-        }
-        this.changeDetector.detectChanges();
+        this.updateSelectionAndView();
     }
 
     /**
@@ -1337,16 +1328,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.showExistingQuestionsFromCourse = false;
         this.showExistingQuestionsFromExam = true;
         this.showExistingQuestionsFromFile = false;
-
-        this.selectedCourseId = undefined;
-        this.allExistingQuestions = this.existingQuestions = [];
-        this.importFile = undefined;
-        this.importFileName = '';
-        const control = document.getElementById('importFileInput') as HTMLInputElement;
-        if (control) {
-            control.value = '';
-        }
-        this.changeDetector.detectChanges();
+        this.updateSelectionAndView();
     }
 
     /**
@@ -1356,8 +1338,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.showExistingQuestionsFromCourse = false;
         this.showExistingQuestionsFromExam = false;
         this.showExistingQuestionsFromFile = true;
+        this.updateSelectionAndView();
+    }
 
+    private updateSelectionAndView() {
         this.selectedCourseId = undefined;
+        this.selectedExamId = undefined;
         this.allExistingQuestions = this.existingQuestions = [];
         this.importFile = undefined;
         this.importFileName = '';
