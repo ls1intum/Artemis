@@ -52,7 +52,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
             .find(exerciseId)
             .map((exerciseResponse) => {
                 if (exerciseResponse.body!.type !== ExerciseType.FILE_UPLOAD) {
-                    throw new Error('Cannot use Text Assessment Dashboard with non-text Exercise type.');
+                    throw new Error('Cannot use File-Upload Assessment Dashboard with non-file-upload Exercise type.');
                 }
                 return <FileUploadExercise>exerciseResponse.body!;
             })
