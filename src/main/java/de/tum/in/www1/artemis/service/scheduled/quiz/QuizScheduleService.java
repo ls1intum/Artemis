@@ -12,7 +12,6 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -34,7 +33,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.QuizExerciseService;
+import de.tum.in.www1.artemis.service.QuizMessagingService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
 
 @Service
@@ -56,9 +55,9 @@ public class QuizScheduleService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
-    private QuizExerciseService quizExerciseService;
+    private final QuizMessagingService quizMessagingService;
 
-    private QuizStatisticService quizStatisticService;
+    private final QuizStatisticService quizStatisticService;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -67,13 +66,16 @@ public class QuizScheduleService {
     private final QuizExerciseRepository quizExerciseRepository;
 
     public QuizScheduleService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            UserRepository userRepository, QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository) {
+            UserRepository userRepository, QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
+            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService) {
         this.messagingTemplate = messagingTemplate;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.userRepository = userRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizExerciseRepository = quizExerciseRepository;
+        this.quizMessagingService = quizMessagingService;
+        this.quizStatisticService = quizStatisticService;
         this.scheduledProcessQuizSubmissions = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
         this.quizCache = new QuizCache(hazelcastInstance);
@@ -94,18 +96,6 @@ public class QuizScheduleService {
     public void applicationReady() {
         // activate Quiz Schedule Service
         startSchedule(5 * 1000);                          // every 5 seconds
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setQuizExerciseService(QuizExerciseService quizExerciseService) {
-        this.quizExerciseService = quizExerciseService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setQuizStatisticService(QuizStatisticService quizStatisticService) {
-        this.quizStatisticService = quizStatisticService;
     }
 
     /**
@@ -346,7 +336,7 @@ public class QuizScheduleService {
         log.debug("Sending quiz {} start", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
         updateQuizExercise(quizExercise);
-        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "start-now");
+        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, "start-now");
     }
 
     /**

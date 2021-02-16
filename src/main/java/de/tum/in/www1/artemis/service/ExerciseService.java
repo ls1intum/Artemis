@@ -137,9 +137,9 @@ public class ExerciseService {
 
     /**
      * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
-     * NOTE: prefer #findOne if you don't need these additional details
+     * NOTE: prefer #ExerciseRepository.findByIdElseThrow() if you don't need these additional details
      * <p>
-     * DEPRECATED: Please use findOne() or write a custom method
+     * DEPRECATED: Please use findByIdElseThrow() or write a custom method
      *
      * @param exerciseId the exerciseId of the entity
      * @return the entity

@@ -30,8 +30,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -84,10 +83,23 @@ public class ResultResource {
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
+    private final ParticipationRepository participationRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
             ResultRepository resultRepository, WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService) {
+            ProgrammingExerciseGradingService programmingExerciseGradingService, ParticipationRepository participationRepository,
+            StudentParticipationRepository studentParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -100,6 +112,11 @@ public class ResultResource {
         this.userRepository = userRepository;
         this.examDateService = examDateService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
+        this.participationRepository = participationRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
 
     /**
@@ -167,12 +184,12 @@ public class ResultResource {
     private ProgrammingExerciseParticipation getParticipationWithResults(String planKey) {
         // we have to support template, solution and student build plans here
         if (planKey.contains(BuildPlanType.TEMPLATE.getName())) {
-            return participationService.findTemplateParticipationByBuildPlanId(planKey);
+            return templateProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
         }
         else if (planKey.contains(BuildPlanType.SOLUTION.getName())) {
-            return participationService.findSolutionParticipationByBuildPlanId(planKey);
+            return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
         }
-        List<ProgrammingExerciseStudentParticipation> participations = participationService.findByBuildPlanIdWithEagerResults(planKey);
+        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findByBuildPlanId(planKey);
         ProgrammingExerciseStudentParticipation participation = null;
         if (participations.size() > 0) {
             participation = participations.get(0);
@@ -210,7 +227,13 @@ public class ResultResource {
         List<Result> results = new ArrayList<>();
         var examMode = exercise.isExamExercise();
 
-        List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId, examMode);
+        List<StudentParticipation> participations;
+        if (examMode) {
+            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(exerciseId);
+        }
+        else {
+            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
+        }
         for (StudentParticipation participation : participations) {
             // Filter out participations without students / teams
             if (participation.getParticipant() == null) {
@@ -277,7 +300,7 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
         log.debug("REST request to get latest result for participation : {}", participationId);
-        Participation participation = participationService.findOne(participationId);
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
 
         if (participation instanceof StudentParticipation && !participationService.canAccessParticipation((StudentParticipation) participation)
                 || participation instanceof ProgrammingExerciseParticipation
@@ -437,7 +460,7 @@ public class ResultResource {
 
         // Create a participation and a submitted empty submission if they do not exist yet
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(exercise, student.get(), SubmissionType.EXTERNAL);
-        Submission submission = participationService.findOneWithEagerSubmissions(participation.getId()).findLatestSubmission().get();
+        Submission submission = participationRepository.findByIdWithSubmissionsElseThrow(participation.getId()).findLatestSubmission().get();
         result.setParticipation(participation);
         result.setSubmission(submission);
 

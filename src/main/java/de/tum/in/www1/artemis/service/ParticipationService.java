@@ -6,8 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -331,7 +329,7 @@ public class ParticipationService {
         participation = save(participation);
 
         // Take the latest submission or initialize a new empty submission
-        participation = (StudentParticipation) findOneWithEagerSubmissions(participation.getId());
+        participation = (StudentParticipation) participationRepository.findByIdWithSubmissionsElseThrow(participation.getId());
         Optional<Submission> optionalSubmission = participation.findLatestSubmission();
         Submission submission;
         if (optionalSubmission.isPresent()) {
@@ -505,7 +503,7 @@ public class ParticipationService {
     private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             // do not allow the student to access the repository if this is an exam exercise that has not started yet
-            boolean allowAccess = !isExamExercise(exercise) || ZonedDateTime.now().isAfter(getIndividualReleaseDate(exercise));
+            boolean allowAccess = !exercise.isExamExercise() || ZonedDateTime.now().isAfter(getIndividualReleaseDate(exercise));
             versionControlService.get().configureRepository(exercise, participation.getVcsRepositoryUrl(), participation.getStudents(), allowAccess);
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);
@@ -563,10 +561,6 @@ public class ParticipationService {
         return participation;
     }
 
-    private boolean isExamExercise(Exercise exercise) {
-        return !exercise.isCourseExercise();
-    }
-
     /**
      * Return the StudentExam of the participation's user, if possible
      *
@@ -575,7 +569,7 @@ public class ParticipationService {
      * @return an optional StudentExam, which is empty if the exercise is not part of an exam or the student exam hasn't been created
      */
     public Optional<StudentExam> findStudentExam(Exercise exercise, StudentParticipation participation) {
-        if (isExamExercise(exercise)) {
+        if (exercise.isExamExercise()) {
             var examUser = participation.getStudent().orElseThrow(() -> new EntityNotFoundException("Exam Participation with " + participation.getId() + " has no student!"));
             return studentExamRepository.findByExerciseIdAndUserId(exercise.getId(), examUser.getId());
         }
@@ -591,7 +585,7 @@ public class ParticipationService {
      * @return the time from which on access to the exercise is allowed, for exercises that are not part of an exam, this is just the release date.
      */
     public ZonedDateTime getIndividualReleaseDate(Exercise exercise) {
-        if (isExamExercise(exercise)) {
+        if (exercise.isExamExercise()) {
             return exercise.getExerciseGroup().getExam().getStartDate();
         }
         else {
@@ -628,37 +622,6 @@ public class ParticipationService {
     public ProgrammingExerciseStudentParticipation performEmptyCommit(ProgrammingExerciseStudentParticipation participation) {
         continuousIntegrationService.get().performEmptySetupCommit(participation);
         return participation;
-    }
-
-    /**
-     * Get one participation by id.
-     *
-     * @param participationId the id of the entity
-     * @return the entity
-     * @throws EntityNotFoundException throws if participation was not found
-     **/
-    public Participation findOne(Long participationId) throws EntityNotFoundException {
-        log.debug("Request to get Participation : {}", participationId);
-        Optional<Participation> participation = participationRepository.findById(participationId);
-        if (participation.isEmpty()) {
-            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
-        }
-        return participation.get();
-    }
-
-    /**
-     * Get one student participation by id.
-     *
-     * @param participationId the id of the entity
-     * @return the entity
-     **/
-    public StudentParticipation findOneStudentParticipation(Long participationId) {
-        log.debug("Request to get Participation : {}", participationId);
-        Optional<StudentParticipation> participation = studentParticipationRepository.findById(participationId);
-        if (participation.isEmpty()) {
-            throw new EntityNotFoundException("StudentParticipation with " + participationId + " was not found!");
-        }
-        return participation.get();
     }
 
     /**
@@ -700,21 +663,6 @@ public class ParticipationService {
     public StudentParticipation findOneWithEagerResults(Long participationId) {
         log.debug("Request to get Participation : {}", participationId);
         Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerResultsById(participationId);
-        if (participation.isEmpty()) {
-            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
-        }
-        return participation.get();
-    }
-
-    /**
-     * Get one participation by id including all submissions. Throws an EntityNotFoundException if the participation with the given id could not be found.
-     *
-     * @param participationId the id of the entity
-     * @return the participation with all its submissions and results
-     */
-    public Participation findOneWithEagerSubmissions(Long participationId) {
-        log.debug("Request to get Participation : {}", participationId);
-        Optional<Participation> participation = participationRepository.findWithEagerSubmissionsById(participationId);
         if (participation.isEmpty()) {
             throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
         }
@@ -816,95 +764,6 @@ public class ParticipationService {
     }
 
     /**
-     * Get all programming exercise participations belonging to build plan and initialize there state with eager results.
-     *
-     * @param buildPlanId the id of build plan
-     * @return the list of programming exercise participations belonging to build plan
-     */
-    public List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdWithEagerResults(String buildPlanId) {
-        log.debug("Request to get Participation for build plan id: {}", buildPlanId);
-        return programmingExerciseStudentParticipationRepository.findByBuildPlanId(buildPlanId);
-    }
-
-    /**
-     * Get all programming exercise participations belonging to exercise.
-     *
-     * @param exerciseId the id of exercise
-     * @return the list of programming exercise participations belonging to exercise
-     */
-    public List<StudentParticipation> findByExerciseId(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseId(exerciseId);
-    }
-
-    /**
-     * Get all programming exercise participations belonging to team.
-     *
-     * @param teamId the id of team
-     * @return the list of programming exercise participations belonging to team
-     */
-    public List<StudentParticipation> findByTeamId(Long teamId) {
-        return studentParticipationRepository.findByTeamId(teamId);
-    }
-
-    /**
-     * Get all programming exercise participations belonging to exercise with eager results.
-     *
-     * @param exerciseId the id of exercise
-     * @param examMode flag should be set to ignore test run submissions
-     * @return the list of programming exercise participations belonging to exercise
-     */
-    public List<StudentParticipation> findByExerciseIdWithLatestResult(Long exerciseId, boolean examMode) {
-        if (examMode) {
-            return studentParticipationRepository.findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(exerciseId);
-        }
-        return studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
-    }
-
-    /**
-     * Get all programming exercise participations belonging to exercise with eager latest {@link AssessmentType#AUTOMATIC} results and feedbacks.
-     *
-     * @param exerciseId the id of exercise
-     * @return the list of programming exercise participations belonging to exercise
-     */
-    public List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacks(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exerciseId);
-    }
-
-    /**
-     * Get all programming exercise participations belonging to exercise with eager latest {@link AssessmentType#MANUAL} results and feedbacks.
-     *
-     * @param exerciseId the id of exercise
-     * @return the list of programming exercise participations belonging to exercise
-     */
-    public List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacks(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exerciseId);
-    }
-
-    /**
-     * Get all programming exercise participations belonging to exercise with eager submissions -> result.
-     *
-     * @param exerciseId the id of exercise
-     * @return the list of programming exercise participations belonging to exercise
-     */
-    public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResult(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResult(exerciseId);
-    }
-
-    /**
-     * Get all programming exercise participations belonging to exercise with eager submissions -> result --> assessor.
-     *
-     * @param exerciseId the id of exercise
-     * @param examMode set flag to ignore test run submissions for exam mode
-     * @return the list of programming exercise participations belonging to exercise
-     */
-    public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(Long exerciseId, boolean examMode) {
-        if (examMode) {
-            return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(exerciseId);
-        }
-        return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
-    }
-
-    /**
      * Get all exercise participations belonging to exercise and student.
      *
      * @param exercise  the exercise
@@ -948,126 +807,6 @@ public class ParticipationService {
                     .orElse(List.of());
         }
         return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), studentId);
-    }
-
-    /**
-     * Get all exercise participations belonging to exercise and team with eager results and submissions.
-     *
-     * @param exercise the exercise
-     * @param team     the team
-     * @return the list of exercise participations belonging to exercise and team
-     */
-    public List<StudentParticipation> findByExerciseAndTeamWithEagerResultsAndSubmissions(Exercise exercise, Team team) {
-        return studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndSubmissions(exercise.getId(), team.getId());
-    }
-
-    /**
-     * Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
-     * No manual result means that no user has started an assessment for the corresponding submission yet.
-     *
-     * @param exerciseId the id of the exercise the participations should belong to
-     * @param correctionRound - the correction round we want our submission to have results for
-     * @return a list of participations including their submitted submissions that do not have a manual result
-     */
-    public List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(Long exerciseId, int correctionRound) {
-        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exerciseId, correctionRound);
-    }
-
-    /**
-     * Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
-     * corresponding submission yet.
-     *
-     * @param exerciseId the id of the exercise the participations should belong to
-     * @return a list of participations including their submitted submissions that do not have a manual result
-     */
-    public List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResults(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(exerciseId);
-    }
-
-    /**
-     * Get all participations belonging to exam with submissions and their relevant results.
-     *
-     * @param examId the id of the exam
-     * @return list of participations belonging to course
-     */
-    public List<StudentParticipation> findByExamIdWithSubmissionRelevantResult(Long examId) {
-        var participations = studentParticipationRepository.findByExamIdWithEagerSubmissionsRatedResults(examId); // without test run participations
-        // filter out the participations of test runs which can only be made by instructors
-        participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).collect(Collectors.toList());
-        return filterParticipationsWithRelevantResults(participations, true);
-    }
-
-    /**
-     * Get all participations belonging to course with relevant results.
-     *
-     * @param courseId the id of the course
-     * @return list of participations belonging to course
-     */
-    public List<StudentParticipation> findByCourseIdWithRelevantResult(Long courseId) {
-        List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithEagerRatedResults(courseId);
-        return filterParticipationsWithRelevantResults(participations, false);
-    }
-
-    /**
-     * filters the relevant results by removing all irrelevant ones
-     * @param participations the participations to get filtered
-     * @param resultInSubmission flag to indicate if the results are represented in the submission or participation
-     * @return the filtered participations
-     */
-    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
-
-        return participations.stream()
-
-                // Filter out participations without Students
-                // These participations are used e.g. to store template and solution build plans in programming exercises
-                .filter(participation -> participation.getParticipant() != null)
-
-                // filter all irrelevant results, i.e. rated = false or no completion date or no score
-                .peek(participation -> {
-                    List<Result> relevantResults = new ArrayList<>();
-
-                    // Get the results over the participation or over submissions
-                    Set<Result> resultsOfParticipation;
-                    if (resultInSubmission) {
-                        resultsOfParticipation = participation.getSubmissions().stream().map(Submission::getLatestResult).collect(Collectors.toSet());
-                    }
-                    else {
-                        resultsOfParticipation = participation.getResults();
-                    }
-                    // search for the relevant result by filtering out irrelevant results using the continue keyword
-                    // this for loop is optimized for performance and thus not very easy to understand ;)
-                    for (Result result : resultsOfParticipation) {
-                        // this should not happen because the database call above only retrieves rated results
-                        if (Boolean.FALSE.equals(result.isRated())) {
-                            continue;
-                        }
-                        if (result.getCompletionDate() == null || result.getScore() == null) {
-                            // we are only interested in results with completion date and with score
-                            continue;
-                        }
-                        relevantResults.add(result);
-                    }
-                    // we take the last rated result
-                    if (!relevantResults.isEmpty()) {
-                        // make sure to take the latest result
-                        relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
-                        Result correctResult = relevantResults.get(0);
-                        relevantResults.clear();
-                        relevantResults.add(correctResult);
-                    }
-                    participation.setResults(new HashSet<>(relevantResults));
-                }).collect(Collectors.toList());
-    }
-
-    /**
-     * Get all exercise participations of a team in a course
-     *
-     * @param courseId the id of the course
-     * @param teamShortName the team short name (all teams with this short name in the course are seen as the same team)
-     * @return the list of exercise participations for the team in the course
-     */
-    public List<StudentParticipation> findAllByCourseIdAndTeamShortName(Long courseId, String teamShortName) {
-        return studentParticipationRepository.findAllByCourseIdAndTeamShortName(courseId, teamShortName);
     }
 
     /**
@@ -1183,7 +922,7 @@ public class ParticipationService {
      */
     @Transactional // ok
     public void deleteAllByExerciseId(Long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
-        List<StudentParticipation> participationsToDelete = findByExerciseId(exerciseId);
+        List<StudentParticipation> participationsToDelete = studentParticipationRepository.findByExerciseId(exerciseId);
 
         for (StudentParticipation participation : participationsToDelete) {
             delete(participation.getId(), deleteBuildPlan, deleteRepository);
@@ -1201,7 +940,7 @@ public class ParticipationService {
     public void deleteAllByTeamId(Long teamId, boolean deleteBuildPlan, boolean deleteRepository) {
         log.info("Request to delete all participations of Team with id : {}", teamId);
 
-        List<StudentParticipation> participationsToDelete = findByTeamId(teamId);
+        List<StudentParticipation> participationsToDelete = studentParticipationRepository.findByTeamId(teamId);
 
         for (StudentParticipation participation : participationsToDelete) {
             delete(participation.getId(), deleteBuildPlan, deleteRepository);
@@ -1235,39 +974,6 @@ public class ParticipationService {
     }
 
     /**
-     * Get template exercise participation belonging to build plan.
-     *
-     * @param planKey the id of build plan
-     * @return template exercise participation belonging to build plan
-     */
-    @Nullable
-    public TemplateProgrammingExerciseParticipation findTemplateParticipationByBuildPlanId(String planKey) {
-        return templateProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
-    }
-
-    /**
-     * Get solution exercise participation belonging to build plan.
-     *
-     * @param planKey the id of build plan
-     * @return solution exercise participation belonging to build plan
-     */
-    @Nullable
-    public SolutionProgrammingExerciseParticipation findSolutionParticipationByBuildPlanId(String planKey) {
-        return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
-    }
-
-    /**
-     * Get all participations for the given student and individual-mode exercises combined with their submissions with a result
-     *
-     * @param studentId the id of the student for which the participations should be found
-     * @param exercises the individual-mode exercises for which participations should be found
-     * @return student's participations
-     */
-    public List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(Long studentId, List<Exercise> exercises) {
-        return studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentId, exercises);
-    }
-
-    /**
      * Get all participations for the given studentExam and exercises combined with their submissions with a result.
      * Distinguishes between student exams and test runs and only loads the respective participations
      *
@@ -1283,38 +989,6 @@ public class ParticipationService {
             return studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(),
                     studentExam.getExercises());
         }
-    }
-
-    /**
-     * Loads the test run participatiosn for the given user id (which typically belongs to an instructor or admin)
-     * @param userId the id of the user
-     * @param exercises the exercises for which we want the participations
-     * @return the test run participations with submissions and results loaded
-     */
-    public List<StudentParticipation> findTestRunParticipationForExerciseWithEagerSubmissionsResult(Long userId, List<Exercise> exercises) {
-        return studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(userId, exercises);
-    }
-
-    /**
-     * Get all participations for the given student and team-mode exercises combined with their submissions with a result
-     *
-     * @param studentId the id of the student for which the participations should be found
-     * @param exercises the team-mode exercises for which participations should be found
-     * @return student's team participations
-     */
-    public List<StudentParticipation> findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(Long studentId, List<Exercise> exercises) {
-        return studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(studentId, exercises);
-    }
-
-    /**
-     * Get all participations for the given student and team-mode exercises combined with their submissions with a result
-     *
-     * @param courseId the id of the course for which the participations should be found
-     * @param teamShortName the short name of the team for which participations should be found
-     * @return participations of team
-     */
-    public List<StudentParticipation> findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(long courseId, String teamShortName) {
-        return studentParticipationRepository.findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(courseId, teamShortName);
     }
 
     /**

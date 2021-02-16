@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -85,10 +86,13 @@ public class ParticipationResource {
 
     private final FeatureToggleService featureToggleService;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamService teamService, FeatureToggleService featureToggleService) {
+            AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamService teamService, FeatureToggleService featureToggleService,
+            StudentParticipationRepository studentParticipationRepository) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -102,6 +106,7 @@ public class ParticipationResource {
         this.guidedTourConfiguration = guidedTourConfiguration;
         this.teamService = teamService;
         this.featureToggleService = featureToggleService;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -245,7 +250,7 @@ public class ParticipationResource {
         if (participation.getPresentationScore() > 1) {
             participation.setPresentationScore(1);
         }
-        StudentParticipation currentParticipation = participationService.findOneStudentParticipation(participation.getId());
+        StudentParticipation currentParticipation = studentParticipationRepository.findByIdElseThrow(participation.getId());
         if (currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
             log.info(user.getLogin() + " removed the presentation score of " + participation.getParticipantIdentifier() + " for exercise with participationId "
                     + participation.getExercise().getId());
@@ -277,10 +282,15 @@ public class ParticipationResource {
         boolean examMode = exercise.isExamExercise();
         List<StudentParticipation> participations;
         if (withLatestResult) {
-            participations = participationService.findByExerciseIdWithLatestResult(exerciseId, examMode);
+            if (examMode) {
+                participations = studentParticipationRepository.findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(exerciseId);
+            }
+            else {
+                participations = studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
+            }
         }
         else {
-            participations = participationService.findByExerciseId(exerciseId);
+            participations = studentParticipationRepository.findByExerciseId(exerciseId);
         }
         participations = participations.stream().filter(participation -> participation.getParticipant() != null).collect(Collectors.toList());
 
@@ -306,7 +316,7 @@ public class ParticipationResource {
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
-        List<StudentParticipation> participations = participationService.findByCourseIdWithRelevantResult(courseId);
+        List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithRelevantResult(courseId);
         int resultCount = 0;
         for (StudentParticipation participation : participations) {
             // make sure the registration number is explicitly shown in the client
@@ -388,7 +398,7 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentParticipation> getParticipation(@PathVariable Long participationId) {
         log.debug("REST request to get participation : {}", participationId);
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionOwner(participation, user);
         return Optional.ofNullable(participation).map(result -> new ResponseEntity<>(result, HttpStatus.OK)).orElse(ResponseUtil.notFound());
@@ -502,7 +512,7 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
             @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
 
         if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)) {
             return forbidden();
@@ -536,7 +546,7 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteParticipationForGuidedTour(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
             @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
 
         if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)) {
             return forbidden();
@@ -577,7 +587,7 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOneStudentParticipation(participationId);
+        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
@@ -613,7 +623,7 @@ public class ParticipationResource {
             return participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
 
-        return participationService.findOneStudentParticipation(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        return studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
     }
 
     /**
@@ -624,7 +634,7 @@ public class ParticipationResource {
     @GetMapping(value = "/participations/{participationId}/submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Submission>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
         List<Submission> submissions = participationService.getSubmissionsWithResultsAndAssessorsByParticipationId(participationId);

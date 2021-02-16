@@ -275,7 +275,7 @@ public class StudentExamService {
         Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
                 .stream().filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
@@ -306,7 +306,7 @@ public class StudentExamService {
         Map<User, List<Exercise>> exercisesOfUser = studentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises().stream()
                 .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent() && studentParticipation.findLatestSubmission().get().isEmpty()) {
@@ -545,7 +545,8 @@ public class StudentExamService {
     public StudentExam deleteTestRun(Long testRunId) {
         var testRun = findOneWithExercises(testRunId);
         User instructor = testRun.getUser();
-        var participations = participationService.findTestRunParticipationForExerciseWithEagerSubmissionsResult(instructor.getId(), testRun.getExercises());
+        var participations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructor.getId(),
+                testRun.getExercises());
         testRun.getExercises().forEach(exercise -> exercise.setStudentParticipations(Set.of(exercise.findRelevantParticipation(participations))));
 
         List<StudentExam> otherTestRunsOfInstructor = findAllTestRunsWithExercisesForUser(testRun.getExam().getId(), instructor.getId()).stream()

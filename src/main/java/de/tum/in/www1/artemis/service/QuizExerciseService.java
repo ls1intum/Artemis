@@ -5,13 +5,7 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -34,26 +28,17 @@ public class QuizExerciseService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
-    private final ObjectMapper objectMapper;
-
-    private final GroupNotificationService groupNotificationService;
-
     private QuizScheduleService quizScheduleService;
 
     private QuizStatisticService quizStatisticService;
 
-    private SimpMessageSendingOperations messagingTemplate;
-
-    public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, ResultRepository resultRepository, GroupNotificationService groupNotificationService,
-            QuizSubmissionRepository quizSubmissionRepository, MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
+    public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository, ResultRepository resultRepository,
+            ShortAnswerMappingRepository shortAnswerMappingRepository, QuizSubmissionRepository quizSubmissionRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.shortAnswerMappingRepository = shortAnswerMappingRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
-        this.objectMapper = mappingJackson2HttpMessageConverter.getObjectMapper();
-        this.groupNotificationService = groupNotificationService;
     }
 
     @Autowired
@@ -64,11 +49,6 @@ public class QuizExerciseService {
     @Autowired
     public void setQuizScheduleService(QuizScheduleService quizScheduleService) {
         this.quizScheduleService = quizScheduleService;
-    }
-
-    @Autowired
-    public void setMessagingTemplate(SimpMessageSendingOperations messagingTemplate) {
-        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -239,33 +219,6 @@ public class QuizExerciseService {
         quizSubmissionRepository.saveAll(submissions);
         resultRepository.saveAll(results);
         log.info(results.size() + " results have been updated successfully for quiz re-evaluate");
-    }
-
-    /**
-     * Sends a QuizExercise to all subscribed clients and creates notification if quiz has started.
-     * @param quizExercise the QuizExercise which will be sent
-     * @param quizChange the change that was applied to the quiz, which decides to which topic subscriptions the quiz exercise is sent
-     */
-    public void sendQuizExerciseToSubscribedClients(QuizExercise quizExercise, String quizChange) {
-        try {
-            long start = System.currentTimeMillis();
-            Class<?> view = quizExercise.viewForStudentsInQuizExercise();
-            byte[] payload = objectMapper.writerWithView(view).writeValueAsBytes(quizExercise);
-            // For each change we send the same message. The client needs to decide how to handle the date based on the quiz status
-            if (quizExercise.isVisibleToStudents() && quizExercise.isCourseExercise()) {
-                // Create a group notification if actions is 'start-now'.
-                if ("start-now".equals(quizChange)) {
-                    groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);
-                }
-                // Send quiz via websocket.
-                messagingTemplate.send("/topic/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quizExercises",
-                        MessageBuilder.withPayload(payload).build());
-                log.info("Sent '{}' for quiz {} to all listening clients in {} ms", quizChange, quizExercise.getId(), System.currentTimeMillis() - start);
-            }
-        }
-        catch (JsonProcessingException e) {
-            log.error("Exception occurred while serializing quiz exercise", e);
-        }
     }
 
     /**

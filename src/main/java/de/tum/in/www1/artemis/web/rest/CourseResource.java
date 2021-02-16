@@ -77,7 +77,7 @@ public class CourseResource {
 
     private final CourseService courseService;
 
-    private final ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -111,14 +111,14 @@ public class CourseResource {
 
     private final ExerciseRepository exerciseRepository;
 
-    public CourseResource(UserRepository userRepository, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
-            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-            SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
-            ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
-            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository) {
+    public CourseResource(UserRepository userRepository, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
+            CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+            Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository,
+            ComplaintResponseRepository complaintResponseRepository, SubmissionService submissionService, ResultService resultService, ComplaintService complaintService,
+            TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository,
+            Optional<VcsUserManagementService> vcsUserManagementService, AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository) {
         this.courseService = courseService;
-        this.participationService = participationService;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -479,11 +479,11 @@ public class CourseResource {
         // would lead to a SQL statement that cannot be optimized
 
         // 1st: fetch participations, submissions and results for individual exercises
-        List<StudentParticipation> individualParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
-                activeIndividualExercises);
+        List<StudentParticipation> individualParticipations = studentParticipationRepository
+                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(), activeIndividualExercises);
 
         // 2nd: fetch participations, submissions and results for team exercises
-        List<StudentParticipation> teamParticipations = participationService.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), activeTeamExercises);
+        List<StudentParticipation> teamParticipations = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), activeTeamExercises);
 
         // 3rd: merge both into one list for further processing
         List<StudentParticipation> participations = Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toList());

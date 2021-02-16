@@ -6,7 +6,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -31,18 +30,14 @@ public class QuizStatisticService {
 
     private final QuizQuestionStatisticRepository quizQuestionStatisticRepository;
 
-    private SimpMessageSendingOperations messagingTemplate;
+    private final SimpMessageSendingOperations messagingTemplate;
 
-    public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
+    public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SimpMessageSendingOperations messagingTemplate,
             QuizPointStatisticRepository quizPointStatisticRepository, QuizQuestionStatisticRepository quizQuestionStatisticRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.quizQuestionStatisticRepository = quizQuestionStatisticRepository;
-    }
-
-    @Autowired
-    public void setMessagingTemplate(SimpMessageSendingOperations messagingTemplate) {
         this.messagingTemplate = messagingTemplate;
     }
 

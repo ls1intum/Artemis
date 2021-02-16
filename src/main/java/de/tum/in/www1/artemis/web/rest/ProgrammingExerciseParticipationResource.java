@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
@@ -30,7 +31,7 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationResource.class);
 
-    private final ParticipationService participationService;
+    private final ParticipationRepository participationRepository;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
@@ -44,11 +45,11 @@ public class ProgrammingExerciseParticipationResource {
 
     private final GradingCriterionService gradingCriterionService;
 
-    public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
-            ResultService resultService, ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authCheckService, GradingCriterionService gradingCriterionService) {
+    public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            ParticipationRepository participationRepository, ResultService resultService, ProgrammingSubmissionService submissionService,
+            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService, GradingCriterionService gradingCriterionService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.participationService = participationService;
+        this.participationRepository = participationRepository;
         this.resultService = resultService;
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -142,7 +143,7 @@ public class ProgrammingExerciseParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacksForProgrammingExerciseParticipation(@PathVariable Long participationId,
             @RequestParam(defaultValue = "false") boolean withSubmission) {
-        Participation participation = participationService.findOne(participationId);
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             return badRequest();
         }

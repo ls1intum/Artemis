@@ -30,7 +30,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
@@ -49,7 +48,7 @@ public class ExamService {
 
     private final ExerciseService exerciseService;
 
-    private final ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -65,13 +64,13 @@ public class ExamService {
 
     private final AuditEventRepository auditEventRepository;
 
-    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ParticipationService participationService,
+    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ExamQuizService examQuizService, ExerciseService exerciseService, UserRepository userRepository,
             InstanceMessageSendService instanceMessageSendService, QuizExerciseRepository quizExerciseRepository, AuditEventRepository auditEventRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
-        this.participationService = participationService;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examQuizService = examQuizService;
         this.instanceMessageSendService = instanceMessageSendService;
@@ -158,7 +157,7 @@ public class ExamService {
     public ExamScoresDTO getExamScore(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
-        List<StudentParticipation> studentParticipations = participationService.findByExamIdWithSubmissionRelevantResult(examId); // without test run participations
+        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithSubmissionRelevantResult(examId); // without test run participations
 
         // Adding exam information to DTO
         ExamScoresDTO scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());

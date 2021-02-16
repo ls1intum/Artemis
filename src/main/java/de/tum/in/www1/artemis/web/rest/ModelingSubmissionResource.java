@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -63,15 +64,19 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseService modelingExerciseService, ParticipationService participationService, AuthorizationCheckService authCheckService, CompassService compassService,
-            ExerciseRepository exerciseRepository, UserRepository userRepository, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
+            ExerciseRepository exerciseRepository, UserRepository userRepository, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService,
+            StudentParticipationRepository studentParticipationRepository) {
         super(submissionRepository, resultService, participationService, authCheckService, userRepository, exerciseRepository, modelingSubmissionService);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.compassService = compassService;
         this.gradingCriterionService = gradingCriterionService;
         this.examSubmissionService = examSubmissionService;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -278,7 +283,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
         else {
             // otherwise get a random (non-optimal) submission that is not assessed
-            var participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
+            // Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for
+            // the
+            // corresponding submission yet.
+            var participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
             var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
                     .collect(Collectors.toList());
 

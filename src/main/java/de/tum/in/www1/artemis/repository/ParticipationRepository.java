@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Repository
 public interface ParticipationRepository extends JpaRepository<Participation, Long> {
@@ -30,4 +31,12 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
      */
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<Participation> findWithEagerSubmissionsById(Long participationId);
+
+    default Participation findByIdWithSubmissionsElseThrow(long participationId) {
+        return findWithEagerSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+    }
+
+    default Participation findByIdElseThrow(long participationId) {
+        return findById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+    }
 }

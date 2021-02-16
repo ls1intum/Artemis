@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,9 +12,12 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -310,4 +313,83 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     List<StudentParticipation> findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
             @Param("assessor") User assessor);
+
+    default StudentParticipation findByIdElseThrow(Long studentParticipationId) {
+        return findById(studentParticipationId).orElseThrow(() -> new EntityNotFoundException("Student Participation", studentParticipationId));
+    }
+
+    /**
+     * Get all participations belonging to exam with submissions and their relevant results.
+     *
+     * @param examId the id of the exam
+     * @return list of participations belonging to course
+     */
+    default List<StudentParticipation> findByExamIdWithSubmissionRelevantResult(Long examId) {
+        var participations = findByExamIdWithEagerSubmissionsRatedResults(examId); // without test run participations
+        // filter out the participations of test runs which can only be made by instructors
+        participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).collect(Collectors.toList());
+        return filterParticipationsWithRelevantResults(participations, true);
+    }
+
+    /**
+     * Get all participations belonging to course with relevant results.
+     *
+     * @param courseId the id of the course
+     * @return list of participations belonging to course
+     */
+    default List<StudentParticipation> findByCourseIdWithRelevantResult(Long courseId) {
+        List<StudentParticipation> participations = findByCourseIdWithEagerRatedResults(courseId);
+        return filterParticipationsWithRelevantResults(participations, false);
+    }
+
+    /**
+     * filters the relevant results by removing all irrelevant ones
+     * @param participations the participations to get filtered
+     * @param resultInSubmission flag to indicate if the results are represented in the submission or participation
+     * @return the filtered participations
+     */
+    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
+
+        return participations.stream()
+
+                // Filter out participations without Students
+                // These participations are used e.g. to store template and solution build plans in programming exercises
+                .filter(participation -> participation.getParticipant() != null)
+
+                // filter all irrelevant results, i.e. rated = false or no completion date or no score
+                .peek(participation -> {
+                    List<Result> relevantResults = new ArrayList<>();
+
+                    // Get the results over the participation or over submissions
+                    Set<Result> resultsOfParticipation;
+                    if (resultInSubmission) {
+                        resultsOfParticipation = participation.getSubmissions().stream().map(Submission::getLatestResult).collect(Collectors.toSet());
+                    }
+                    else {
+                        resultsOfParticipation = participation.getResults();
+                    }
+                    // search for the relevant result by filtering out irrelevant results using the continue keyword
+                    // this for loop is optimized for performance and thus not very easy to understand ;)
+                    for (Result result : resultsOfParticipation) {
+                        // this should not happen because the database call above only retrieves rated results
+                        if (Boolean.FALSE.equals(result.isRated())) {
+                            continue;
+                        }
+                        if (result.getCompletionDate() == null || result.getScore() == null) {
+                            // we are only interested in results with completion date and with score
+                            continue;
+                        }
+                        relevantResults.add(result);
+                    }
+                    // we take the last rated result
+                    if (!relevantResults.isEmpty()) {
+                        // make sure to take the latest result
+                        relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
+                        Result correctResult = relevantResults.get(0);
+                        relevantResults.clear();
+                        relevantResults.add(correctResult);
+                    }
+                    participation.setResults(new HashSet<>(relevantResults));
+                }).collect(Collectors.toList());
+    }
 }

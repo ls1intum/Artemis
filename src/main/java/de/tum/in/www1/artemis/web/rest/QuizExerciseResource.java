@@ -43,6 +43,8 @@ public class QuizExerciseResource {
 
     private final QuizExerciseService quizExerciseService;
 
+    private final QuizMessagingService quizMessagingService;
+
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final UserRepository userRepository;
@@ -65,7 +67,8 @@ public class QuizExerciseResource {
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
             QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService, CourseRepository courseRepository,
-            GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserRepository userRepository, ExamDateService examDateService) {
+            GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserRepository userRepository, ExamDateService examDateService,
+            QuizMessagingService quizMessagingService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userRepository = userRepository;
@@ -77,6 +80,7 @@ public class QuizExerciseResource {
         this.exerciseService = exerciseService;
         this.examDateService = examDateService;
         this.courseRepository = courseRepository;
+        this.quizMessagingService = quizMessagingService;
     }
 
     /**
@@ -124,7 +128,7 @@ public class QuizExerciseResource {
         // Only notify students and tutors if the exercise is created for a course
         if (quizExercise.isCourseExercise()) {
             // notify websocket channel of changes to the quiz exercise
-            quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
+            quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
             groupNotificationService.notifyTutorGroupAboutExerciseCreated(quizExercise);
         }
 
@@ -193,7 +197,7 @@ public class QuizExerciseResource {
         // Only notify students about changes if a regular exercise in a course was updated
         if (notificationText != null && quizExercise.isCourseExercise()) {
             // notify websocket channel of changes to the quiz exercise
-            quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
+            quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(quizExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
@@ -365,7 +369,7 @@ public class QuizExerciseResource {
         quizScheduleService.updateQuizExercise(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
-        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, action);
+        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, action);
         return new ResponseEntity<>(quizExercise, HttpStatus.OK);
     }
 

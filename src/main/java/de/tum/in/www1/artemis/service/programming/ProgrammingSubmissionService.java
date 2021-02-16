@@ -76,9 +76,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
-            FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository, ExamDateService examDateService, CourseRepository courseRepository) {
+            FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository, ExamDateService examDateService, CourseRepository courseRepository,
+            ParticipationRepository participationRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                courseRepository);
+                courseRepository, participationRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.groupNotificationService = groupNotificationService;
@@ -103,7 +104,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @throws IllegalArgumentException it the Commit hash could not be parsed for submission from participation
      */
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
-        Participation participation = participationService.findOneWithEagerSubmissions(participationId);
+        Participation participation = participationRepository.findByIdWithSubmissionsElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new EntityNotFoundException("ProgrammingExerciseParticipation with id " + participationId + " could not be found!");
         }
@@ -184,7 +185,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @throws IllegalArgumentException if the participation for the given id is not a programming exercise participation.
      */
     public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId, boolean filterGraded) throws EntityNotFoundException, IllegalArgumentException {
-        Participation participation = participationService.findOne(participationId);
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException("Participation with id " + participationId + " is not a programming exercise participation!");
         }
