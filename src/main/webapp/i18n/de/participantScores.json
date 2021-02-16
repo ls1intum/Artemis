@@ -21,7 +21,9 @@
                 "userName": "Nutzername",
                 "teamName": "Team Name",
                 "averageScore": "Durchschnittliches Ergebnis",
-                "averageRatedScore": "Durchschnittliches bewertetes Ergebnis"
+                "averageRatedScore": "Durchschnittliches bewertetes Ergebnis",
+                "averagePoints": "Durchschnittliche Punkte",
+                "averageRatedPoints": "Durchschnittliche bewertete Punkte"
             },
             "average": "Durchschnittswerte",
             "individual": "Individuelle Werte",

@@ -21,7 +21,9 @@
                 "userName": "Username",
                 "teamName": "Team Name",
                 "averageScore": "Average Score",
-                "averageRatedScore": "Average Rated Score"
+                "averageRatedScore": "Average Rated Score",
+                "averagePoints": "Average Points",
+                "averageRatedPoints": "Average Rated Points"
             },
             "average": "Average Scores",
             "individual": "Individual Scores",
