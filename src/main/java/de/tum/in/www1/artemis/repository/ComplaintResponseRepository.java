@@ -43,16 +43,11 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      * @return number of complaints associated to exercise exerciseId without test runs
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM StudentParticipation p
-            WHERE p.exercise.id = :#{#exerciseId}
-            AND p.testRun = FALSE
-            AND EXISTS (Select s FROM p.submissions s
-                        WHERE s.results IS NOT EMPTY
-                        AND EXISTS (SELECT c FROM Complaint c
-                            WHERE EXISTS (SELECT r.id FROM s.results r
-                                WHERE r.id = c.result.id) AND c.complaintType = :#{#complaintType}
-                                AND EXISTS (SELECT cr FROM ComplaintResponse cr
-                                    WHERE cr.complaint.id = c.id AND cr.submittedTime IS NOT NULL)))
+            SELECT COUNT (DISTINCT cr) FROM ComplaintResponse cr
+            WHERE cr.submittedTime IS NOT NULL
+            AND cr.complaint.complaintType = :#{#complaintType}
+            AND cr.complaint.result.participation.exercise.id = :#{#exerciseId}
+            AND cr.complaint.result.participation.testRun = FALSE
             """)
     long countByComplaintResultParticipationExerciseIdAndComplaintComplaintTypeIgnoreTestRuns(long exerciseId, ComplaintType complaintType);
 
