@@ -25,6 +25,7 @@ import { DocsComponent } from 'app/admin/docs/docs.component';
 import { OrganizationManagementComponent } from './organization-management/organization-management.component';
 import { OrganizationManagementDetailComponent } from './organization-management/organization-management-detail.component';
 import { OrganizationManagementUpdateComponent } from './organization-management/organization-management-update.component';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 
 /* jhipster-needle-add-admin-module-import - JHipster will add admin modules imports here */
 
@@ -35,8 +36,9 @@ const ENTITY_STATES = [...adminState];
         RouterModule.forChild(ENTITY_STATES),
         ArtemisSharedModule,
         FormDateTimePickerModule,
-        NgxDatatableModule,
         TagInputModule,
+        NgxDatatableModule,
+        ArtemisDataTableModule,
         /* jhipster-needle-add-admin-module - JHipster will add admin modules here */
     ],
     declarations: [
