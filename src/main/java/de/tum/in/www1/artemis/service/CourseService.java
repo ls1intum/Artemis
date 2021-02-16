@@ -55,8 +55,6 @@ public class CourseService {
 
     private final ExerciseGroupService exerciseGroupService;
 
-    private final OrganizationService organizationService;
-
     private final AuditEventRepository auditEventRepository;
 
     private final UserService userService;
@@ -65,8 +63,7 @@ public class CourseService {
 
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
-            ExerciseGroupService exerciseGroupService, OrganizationService organizationService, AuditEventRepository auditEventRepository, UserService userService,
-            LearningGoalRepository learningGoalRepository) {
+            ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -75,7 +72,6 @@ public class CourseService {
         this.lectureService = lectureService;
         this.notificationService = notificationService;
         this.exerciseGroupService = exerciseGroupService;
-        this.organizationService = organizationService;
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
         this.learningGoalRepository = learningGoalRepository;
@@ -367,41 +363,5 @@ public class CourseService {
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
-    }
-
-    /**
-     * Add a course to an existing organization
-     * @param course the course to add
-     * @param organizationId the id of the organization where the course should be added
-     */
-    public void addCourseToOrganization(Course course, long organizationId) {
-        organizationService.addCourseToOrganization(course, organizationId);
-    }
-
-    /**
-     * Removes a course from an existing organization
-     * @param course the course to remove
-     * @param organization the organization where the course should be removed from
-     */
-    public void removeCourseFromOrganization(Course course, Organization organization) {
-        organizationService.removeCourseFromOrganization(course, organization);
-    }
-
-    /**
-     * Get all organizations where the given course is currently in
-     * @param courseId the id of the course used to retrieve the organizations
-     * @return a Set of all organizations the given course is currently in
-     */
-    public Set<Organization> getAllOrganizationsOfCourse(long courseId) {
-        return organizationService.getAllOrganizationsByCourse(courseId);
-    }
-
-    /**
-     * Get all organizations where the given course is currently in
-     * @param course the course used to retrieve the organizations
-     * @return a Set of all organizations the given course is currently in
-     */
-    public Set<Organization> getAllOrganizationsOfCourse(Course course) {
-        return organizationService.getAllOrganizationsByCourse(course.getId());
     }
 }

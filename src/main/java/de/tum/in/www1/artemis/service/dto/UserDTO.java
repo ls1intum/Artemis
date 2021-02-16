@@ -13,6 +13,7 @@ import javax.validation.constraints.Size;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
+import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 
 /**
@@ -58,6 +59,8 @@ public class UserDTO extends AuditingEntityDTO {
 
     private Set<GuidedTourSetting> guidedTourSettings;
 
+    private Set<Organization> organizations;
+
     public UserDTO() {
         // Empty constructor needed for Jackson.
     }
@@ -65,12 +68,13 @@ public class UserDTO extends AuditingEntityDTO {
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-                user.getLastNotificationRead(), user.getAuthorities().stream().map(Authority::getName).collect(Collectors.toSet()), user.getGroups(), user.getGuidedTourSettings());
+                user.getLastNotificationRead(), user.getAuthorities().stream().map(Authority::getName).collect(Collectors.toSet()), user.getGroups(), user.getGuidedTourSettings(),
+                user.getOrganizations());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
             String langKey, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead, Set<String> authorities,
-            Set<String> groups, Set<GuidedTourSetting> guidedTourSettings) {
+            Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations) {
 
         this.id = id;
         this.login = login;
@@ -90,6 +94,7 @@ public class UserDTO extends AuditingEntityDTO {
         this.authorities = authorities;
         this.groups = groups;
         this.guidedTourSettings = guidedTourSettings;
+        this.organizations = organizations;
     }
 
     public Long getId() {
@@ -194,6 +199,14 @@ public class UserDTO extends AuditingEntityDTO {
 
     public void setGroups(Set<String> groups) {
         this.groups = groups;
+    }
+
+    public Set<Organization> getOrganizations() {
+        return organizations;
+    }
+
+    public void setOrganizations(Set<Organization> organizations) {
+        this.organizations = organizations;
     }
 
     public Set<GuidedTourSetting> getGuidedTourSettings() {

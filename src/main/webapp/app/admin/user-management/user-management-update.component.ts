@@ -3,6 +3,10 @@ import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
+import { Organization } from 'app/entities/organization.model';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -14,7 +18,13 @@ export class UserManagementUpdateComponent implements OnInit {
     authorities: string[];
     isSaving: boolean;
 
-    constructor(private languageHelper: JhiLanguageHelper, private userService: UserService, private route: ActivatedRoute) {}
+    constructor(
+        private languageHelper: JhiLanguageHelper,
+        private userService: UserService,
+        private route: ActivatedRoute,
+        private organizationService: OrganizationManagementService,
+        private modalService: NgbModal,
+    ) {}
 
     /**
      * Enable subscriptions to retrieve the user based on the activated route, all authorities and all languages on init
@@ -26,6 +36,9 @@ export class UserManagementUpdateComponent implements OnInit {
         this.route.parent!.data.subscribe(({ user }) => {
             if (user) {
                 this.user = user.body ? user.body : user;
+                this.organizationService.getOrganizationsByUser(this.user.id!).subscribe((organizations) => {
+                    this.user.organizations = organizations;
+                });
             }
         });
         this.authorities = [];
@@ -87,5 +100,26 @@ export class UserManagementUpdateComponent implements OnInit {
         } else {
             this.user.password = '';
         }
+    }
+
+    /**
+     * Opens the organizations modal used to select an organization to add
+     */
+    openOrganizationsModal() {
+        const modalRef = this.modalService.open(OrganizationSelectorComponent, { size: 'xl', backdrop: 'static' });
+        modalRef.componentInstance.organizations = this.user.organizations;
+        modalRef.closed.subscribe((organization) => {
+            if (organization !== undefined) {
+                this.user.organizations!.push(organization);
+            }
+        });
+    }
+
+    /**
+     * Removes an organization from the user
+     * @param organization to remove
+     */
+    removeOrganizationFromUser(organization: Organization) {
+        this.user.organizations = this.user.organizations!.filter((o) => o.id !== organization.id);
     }
 }

@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
@@ -62,7 +61,7 @@ public class OrganizationService {
                  */
                 if (!user.getOrganizations().contains(organization) && match(user, organization)) {
                     log.debug("User {} matches {} email pattern. Adding", user.getLogin(), organization.getName());
-                    addUserToOrganization(user, organization.getId());
+                    organizationRepository.addUserToOrganization(user, organization.getId());
                 }
             }
         });
@@ -97,11 +96,11 @@ public class OrganizationService {
         usersToAssign.forEach(user -> {
             if (user.getOrganizations().contains(organization) && !match(user, organization)) {
                 log.debug("User {} does not match {} email pattern anymore. Removing", user.getLogin(), organization.getName());
-                removeUserFromOrganization(user, organization.getId());
+                organizationRepository.removeUserFromOrganization(user, organization.getId());
             }
             else if (!user.getOrganizations().contains(organization) && match(user, organization)) {
                 log.debug("User {} matches {} email pattern. Adding", user.getLogin(), organization.getName());
-                addUserToOrganization(user, organization.getId());
+                organizationRepository.addUserToOrganization(user, organization.getId());
             }
         });
     }
@@ -234,81 +233,5 @@ public class OrganizationService {
      */
     public long getNumberOfCoursesByOrganization(long organizationId) {
         return organizationRepository.getNumberOfCoursesByOrganizationId(organizationId);
-    }
-
-    /**
-     * Add a user to an existing organization
-     * @param user the user to add
-     * @param organizationId the id of the organization where the user should be added
-     */
-    public void addUserToOrganization(User user, long organizationId) {
-        Optional<Organization> organization = organizationRepository.findByIdWithEagerUsers(organizationId);
-        if (organization.isPresent() && !(organization.get().getUsers().contains(user))) {
-            organization.get().getUsers().add(user);
-            save(organization.get());
-        }
-    }
-
-    /**
-     * Removes a user from an existing organization
-     * @param user the user to remove
-     * @param organizationId the id of the organization where the user should be removed from
-     */
-    public void removeUserFromOrganization(User user, long organizationId) {
-        Optional<Organization> organization = organizationRepository.findByIdWithEagerUsers(organizationId);
-        if (organization.isPresent() && organization.get().getUsers().contains(user)) {
-            organization.get().getUsers().remove(user);
-            save(organization.get());
-        }
-    }
-
-    /**
-     * Add a course to an existing organization
-     * @param course the course to add
-     * @param organizationId the id of the organization where the course should be added
-     */
-    public void addCourseToOrganization(Course course, long organizationId) {
-        Optional<Organization> organization = organizationRepository.findByIdWithEagerCourses(organizationId);
-        if (organization.isPresent() && !(organization.get().getCourses().contains(course))) {
-            organization.get().getCourses().add(course);
-            save(organization.get());
-        }
-    }
-
-    /**
-     * Add a course to an existing organization
-     * @param course the course to add
-     * @param organization the organization where the course should be added
-     */
-    public void addCourseToOrganization(Course course, Organization organization) {
-        if (!organization.getCourses().contains(course)) {
-            organization.getCourses().add(course);
-            save(organization);
-        }
-    }
-
-    /**
-     * Removes a course from an existing organization
-     * @param course the course to remove
-     * @param organization the organization where the course should be removed from
-     */
-    public void removeCourseFromOrganization(Course course, Organization organization) {
-        if (organization.getCourses().contains(course)) {
-            organization.getCourses().remove(course);
-            save(organization);
-        }
-    }
-
-    /**
-     * Removes a course from an existing organization
-     * @param course the course to remove
-     * @param organizationId the id of organization where the course should be removed from
-     */
-    public void removeCourseFromOrganization(Course course, long organizationId) {
-        Optional<Organization> organization = organizationRepository.findByIdWithEagerCourses(organizationId);
-        if (organization.isPresent() && organization.get().getCourses().contains(course)) {
-            organization.get().getCourses().remove(course);
-            save(organization.get());
-        }
     }
 }

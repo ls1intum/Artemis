@@ -52,6 +52,14 @@ export class OrganizationManagementService {
     }
 
     /**
+     * Send GET request to retrieve all organizations of a given user
+     * @param userId the id of the user to retrieve the organizations from
+     */
+    getOrganizationsByUser(userId: number): Observable<any> {
+        return this.http.get(`${this.resourceUrl}/user/${userId}`);
+    }
+
+    /**
      * Send PUT request to update an organization
      * @param organization the organization to update
      */

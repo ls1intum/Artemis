@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.OrganizationService;
 import de.tum.in.www1.artemis.service.UserService;
@@ -40,13 +41,16 @@ public class OrganizationResource {
 
     private final OrganizationService organizationService;
 
+    private final OrganizationRepository organizationRepository;
+
     private final UserService userService;
 
     private final CourseService courseService;
 
-    public OrganizationResource(OrganizationService organizationService, UserService userService, CourseService courseService) {
+    public OrganizationResource(OrganizationService organizationService, OrganizationRepository organizationRepository, UserService userService, CourseService courseService) {
         this.organizationService = organizationService;
         this.userService = userService;
+        this.organizationRepository = organizationRepository;
         this.courseService = courseService;
     }
 
@@ -54,7 +58,7 @@ public class OrganizationResource {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> addCourseToOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
         Course course = courseService.findOne(courseId);
-        organizationService.addCourseToOrganization(course, organizationId);
+        organizationRepository.addCourseToOrganization(course, organizationId);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, course.getTitle())).build();
     }
@@ -63,7 +67,7 @@ public class OrganizationResource {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> removeCourseToOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
         Course course = courseService.findOne(courseId);
-        organizationService.removeCourseFromOrganization(course, organizationId);
+        organizationRepository.removeCourseFromOrganization(course, organizationId);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, course.getTitle())).build();
     }
@@ -73,7 +77,7 @@ public class OrganizationResource {
     public ResponseEntity<Void> addUserToOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
         Optional<User> user = userService.getUserByLogin(userLogin);
         if (user.isPresent()) {
-            organizationService.addUserToOrganization(user.get(), organizationId);
+            organizationRepository.addUserToOrganization(user.get(), organizationId);
         }
         else {
             return ResponseEntity.notFound().headers(HeaderUtil.createAlert(applicationName, "User couldn't be found.", "userNotFound")).build();
@@ -87,7 +91,7 @@ public class OrganizationResource {
     public ResponseEntity<Void> removeUserFromOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
         Optional<User> user = userService.getUserByLogin(userLogin);
         if (user.isPresent()) {
-            organizationService.removeUserFromOrganization(user.get(), organizationId);
+            organizationRepository.removeUserFromOrganization(user.get(), organizationId);
         }
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, user.get().getLogin())).build();
@@ -172,6 +176,13 @@ public class OrganizationResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<Organization>> getAllOrganizationsByCourse(@PathVariable Long courseId) {
         Set<Organization> organizations = organizationService.getAllOrganizationsByCourse(courseId);
+        return new ResponseEntity<>(organizations, HttpStatus.OK);
+    }
+
+    @GetMapping("/organizations/user/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Set<Organization>> getAllOrganizationsByUser(@PathVariable Long userId) {
+        Set<Organization> organizations = organizationService.getAllOrganizationsByUser(userId);
         return new ResponseEntity<>(organizations, HttpStatus.OK);
     }
 }

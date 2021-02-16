@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.validation.Valid;
 
@@ -21,7 +22,9 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.UserService;
@@ -67,15 +70,22 @@ public class UserResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    @Value("${artemis.user-management.organizations.enable-multiple-organizations:#{null}}")
+    private Optional<Boolean> enabledMultipleOrganizations;
+
     private final UserRepository userRepository;
 
     private final UserService userService;
 
+    private final OrganizationRepository organizationRepository;
+
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    public UserResource(UserRepository userRepository, UserService userService, ArtemisAuthenticationProvider artemisAuthenticationProvider) {
+    public UserResource(UserRepository userRepository, UserService userService, OrganizationRepository organizationRepository,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider) {
         this.userRepository = userRepository;
         this.userService = userService;
+        this.organizationRepository = organizationRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
 
@@ -108,6 +118,9 @@ public class UserResource {
             throw new EntityNotFoundException("Not all groups are available: " + managedUserVM.getGroups());
         }
         else {
+            if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
+                updateOrganizations(managedUserVM);
+            }
             User newUser = userService.createUser(managedUserVM);
 
             // NOTE: Mail service is NOT active at the moment
@@ -143,6 +156,9 @@ public class UserResource {
 
         User updatedUser = null;
         if (existingUser.isPresent()) {
+            if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
+                updateOrganizations(managedUserVM);
+            }
             updatedUser = userService.updateUser(existingUser.get(), managedUserVM);
         }
 
@@ -225,5 +241,25 @@ public class UserResource {
         User user = userService.getUser();
         userService.updateUserNotificationReadDate(user.getId());
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Utility method used to update the organizations of a course
+     * @param userVM the course containing the organizations to update
+     */
+    private void updateOrganizations(ManagedUserVM userVM) {
+        User user = userService.getUserByLogin(userVM.getLogin()).orElseThrow(() -> new EntityNotFoundException("User" + userVM.getLogin()));
+        Set<Organization> oldOrganizations = organizationRepository.findAllOrganizationsByUserId(userVM.getId());
+        for (Organization organization : userVM.getOrganizations()) {
+            if (!oldOrganizations.contains(organization)) {
+                organizationRepository.addUserToOrganization(user, organization.getId());
+            }
+            oldOrganizations.remove(organization);
+        }
+        // we remove the remaining organizations that are not present anymore in the course
+        for (Organization organization : oldOrganizations) {
+            organizationRepository.removeUserFromOrganization(user, organization.getId());
+        }
+        userVM.setOrganizations(null);
     }
 }

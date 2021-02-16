@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
-import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
@@ -101,17 +100,14 @@ public class UserService {
 
     private Optional<VcsUserManagementService> optionalVcsUserManagementService;
 
-    private final OrganizationService organizationService;
-
     private ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService,
-            OrganizationService organizationService, GuidedTourSettingsRepository guidedTourSettingsRepository, CourseRepository courseRepository) {
+            GuidedTourSettingsRepository guidedTourSettingsRepository, CourseRepository courseRepository) {
         this.userRepository = userRepository;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
         this.ldapUserService = ldapUserService;
-        this.organizationService = organizationService;
         this.guidedTourSettingsRepository = guidedTourSettingsRepository;
         this.courseRepository = courseRepository;
     }
@@ -1115,41 +1111,5 @@ public class UserService {
 
         authorities.add(new Authority(USER));
         return authorities;
-    }
-
-    /**
-     * Add a user to an existing organization
-     * @param user the user to add
-     * @param organizationId the id of the organization where the user should be added
-     */
-    public void addUserToOrganization(User user, long organizationId) {
-        organizationService.addUserToOrganization(user, organizationId);
-    }
-
-    /**
-     * Removes a user from an existing organization
-     * @param user the user to remove
-     * @param organizationId the id of the organization where the user should be removed from
-     */
-    public void removeUserFromOrganization(User user, long organizationId) {
-        organizationService.removeUserFromOrganization(user, organizationId);
-    }
-
-    /**
-     * Get all organizations where the given user is currently in
-     * @param userId the id of the user used to retrieve the organizations
-     * @return a Set of all organizations the given user is currently in
-     */
-    public Set<Organization> getAllOrganizationsOfUser(long userId) {
-        return organizationService.getAllOrganizationsByUser(userId);
-    }
-
-    /**
-     * Get all organizations where the given user is currently in
-     * @param user the user used to retrieve the organizations
-     * @return a Set of all organizations the given user is currently in
-     */
-    public Set<Organization> getAllOrganizationsOfUser(User user) {
-        return organizationService.getAllOrganizationsByUser(user.getId());
     }
 }

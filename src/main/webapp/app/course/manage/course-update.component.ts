@@ -66,7 +66,7 @@ export class CourseUpdateComponent implements OnInit {
             if (course) {
                 this.course = course;
                 this.organizationService.getOrganizationsByCourse(course.id).subscribe((organizations) => {
-                    this.courseOrganizations = organizations ? organizations : [];
+                    this.courseOrganizations = organizations;
                 });
 
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
@@ -401,7 +401,6 @@ export class CourseUpdateComponent implements OnInit {
     /**
      * Removes an organization from the course
      * @param organization to remove
-     * @param index
      */
     removeOrganizationFromCourse(organization: Organization) {
         this.courseOrganizations = this.courseOrganizations.filter((o) => o.id !== organization.id);
