@@ -70,7 +70,7 @@ public class InstanceMessageReceiveService {
 
     public void processScheduleProgrammingExercise(Long exerciseId) {
         log.info("Received schedule update for programming exercise " + exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         programmingExerciseScheduleService.updateScheduling(programmingExercise);
     }
 
@@ -93,14 +93,14 @@ public class InstanceMessageReceiveService {
 
     public void processUnlockAllRepositories(Long exerciseId) {
         log.info("Received unlock all repositories for programming exercise " + exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are unlocked as fast as possible
         programmingExerciseScheduleService.unlockAllStudentRepositories(programmingExercise).run();
     }
 
     public void processLockAllRepositories(Long exerciseId) {
         log.info("Received lock all repositories for programming exercise " + exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are locked as fast as possible
         programmingExerciseScheduleService.lockAllStudentRepositories(programmingExercise).run();
     }

@@ -91,7 +91,7 @@ public class ProgrammingSubmissionResultSimulationService {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Participant participant = user;
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithStudentParticipationsAndSubmissionsByIdElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(programmingExercise,
                 user.getLogin());
         if (optionalStudentParticipation.isEmpty()) {

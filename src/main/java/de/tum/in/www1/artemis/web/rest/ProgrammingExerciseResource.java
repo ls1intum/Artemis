@@ -991,7 +991,7 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithStudentParticipationsAndSubmissionsByIdElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
@@ -1041,7 +1041,7 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithStudentParticipationsAndSubmissionsByIdElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
             return forbidden();

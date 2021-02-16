@@ -44,6 +44,9 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     QuizExerciseService quizExerciseService;
 
     @Autowired
+    QuizExerciseRepository quizExerciseRepository;
+
+    @Autowired
     QuizScheduleService quizScheduleService;
 
     @Autowired
@@ -120,7 +123,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(quizSubmissionRepository.count()).isEqualTo(numberOfParticipants / 2);
 
         // End the quiz right now so that results can be processed
-        quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
         exerciseRepository.saveAndFlush(quizExercise);
 
@@ -130,7 +133,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(quizSubmissionRepository.count()).isEqualTo(numberOfParticipants);
 
         // Test the statistics directly from the database
-        QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(0);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
@@ -211,7 +214,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         quizScheduleService.processCachedQuizSubmissions();
 
         // Test the statistics directly from the database
-        QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(0);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(numberOfParticipants);
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
@@ -381,7 +384,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // all stats must be 0 because we have a preview here
         // Test the statistics directly from the database
-        QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(0);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(0);
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
@@ -483,7 +486,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // set the quiz end to now and ...
         log.debug("// End the quiz and delete it");
-        quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
         quizExercise = exerciseRepository.saveAndFlush(quizExercise);
         quizScheduleService.updateQuizExercise(quizExercise);

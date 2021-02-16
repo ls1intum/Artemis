@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
@@ -33,7 +34,7 @@ public class QuizSubmissionService {
 
     private final ResultRepository resultRepository;
 
-    private QuizExerciseService quizExerciseService;
+    private final QuizExerciseRepository quizExerciseRepository;
 
     private final QuizScheduleService quizScheduleService;
 
@@ -42,17 +43,12 @@ public class QuizSubmissionService {
     private final SubmissionVersionService submissionVersionService;
 
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService, ResultRepository resultRepository,
-            SubmissionVersionService submissionVersionService) {
+            SubmissionVersionService submissionVersionService, QuizExerciseRepository quizExerciseRepository) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
         this.quizScheduleService = quizScheduleService;
         this.submissionVersionService = submissionVersionService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setQuizExerciseService(QuizExerciseService quizExerciseService) {
-        this.quizExerciseService = quizExerciseService;
+        this.quizExerciseRepository = quizExerciseRepository;
     }
 
     @Autowired
@@ -144,12 +140,7 @@ public class QuizSubmissionService {
         if (quizExercise == null) {
             // Fallback solution
             log.info("Quiz not in QuizScheduleService cache, fetching from DB");
-            Optional<QuizExercise> optionalQuizExercise = quizExerciseService.findById(exerciseId);
-            if (optionalQuizExercise.isEmpty()) {
-                log.warn(logText + "Could not executre for user {} in quiz {} because the quizExercise could not be found.", username, exerciseId);
-                throw new QuizSubmissionException("The quiz could not be found");
-            }
-            quizExercise = optionalQuizExercise.get();
+            quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
         }
         log.debug(logText + "Received quiz exercise for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
         if (!quizExercise.isSubmissionAllowed()) {

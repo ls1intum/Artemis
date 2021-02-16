@@ -512,7 +512,7 @@ public class StudentExamService {
                     if (exercise instanceof ProgrammingExercise) {
                         // TODO: we should try to move this out of the for-loop into the method which calls this method.
                         // Load lazy property
-                        final var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exercise.getId());
+                        final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
                         ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
                     }
                     // this will also create initial (empty) submissions for quiz, text, modeling and file upload

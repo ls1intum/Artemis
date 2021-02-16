@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -62,7 +63,7 @@ public class ParticipationResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final QuizExerciseService quizExerciseService;
+    private final QuizExerciseRepository quizExerciseRepository;
 
     private final ExerciseService exerciseService;
 
@@ -85,12 +86,12 @@ public class ParticipationResource {
     private final FeatureToggleService featureToggleService;
 
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            CourseRepository courseRepository, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
+            CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamService teamService, FeatureToggleService featureToggleService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.quizExerciseService = quizExerciseService;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.exerciseService = exerciseService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -224,12 +225,11 @@ public class ParticipationResource {
      * @param participation the participation to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated participation, or with status 400 (Bad Request) if the participation is not valid, or with status
      *         500 (Internal Server Error) if the participation couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     // TODO we should not use this global resource here, instead we should use /courses/:courseId/exercises/:exerciseId/participations
     @PutMapping("/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> updateParticipation(@RequestBody StudentParticipation participation) throws URISyntaxException {
+    public ResponseEntity<Participation> updateParticipation(@RequestBody StudentParticipation participation) {
         log.debug("REST request to update Participation : {}", participation);
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -459,18 +459,18 @@ public class ParticipationResource {
         else if (quizExercise.isSubmissionAllowed()) {
             // Quiz is active => construct Participation from
             // filtered quizExercise and submission from HashMap
-            quizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
+            quizExercise = quizExerciseRepository.findByIdWithQuestionsOrElseThrow(quizExercise.getId());
             quizExercise.filterForStudentsDuringQuiz();
             StudentParticipation participation = participationService.participationForQuizWithResult(quizExercise, username);
             // set view
-            Class view = quizExerciseService.viewForStudentsInQuizExercise(quizExercise);
+            var view = quizExercise.viewForStudentsInQuizExercise();
             MappingJacksonValue value = new MappingJacksonValue(participation);
             value.setSerializationView(view);
             return value;
         }
         else {
             // quiz has ended => get participation from database and add full quizExercise
-            quizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
+            quizExercise = quizExerciseRepository.findByIdWithQuestionsOrElseThrow(quizExercise.getId());
             // TODO: we get a lot of error message here, when the quiz has ended, students reload the page (or navigate again into it), but the participation (+ submission
             // + result) has not yet been stored in the database (because for 1500 students this can take up to 60s). We should handle this case here properly
             // The best would be a message to the user: please wait while the quiz results are being processed (show a progress animation in the client)

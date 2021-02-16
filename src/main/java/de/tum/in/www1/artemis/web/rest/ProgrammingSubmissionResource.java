@@ -255,7 +255,7 @@ public class ProgrammingSubmissionResource {
         if (participationIds.isEmpty()) {
             return badRequest();
         }
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         if (programmingExercise == null) {
             return notFound();
         }
@@ -344,7 +344,7 @@ public class ProgrammingSubmissionResource {
     public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all programming submissions");
-        Exercise exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
+        Exercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -421,7 +421,7 @@ public class ProgrammingSubmissionResource {
     public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a programming submission without assessment");
-        final ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
+        final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             return forbidden();

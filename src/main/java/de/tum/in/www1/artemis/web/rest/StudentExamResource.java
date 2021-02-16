@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -56,7 +57,7 @@ public class StudentExamResource {
 
     private final ExamSessionService examSessionService;
 
-    private final QuizExerciseService quizExerciseService;
+    private final QuizExerciseRepository quizExerciseRepository;
 
     private final ParticipationService participationService;
 
@@ -66,7 +67,7 @@ public class StudentExamResource {
 
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserRepository userRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
-            ParticipationService participationService, QuizExerciseService quizExerciseService, ExamRepository examRepository,
+            ParticipationService participationService, QuizExerciseRepository quizExerciseRepository, ExamRepository examRepository,
             AuthorizationCheckService authorizationCheckService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
@@ -76,7 +77,7 @@ public class StudentExamResource {
         this.examDateService = examDateService;
         this.examSessionService = examSessionService;
         this.participationService = participationService;
-        this.quizExerciseService = quizExerciseService;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.examRepository = examRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
@@ -609,7 +610,7 @@ public class StudentExamResource {
             var exercise = studentExam.getExercises().get(i);
             if (exercise instanceof QuizExercise) {
                 // reload and replace the quiz exercise
-                var quizExercise = quizExerciseService.findOneWithQuestions(exercise.getId());
+                var quizExercise = quizExerciseRepository.findOneWithQuestions(exercise.getId());
                 // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
                 if (!(studentExam.areResultsPublishedYet() || studentExam.isTestRun())) {
                     quizExercise.filterForStudentsDuringQuiz();

@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
@@ -44,7 +45,7 @@ public class QuizSubmissionResource {
 
     private final UserRepository userRepository;
 
-    private final QuizExerciseService quizExerciseService;
+    private final QuizExerciseRepository quizExerciseRepository;
 
     private final QuizSubmissionService quizSubmissionService;
 
@@ -56,9 +57,9 @@ public class QuizSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
-    public QuizSubmissionResource(QuizExerciseService quizExerciseService, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
+    public QuizSubmissionResource(QuizExerciseRepository quizExerciseRepository, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
             WebsocketMessagingService messagingService, UserRepository userRepository, AuthorizationCheckService authCheckService, ExamSubmissionService examSubmissionService) {
-        this.quizExerciseService = quizExerciseService;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
         this.messagingService = messagingService;
@@ -113,11 +114,7 @@ public class QuizSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID.")).body(null);
         }
 
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
-        if (quizExercise == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsOrElseThrow(exerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
@@ -173,13 +170,9 @@ public class QuizSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID.")).body(null);
         }
 
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
-        if (quizExercise == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsOrElseThrow(exerciseId);
 
-        if (!quizExerciseService.userHasTAPermissions(quizExercise)) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(quizExercise, null)) {
             return forbidden();
         }
 
@@ -220,11 +213,7 @@ public class QuizSubmissionResource {
             submittedAnswer.setSubmission(quizSubmission);
         }
 
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
-        if (quizExercise == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsOrElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Apply further checks if it is an exam submission

@@ -113,7 +113,7 @@ public class ExerciseResource {
         log.debug("REST request to get Exercise : {}", exerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseRepository.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(exerciseId);
 
         // Exam exercise
         if (exercise.isExamExercise()) {

@@ -10,7 +10,6 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
@@ -24,6 +23,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
@@ -57,9 +57,11 @@ public class CourseService {
 
     private final ExerciseGroupService exerciseGroupService;
 
-    private CourseExportService courseExportService;
+    private final CourseExportService courseExportService;
 
     private final ExamService examService;
+
+    private final ExamRepository examRepository;
 
     private final GroupNotificationService groupNotificationService;
 
@@ -74,7 +76,7 @@ public class CourseService {
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
             ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository,
-            GroupNotificationService groupNotificationService, ExamService examService) {
+            GroupNotificationService groupNotificationService, ExamService examService, ExamRepository examRepository, CourseExportService courseExportService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -88,11 +90,7 @@ public class CourseService {
         this.learningGoalRepository = learningGoalRepository;
         this.groupNotificationService = groupNotificationService;
         this.examService = examService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setCourseExportService(CourseExportService courseExportService) {
+        this.examRepository = examRepository;
         this.courseExportService = courseExportService;
     }
 
@@ -104,7 +102,7 @@ public class CourseService {
      * @return the course including exercises and lectures for the user
      */
     public Course findOneWithExercisesAndLecturesForUser(Long courseId, User user) {
-        Course course = courseRepository.findOneWithLecturesAndExams(courseId);
+        Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -188,7 +186,7 @@ public class CourseService {
 
     private void deleteExamsOfCourse(Course course) {
         // delete the Exams
-        List<Exam> exams = examService.findAllByCourseId(course.getId());
+        List<Exam> exams = examRepository.findByCourseId(course.getId());
         for (Exam exam : exams) {
             examService.delete(exam.getId());
         }
@@ -332,15 +330,15 @@ public class CourseService {
      */
     public void cleanupCourse(Long courseId) {
         // Get the course with all exercises
-        var course = courseRepository.findOneWithExercisesAndLectures(courseId);
+        var course = courseRepository.findWithEagerExercisesAndLecturesById(courseId);
         if (!course.hasCourseArchive()) {
             log.info("Cannot clean up course {} because it hasn't been archived.", courseId);
             return;
         }
 
         // Clean up exams
-        var exams = courseRepository.findOneWithLecturesAndExams(course.getId()).getExams();
-        var examExercises = exams.stream().map(exam -> examService.getAllExercisesOfExam(exam.getId())).flatMap(Collection::stream).collect(Collectors.toSet());
+        var exams = courseRepository.findByIdWithLecturesAndExamsElseThrow(course.getId()).getExams();
+        var examExercises = exams.stream().map(exam -> examRepository.findAllExercisesByExamId(exam.getId())).flatMap(Collection::stream).collect(Collectors.toSet());
 
         var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());
         exercisesToCleanup.forEach(exercise -> {

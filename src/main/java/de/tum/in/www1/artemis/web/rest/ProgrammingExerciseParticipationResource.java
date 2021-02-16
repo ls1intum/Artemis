@@ -102,7 +102,7 @@ public class ProgrammingExerciseParticipationResource {
 
         // Fetch template and solution participation into exercise of participation
         ProgrammingExercise exercise = (ProgrammingExercise) participation.get().getExercise();
-        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exercise.getId());
+        exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
 
         // Fetch grading criterion into exercise of participation
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
@@ -202,7 +202,7 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<Map<Long, Optional<ProgrammingSubmission>>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
         ProgrammingExercise programmingExercise;
         try {
-            programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
+            programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         }
         catch (EntityNotFoundException ex) {
             return notFound();

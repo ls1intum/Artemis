@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * Service Implementation for managing Participation.
  */
 @Service
-// TODO: this class is way to large. We need to split it into muliple smaller classes with fewer dependencies
+// TODO: this class is way to large. We need to split it into multiple smaller classes with fewer dependencies
 public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);

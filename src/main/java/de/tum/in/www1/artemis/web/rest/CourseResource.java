@@ -545,7 +545,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseForAssessmentDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
-        Course course = courseRepository.findOneWithExercises(courseId);
+        Course course = courseRepository.findWithEagerExercisesById(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -640,7 +640,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
-        Course course = courseRepository.findOneWithExercises(courseId);
+        Course course = courseRepository.findWithEagerExercisesById(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -661,7 +661,7 @@ public class CourseResource {
     public ResponseEntity<Course> getCourseWithExercisesAndRelevantParticipations(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request to get Course with exercises and relevant participations : {}", courseId);
         long start = System.currentTimeMillis();
-        Course course = courseRepository.findOneWithExercises(courseId);
+        Course course = courseRepository.findWithEagerExercisesById(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -710,7 +710,7 @@ public class CourseResource {
     public ResponseEntity<List<Submission>> getLockedSubmissionsForCourse(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
         long start = System.currentTimeMillis();
-        Course course = courseRepository.findOneWithExercises(courseId);
+        Course course = courseRepository.findWithEagerExercisesById(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -827,7 +827,7 @@ public class CourseResource {
         log.info("REST request to archive Course : {}", courseId);
 
         // Get the course with all exercises
-        final Course course = courseRepository.findOneWithExercisesAndLectures(courseId);
+        final Course course = courseRepository.findWithEagerExercisesAndLecturesById(courseId);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {

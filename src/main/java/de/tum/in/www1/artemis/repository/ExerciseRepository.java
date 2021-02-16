@@ -150,7 +150,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @param exerciseId the exerciseId of the entity
      * @return the entity
      */
-    default Exercise findOneWithCategoriesAndTeamAssignmentConfig(Long exerciseId) {
+    default Exercise findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(Long exerciseId) {
         return findWithEagerCategoriesAndTeamAssignmentConfigById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
@@ -170,7 +170,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @param exerciseId the exerciseId of the exercise entity
      * @return the exercise entity
      */
-    default Exercise findOneWithStudentParticipations(Long exerciseId) {
+    default Exercise findByIdWithStudentParticipationsElseThrow(Long exerciseId) {
         return findByIdWithEagerParticipations(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
@@ -234,7 +234,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             int numberOfPossibleParticipants = exerciseStatistics[3] != null ? ((Number) exerciseStatistics[3]).intValue() : 0;
 
             if (numberOfPossibleParticipants != 0) {
-                Double participationRate = ((courseExerciseStatisticsDTO.getNoOfParticipatingStudentsOrTeams() * 1.0) / (numberOfPossibleParticipants * 1.0)) * 100.0;
+                double participationRate = ((courseExerciseStatisticsDTO.getNoOfParticipatingStudentsOrTeams() * 1.0) / (numberOfPossibleParticipants * 1.0)) * 100.0;
                 courseExerciseStatisticsDTO.setParticipationRateInPercent(Math.round(participationRate * 100.0) / 100.0);
             }
             else {

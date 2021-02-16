@@ -493,7 +493,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         QuizExercise quizExercise = database.createQuiz(course, releaseDate, dueDate);
         quizExercise.setDuration(3600);
         QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
-        QuizExercise quizExerciseDatabase = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
+        QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
 
         checkQuizExercises(quizExercise, quizExerciseServer);
         checkQuizExercises(quizExercise, quizExerciseDatabase);
@@ -524,7 +524,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         QuizExercise quizExercise = database.createQuizForExam(exerciseGroup);
         quizExercise.setDuration(3600);
         QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
-        QuizExercise quizExerciseDatabase = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
+        QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
 
         checkQuizExercises(quizExercise, quizExerciseServer);
         checkQuizExercises(quizExercise, quizExerciseDatabase);
@@ -554,9 +554,9 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void testDeleteQuizExercise() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
-        assertThat(quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is created correctly").isNotNull();
+        assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is created correctly").isNotNull();
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
-        assertThat(quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
+        assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
     }
 
     @Test
@@ -564,7 +564,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void testDeleteQuizExerciseWithSubmittedAnswers() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1));
 
-        assertThat(quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is created correctly").isNotNull();
+        assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is created correctly").isNotNull();
 
         final var username = "student1";
         final Principal principal = () -> username;
@@ -580,7 +580,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(1);
 
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
-        assertThat(quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
+        assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
     }
 
     @Test
@@ -589,7 +589,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null);
         QuizExercise quizExerciseServer = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
-        assertThat(quizExercise.equals(quizExerciseServer));
+        assertThat(quizExercise).isEqualTo(quizExerciseServer);
     }
 
     @Test
