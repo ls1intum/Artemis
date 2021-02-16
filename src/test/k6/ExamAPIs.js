@@ -1,6 +1,6 @@
 import { login } from './requests/requests.js';
 import { group, sleep } from 'k6';
-import {newCourse, deleteCourse, addUserToInstructorsInCourse} from './requests/course.js';
+import { newCourse, deleteCourse, addUserToInstructorsInCourse } from './requests/course.js';
 import { createUsersIfNeeded } from './requests/user.js';
 import { createQuizExercise, submitRandomAnswerRESTExam } from './requests/quiz.js';
 import {
