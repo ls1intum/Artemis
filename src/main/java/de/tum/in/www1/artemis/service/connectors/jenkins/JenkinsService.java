@@ -392,20 +392,25 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             for (final var testCase : job.getTestCases()) {
                 var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMostInformativeMessage());
                 var failureMessage = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getMostInformativeMessage());
-                var errorList = errorMessage.or(() -> failureMessage).map(List::of).orElse(Collections.emptyList());
+                var successMessage = Optional.ofNullable(testCase.getSuccessInfos()).map((infos) -> infos.get(0).getMessage());
+
+                var feedbackMessageList = errorMessage.or(() -> failureMessage).map(List::of).orElse(Collections.emptyList());
                 boolean successful = Optional.ofNullable(testCase.getErrors()).map(List::isEmpty).orElse(true)
                         && Optional.ofNullable(testCase.getFailures()).map(List::isEmpty).orElse(true);
 
-                if (!successful && errorList.isEmpty()) {
+                if (successful && successMessage.isPresent()) {
+                    feedbackMessageList = List.of(successMessage.get());
+                }
+                else if (!successful && feedbackMessageList.isEmpty()) {
                     var errorType = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getType());
                     var failureType = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getType());
                     var message = errorType.or(() -> failureType).map(t -> String.format("Unsuccessful due to an error of type: %s", t));
                     if (message.isPresent()) {
-                        errorList = List.of(message.get());
+                        feedbackMessageList = List.of(message.get());
                     }
                 }
 
-                result.addFeedback(feedbackService.createFeedbackFromTestCase(testCase.getName(), errorList, successful, programmingLanguage));
+                result.addFeedback(feedbackService.createFeedbackFromTestCase(testCase.getName(), feedbackMessageList, successful, programmingLanguage));
             }
         }
 

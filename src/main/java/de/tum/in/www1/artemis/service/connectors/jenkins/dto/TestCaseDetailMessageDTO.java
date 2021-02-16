@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
-public class ErrorOrFailureDTO {
+public class TestCaseDetailMessageDTO {
 
     private String message;
 

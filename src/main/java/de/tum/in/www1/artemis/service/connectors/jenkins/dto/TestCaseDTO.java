@@ -10,9 +10,11 @@ public class TestCaseDTO {
 
     private double time;
 
-    private List<ErrorOrFailureDTO> failures;
+    private List<TestCaseDetailMessageDTO> failures;
 
-    private List<ErrorOrFailureDTO> errors;
+    private List<TestCaseDetailMessageDTO> errors;
+
+    private List<TestCaseDetailMessageDTO> successInfos;
 
     public String getName() {
         return name;
@@ -38,19 +40,27 @@ public class TestCaseDTO {
         this.time = time;
     }
 
-    public List<ErrorOrFailureDTO> getFailures() {
+    public List<TestCaseDetailMessageDTO> getFailures() {
         return failures;
     }
 
-    public void setFailures(List<ErrorOrFailureDTO> failures) {
+    public void setFailures(List<TestCaseDetailMessageDTO> failures) {
         this.failures = failures;
     }
 
-    public List<ErrorOrFailureDTO> getErrors() {
+    public List<TestCaseDetailMessageDTO> getErrors() {
         return errors;
     }
 
-    public void setErrors(List<ErrorOrFailureDTO> errors) {
+    public void setErrors(List<TestCaseDetailMessageDTO> errors) {
         this.errors = errors;
+    }
+
+    public List<TestCaseDetailMessageDTO> getSuccessInfos() {
+        return successInfos;
+    }
+
+    public void setSuccessInfos(List<TestCaseDetailMessageDTO> successInfos) {
+        this.successInfos = successInfos;
     }
 }

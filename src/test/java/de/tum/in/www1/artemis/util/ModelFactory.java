@@ -801,7 +801,7 @@ public class ModelFactory {
             var testcase = new TestCaseDTO();
             testcase.setName(name);
             testcase.setClassname("Class");
-            var error = new ErrorOrFailureDTO();
+            var error = new TestCaseDetailMessageDTO();
             error.setMessage(name + " error message");
             testcase.setErrors(List.of(error));
             return testcase;
