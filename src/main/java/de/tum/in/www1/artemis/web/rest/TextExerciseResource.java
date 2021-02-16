@@ -214,6 +214,9 @@ public class TextExerciseResource {
         exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
 
         TextExercise result = textExerciseRepository.save(textExercise);
+
+        exerciseService.updatePointsInRelatedParticipantScores(textExerciseBeforeUpdate, result);
+
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
 
         // Avoid recursions
@@ -228,6 +231,7 @@ public class TextExerciseResource {
         if (notificationText != null && textExercise.isCourseExercise()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
         }
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(result);
     }
 

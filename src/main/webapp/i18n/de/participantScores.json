@@ -12,8 +12,10 @@
                 "exerciseTitle": "Aufgabentitel",
                 "lastResultId": "Id letztes Ergebnis",
                 "lastResultScore": "Letztes Ergebnis (%)",
+                "lastPoints": "Letzten Punkte",
                 "lastRatedResultId": "Id letztes bewertetes Ergebnis",
-                "lastRatedResultScore": "Letztes bewertetes Ergebnis (%)"
+                "lastRatedResultScore": "Letztes bewertetes Ergebnis (%)",
+                "lastRatedPoints": "Letzten bewerteten Punkte"
             },
             "participantScoreAverageDTO": {
                 "userName": "Nutzername",

@@ -32,6 +32,8 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     List<ParticipantScore> findAll();
 
+    List<ParticipantScore> findAllByExercise(Exercise exercise);
+
     @Query("""
             SELECT p
             FROM ParticipantScore p LEFT JOIN FETCH p.exercise LEFT JOIN FETCH p.lastResult LEFT JOIN FETCH p.lastRatedResult
@@ -41,8 +43,8 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     @Query("""
             SELECT AVG(p.lastRatedScore)
             FROM ParticipantScore p
-            WHERE p.exercise IN :exercises
-            """)
+                WHERE p.exercise IN :exercises
+                """)
     Long findAvgRatedScore(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""

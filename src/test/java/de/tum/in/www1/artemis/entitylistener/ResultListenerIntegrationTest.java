@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.entitylistener;
 
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -14,6 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -97,6 +99,30 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         idOfCourse = course.getId();
         createIndividualTextExercise(pastTimestamp, pastTimestamp, pastTimestamp);
         createTeamTextExerciseAndTeam(pastTimestamp, pastTimestamp, pastTimestamp);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    public void updateExercisePoints_ShouldUpdatePointsInParticipantScores(boolean isTeamTest) throws Exception {
+        setupTestScenarioWithOneResultSaved(true, isTeamTest);
+        Exercise exercise;
+        if (isTeamTest) {
+            exercise = exerciseRepository.findById(idOfTeamTextExercise).get();
+        }
+        else {
+            exercise = exerciseRepository.findById(idOfIndividualTextExercise).get();
+        }
+        exercise.setMaxPoints(100.0);
+        exercise.setBonusPoints(100.0);
+        database.changeUser("instructor1");
+        request.put("/api/text-exercises", exercise, HttpStatus.OK);
+        List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllEagerly();
+        SecurityContextHolder.getContext().setAuthentication(null);
+        assertThat(savedParticipantScores).isNotEmpty();
+        assertThat(savedParticipantScores).size().isEqualTo(1);
+        ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
+        assertThat(savedParticipantScore.getLastPoints()).isEqualTo(200.0);
+        assertThat(savedParticipantScore.getLastRatedPoints()).isEqualTo(200.0);
     }
 
     @ParameterizedTest
@@ -305,7 +331,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     private void assertParticipantScoreStructure(ParticipantScore participantScore, Long expectedExerciseId, Long expectedParticipantId, Long expectedLastResultId,
-            Long expectedLastScore, Long expectedLastRatedResultId, Long expectedLastRatedScore) {
+            Long expectedLastScore, Long expectedLastRatedResultId, Long expectedLastRatedScore, Double expectedLastPoints, Double expectedLastRatedPoints) {
         assertThat(participantScore.getExercise().getId()).isEqualTo(expectedExerciseId);
 
         if (participantScore.getClass().equals(StudentScore.class)) {
@@ -324,6 +350,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
             assertThat(participantScore.getLastResult().getId()).isEqualTo(expectedLastResultId);
         }
         assertThat(participantScore.getLastScore()).isEqualTo(expectedLastScore);
+        assertThat(participantScore.getLastPoints()).isEqualTo(expectedLastPoints);
 
         if (expectedLastRatedResultId == null) {
             assertThat(participantScore.getLastRatedResult()).isNull();
@@ -332,6 +359,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
             assertThat(participantScore.getLastRatedResult().getId()).isEqualTo(expectedLastRatedResultId);
         }
         assertThat(participantScore.getLastRatedScore()).isEqualTo(expectedLastRatedScore);
+        assertThat(participantScore.getLastRatedPoints()).isEqualTo(expectedLastRatedPoints);
     }
 
     public Result createNewResult(boolean isTeamTest, boolean isRated) {
@@ -456,12 +484,14 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(savedParticipantScores).isNotEmpty();
         assertThat(savedParticipantScores).size().isEqualTo(1);
         ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
+        Double pointsAchieved = round(persistedResult.getScore() * 0.01 * 10.0);
         if (isRatedResult) {
             assertParticipantScoreStructure(savedParticipantScore, idOfExercise, participant.getId(), persistedResult.getId(), persistedResult.getScore(), persistedResult.getId(),
-                    persistedResult.getScore());
+                    persistedResult.getScore(), pointsAchieved, pointsAchieved);
         }
         else {
-            assertParticipantScoreStructure(savedParticipantScore, idOfExercise, participant.getId(), persistedResult.getId(), persistedResult.getScore(), null, null);
+            assertParticipantScoreStructure(savedParticipantScore, idOfExercise, participant.getId(), persistedResult.getId(), persistedResult.getScore(), null, null,
+                    pointsAchieved, null);
 
         }
         verify(this.scoreService, times(1)).updateOrCreateParticipantScore(any());
@@ -486,8 +516,17 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(savedParticipantScore).isNotEmpty();
         assertThat(savedParticipantScore).size().isEqualTo(1);
         ParticipantScore updatedParticipantScore = savedParticipantScore.get(0);
+        Double lastPoints = null;
+        Double lastRatedPoints = null;
+        if (expectedLastScore != null) {
+            lastPoints = round(expectedLastScore * 0.01 * 10.0);
+        }
+        if (expectedLastRatedScore != null) {
+            lastRatedPoints = round(expectedLastRatedScore * 0.01 * 10.0);
+        }
+
         assertParticipantScoreStructure(updatedParticipantScore, idOfExercise, participant.getId(), expectedLastResultId, expectedLastScore, expectedLastRatedResultId,
-                expectedLastRatedScore);
+                expectedLastRatedScore, lastPoints, lastRatedPoints);
         verify(this.scoreService, times(2)).updateOrCreateParticipantScore(any(Result.class));
     }
 

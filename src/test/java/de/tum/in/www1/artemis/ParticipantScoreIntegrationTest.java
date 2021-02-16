@@ -129,8 +129,8 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         assertThat(participantScoresOfCourse.size()).isEqualTo(2);
         ParticipantScoreDTO student1Result = participantScoresOfCourse.stream().filter(participantScoreDTO -> participantScoreDTO.userId != null).findFirst().get();
         ParticipantScoreDTO team1Result = participantScoresOfCourse.stream().filter(participantScoreDTO -> participantScoreDTO.teamId != null).findFirst().get();
-        assertParticipantScoreDTOStructure(student1Result, idOfStudent1, null, idOfIndividualTextExercise, 50L, 50L);
-        assertParticipantScoreDTOStructure(team1Result, null, idOfTeam1, idOfTeamTextExercise, 50L, 50L);
+        assertParticipantScoreDTOStructure(student1Result, idOfStudent1, null, idOfIndividualTextExercise, 50L, 50L, 5.0, 5.0);
+        assertParticipantScoreDTOStructure(team1Result, null, idOfTeam1, idOfTeamTextExercise, 50L, 50L, 5.0, 5.0);
     }
 
     @Test
@@ -143,8 +143,8 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
                 .findFirst().get();
         ParticipantScoreAverageDTO team1Result = participantScoreAverageDTOS.stream().filter(participantScoreAverageDTO -> participantScoreAverageDTO.teamName != null).findFirst()
                 .get();
-        assertAverageParticipantScoreDTOStructure(student1Result, "student1", null, 50.0, 50.0);
-        assertAverageParticipantScoreDTOStructure(team1Result, null, "team1", 50.0, 50.0);
+        assertAverageParticipantScoreDTOStructure(student1Result, "student1", null, 50.0, 50.0, 5.0, 5.0);
+        assertAverageParticipantScoreDTOStructure(team1Result, null, "team1", 50.0, 50.0, 5.0, 5.0);
     }
 
     @Test
@@ -162,7 +162,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         List<ParticipantScoreDTO> participantScoresOfExam = request.getList("/api/exams/" + idOfExam + "/participant-scores", HttpStatus.OK, ParticipantScoreDTO.class);
         assertThat(participantScoresOfExam.size()).isEqualTo(1);
         ParticipantScoreDTO student1Result = participantScoresOfExam.stream().filter(participantScoreDTO -> participantScoreDTO.userId != null).findFirst().get();
-        assertParticipantScoreDTOStructure(student1Result, idOfStudent1, null, getIdOfIndividualTextExerciseOfExam, 50L, 50L);
+        assertParticipantScoreDTOStructure(student1Result, idOfStudent1, null, getIdOfIndividualTextExerciseOfExam, 50L, 50L, 5.0, 5.0);
     }
 
     @Test
@@ -173,7 +173,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         assertThat(participantScoreAverageDTOS.size()).isEqualTo(1);
         ParticipantScoreAverageDTO student1Result = participantScoreAverageDTOS.stream().filter(participantScoreAverageDTO -> participantScoreAverageDTO.userName != null)
                 .findFirst().get();
-        assertAverageParticipantScoreDTOStructure(student1Result, "student1", null, 50.0, 50.0);
+        assertAverageParticipantScoreDTOStructure(student1Result, "student1", null, 50.0, 50.0, 5.0, 5.0);
     }
 
     @Test
@@ -282,19 +282,24 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     private void assertParticipantScoreDTOStructure(ParticipantScoreDTO participantScoreDTO, Long expectedUserId, Long expectedTeamId, Long expectedExerciseId,
-            Long expectedLastResultScore, Long expectedLastRatedResultScore) {
+            Long expectedLastResultScore, Long expectedLastRatedResultScore, Double expectedLastPoints, Double exptectedLastRatedPoints) {
         assertThat(participantScoreDTO.userId).isEqualTo(expectedUserId);
         assertThat(participantScoreDTO.teamId).isEqualTo(expectedTeamId);
         assertThat(participantScoreDTO.exerciseId).isEqualTo(expectedExerciseId);
         assertThat(participantScoreDTO.lastResultScore).isEqualTo(expectedLastResultScore);
         assertThat(participantScoreDTO.lastRatedResultScore).isEqualTo(expectedLastRatedResultScore);
+        assertThat(participantScoreDTO.lastPoints).isEqualTo(expectedLastPoints);
+        assertThat(participantScoreDTO.lastRatedPoints).isEqualTo(exptectedLastRatedPoints);
     }
 
     private void assertAverageParticipantScoreDTOStructure(ParticipantScoreAverageDTO participantScoreAverageDTO, String expectedUserName, String expectedTeamName,
-            Double expectedAverageScore, Double expectedAverageRatedScore) {
+            Double expectedAverageScore, Double expectedAverageRatedScore, Double expectedAveragePoints, Double expectedAverageRatedPoints) {
         assertThat(participantScoreAverageDTO.userName).isEqualTo(expectedUserName);
         assertThat(participantScoreAverageDTO.teamName).isEqualTo(expectedTeamName);
         assertThat(participantScoreAverageDTO.averageScore).isEqualTo(expectedAverageScore);
         assertThat(participantScoreAverageDTO.averageRatedScore).isEqualTo(expectedAverageRatedScore);
+        assertThat(participantScoreAverageDTO.averagePoints).isEqualTo(expectedAveragePoints);
+        assertThat(participantScoreAverageDTO.averageRatedPoints).isEqualTo(expectedAverageRatedPoints);
+
     }
 }

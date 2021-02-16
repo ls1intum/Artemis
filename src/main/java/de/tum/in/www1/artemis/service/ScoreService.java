@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -78,6 +80,7 @@ public class ScoreService {
 
         // There is a participant score connected to the result that will be deleted
         ParticipantScore associatedParticipantScore = associatedParticipantScoreOptional.get();
+        Exercise exercise = associatedParticipantScore.getExercise();
         String originalParticipantScoreStructure = associatedParticipantScore.toString();
 
         // There are two possibilities now:
@@ -87,10 +90,10 @@ public class ScoreService {
             Optional<Result> newLastRatedResultOptional = getNewLastRatedResultForParticipantScore(associatedParticipantScore);
             if (newLastRatedResultOptional.isPresent()) {
                 Result newLastRatedResult = newLastRatedResultOptional.get();
-                setLastRatedResultAttributes(associatedParticipantScore, newLastRatedResult);
+                setLastRatedAttributes(associatedParticipantScore, newLastRatedResult, exercise);
             }
             else {
-                setLastRatedResultAttributes(associatedParticipantScore, null);
+                setLastRatedAttributes(associatedParticipantScore, null, exercise);
             }
         }
 
@@ -98,10 +101,10 @@ public class ScoreService {
             Optional<Result> newLastResultOptional = getNewLastResultForParticipantScore(associatedParticipantScore);
             if (newLastResultOptional.isPresent()) {
                 Result newLastResult = newLastResultOptional.get();
-                setLastResultAttributes(associatedParticipantScore, newLastResult);
+                setLastAttributes(associatedParticipantScore, newLastResult, exercise);
             }
             else {
-                setLastResultAttributes(associatedParticipantScore, null);
+                setLastAttributes(associatedParticipantScore, null, exercise);
             }
         }
 
@@ -136,7 +139,7 @@ public class ScoreService {
         ParticipantScore existingParticipationScoreForExerciseAndParticipant = getExistingParticipationScore(studentParticipation, exercise);
         // there already exists a participant score -> we need to update it
         if (existingParticipationScoreForExerciseAndParticipant != null) {
-            updateExistingParticipantScore(existingParticipationScoreForExerciseAndParticipant, createdOrUpdatedResult);
+            updateExistingParticipantScore(existingParticipationScoreForExerciseAndParticipant, createdOrUpdatedResult, exercise);
         }
         else { // there does not already exists a participant score -> we need to create it
             createNewParticipantScore(createdOrUpdatedResult, studentParticipation, exercise);
@@ -210,9 +213,9 @@ public class ScoreService {
         StudentScore newStudentScore = new StudentScore();
         newStudentScore.setExercise(exercise);
         newStudentScore.setUser(studentParticipation.getStudent().get());
-        setLastResultAttributes(newStudentScore, newResult);
+        setLastAttributes(newStudentScore, newResult, exercise);
         if (newResult.isRated() != null && newResult.isRated()) {
-            setLastRatedResultAttributes(newStudentScore, newResult);
+            setLastRatedAttributes(newStudentScore, newResult, exercise);
         }
         StudentScore studentScore = studentScoreRepository.saveAndFlush(newStudentScore);
         logger.info("Saved a new student score: " + studentScore.toString());
@@ -222,9 +225,9 @@ public class ScoreService {
         TeamScore newTeamScore = new TeamScore();
         newTeamScore.setExercise(exercise);
         newTeamScore.setTeam(studentParticipation.getTeam().get());
-        setLastResultAttributes(newTeamScore, newResult);
+        setLastAttributes(newTeamScore, newResult, exercise);
         if (newResult.isRated() != null && newResult.isRated()) {
-            setLastRatedResultAttributes(newTeamScore, newResult);
+            setLastRatedAttributes(newTeamScore, newResult, exercise);
         }
         TeamScore teamScore = teamScoreRepository.saveAndFlush(newTeamScore);
         logger.info("Saved a new team score: " + teamScore.toString());
@@ -234,25 +237,26 @@ public class ScoreService {
      * Update an existing participant score when a new or updated result comes in
      *
      * @param participantScore            existing participant score that refers to the same exercise and participant as the result
+     * @param exercise                    the exercise to which the participant score belong
      * @param updatedOrNewlyCreatedResult updated or new result
      */
-    private void updateExistingParticipantScore(ParticipantScore participantScore, Result updatedOrNewlyCreatedResult) {
+    private void updateExistingParticipantScore(ParticipantScore participantScore, Result updatedOrNewlyCreatedResult, Exercise exercise) {
         String originalParticipantScoreStructure = participantScore.toString();
 
         ParticipantScore participantScoreToSave = participantScore;
         // update the last result and last score if either it has not been set previously or new result is either the old one (=) or newer (>)
         if (participantScoreToSave.getLastResult() == null || updatedOrNewlyCreatedResult.getId() >= participantScoreToSave.getLastResult().getId()) {
-            setLastResultAttributes(participantScoreToSave, updatedOrNewlyCreatedResult);
+            setLastAttributes(participantScoreToSave, updatedOrNewlyCreatedResult, exercise);
         }
         // update the last rated result and last rated score if either it has not been set previously or new rated result is either the old one (=) or newer (>)
         if ((updatedOrNewlyCreatedResult.isRated() != null && updatedOrNewlyCreatedResult.isRated())
                 && (participantScoreToSave.getLastRatedResult() == null || updatedOrNewlyCreatedResult.getId() >= participantScoreToSave.getLastRatedResult().getId())) {
-            setLastRatedResultAttributes(participantScoreToSave, updatedOrNewlyCreatedResult);
+            setLastRatedAttributes(participantScoreToSave, updatedOrNewlyCreatedResult, exercise);
         }
         // Edge Case: if the result is now unrated but is equal to the current last rated result we have to set these to null (result was switched from rated to unrated)
         if ((updatedOrNewlyCreatedResult.isRated() == null || !updatedOrNewlyCreatedResult.isRated())
                 && updatedOrNewlyCreatedResult.equals(participantScoreToSave.getLastRatedResult())) {
-            setLastRatedResultAttributes(participantScoreToSave, null);
+            setLastRatedAttributes(participantScoreToSave, null, exercise);
         }
         participantScoreRepository.saveAndFlush(participantScoreToSave);
         logger.info("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + participantScoreToSave.toString());
@@ -307,23 +311,28 @@ public class ScoreService {
 
     }
 
-    private void setLastResultAttributes(ParticipantScore associatedParticipantScore, Result newLastResult) {
+    private void setLastAttributes(ParticipantScore associatedParticipantScore, Result newLastResult, Exercise exercise) {
         associatedParticipantScore.setLastResult(newLastResult);
         if (newLastResult == null) {
             associatedParticipantScore.setLastScore(null);
+            associatedParticipantScore.setLastPoints(null);
         }
         else {
             associatedParticipantScore.setLastScore(newLastResult.getScore());
+            associatedParticipantScore.setLastPoints(round(newLastResult.getScore() * 0.01 * exercise.getMaxPoints()));
+
         }
     }
 
-    private void setLastRatedResultAttributes(ParticipantScore associatedParticipantScore, Result newLastRatedResult) {
+    private void setLastRatedAttributes(ParticipantScore associatedParticipantScore, Result newLastRatedResult, Exercise exercise) {
         associatedParticipantScore.setLastRatedResult(newLastRatedResult);
         if (newLastRatedResult == null) {
             associatedParticipantScore.setLastRatedScore(null);
+            associatedParticipantScore.setLastRatedPoints(null);
         }
         else {
             associatedParticipantScore.setLastRatedScore(newLastRatedResult.getScore());
+            associatedParticipantScore.setLastRatedPoints(round(newLastRatedResult.getScore() * 0.01 * exercise.getMaxPoints()));
         }
     }
 

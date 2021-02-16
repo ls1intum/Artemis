@@ -61,13 +61,15 @@ describe('ParticipantScoresTable', () => {
         participantScoreDTO.lastResultScore = 50;
         participantScoreDTO.lastRatedResultId = 20;
         participantScoreDTO.lastRatedResultScore = 100;
+        participantScoreDTO.lastPoints = 13.3;
+        participantScoreDTO.lastRatedPoints = 44.4;
         component.isLoading = false;
         component.participantScores = [participantScoreDTO];
 
         fixture.detectChanges();
 
         const cellElements = fixture.debugElement.queryAll(By.css('.datatable-body-cell-label > span'));
-        expect(cellElements.length).to.equal(11);
+        expect(cellElements.length).to.equal(13);
         expect(cellElements[0].nativeElement.innerHTML).to.contain(participantScoreDTO.id);
         expect(cellElements[1].nativeElement.innerHTML).to.contain(participantScoreDTO.userId);
         expect(cellElements[2].nativeElement.innerHTML).to.contain(participantScoreDTO.userName);
@@ -77,8 +79,10 @@ describe('ParticipantScoresTable', () => {
         expect(cellElements[6].nativeElement.innerHTML).to.contain(participantScoreDTO.exerciseTitle);
         expect(cellElements[7].nativeElement.innerHTML).to.contain(participantScoreDTO.lastResultId);
         expect(cellElements[8].nativeElement.innerHTML).to.contain(participantScoreDTO.lastResultScore);
-        expect(cellElements[9].nativeElement.innerHTML).to.contain(participantScoreDTO.lastRatedResultId);
-        expect(cellElements[10].nativeElement.innerHTML).to.contain(participantScoreDTO.lastRatedResultScore);
+        expect(cellElements[9].nativeElement.innerHTML).to.contain(participantScoreDTO.lastPoints);
+        expect(cellElements[10].nativeElement.innerHTML).to.contain(participantScoreDTO.lastRatedResultId);
+        expect(cellElements[11].nativeElement.innerHTML).to.contain(participantScoreDTO.lastRatedResultScore);
+        expect(cellElements[12].nativeElement.innerHTML).to.contain(participantScoreDTO.lastRatedPoints);
     });
 
     it('should extract participant name correctly', () => {

@@ -1,6 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.*;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -22,6 +27,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
@@ -227,6 +233,33 @@ public class ExerciseService {
         else {
             exerciseRepository.delete(exercise);
         }
+    }
+
+    /**
+     * Updates the points of related exercises if the points of exercises have changed
+     *
+     * @param originalExercise the original exercise
+     * @param updatedExercise  the updatedExercise
+     */
+    public void updatePointsInRelatedParticipantScores(Exercise originalExercise, Exercise updatedExercise) {
+        if (originalExercise.getMaxPoints().equals(updatedExercise.getMaxPoints()) && originalExercise.getBonusPoints().equals(updatedExercise.getBonusPoints())) {
+            return; // nothing to do since points are still correct
+        }
+
+        List<ParticipantScore> participantScoreList = participantScoreRepository.findAllByExercise(updatedExercise);
+        for (ParticipantScore participantScore : participantScoreList) {
+            Double lastPoints = null;
+            Double lastRatedPoints = null;
+            if (participantScore.getLastScore() != null) {
+                lastPoints = round(participantScore.getLastScore() * 0.01 * updatedExercise.getMaxPoints());
+            }
+            if (participantScore.getLastRatedScore() != null) {
+                lastRatedPoints = round(participantScore.getLastRatedScore() * 0.01 * updatedExercise.getMaxPoints());
+            }
+            participantScore.setLastPoints(lastPoints);
+            participantScore.setLastRatedPoints(lastRatedPoints);
+        }
+        participantScoreRepository.saveAll(participantScoreList);
     }
 
     /**

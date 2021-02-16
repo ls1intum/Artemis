@@ -55,6 +55,8 @@ describe('ParticipantScoresAverageTable', () => {
         participantScoreAverageDTO.userName = 'testUser';
         participantScoreAverageDTO.averageRatedScore = 10;
         participantScoreAverageDTO.averageScore = 5;
+        participantScoreAverageDTO.averagePoints = 8;
+        participantScoreAverageDTO.averageRatedPoints = 12;
 
         component.isLoading = false;
         component.participantAverageScores = [participantScoreAverageDTO];
@@ -62,11 +64,13 @@ describe('ParticipantScoresAverageTable', () => {
         fixture.detectChanges();
 
         const cellElements = fixture.debugElement.queryAll(By.css('.datatable-body-cell-label > span'));
-        expect(cellElements.length).to.equal(4);
+        expect(cellElements.length).to.equal(6);
         expect(cellElements[0].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.userName);
         expect(cellElements[1].nativeElement.innerHTML).to.contain('');
         expect(cellElements[2].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.averageScore);
-        expect(cellElements[3].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.averageRatedScore);
+        expect(cellElements[3].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.averagePoints);
+        expect(cellElements[4].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.averageRatedScore);
+        expect(cellElements[5].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.averageRatedPoints);
     });
 
     it('should extract participant name correctly', () => {
@@ -74,6 +78,8 @@ describe('ParticipantScoresAverageTable', () => {
         participantScoreAverageDTO.userName = 'testUser';
         participantScoreAverageDTO.averageRatedScore = 10;
         participantScoreAverageDTO.averageScore = 5;
+        participantScoreAverageDTO.averagePoints = 12;
+        participantScoreAverageDTO.averageRatedPoints = 20;
 
         expect(component.extractParticipantName(participantScoreAverageDTO)).to.equal(participantScoreAverageDTO.userName);
 
@@ -81,6 +87,8 @@ describe('ParticipantScoresAverageTable', () => {
         participantScoreAverageDTO.averageRatedScore = 10;
         participantScoreAverageDTO.averageScore = 5;
         participantScoreAverageDTO.teamName = 'testTeam';
+        participantScoreAverageDTO.averageRatedPoints = 20;
+        participantScoreAverageDTO.averagePoints = 12;
 
         expect(component.extractParticipantName(participantScoreAverageDTO)).to.equal(participantScoreAverageDTO.teamName);
     });

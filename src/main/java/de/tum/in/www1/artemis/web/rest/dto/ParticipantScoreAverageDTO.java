@@ -16,18 +16,27 @@ public class ParticipantScoreAverageDTO {
 
     public Double averageRatedScore;
 
-    public ParticipantScoreAverageDTO(User user, Double averageScore, Double averageRatedScore) {
+    public Double averagePoints;
+
+    public Double averageRatedPoints;
+
+    public ParticipantScoreAverageDTO(User user, Double averageScore, Double averageRatedScore, Double averagePoints, Double averageRatedPoints) {
         this.userName = user.getLogin();
         this.teamName = null;
         this.averageScore = averageScore;
         this.averageRatedScore = averageRatedScore;
+        this.averagePoints = averagePoints;
+        this.averageRatedPoints = averageRatedPoints;
+
     }
 
-    public ParticipantScoreAverageDTO(Team team, Double averageScore, Double averageRatedScore) {
+    public ParticipantScoreAverageDTO(Team team, Double averageScore, Double averageRatedScore, Double averagePoints, Double averageRatedPoints) {
         this.userName = null;
         this.teamName = team.getName();
         this.averageScore = averageScore;
         this.averageRatedScore = averageRatedScore;
+        this.averagePoints = averagePoints;
+        this.averageRatedPoints = averageRatedPoints;
     }
 
     public ParticipantScoreAverageDTO() {

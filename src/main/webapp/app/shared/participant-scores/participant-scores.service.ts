@@ -13,8 +13,10 @@ export class ParticipantScoreDTO {
     public exerciseTitle?: string;
     public lastResultId?: number;
     public lastResultScore?: number;
+    public lastPoints?: number;
     public lastRatedResultId?: number;
     public lastRatedResultScore?: number;
+    public lastRatedPoints?: number;
 }
 
 export class ParticipantScoreAverageDTO {
@@ -22,6 +24,8 @@ export class ParticipantScoreAverageDTO {
     public teamName?: string;
     public averageScore?: number;
     public averageRatedScore?: number;
+    public averagePoints?: number;
+    public averageRatedPoints?: number;
 }
 
 export type SortDirection = 'asc' | 'desc';

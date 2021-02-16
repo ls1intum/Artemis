@@ -27,12 +27,16 @@ public class ParticipantScoreDTO {
 
     public Long lastResultScore;
 
+    public Double lastPoints;
+
     public Long lastRatedResultId;
 
     public Long lastRatedResultScore;
 
+    public Double lastRatedPoints;
+
     public ParticipantScoreDTO(Long id, Long userId, String userName, Long teamId, String teamName, Long exerciseId, String exerciseTitle, Long lastResultId, Long lastResultScore,
-            Long lastRatedResultId, Long lastRatedResultScore) {
+            Long lastRatedResultId, Long lastRatedResultScore, Double lastPoints, Double lastRatedPoints) {
         this.id = id;
         this.userId = userId;
         this.userName = userName;
@@ -44,6 +48,8 @@ public class ParticipantScoreDTO {
         this.lastResultScore = lastResultScore;
         this.lastRatedResultId = lastRatedResultId;
         this.lastRatedResultScore = lastRatedResultScore;
+        this.lastPoints = lastPoints;
+        this.lastRatedPoints = lastRatedPoints;
     }
 
     public ParticipantScoreDTO() {
@@ -79,7 +85,10 @@ public class ParticipantScoreDTO {
         Long lastResultScore = participantScore.getLastScore();
         Long lastRatedResultId = participantScore.getLastRatedResult() != null ? participantScore.getLastRatedResult().getId() : null;
         Long lastRatedResultScore = participantScore.getLastRatedScore();
+        Double lastPoints = participantScore.getLastPoints();
+        Double lastRatedPoints = participantScore.getLastRatedPoints();
 
-        return new ParticipantScoreDTO(id, userId, userName, teamId, teamName, exerciseId, exerciseTitle, lastResultId, lastResultScore, lastRatedResultId, lastRatedResultScore);
+        return new ParticipantScoreDTO(id, userId, userName, teamId, teamName, exerciseId, exerciseTitle, lastResultId, lastResultScore, lastRatedResultId, lastRatedResultScore,
+                lastPoints, lastRatedPoints);
     }
 }
