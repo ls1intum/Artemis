@@ -4,11 +4,9 @@ import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +15,6 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -26,12 +23,10 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service Implementation for managing Participation.
@@ -42,15 +37,11 @@ public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
 
-    private final UserRepository userRepository;
-
     private final GitService gitService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<VersionControlService> versionControlService;
-
-    private final AuthorizationCheckService authCheckService;
 
     private final QuizScheduleService quizScheduleService;
 
@@ -59,8 +50,6 @@ public class ParticipationService {
     private final ParticipationRepository participationRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
-
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
@@ -82,16 +71,13 @@ public class ParticipationService {
 
     private final StudentExamRepository studentExamRepository;
 
-    public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+    public ParticipationService(UrlService urlService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-            TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserRepository userRepository, GitService gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService,
-            @Lazy QuizScheduleService quizScheduleService, RatingRepository ratingRepository, UrlService urlService) {
+            TeamRepository teamRepository, StudentExamRepository studentExamRepository, GitService gitService, QuizScheduleService quizScheduleService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RatingRepository ratingRepository) {
         this.participationRepository = participationRepository;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -102,11 +88,9 @@ public class ParticipationService {
         this.complaintRepository = complaintRepository;
         this.teamRepository = teamRepository;
         this.studentExamRepository = studentExamRepository;
-        this.userRepository = userRepository;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
-        this.authCheckService = authCheckService;
         this.quizScheduleService = quizScheduleService;
         this.ratingRepository = ratingRepository;
         this.urlService = urlService;
@@ -443,15 +427,6 @@ public class ParticipationService {
         return participation;
     }
 
-    /*
-     * Get all submissions of a participationId
-     * @param participationId of submission
-     * @return List<submission>
-     */
-    public List<Submission> getSubmissionsWithResultsAndAssessorsByParticipationId(long participationId) {
-        return submissionRepository.findAllWithResultsAndAssessorByParticipationId(participationId);
-    }
-
     /**
      * Resume an inactive programming exercise participation (with previously deleted build plan) by creating and configuring a student build plan (step 2)
      * based on the template (BASE) in the corresponding programming exercise, also compare {@link #startProgrammingExercise}
@@ -562,21 +537,6 @@ public class ParticipationService {
     }
 
     /**
-     * Return the StudentExam of the participation's user, if possible
-     *
-     * @param exercise that is possibly part of an exam
-     * @param participation the participation of the student
-     * @return an optional StudentExam, which is empty if the exercise is not part of an exam or the student exam hasn't been created
-     */
-    public Optional<StudentExam> findStudentExam(Exercise exercise, StudentParticipation participation) {
-        if (exercise.isExamExercise()) {
-            var examUser = participation.getStudent().orElseThrow(() -> new EntityNotFoundException("Exam Participation with " + participation.getId() + " has no student!"));
-            return studentExamRepository.findByExerciseIdAndUserId(exercise.getId(), examUser.getId());
-        }
-        return Optional.empty();
-    }
-
-    /**
      * Return the individual release date for the exercise of the participation's user
      * <p>
      * Currently, exercise start dates are the same for all users
@@ -594,26 +554,6 @@ public class ParticipationService {
     }
 
     /**
-     * Return the individual due date for the exercise of the participation's user
-     * <p>
-     * For exam exercises, this depends on the StudentExam's working time
-     *
-     * @param exercise that is possibly part of an exam
-     * @param participation the participation of the student
-     * @return the time from which on submissions are not allowed, for exercises that are not part of an exam, this is just the due date.
-     */
-    public ZonedDateTime getIndividualDueDate(Exercise exercise, StudentParticipation participation) {
-        if (exercise.isExamExercise()) {
-            var studentExam = findStudentExam(exercise, participation).orElse(null);
-            if (studentExam == null) {
-                return exercise.getDueDate();
-            }
-            return studentExam.getExam().getStartDate().plusSeconds(studentExam.getWorkingTime());
-        }
-        return exercise.getDueDate();
-    }
-
-    /**
      * Perform an empty commit so that the build plan definitely runs for the actual student commit
      *
      * @param participation the participation of the student
@@ -622,66 +562,6 @@ public class ParticipationService {
     public ProgrammingExerciseStudentParticipation performEmptyCommit(ProgrammingExerciseStudentParticipation participation) {
         continuousIntegrationService.get().performEmptySetupCommit(participation);
         return participation;
-    }
-
-    /**
-     * Get one student participation by id with fetched Result, Submissions, Exercise and Course.
-     *
-     * @param participationId the id of the entity
-     * @return the entity
-     **/
-    public StudentParticipation findOneStudentParticipationWithEagerSubmissionsResultsFeedbacks(Long participationId) {
-        log.debug("Request to get Participation : {}", participationId);
-        Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerSubmissionsResultsFeedbacksById(participationId);
-        if (participation.isEmpty()) {
-            throw new EntityNotFoundException("StudentParticipation with " + participationId + " was not found!");
-        }
-        return participation.get();
-    }
-
-    /**
-     * Get one programming exercise participation by id.
-     *
-     * @param participationId the id of the entity
-     * @return the entity
-     */
-    public ProgrammingExerciseStudentParticipation findProgrammingExerciseParticipation(Long participationId) {
-        log.debug("Request to get Participation : {}", participationId);
-        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository.findById(participationId);
-        if (participation.isEmpty()) {
-            throw new EntityNotFoundException("ProgrammingExerciseStudentParticipation with " + participationId + " was not found!");
-        }
-        return participation.get();
-    }
-
-    /**
-     * Get one participation by id including all results.
-     *
-     * @param participationId the id of the participation
-     * @return the participation with all its results
-     */
-    public StudentParticipation findOneWithEagerResults(Long participationId) {
-        log.debug("Request to get Participation : {}", participationId);
-        Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerResultsById(participationId);
-        if (participation.isEmpty()) {
-            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
-        }
-        return participation.get();
-    }
-
-    /**
-     * Get one participation by id including all submissions and results. Throws an EntityNotFoundException if the participation with the given id could not be found.
-     *
-     * @param participationId the id of the entity
-     * @return the participation with all its submissions and results
-     */
-    public StudentParticipation findOneWithEagerSubmissionsResultsFeedback(Long participationId) {
-        log.debug("Request to get Participation : {}", participationId);
-        Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerSubmissionsResultsFeedbacksById(participationId);
-        if (participation.isEmpty()) {
-            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
-        }
-        return participation.get();
     }
 
     /**
@@ -701,18 +581,6 @@ public class ParticipationService {
     }
 
     /**
-     * Get one participation (in any state) by its team and exercise.
-     *
-     * @param exercise the exercise for which to find a participation
-     * @param teamId the id of the team
-     * @return the participation of the given team and exercise in any state
-     */
-    public Optional<StudentParticipation> findOneByExerciseAndTeamIdAnyState(Exercise exercise, Long teamId) {
-        log.debug("Request to get Participation for Team with id {} for Exercise with id: {}", teamId, exercise.getId());
-        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), teamId);
-    }
-
-    /**
      * Get one participation (in any state) by its participant and exercise.
      *
      * @param exercise the exercise for which to find a participation
@@ -724,7 +592,7 @@ public class ParticipationService {
             return findOneByExerciseAndStudentLoginAnyState(exercise, ((User) participant).getLogin());
         }
         else if (participant instanceof Team) {
-            return findOneByExerciseAndTeamIdAnyState(exercise, ((Team) participant).getId());
+            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), ((Team) participant).getId());
         }
         else {
             throw new Error("Unknown Participant type");
@@ -947,81 +815,4 @@ public class ParticipationService {
         }
     }
 
-    /**
-     * Check if a participation can be accessed with the current user.
-     *
-     * @param participation to access
-     * @return can user access participation
-     */
-    public boolean canAccessParticipation(StudentParticipation participation) {
-        return Optional.ofNullable(participation).isPresent() && userHasPermissions(participation);
-    }
-
-    /**
-     * Check if a user has permissions to access a certain participation. This includes not only the owner of the participation but also the TAs and instructors of the course.
-     *
-     * @param participation to access
-     * @return does user has permissions to access participation
-     */
-    private boolean userHasPermissions(StudentParticipation participation) {
-        if (authCheckService.isOwnerOfParticipation(participation))
-            return true;
-        // if the user is not the owner of the participation, the user can only see it in case he is
-        // a teaching assistant or an instructor of the course, or in case he is admin
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-    }
-
-    /**
-     * Get all participations for the given studentExam and exercises combined with their submissions with a result.
-     * Distinguishes between student exams and test runs and only loads the respective participations
-     *
-     * @param studentExam studentExam with exercises loaded
-     * @return student's participations with submissions and results
-     */
-    public List<StudentParticipation> findByStudentExamWithEagerSubmissionsResult(StudentExam studentExam) {
-        if (studentExam.isTestRun()) {
-            return studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(),
-                    studentExam.getExercises());
-        }
-        else {
-            return studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(),
-                    studentExam.getExercises());
-        }
-    }
-
-    /**
-     * Get a mapping of participation ids to the number of submission for each participation.
-     *
-     * @param exerciseId the id of the exercise for which to consider participations
-     * @return the number of submissions per participation in the given exercise
-     */
-    public Map<Long, Integer> countSubmissionsPerParticipationByExerciseId(long exerciseId) {
-        return convertListOfCountsIntoMap(studentParticipationRepository.countSubmissionsPerParticipationByExerciseId(exerciseId));
-    }
-
-    /**
-     * Get a mapping of participation ids to the number of submission for each participation.
-     *
-     * @param courseId the id of the course for which to consider participations
-     * @param teamShortName the short name of the team for which to consider participations
-     * @return the number of submissions per participation in the given course for the team
-     */
-    public Map<Long, Integer> countSubmissionsPerParticipationByCourseIdAndTeamShortName(long courseId, String teamShortName) {
-        return convertListOfCountsIntoMap(studentParticipationRepository.countSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName));
-    }
-
-    /**
-     * Converts List<[participationId, submissionCount]> into Map<participationId -> submissionCount>
-     *
-     * @param participationIdAndSubmissionCountPairs list of pairs (participationId, submissionCount)
-     * @return map of participation id to submission count
-     */
-    private Map<Long, Integer> convertListOfCountsIntoMap(List<long[]> participationIdAndSubmissionCountPairs) {
-
-        return participationIdAndSubmissionCountPairs.stream().collect(Collectors.toMap(participationIdAndSubmissionCountPair -> participationIdAndSubmissionCountPair[0], // participationId
-                participationIdAndSubmissionCountPair -> Math.toIntExact(participationIdAndSubmissionCountPair[1]) // submissionCount
-        ));
-    }
 }

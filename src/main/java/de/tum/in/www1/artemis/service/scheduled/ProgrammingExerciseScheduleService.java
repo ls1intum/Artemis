@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
@@ -49,18 +50,18 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final GroupNotificationService groupNotificationService;
 
-    private final ParticipationService participationService;
+    private final StudentExamRepository studentExamRepository;
 
     private final ExamDateService examDateService;
 
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository, Environment env,
             ProgrammingSubmissionService programmingSubmissionService, GroupNotificationService groupNotificationService, ParticipationService participationService,
-            ExamDateService examDateService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ExamDateService examDateService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, StudentExamRepository studentExamRepository) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.groupNotificationService = groupNotificationService;
-        this.participationService = participationService;
+        this.studentExamRepository = studentExamRepository;
         this.examDateService = examDateService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.env = env;
@@ -295,7 +296,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates = new HashSet<>();
                 // This operation unlocks the repositories and collects all individual due dates
                 BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> unlockAndCollectOperation = (programmingExercise, participation) -> {
-                    var dueDate = participationService.getIndividualDueDate(programmingExercise, participation);
+                    var dueDate = studentExamRepository.getIndividualDueDate(programmingExercise, participation);
                     individualDueDates.add(new Tuple<>(dueDate, participation));
                     programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
                 };
@@ -343,7 +344,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates = new HashSet<>();
         for (StudentParticipation studentParticipation : programmingExercise.get().getStudentParticipations()) {
             var programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            var dueDate = participationService.getIndividualDueDate(programmingExercise.get(), programmingExerciseStudentParticipation);
+            var dueDate = studentExamRepository.getIndividualDueDate(programmingExercise.get(), programmingExerciseStudentParticipation);
             individualDueDates.add(new Tuple<>(dueDate, programmingExerciseStudentParticipation));
         }
         scheduleIndividualRepositoryLockTasks(exercise, individualDueDates);

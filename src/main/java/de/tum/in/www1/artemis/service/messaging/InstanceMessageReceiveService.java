@@ -12,8 +12,8 @@ import com.hazelcast.core.HazelcastInstance;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.TextExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.AtheneScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 
@@ -27,19 +27,19 @@ public class InstanceMessageReceiveService {
 
     private final Logger log = LoggerFactory.getLogger(InstanceMessageReceiveService.class);
 
-    protected final ProgrammingExerciseRepository programmingExerciseRepository;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
-    protected final TextExerciseService textExerciseService;
+    private final TextExerciseRepository textExerciseRepository;
 
     private final Optional<AtheneScheduleService> atheneScheduleService;
 
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-            TextExerciseService textExerciseService, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance) {
+            TextExerciseRepository textExerciseRepository, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
-        this.textExerciseService = textExerciseService;
+        this.textExerciseRepository = textExerciseRepository;
         this.atheneScheduleService = atheneScheduleService;
 
         hazelcastInstance.<Long>getTopic("programming-exercise-schedule").addMessageListener(message -> {
@@ -76,7 +76,7 @@ public class InstanceMessageReceiveService {
 
     public void processScheduleTextExercise(Long exerciseId) {
         log.info("Received schedule update for text exercise " + exerciseId);
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         atheneScheduleService.ifPresent(service -> service.scheduleExerciseForAtheneIfRequired(textExercise));
     }
 
@@ -87,7 +87,7 @@ public class InstanceMessageReceiveService {
 
     public void processTextExerciseInstantClustering(Long exerciseId) {
         log.info("Received schedule instant clustering for text exercise " + exerciseId);
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         atheneScheduleService.ifPresent(service -> service.scheduleExerciseForInstantAthene(textExercise));
     }
 

@@ -2,12 +2,10 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
@@ -38,35 +36,18 @@ public class QuizSubmissionService {
 
     private final QuizScheduleService quizScheduleService;
 
-    private ParticipationService participationService;
+    private final ParticipationService participationService;
 
     private final SubmissionVersionService submissionVersionService;
 
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService, ResultRepository resultRepository,
-            SubmissionVersionService submissionVersionService, QuizExerciseRepository quizExerciseRepository) {
+            SubmissionVersionService submissionVersionService, QuizExerciseRepository quizExerciseRepository, ParticipationService participationService) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
         this.quizScheduleService = quizScheduleService;
         this.submissionVersionService = submissionVersionService;
         this.quizExerciseRepository = quizExerciseRepository;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setParticipationService(ParticipationService participationService) {
         this.participationService = participationService;
-    }
-
-    public QuizSubmission findOne(Long id) {
-        return quizSubmissionRepository.findById(id).get();
-    }
-
-    public List<QuizSubmission> findAll() {
-        return quizSubmissionRepository.findAll();
-    }
-
-    public void delete(Long id) {
-        quizSubmissionRepository.deleteById(id);
     }
 
     /**

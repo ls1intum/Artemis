@@ -71,13 +71,15 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GroupNotificationService groupNotificationService, SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
             FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository, ExamDateService examDateService, CourseRepository courseRepository,
-            ParticipationRepository participationRepository) {
+            ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
                 courseRepository, participationRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -91,6 +93,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.auditEventRepository = auditEventRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
 
     /**
@@ -203,7 +206,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a pending submission exists or null if not.
      */
     public Map<Long, Optional<ProgrammingSubmission>> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
-        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseId(programmingExerciseId);
+        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExerciseId);
         return participations.stream().collect(Collectors.toMap(Participation::getId, p -> findLatestPendingSubmissionForParticipation(p.getId())));
     }
 
@@ -244,7 +247,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         // Let the instructor know that a build run was triggered.
         notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
-        List<ProgrammingExerciseParticipation> participations = new LinkedList<>(programmingExerciseParticipationService.findByExerciseId(exerciseId));
+        List<ProgrammingExerciseParticipation> participations = new LinkedList<ProgrammingExerciseParticipation>(
+                programmingExerciseStudentParticipationRepository.findByExerciseId(exerciseId));
 
         var index = 0;
         for (var participation : participations) {

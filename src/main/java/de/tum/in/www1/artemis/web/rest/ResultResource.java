@@ -302,7 +302,7 @@ public class ResultResource {
         log.debug("REST request to get latest result for participation : {}", participationId);
         Participation participation = participationRepository.findByIdElseThrow(participationId);
 
-        if (participation instanceof StudentParticipation && !participationService.canAccessParticipation((StudentParticipation) participation)
+        if (participation instanceof StudentParticipation && !authCheckService.canAccessParticipation((StudentParticipation) participation)
                 || participation instanceof ProgrammingExerciseParticipation
                         && !programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
             return forbidden();
@@ -332,7 +332,7 @@ public class ResultResource {
 
         // The permission check depends on the participation type (normal participations vs. programming exercise participations).
         if (participation instanceof StudentParticipation) {
-            if (!participationService.canAccessParticipation((StudentParticipation) participation)) {
+            if (!authCheckService.canAccessParticipation((StudentParticipation) participation)) {
                 return forbidden();
             }
         }

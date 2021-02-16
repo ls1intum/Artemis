@@ -460,7 +460,7 @@ public class TeamResource {
         }
 
         // Set the submission count for all participations
-        Map<Long, Integer> submissionCountMap = participationService.countSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName);
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByCourseIdAndTeamShortNameAsMap(courseId, teamShortName);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         // Set studentParticipations on all exercises

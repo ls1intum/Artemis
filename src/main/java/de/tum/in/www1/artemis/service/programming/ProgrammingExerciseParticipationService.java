@@ -135,9 +135,7 @@ public class ProgrammingExerciseParticipationService {
         return participation.get();
     }
 
-    public List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseId(exerciseId);
-    }
+    // TODO move as default methods into ProgrammingExerciseStudentParticipationRepository
 
     public Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId) {
         return studentParticipationRepository.findByExerciseIdAndTeamId(exerciseId, teamId);
@@ -153,7 +151,7 @@ public class ProgrammingExerciseParticipationService {
 
     /**
      *
-     * @param participationId
+     * @param participationId the participation
      * @return the participation with all its manual/semi-automatic results
      */
     public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(

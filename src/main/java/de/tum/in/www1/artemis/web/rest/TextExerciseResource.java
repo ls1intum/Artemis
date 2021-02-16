@@ -73,7 +73,7 @@ public class TextExerciseResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final ResultRepository resultRepository;
 
@@ -92,7 +92,7 @@ public class TextExerciseResource {
     private final CourseRepository courseRepository;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
+            UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService,
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionService gradingCriterionService, TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService,
@@ -104,7 +104,7 @@ public class TextExerciseResource {
         this.userRepository = userRepository;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
-        this.participationService = participationService;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.textExerciseImportService = textExerciseImportService;
         this.textSubmissionExportService = textSubmissionExportService;
@@ -208,7 +208,7 @@ public class TextExerciseResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-        TextExercise textExerciseBeforeUpdate = textExerciseService.findOne(textExercise.getId());
+        TextExercise textExerciseBeforeUpdate = textExerciseRepository.findByIdElseThrow(textExercise.getId());
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
@@ -349,7 +349,7 @@ public class TextExerciseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        StudentParticipation participation = participationService.findOneStudentParticipationWithEagerSubmissionsResultsFeedbacks(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
         if (participation == null) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
@@ -577,7 +577,7 @@ public class TextExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) throws ExitException {
-        Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissionsAndResults(exerciseId);
+        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findWithEagerStudentParticipationAndSubmissionsById(exerciseId);
 
         if (optionalTextExercise.isEmpty()) {
             return notFound();

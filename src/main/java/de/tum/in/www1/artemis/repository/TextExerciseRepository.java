@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the TextExercise entity.
@@ -55,4 +56,17 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<TextExercise> findWithEagerStudentParticipationAndSubmissionsById(Long exerciseId);
+
+    default TextExercise findByIdElseThrow(long exerciseId) {
+        return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
+    }
+
+    /**
+     * Find all exercises with *Due Date* in the future.
+     *
+     * @return List of Text Exercises
+     */
+    default List<TextExercise> findAllAutomaticAssessmentTextExercisesWithFutureDueDate() {
+        return findByAssessmentTypeAndDueDateIsAfter(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now());
+    }
 }

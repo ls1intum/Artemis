@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -318,6 +319,14 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
         return findById(studentParticipationId).orElseThrow(() -> new EntityNotFoundException("Student Participation", studentParticipationId));
     }
 
+    default StudentParticipation findByIdWithResultsElseThrow(Long participationId) {
+        return findWithEagerResultsById(participationId).orElseThrow(() -> new EntityNotFoundException("StudentParticipation", participationId));
+    }
+
+    default StudentParticipation findByIdWithSubmissionsResultsFeedbackElseThrow(Long participationId) {
+        return findWithEagerSubmissionsResultsFeedbacksById(participationId).orElseThrow(() -> new EntityNotFoundException("StudentParticipation", participationId));
+    }
+
     /**
      * Get all participations belonging to exam with submissions and their relevant results.
      *
@@ -391,5 +400,55 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     }
                     participation.setResults(new HashSet<>(relevantResults));
                 }).collect(Collectors.toList());
+    }
+
+    /**
+     * Get all participations for the given studentExam and exercises combined with their submissions with a result.
+     * Distinguishes between student exams and test runs and only loads the respective participations
+     *
+     * @param studentExam studentExam with exercises loaded
+     * @return student's participations with submissions and results
+     */
+    default List<StudentParticipation> findByStudentExamWithEagerSubmissionsResult(StudentExam studentExam) {
+        if (studentExam.isTestRun()) {
+            return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
+        }
+        else {
+            return findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
+        }
+    }
+
+    /**
+     * Get a mapping of participation ids to the number of submission for each participation.
+     *
+     * @param exerciseId the id of the exercise for which to consider participations
+     * @return the number of submissions per participation in the given exercise
+     */
+    default Map<Long, Integer> countSubmissionsPerParticipationByExerciseIdAsMap(long exerciseId) {
+        return convertListOfCountsIntoMap(countSubmissionsPerParticipationByExerciseId(exerciseId));
+    }
+
+    /**
+     * Get a mapping of participation ids to the number of submission for each participation.
+     *
+     * @param courseId the id of the course for which to consider participations
+     * @param teamShortName the short name of the team for which to consider participations
+     * @return the number of submissions per participation in the given course for the team
+     */
+    default Map<Long, Integer> countSubmissionsPerParticipationByCourseIdAndTeamShortNameAsMap(long courseId, String teamShortName) {
+        return convertListOfCountsIntoMap(countSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName));
+    }
+
+    /**
+     * Converts List<[participationId, submissionCount]> into Map<participationId -> submissionCount>
+     *
+     * @param participationIdAndSubmissionCountPairs list of pairs (participationId, submissionCount)
+     * @return map of participation id to submission count
+     */
+    private static Map<Long, Integer> convertListOfCountsIntoMap(List<long[]> participationIdAndSubmissionCountPairs) {
+
+        return participationIdAndSubmissionCountPairs.stream().collect(Collectors.toMap(participationIdAndSubmissionCountPair -> participationIdAndSubmissionCountPair[0], // participationId
+                participationIdAndSubmissionCountPair -> Math.toIntExact(participationIdAndSubmissionCountPair[1]) // submissionCount
+        ));
     }
 }

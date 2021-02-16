@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
@@ -58,7 +59,7 @@ public class ProgrammingSubmissionResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final Optional<VersionControlService> versionControlService;
 
@@ -69,7 +70,7 @@ public class ProgrammingSubmissionResource {
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService, UserRepository userRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, StudentParticipationRepository studentParticipationRepository) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -78,7 +79,7 @@ public class ProgrammingSubmissionResource {
         this.versionControlService = versionControlService;
         this.userRepository = userRepository;
         this.continuousIntegrationService = continuousIntegrationService;
-        this.participationService = participationService;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -380,7 +381,7 @@ public class ProgrammingSubmissionResource {
     public ResponseEntity<Participation> lockAndGetProgrammingSubmissionParticipation(@PathVariable Long participationId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get ProgrammingSubmission of Participation with id: {}", participationId);
-        final var participation = participationService.findOneWithEagerResults(participationId);
+        final var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
         final var exercise = participation.getExercise();
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 

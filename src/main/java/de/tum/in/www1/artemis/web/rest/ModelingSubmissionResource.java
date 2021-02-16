@@ -64,19 +64,16 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ModelingSubmissionService modelingSubmissionService,
-            ModelingExerciseService modelingExerciseService, ParticipationService participationService, AuthorizationCheckService authCheckService, CompassService compassService,
-            ExerciseRepository exerciseRepository, UserRepository userRepository, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService,
+            ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService, CompassService compassService, UserRepository userRepository,
+            ExerciseRepository exerciseRepository, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService,
             StudentParticipationRepository studentParticipationRepository) {
-        super(submissionRepository, resultService, participationService, authCheckService, userRepository, exerciseRepository, modelingSubmissionService);
+        super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.compassService = compassService;
         this.gradingCriterionService = gradingCriterionService;
         this.examSubmissionService = examSubmissionService;
-        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -327,7 +324,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("/participations/{participationId}/latest-modeling-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getLatestSubmissionForModelingEditor(@PathVariable long participationId) {
-        StudentParticipation participation = participationService.findOneWithEagerSubmissionsResultsFeedback(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         ModelingExercise modelingExercise;
 

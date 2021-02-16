@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -12,8 +13,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -69,5 +72,40 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
 
     default StudentExam findByIdElseThrow(Long studentExamId) throws EntityNotFoundException {
         return findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student Exam", studentExamId));
+    }
+
+    /**
+     * Return the StudentExam of the participation's user, if possible
+     *
+     * @param exercise that is possibly part of an exam
+     * @param participation the participation of the student
+     * @return an optional StudentExam, which is empty if the exercise is not part of an exam or the student exam hasn't been created
+     */
+    default Optional<StudentExam> findStudentExam(Exercise exercise, StudentParticipation participation) {
+        if (exercise.isExamExercise()) {
+            var examUser = participation.getStudent().orElseThrow(() -> new EntityNotFoundException("Exam Participation with " + participation.getId() + " has no student!"));
+            return findByExerciseIdAndUserId(exercise.getId(), examUser.getId());
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Return the individual due date for the exercise of the participation's user
+     * <p>
+     * For exam exercises, this depends on the StudentExam's working time
+     *
+     * @param exercise that is possibly part of an exam
+     * @param participation the participation of the student
+     * @return the time from which on submissions are not allowed, for exercises that are not part of an exam, this is just the due date.
+     */
+    default ZonedDateTime getIndividualDueDate(Exercise exercise, StudentParticipation participation) {
+        if (exercise.isExamExercise()) {
+            var studentExam = findStudentExam(exercise, participation).orElse(null);
+            if (studentExam == null) {
+                return exercise.getDueDate();
+            }
+            return studentExam.getExam().getStartDate().plusSeconds(studentExam.getWorkingTime());
+        }
+        return exercise.getDueDate();
     }
 }
