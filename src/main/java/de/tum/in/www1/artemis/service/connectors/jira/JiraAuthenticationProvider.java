@@ -47,6 +47,7 @@ import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGroupDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
+import de.tum.in.www1.artemis.service.user.AuthorityService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -71,12 +72,16 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     private final Optional<LdapUserService> ldapUserService;
 
+    private final AuthorityService authorityService;
+
     public JiraAuthenticationProvider(UserRepository userRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate,
-            @Qualifier("shortTimeoutJiraRestTemplate") RestTemplate shortTimeoutRestTemplate, Optional<LdapUserService> ldapUserService, PasswordService passwordService) {
+            @Qualifier("shortTimeoutJiraRestTemplate") RestTemplate shortTimeoutRestTemplate, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
+            AuthorityService authorityService) {
         super(userRepository, passwordService);
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.restTemplate = restTemplate;
         this.ldapUserService = ldapUserService;
+        this.authorityService = authorityService;
     }
 
     /**
@@ -165,7 +170,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             }
             final var groups = jiraUserDTO.getGroups().getItems().stream().map(JiraUserGroupDTO::getName).collect(Collectors.toSet());
             user.setGroups(groups);
-            user.setAuthorities(userService.buildAuthorities(user));
+            user.setAuthorities(authorityService.buildAuthorities(user));
 
             if (!user.getActivated()) {
                 userService.activateUser(user);

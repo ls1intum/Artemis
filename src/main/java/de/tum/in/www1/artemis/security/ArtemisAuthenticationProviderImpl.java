@@ -19,8 +19,7 @@ public abstract class ArtemisAuthenticationProviderImpl implements ArtemisAuthen
         this.passwordService = passwordService;
     }
 
-    @Autowired
-    // break the dependency cycle
+    @Autowired // break the dependency cycle
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
