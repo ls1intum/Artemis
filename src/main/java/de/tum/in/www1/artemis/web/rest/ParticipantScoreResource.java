@@ -88,9 +88,13 @@ public class ParticipantScoreResource {
         Set<Exercise> visibleIndividualExercisesThatCount = visibleExercisesThatCount.stream().filter(exercise -> !exercise.isTeamMode()).collect(Collectors.toSet());
         Set<Exercise> visibleTeamExercisesThatCount = visibleExercisesThatCount.stream().filter(exercise -> exercise.isTeamMode()).collect(Collectors.toSet());
 
-        List<User> studentOfCourse = userRepository.findAllInGroupWithAuthorities(course.getStudentGroupName());
+        List<User> usersOfCourse = new ArrayList<>();
+        usersOfCourse.addAll(userRepository.findAllInGroupWithAuthorities(course.getStudentGroupName()));
+        usersOfCourse.addAll(userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()));
+        usersOfCourse.addAll(userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()));
+
         // For every student in the course we want to calculate course score
-        Map<Long, CourseScoreDTO> studentIdToCourseScore = studentOfCourse.stream().collect(Collectors.toMap(User::getId, user -> new CourseScoreDTO(user)));
+        Map<Long, CourseScoreDTO> userIdToCourseScoreDTO = usersOfCourse.stream().collect(Collectors.toMap(User::getId, user -> new CourseScoreDTO(user)));
 
         // individual exercises
         // [0] -> User
@@ -99,8 +103,8 @@ public class ParticipantScoreResource {
         for (Object[] rawData : studentAndAchievedPoints) {
             User user = (User) rawData[0];
             double achievedPoints = rawData[1] != null ? ((Number) rawData[1]).doubleValue() : 0.0;
-            if (studentIdToCourseScore.containsKey(user.getId())) {
-                studentIdToCourseScore.get(user.getId()).pointsAchieved += achievedPoints;
+            if (userIdToCourseScoreDTO.containsKey(user.getId())) {
+                userIdToCourseScoreDTO.get(user.getId()).pointsAchieved += achievedPoints;
             }
         }
 
@@ -112,19 +116,19 @@ public class ParticipantScoreResource {
             Team team = (Team) rawData[0];
             double achievedPoints = rawData[1] != null ? ((Number) rawData[1]).doubleValue() : 0.0;
             for (User student : team.getStudents()) {
-                if (studentIdToCourseScore.containsKey(student.getId())) {
-                    studentIdToCourseScore.get(student.getId()).pointsAchieved += achievedPoints;
+                if (userIdToCourseScoreDTO.containsKey(student.getId())) {
+                    userIdToCourseScoreDTO.get(student.getId()).pointsAchieved += achievedPoints;
                 }
             }
         }
 
         // calculating achieved score
-        for (CourseScoreDTO courseScoreDTO : studentIdToCourseScore.values()) {
+        for (CourseScoreDTO courseScoreDTO : userIdToCourseScoreDTO.values()) {
             courseScoreDTO.scoreAchieved = round((courseScoreDTO.pointsAchieved / regularAchievablePoints) * 100.0);
             courseScoreDTO.regularPointsAchievable = regularAchievablePoints;
         }
         log.info("getCourseScoresOfCourse took " + (System.currentTimeMillis() - start) + "ms");
-        return ResponseEntity.ok().body(new ArrayList<>(studentIdToCourseScore.values()));
+        return ResponseEntity.ok().body(new ArrayList<>(userIdToCourseScoreDTO.values()));
     }
 
     /**
