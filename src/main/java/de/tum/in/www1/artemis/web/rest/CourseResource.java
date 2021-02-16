@@ -103,6 +103,8 @@ public class CourseResource {
 
     private final Optional<VcsUserManagementService> vcsUserManagementService;
 
+    private final Optional<OrganizationService> organizationService;
+
     private final Environment env;
 
     public CourseResource(UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
@@ -110,7 +112,7 @@ public class CourseResource {
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
             ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
-            AssessmentDashboardService assessmentDashboardService) {
+            AssessmentDashboardService assessmentDashboardService, Optional<OrganizationService> organizationService) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
@@ -130,6 +132,7 @@ public class CourseResource {
         this.auditEventRepository = auditEventRepository;
         this.env = env;
         this.assessmentDashboardService = assessmentDashboardService;
+        this.organizationService = organizationService;
     }
 
     /**
@@ -273,6 +276,21 @@ public class CourseResource {
         validateComplaintsAndRequestMoreFeedbackConfig(updatedCourse);
         validateOnlineCourseAndRegistrationEnabled(updatedCourse);
         validateShortName(updatedCourse);
+
+        if (organizationService.isPresent()) {
+            Set<Organization> oldOrganizations = organizationService.get().getAllOrganizationsByCourse(updatedCourse.getId());
+            for (Organization organization : updatedCourse.getOrganizations()) {
+                if (!oldOrganizations.contains(organization)) {
+                    organizationService.get().addCourseToOrganization(updatedCourse, organization.getId());
+                }
+                oldOrganizations.remove(organization);
+            }
+            // we remove the remaining organizations that are not present anymore in the course
+            for (Organization organization : oldOrganizations) {
+                organizationService.get().removeCourseFromOrganization(updatedCourse, organization.getId());
+            }
+            updatedCourse.setOrganizations(null);
+        }
 
         // Based on the old instructors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors and TAs, so that the VCS user management service can determine which
@@ -613,7 +631,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
-        Course course = courseService.findOneWithOrganizations(courseId);
+        Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -688,6 +706,25 @@ public class CourseResource {
         long end = System.currentTimeMillis();
         log.info("Finished /courses/" + courseId + "/with-exercises-and-relevant-participations call in " + (end - start) + "ms");
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
+    }
+
+    /**
+     * GET /courses/:courseId/with-organizations Get a course by id with eagerly loaded organizations
+     * @param courseId the id of the course
+     * @return the course with eagerly loaded organizations
+     * @throws AccessForbiddenException
+     */
+    @GetMapping("/courses/{courseId}/with-organizations")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Course> getCourseWithOrganizations(@PathVariable Long courseId) throws AccessForbiddenException {
+        log.debug("REST request to get a course with its organizations : {}", courseId);
+        Course course = courseService.findOneWithOrganizations(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            return forbidden();
+        }
+
+        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
     }
 
     /**

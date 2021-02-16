@@ -1,13 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,6 +25,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RestController
 @RequestMapping("/api")
 @PreAuthorize("hasRole('ADMIN')")
+@ConditionalOnProperty(value = "artemis.user-management.organizations.enable-multiple-organizations", havingValue = "true")
 public class OrganizationResource {
 
     private final Logger log = LoggerFactory.getLogger(OrganizationResource.class);
@@ -167,5 +166,12 @@ public class OrganizationResource {
         numberOfUsersAndCourses.put("users", organizationService.getNumberOfUsersByOrganization(organizationId));
         numberOfUsersAndCourses.put("courses", organizationService.getNumberOfCoursesByOrganization(organizationId));
         return new ResponseEntity<>(numberOfUsersAndCourses, HttpStatus.OK);
+    }
+
+    @GetMapping("/organizations/course/{courseId}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Set<Organization>> getAllOrganizationsByCourse(@PathVariable Long courseId) {
+        Set<Organization> organizations = organizationService.getAllOrganizationsByCourse(courseId);
+        return new ResponseEntity<>(organizations, HttpStatus.OK);
     }
 }

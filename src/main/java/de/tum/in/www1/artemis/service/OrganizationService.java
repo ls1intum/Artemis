@@ -47,7 +47,7 @@ public class OrganizationService {
      */
     @PostConstruct
     public void init() {
-        // to avoid Authentication object cannot be null
+        // to avoid 'Authentication object cannot be null'
         SecurityUtils.setAuthorizationObject();
 
         log.debug("Start assigning organizations to users");
@@ -55,11 +55,11 @@ public class OrganizationService {
         List<Organization> organizations = organizationRepository.findAll();
         usersToAssign.forEach(user -> {
             for (Organization organization : organizations) {
-                if (user.getOrganizations().contains(organization) && !match(user, organization)) {
-                    log.debug("User {} does not match {} email pattern anymore. Removing", user.getLogin(), organization.getName());
-                    removeUserFromOrganization(user, organization.getId());
-                    continue;
-                }
+                /*
+                 * TODO: strict re-indexing policy or additive? if (user.getOrganizations().contains(organization) && !match(user, organization)) {
+                 * log.debug("User {} does not match {} email pattern anymore. Removing", user.getLogin(), organization.getName()); removeUserFromOrganization(user,
+                 * organization.getId()); continue; }
+                 */
                 if (!user.getOrganizations().contains(organization) && match(user, organization)) {
                     log.debug("User {} matches {} email pattern. Adding", user.getLogin(), organization.getName());
                     addUserToOrganization(user, organization.getId());

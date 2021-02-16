@@ -90,6 +90,16 @@ export class CourseManagementService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
+    /**
+     * finds a course with the given id and eagerly loaded organizations
+     * @param courseId the id of the course to be found
+     */
+    findWithOrganizations(courseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/with-organizations`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
     // TODO: separate course overview and course management REST API calls in a better way
     /**
      * finds all courses using a GET request

@@ -84,10 +84,17 @@
                     <input type="text" class="form-control" name="description" id="field_description" formControlName="description" />
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="TODO">Course organizations</label>
-                    <div *ngFor="let organization of course.organizations">
-                        <span class="badge badge-primary">{{ organization.name }}</span>
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.organizations">Course organizations</label>
+                    <div class="btn-group">
+                        <div *ngFor="let organization of courseOrganizations">
+                            <span class="badge badge-primary m-1"
+                                >{{ organization.name
+                                }}<button type="button" class="btn btn-outline-primary" (click)="removeOrganizationFromCourse(organization)">
+                                    <fa-icon [icon]="'times'"></fa-icon></button
+                            ></span>
+                        </div>
                     </div>
+                    <button type="button" class="btn btn-outline-primary float-right" (click)="openOrganizationsModal()">Add</button>
                 </div>
                 <div class="d-flex">
                     <div class="form-group flex-grow-1">

@@ -18,6 +18,7 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
 import { ChartComponent } from 'app/shared/chart/chart.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { CircularProgressBarComponent } from 'app/shared/circular-progress-bar/circular-progress-bar.component';
+import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
@@ -34,6 +35,7 @@ import { CircularProgressBarComponent } from 'app/shared/circular-progress-bar/c
         SlideToggleComponent,
         JhiConnectionStatusComponent,
         ChartComponent,
+        OrganizationSelectorComponent,
     ],
     entryComponents: [DeleteDialogComponent],
     exports: [

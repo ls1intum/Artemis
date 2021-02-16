@@ -16,6 +16,9 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import * as moment from 'moment';
 import { Organization } from 'app/entities/organization.model';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 
 @Component({
     selector: 'jhi-course-update',
@@ -51,6 +54,8 @@ export class CourseUpdateComponent implements OnInit {
         private fileUploaderService: FileUploaderService,
         private jhiAlertService: JhiAlertService,
         private profileService: ProfileService,
+        private organizationService: OrganizationManagementService,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit() {
@@ -60,6 +65,10 @@ export class CourseUpdateComponent implements OnInit {
         this.activatedRoute.parent!.data.subscribe(({ course }) => {
             if (course) {
                 this.course = course;
+                this.organizationService.getOrganizationsByCourse(course.id).subscribe((organizations) => {
+                    this.courseOrganizations = organizations ? organizations : [];
+                });
+
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
                 this.complaintsEnabled = (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) && this.course.maxComplaintTimeDays! > 0;
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
@@ -102,6 +111,7 @@ export class CourseUpdateComponent implements OnInit {
                 teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
                 instructorGroupName: new FormControl(this.course.instructorGroupName),
                 description: new FormControl(this.course.description),
+                organizations: new FormControl(this.courseOrganizations),
                 startDate: new FormControl(this.course.startDate),
                 endDate: new FormControl(this.course.endDate),
                 semester: new FormControl(this.course.semester),
@@ -150,6 +160,7 @@ export class CourseUpdateComponent implements OnInit {
      */
     save() {
         this.isSaving = true;
+        this.courseForm.controls['organizations'].setValue(this.courseOrganizations);
         if (this.course.id !== undefined) {
             this.subscribeToSaveResponse(this.courseService.update(this.courseForm.getRawValue()));
         } else {
@@ -359,6 +370,51 @@ export class CourseUpdateComponent implements OnInit {
             semesters[2 * i + 2] = 'WS' + (18 + i) + '/' + (19 + i);
         }
         return semesters;
+    }
+
+    /**
+     * Opens the organizations modal used to select an organization to add
+     */
+    openOrganizationsModal() {
+        const modalRef = this.modalService.open(OrganizationSelectorComponent, { size: 'xl', backdrop: 'static' });
+        modalRef.componentInstance.organizations = this.courseOrganizations;
+        modalRef.closed.subscribe((organization) => {
+            if (organization !== undefined) {
+                this.courseOrganizations.push(organization);
+            }
+            /*
+            if (this.course.id !== undefined) {
+                this.organizationService.addCourseToOrganization(organization.id, this.course.id).subscribe(
+                    () => {
+                        this.courseOrganizations.push(organization);
+                    },
+                    (error: HttpErrorResponse) => this.jhiAlertService.error(error.message),
+                );
+            } else {
+                // add for later save
+                this.courseOrganizations.push(organization);
+            }
+             */
+        });
+    }
+
+    /**
+     * Removes an organization from the course
+     * @param organization to remove
+     * @param index
+     */
+    removeOrganizationFromCourse(organization: Organization) {
+        this.courseOrganizations = this.courseOrganizations.filter((o) => o.id !== organization.id);
+        /*
+        if (this.course.id !== undefined) {
+            this.organizationService.removeCourseFromOrganization(organization.id!, this.course.id).subscribe(
+                () => {
+                    this.course.organizations = this.course.organizations!.filter((o) => o.id !== organization.id);
+                },
+                (error: HttpErrorResponse) => this.jhiAlertService.error(error.message),
+            );
+        }
+         */
     }
 }
 
