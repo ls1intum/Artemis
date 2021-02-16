@@ -23,6 +23,7 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import * as moment from 'moment';
 import { User } from 'app/core/user/user.model';
 import { Result } from 'app/entities/result.model';
+import { ParticipantScoresService } from 'app/shared/participant-scores/participant-scores.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -224,13 +225,22 @@ describe('CourseScoresComponent', () => {
                 MockDirective(JhiTranslateDirective),
                 MockTranslateValuesDirective,
             ],
-            providers: [{ provide: ActivatedRoute, useValue: { params: of({ courseId: 1 }) } }, MockProvider(TranslateService)],
+            providers: [
+                {
+                    provide: ActivatedRoute,
+                    useValue: { params: of({ courseId: 1 }) },
+                },
+                MockProvider(TranslateService),
+                MockProvider(ParticipantScoresService),
+            ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseScoresComponent);
                 component = fixture.componentInstance;
                 courseService = fixture.debugElement.injector.get(CourseManagementService);
+                const participationScoreService = fixture.debugElement.injector.get(ParticipantScoresService);
+                spyOn(participationScoreService, 'findCourseScores').and.returnValue(of(new HttpResponse({ body: [] })));
             });
     });
 
