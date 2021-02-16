@@ -70,7 +70,7 @@ export const organizationMgmtRoute: Route[] = [
                         path: 'edit',
                         component: OrganizationManagementUpdateComponent,
                         data: {
-                            pageTitle: 'organizationManagement.editLabel',
+                            pageTitle: 'organizationManagement.addOrEditLabel',
                             breadcrumbLabelVariable: 'organization.id',
                         },
                     },

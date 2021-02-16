@@ -25,6 +25,11 @@
             "removeFromOrganization": {
                 "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this organization?"
             }
-        }
+        },
+        "modalSelector": {
+            "select": "Select",
+            "title": "Organizations"
+        },
+        "patternChangeWarning": "Changing the email pattern will trigger a re-assignment of all users to this organization"
     }
 }

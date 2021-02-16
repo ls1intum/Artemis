@@ -44,6 +44,14 @@ export class OrganizationManagementService {
     }
 
     /**
+     * Send GET request to retrieve all organizations of a given course
+     * @param courseId the id of the course to retrieve the organizations from
+     */
+    getOrganizationsByCourse(courseId: number): Observable<any> {
+        return this.http.get(`${this.resourceUrl}/course/${courseId}`);
+    }
+
+    /**
      * Send PUT request to update an organization
      * @param organization the organization to update
      */
@@ -68,7 +76,7 @@ export class OrganizationManagementService {
     }
 
     /**
-     * Send a DELETE request to remove a user from an oranization
+     * Send a DELETE request to remove a user from an organization
      * @param organizationId the id of the organization to remove the user from
      * @param userLogin the user to remove
      */
@@ -83,5 +91,23 @@ export class OrganizationManagementService {
      */
     addUserToOrganization(organizationId: number, userLogin: String): Observable<HttpResponse<void>> {
         return this.http.post<void>(`${this.resourceUrl}/user/${userLogin}/organization/${organizationId}`, {}, { observe: 'response' });
+    }
+
+    /**
+     *  Send a DELETE request to remove a course from an organization
+     * @param organizationId the id of the organization to remove the course from
+     * @param courseId the course id to remove from the organization
+     */
+    removeCourseFromOrganization(organizationId: number, courseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/course/${courseId}/organization/${organizationId}`, { observe: 'response' });
+    }
+
+    /**
+     * Send a POST request to add a course to an organization
+     * @param organizationId the id of the organization to add the course to
+     * @param courseId the id of the course to add
+     */
+    addCourseToOrganization(organizationId: number, courseId: number): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.resourceUrl}/course/${courseId}/organization/${organizationId}`, {}, { observe: 'response' });
     }
 }

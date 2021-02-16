@@ -52,6 +52,7 @@
                                 [entityTitle]="organization.name"
                                 deleteQuestion="organizationManagement.delete.question"
                                 (delete)="deleteOrganization(organization.id)"
+                                [dialogError]="dialogError$"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>
                             </button>

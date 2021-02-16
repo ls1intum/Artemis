@@ -11,17 +11,7 @@
 
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="organizationManagement.name">Name</label>
-                    <input
-                        type="text"
-                        class="form-control"
-                        name="name"
-                        #nameInput="ngModel"
-                        [(ngModel)]="organization.name"
-                        required
-                        minlength="1"
-                        maxlength="100"
-                        pattern="^[A-Za-z0-9]*$"
-                    />
+                    <input type="text" class="form-control" name="name" #nameInput="ngModel" [(ngModel)]="organization.name" required minlength="1" maxlength="100" />
 
                     <div *ngIf="nameInput.dirty && nameInput.invalid">
                         <small class="form-text text-danger" *ngIf="nameInput.errors?.required" jhiTranslate="entity.validation.required"> This field is required. </small>
@@ -71,11 +61,16 @@
                 </div>
                 <div class="form-group">
                     <label jhiTranslate="organizationManagement.logoUrl">Logo Url</label>
-                    <input type="text" class="form-control" name="description" #logoUrlInput="ngModel" [(ngModel)]="organization.logoUrl" />
+                    <input type="text" class="form-control" name="logoUrl" #logoUrlInput="ngModel" [(ngModel)]="organization.logoUrl" />
                 </div>
                 <div class="form-group">
+                    <div class="alert alert-warning">
+                        <span jhiTranslate="organizationManagement.patternChangeWarning"
+                            >Changing the email pattern will trigger a re-assignment of all users to this organization</span
+                        >
+                    </div>
                     <label jhiTranslate="organizationManagement.emailPattern">Email Pattern</label>
-                    <input type="text" class="form-control" name="emailPattern" #logoUrlInput="ngModel" [(ngModel)]="organization.emailPattern" />
+                    <input type="text" required class="form-control" name="emailPattern" #emailPatternInput="ngModel" [(ngModel)]="organization.emailPattern" />
                 </div>
             </div>
             <div>

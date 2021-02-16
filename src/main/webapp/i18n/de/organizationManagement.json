@@ -8,7 +8,7 @@
         "logoUrl": "Logo URL",
         "users": "Benutzer",
         "courses": "Kurse",
-        "emailPattern": "Email Pattern",
+        "emailPattern": "Email Muster",
         "delete": {
             "question": "Soll die Organisation <strong>{{ title }}</strong> wirklich gelöscht werden?"
         },
@@ -25,6 +25,11 @@
             "removeFromOrganization": {
                 "modalQuestion": "Soll der Nutzer mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Organisation entfernt werden?"
             }
-        }
+        },
+        "modalSelector": {
+            "select": "Auswählen",
+            "title": "Organisationen"
+        },
+        "patternChangeWarning": "Beim ändern des Emailmusters, wird eine Neuzuweisung der Nutzern zu dieser Organisation ausgeführt"
     }
 }

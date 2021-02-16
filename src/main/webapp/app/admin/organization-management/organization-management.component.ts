@@ -4,6 +4,7 @@ import { Organization } from 'app/entities/organization.model';
 import { UserService } from 'app/core/user/user.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { JhiAlertService } from 'ng-jhipster';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-organization-management',
@@ -11,6 +12,9 @@ import { JhiAlertService } from 'ng-jhipster';
 })
 export class OrganizationManagementComponent implements OnInit {
     organizations: Organization[];
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(private organizationService: OrganizationManagementService, private userService: UserService, private alertService: JhiAlertService) {}
 
@@ -30,10 +34,11 @@ export class OrganizationManagementComponent implements OnInit {
     deleteOrganization(organizationId: number) {
         this.organizationService.deleteOrganization(organizationId).subscribe(
             () => {
-                this.alertService.success('Organization has been removed successfully');
+                this.dialogErrorSource.next('');
+                this.organizations = this.organizations.filter((org) => org.id !== organizationId);
             },
             (error: HttpErrorResponse) => {
-                this.alertService.error('An error occurred while removing the organization: ' + error.message);
+                this.dialogErrorSource.next('An error occurred while removing the organization: ' + error.message);
             },
         );
     }
