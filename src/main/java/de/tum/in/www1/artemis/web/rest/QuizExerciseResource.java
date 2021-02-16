@@ -93,7 +93,7 @@ public class QuizExerciseResource {
     @PostMapping("/quiz-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<QuizExercise> createQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
-        log.debug("REST request to save QuizExercise : {}", quizExercise);
+        log.debug("REST request to create QuizExercise : {}", quizExercise);
         if (quizExercise.getId() != null) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new quizExercise cannot already have an ID")).body(null);

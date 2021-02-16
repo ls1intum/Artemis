@@ -589,7 +589,11 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null);
         QuizExercise quizExerciseServer = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
-        assertThat(quizExercise).isEqualTo(quizExerciseServer);
+        assertThat(quizExerciseServer.getId()).isNotNull();
+        assertThat(quizExerciseServer.getQuizQuestions()).hasSize(quizExercise.getQuizQuestions().size());
+        assertThat(quizExerciseServer.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(quizExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        assertThat(quizExerciseServer.getMaxPoints()).isEqualTo(quizExercise.getMaxPoints());
+        // TODO: check more values for equality
     }
 
     @Test
