@@ -37,7 +37,7 @@ WITH last_submission AS (
                  SELECT *
                  FROM result r2
                  WHERE r2.submission_id = r.submission_id
-                   AND r2.results_order > r.results_order
+                   AND r2.id > r.id
                    AND r2.score IS NOT NULL
                    AND r2.completion_date IS NOT NULL
              )
@@ -91,7 +91,7 @@ WITH last_submission AS (
                  SELECT *
                  FROM result r2
                  WHERE r2.submission_id = r.submission_id
-                   AND r2.results_order > r.results_order
+                   AND r2.id > r.id
                    AND r2.score IS NOT NULL
                    AND r2.completion_date IS NOT NULL
                    AND r2.rated IS TRUE
@@ -145,7 +145,7 @@ WITH last_submission AS (
                  SELECT *
                  FROM result r2
                  WHERE r2.submission_id = r.submission_id
-                   AND r2.results_order > r.results_order
+                   AND r2.id > r.id
                    AND r2.score IS NOT NULL
                    AND r2.completion_date IS NOT NULL
              )
@@ -198,7 +198,7 @@ WITH last_submission AS (
                  SELECT *
                  FROM result r2
                  WHERE r2.submission_id = r.submission_id
-                   AND r2.results_order > r.results_order
+                   AND r2.id > r.id
                    AND r2.score IS NOT NULL
                    AND r2.completion_date IS NOT NULL
                    AND r2.rated IS TRUE

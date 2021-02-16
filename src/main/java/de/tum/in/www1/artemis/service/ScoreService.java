@@ -53,10 +53,11 @@ public class ScoreService {
 
     /**
      * Either updates or removes an existing participant score when a result is removed
+     * The annotation "@Transactional" is ok because it means that this method does not support run in an outer transactional context, instead the outer transaction is paused
      *
      * @param resultToBeDeleted result that will be removes
      */
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED) // ok (see JavaDoc)
     public void removeOrUpdateAssociatedParticipantScore(Result resultToBeDeleted) {
         // In this method we use custom @Query methods that will fail if no authentication is available, therefore
         // we check this here and set a dummy authentication if none is available (this is the case in a scheduled service or
@@ -120,10 +121,11 @@ public class ScoreService {
 
     /**
      * Either updates an existing participant score or creates a new participant score if a new result comes in
+     * The annotation "@Transactional" is ok because it means that this method does not support run in an outer transactional context, instead the outer transaction is paused
      *
      * @param createdOrUpdatedResult newly created or updated result
      */
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED) // ok (see JavaDoc)
     public void updateOrCreateParticipantScore(Result createdOrUpdatedResult) {
         if (createdOrUpdatedResult.getScore() == null || createdOrUpdatedResult.getCompletionDate() == null) {
             return;

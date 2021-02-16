@@ -82,7 +82,7 @@ public class ParticipantScoreResource {
             pageable = Pageable.unpaged();
         }
         List<ParticipantScoreDTO> resultsOfAllExercises = gertParticipantScoreDTOs(pageable, exercisesOfCourse);
-        log.debug("getParticipantScoresOfCourse took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("getParticipantScoresOfCourse took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok().body(resultsOfAllExercises);
     }
 
@@ -110,7 +110,7 @@ public class ParticipantScoreResource {
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
 
         List<ParticipantScoreAverageDTO> resultsOfAllExercises = getParticipantScoreAverageDTOs(exercisesOfCourse);
-        log.debug("getAverageScoreOfStudentInCourse took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("getAverageScoreOfStudentInCourse took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok().body(resultsOfAllExercises);
     }
 
@@ -146,7 +146,7 @@ public class ParticipantScoreResource {
 
         Long averageScore = getAverageScore(onlyConsiderRatedScores, includedExercisesOfCourse);
 
-        log.debug("getAverageScoreOfCourse took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("getAverageScoreOfCourse took " + (System.currentTimeMillis() - start) + "ms");
 
         return ResponseEntity.ok().body(averageScore);
     }
@@ -182,7 +182,7 @@ public class ParticipantScoreResource {
         }
 
         List<ParticipantScoreDTO> resultsOfAllExercises = gertParticipantScoreDTOs(pageable, exercisesOfExam);
-        log.debug("getParticipantScoresOfExam took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("getParticipantScoresOfExam took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok().body(resultsOfAllExercises);
     }
 
@@ -223,7 +223,7 @@ public class ParticipantScoreResource {
 
         Long averageScore = getAverageScore(onlyConsiderRatedScores, includedExercisesOfExam);
 
-        log.debug("getAverageScoreOfExam took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("getAverageScoreOfExam took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok().body(averageScore);
     }
 
@@ -256,7 +256,7 @@ public class ParticipantScoreResource {
                 .collect(Collectors.toSet());
 
         List<ParticipantScoreAverageDTO> resultsOfAllExercises = getParticipantScoreAverageDTOs(includedExercisesOfExam);
-        log.debug("getAverageScoreOfParticipantInExam took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("getAverageScoreOfParticipantInExam took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok().body(resultsOfAllExercises);
     }
 
