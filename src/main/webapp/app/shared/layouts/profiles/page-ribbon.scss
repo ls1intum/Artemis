@@ -13,8 +13,8 @@ Developement Ribbon
 /* common */
 .ribbon {
     z-index: 9999;
-    width: 150px;
-    height: 150px;
+    width: 200px;
+    height: 200px;
     overflow: hidden;
     white-space: nowrap;
     pointer-events: none;
@@ -23,7 +23,7 @@ Developement Ribbon
     span {
         position: absolute;
         display: block;
-        width: 235px;
+        width: 300px;
         padding: 10px 0;
         background-color: rgba(170, 0, 0, 0.5);
         box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
@@ -47,6 +47,6 @@ Developement Ribbon
 
 .ribbon-top-left span {
     right: -25px;
-    top: 30px;
+    top: 45px;
     transform: rotate(-45deg);
 }
