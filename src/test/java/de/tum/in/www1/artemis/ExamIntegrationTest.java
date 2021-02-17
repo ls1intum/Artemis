@@ -668,6 +668,12 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExamsForUser_asInstructor() throws Exception {
+        request.getList("/api/courses/" + course1.getId() + "/exams-for-user", HttpStatus.OK, Exam.class);
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testGetCurrentAndUpcomingExams() throws Exception {
         request.getList("/api/courses/upcoming-exams", HttpStatus.OK, Exam.class);
