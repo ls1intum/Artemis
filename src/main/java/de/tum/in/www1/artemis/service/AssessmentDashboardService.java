@@ -4,8 +4,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -17,6 +15,8 @@ import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
@@ -39,7 +39,7 @@ public class AssessmentDashboardService {
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     public AssessmentDashboardService(ComplaintService complaintService, ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository,
-                                      ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository) {
+            ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository) {
         this.complaintService = complaintService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionRepository = submissionRepository;

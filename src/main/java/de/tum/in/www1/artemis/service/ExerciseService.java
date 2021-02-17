@@ -80,11 +80,11 @@ public class ExerciseService {
     private final ResultRepository resultRepository;
 
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
-                           AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
-                           QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
-                           AuditEventRepository auditEventRepository, TeamRepository teamRepository, StudentExamRepository studentExamRepository, ExamRepository examRepository,
-                           ProgrammingExerciseRepository programmingExerciseRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-                           ResultRepository resultRepository) {
+            AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
+            QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
+            AuditEventRepository auditEventRepository, TeamRepository teamRepository, StudentExamRepository studentExamRepository, ExamRepository examRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
+            ResultRepository resultRepository) {
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
         this.participationService = participationService;

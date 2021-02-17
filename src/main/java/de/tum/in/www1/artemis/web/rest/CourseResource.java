@@ -114,11 +114,12 @@ public class CourseResource {
     private final ResultRepository resultRepository;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
-                          ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
-                          ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-                          SubmissionService submissionService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
-                          ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
-                          AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository) {
+            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            SubmissionService submissionService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
+            ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
+            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository,
+            ResultRepository resultRepository) {
         this.courseService = courseService;
         this.participationService = participationService;
         this.courseRepository = courseRepository;
