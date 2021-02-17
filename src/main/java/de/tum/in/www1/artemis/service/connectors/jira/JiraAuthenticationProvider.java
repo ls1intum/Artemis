@@ -47,6 +47,7 @@ import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGroupDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -71,8 +72,8 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     private final Optional<LdapUserService> ldapUserService;
 
     public JiraAuthenticationProvider(UserRepository userRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate,
-            @Qualifier("shortTimeoutJiraRestTemplate") RestTemplate shortTimeoutRestTemplate, Optional<LdapUserService> ldapUserService) {
-        super(userRepository);
+            @Qualifier("shortTimeoutJiraRestTemplate") RestTemplate shortTimeoutRestTemplate, Optional<LdapUserService> ldapUserService, PasswordService passwordService) {
+        super(userRepository, passwordService);
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.restTemplate = restTemplate;
         this.ldapUserService = ldapUserService;

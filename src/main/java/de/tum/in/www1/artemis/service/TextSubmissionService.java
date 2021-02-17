@@ -18,6 +18,8 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -35,10 +37,11 @@ public class TextSubmissionService extends SubmissionService {
     private final SubmissionVersionService submissionVersionService;
 
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, TextClusterRepository textClusterRepository, SubmissionRepository submissionRepository,
-            StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
-            Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService,
-            FeedbackRepository feedbackRepository) {
-        super(submissionRepository, userService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
+            StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository,
+            UserRepository userRepository, Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService,
+            SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository) {
+        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
+                courseRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.textClusterRepository = textClusterRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;

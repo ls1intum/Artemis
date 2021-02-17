@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.exam;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
@@ -17,6 +17,9 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -24,16 +27,16 @@ public class ExamSubmissionService {
 
     private final StudentExamService studentExamService;
 
-    private final ExamService examService;
-
     private final ParticipationService participationService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public ExamSubmissionService(StudentExamService studentExamService, ExamService examService, ParticipationService participationService,
+    private final ExamRepository examRepository;
+
+    public ExamSubmissionService(StudentExamService studentExamService, ExamRepository examRepository, ParticipationService participationService,
             AuthorizationCheckService authorizationCheckService) {
         this.studentExamService = studentExamService;
-        this.examService = examService;
+        this.examRepository = examRepository;
         this.participationService = participationService;
         this.authorizationCheckService = authorizationCheckService;
     }
@@ -158,7 +161,7 @@ public class ExamSubmissionService {
         // TODO: we might want to add a grace period here. If so we have to adjust the dueDate checks in the submission
         // services (e.g. in TextSubmissionService::handleTextSubmission())
         // The attributes of the exam (e.g. startDate) are missing. Therefore we need to load it.
-        Exam exam = examService.findOne(exercise.getExerciseGroup().getExam().getId());
+        Exam exam = examRepository.findExamByIdElseThrow(exercise.getExerciseGroup().getExam().getId());
         ZonedDateTime calculatedEndDate = exam.getEndDate();
         if (studentExam.getWorkingTime() != null && studentExam.getWorkingTime() > 0) {
             calculatedEndDate = exam.getStartDate().plusSeconds(studentExam.getWorkingTime());

@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -27,7 +28,7 @@ public class ResultService {
 
     private final Logger log = LoggerFactory.getLogger(ResultService.class);
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final ResultRepository resultRepository;
 
@@ -47,10 +48,10 @@ public class ResultService {
 
     private final ComplaintRepository complaintRepository;
 
-    public ResultService(UserService userService, ResultRepository resultRepository, LtiService ltiService, ObjectMapper objectMapper, FeedbackRepository feedbackRepository,
+    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiService ltiService, ObjectMapper objectMapper, FeedbackRepository feedbackRepository,
             WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
             ComplaintRepository complaintRepository, RatingRepository ratingRepository) {
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
         this.objectMapper = objectMapper;
@@ -128,7 +129,7 @@ public class ResultService {
      * @param result Result for which current user is set as an assessor
      */
     public void setAssessor(Result result) {
-        User currentUser = userService.getUser();
+        User currentUser = userRepository.getUser();
         result.setAssessor(currentUser);
     }
 
@@ -169,7 +170,7 @@ public class ResultService {
             result.setHasFeedback(isProgrammingExerciseWithFeedback);
         }
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         result.setAssessmentType(AssessmentType.MANUAL);
         result.setAssessor(user);
@@ -238,14 +239,25 @@ public class ResultService {
     }
 
     /**
-     * Given a courseId and a tutorId, return the number of assessments for that course written by that tutor that have been completed (e.g. no draft!)
+     * Calculates the number of assessments done for each correction round.
      *
-     * @param courseId - the course we are interested in
-     * @param tutorId  - the tutor we are interested in
-     * @return a number of assessments for the course
+     * @param exercise the exercise for which we want to calculate the # of assessments for each correction round
+     * @param examMode states whether or not the the function is called in the exam mode
+     * @param totalNumberOfAssessments so total number of assessments sum up over all correction rounds
+     * @return the number of assessments for each correction rounds
      */
-    public long countNumberOfAssessmentsForTutor(Long courseId, Long tutorId) {
-        return resultRepository.countByAssessor_IdAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(tutorId, courseId, true);
+    public DueDateStat[] calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(Exercise exercise, boolean examMode, DueDateStat totalNumberOfAssessments) {
+        DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
+        if (examMode) {
+            // set number of corrections specific to each correction round
+            int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+            numberOfAssessmentsOfCorrectionRounds = countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(exercise, numberOfCorrectionRounds);
+        }
+        else {
+            // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
+            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+        }
+        return numberOfAssessmentsOfCorrectionRounds;
     }
 
     /**

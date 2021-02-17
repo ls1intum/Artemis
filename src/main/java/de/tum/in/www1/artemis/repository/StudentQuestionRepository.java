@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.StudentQuestion;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the StudentQuestion entity.
@@ -28,4 +29,7 @@ public interface StudentQuestionRepository extends JpaRepository<StudentQuestion
     @Query("select distinct student_question from StudentQuestion student_question left join student_question.lecture lecture left join student_question.exercise exercise where ( lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} )")
     List<StudentQuestion> findStudentQuestionsForCourse(@Param("courseId") Long courseId);
 
+    default StudentQuestion findByIdElseThrow(Long studentQuestionId) throws EntityNotFoundException {
+        return findById(studentQuestionId).orElseThrow(() -> new EntityNotFoundException("Student Question", studentQuestionId));
+    }
 }

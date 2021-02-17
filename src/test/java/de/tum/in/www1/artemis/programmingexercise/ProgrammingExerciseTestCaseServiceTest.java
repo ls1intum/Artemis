@@ -18,9 +18,9 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 

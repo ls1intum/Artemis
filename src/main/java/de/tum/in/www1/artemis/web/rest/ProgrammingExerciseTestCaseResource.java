@@ -12,12 +12,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -37,20 +40,20 @@ public class ProgrammingExerciseTestCaseResource {
 
     private final ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     public ProgrammingExerciseTestCaseResource(ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseService programmingExerciseService,
-            AuthorizationCheckService authCheckService, UserService userService) {
+            ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseRepository programmingExerciseRepository,
+            AuthorizationCheckService authCheckService, UserRepository userRepository) {
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.programmingExerciseTestCaseService = programmingExerciseTestCaseService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
-        this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -63,10 +66,10 @@ public class ProgrammingExerciseTestCaseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> getTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to get test cases for programming exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
 
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -89,9 +92,9 @@ public class ProgrammingExerciseTestCaseResource {
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> updateTestCases(@PathVariable Long exerciseId,
             @RequestBody Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS) {
         log.debug("REST request to update the weights {} of the exercise {}", testCaseProgrammingExerciseTestCaseDTOS, exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
@@ -123,9 +126,9 @@ public class ProgrammingExerciseTestCaseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ProgrammingExerciseTestCase>> resetTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the test case weights of exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();

@@ -26,10 +26,10 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.StaticCodeAnalysisResource;
 
