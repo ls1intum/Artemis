@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.util.Set;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 
@@ -11,6 +12,7 @@ public interface CIUserManagementService {
      * Creates a new user in the CIS based the Artemis user.
      *
      * @param user The Artemis user
+     * @throws ContinuousIntegrationException thrown when a job cannot be fetched/updated
      */
     void createUser(User user) throws ContinuousIntegrationException;
 
@@ -18,6 +20,7 @@ public interface CIUserManagementService {
      * Deletes the user under the specified login from the CIS.
      *
      * @param userLogin The login of the user that should be deleted
+     * @throws ContinuousIntegrationException thrown when a job cannot be fetched/updated
      */
     void deleteUser(String userLogin) throws ContinuousIntegrationException;
 
@@ -26,6 +29,7 @@ public interface CIUserManagementService {
      * an exceptions if the user doesn't exist in the CIS.
      *
      * @param user The Artemis user
+     * @throws ContinuousIntegrationException thrown when a job cannot be fetched/updated
      */
     void updateUser(User user) throws ContinuousIntegrationException;
 
@@ -37,6 +41,7 @@ public interface CIUserManagementService {
      * @param user the Artemis user
      * @param groupsToAdd groups to add the user to
      * @param groupsToRemove groups to remove the user from
+     * @throws ContinuousIntegrationException thrown when a job cannot be fetched/updated
      */
     void updateUserAndGroups(User user, Set<String> groupsToAdd, Set<String> groupsToRemove) throws ContinuousIntegrationException;
 
@@ -46,6 +51,7 @@ public interface CIUserManagementService {
      *
      * @param user The Artemis user to add to the group
      * @param group The group
+     * @throws ContinuousIntegrationException thrown when a job cannot be fetched/updated
      */
     void addUserToGroups(User user, Set<String> group) throws ContinuousIntegrationException;
 
@@ -55,6 +61,18 @@ public interface CIUserManagementService {
      *
      * @param user The Artemis user to remove from the group
      * @param group The group
+     * @throws ContinuousIntegrationException thrown when a job cannot be fetched/updated
      */
     void removeUserFromGroups(User user, Set<String> group) throws ContinuousIntegrationException;
+
+    /**
+     * Update permissions of all users that belong to the teaching assistant and instructor groups of the course. This
+     * means removing each user from the old groups and adding them to the new one from the course.
+     *
+     * @param updatedCourse the course that has the new groups
+     * @param oldInstructorGroup the old instructor group. Permissions are revoked for each user in that group
+     * @param oldTeachingAssistantGroup the old teaching assistant group. Permissions are revoked for each user in that group
+     * @throws ContinuousIntegrationException thrown when a job cannot be fetched/updated
+     */
+    void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws ContinuousIntegrationException;
 }

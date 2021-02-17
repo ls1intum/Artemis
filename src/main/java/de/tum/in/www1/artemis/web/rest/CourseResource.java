@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
@@ -97,7 +98,9 @@ public class CourseResource {
 
     private final AssessmentDashboardService assessmentDashboardService;
 
-    private final Optional<VcsUserManagementService> vcsUserManagementService;
+    private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
+
+    private final Optional<CIUserManagementService> optionalCiUserManagementService;
 
     private final Environment env;
 
@@ -115,7 +118,8 @@ public class CourseResource {
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
-            ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
+            ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository,
+            Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCiUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository) {
         this.courseService = courseService;
         this.participationService = participationService;
@@ -131,7 +135,8 @@ public class CourseResource {
         this.complaintService = complaintService;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.vcsUserManagementService = vcsUserManagementService;
+        this.optionalVcsUserManagementService = optionalVcsUserManagementService;
+        this.optionalCiUserManagementService = optionalCiUserManagementService;
         this.auditEventRepository = auditEventRepository;
         this.env = env;
         this.assessmentDashboardService = assessmentDashboardService;
@@ -283,7 +288,9 @@ public class CourseResource {
         final var oldInstructorGroup = existingCourse.getInstructorGroupName();
         final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
         Course result = courseRepository.save(updatedCourse);
-        vcsUserManagementService.ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldTeachingAssistantGroup));
+        optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldTeachingAssistantGroup));
+        optionalCiUserManagementService
+                .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldTeachingAssistantGroup));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedCourse.getTitle())).body(result);
     }
 

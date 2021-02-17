@@ -1,17 +1,17 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Set;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.offbytwo.jenkins.JenkinsServer;
+import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsUtils;
 
 @Service
 @Profile("jenkins")
@@ -33,9 +33,30 @@ public class JenkinsJobPermissionsService {
      * @param jobName the name of the job where the permissions will take affect
      * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
      */
-    public void assignUserInstructorPermissionsForJob(String userLogin, String jobName) throws IOException {
-        var allPermissions = List.of(JenkinsJobPermission.values());
-        addPermissionsForUserToJob(userLogin, jobName, allPermissions);
+    public void addInstructorPermissionsToUserForJob(String userLogin, String jobName) throws IOException {
+        addPermissionsForUserToJob(userLogin, jobName, JenkinsJobPermission.getInstructorPermissions());
+    }
+
+    /**
+     * Assigns teaching assistant and instructor permissions to users.
+     *
+     * @param taLogins logins of the teaching assisstants
+     * @param instructorLogins logins of the instructors
+     * @param jobName the name of the job where the permissions will take affect
+     * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
+     */
+    public void addInstructorAndTAPermissionsToUsersForJob(Set<String> taLogins, Set<String> instructorLogins, String jobName) throws IOException {
+        var jobConfigDocument = getJobConfigXmlDocument(jobName);
+
+        // Revoke previously-assigned permissions
+        JenkinsJobPermissionsUtils.removePermissionsFromDocument(jobConfigDocument, Set.of(JenkinsJobPermission.values()), taLogins);
+        JenkinsJobPermissionsUtils.removePermissionsFromDocument(jobConfigDocument, Set.of(JenkinsJobPermission.values()), instructorLogins);
+
+        // Assign teaching assistant permissions
+        JenkinsJobPermissionsUtils.addPermissionsToDocument(jobConfigDocument, JenkinsJobPermission.getTeachingAssistantPermissions(), taLogins);
+        JenkinsJobPermissionsUtils.addPermissionsToDocument(jobConfigDocument, JenkinsJobPermission.getInstructorPermissions(), instructorLogins);
+
+        jenkinsServer.updateJob(jobName, jobConfigDocument.toString(), useCrumb);
     }
 
     /**
@@ -46,36 +67,16 @@ public class JenkinsJobPermissionsService {
      * @param jobName the name of the job where the permissions will take affect
      * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
      */
-    public void assignUserTeachingAssistantPermissionsForJob(String userLogin, String jobName) throws IOException {
+    public void addTeachingAssistantPermissionsToUserForJob(String userLogin, String jobName) throws IOException {
+        var jobConfigDocument = getJobConfigXmlDocument(jobName);
+
         // Revoke previously-assigned permissions
-        removePermissionsFromUserOfJob(userLogin, jobName, List.of(JenkinsJobPermission.values()));
-        // Assign read-only permissions.
-        var permissions = List.of(JenkinsJobPermission.JOB_READ, JenkinsJobPermission.JOB_BUILD, JenkinsJobPermission.JOB_CANCEL, JenkinsJobPermission.RUN_UPDATE);
-        addPermissionsForUserToJob(userLogin, jobName, permissions);
-    }
+        JenkinsJobPermissionsUtils.removePermissionsFromDocument(jobConfigDocument, Set.of(JenkinsJobPermission.values()), userLogin);
 
-    /**
-     * Revokes instructor permissions from the user.
-     *
-     * @param userLogin the login of the user that will have the permissions revoked
-     * @param jobName the name of the job where the permissions will take affect
-     * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
-     */
-    public void revokeUserInstructorPermissionsForJob(String userLogin, String jobName) throws IOException {
-        var allPermissions = List.of(JenkinsJobPermission.values());
-        removePermissionsFromUserOfJob(userLogin, jobName, allPermissions);
-    }
+        // Assign teaching assistant permissions
+        JenkinsJobPermissionsUtils.addPermissionsToDocument(jobConfigDocument, JenkinsJobPermission.getTeachingAssistantPermissions(), Set.of(userLogin));
 
-    /**
-     * Revokes teaching assistant permissions from the user.
-     *
-     * @param userLogin the login of the user that will have the permissions revoked
-     * @param jobName the name of the job where the permissions will take affect
-     * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
-     */
-    public void revokeUserTeachingAssistantPermissionsForJob(String userLogin, String jobName) throws IOException {
-        var permissions = List.of(JenkinsJobPermission.JOB_READ, JenkinsJobPermission.JOB_BUILD, JenkinsJobPermission.JOB_CANCEL, JenkinsJobPermission.RUN_UPDATE);
-        removePermissionsFromUserOfJob(userLogin, jobName, permissions);
+        jenkinsServer.updateJob(jobName, jobConfigDocument.toString(), useCrumb);
     }
 
     /**
@@ -85,23 +86,25 @@ public class JenkinsJobPermissionsService {
      * @param userLogin the login of the user that will have the permissions
      * @param jobName the name of the job where the permissions will take affect
      * @param permissions a list of permissions to give to the user
-     * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
+     * @throws IOException thrown when retrieving/updating the Jenkins job failed
      */
-    public void addPermissionsForUserToJob(String userLogin, String jobName, List<JenkinsJobPermission> permissions) throws IOException {
-        var jobXml = jenkinsServer.getJobXml(jobName);
+    public void addPermissionsForUserToJob(String userLogin, String jobName, Set<JenkinsJobPermission> permissions) throws IOException {
+        addPermissionsForUsersToJob(Set.of(userLogin), jobName, permissions);
+    }
 
-        // Parse the config xml file for the job and insert the permissions into it.
-        var document = Jsoup.parse(jobXml, "", Parser.xmlParser());
-        document.outputSettings().indentAmount(0).prettyPrint(false);
-
-        // The authorization matrix is an element that holds the permissions for a specific
-        // job.
-        var authorizationMatrixElement = getOrCreateAuthorizationMatrixPropertyElement(document);
-
-        addPermissionsToAuthorizationMatrix(authorizationMatrixElement, permissions, userLogin);
-        addAuthorizationMatrixToDocument(authorizationMatrixElement, document);
-
-        jenkinsServer.updateJob(jobName, document.toString(), useCrumb);
+    /**
+     * Adds all Jenkins job permissions for the specific Jenkins users to the job. This function does not overwrite
+     * permissions that have already been given.
+     *
+     * @param userLogins the logins of the users that will have the permissions
+     * @param jobName the name of the job where the permissions will take affect
+     * @param permissions a list of permissions to give to the users
+     * @throws IOException thrown when retrieving/updating the Jenkins job failed
+     */
+    public void addPermissionsForUsersToJob(Set<String> userLogins, String jobName, Set<JenkinsJobPermission> permissions) throws IOException {
+        var jobConfigDocument = getJobConfigXmlDocument(jobName);
+        JenkinsJobPermissionsUtils.addPermissionsToDocument(jobConfigDocument, permissions, userLogins);
+        jenkinsServer.updateJob(jobName, jobConfigDocument.toString(), useCrumb);
     }
 
     /**
@@ -110,114 +113,41 @@ public class JenkinsJobPermissionsService {
      * @param userLogin the login of the user to remove the permissions
      * @param jobName the name of the job where the permissions will be removed
      * @param permissionsToRemove a list of permissions to remove from the user
-     * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
+     * @throws IOException thrown when retrieving/updating the Jenkins job failed
      */
-    public void removePermissionsFromUserOfJob(String userLogin, String jobName, List<JenkinsJobPermission> permissionsToRemove) throws IOException {
+    public void removePermissionsFromUserOfJob(String userLogin, String jobName, Set<JenkinsJobPermission> permissionsToRemove) throws IOException {
+        removePermissionsFromUsersForJob(Set.of(userLogin), jobName, permissionsToRemove);
+    }
+
+    /**
+     * Removes the permissions from the users for the specific Jenkins job.
+     *
+     * @param userLogins the logins of the users to remove the permissions
+     * @param jobName the name of the job where the permissions will be removed
+     * @param permissionsToRemove a list of permissions to remove from the users
+     * @throws IOException thrown when retrieving/updating the Jenkins job failed
+     */
+    public void removePermissionsFromUsersForJob(Set<String> userLogins, String jobName, Set<JenkinsJobPermission> permissionsToRemove) throws IOException {
+        var jobConfigDocument = getJobConfigXmlDocument(jobName);
+        JenkinsJobPermissionsUtils.removePermissionsFromDocument(jobConfigDocument, permissionsToRemove, userLogins);
+        jenkinsServer.updateJob(jobName, jobConfigDocument.toString(), useCrumb);
+    }
+
+    /**
+     * Fetches the configuration file for the specified Jenkins job as an ml
+     * document.
+     * @param jobName the name of the Jenkins job to fetch the configuration file
+     * @return the job configuration file as an xml document
+     * @throws IOException thrown when retrieving/updating the Jenkins job failed
+     */
+    private Document getJobConfigXmlDocument(String jobName) throws IOException {
         var jobXml = jenkinsServer.getJobXml(jobName);
 
         // Parse the config xml file for the job and insert the permissions into it.
         var document = Jsoup.parse(jobXml, "", Parser.xmlParser());
         document.outputSettings().indentAmount(0).prettyPrint(false);
 
-        // The authorization matrix is an element that holds the permissions for a specific
-        // job.
-        removePermissionsFromAuthorizationMatrix(document, permissionsToRemove, userLogin);
-
-        jenkinsServer.updateJob(jobName, document.toString(), useCrumb);
+        return document;
     }
 
-    /**
-     * Removes the specified permissions belonging to the user from the xml document. Permission
-     * elements must be children of the AuthorizationMatrixProperty element. Doesn't do anything
-     * if AuthorizationMatrixProperty is missing.
-     *
-     * @param document The xml document
-     * @param permissionsToRemove  a list of permissions to remove from the user
-     * @param userLogin  the login of the user to remove the permissions from
-     */
-    private void removePermissionsFromAuthorizationMatrix(Document document, List<JenkinsJobPermission> permissionsToRemove, String userLogin) {
-        var authorizationMatrixTagName = "com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty";
-        var authorizationMatrixElement = document.getElementsByTag(authorizationMatrixTagName).first();
-        if (authorizationMatrixElement == null) {
-            return;
-        }
-
-        permissionsToRemove.forEach(jenkinsJobPermission -> {
-            // The permission in the xml node has the format: com.jenkins.job.permission:user-login
-            var permission = jenkinsJobPermission.getName() + ":" + userLogin;
-            authorizationMatrixElement.getElementsContainingOwnText(permission).remove();
-        });
-    }
-
-    /**
-     * Retrieves the AuthorizationMatrixProperty element from the document if it exists or creates a new one
-     * pre-configured with matrixauth.inheritance.InheritParentStrategy.
-     * @param document The xml document
-     * @return AuthorizationMatrixProperty element
-     */
-    private Element getOrCreateAuthorizationMatrixPropertyElement(Document document) {
-        var authorizationMatrixTagName = "com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty";
-        var authorizationMatrixElement = document.getElementsByTag(authorizationMatrixTagName).first();
-        if (authorizationMatrixElement != null) {
-            return authorizationMatrixElement;
-        }
-
-        // Create the element
-        var strategyElement = new Element("inheritanceStrategy").addClass("org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy");
-        authorizationMatrixElement = new Element(authorizationMatrixTagName);
-        strategyElement.appendTo(authorizationMatrixElement);
-        return authorizationMatrixElement;
-    }
-
-    /**
-     * Adds all jenkinsJobPermissions specified for the specific Jenkins user into the authorizationMatrixElement.
-     * The resulting output element has the following format:
-     * <pre>
-     * {@code
-     *      <com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
-     *          ...existing permissions
-     *          <permission>hudson.model.the.jenkins.permission1:userLogin</permission>
-     *          ...
-     *          <permission>hudson.model.the.jenkins.permissionn:userLogin</permission>
-     *      </com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
-     * }
-     * </pre>
-     * @param authorizationMatrixElement the com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty element
-     * @param jenkinsJobPermissions      a list of Jenkins job permissions to be added for the specific user
-     * @param userLogin                  the login name of the user
-     */
-    private void addPermissionsToAuthorizationMatrix(Element authorizationMatrixElement, List<JenkinsJobPermission> jenkinsJobPermissions, String userLogin) {
-        var existingPermissionElements = authorizationMatrixElement.getElementsByTag("permission");
-        jenkinsJobPermissions.forEach(jenkinsJobPermission -> {
-            // The permission in the xml node has the format: com.jenkins.job.permission:user-login
-            var permission = jenkinsJobPermission.getName() + ":" + userLogin;
-
-            // Add the permission if it doesn't exist.
-            var permissionDoesntExist = existingPermissionElements.stream().noneMatch(element -> element.text().equals(permission));
-            if (permissionDoesntExist) {
-                // Permission element has format <permission>com.jenkins.job.permission:user-login</permission>
-                var permissionElement = new Element("permission").appendText(permission);
-                permissionElement.appendTo(authorizationMatrixElement);
-            }
-        });
-    }
-
-    /**
-     * Adds the authorizationMatrixElement into the document. The function checks the document if the properties
-     * element exist and creates one if it doesn't. The authorizationMatrixElement must be a child if this tag.
-     *
-     * @param authorizationMatrixElement the com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty element
-     * @param document                   the Jenkins Job config.xml
-     */
-    private void addAuthorizationMatrixToDocument(Element authorizationMatrixElement, Document document) {
-        // The authorization matrix is stored inside the <properties/> tag within the document. Either find it
-        // or create a new one.
-        var propertyElement = document.getElementsByTag("properties").first();
-        if (propertyElement == null) {
-            propertyElement = new Element("properties");
-            propertyElement.appendTo(document);
-        }
-
-        authorizationMatrixElement.appendTo(propertyElement);
-    }
 }

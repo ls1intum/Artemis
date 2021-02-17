@@ -3,10 +3,11 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -22,13 +23,15 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.JenkinsUpdateUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.JenkinsUserDTO;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Service
 @Profile("jenkins")
@@ -43,20 +46,19 @@ public class JenkinsUserManagementService implements CIUserManagementService {
 
     private final JenkinsJobPermissionsService jenkinsJobPermissionsService;
 
-    private UserService userService;
+    protected final PasswordService passwordService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final UserRepository userRepository;
+
     public JenkinsUserManagementService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsJobPermissionsService jenkinsJobPermissionsService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            PasswordService passwordService, ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository) {
         this.restTemplate = restTemplate;
         this.jenkinsJobPermissionsService = jenkinsJobPermissionsService;
+        this.passwordService = passwordService;
         this.programmingExerciseRepository = programmingExerciseRepository;
-    }
-
-    @Autowired // break the cycle
-    public void setUserService(UserService userService) {
-        this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -98,12 +100,10 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * @return http entity with the user encoded as the form data.
      */
     private HttpEntity<MultiValueMap<String, String>> getCreateUserFormHttpEntity(User user) {
-        var password = userService.decryptPassword(user);
-
         var formData = new LinkedMultiValueMap<String, String>();
         formData.add("username", user.getLogin());
-        formData.add("password1", password);
-        formData.add("password2", password);
+        formData.add("password1", passwordService.decryptPassword(user));
+        formData.add("password2", passwordService.decryptPassword(user));
         formData.add("fullname", user.getName());
         formData.add("email", user.getEmail());
 
@@ -131,92 +131,6 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         catch (RestClientException e) {
             throw new JenkinsException("Cannot delete user: " + userLogin, e);
         }
-    }
-
-    /**
-     * Adds the Artemis user to a group in Jenkins. Jenkins does not support
-     * groups so this function fetches all programming exercises belonging to
-     * the groups and assigns the user permissions to them.
-     *
-     * @param user   The Artemis user to add to the group
-     * @param groups The groups to add the user to
-     */
-    @Override
-    public void addUserToGroups(User user, Set<String> groups) throws ContinuousIntegrationException {
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
-        exercises.forEach(exercise -> {
-            // The exercise's project key is also the name of the Jenkins job that groups all build plans
-            // for students, solution, and template.
-            var jobName = exercise.getProjectKey();
-            var userLogin = user.getLogin();
-
-            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            var instructorGroup = course.getInstructorGroupName();
-            if (groups.contains(instructorGroup)) {
-                try {
-                    jenkinsJobPermissionsService.assignUserInstructorPermissionsForJob(userLogin, jobName);
-                    return;
-                }
-                catch (IOException e) {
-                    throw new JenkinsException("Cannot assign instructor permissions to user: " + userLogin, e);
-                }
-            }
-
-            var teachingAssistantGroup = course.getTeachingAssistantGroupName();
-            if (groups.contains(teachingAssistantGroup)) {
-                try {
-                    jenkinsJobPermissionsService.assignUserTeachingAssistantPermissionsForJob(userLogin, jobName);
-                }
-                catch (IOException e) {
-                    throw new JenkinsException("Cannot assign teaching assistant permissions to user: " + userLogin, e);
-                }
-            }
-        });
-    }
-
-    /**
-     * Removes the Artemis user from the specified groups. Jenkins doesn't support groups so this function fetches
-     * all programming exercises belonging to the groups, and revokes the user's permissions from them.
-     *
-     * @param user   The Artemis user to remove from the group
-     * @param groups The groups to remove the user from
-     */
-    @Override
-    public void removeUserFromGroups(User user, Set<String> groups) throws ContinuousIntegrationException {
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
-        exercises.forEach(exercise -> {
-            // The exercise's project key is also the name of the Jenkins job that groups all build plans
-            // for students, solution, and template.
-            var jobName = exercise.getProjectKey();
-            var userLogin = user.getLogin();
-
-            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            var instructorGroup = course.getInstructorGroupName();
-            if (groups.contains(instructorGroup)) {
-                try {
-                    jenkinsJobPermissionsService.revokeUserInstructorPermissionsForJob(userLogin, jobName);
-                    return;
-                }
-                catch (IOException e) {
-                    throw new JenkinsException("Cannot revoke instructor permissions from user: " + userLogin, e);
-                }
-            }
-
-            var teachingAssistantGroup = course.getTeachingAssistantGroupName();
-            if (groups.contains(teachingAssistantGroup)) {
-                try {
-                    jenkinsJobPermissionsService.revokeUserTeachingAssistantPermissionsForJob(userLogin, jobName);
-                }
-                catch (IOException e) {
-                    throw new JenkinsException("Cannot revoke teaching assistant permissions from user: " + userLogin, e);
-                }
-            }
-        });
-
-        // The same user can belong to a TA and instructor group. Adding the user to an instructor group
-        // automatically overwrites the TA permissions. If the user is removed from the instructor group,
-        // we need to re-apply TA permissions.
-        addUserToGroups(user, user.getGroups());
     }
 
     /**
@@ -250,6 +164,153 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     }
 
     /**
+     * Adds the Artemis user to a group in Jenkins. Jenkins does not support
+     * groups so this function fetches all programming exercises belonging to
+     * the groups and assigns the user permissions to them.
+     *
+     * @param user   The Artemis user to add to the group
+     * @param groups The groups to add the user to
+     */
+    @Override
+    public void addUserToGroups(User user, Set<String> groups) throws ContinuousIntegrationException {
+        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
+        exercises.forEach(exercise -> {
+            // The exercise's project key is also the name of the Jenkins job that groups all build plans
+            // for students, solution, and template.
+            var jobName = exercise.getProjectKey();
+            var userLogin = user.getLogin();
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+
+            if (groups.contains(course.getInstructorGroupName())) {
+                try {
+                    // We are assigning instructor permissions since the exercise's course teaching assistant group
+                    // is the same as the one that is specified.
+                    jenkinsJobPermissionsService.addInstructorPermissionsToUserForJob(userLogin, jobName);
+                }
+                catch (IOException e) {
+                    throw new JenkinsException("Cannot assign instructor permissions to user: " + userLogin, e);
+                }
+            }
+            else if (groups.contains(course.getTeachingAssistantGroupName())) {
+                try {
+                    // We are assigning teaching assistant permissions since the exercise's course teaching assistant group
+                    // is the same as the one that is specified.
+                    jenkinsJobPermissionsService.addTeachingAssistantPermissionsToUserForJob(userLogin, jobName);
+                }
+                catch (IOException e) {
+                    throw new JenkinsException("Cannot assign teaching assistant permissions to user: " + userLogin, e);
+                }
+            }
+
+        });
+    }
+
+    /**
+     * Removes the Artemis user from the specified groups. Jenkins doesn't support groups so this function fetches
+     * all programming exercises belonging to the groups, and revokes the user's permissions from them.
+     *
+     * @param user   The Artemis user to remove from the group
+     * @param groups The groups to remove the user from
+     */
+    @Override
+    public void removeUserFromGroups(User user, Set<String> groups) throws ContinuousIntegrationException {
+        var userLogin = user.getLogin();
+        // Remove all permissions assigned to the user for each exercise that belongs to the specified groups.
+        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
+        exercises.forEach(exercise -> {
+            try {
+                // The exercise's projectkey is also the name of the Jenkins folder job which groups the student's, solution,
+                // and template build plans together
+                var jobName = exercise.getProjectKey();
+                jenkinsJobPermissionsService.removePermissionsFromUserOfJob(userLogin, jobName, Set.of(JenkinsJobPermission.values()));
+            }
+            catch (IOException e) {
+                throw new JenkinsException("Cannot revoke permissions from user: " + userLogin, e);
+            }
+        });
+
+        // The same user can belong to a TA and instructor group. Adding the user to an instructor group
+        // automatically overwrites the TA permissions. If the user is removed from the instructor group,
+        // we need to re-apply TA permissions.
+        addUserToGroups(user, user.getGroups());
+    }
+
+    @Override
+    public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws ContinuousIntegrationException {
+        var newInstructorGroup = updatedCourse.getInstructorGroupName();
+        var newTeachingAssistangGroup = updatedCourse.getTeachingAssistantGroupName();
+
+        // Don't do anything if the groups didn't change
+        if (newInstructorGroup.equals(oldInstructorGroup) && newTeachingAssistangGroup.equals(oldTeachingAssistantGroup)) {
+            return;
+        }
+
+        // Remove all permissions assigned to the instructors and teaching assistants that do not belong to the course
+        // anymore.
+        removePermissionsFromInstructorsAndTAsForCourse(oldInstructorGroup, oldTeachingAssistantGroup, updatedCourse);
+
+        // Assign teaching assistant and instructor permissions
+        assignPermissionsToInstructorAndTAsForCourse(updatedCourse);
+    }
+
+    /**
+     * Assigns teaching assistant and/or instructor permissions to each user belonging to the teaching assistant/instructor
+     * groups of the course.
+     *
+     * @param updatedCourse the course
+     */
+    private void assignPermissionsToInstructorAndTAsForCourse(Course updatedCourse) {
+        var teachingAssistants = userRepository.findAllInGroupWithAuthorities(updatedCourse.getTeachingAssistantGroupName()).stream().map(User::getLogin)
+                .collect(Collectors.toSet());
+        var instructors = userRepository.findAllInGroupWithAuthorities(updatedCourse.getInstructorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+
+        // Courses can have the same groups. We do not want to add/remove users from exercises of other courses
+        // belonging to the same group
+        var exercises = programmingExerciseRepository.findAllByCourse(updatedCourse);
+        exercises.forEach(exercise -> {
+            var job = exercise.getProjectKey();
+            try {
+                jenkinsJobPermissionsService.addInstructorAndTAPermissionsToUsersForJob(teachingAssistants, instructors, job);
+            }
+            catch (IOException e) {
+                throw new JenkinsException("Cannot assign teaching assistant and instructor permissions for job: " + job, e);
+            }
+        });
+
+    }
+
+    /**
+     * Removes all permissions assigned to instructors and teaching assistants for the specified course. The function
+     * fetches all exercises that belong to the course and removes all permissions assigned to all instructors and
+     * teaching assistants belonging to the groups.
+     *
+     * @param instructorGroup the group of instructors
+     * @param teachingAssistantGroup the group of teaching assistants
+     * @param course the course
+     */
+    private void removePermissionsFromInstructorsAndTAsForCourse(String instructorGroup, String teachingAssistantGroup, Course course) {
+        // Courses can have the same groups. We do not want to add/remove users from exercises of other courses
+        // belonging to the same group
+        var exercises = programmingExerciseRepository.findAllByCourse(course);
+
+        // Fetch all instructors and teaching assistants belonging to the group that was removed from the course.
+        var oldInstructors = userRepository.findAllInGroupWithAuthorities(instructorGroup);
+        var oldTeachingAssistants = userRepository.findAllInGroupWithAuthorities(teachingAssistantGroup);
+        var usersFromOldGroup = Stream.concat(oldInstructors.stream(), oldTeachingAssistants.stream()).collect(Collectors.toList()).stream().map(User::getLogin)
+                .collect(Collectors.toSet());
+
+        // Revoke all permissions.
+        exercises.forEach(exercise -> {
+            try {
+                jenkinsJobPermissionsService.removePermissionsFromUsersForJob(usersFromOldGroup, exercise.getProjectKey(), Set.of(JenkinsJobPermission.values()));
+            }
+            catch (IOException e) {
+                throw new JenkinsException("Cannot remove permissions from all users for job: " + exercise.getProjectKey(), e);
+            }
+        });
+    }
+
+    /**
      * Creates an HttpEntity containing the form data required by the POST request for updating an
      * existing Jenkins user.
      * <p>
@@ -262,11 +323,9 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * @throws JsonProcessingException if the user can't be parsed into json.
      */
     private HttpEntity<MultiValueMap<String, String>> getUpdateUserFormHttpEntity(User user) throws JsonProcessingException {
-        var password = userService.decryptPassword(user);
-
         var formData = new LinkedMultiValueMap<String, String>();
-        formData.add("user.password", password);
-        formData.add("user.password2", password);
+        formData.add("user.password", passwordService.decryptPassword(user));
+        formData.add("user.password2", passwordService.decryptPassword(user));
         formData.add("_.fullName", user.getName());
         formData.add("email.address", user.getEmail());
         formData.add("_.description", "");
@@ -306,7 +365,8 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     }
 
     /**
-     * Gets a Jenkins user or returns empty if the user wasn't found.
+     * Gets a Jenkins user if it exists. Otherwise returns
+     * null.
      *
      * @param userLogin the username of the user to look up
      * @return the user or null if the user doesn't exist

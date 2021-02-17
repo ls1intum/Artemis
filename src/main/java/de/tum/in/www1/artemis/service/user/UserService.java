@@ -91,10 +91,11 @@ public class UserService {
 
     private final GuidedTourSettingsRepository guidedTourSettingsRepository;
 
-    private Optional<CIUserManagementService> optionalCIUserManagementService;
+    private final Optional<CIUserManagementService> optionalCIUserManagementService;
 
     public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService,
-            GuidedTourSettingsRepository guidedTourSettingsRepository, CourseRepository courseRepository, PasswordService passwordService) {
+            GuidedTourSettingsRepository guidedTourSettingsRepository, CourseRepository courseRepository, PasswordService passwordService,
+            Optional<CIUserManagementService> optionalCIUserManagementService) {
         this.userRepository = userRepository;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
@@ -102,18 +103,13 @@ public class UserService {
         this.guidedTourSettingsRepository = guidedTourSettingsRepository;
         this.courseRepository = courseRepository;
         this.passwordService = passwordService;
+        this.optionalCIUserManagementService = optionalCIUserManagementService;
     }
 
     @Autowired
     // break the dependency cycle
     public void setOptionalVcsUserManagementService(Optional<VcsUserManagementService> optionalVcsUserManagementService) {
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setOptionalCIUserManagementService(Optional<CIUserManagementService> optionalCIUserManagementService) {
-        this.optionalCIUserManagementService = optionalCIUserManagementService;
     }
 
     @Autowired
