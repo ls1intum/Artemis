@@ -7,8 +7,6 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -149,31 +147,6 @@ public class UserService {
         catch (Exception ex) {
             log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search: " + ex.getMessage(), ex);
         }
-    }
-
-    /**
-     * load additional user details from the ldap if it is available: correct firstname, correct lastname and registration number (= matriculation number)
-     *
-     * @param login the login of the user for which the details should be retrieved
-     * @return the found Ldap user details or null if the user cannot be found
-     */
-    @Nullable
-    public LdapUserDto loadUserDetailsFromLdap(@NotNull String login) {
-        try {
-            Optional<LdapUserDto> ldapUserOptional = ldapUserService.get().findByUsername(login);
-            if (ldapUserOptional.isPresent()) {
-                LdapUserDto ldapUser = ldapUserOptional.get();
-                log.info("Ldap User " + ldapUser.getUsername() + " has registration number: " + ldapUser.getRegistrationNumber());
-                return ldapUserOptional.get();
-            }
-            else {
-                log.warn("Ldap User " + login + " not found");
-            }
-        }
-        catch (Exception ex) {
-            log.error("Error in LDAP Search " + ex.getMessage());
-        }
-        return null;
     }
 
     /**

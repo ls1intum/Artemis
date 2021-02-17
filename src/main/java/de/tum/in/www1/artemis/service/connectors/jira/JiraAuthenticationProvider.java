@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREF
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -45,7 +44,6 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProviderImpl;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGroupDTO;
-import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.user.AuthorityService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -62,9 +60,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     @Value("${artemis.user-management.external.url}")
     private URL jiraUrl;
-
-    @Value("${artemis.user-management.ldap.allowed-username-pattern:#{null}}")
-    private Optional<Pattern> allowedLdapUsernamePattern;
 
     private final RestTemplate restTemplate;
 
@@ -164,40 +159,20 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
                 // Note: we use an empty password, so that we don't store the credentials of Jira users in the Artemis DB (Spring enforces a non null password)
                 user = userService.createUser(username, "", jiraUserDTO.getDisplayName(), "", jiraUserDTO.getEmailAddress(), null, null, "en");
                 // load additional details if the ldap service is available and the user follows the allowed username pattern (if specified)
-                if (ldapUserService.isPresent()) {
-                    loadUserDetailsFromLdap(user);
-                }
+                ldapUserService.ifPresent(service -> service.loadUserDetailsFromLdap(user));
             }
             final var groups = jiraUserDTO.getGroups().getItems().stream().map(JiraUserGroupDTO::getName).collect(Collectors.toSet());
             user.setGroups(groups);
             user.setAuthorities(authorityService.buildAuthorities(user));
 
             if (!user.getActivated()) {
-                userService.activateUser(user);
+                user.setActivated(true);
+                user.setActivationKey(null);
             }
             return userService.saveUser(user);
         }
         else {
             throw new InternalAuthenticationServiceException("JIRA Authentication failed for user " + username);
-        }
-    }
-
-    /**
-     * loads the user details from the provided LDAP in case:
-     * 1) the allowedUsernamePattern is not specified (means all users should be loaded) or
-     * 2) the allowedUsernamePattern is specified and the username matches
-     * Example for TUM: ab12cde
-     * @param user the user for which the additional details (in particular the registration number should be loaded)
-     */
-    private void loadUserDetailsFromLdap(User user) {
-        if (allowedLdapUsernamePattern.isEmpty() || allowedLdapUsernamePattern.get().matcher(user.getLogin()).matches()) {
-            LdapUserDto ldapUserDto = userService.loadUserDetailsFromLdap(user.getLogin());
-            if (ldapUserDto != null) {
-                user.setFirstName(ldapUserDto.getFirstName());
-                user.setLastName(ldapUserDto.getLastName());
-                user.setEmail(ldapUserDto.getEmail());
-                user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
-            }
         }
     }
 
