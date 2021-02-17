@@ -433,10 +433,8 @@ public class CourseResource {
         List<Course> coursesWithQuiz = new ArrayList<>();
         courses.forEach(course -> {
             Course courseWithExercises = courseRepository.findWithEagerExercisesById(course.getId());
-            if (courseWithExercises != null) {
-                if (courseWithExercises.getExercises().stream().anyMatch(exercise -> exercise instanceof QuizExercise)) {
-                    coursesWithQuiz.add(course);
-                }
+            if (courseWithExercises != null && courseWithExercises.getExercises().stream().anyMatch(exercise -> exercise instanceof QuizExercise)) {
+                coursesWithQuiz.add(course);
             }
         });
         return coursesWithQuiz;
