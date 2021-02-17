@@ -165,7 +165,12 @@ public class ExerciseGroupResource {
     public ResponseEntity<List<ExerciseGroup>> getExerciseGroupsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all exercise groups for exam : {}", examId);
         Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
-        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupService.findAllWithExamAndExercises(examId)));
+
+        List<ExerciseGroup> exerciseGroupList = exerciseGroupService.findAllWithExamAndExercises(examId);
+
+        exerciseGroupService.addNumberOfExamExerciseParticipations(exerciseGroupList);
+
+        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupList));
     }
 
     /**

@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.util.Arrays.asList;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -14,13 +12,15 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
-import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -225,93 +225,6 @@ public class ResultService {
      */
     public List<Result> findByCourseId(Long courseId) {
         return resultRepository.findAllByParticipation_Exercise_CourseId(courseId);
-    }
-
-    /**
-     * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
-     *
-     * @param courseId - the course we are interested in
-     * @return a number of assessments for the course
-     */
-    public DueDateStat countNumberOfAssessments(Long courseId) {
-        return new DueDateStat(resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true),
-                resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, false));
-    }
-
-    /**
-     * Calculates the number of assessments done for each correction round.
-     *
-     * @param exercise the exercise for which we want to calculate the # of assessments for each correction round
-     * @param examMode states whether or not the the function is called in the exam mode
-     * @param totalNumberOfAssessments so total number of assessments sum up over all correction rounds
-     * @return the number of assessments for each correction rounds
-     */
-    public DueDateStat[] calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(Exercise exercise, boolean examMode, DueDateStat totalNumberOfAssessments) {
-        DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
-        if (examMode) {
-            // set number of corrections specific to each correction round
-            int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
-            numberOfAssessmentsOfCorrectionRounds = countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(exercise, numberOfCorrectionRounds);
-        }
-        else {
-            // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
-            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
-        }
-        return numberOfAssessmentsOfCorrectionRounds;
-    }
-
-    /**
-     * Given an exerciseId, return the number of assessments for that exerciseId that have been completed (e.g. no draft!)
-     *
-     * @param exerciseId - the exercise we are interested in
-     * @param examMode should be used for exam exercises to ignore test run submissions
-     * @return a number of assessments for the exercise
-     */
-    public DueDateStat countNumberOfFinishedAssessmentsForExercise(Long exerciseId, boolean examMode) {
-        if (examMode) {
-            return new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(exerciseId), 0L);
-        }
-        return new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId), 0L);
-    }
-
-    /**
-     * Given an exerciseId and a correctionRound, return the number of assessments for that exerciseId and correctionRound that have been finished
-     *
-     * @param exercise  - the exercise we are interested in
-     * @param correctionRounds - the correction round we want finished assessments for
-     * @return an array of the number of assessments for the exercise for a given correction round
-     */
-    public DueDateStat[] countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(Exercise exercise, int correctionRounds) {
-        DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds];
-
-        for (int i = 0; i < correctionRounds; i++) {
-            correctionRoundsDataStats[i] = new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), i), 0L);
-
-        }
-
-        return correctionRoundsDataStats;
-    }
-
-    /**
-     * Given a exerciseId and a tutorId, return the number of assessments for that exercise written by that tutor that have been completed (e.g. no draft!)
-     *
-     * @param exerciseId - the exercise we are interested in
-     * @param tutorId    - the tutor we are interested in
-     * @return a number of assessments for the exercise
-     */
-    public long countNumberOfAssessmentsForTutorInExercise(Long exerciseId, Long tutorId) {
-        return resultRepository.countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(tutorId, exerciseId, true);
-    }
-
-    /**
-     * Calculate the number of assessments which are either AUTOMATIC or SEMI_AUTOMATIC for a given exercise
-     *
-     * @param exerciseId the exercise we are interested in
-     * @return number of assessments for the exercise
-     */
-    public DueDateStat countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
-        return new DueDateStat(resultRepository.countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC)),
-                resultRepository.countNumberOfAssessmentsByTypeForExerciseAfterDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC)));
     }
 
     /**

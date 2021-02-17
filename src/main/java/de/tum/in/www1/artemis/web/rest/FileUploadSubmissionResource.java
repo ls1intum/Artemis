@@ -146,11 +146,13 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * GET /file-upload-submissions/:id : get the fileUploadSubmissions by it's id. Is used by tutor when assessing submissions.
      *
      * @param submissionId the id of the fileUploadSubmission to retrieve
+     * @param correctionRound the correctionRound of the result we want to receive
      * @return the ResponseEntity with status 200 (OK) and with body the fileUploadSubmission, or with status 404 (Not Found)
      */
     @GetMapping("/file-upload-submissions/{submissionId}")
     @PreAuthorize("hasAnyRole('TA','INSTRUCTOR','ADMIN')")
-    public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId) {
+    public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId,
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
         var fileUploadSubmission = fileUploadSubmissionService.findOne(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
@@ -161,11 +163,18 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
             return forbidden();
         }
-        fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmission(submissionId, fileUploadExercise);
+        fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmission(submissionId, fileUploadExercise, correctionRound);
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(fileUploadExercise);
         fileUploadSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         this.fileUploadSubmissionService.hideDetails(fileUploadSubmission, user);
+
+        if (correctionRound == 0 && fileUploadSubmission.getResults().size() == 2) {
+            var resultList = new ArrayList<Result>();
+            resultList.add(fileUploadSubmission.getFirstResult());
+            fileUploadSubmission.setResults(resultList);
+        }
+
         return ResponseEntity.ok(fileUploadSubmission);
     }
 
