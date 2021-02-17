@@ -87,12 +87,33 @@ Exercise Creation
     .. figure:: programming/course-management-exercise-dashboard.png
               :align: center
 
-- Fill out all mandatory values and click on |generate|
+- Artemis provides various options to customize programming exercises |generate|
 
-    .. figure:: programming/create-programming-1.png
+    .. figure:: programming/programming-options-naming.png
               :align: center
 
-    .. figure:: programming/create-programming-2.png
+    .. figure:: programming/programming-options-general-information.png
+              :align: center
+
+    .. figure:: programming/programming-options-mode.png
+              :align: center
+
+    .. figure:: programming/programming-options-programming-language.png
+              :align: center
+
+    .. figure:: programming/programming-options-timeline.png
+              :align: center
+
+    .. figure:: programming/programming-options-score.png
+              :align: center
+
+    .. figure:: programming/programming-options-sca.png
+              :align: center
+
+    .. figure:: programming/programming-options-instructions.png
+              :align: center
+
+    .. figure:: programming/programming-options-advanced-configuration.png
               :align: center
 
   Result: **Programming Exercise**
