@@ -19,7 +19,6 @@
 <h4 class="mb-0">{{ 'artemisApp.exam.exercises' | translate }}</h4>
 <div *ngFor="let exercise of studentExam.exercises; let i = index">
     <div class="question card">
-        <jhi-test-run-ribbon id="testRunRibbon" *ngIf="isTestRun"></jhi-test-run-ribbon>
         <div class="question-options card-header question-card-header">
             <h5>
                 &nbsp;<fa-icon [icon]="getIcon(exercise.type)"></fa-icon>&nbsp;
