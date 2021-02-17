@@ -19,10 +19,6 @@
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="result.score">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
-                    </th>
                     <th jhiSortBy="language">
                         <a class="th-link" jhiTranslate="artemisApp.exerciseAssessmentDashboard.language">Language</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
@@ -39,7 +35,10 @@
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th>
+                    <th *ngIf="exercise.course || (exercise.exerciseGroup && numberOfCorrectionrounds == 1)">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Assessment</a>
+                    </th>
+                    <th *ngIf="numberOfCorrectionrounds == 2">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentFirst">Assessment</a>
                     </th>
                     <th *ngIf="numberOfCorrectionrounds == 2">
@@ -59,9 +58,6 @@
                         <ng-container *ngIf="submission.participation.submissions">
                             {{ submission.participation.submissions.length }}
                         </ng-container>
-                    </td>
-                    <td>
-                        <span *ngIf="submission.latestResult && submission.latestResult!.score != null">{{ submission.latestResult!.score }} %</span>
                     </td>
                     <td>{{ 'artemisApp.exerciseAssessmentDashboard.languages.' + (submission.language || 'UNKNOWN') | translate }}</td>
                     <td>
