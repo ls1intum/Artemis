@@ -91,6 +91,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
         // If SAML2 flow was started, retry login.
         if (document.cookie.indexOf('SAML2flow=') >= 0) {
+            // remove cookie
+            document.cookie = 'SAML2flow=; expires=Thu, 01 Jan 1970 00:00:00 UTC; ; SameSite=Lax;';
             this.loginSAML2();
         }
     }
@@ -171,12 +173,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     loginSAML2() {
         this.isSubmittingLogin = true;
-        if (document.cookie.indexOf('SAML2flow=') < 0) {
-            document.cookie = 'SAML2flow=true';
-        } else {
-            // remove cookie
-            document.cookie = 'SAML2flow=; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
-        }
         this.loginService
             .loginSAML2()
             .then(() => {
@@ -212,6 +208,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             })
             .catch((error: HttpErrorResponse) => {
                 if (error.status === 401) {
+                    // (re)set cookie
+                    document.cookie = 'SAML2flow=true; max-age=300; SameSite=Lax;';
                     window.location.replace('/saml2/authenticate'); // arbitrary by SAML2 HTTP Filter Chain secured URL
                 }
             })
