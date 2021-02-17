@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
-import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -117,16 +116,6 @@ public class SubmissionService {
         if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
             throw new BadRequestAlertException("The limit of locked submissions has been reached", "submission", "lockedSubmissionsLimitReached");
         }
-    }
-
-    /**
-     * Get the number of simultaneously locked submissions (i.e. unfinished assessments) for the current user in the given course.
-     *
-     * @param courseId the id of the course
-     * @return number of locked submissions for the current user in the given course
-     */
-    public long countSubmissionLocks(long courseId) {
-        return submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
     }
 
     /**
@@ -228,38 +217,6 @@ public class SubmissionService {
     public Submission findOneWithEagerResultAndFeedback(long submissionId) {
         return submissionRepository.findWithEagerResultAndFeedbackById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * Count number of in-time submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
-     * @param courseId the course id we are interested in
-     * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
-     *         due date at all
-     */
-    public long countInTimeSubmissionsForCourse(long courseId) {
-        return submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
-    }
-
-    /**
-     * Count number of late submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
-     * @param courseId the course id we are interested in
-     * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date after the exercise due date
-     */
-    public long countLateSubmissionsForCourse(long courseId) {
-        return submissionRepository.countByCourseIdSubmittedAfterDueDate(courseId);
-    }
-
-    /**
-     * Count number of submissions for exercise.
-     * @param exerciseId the exercise id we are interested in
-     * @param examMode should be set to ignore the test run submissions
-     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true, separated into before and after the due date
-     */
-    public DueDateStat countSubmissionsForExercise(long exerciseId, boolean examMode) {
-        if (examMode) {
-            return new DueDateStat(submissionRepository.countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exerciseId), 0L);
-        }
-        return new DueDateStat(submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId), submissionRepository.countByExerciseIdSubmittedAfterDueDate(exerciseId));
     }
 
     /**
@@ -450,7 +407,7 @@ public class SubmissionService {
      */
     protected Result lockSubmission(Submission submission, int correctionRound) {
         Result result = submission.getResultForCorrectionRound(correctionRound);
-        if (result == null && correctionRound > 0L) {
+        if (result == null && correctionRound > 0) {
             // copy the result of the previous correction round
             result = copyResultFromPreviousRoundAndSave(submission, submission.getResultForCorrectionRound(correctionRound - 1));
         }
