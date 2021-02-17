@@ -245,19 +245,19 @@ export class ResultDetailComponent implements OnInit {
         if (this.exerciseType !== ExerciseType.PROGRAMMING || this.showTestDetails) {
             return [...feedbackList];
         } else {
-            const positiveTestCases = feedbackList.filter((feedbackItem) => {
-                return feedbackItem.type === FeedbackItemType.Test && feedbackItem.positive;
+            const positiveTestCasesWithoutDetailText = feedbackList.filter((feedbackItem) => {
+                return feedbackItem.type === FeedbackItemType.Test && feedbackItem.positive && !feedbackItem.text;
             });
-            if (positiveTestCases.length > 0) {
+            if (positiveTestCasesWithoutDetailText.length > 0) {
                 return [
                     {
                         type: FeedbackItemType.Test,
                         category: 'Feedback',
-                        title: positiveTestCases.length + ' passed test' + (positiveTestCases.length > 1 ? 's' : ''),
+                        title: positiveTestCasesWithoutDetailText.length + ' passed test' + (positiveTestCasesWithoutDetailText.length > 1 ? 's' : ''),
                         positive: true,
-                        credits: positiveTestCases.reduce((sum, feedbackItem) => sum + (feedbackItem.credits || 0), 0),
+                        credits: positiveTestCasesWithoutDetailText.reduce((sum, feedbackItem) => sum + (feedbackItem.credits || 0), 0),
                     },
-                    ...feedbackList.filter((feedbackItem) => !positiveTestCases.includes(feedbackItem)),
+                    ...feedbackList.filter((feedbackItem) => !positiveTestCasesWithoutDetailText.includes(feedbackItem)),
                 ];
             } else {
                 return [...feedbackList];

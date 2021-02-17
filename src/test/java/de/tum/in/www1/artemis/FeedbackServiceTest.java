@@ -148,4 +148,15 @@ class FeedbackServiceTest {
                     something else">
                 but was not.""").isEqualTo(f.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText());
     }
+
+    @Test
+    void createFeedbackFromTestCaseSuccessfulWithMessage() {
+        String msg = "success\nmessage";
+        assertThat(f.createFeedbackFromTestCase("test1", List.of(msg), true, ProgrammingLanguage.JAVA).getDetailText()).isEqualTo("success\nmessage");
+    }
+
+    @Test
+    void createFeedbackFromTestCaseSuccessfulNoMessage() {
+        assertThat(f.createFeedbackFromTestCase("test1", List.of(), true, ProgrammingLanguage.JAVA).getDetailText()).isEqualTo(null);
+    }
 }

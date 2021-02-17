@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties({ "mostInformativeMessage" })
 public class TestCaseDetailMessageDTO {
 
     private String message;

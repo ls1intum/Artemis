@@ -114,7 +114,6 @@ public class FeedbackService {
      * @return Feedback object for the test job
      */
     public Feedback createFeedbackFromTestCase(String testName, List<String> testMessages, boolean successful, final ProgrammingLanguage programmingLanguage) {
-
         Feedback feedback = new Feedback();
         feedback.setText(testName);
 
@@ -126,8 +125,11 @@ public class FeedbackService {
 
             feedback.setDetailText(errorMessageString);
         }
-        else {
+        else if (!testMessages.isEmpty()) {
             feedback.setDetailText(String.join("\n\n", testMessages));
+        }
+        else {
+            feedback.setDetailText(null);
         }
 
         feedback.setType(FeedbackType.AUTOMATIC);

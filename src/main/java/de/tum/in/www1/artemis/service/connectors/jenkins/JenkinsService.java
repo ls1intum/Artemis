@@ -392,7 +392,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             for (final var testCase : job.getTestCases()) {
                 var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMostInformativeMessage());
                 var failureMessage = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getMostInformativeMessage());
-                var successMessage = Optional.ofNullable(testCase.getSuccessInfos()).map((infos) -> infos.get(0).getMessage());
+                var successMessage = Optional.ofNullable(testCase.getSuccessInfos()).map((infos) -> infos.get(0).getMostInformativeMessage());
 
                 var feedbackMessageList = errorMessage.or(() -> failureMessage).map(List::of).orElse(Collections.emptyList());
                 boolean successful = Optional.ofNullable(testCase.getErrors()).map(List::isEmpty).orElse(true)
@@ -421,8 +421,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             result.addFeedbacks(scaFeedback);
         }
 
-        // Relevant feedback is negative
-        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(fb -> !fb.isPositive()));
+        // Relevant feedback is negative, or positive with a message
+        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(fb -> !fb.isPositive() || fb.getDetailText() != null));
     }
 
     @Override
