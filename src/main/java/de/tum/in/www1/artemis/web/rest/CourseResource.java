@@ -410,8 +410,6 @@ public class CourseResource {
             // only include courses that have NOT been finished
             userCourses = userCourses.filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()));
         }
-        userCourses = userCourses
-                .filter(course -> courseRepository.findWithEagerExercisesById(course.getId()).getExercises().stream().anyMatch(exercise -> exercise instanceof QuizExercise));
         return userCourses.collect(Collectors.toList());
     }
 
