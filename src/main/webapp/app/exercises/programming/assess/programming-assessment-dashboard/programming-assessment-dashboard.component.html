@@ -30,12 +30,17 @@
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th *ngIf="newManualResultAllowed">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentFirst">Assessment</a>
-                    </th>
-                    <th *ngIf="numberOfCorrectionrounds == 2 && newManualResultAllowed">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentSecond">Assessment</a>
-                    </th>
+                    <ng-container *ngIf="newManualResultAllowed">
+                        <th *ngIf="exercise.course || (exercise.exerciseGroup && numberOfCorrectionrounds == 1)">
+                            <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Assessment</a>
+                        </th>
+                        <th *ngIf="numberOfCorrectionrounds == 2">
+                            <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentFirst">Assessment</a>
+                        </th>
+                        <th *ngIf="numberOfCorrectionrounds == 2">
+                            <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentSecond">Assessment</a>
+                        </th>
+                    </ng-container>
                     <th></th>
                 </tr>
             </thead>

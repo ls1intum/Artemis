@@ -190,6 +190,9 @@ public abstract class Exercise extends DomainObject {
     @Transient
     private boolean studentAssignedTeamIdComputedTransient = false; // set to true if studentAssignedTeamIdTransient was computed for the exercise
 
+    @Transient
+    private Long numberOfParticipationsTransient; // used for instructor exam checklist
+
     public String getTitle() {
         return title;
     }
@@ -497,6 +500,14 @@ public abstract class Exercise extends DomainObject {
 
     public boolean isTeamMode() {
         return mode == ExerciseMode.TEAM;
+    }
+
+    public Long getNumberOfParticipations() {
+        return numberOfParticipationsTransient;
+    }
+
+    public void setNumberOfParticipations(Long numberOfParticipationsTransient) {
+        this.numberOfParticipationsTransient = numberOfParticipationsTransient;
     }
 
     /**
