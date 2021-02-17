@@ -5,7 +5,6 @@ File Upload Exercise
     :local:
     :depth: 2
 
-|
 
 Overview
 --------
@@ -22,4 +21,30 @@ Setup
 
 The following sections describe the supported features and the process of creating a new file upload exercise.
 
-.. include:: file-upload-exercise-setup.rst
+- Open |course-management|
+- Navigate into **Exercises** of your preferred course
+
+    .. figure:: programming/course-management-course-dashboard.png
+              :align: center
+
+- Click on **Create new file upload exercise**
+
+    .. figure:: file-upload/create-new-file-upload-exercise.png
+              :align: center
+
+- Fill out all mandatory values and click on |save|
+- The exercise specific ``File Pattern`` defines which file types students can upload as solution.
+
+    .. figure::  file-upload/file_upload_exercise_creation.png
+              :align: center
+
+  Result: **File Upload Exercise**
+
+    .. figure:: file-upload/course-dashboard-exercise-file-upload.png
+              :align: center
+
+- Click the |edit| button of the file upload exercise and adapt the interactive problem statement, and view the exercise by clicking on the title.
+
+.. |edit| image:: programming/edit.png
+.. |course-management| image:: programming/course-management.png
+.. |save| image:: file-upload/save_button.png

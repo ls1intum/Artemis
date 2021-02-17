@@ -41,7 +41,7 @@ During the exam creation and configuration, you can create your exam and configu
 - When you click on |create_new_exam| you are presented with the *Create Exam* view. Here you can set the basic information such as ``title``, ``examiner`` etc. The :ref:`timeline of the exam <timeline>` is defined by the dates: ``visible from``, ``start of working time``, ``end of working time``, ``release date of results``, ``begin of student review``, ``end of student review``.
 - The first three dates are mandatory when you create an exam. The rest can be set when required.
 - The ``grace period`` defines the amount of time the students have at their disposal to hand in their exam after the ``working time`` is over. This is set to 3 minutes by default.
-- Before the exams assessment you can choose the ``Number of correction rounds in exam``. If you want two tutors to assess a student's exam subsequently, choose two here. This enables the :ref:`second correction <second_correction>`.
+- _`Before the exams assessment` you can choose the ``Number of correction rounds in exam``. If you want two tutors to assess a student's exam subsequently, set the number two here. This enables the :ref:`second correction <second_correction_explanation>`.
 - You can also define the ``number of exercises`` in the exam. You can leave this out initially, however it must be set before you can generate the :ref:`student exams <student_exams>`. For more information, see `1.3 Exercise Groups`_.
 - Artemis will randomize the order of the exercises for each student if you activate ``randomize order of exercise groups``.
 - Finally, you can fill out the exam ``start text`` and ``end text``. Artemis will present these texts to the students during the :ref:`exam conduction <exam_conduction>`, at the *Start-* and *End* page respectively.
@@ -243,7 +243,12 @@ The exam conduction starts when the exam becomes visible to the students and end
 
 3. **Assessment**
 -----------------
-The assessment begins as soon as the latest :ref:`student exam <student_exams>` working time is over. During this period, your team can assess the submissions of the students and provide results. Artemis executes the test suites for programming exercises automatically and grades these. You can enhance the automatic grading with a :ref:`manual review <manual_assessment>`. You can also trigger the :ref:`automatic grading of the quiz exercises <evaluate_quiz_exercises>` via the *Manage Student Exams Screen*.
+The assessment begins as soon as the latest :ref:`student exam <student_exams>` working time is over.
+During this period, your team can assess the submissions of the students and provide results.
+Artemis executes the test suites for programming exercises automatically and grades these.
+You can enhance the automatic grading with a :ref:`manual review <manual_assessment>`.
+You can also trigger the :ref:`automatic grading of the quiz exercises <evaluate_quiz_exercises>` via the *Manage Student Exams Screen*.
+If you want you can also enable the :ref:`second correction <Before the exams assessment>` feature for the exam.
 
 3.1 Assess Student Exams
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -274,12 +279,15 @@ The assessment begins as soon as the latest :ref:`student exam <student_exams>` 
 
    Manually Assessing a Programming Submission
 
+3.2 Plagiarism detection
+^^^^^^^^^^^^^^^^^^^^^^^^
+
 - Artemis also allows you to detect plagiarism attempts.
 - Artemis conducts this by analyzing the similarities between all student submissions and flagging those which exceed a given threshold. You can compare all flagged submissions side by side and confirm plagiarism attempts.
 - Instructors can download a ``CSV`` report of accepted and rejected plagiarism attempts for further processing on external systems.
 - To apply the plagiarism check, you must navigate to the individual exercise. This can be done by navigating to:
 
-     |exams| -> |exercise_groups| -> title of the specific exercise.
+     |exams| -> |exercise_groups| -> exercise-title
 
 .. figure:: instructor/plagiarism.png
    :alt: Plagiarism Editor
@@ -288,6 +296,11 @@ The assessment begins as soon as the latest :ref:`student exam <student_exams>` 
    Detecting Plagiarism attempts on Modeling Exercises
 
 - At the bottom of the page you will find the option |check_plagiarism|.
+
+.. _second_correction_explanation:
+
+3.3 Assessment with Second Correction Round
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 4. **Publication of Results**
