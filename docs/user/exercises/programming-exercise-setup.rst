@@ -262,7 +262,15 @@ Exercise Creation
 
     - **Bonus multiplier**: Allows instructors to multiply the points for passing a test case without affecting the points rewarded for passing other test cases
     - **Bonus points**: Adds a flat point bonus for passing a test case
-    - **After Due Date**: Select test cases that should only be executed after the due date passed. This option is only available if the *Timeline of the whole programming exercise* (available during exercise creation, edit, import option) includes *Run Tests once after Due Date*
+    - **Visibility**: Select the visibility of feedbacks to students for this test case.
+
+      - **Always**: Feedback associated with this test case is visible to students directly after the automatic grading process for their submission.
+      - **After Due Date**: Feedback associated with this test case is visible to students only after the due date for this exercise has passed.
+        Tutors and Instructors are able to see the feedback before the due date.
+      - **Never**: Feedback associated with this test case is *never* visible to students even after the due date for this exercise has passed.
+        Tutors and Instructors are able to see the feedback before and after the due date, e.g. when manually assessing submissions.
+        Additionally, results of this test case are *not* considered in the student score calculation.
+
     - **Is Active**: Displays whether the test case is currently part of the grading configuration. The *Show inactivate test cases* controls whether inactive test cases are displayed
     - **Passed %**: Displays statistics about the percentage of participating students that passed or failed the test case
 
