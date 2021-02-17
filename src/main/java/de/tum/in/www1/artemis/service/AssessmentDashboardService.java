@@ -15,6 +15,8 @@ import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
@@ -30,18 +32,18 @@ public class AssessmentDashboardService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final SubmissionService submissionService;
+    private final SubmissionRepository submissionRepository;
 
-    private final ResultService resultService;
+    private final ResultRepository resultRepository;
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    public AssessmentDashboardService(ComplaintService complaintService, ProgrammingExerciseRepository programmingExerciseRepository, SubmissionService submissionService,
-            ResultService resultService, ExampleSubmissionRepository exampleSubmissionRepository) {
+    public AssessmentDashboardService(ComplaintService complaintService, ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository,
+            ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository) {
         this.complaintService = complaintService;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.submissionService = submissionService;
-        this.resultService = resultService;
+        this.submissionRepository = submissionRepository;
+        this.resultRepository = resultRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
     }
 
@@ -63,14 +65,14 @@ public class AssessmentDashboardService {
                 totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
             }
             else {
-                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId(), examMode);
-                totalNumberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), examMode);
+                numberOfSubmissions = submissionRepository.countSubmissionsForExercise(exercise.getId(), examMode);
+                totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), examMode);
             }
 
             exercise.setNumberOfSubmissions(numberOfSubmissions);
             exercise.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
-            final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultService.calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
+            final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
                     totalNumberOfAssessments);
             exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
