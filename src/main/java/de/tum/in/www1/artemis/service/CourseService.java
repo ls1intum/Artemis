@@ -236,10 +236,6 @@ public class CourseService {
         }
     }
 
-    public String findStudentGroupName(Long courseId) {
-        return courseRepository.findStudentGroupName(courseId);
-    }
-
     /**
      * Given a Course object, it returns the number of users enrolled in the course
      *

@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -79,15 +76,15 @@ public class ExerciseService {
 
     private final SubmissionRepository submissionRepository;
 
-    private final ResultService resultService;
+    private final ResultRepository resultRepository;
 
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, StudentExamRepository studentExamRepository, ExamRepository examRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, ResultService resultService, SubmissionRepository submissionRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository) {
         this.exerciseRepository = exerciseRepository;
-        this.resultService = resultService;
+        this.resultRepository = resultRepository;
         this.examRepository = examRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
@@ -481,7 +478,7 @@ public class ExerciseService {
                 dto.setParticipationRateInPercent(noStudentsInCourse ? 0.0 : Math.round(participations * 1000.0 / amountOfStudentsInCourse) / 10.0);
             }
 
-            long numberOfRatedAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId, false).getInTime();
+            long numberOfRatedAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId, false).getInTime();
             long noOfSubmissionsInTime = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
             dto.setNoOfRatedAssessments(numberOfRatedAssessments);
             dto.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
