@@ -27,7 +27,9 @@
                 "question": "Soll die Übung <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Das bedeutet, dass alle Teilnahmen, vorhandenen Ergebnisse, Studenten Repositories und Studenten Build Pläne gelöscht werden."
             },
             "detail": {
-                "title": "Programmieraufgabe"
+                "title": "Programmieraufgabe",
+                "showTemplateSubmissions": "Zeige Template-Abgaben",
+                "showSolutionSubmissions": "Zeige Lösungs-Abgaben"
             },
             "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studenten sein.",
             "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",

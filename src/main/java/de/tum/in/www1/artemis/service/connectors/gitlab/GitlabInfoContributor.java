@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.config.Constants;
 
 @Component
 @Profile("gitlab")
-public class GitlabSshCloneLinkInfoContributor implements InfoContributor {
+public class GitlabInfoContributor implements InfoContributor {
 
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
@@ -26,9 +26,15 @@ public class GitlabSshCloneLinkInfoContributor implements InfoContributor {
 
     @Override
     public void contribute(Info.Builder builder) {
-
+        // Store server url
         builder.withDetail(Constants.VERSION_CONTROL_URL, gitlabServerUrl);
 
+        // Store commit hash url template
+        String commitHashPathTemplate = "/{projectKey}/{repoSlug}/-/commit/{commitHash}";
+        String commitHashUrlTemplate = gitlabServerUrl + commitHashPathTemplate;
+        builder.withDetail(Constants.INFO_COMMIT_HASH_URL_DETAIL, commitHashUrlTemplate);
+
+        // Store ssh url template
         if (gitlabSshUrlTemplate.isPresent()) {
             builder.withDetail(Constants.INFO_SSH_CLONE_URL_DETAIL, gitlabSshUrlTemplate);
             if (gitlabSshKeysUrlPath.isPresent()) {
