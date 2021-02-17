@@ -192,19 +192,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                     this.stateStorageService.storeUrl(null);
                     this.router.navigate([redirect]);
                 }
-
-                // Log in to Orion
-                if (isOrion) {
-                    const modalRef: NgbModalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, { size: 'lg', backdrop: 'static' });
-                    modalRef.componentInstance.text = 'login.ide.confirmation';
-                    modalRef.componentInstance.title = 'login.ide.title';
-                    modalRef.result.then(
-                        (result) => {
-                            this.javaBridge.login(this.username, this.password);
-                        },
-                        (reason) => {},
-                    );
-                }
             })
             .catch((error: HttpErrorResponse) => {
                 if (error.status === 401) {
