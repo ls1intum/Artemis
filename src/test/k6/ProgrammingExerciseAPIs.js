@@ -107,7 +107,7 @@ export default function (data) {
             someSuccessfulErrorContent = someSuccessfulErrorContentJava(enableSCA);
             allSuccessfulContent = allSuccessfulContentJava;
             buildErrorContent = buildErrorContentJava;
-            somePassedString = enableSCA ? '2 of 13 passed' : '1 of 13 passed, 1 issue';
+            somePassedString = enableSCA ? '3 of 13 passed, 4 issues' : '2 of 13 passed';
             break;
         case 'PYTHON':
             someSuccessfulErrorContent = someSuccessfulErrorContentPython;

@@ -6,6 +6,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 @NgModule({
     imports: [ArtemisSharedModule],
     declarations: [ProgressBarComponent, TutorParticipationGraphComponent],
-    exports: [ProgressBarComponent, TutorParticipationGraphComponent],
+    exports: [TutorParticipationGraphComponent, ProgressBarComponent],
 })
 export class ArtemisTutorParticipationGraphModule {}

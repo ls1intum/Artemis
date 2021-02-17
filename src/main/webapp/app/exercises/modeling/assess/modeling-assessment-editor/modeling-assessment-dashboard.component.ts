@@ -31,7 +31,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     AssessmentType = AssessmentType;
 
     course: Course;
-    modelingExercise: ModelingExercise;
+    exercise: ModelingExercise;
     paramSub: Subscription;
     predicate: string;
     reverse: boolean;
@@ -89,9 +89,9 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
             });
             this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
                 if (res.body!.type === ExerciseType.MODELING) {
-                    this.modelingExercise = res.body as ModelingExercise;
+                    this.exercise = res.body as ModelingExercise;
                     this.getSubmissions(true);
-                    this.numberOfCorrectionrounds = this.modelingExercise.exerciseGroup ? this.modelingExercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
+                    this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
                     this.setPermissions();
                 } else {
                     // TODO: error message if this is not a modeling exercise
@@ -112,7 +112,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
      */
     getSubmissions(forceReload: boolean) {
         this.modelingSubmissionService
-            .getModelingSubmissionsForExerciseByCorrectionRound(this.modelingExercise.id!, { submittedOnly: true })
+            .getModelingSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
             .subscribe((res: HttpResponse<ModelingSubmission[]>) => {
                 // only use submissions that have already been submitted (this makes sure that unsubmitted submissions are not shown
                 // the server should have filtered these submissions already
@@ -150,8 +150,8 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
      * @param {boolean} forceReload force REST call to update nextOptimalSubmissionIds
      */
     filterSubmissions(forceReload: boolean) {
-        if (this.modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && (this.nextOptimalSubmissionIds.length < 3 || forceReload)) {
-            this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id!).subscribe(
+        if (this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && (this.nextOptimalSubmissionIds.length < 3 || forceReload)) {
+            this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id!).subscribe(
                 (optimal: number[]) => {
                     this.nextOptimalSubmissionIds = optimal;
                     this.applyFilter();
@@ -192,8 +192,8 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
      * Reset optimality attribute of models
      */
     resetOptimality() {
-        if (this.modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
-            this.modelingAssessmentService.resetOptimality(this.modelingExercise.id!).subscribe(() => {
+        if (this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
+            this.modelingAssessmentService.resetOptimality(this.exercise.id!).subscribe(() => {
                 this.filterSubmissions(true);
             });
         }
@@ -211,7 +211,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     assessNextOptimal() {
         this.busy = true;
         if (this.nextOptimalSubmissionIds.length === 0) {
-            this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id!).subscribe(
+            this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id!).subscribe(
                 (optimal: number[]) => {
                     this.busy = false;
                     if (optimal.length === 0) {
@@ -236,22 +236,14 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     private navigateToNextRandomOptimalSubmission() {
         const randomInt = Math.floor(Math.random() * this.nextOptimalSubmissionIds.length);
         this.router.onSameUrlNavigation = 'reload';
-        this.router.navigate([
-            '/course-management',
-            this.course.id,
-            'modeling-exercises',
-            this.modelingExercise.id,
-            'submissions',
-            this.nextOptimalSubmissionIds[randomInt],
-            'assessment',
-        ]);
+        this.router.navigate(['/course-management', this.course.id, 'modeling-exercises', this.exercise.id, 'submissions', this.nextOptimalSubmissionIds[randomInt], 'assessment']);
     }
 
     private setPermissions() {
-        if (this.modelingExercise.course) {
-            this.modelingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course!);
+        if (this.exercise.course) {
+            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
         } else {
-            this.modelingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.exerciseGroup?.exam?.course!);
+            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup?.exam?.course!);
         }
     }
 
@@ -281,18 +273,10 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
      * @param submissionId
      */
     getAssessmentLink(submissionId: number) {
-        if (this.modelingExercise.exerciseGroup) {
-            return [
-                '/course-management',
-                this.modelingExercise.exerciseGroup.exam?.course?.id,
-                'modeling-exercises',
-                this.modelingExercise.id,
-                'submissions',
-                submissionId,
-                'assessment',
-            ];
+        if (this.exercise.exerciseGroup) {
+            return ['/course-management', this.exercise.exerciseGroup.exam?.course?.id, 'modeling-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
         } else {
-            return ['/course-management', this.modelingExercise.course?.id, 'modeling-exercises', this.modelingExercise.id, 'submissions', submissionId, 'assessment'];
+            return ['/course-management', this.exercise.course?.id, 'modeling-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
         }
     }
 }
