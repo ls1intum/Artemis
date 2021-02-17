@@ -4,7 +4,6 @@ import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
@@ -28,27 +27,20 @@ public class QuizExerciseService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
-    private QuizScheduleService quizScheduleService;
+    private final QuizScheduleService quizScheduleService;
 
-    private QuizStatisticService quizStatisticService;
+    private final QuizStatisticService quizStatisticService;
 
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository, ResultRepository resultRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, QuizSubmissionRepository quizSubmissionRepository) {
+            ShortAnswerMappingRepository shortAnswerMappingRepository, QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService,
+            QuizStatisticService quizStatisticService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.shortAnswerMappingRepository = shortAnswerMappingRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
-    }
-
-    @Autowired
-    public void setQuizStatisticService(QuizStatisticService quizStatisticService) {
-        this.quizStatisticService = quizStatisticService;
-    }
-
-    @Autowired
-    public void setQuizScheduleService(QuizScheduleService quizScheduleService) {
         this.quizScheduleService = quizScheduleService;
+        this.quizStatisticService = quizStatisticService;
     }
 
     /**

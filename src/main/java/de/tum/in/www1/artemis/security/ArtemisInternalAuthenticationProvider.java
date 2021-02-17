@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.user.UserCreationService;
 
 @Component
 @ConditionalOnProperty(value = "artemis.user-management.use-external", havingValue = "false")
@@ -23,8 +24,8 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
 
     private final Logger log = LoggerFactory.getLogger(ArtemisInternalAuthenticationProvider.class);
 
-    public ArtemisInternalAuthenticationProvider(UserRepository userRepository, PasswordService passwordService) {
-        super(userRepository, passwordService);
+    public ArtemisInternalAuthenticationProvider(UserRepository userRepository, PasswordService passwordService, UserCreationService userCreationService) {
+        super(userRepository, passwordService, userCreationService);
     }
 
     @Override
@@ -49,7 +50,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         final var optionalUser = userRepository.findOneByLogin(authentication.getName().toLowerCase());
         final User user;
         if (optionalUser.isEmpty()) {
-            user = userService.createUser(authentication.getName(), password, firstName, lastName, email, null, null, "en");
+            user = userCreationService.createUser(authentication.getName(), password, firstName, lastName, email, null, null, "en");
         }
         else {
             user = optionalUser.get();

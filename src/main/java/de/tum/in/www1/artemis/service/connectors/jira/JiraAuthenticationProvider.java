@@ -45,6 +45,7 @@ import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGr
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.user.AuthorityService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -69,8 +70,8 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     public JiraAuthenticationProvider(UserRepository userRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutJiraRestTemplate") RestTemplate shortTimeoutRestTemplate, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
-            AuthorityService authorityService) {
-        super(userRepository, passwordService);
+            AuthorityService authorityService, UserCreationService userCreationService) {
+        super(userRepository, passwordService, userCreationService);
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.restTemplate = restTemplate;
         this.ldapUserService = ldapUserService;
@@ -154,7 +155,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             else {
                 // the user does not exist yet, we have to create it in the Artemis database
                 // Note: we use an empty password, so that we don't store the credentials of Jira users in the Artemis DB (Spring enforces a non null password)
-                user = userService.createUser(username, "", jiraUserDTO.getDisplayName(), "", jiraUserDTO.getEmailAddress(), null, null, "en");
+                user = userCreationService.createUser(username, "", jiraUserDTO.getDisplayName(), "", jiraUserDTO.getEmailAddress(), null, null, "en");
                 // load additional details if the ldap service is available and the user follows the allowed username pattern (if specified)
                 ldapUserService.ifPresent(service -> service.loadUserDetailsFromLdap(user));
             }
@@ -166,7 +167,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
                 user.setActivated(true);
                 user.setActivationKey(null);
             }
-            return userService.saveUser(user);
+            return userCreationService.saveUser(user);
         }
         else {
             throw new InternalAuthenticationServiceException("JIRA Authentication failed for user " + username);

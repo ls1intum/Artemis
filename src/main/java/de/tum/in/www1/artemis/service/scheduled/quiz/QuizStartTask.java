@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.scheduled.quiz;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ final class QuizStartTask implements Runnable, Serializable, NamedTask {
     /**
      * Initial implementation 13.06.2020
      */
+    @Serial
     private static final long serialVersionUID = 1L;
 
     final Long quizExerciseId;

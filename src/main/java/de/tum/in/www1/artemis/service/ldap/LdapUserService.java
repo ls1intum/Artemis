@@ -10,7 +10,6 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -31,8 +30,11 @@ public class LdapUserService {
     @Value("${artemis.user-management.ldap.allowed-username-pattern:#{null}}")
     private Optional<Pattern> allowedLdapUsernamePattern;
 
-    @Autowired
-    private LdapUserRepository ldapUserRepository;
+    private final LdapUserRepository ldapUserRepository;
+
+    public LdapUserService(LdapUserRepository ldapUserRepository) {
+        this.ldapUserRepository = ldapUserRepository;
+    }
 
     public Optional<LdapUserDto> findByUsername(final String username) {
         return ldapUserRepository.findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).attributes("cn").where("cn").is(username));
