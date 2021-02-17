@@ -155,9 +155,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
      * database.
      *
-     * @param participation                 the participation for which the submission should be initialized
-     * @param exercise                      the corresponding exercise, should be either a text, modeling or file upload exercise, otherwise it will instantly return and not do anything
-     * @param submissionType                type for the submission to be initialized
+     * @param participation   the participation for which the submission should be initialized
+     * @param exercise        the corresponding exercise, should be either a text, modeling or file upload exercise, otherwise it will instantly return and not do anything
+     * @param submissionType  type for the submission to be initialized
+     * @return a new submission for the given type connected to the given participation
      */
     default Submission initializeSubmission(Participation participation, Exercise exercise, SubmissionType submissionType) {
 

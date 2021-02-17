@@ -843,7 +843,6 @@ public abstract class Exercise extends DomainObject {
      * <p>
      * Currently, exercise start dates are the same for all users
      *
-     * @param exercise that is possibly part of an exam
      * @return the time from which on access to the exercise is allowed, for exercises that are not part of an exam, this is just the release date.
      */
     @JsonIgnore
