@@ -66,7 +66,7 @@ public class CacheConfiguration {
         this.applicationContext = applicationContext;
     }
 
-    @Autowired(required = false)
+    @Autowired(required = false) // ok
     public void setRegistration(Registration registration) {
         this.registration = registration;
     }
@@ -174,12 +174,12 @@ public class CacheConfiguration {
         config.setProperty("hazelcast.socket.client.bind.any", "false");
     }
 
-    @Autowired(required = false)
+    @Autowired(required = false) // ok
     public void setGitProperties(GitProperties gitProperties) {
         this.gitProperties = gitProperties;
     }
 
-    @Autowired(required = false)
+    @Autowired(required = false) // ok
     public void setBuildProperties(BuildProperties buildProperties) {
         this.buildProperties = buildProperties;
     }

@@ -208,7 +208,7 @@ public class QuizScheduleService {
     public void startSchedule(long delayInMillis) {
         if (scheduledProcessQuizSubmissions.isNull()) {
             try {
-                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(), 0, delayInMillis, TimeUnit.MILLISECONDS);
+                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(this), 0, delayInMillis, TimeUnit.MILLISECONDS);
                 scheduledProcessQuizSubmissions.set(scheduledFuture.getHandler());
                 log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
             }
@@ -277,7 +277,7 @@ public class QuizScheduleService {
             // schedule sending out filtered quiz over websocket
             try {
                 long delay = Duration.between(ZonedDateTime.now(), quizExercise.getReleaseDate()).toMillis();
-                var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId), delay, TimeUnit.MILLISECONDS);
+                var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId, this), delay, TimeUnit.MILLISECONDS);
                 // save scheduled future in HashMap
                 quizCache.performCacheWrite(quizExercise.getId(), quizExerciseCache -> {
                     quizExerciseCache.setQuizStart(List.of(scheduledFuture.getHandler()));
