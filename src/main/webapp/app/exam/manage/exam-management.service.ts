@@ -12,6 +12,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
+import { ExamChecklist } from 'app/entities/exam-checklist.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -67,6 +68,15 @@ export class ExamManagementService {
      */
     getExamScores(courseId: number, examId: number): Observable<HttpResponse<ExamScoreDTO>> {
         return this.http.get<ExamScoreDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/scores`, { observe: 'response' });
+    }
+
+    /**
+     * Get the exam statistics used within the instructor exam checklist
+     * @param courseId The id of the course.
+     * @param examId The id of the exam.
+     */
+    getExamStatistics(courseId: number, examId: number): Observable<HttpResponse<ExamChecklist>> {
+        return this.http.get<ExamChecklist>(`${this.resourceUrl}/${courseId}/exams/${examId}/statistics`, { observe: 'response' });
     }
 
     /**
