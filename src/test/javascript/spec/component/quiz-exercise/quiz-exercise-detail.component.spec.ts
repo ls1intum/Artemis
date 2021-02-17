@@ -1133,7 +1133,7 @@ describe('QuizExercise Management Detail Component', () => {
             let examManagementServiceStub: SinonStub;
             beforeEach(() => {
                 comp.courseRepository = courseManagementService;
-                courseManagementServiceStub = stub(comp.courseRepository, 'getAll');
+                courseManagementServiceStub = stub(comp.courseRepository, 'getAllCoursesWithQuizExercises');
                 courseManagementServiceStub.returns(
                     of(
                         new HttpResponse<Course>({ body: course }),

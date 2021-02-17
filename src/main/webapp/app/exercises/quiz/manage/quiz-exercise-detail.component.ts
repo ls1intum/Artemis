@@ -418,7 +418,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
         // If courses are not populated, then populate list of courses
         if (this.courses.length === 0) {
-            this.courseRepository.getAll().subscribe((res: HttpResponse<Course[]>) => {
+            this.courseRepository.getAllCoursesWithQuizExercises().subscribe((res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
             });
         }

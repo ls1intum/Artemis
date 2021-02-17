@@ -416,6 +416,35 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/courses-with-quiz : get all courses with quiz exercises for administration purposes.
+     *
+     * @return the list of courses
+     */
+    @GetMapping("/courses/courses-with-quiz")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public List<Course> getAllCoursesWithQuizExercises() {
+        List<Course> courses;
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (authCheckService.isAdmin(user)) {
+            courses = courseRepository.findAll();
+        }
+        else {
+            courses = courseRepository.getCoursesForWhichUserHasInstructorAccess(user.getId());
+        }
+
+        List<Course> coursesWithQuiz = new ArrayList<>();
+        courses.forEach(course -> {
+            Course courseWithExercises = courseRepository.findWithEagerExercisesById(course.getId());
+            if (courseWithExercises != null) {
+                if (courseWithExercises.getExercises().stream().anyMatch(exercise -> exercise instanceof QuizExercise)) {
+                    coursesWithQuiz.add(course);
+                }
+            }
+        });
+        return coursesWithQuiz;
+    }
+
+    /**
      * GET /courses : get all courses for administration purposes with user stats.
      *
      * @param onlyActive if true, only active courses will be considered in the result
