@@ -77,13 +77,13 @@ public class ExamService {
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
-    private final ResultService resultService;
+    private final ResultRepository resultRepository;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ParticipationService participationService, ExamQuizService examQuizService,
-            ExerciseService exerciseService, InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService,
-            AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, ResultService resultService, UserRepository userRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+                       ExerciseService exerciseService, InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService,
+                       AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository,
+                       ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
+                       ProgrammingExerciseRepository programmingExerciseRepository, ResultRepository resultRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -97,7 +97,7 @@ public class ExamService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
-        this.resultService = resultService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -627,7 +627,7 @@ public class ExamService {
 
                 // number of assessments done
                 numberOfAssessmentsFinishedOfCorrectionRoundsByExercise
-                        .add(resultService.countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(exercise, exam.getNumberOfCorrectionRoundsInExam()));
+                        .add(resultRepository.countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(exercise, exam.getNumberOfCorrectionRoundsInExam()));
 
                 // get number of all generated participations
                 numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId()));

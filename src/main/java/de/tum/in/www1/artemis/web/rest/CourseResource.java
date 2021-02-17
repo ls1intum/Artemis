@@ -87,8 +87,6 @@ public class CourseResource {
 
     private final SubmissionService submissionService;
 
-    private final ResultService resultService;
-
     private final ComplaintService complaintService;
 
     private final TutorLeaderboardService tutorLeaderboardService;
@@ -111,12 +109,16 @@ public class CourseResource {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final SubmissionRepository submissionRepository;
+
+    private final ResultRepository resultRepository;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
-            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-            SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
-            ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
-            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository) {
+                          ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
+                          ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+                          SubmissionService submissionService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
+                          ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
+                          AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository) {
         this.courseService = courseService;
         this.participationService = participationService;
         this.courseRepository = courseRepository;
@@ -127,7 +129,6 @@ public class CourseResource {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.submissionService = submissionService;
-        this.resultService = resultService;
         this.complaintService = complaintService;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -137,6 +138,8 @@ public class CourseResource {
         this.assessmentDashboardService = assessmentDashboardService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
+        this.submissionRepository = submissionRepository;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -580,11 +583,11 @@ public class CourseResource {
         }
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        final long numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForCourse(courseId)
+        final long numberOfInTimeSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
                 + programmingExerciseRepository.countSubmissionsByCourseIdSubmitted(courseId);
-        final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
+        final long numberOfLateSubmissions = submissionRepository.countByCourseIdSubmittedAfterDueDate(courseId);
 
-        DueDateStat totalNumberOfAssessments = resultService.countNumberOfAssessments(courseId);
+        DueDateStat totalNumberOfAssessments = resultRepository.countNumberOfAssessments(courseId);
         stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
         // no examMode here, so its the same as totalNumberOfAssessments
@@ -599,7 +602,7 @@ public class CourseResource {
         final long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
         stats.setNumberOfComplaints(numberOfComplaints);
 
-        final long numberOfAssessmentLocks = submissionService.countSubmissionLocks(courseId);
+        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course);
@@ -680,8 +683,8 @@ public class CourseResource {
                 totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId(), false), 0L);
             }
             else {
-                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId(), false);
-                totalNumberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), false);
+                numberOfSubmissions = submissionRepository.countSubmissionsForExercise(exercise.getId(), false);
+                totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), false);
             }
 
             exercise.setNumberOfSubmissions(numberOfSubmissions);
@@ -750,7 +753,7 @@ public class CourseResource {
 
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        DueDateStat totalNumberOfAssessments = resultService.countNumberOfAssessments(courseId);
+        DueDateStat totalNumberOfAssessments = resultRepository.countNumberOfAssessments(courseId);
         stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
         // no examMode here, so its the same as totalNumberOfAssessments
@@ -771,14 +774,14 @@ public class CourseResource {
 
         stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
 
-        final long numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForCourse(courseId)
+        final long numberOfInTimeSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
                 + programmingExerciseRepository.countSubmissionsByCourseIdSubmitted(courseId);
-        final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
+        final long numberOfLateSubmissions = submissionRepository.countByCourseIdSubmittedAfterDueDate(courseId);
 
         stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
-        stats.setTotalNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
+        stats.setTotalNumberOfAssessments(resultRepository.countNumberOfAssessments(courseId));
 
-        final long numberOfAssessmentLocks = submissionService.countSubmissionLocks(courseId);
+        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
         final long startT = System.currentTimeMillis();

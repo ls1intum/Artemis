@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.repository;
 
+import static java.util.Arrays.asList;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -112,8 +115,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     long countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
 
     /**
-     * @param exerciseId
-     * @param correctionRound
+     * @param exerciseId id of exercise
+     * @param correctionRound correction round to find completed assessments by
      * @return the number of completed assessments for the specified correction round of an exam exercise
      */
     @Query("""
@@ -157,4 +160,78 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return true if there is a result, false if not.
      */
     boolean existsByParticipation_ExerciseId(long exerciseId);
+
+
+    /**
+     * Given an exerciseId and a correctionRound, return the number of assessments for that exerciseId and correctionRound that have been finished
+     *
+     * @param exercise  - the exercise we are interested in
+     * @param correctionRounds - the correction round we want finished assessments for
+     * @return an array of the number of assessments for the exercise for a given correction round
+     */
+    default DueDateStat[] countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(Exercise exercise, int correctionRounds) {
+        DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds];
+
+        for (int i = 0; i < correctionRounds; i++) {
+            correctionRoundsDataStats[i] = new DueDateStat(this.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), i), 0L);
+        }
+        return correctionRoundsDataStats;
+    }
+
+    /**
+     * Calculate the number of assessments which are either AUTOMATIC or SEMI_AUTOMATIC for a given exercise
+     *
+     * @param exerciseId the exercise we are interested in
+     * @return number of assessments for the exercise
+     */
+    default DueDateStat countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
+        return new DueDateStat(countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC)),
+            countNumberOfAssessmentsByTypeForExerciseAfterDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC)));
+    }
+
+    /**
+     * Given an exerciseId, return the number of assessments for that exerciseId that have been completed (e.g. no draft!)
+     *
+     * @param exerciseId - the exercise we are interested in
+     * @param examMode should be used for exam exercises to ignore test run submissions
+     * @return a number of assessments for the exercise
+     */
+    default DueDateStat countNumberOfFinishedAssessmentsForExercise(Long exerciseId, boolean examMode) {
+        if (examMode) {
+            return new DueDateStat(countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(exerciseId), 0L);
+        }
+        return new DueDateStat(countNumberOfFinishedAssessmentsForExercise(exerciseId), 0L);
+    }
+
+    /**
+     * Calculates the number of assessments done for each correction round.
+     *
+     * @param exercise the exercise for which we want to calculate the # of assessments for each correction round
+     * @param examMode states whether or not the the function is called in the exam mode
+     * @param totalNumberOfAssessments so total number of assessments sum up over all correction rounds
+     * @return the number of assessments for each correction rounds
+     */
+    default DueDateStat[] countNrOfAssessmentsOfCorrectionRoundsForDashboard(Exercise exercise, boolean examMode, DueDateStat totalNumberOfAssessments) {
+        if (examMode) {
+            // set number of corrections specific to each correction round
+            int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+            return countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(exercise, numberOfCorrectionRounds);
+        }
+        else {
+            // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
+            return new DueDateStat[] { totalNumberOfAssessments };
+        }
+    }
+
+    /**
+     * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
+     *
+     * @param courseId - the course we are interested in
+     * @return a number of assessments for the course
+     */
+    default DueDateStat countNumberOfAssessments(Long courseId) {
+        return new DueDateStat(countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true),
+            countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, false));
+    }
+
 }
