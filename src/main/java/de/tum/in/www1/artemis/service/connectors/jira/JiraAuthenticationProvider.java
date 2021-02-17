@@ -25,8 +25,6 @@ import org.springframework.security.authentication.ProviderNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -99,8 +97,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         User user = getOrCreateUser(authentication, false);
-        List<GrantedAuthority> grantedAuthorities = user.getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).collect(Collectors.toList());
-        return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), grantedAuthorities);
+        return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities());
     }
 
     @Override
@@ -270,7 +267,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
                 log.error("Could not delete group " + groupName + " in JIRA. Error: " + e.getMessage());
             }
         }
-        userService.removeGroupFromUsers(groupName);
     }
 
     @Override

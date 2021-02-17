@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.user.UserService;
@@ -46,8 +45,6 @@ public class CourseService {
     private final ExerciseService exerciseService;
 
     private final AuthorizationCheckService authCheckService;
-
-    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final LectureService lectureService;
 
@@ -73,14 +70,13 @@ public class CourseService {
 
     private final LearningGoalRepository learningGoalRepository;
 
-    public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
-            ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository,
-            GroupNotificationService groupNotificationService, ExamService examService, ExamRepository examRepository, CourseExportService courseExportService) {
+    public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            LectureService lectureService, NotificationService notificationService, ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository,
+            UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService, ExamService examService,
+            ExamRepository examRepository, CourseExportService courseExportService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
-        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.userRepository = userRepository;
         this.lectureService = lectureService;
         this.notificationService = notificationService;
@@ -166,7 +162,7 @@ public class CourseService {
      *      submissions, participations, results, repositories and build plans, see {@link ExerciseService#delete}</li>
      *     <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
      *     <li>All GroupNotifications of the course, see {@link NotificationService#deleteGroupNotification}</li>
-     *     <li>All default groups created by Artemis, see {@link ArtemisAuthenticationProvider#deleteGroup}</li>
+     *     <li>All default groups created by Artemis, see {@link UserService#deleteGroup}</li>
      *     <li>All Exams, see {@link ExamService#delete}</li>
      * </ul>
      *
@@ -195,13 +191,13 @@ public class CourseService {
     private void deleteDefaultGroups(Course course) {
         // only delete (default) groups which have been created by Artemis before
         if (course.getStudentGroupName().equals(course.getDefaultStudentGroupName())) {
-            artemisAuthenticationProvider.deleteGroup(course.getStudentGroupName());
+            userService.deleteGroup(course.getStudentGroupName());
         }
         if (course.getTeachingAssistantGroupName().equals(course.getDefaultTeachingAssistantGroupName())) {
-            artemisAuthenticationProvider.deleteGroup(course.getTeachingAssistantGroupName());
+            userService.deleteGroup(course.getTeachingAssistantGroupName());
         }
         if (course.getInstructorGroupName().equals(course.getDefaultInstructorGroupName())) {
-            artemisAuthenticationProvider.deleteGroup(course.getInstructorGroupName());
+            userService.deleteGroup(course.getInstructorGroupName());
         }
     }
 

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.security;
 
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +10,6 @@ import org.springframework.security.authentication.InternalAuthenticationService
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -42,9 +40,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         if (!authentication.getCredentials().toString().equals(storedPassword)) {
             throw new AuthenticationServiceException("Invalid password for user " + user.get().getLogin());
         }
-        final var grantedAuthorities = user.get().getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).collect(Collectors.toList());
-
-        return new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), grantedAuthorities);
+        return new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), user.get().getGrantedAuthorities());
     }
 
     @Override
@@ -103,7 +99,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
 
     @Override
     public void deleteGroup(String groupName) {
-        userService.removeGroupFromUsers(groupName);
+        // nothing to do here, because the user service already takes care about internal groups
     }
 
     @Override

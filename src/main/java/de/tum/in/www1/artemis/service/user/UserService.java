@@ -527,9 +527,9 @@ public class UserService {
         final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
         final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(oldUserLogin, user, removedGroups, addedGroups, true));
-        removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group)); // e.g. Jira
+        removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group)); // e.g. JIRA
         try {
-            addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(user, group)); // e.g. Jira
+            addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(user, group)); // e.g. JIRA
         }
         catch (ArtemisAuthenticationException e) {
             // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
@@ -630,6 +630,16 @@ public class UserService {
             }
         }
         return saveUser(loggedInUser);
+    }
+
+    /**
+     * delete the group with the given name
+     *
+     * @param groupName the name of the group which should be deleted
+     */
+    public void deleteGroup(String groupName) {
+        artemisAuthenticationProvider.deleteGroup(groupName);
+        removeGroupFromUsers(groupName);
     }
 
     /**
