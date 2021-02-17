@@ -203,7 +203,7 @@ public class ParticipationResource {
 
         participation = participationService.resumeProgrammingExercise(participation);
         // Note: in this case we might need an empty commit to make sure the build plan works correctly for subsequent student commits
-        participation = participationService.performEmptyCommit(participation);
+        continuousIntegrationService.get().performEmptySetupCommit(participation);
         addLatestResultToParticipation(participation);
         participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getParticipant().getName())).body(participation);
@@ -256,7 +256,7 @@ public class ParticipationResource {
                     + participation.getExercise().getId());
         }
 
-        Participation result = participationService.save(participation);
+        Participation result = studentParticipationRepository.saveAndFlush(participation);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getParticipant().getName())).body(result);
     }
 
@@ -469,7 +469,7 @@ public class ParticipationResource {
         else if (quizExercise.isSubmissionAllowed()) {
             // Quiz is active => construct Participation from
             // filtered quizExercise and submission from HashMap
-            quizExercise = quizExerciseRepository.findByIdWithQuestionsOrElseThrow(quizExercise.getId());
+            quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
             quizExercise.filterForStudentsDuringQuiz();
             StudentParticipation participation = participationService.participationForQuizWithResult(quizExercise, username);
             // set view
@@ -480,7 +480,7 @@ public class ParticipationResource {
         }
         else {
             // quiz has ended => get participation from database and add full quizExercise
-            quizExercise = quizExerciseRepository.findByIdWithQuestionsOrElseThrow(quizExercise.getId());
+            quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
             // TODO: we get a lot of error message here, when the quiz has ended, students reload the page (or navigate again into it), but the participation (+ submission
             // + result) has not yet been stored in the database (because for 1500 students this can take up to 60s). We should handle this case here properly
             // The best would be a message to the user: please wait while the quiz results are being processed (show a progress animation in the client)

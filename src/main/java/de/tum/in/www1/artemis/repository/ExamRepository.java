@@ -78,6 +78,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("select count(studentExam) from StudentExam studentExam where studentExam.testRun = FALSE AND studentExam.exam.id = :#{#examId}")
     long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") Long examId);
 
+    @NotNull
     default Exam findByIdElseThrow(Long examId) throws EntityNotFoundException {
         return findById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }

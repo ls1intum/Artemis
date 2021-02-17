@@ -6,6 +6,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -140,6 +142,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
+    @NotNull
     default Exercise findByIdElseThrow(Long exerciseId) throws EntityNotFoundException {
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
@@ -150,6 +153,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @param exerciseId the exerciseId of the entity
      * @return the entity
      */
+    @NotNull
     default Exercise findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(Long exerciseId) {
         return findWithEagerCategoriesAndTeamAssignmentConfigById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
@@ -170,6 +174,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @param exerciseId the exerciseId of the exercise entity
      * @return the exercise entity
      */
+    @NotNull
     default Exercise findByIdWithStudentParticipationsElseThrow(Long exerciseId) {
         return findByIdWithEagerParticipations(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }

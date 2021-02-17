@@ -239,7 +239,7 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsOrElseThrow(quizExerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
 
         if (quizExercise.isExamExercise()) {
             // Get the course over the exercise group
@@ -265,13 +265,13 @@ public class QuizExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<QuizExercise> recalculateStatistics(@PathVariable Long quizExerciseId) {
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsOrElseThrow(quizExerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return forbidden();
         }
         quizStatisticService.recalculateStatistics(quizExercise);
         // fetch the quiz exercise again to make sure the latest changes are included
-        return ResponseEntity.ok(quizExerciseRepository.findByIdWithQuestionsAndStatisticsOrElseThrow(quizExercise.getId()));
+        return ResponseEntity.ok(quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId()));
     }
 
     /**
@@ -285,7 +285,7 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long quizExerciseId) {
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
 
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsOrElseThrow(quizExerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
 
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return forbidden();
@@ -309,7 +309,7 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable String action) {
         log.debug("REST request to immediately start QuizExercise : {}", quizExerciseId);
 
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsOrElseThrow(quizExerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
 
         // check permissions
         Course course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -365,7 +365,7 @@ public class QuizExerciseResource {
         // save quiz exercise
         quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
         // reload the quiz exercise with questions and statistics to prevent problems with proxy objects
-        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsOrElseThrow(quizExercise.getId());
+        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
         quizScheduleService.updateQuizExercise(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
@@ -412,7 +412,7 @@ public class QuizExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestBody QuizExercise quizExercise) {
         log.debug("REST request to re-evaluate QuizExercise : {}", quizExercise);
-        QuizExercise originalQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsOrElseThrow(quizExerciseId);
+        QuizExercise originalQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
 
         if (originalQuizExercise.isExamExercise()) {
             // Re-evaluation of an exam quiz is only possible if all students finished their exam

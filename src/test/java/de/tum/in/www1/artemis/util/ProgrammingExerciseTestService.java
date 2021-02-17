@@ -91,6 +91,9 @@ public class ProgrammingExerciseTestService {
     private ParticipationService participationService;
 
     @Autowired
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
     private ParticipationRepository participationRepository;
 
     @Autowired
@@ -554,7 +557,7 @@ public class ProgrammingExerciseTestService {
         // These will be updated when the participation is resumed.
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
-        participationService.save(participation);
+        programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         var participant = participation.getParticipant();
         mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
@@ -578,7 +581,7 @@ public class ProgrammingExerciseTestService {
         // These will be updated when pushing a commit
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
-        participationService.save(participation);
+        programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         // Mock REST Call from the VCS for a new programming submission (happens as part of the webhook after pushing code to git)
         request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), body, HttpStatus.OK, new HttpHeaders());
@@ -602,7 +605,7 @@ public class ProgrammingExerciseTestService {
         // These will be updated when triggering a build
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
-        participationService.save(participation);
+        programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         // Construct trigger-build url and execute request
         submissionType = submissionType == null ? SubmissionType.MANUAL : submissionType;
@@ -633,7 +636,7 @@ public class ProgrammingExerciseTestService {
         // These will be updated triggering a failed build
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(!buildPlanExists ? null : participation.getBuildPlanId());
-        participationService.save(participation);
+        programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         if (!buildPlanExists) {
             mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
@@ -669,7 +672,7 @@ public class ProgrammingExerciseTestService {
         // These will be updated triggering a failed build
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
-        participationService.save(participation);
+        programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         var url = "/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());

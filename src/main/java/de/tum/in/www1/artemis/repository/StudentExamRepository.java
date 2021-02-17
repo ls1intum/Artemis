@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -70,6 +72,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @Query("SELECT studentExam FROM StudentExam studentExam LEFT JOIN FETCH studentExam.exercises exercises WHERE studentExam.exam.id = :#{#examId} AND studentExam.submitted = FALSE AND studentExam.testRun = FALSE")
     Set<StudentExam> findAllUnsubmittedWithExercisesByExamId(Long examId);
 
+    @NotNull
     default StudentExam findByIdElseThrow(Long studentExamId) throws EntityNotFoundException {
         return findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student Exam", studentExamId));
     }

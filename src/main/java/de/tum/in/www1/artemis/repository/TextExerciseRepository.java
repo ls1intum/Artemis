@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -52,13 +54,24 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
             String partialTitle, String partialCourseTitle, String partialExamTitle, String partialExamCourseTitle, Pageable pageable);
 
     @Query("select textExercise from TextExercise textExercise left join fetch textExercise.exampleSubmissions exampleSubmissions left join fetch exampleSubmissions.submission submission left join fetch submission.results result left join fetch result.feedbacks left join fetch submission.blocks left join fetch result.assessor left join fetch textExercise.teamAssignmentConfig where textExercise.id = :#{#exerciseId}")
-    Optional<TextExercise> findByIdWithEagerExampleSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
+    Optional<TextExercise> findByIdWithExampleSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
-    Optional<TextExercise> findWithEagerStudentParticipationAndSubmissionsById(Long exerciseId);
+    Optional<TextExercise> findWithStudentParticipationsAndSubmissionsById(Long exerciseId);
 
+    @NotNull
     default TextExercise findByIdElseThrow(long exerciseId) {
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
+    }
+
+    @NotNull
+    default TextExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
+        return findByIdWithExampleSubmissionsAndResults(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
+    }
+
+    @NotNull
+    default TextExercise findByIdWithStudentParticipationsAndSubmissionsElseThrow(long exerciseId) {
+        return findWithStudentParticipationsAndSubmissionsById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
     }
 
     /**

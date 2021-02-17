@@ -109,7 +109,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
         Participation participation = participationRepository.findByIdWithSubmissionsElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
-            throw new EntityNotFoundException("ProgrammingExerciseParticipation with id " + participationId + " could not be found!");
+            throw new EntityNotFoundException("Programming Exercise Participation", participationId);
         }
 
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;

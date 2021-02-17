@@ -377,11 +377,11 @@ public class QuizExerciseService {
 
         if (updateOfResultsAndStatisticsNecessary) {
             // make sure we have all objects available before updating the statistics to avoid lazy / proxy issues
-            quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsOrElseThrow(quizExercise.getId());
+            quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
             quizStatisticService.recalculateStatistics(quizExercise);
         }
         // fetch the quiz exercise again to make sure the latest changes are included
-        return quizExerciseRepository.findByIdWithQuestionsAndStatisticsOrElseThrow(quizExercise.getId());
+        return quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
     }
 
     /**
@@ -390,7 +390,7 @@ public class QuizExerciseService {
      */
     public void resetExercise(Long exerciseId) {
         // fetch exercise again to make sure we have an updated version
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsOrElseThrow(exerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
 
         // for quizzes we need to delete the statistics and we need to reset the quiz to its original state
         quizExercise.setIsVisibleBeforeStart(Boolean.FALSE);

@@ -76,6 +76,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     Optional<Course> findById(long courseId);
 
+    @NotNull
     default Course findByIdElseThrow(Long courseId) throws EntityNotFoundException {
         return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }

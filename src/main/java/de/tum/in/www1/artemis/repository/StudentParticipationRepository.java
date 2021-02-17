@@ -5,6 +5,8 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -194,6 +196,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResults(@Param("exerciseId") Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    Optional<StudentParticipation> findWithEagerSubmissionsById(Long participationId);
+
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     Optional<StudentParticipation> findWithEagerResultsById(@Param("participationId") Long participationId);
 
@@ -315,16 +320,24 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
             @Param("assessor") User assessor);
 
-    default StudentParticipation findByIdElseThrow(Long studentParticipationId) {
+    @NotNull
+    default StudentParticipation findByIdElseThrow(long studentParticipationId) {
         return findById(studentParticipationId).orElseThrow(() -> new EntityNotFoundException("Student Participation", studentParticipationId));
     }
 
-    default StudentParticipation findByIdWithResultsElseThrow(Long participationId) {
+    @NotNull
+    default StudentParticipation findByIdWithResultsElseThrow(long participationId) {
         return findWithEagerResultsById(participationId).orElseThrow(() -> new EntityNotFoundException("StudentParticipation", participationId));
     }
 
-    default StudentParticipation findByIdWithSubmissionsResultsFeedbackElseThrow(Long participationId) {
+    @NotNull
+    default StudentParticipation findByIdWithSubmissionsResultsFeedbackElseThrow(long participationId) {
         return findWithEagerSubmissionsResultsFeedbacksById(participationId).orElseThrow(() -> new EntityNotFoundException("StudentParticipation", participationId));
+    }
+
+    @NotNull
+    default StudentParticipation findByIdWithSubmissionsElseThrow(long participationId) {
+        return findWithEagerSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
 
     /**

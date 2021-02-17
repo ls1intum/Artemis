@@ -61,7 +61,7 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     }
 
     @NotNull
-    default QuizExercise findByIdWithQuestionsOrElseThrow(Long quizExerciseId) {
+    default QuizExercise findByIdWithQuestionsElseThrow(Long quizExerciseId) {
         return findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
     }
 
@@ -77,7 +77,7 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     }
 
     @NotNull
-    default QuizExercise findByIdWithQuestionsAndStatisticsOrElseThrow(Long quizExerciseId) {
+    default QuizExercise findByIdWithQuestionsAndStatisticsElseThrow(Long quizExerciseId) {
         return findWithEagerQuestionsAndStatisticsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
     }
 

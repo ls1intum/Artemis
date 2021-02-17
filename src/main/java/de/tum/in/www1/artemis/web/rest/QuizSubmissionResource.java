@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
@@ -51,6 +52,8 @@ public class QuizSubmissionResource {
 
     private final ParticipationService participationService;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     private final WebsocketMessagingService messagingService;
 
     private final AuthorizationCheckService authCheckService;
@@ -58,7 +61,8 @@ public class QuizSubmissionResource {
     private final ExamSubmissionService examSubmissionService;
 
     public QuizSubmissionResource(QuizExerciseRepository quizExerciseRepository, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
-            WebsocketMessagingService messagingService, UserRepository userRepository, AuthorizationCheckService authCheckService, ExamSubmissionService examSubmissionService) {
+            WebsocketMessagingService messagingService, UserRepository userRepository, AuthorizationCheckService authCheckService, ExamSubmissionService examSubmissionService,
+            StudentParticipationRepository studentParticipationRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
@@ -66,6 +70,7 @@ public class QuizSubmissionResource {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.examSubmissionService = examSubmissionService;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -114,7 +119,7 @@ public class QuizSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID.")).body(null);
         }
 
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsOrElseThrow(exerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
@@ -138,7 +143,7 @@ public class QuizSubmissionResource {
         // The quizScheduler is usually responsible for updating the participation to FINISHED in the database. If quizzes where the student did not participate are used for
         // practice, the QuizScheduler does not update the participation, that's why we update it manually here
         participation.setInitializationState(InitializationState.FINISHED);
-        participationService.save(participation);
+        studentParticipationRepository.saveAndFlush(participation);
 
         // remove some redundant or unnecessary data that is not needed on client side
         for (SubmittedAnswer answer : quizSubmission.getSubmittedAnswers()) {
@@ -170,7 +175,7 @@ public class QuizSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID.")).body(null);
         }
 
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsOrElseThrow(exerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(quizExercise, null)) {
             return forbidden();
@@ -213,7 +218,7 @@ public class QuizSubmissionResource {
             submittedAnswer.setSubmission(quizSubmission);
         }
 
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsOrElseThrow(exerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Apply further checks if it is an exam submission
