@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.byLessThan;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -665,6 +666,17 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         QuizExercise quizExerciseForStudent_Finished = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
         checkQuizExerciseForStudent(quizExerciseForStudent_Finished);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetQuizExercisesForExam() throws Exception {
+        quizExercise = createQuizOnServerForExam();
+        var examId = quizExercise.getExerciseGroup().getExam().getId();
+        List<LinkedHashMap<String, Object>> quizExercises = request.get("/api/" + examId + "/quiz-exercises", HttpStatus.OK, List.class);
+        assertThat(quizExercises).as("Quiz exercise was retrieved").isNotNull();
+        assertThat(quizExercises.size()).as("Quiz exercise was retrieved").isEqualTo(1L);
+        assertThat(quizExercise.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(Long.valueOf((Integer) quizExercises.get(0).get("id")));
     }
 
     @Test
