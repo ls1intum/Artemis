@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -29,15 +30,14 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -70,9 +70,19 @@ public class ExamService {
 
     private final AuditEventRepository auditEventRepository;
 
-    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ParticipationService participationService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExamQuizService examQuizService, ExerciseService exerciseService, UserRepository userRepository,
-            InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService, AuditEventRepository auditEventRepository) {
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final ComplaintRepository complaintRepository;
+
+    private final ComplaintResponseRepository complaintResponseRepository;
+
+    private final ResultRepository resultRepository;
+
+    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ParticipationService participationService, ExamQuizService examQuizService,
+            ExerciseService exerciseService, InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService,
+            AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository,
+            ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ResultRepository resultRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -83,6 +93,10 @@ public class ExamService {
         this.exerciseService = exerciseService;
         this.quizExerciseService = quizExerciseService;
         this.auditEventRepository = auditEventRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.complaintRepository = complaintRepository;
+        this.complaintResponseRepository = complaintResponseRepository;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -586,23 +600,85 @@ public class ExamService {
     }
 
     /**
-     * Sets the transient attribute numberOfGeneratedStudentExams for the given exam
-     * @param exam Exam for which to compute and set the number of generated student exams
+     * Gets all statistics for the instructor checklist regarding an exam
+     *
+     * @param exam the exam for which to get statistics for
+     * @return a examStatisticsDTO filled with all statistics regarding the exam
      */
-    public void setNumberOfGeneratedStudentExams(Exam exam) {
+    public ExamChecklistDTO getStatsForChecklist(Exam exam) {
+        ExamChecklistDTO examChecklistDTO = new ExamChecklistDTO();
+
+        List<Long> numberOfComplaintsOpenByExercise = new ArrayList<>();
+        List<Long> numberOfComplaintResponsesByExercise = new ArrayList<>();
+        List<DueDateStat[]> numberOfAssessmentsFinishedOfCorrectionRoundsByExercise = new ArrayList<>();
+        List<Long> numberOfParticipationsGeneratedByExercise = new ArrayList<>();
+
+        // loop over all exercises and retrieve all needed counts for the properties at once
+        exam.getExerciseGroups().forEach(exerciseGroup -> {
+            exerciseGroup.getExercises().forEach(exercise -> {
+                // number of complaints open
+                numberOfComplaintsOpenByExercise
+                        .add(complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exercise.getId(), ComplaintType.COMPLAINT));
+
+                // number of complaints finished
+                numberOfComplaintResponsesByExercise.add(complaintResponseRepository
+                        .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT));
+
+                // number of assessments done
+                numberOfAssessmentsFinishedOfCorrectionRoundsByExercise
+                        .add(resultRepository.countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(exercise, exam.getNumberOfCorrectionRoundsInExam()));
+
+                // get number of all generated participations
+                numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId()));
+            });
+        });
+
+        long totalNumberOfComplaints = 0;
+        long totalNumberOfComplaintResponse = 0;
+        Long[] totalNumberOfAssessmentsFinished = new Long[exam.getNumberOfCorrectionRoundsInExam()];
+        long totalNumberOfParticipationsGenerated = 0;
+
+        // sum up all counts for the different properties
+        for (Long numberOfParticipations : numberOfParticipationsGeneratedByExercise) {
+            totalNumberOfParticipationsGenerated += numberOfParticipations != null ? numberOfParticipations : 0;
+        }
+        for (DueDateStat[] dateStats : numberOfAssessmentsFinishedOfCorrectionRoundsByExercise) {
+            for (int i = 0; i < exam.getNumberOfCorrectionRoundsInExam(); i++) {
+                if (totalNumberOfAssessmentsFinished[i] == null) {
+                    totalNumberOfAssessmentsFinished[i] = 0L;
+                }
+                totalNumberOfAssessmentsFinished[i] += dateStats[i].getInTime();
+            }
+        }
+        for (Long numberOfComplaints : numberOfComplaintsOpenByExercise) {
+            totalNumberOfComplaints += numberOfComplaints;
+        }
+        for (Long numberOfComplaintResponse : numberOfComplaintResponsesByExercise) {
+            totalNumberOfComplaintResponse += numberOfComplaintResponse;
+        }
+        examChecklistDTO.setNumberOfTotalExamAssessmentsFinishedByCorrectionRound(totalNumberOfAssessmentsFinished);
+        examChecklistDTO.setNumberOfAllComplaints(totalNumberOfComplaints);
+        examChecklistDTO.setNumberOfAllComplaintsDone(totalNumberOfComplaintResponse);
+
+        // set number of student exams that have been generated
         long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExamWithoutTestRuns(exam.getId());
-        exam.setNumberOfGeneratedStudentExams(numberOfGeneratedStudentExams);
-    }
+        examChecklistDTO.setNumberOfGeneratedStudentExams(numberOfGeneratedStudentExams);
 
-    public void setStatsForChecklist(Exam exam) {
-        this.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
-        this.setNumberOfGeneratedStudentExams(exam);
-        this.setNumberOfTestRuns(exam);
-    }
-
-    public void setNumberOfTestRuns(Exam exam) {
+        // set number of test runs
         long numberOfTestRuns = studentExamRepository.countTestRunsByExamId(exam.getId());
-        exam.setNumberOfTestRuns(numberOfTestRuns);
+        examChecklistDTO.setNumberOfTestRuns(numberOfTestRuns);
+
+        // check if all exercises have been prepared for all students;
+        boolean exercisesPrepared = numberOfGeneratedStudentExams != 0
+                && (exam.getNumberOfExercisesInExam() * numberOfGeneratedStudentExams) == totalNumberOfParticipationsGenerated;
+        examChecklistDTO.setAllExamExercisesAllStudentsPrepared(exercisesPrepared);
+
+        // set started and submitted exam properties
+        long numberOfStudentExamsStarted = studentExamRepository.countStudentExamsStartedByExamIdIgnoreTestRuns(exam.getId());
+        long numberOfStudentExamsSubmitted = studentExamRepository.countStudentExamsSubmittedByExamIdIgnoreTestRuns(exam.getId());
+        examChecklistDTO.setNumberOfExamsStarted(numberOfStudentExamsStarted);
+        examChecklistDTO.setNumberOfExamsSubmitted(numberOfStudentExamsSubmitted);
+        return examChecklistDTO;
     }
 
     /**
