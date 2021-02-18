@@ -12,16 +12,15 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewDetailsDTO;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewDetailsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -113,7 +112,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             where (c.endDate is null or :#{#now} is null or c.endDate >= :#{#now})
                 and (:isAdmin = true or c.teachingAssistantGroupName in :userGroups or c.instructorGroupName in :userGroups)
             """)
-    List<CourseManagementOverviewDetailsDTO> getAllDTOsForOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
+    List<CourseManagementOverviewDetailsDTO> getAllDTOsForOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin,
+            @Param("userGroups") List<String> userGroups);
 
     default Course findByIdElseThrow(Long courseId) throws EntityNotFoundException {
         return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
