@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -62,37 +61,37 @@ public class SAML2Service {
         log.debug("User {} attributes {}", auth.getName(), principal.getAttributes());
 
         final String username = substituteAttributes(properties.getUsernamePattern(), principal);
-
-
-        Optional<User> user = userRepository.findOneByLogin(username);
+        Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
         if (user.isEmpty()) {
             // create User
-            ManagedUserVM newUser = new ManagedUserVM();
-            newUser.setLogin(username);
-            newUser.setFirstName(substituteAttributes(properties.getFirstNamePattern(), principal));
-            newUser.setLastName(substituteAttributes(properties.getLastNamePattern(), principal));
-            newUser.setEmail(substituteAttributes(properties.getEmailPattern(), principal));
-            newUser.setVisibleRegistrationNumber(substituteAttributes(properties.getRegistrationNumberPattern(), principal));
-
-            newUser.setAuthorities(new HashSet<>(Set.of(AuthoritiesConstants.USER)));
-            newUser.setGroups(new HashSet<>());
-
-            // userService.createUser(ManagedUserVM) does create an activated User, else use userService.registerUser()
-            // a random password is generated
-            user = Optional.of(userService.createUser(newUser));
+            user = Optional.of(createUser(username, principal));
         }
         
-        // failes with LazyInitializationException
-        //SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
-        //        user.getLogin(), user.getPassword(), toGrantedAuthorities(user.getAuthorities())));
-
         auth = new UsernamePasswordAuthenticationToken(
-                 user.get().getLogin(), user.get().getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER)));
+                 user.get().getLogin(), user.get().getPassword(), toGrantedAuthorities(user.get().getAuthorities()));
         return auth;
     }
 
+    private User createUser(String username, final Saml2AuthenticatedPrincipal principal) {
+        ManagedUserVM newUser = new ManagedUserVM();
+        newUser.setLogin(username);
+        newUser.setFirstName(substituteAttributes(properties.getFirstNamePattern(), principal));
+        newUser.setLastName(substituteAttributes(properties.getLastNamePattern(), principal));
+        newUser.setEmail(substituteAttributes(properties.getEmailPattern(), principal));
+        newUser.setVisibleRegistrationNumber(substituteAttributes(properties.getRegistrationNumberPattern(), principal));
+        newUser.setAuthorities(new HashSet<>(Set.of(AuthoritiesConstants.USER)));
+        newUser.setGroups(new HashSet<>());
+
+        // userService.createUser(ManagedUserVM) does create an activated User, else use userService.registerUser()
+        // a random password is generated
+        return userService.createUser(newUser);
+    }
+
     private static Collection<GrantedAuthority> toGrantedAuthorities(final Collection<Authority> authorities) {
-        return authorities.stream().map(Authority::getName).map(SimpleGrantedAuthority::new).collect(Collectors.toSet());
+        return authorities.stream()
+            .map(Authority::getName)
+            .map(SimpleGrantedAuthority::new)
+            .collect(Collectors.toSet());
     }
 
     private static String substituteAttributes(final String input, final Saml2AuthenticatedPrincipal principal) {
