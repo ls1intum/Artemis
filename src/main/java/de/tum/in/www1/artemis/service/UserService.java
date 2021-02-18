@@ -6,6 +6,8 @@ import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -28,17 +30,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Authority;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.GuidedTourSetting;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
-import de.tum.in.www1.artemis.repository.AuthorityRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -68,6 +64,9 @@ public class UserService {
     @Value("${artemis.user-management.use-external}")
     private Boolean useExternalUserManagement;
 
+    @Value("${artemis.user-management.organizations.enable-multiple-organizations:#{null}}")
+    private Optional<Boolean> enabledMultipleOrganizations;
+
     @Value("${artemis.encryption-password}")
     private String encryptionPassword;
 
@@ -94,6 +93,8 @@ public class UserService {
 
     private final GuidedTourSettingsRepository guidedTourSettingsRepository;
 
+    private final OrganizationRepository organizationRepository;
+
     private final CacheManager cacheManager;
 
     private final Optional<LdapUserService> ldapUserService;
@@ -103,13 +104,14 @@ public class UserService {
     private ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService,
-            GuidedTourSettingsRepository guidedTourSettingsRepository, CourseRepository courseRepository) {
+            GuidedTourSettingsRepository guidedTourSettingsRepository, CourseRepository courseRepository, OrganizationRepository organizationRepository) {
         this.userRepository = userRepository;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
         this.ldapUserService = ldapUserService;
         this.guidedTourSettingsRepository = guidedTourSettingsRepository;
         this.courseRepository = courseRepository;
+        this.organizationRepository = organizationRepository;
     }
 
     @Autowired
@@ -521,6 +523,16 @@ public class UserService {
             addTutorialGroups(userDTO); // Automatically add interactive tutorial course groups to the new created user if it has been specified
         }
         user.setGroups(userDTO.getGroups());
+        if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
+            // add organizations matching the email of the newly created user
+            if (userDTO.getOrganizations() != null) {
+                userDTO.getOrganizations().addAll(getAllMatchingOrganizations(userDTO));
+            }
+            else {
+                userDTO.setOrganizations(getAllMatchingOrganizations(userDTO));
+            }
+        }
+        user.setOrganizations(userDTO.getOrganizations());
         user.setActivated(true);
         saveUser(user);
 
@@ -579,6 +591,7 @@ public class UserService {
         user.setActivated(updatedUserDTO.isActivated());
         user.setLangKey(updatedUserDTO.getLangKey());
         user.setGroups(updatedUserDTO.getGroups());
+        user.setOrganizations(updatedUserDTO.getOrganizations());
         if (updatedUserDTO.getPassword() != null) {
             user.setPassword(passwordEncoder().encode(updatedUserDTO.getPassword()));
         }
@@ -1111,5 +1124,23 @@ public class UserService {
 
         authorities.add(new Authority(USER));
         return authorities;
+    }
+
+    /**
+     * Utility method used for mapping newly created users to the current organizations,
+     * by returning the set of organizations with a matching email pattern
+     * @param userDTO the user to match the organizations' email patterns with
+     * @return set of organizations with a matching email pattern
+     */
+    private Set<Organization> getAllMatchingOrganizations(UserDTO userDTO) {
+        Set<Organization> matchingOrganizations = new HashSet<>();
+        organizationRepository.findAll().forEach((organization) -> {
+            Pattern pattern = Pattern.compile(organization.getEmailPattern());
+            Matcher matcher = pattern.matcher(userDTO.getEmail());
+            if (matcher.matches()) {
+                matchingOrganizations.add(organization);
+            }
+        });
+        return matchingOrganizations;
     }
 }
