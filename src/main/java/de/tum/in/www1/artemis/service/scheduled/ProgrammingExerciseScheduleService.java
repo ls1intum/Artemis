@@ -298,7 +298,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 // This operation unlocks the repositories and collects all individual due dates
                 BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> unlockAndCollectOperation = (programmingExercise, participation) -> {
                     var dueDate = studentExamRepository.getIndividualDueDate(programmingExercise, participation);
-                    individualDueDates.add(new Tuple<>(dueDate, participation));
+                    if (dueDate != null) {
+                        individualDueDates.add(new Tuple<>(dueDate, participation));
+                    }
                     programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
                 };
                 List<ProgrammingExerciseStudentParticipation> failedUnlockOperations = invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId,
@@ -326,7 +328,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     // the scheduler would execute the lock operation immediately, making the unlock obsolete, therefore we filter out all individual due dates in the past
                     // one use case is that the unlock all operation is invoked directly after exam start
                     Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> futureIndividualDueDates = individualDueDates.stream()
-                            .filter(tuple -> ZonedDateTime.now().isBefore(tuple.x)).collect(Collectors.toSet());
+                            .filter(tuple -> tuple.x != null && ZonedDateTime.now().isBefore(tuple.x)).collect(Collectors.toSet());
                     scheduleIndividualRepositoryLockTasks(exercise, futureIndividualDueDates);
                 }
             }

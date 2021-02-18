@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -107,6 +108,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
      * @param participation the participation of the student
      * @return the time from which on submissions are not allowed, for exercises that are not part of an exam, this is just the due date.
      */
+    @Nullable
     default ZonedDateTime getIndividualDueDate(Exercise exercise, StudentParticipation participation) {
         if (exercise.isExamExercise()) {
             var studentExam = findStudentExam(exercise, participation).orElse(null);
