@@ -103,16 +103,18 @@
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="userManagement.organizations">User organizations</label>
-                    <div class="btn-group">
-                        <div *ngFor="let organization of user.organizations">
-                            <span class="badge badge-primary m-1"
-                                >{{ organization.name
-                                }}<button type="button" class="btn btn-outline-primary" (click)="removeOrganizationFromUser(organization)">
-                                    <fa-icon [icon]="'times'"></fa-icon></button
-                            ></span>
+                    <div class="w-100">
+                        <div class="btn-group">
+                            <div *ngFor="let organization of user.organizations">
+                                <span class="badge badge-primary m-1"
+                                    >{{ organization.name
+                                    }}<button type="button" class="btn btn-outline-primary" (click)="removeOrganizationFromUser(organization)">
+                                        <fa-icon [icon]="'times'"></fa-icon></button
+                                ></span>
+                            </div>
                         </div>
+                        <button type="button" class="btn btn-outline-primary float-right" (click)="openOrganizationsModal()">Add</button>
                     </div>
-                    <button type="button" class="btn btn-outline-primary float-right" (click)="openOrganizationsModal()">Add</button>
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="userManagement.email">Email</label>

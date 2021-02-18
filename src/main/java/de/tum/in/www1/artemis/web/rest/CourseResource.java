@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
@@ -67,9 +66,6 @@ public class CourseResource {
 
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
     private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
-
-    @Value("${artemis.user-management.organizations.enable-multiple-organizations:#{null}}")
-    private Optional<Boolean> enabledMultipleOrganizations;
 
     private final UserService userService;
 
@@ -107,8 +103,6 @@ public class CourseResource {
 
     private final Optional<VcsUserManagementService> vcsUserManagementService;
 
-    private final OrganizationRepository organizationRepository;
-
     private final Environment env;
 
     public CourseResource(UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
@@ -116,7 +110,7 @@ public class CourseResource {
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
             ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
-            AssessmentDashboardService assessmentDashboardService, OrganizationRepository organizationRepository) {
+            AssessmentDashboardService assessmentDashboardService) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
@@ -136,7 +130,6 @@ public class CourseResource {
         this.auditEventRepository = auditEventRepository;
         this.env = env;
         this.assessmentDashboardService = assessmentDashboardService;
-        this.organizationRepository = organizationRepository;
     }
 
     /**
@@ -207,9 +200,6 @@ public class CourseResource {
         catch (ArtemisAuthenticationException ex) {
             // a specified group does not exist, notify the client
             throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "groupNotFound", true);
-        }
-        if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
-            updateOrganizations(course);
         }
         Course result = courseService.save(course);
         return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
@@ -283,10 +273,6 @@ public class CourseResource {
         validateComplaintsAndRequestMoreFeedbackConfig(updatedCourse);
         validateOnlineCourseAndRegistrationEnabled(updatedCourse);
         validateShortName(updatedCourse);
-
-        if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
-            updateOrganizations(updatedCourse);
-        }
 
         // Based on the old instructors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors and TAs, so that the VCS user management service can determine which
@@ -1055,24 +1041,5 @@ public class CourseResource {
         else {
             return forbidden();
         }
-    }
-
-    /**
-     * Utility method used to update the organizations of a course
-     * @param course the course containing the organizations to update
-     */
-    private void updateOrganizations(Course course) {
-        Set<Organization> oldOrganizations = organizationRepository.findAllOrganizationsByCourseId(course.getId());
-        for (Organization organization : course.getOrganizations()) {
-            if (!oldOrganizations.contains(organization)) {
-                organizationRepository.addCourseToOrganization(course, organization.getId());
-            }
-            oldOrganizations.remove(organization);
-        }
-        // we remove the remaining organizations that are not present anymore in the course
-        for (Organization organization : oldOrganizations) {
-            organizationRepository.removeCourseFromOrganization(course, organization.getId());
-        }
-        course.setOrganizations(null);
     }
 }

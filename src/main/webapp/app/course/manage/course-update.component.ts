@@ -380,21 +380,11 @@ export class CourseUpdateComponent implements OnInit {
         modalRef.componentInstance.organizations = this.courseOrganizations;
         modalRef.closed.subscribe((organization) => {
             if (organization !== undefined) {
+                if (this.courseOrganizations === undefined) {
+                    this.courseOrganizations = [];
+                }
                 this.courseOrganizations.push(organization);
             }
-            /*
-            if (this.course.id !== undefined) {
-                this.organizationService.addCourseToOrganization(organization.id, this.course.id).subscribe(
-                    () => {
-                        this.courseOrganizations.push(organization);
-                    },
-                    (error: HttpErrorResponse) => this.jhiAlertService.error(error.message),
-                );
-            } else {
-                // add for later save
-                this.courseOrganizations.push(organization);
-            }
-             */
         });
     }
 

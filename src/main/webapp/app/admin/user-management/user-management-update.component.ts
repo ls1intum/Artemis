@@ -110,6 +110,9 @@ export class UserManagementUpdateComponent implements OnInit {
         modalRef.componentInstance.organizations = this.user.organizations;
         modalRef.closed.subscribe((organization) => {
             if (organization !== undefined) {
+                if (this.user.organizations === undefined) {
+                    this.user.organizations = [];
+                }
                 this.user.organizations!.push(organization);
             }
         });
