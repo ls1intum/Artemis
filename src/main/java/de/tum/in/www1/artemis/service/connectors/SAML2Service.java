@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -18,9 +21,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 /**
  * This class describes a service for SAML2 authentication.
@@ -34,9 +37,6 @@ public class SAML2Service {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     /**
      * Handles an authentication via SAML2.
@@ -53,26 +53,32 @@ public class SAML2Service {
         log.debug("User {} attributes {}", auth.getName(), principal.getAttributes());
 
         final String username = principal.getFirstAttribute("uid");
-        final String firstName = principal.getFirstAttribute("first_name");
-        final String lastName = principal.getFirstAttribute("last_name");
-        final String email = principal.getFirstAttribute("email");
 
 
-        final User user = artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(
-                username, "randomPassword"), firstName, lastName, email, true);
-        
-        // or send activation mail...
-        if (!user.getActivated()) {
-            userService.activateUser(user);
+        Optional<User> user = userService.getUserByLogin(username);
+        if (user.isEmpty()) {
+            // create User
+            ManagedUserVM newUser = new ManagedUserVM();
+            newUser.setLogin(username);
+            newUser.setFirstName(principal.getFirstAttribute("first_name"));
+            newUser.setLastName(principal.getFirstAttribute("last_name"));
+            newUser.setEmail(principal.getFirstAttribute("email"));
+            // newUser.setVisibleRegistrationNumber(principal.getFirstAttribute("matriculation"));
+
+            newUser.setAuthorities(new HashSet<>(Set.of(AuthoritiesConstants.USER)));
+            newUser.setGroups(new HashSet<>());
+
+            // userService.createUser(ManagedUserVM) does create an activated User, else use userService.registerUser()
+            // a random password is generated
+            user = Optional.of(userService.createUser(newUser));
         }
         
         // failes with LazyInitializationException
         //SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
         //        user.getLogin(), user.getPassword(), toGrantedAuthorities(user.getAuthorities())));
-        
+
         auth = new UsernamePasswordAuthenticationToken(
-                 user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER)));
-        // SecurityContextHolder.getContext().setAuthentication(auth);
+                 user.get().getLogin(), user.get().getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER)));
         return auth;
     }
 
