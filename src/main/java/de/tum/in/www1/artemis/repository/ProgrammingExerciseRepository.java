@@ -191,6 +191,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     long countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
 
+    // TODO: this query is only used in tests, we should remove it or at least move it into a Repository in the test space
+    // TODO: this query would also be too slow on production for large exams
     @Query("""
             SELECT COUNT(DISTINCT p)
             FROM ProgrammingExerciseStudentParticipation p
