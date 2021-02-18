@@ -128,7 +128,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     @Query("""
             SELECT COUNT(p.id)
-            FROM StudentParticipation p left join  p.submissions s left join s.results r
+            FROM StudentParticipation p join  p.submissions s join s.results r
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
