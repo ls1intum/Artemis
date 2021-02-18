@@ -38,7 +38,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     participation?: StudentParticipation;
     result?: Result;
-    generalFeedback: Feedback;
     unreferencedFeedback: Feedback[];
     complaint?: Complaint;
     totalScore: number;
@@ -68,11 +67,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     private get assessments(): Feedback[] {
-        if (Feedback.hasDetailText(this.generalFeedback)) {
-            return [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback];
-        } else {
-            return [...this.referencedFeedback, ...this.unreferencedFeedback];
-        }
+        return [...this.referencedFeedback, ...this.unreferencedFeedback];
     }
 
     constructor(
@@ -102,7 +97,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.submission = undefined;
         this.exercise = undefined;
         this.result = undefined;
-        this.generalFeedback = new Feedback();
         this.unreferencedFeedback = [];
         this.textBlockRefs = [];
         this.unusedTextBlockRefs = [];
@@ -310,9 +304,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     validateFeedback(): void {
         const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
         const hasUnreferencedFeedback = this.unreferencedFeedback.filter(Feedback.isPresent).length > 0;
-        const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
 
-        this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback || hasUnreferencedFeedback;
+        this.assessmentsAreValid = hasReferencedFeedback || hasUnreferencedFeedback;
 
         this.totalScore = this.computeTotalScore(this.assessments);
     }
@@ -323,13 +316,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
         const feedbacks = this.result.feedbacks || [];
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
-        const generalFeedbackIndex = feedbacks.findIndex((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
-        if (generalFeedbackIndex !== -1) {
-            this.generalFeedback = feedbacks[generalFeedbackIndex];
-            feedbacks.splice(generalFeedbackIndex, 1);
-        } else {
-            this.generalFeedback = new Feedback();
-        }
 
         const matchBlocksWithFeedbacks = TextAssessmentsService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
