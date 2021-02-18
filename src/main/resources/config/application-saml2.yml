@@ -1,0 +1,34 @@
+# ===================================================================
+# Spring Boot configuration for the "saml2" profile.
+#
+# See https://docs.spring.io/spring-security/site/docs/5.2.8.RELEASE/reference/html/saml2.html
+# ===================================================================
+
+# The authentication process can be initiated by navigating to {baseUrl}/saml2/authenticate/{registrationId} for a certain IdP
+# The Assertion Consumer Service URL (Callback URL, Recipient URL, Destination URL) is {baseUrl}/login/saml2/sso/{registrationId}
+# this URL must be registerd in the IdP.
+# Spring Security autogenerates a simple login page at {baseUrl}/login
+
+# Proxy Environment
+# Forward /login and /saml2 to the Artemis Server.
+
+saml2:
+    # Define the patterns used when generating users. SAML2 Attributes can be substituted by surrounding them with
+    # curly brackets. E.g. username: '{user_attribute}'. Missing attributes get replaced with an empty string.
+    # This enables definition of alternative attribute keys when using multiple IdPs. E.g. username: '{uid}{user_id}'.
+    # User template pattern:
+    username-pattern: '{first_name}_{last_name}'
+    first-name-pattern: '{first_name}'
+    last-name-pattern: '{last_name}'
+    email-pattern: '{email}'
+    registration-number-pattern: '{uid}'
+    # A list of identity provides (IdP). Metadata location can be a local path (or classpath) or url.
+    # If your IdP does not publish its metadata you can generate it here: https://www.samltool.com/idp_metadata.php
+    identity-providers:
+        - metadata: https://idp_host/.../metadata
+          registration-id: IdPName
+          entity-id: artemis
+        # Multiple IdPs can be configured
+        # - metadata: <URL>
+        #   registrationid: <id>
+        #   entityid: <id>
