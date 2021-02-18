@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
@@ -27,7 +26,7 @@ import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 @Service
 public class AssessmentDashboardService {
 
-    private final Logger log = LoggerFactory.getLogger(ExamService.class);
+    private final Logger log = LoggerFactory.getLogger(AssessmentDashboardService.class);
 
     private final ComplaintService complaintService;
 
