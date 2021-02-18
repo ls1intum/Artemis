@@ -43,8 +43,32 @@ The following sections describe the supported features and the process of creati
     .. figure:: file-upload/course-dashboard-exercise-file-upload.png
               :align: center
 
-- Click the |edit| button of the file upload exercise and adapt the interactive problem statement, and view the exercise by clicking on the title.
+- Click the |edit| button of the file upload exercise and adapt the interactive problem statement. There you can also set release and due dates.
+- You can get an overview of the exercise by clicking on the title.
+
+Student Submission
+------------------
+
+- When the exercise is released the students can upload the requested file.
+- They can choose a file with |browse| and then submit the file with |submit|.
+
+    .. figure:: file-upload/file_upload_exercise_student_view.png
+              :align: center
+
+- After a file was uploaded it can then be downloaded again with the link below.
+
+    .. figure:: file-upload/file_upload_exercise_student_submitted.png
+              :align: center
+
+Assessment
+----------
+
+- When the due date is over you can assess the submissions. Go to the
 
 .. |edit| image:: programming/edit.png
 .. |course-management| image:: programming/course-management.png
 .. |save| image:: file-upload/save_button.png
+.. |submit| image:: file-upload/submit.png
+    :scale: 50
+.. |browse| image:: file-upload/browse.png
+    :scale: 50
