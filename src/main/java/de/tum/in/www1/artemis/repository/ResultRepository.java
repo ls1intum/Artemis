@@ -173,7 +173,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds];
 
         for (int i = 0; i < correctionRounds; i++) {
-            correctionRoundsDataStats[i] = new DueDateStat(this.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), i), 0L);
+            // TODO: currently disabled because it is too slow for large exams
+            // var finishedAssessments = this.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), i);
+            var finishedAssessments = 0;
+            correctionRoundsDataStats[i] = new DueDateStat(finishedAssessments, 0L);
         }
         return correctionRoundsDataStats;
     }
