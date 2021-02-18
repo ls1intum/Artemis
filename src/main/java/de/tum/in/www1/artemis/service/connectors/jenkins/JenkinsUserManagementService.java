@@ -31,6 +31,8 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.JenkinsUpdateUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.JenkinsUserDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermission;
+import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Service
@@ -185,7 +187,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
                 try {
                     // We are assigning instructor permissions since the exercise's course teaching assistant group
                     // is the same as the one that is specified.
-                    jenkinsJobPermissionsService.addInstructorPermissionsToUserForJob(userLogin, jobName);
+                    jenkinsJobPermissionsService.addInstructorPermissionsToUserForJob(userLogin, null, jobName);
                 }
                 catch (IOException e) {
                     throw new JenkinsException("Cannot assign instructor permissions to user: " + userLogin, e);
@@ -195,7 +197,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
                 try {
                     // We are assigning teaching assistant permissions since the exercise's course teaching assistant group
                     // is the same as the one that is specified.
-                    jenkinsJobPermissionsService.addTeachingAssistantPermissionsToUserForJob(userLogin, jobName);
+                    jenkinsJobPermissionsService.addTeachingAssistantPermissionsToUserForJob(userLogin, null, jobName);
                 }
                 catch (IOException e) {
                     throw new JenkinsException("Cannot assign teaching assistant permissions to user: " + userLogin, e);
@@ -222,7 +224,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
                 // The exercise's projectkey is also the name of the Jenkins folder job which groups the student's, solution,
                 // and template build plans together
                 var jobName = exercise.getProjectKey();
-                jenkinsJobPermissionsService.removePermissionsFromUserOfJob(userLogin, jobName, Set.of(JenkinsJobPermission.values()));
+                jenkinsJobPermissionsService.removePermissionsFromUserOfJob(userLogin, null, jobName, Set.of(JenkinsJobPermission.values()));
             }
             catch (IOException e) {
                 throw new JenkinsException("Cannot revoke permissions from user: " + userLogin, e);
@@ -257,20 +259,19 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * Assigns teaching assistant and/or instructor permissions to each user belonging to the teaching assistant/instructor
      * groups of the course.
      *
-     * @param updatedCourse the course
+     * @param course the course
      */
-    private void assignPermissionsToInstructorAndTAsForCourse(Course updatedCourse) {
-        var teachingAssistants = userRepository.findAllInGroupWithAuthorities(updatedCourse.getTeachingAssistantGroupName()).stream().map(User::getLogin)
-                .collect(Collectors.toSet());
-        var instructors = userRepository.findAllInGroupWithAuthorities(updatedCourse.getInstructorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+    private void assignPermissionsToInstructorAndTAsForCourse(Course course) {
+        var teachingAssistants = userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+        var instructors = userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
 
         // Courses can have the same groups. We do not want to add/remove users from exercises of other courses
         // belonging to the same group
-        var exercises = programmingExerciseRepository.findAllByCourse(updatedCourse);
+        var exercises = programmingExerciseRepository.findAllByCourse(course);
         exercises.forEach(exercise -> {
             var job = exercise.getProjectKey();
             try {
-                jenkinsJobPermissionsService.addInstructorAndTAPermissionsToUsersForJob(teachingAssistants, instructors, job);
+                jenkinsJobPermissionsService.addInstructorAndTAPermissionsToUsersForJob(teachingAssistants, instructors, null, job);
             }
             catch (IOException e) {
                 throw new JenkinsException("Cannot assign teaching assistant and instructor permissions for job: " + job, e);
@@ -302,7 +303,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         // Revoke all permissions.
         exercises.forEach(exercise -> {
             try {
-                jenkinsJobPermissionsService.removePermissionsFromUsersForJob(usersFromOldGroup, exercise.getProjectKey(), Set.of(JenkinsJobPermission.values()));
+                jenkinsJobPermissionsService.removePermissionsFromUsersForJob(usersFromOldGroup, null, exercise.getProjectKey(), Set.of(JenkinsJobPermission.values()));
             }
             catch (IOException e) {
                 throw new JenkinsException("Cannot remove permissions from all users for job: " + exercise.getProjectKey(), e);

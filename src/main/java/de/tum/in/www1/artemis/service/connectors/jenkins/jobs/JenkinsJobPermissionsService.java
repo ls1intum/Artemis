@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.jenkins;
+package de.tum.in.www1.artemis.service.connectors.jenkins.jobs;
 
 import java.io.IOException;
 import java.util.Set;
@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.offbytwo.jenkins.JenkinsServer;
-import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsUtils;
 
 @Service
 @Profile("jenkins")
@@ -33,8 +32,8 @@ public class JenkinsJobPermissionsService {
      * @param jobName the name of the job where the permissions will take affect
      * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
      */
-    public void addInstructorPermissionsToUserForJob(String userLogin, String jobName) throws IOException {
-        addPermissionsForUserToJob(userLogin, jobName, JenkinsJobPermission.getInstructorPermissions());
+    public void addInstructorPermissionsToUserForJob(String userLogin, String folderName, String jobName) throws IOException {
+        addPermissionsForUserToJob(userLogin, folderName, jobName, JenkinsJobPermission.getInstructorPermissions());
     }
 
     /**
@@ -45,8 +44,8 @@ public class JenkinsJobPermissionsService {
      * @param jobName the name of the job where the permissions will take affect
      * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
      */
-    public void addInstructorAndTAPermissionsToUsersForJob(Set<String> taLogins, Set<String> instructorLogins, String jobName) throws IOException {
-        var jobConfigDocument = getJobConfigXmlDocument(jobName);
+    public void addInstructorAndTAPermissionsToUsersForJob(Set<String> taLogins, Set<String> instructorLogins, String folderName, String jobName) throws IOException {
+        var jobConfigDocument = getJobConfigXmlDocument(folderName, jobName);
 
         // Revoke previously-assigned permissions
         JenkinsJobPermissionsUtils.removePermissionsFromDocument(jobConfigDocument, Set.of(JenkinsJobPermission.values()), taLogins);
@@ -67,8 +66,8 @@ public class JenkinsJobPermissionsService {
      * @param jobName the name of the job where the permissions will take affect
      * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
      */
-    public void addTeachingAssistantPermissionsToUserForJob(String userLogin, String jobName) throws IOException {
-        var jobConfigDocument = getJobConfigXmlDocument(jobName);
+    public void addTeachingAssistantPermissionsToUserForJob(String userLogin, String folderName, String jobName) throws IOException {
+        var jobConfigDocument = getJobConfigXmlDocument(folderName, jobName);
 
         // Revoke previously-assigned permissions
         JenkinsJobPermissionsUtils.removePermissionsFromDocument(jobConfigDocument, Set.of(JenkinsJobPermission.values()), userLogin);
@@ -88,8 +87,8 @@ public class JenkinsJobPermissionsService {
      * @param permissions a list of permissions to give to the user
      * @throws IOException thrown when retrieving/updating the Jenkins job failed
      */
-    public void addPermissionsForUserToJob(String userLogin, String jobName, Set<JenkinsJobPermission> permissions) throws IOException {
-        addPermissionsForUsersToJob(Set.of(userLogin), jobName, permissions);
+    public void addPermissionsForUserToJob(String userLogin, String folderName, String jobName, Set<JenkinsJobPermission> permissions) throws IOException {
+        addPermissionsForUsersToJob(Set.of(userLogin), folderName, jobName, permissions);
     }
 
     /**
@@ -101,8 +100,8 @@ public class JenkinsJobPermissionsService {
      * @param permissions a list of permissions to give to the users
      * @throws IOException thrown when retrieving/updating the Jenkins job failed
      */
-    public void addPermissionsForUsersToJob(Set<String> userLogins, String jobName, Set<JenkinsJobPermission> permissions) throws IOException {
-        var jobConfigDocument = getJobConfigXmlDocument(jobName);
+    public void addPermissionsForUsersToJob(Set<String> userLogins, String folderName, String jobName, Set<JenkinsJobPermission> permissions) throws IOException {
+        var jobConfigDocument = getJobConfigXmlDocument(folderName, jobName);
         JenkinsJobPermissionsUtils.addPermissionsToDocument(jobConfigDocument, permissions, userLogins);
         jenkinsServer.updateJob(jobName, jobConfigDocument.toString(), useCrumb);
     }
@@ -115,8 +114,8 @@ public class JenkinsJobPermissionsService {
      * @param permissionsToRemove a list of permissions to remove from the user
      * @throws IOException thrown when retrieving/updating the Jenkins job failed
      */
-    public void removePermissionsFromUserOfJob(String userLogin, String jobName, Set<JenkinsJobPermission> permissionsToRemove) throws IOException {
-        removePermissionsFromUsersForJob(Set.of(userLogin), jobName, permissionsToRemove);
+    public void removePermissionsFromUserOfJob(String userLogin, String folderName, String jobName, Set<JenkinsJobPermission> permissionsToRemove) throws IOException {
+        removePermissionsFromUsersForJob(Set.of(userLogin), folderName, jobName, permissionsToRemove);
     }
 
     /**
@@ -127,8 +126,8 @@ public class JenkinsJobPermissionsService {
      * @param permissionsToRemove a list of permissions to remove from the users
      * @throws IOException thrown when retrieving/updating the Jenkins job failed
      */
-    public void removePermissionsFromUsersForJob(Set<String> userLogins, String jobName, Set<JenkinsJobPermission> permissionsToRemove) throws IOException {
-        var jobConfigDocument = getJobConfigXmlDocument(jobName);
+    public void removePermissionsFromUsersForJob(Set<String> userLogins, String folderName, String jobName, Set<JenkinsJobPermission> permissionsToRemove) throws IOException {
+        var jobConfigDocument = getJobConfigXmlDocument(folderName, jobName);
         JenkinsJobPermissionsUtils.removePermissionsFromDocument(jobConfigDocument, permissionsToRemove, userLogins);
         jenkinsServer.updateJob(jobName, jobConfigDocument.toString(), useCrumb);
     }
@@ -140,8 +139,17 @@ public class JenkinsJobPermissionsService {
      * @return the job configuration file as an xml document
      * @throws IOException thrown when retrieving/updating the Jenkins job failed
      */
-    private Document getJobConfigXmlDocument(String jobName) throws IOException {
-        var jobXml = jenkinsServer.getJobXml(jobName);
+    private Document getJobConfigXmlDocument(String folderName, String jobName) throws IOException {
+        var jobXml = "";
+
+        if (folderName != null && !folderName.isEmpty()) {
+            var job = jenkinsServer.getJob(folderName);
+            var folder = jenkinsServer.getFolderJob(job);
+            jobXml = jenkinsServer.getJobXml(folder.orNull(), jobName);
+        }
+        else {
+            jobXml = jenkinsServer.getJobXml(jobName);
+        }
 
         // Parse the config xml file for the job and insert the permissions into it.
         var document = Jsoup.parse(jobXml, "", Parser.xmlParser());
@@ -149,5 +157,4 @@ public class JenkinsJobPermissionsService {
 
         return document;
     }
-
 }
