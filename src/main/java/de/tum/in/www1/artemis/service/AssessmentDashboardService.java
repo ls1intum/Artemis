@@ -65,23 +65,25 @@ public class AssessmentDashboardService {
             if (exercise instanceof ProgrammingExercise) {
                 numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
                 log.info("StatsTimeLog: number of submitted submissions done in " + TimeLogUtil.formatDurationFrom(start) + " for programming exercise " + exercise.getId());
-                totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
-                log.info("StatsTimeLog: number of submitted assessments done in " + TimeLogUtil.formatDurationFrom(start) + " for programming exercise " + exercise.getId());
             }
             else {
                 numberOfSubmissions = submissionRepository.countSubmissionsForExercise(exercise.getId(), examMode);
                 log.info("StatsTimeLog: number of submitted submissions done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
-                totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), examMode);
-                log.info("StatsTimeLog: number of submitted assessments done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            }
+            exercise.setNumberOfSubmissions(numberOfSubmissions);
+
+            // set number of correctionrounds. If it isn't an exam the default is 1. If it is an exam we fetch the number of correction rounds which is set for the exam
+            int numberOfCorrectionRounds = 1;
+            if (examMode) {
+                numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
             }
 
-            exercise.setNumberOfSubmissions(numberOfSubmissions);
-            exercise.setTotalNumberOfAssessments(totalNumberOfAssessments);
-
-            final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
-                    totalNumberOfAssessments);
+            final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(exercise,
+                    numberOfCorrectionRounds);
             log.info("StatsTimeLog: number of assessments per correction round in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+
             exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
+            exercise.setTotalNumberOfAssessments(numberOfAssessmentsOfCorrectionRounds[0]);
 
             complaintService.calculateNrOfOpenComplaints(exercise, examMode);
             log.info("StatsTimeLog: number of open complaints done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
