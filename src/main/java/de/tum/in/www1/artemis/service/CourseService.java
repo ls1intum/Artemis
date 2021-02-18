@@ -292,25 +292,15 @@ public class CourseService {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var isAdmin = authCheckService.isAdmin(user);
 
-        List<Map<String, Object>> courses = this.courseRepository.getAllDTOsForOverview(now);
+        List<CourseManagementOverviewDetailsDTO> courses = this.courseRepository.getAllDTOsForOverview(now);
         List<CourseManagementOverviewDetailsDTO> dtos = new ArrayList<>();
-        for (var course : courses) {
-            var teachingAssistantGroupName = (String) course.get("teachingAssistantGroupName");
-            var instructorGroupName = (String) course.get("instructorGroupName");
+        for (var dto : courses) {
+            var teachingAssistantGroupName = dto.getTeachingAssistantGroupName();
+            var instructorGroupName = dto.getInstructorGroupName();
             if (!isAdmin && !user.getGroups().contains(teachingAssistantGroupName) && !user.getGroups().contains(instructorGroupName)) {
                 continue;
             }
 
-            CourseManagementOverviewDetailsDTO dto = new CourseManagementOverviewDetailsDTO();
-            dto.setId((Long) course.get("id"));
-            dto.setTitle((String) course.get("title"));
-            dto.setTestCourse((Boolean) course.get("testCourse"));
-            dto.setColor((String) course.get("color"));
-            dto.setSemester((String) course.get("semester"));
-            dto.setStudentGroupName((String) course.get("studentGroupName"));
-            dto.setTeachingAssistantGroupName(teachingAssistantGroupName);
-            dto.setInstructorGroupName(instructorGroupName);
-            dto.setShortName((String) course.get("shortName"));
             dtos.add(dto);
         }
         return dtos;

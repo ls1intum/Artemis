@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewDetailsDTO;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -110,7 +111,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             from Course c
             where c.endDate is null or :#{#now} is null or c.endDate >= :#{#now}
             """)
-    List<Map<String, Object>> getAllDTOsForOverview(@Param("now") ZonedDateTime now);
+    List<CourseManagementOverviewDetailsDTO> getAllDTOsForOverview(@Param("now") ZonedDateTime now);
 
     default Course findByIdElseThrow(Long courseId) throws EntityNotFoundException {
         return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));

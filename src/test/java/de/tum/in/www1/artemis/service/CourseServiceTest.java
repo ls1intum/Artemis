@@ -38,7 +38,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     @Test
-    public void getActiveStudents() {
+    public void testGetActiveStudents() {
         SecurityUtils.setAuthorizationObject();
         var course = database.addEmptyCourse();
         var now = ZonedDateTime.now();
