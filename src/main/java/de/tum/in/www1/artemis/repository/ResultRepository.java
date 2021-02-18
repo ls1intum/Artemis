@@ -124,7 +124,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     /**
      * @param exerciseId id of exercise
-     * @return the number of completed assessments for the specified correction round of an exam exercise
+     * @return a list that contains the count of manual assessments for each studentParticipation of the exercise
      */
     @Query("""
             SELECT COUNT(p.id)
@@ -167,7 +167,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     /**
      * Use this method only for exams!
-     * Given an exerciseId and a correctionRound, return the number of assessments for that exerciseId and correctionRound that have been finished
+     * Given an exerciseId and the number of correctionRounds, return the number of assessments that have been finished, for that exerciseId and each correctionRound
      *
      * @param exercise  - the exercise we are interested in
      * @param numberOfCorrectionRounds - the correction round we want finished assessments for
@@ -176,8 +176,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     default DueDateStat[] countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRound(Exercise exercise, int numberOfCorrectionRounds) {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
 
+        // here we receive a list which contains an entry for each studentparticipation of the exercise.
+        // the entry simply is the number of already created and submitted manual results, so the number is either 1 or 2
         List<Long> countlist = countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(exercise.getId());
 
+        // depending on the number of correctionRounds we create 1 or 2 DueDateStats that contain the sum of all participations:
+        // with either 1 or more manual results, OR 2 or more manual results
         correctionRoundsDataStats[0] = new DueDateStat(countlist.stream().filter(x -> x >= 1L).count(), 0L);
         if (numberOfCorrectionRounds == 2) {
             correctionRoundsDataStats[1] = new DueDateStat(countlist.stream().filter(x -> x >= 2L).count(), 0L);
