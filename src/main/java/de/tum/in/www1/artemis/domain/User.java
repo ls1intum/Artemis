@@ -112,7 +112,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     @BatchSize(size = 20)
     private Set<Authority> authorities = new HashSet<>();
 
-    @ManyToMany(mappedBy = "users")
+    @ManyToMany
+    @JoinTable(name = "user_organization", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
+            @JoinColumn(name = "organization_id", referencedColumnName = "id") })
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @BatchSize(size = 20)
     private Set<Organization> organizations = new HashSet<Organization>();
 
     public String getLogin() {

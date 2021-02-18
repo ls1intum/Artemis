@@ -8,6 +8,7 @@ import java.util.Set;
 
 import javax.persistence.*;
 
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -147,7 +148,11 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties("course")
     private Set<Exam> exams = new HashSet<>();
 
-    @ManyToMany(mappedBy = "courses")
+    @ManyToMany
+    @JoinTable(name = "course_organization", joinColumns = { @JoinColumn(name = "course_id", referencedColumnName = "id") }, inverseJoinColumns = {
+            @JoinColumn(name = "organization_id", referencedColumnName = "id") })
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @BatchSize(size = 20)
     private Set<Organization> organizations = new HashSet<Organization>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it

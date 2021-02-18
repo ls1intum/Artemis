@@ -1,0 +1,44 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.1.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+    <changeSet author="qe (generated)" id="1613639496714-48">
+        <createTable tableName="course_organization">
+            <column name="course_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="organization_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="qe (generated)" id="1613639496714-49">
+        <createTable tableName="user_organization">
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="organization_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="qe (generated)" id="1613639496714-55">
+        <addPrimaryKey columnNames="organization_id, course_id" tableName="course_organization"/>
+    </changeSet>
+    <changeSet author="qe (generated)" id="1613639496714-56">
+        <addPrimaryKey columnNames="organization_id, user_id" tableName="user_organization"/>
+    </changeSet>
+    <changeSet author="qe (generated)" id="1613639496714-57">
+        <addUniqueConstraint columnNames="id" constraintName="UC_TEXT_BLOCKID_COL" tableName="text_block"/>
+    </changeSet>
+    <changeSet author="qe (generated)" id="1613639496714-58">
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_organization" constraintName="FK71cxcwaglhos8x0qxs61vpxkb" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+    </changeSet>
+    <changeSet author="qe (generated)" id="1613639496714-59">
+        <addForeignKeyConstraint baseColumnNames="organization_id" baseTableName="course_organization" constraintName="FKdythnvneadrsbvfa3hxd1tq4h" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="organization" validate="true"/>
+    </changeSet>
+    <changeSet author="qe (generated)" id="1613639496714-60">
+        <addForeignKeyConstraint baseColumnNames="organization_id" baseTableName="user_organization" constraintName="FKfdnaj8emi62iffmg6w6ykjxf4" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="organization" validate="true"/>
+    </changeSet>
+    <changeSet author="qe (generated)" id="1613639496714-61">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_organization" constraintName="FKnfyuy63doxihtl3pu8rnm46n4" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+    </changeSet>
+</databaseChangeLog>
