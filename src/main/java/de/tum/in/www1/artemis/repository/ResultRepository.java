@@ -97,7 +97,15 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
     Optional<Result> findWithEagerSubmissionAndFeedbackById(long resultId);
 
-    @Query("SELECT COUNT(DISTINCT p) FROM StudentParticipation p left join p.results r WHERE p.exercise.id = :exerciseId AND r.assessor IS NOT NULL AND r.rated = TRUE AND r.completionDate IS NOT NULL AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)")
+    @Query("""
+                SELECT COUNT(DISTINCT p) FROM StudentParticipation p left join p.results r
+                WHERE p.exercise.id = :exerciseId
+                AND r.assessor IS NOT NULL
+                AND r.rated = TRUE
+                AND r.completionDate IS NOT NULL
+                AND (p.exercise.dueDate IS NULL
+                    OR r.submission.submissionDate <= p.exercise.dueDate)
+            """)
     long countNumberOfFinishedAssessmentsForExercise(@Param("exerciseId") Long exerciseId);
 
     @Query("""
@@ -158,13 +166,14 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     boolean existsByParticipation_ExerciseId(long exerciseId);
 
     /**
+     * Use this method only for exams!
      * Given an exerciseId and a correctionRound, return the number of assessments for that exerciseId and correctionRound that have been finished
      *
      * @param exercise  - the exercise we are interested in
      * @param numberOfCorrectionRounds - the correction round we want finished assessments for
      * @return an array of the number of assessments for the exercise for a given correction round
      */
-    default DueDateStat[] countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(Exercise exercise, int numberOfCorrectionRounds) {
+    default DueDateStat[] countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRound(Exercise exercise, int numberOfCorrectionRounds) {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
 
         List<Long> countlist = countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(exercise.getId());
@@ -213,7 +222,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         if (examMode) {
             // set number of corrections specific to each correction round
             int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
-            return countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(exercise, numberOfCorrectionRounds);
+            return countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRound(exercise, numberOfCorrectionRounds);
         }
         else {
             // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
