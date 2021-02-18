@@ -135,6 +135,22 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             """)
     long countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("correctionRound") long correctionRound);
 
+    /**
+     * @param exerciseId id of exercise
+     * @return the number of completed assessments for the specified correction round of an exam exercise
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT p) as countOfRound
+            FROM StudentParticipation p left join fetch  p.submissions s left join fetch s.results r
+            WHERE p.exercise.id = :exerciseId
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
+                AND r.completionDate IS NOT NULL
+                AND r.rated = TRUE
+                AND r.assessor IS NOT NULL
+            """)
+    List<Long> countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
     List<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(Long exerciseId);
 
@@ -165,15 +181,17 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * Given an exerciseId and a correctionRound, return the number of assessments for that exerciseId and correctionRound that have been finished
      *
      * @param exercise  - the exercise we are interested in
-     * @param correctionRounds - the correction round we want finished assessments for
+     * @param numberOfCorrectionRounds - the correction round we want finished assessments for
      * @return an array of the number of assessments for the exercise for a given correction round
      */
-    default DueDateStat[] countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(Exercise exercise, int correctionRounds) {
-        DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds];
+    default DueDateStat[] countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(Exercise exercise, int numberOfCorrectionRounds) {
+        DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
 
-        for (int i = 0; i < correctionRounds; i++) {
-            var finishedAssessments = this.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), i);
-            correctionRoundsDataStats[i] = new DueDateStat(finishedAssessments, 0L);
+        List<Long> countlist = countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(exercise.getId());
+
+        correctionRoundsDataStats[0] = new DueDateStat(countlist.stream().filter(x -> x >= 1L).count(), 0L);
+        if (numberOfCorrectionRounds == 2) {
+            correctionRoundsDataStats[1] = new DueDateStat(countlist.stream().filter(x -> x >= 2L).count(), 0L);
         }
         return correctionRoundsDataStats;
     }
