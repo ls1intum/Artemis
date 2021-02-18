@@ -35,7 +35,7 @@ public interface CIUserManagementService {
 
     /**
      * Updates the user in the CIS with the data from the Artemis users. Also adds/removes
-     * the user to/from the specified groups. Throws an exceptions if the user doesn't exist
+     * the user to/from the specified groups. Throws an exception if the user doesn't exist
      * in the CIS.
      *
      * @param user the Artemis user
