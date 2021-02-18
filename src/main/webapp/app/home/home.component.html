@@ -69,18 +69,22 @@
                                 </label>
                             </div>
                         </div>
-                        <button
-                            type="submit"
-                            [disabled]="isSubmittingLogin || !acceptTerms || !password || password.length < 4 || !username || username.length < 4"
-                            class="btn btn-primary"
-                        >
-                            <span *ngIf="isSubmittingLogin" class="mr-1"><fa-icon [icon]="'circle-notch'" spin="true"></fa-icon></span>
-                            <span jhiTranslate="login.form.button"> Sign in </span>
-                        </button>
+                        <div class="btn-toolbar">
+                            <button
+                                type="submit"
+                                [disabled]="isSubmittingLogin || !acceptTerms || !password || password.length < 4 || !username || username.length < 4"
+                                class="btn btn-primary btn-space"
+                            >
+                                <span *ngIf="isSubmittingLogin" class="mr-1"><fa-icon [icon]="'circle-notch'" spin="true"></fa-icon></span>
+                                <span jhiTranslate="login.form.button"> Sign in </span>
+                            </button>
+                            <div *ngIf="saml2Enabled">
+                                <button type="button" [disabled]="!acceptTerms" class="btn btn-primary" (click)="loginSAML2()">
+                                    <span>{{saml2ButtonLabel}}</span>
+                                </button>
+                            </div>
+                        </div>
                     </form>
-                    <button type="button" [disabled]="!acceptTerms" class="btn btn-primary" (click)="loginSAML2()">
-                            <span> SAML2</span>
-                    </button>
                 </div>
             </div>
         </div>

@@ -57,6 +57,7 @@ export class ProfileService {
                         profileInfo.accountName = data.accountName;
                         profileInfo.versionControlUrl = data.versionControlUrl;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
+                        profileInfo.saml2 = data.saml2;
 
                         return profileInfo;
                     }),

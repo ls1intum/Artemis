@@ -43,6 +43,9 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     externalUserManagementUrl: string;
     externalUserManagementName: string;
 
+    saml2Enabled = false;
+    saml2ButtonLabel: string;
+
     isSubmittingLogin = false;
 
     constructor(
@@ -77,6 +80,10 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                     this.errorMessageUsername = 'home.errors.tumWarning';
                 }
                 this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
+                if (profileInfo.activeProfiles.includes('saml2')) {
+                    this.saml2Enabled = true;
+                    this.saml2ButtonLabel = profileInfo.saml2?.["button-label"] || 'SAML2 Login';
+                }
             }
         });
         this.accountService.identity().then((user) => {

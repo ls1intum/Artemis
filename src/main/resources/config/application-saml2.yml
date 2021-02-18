@@ -32,3 +32,6 @@ saml2:
         # - metadata: <URL>
         #   registrationid: <id>
         #   entityid: <id>
+
+# String used for the SAML2 login button. E.g. 'Shibboleth Login'
+info.saml2.button-label: 'SAML2 Login'

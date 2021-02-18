@@ -28,4 +28,5 @@ export class ProfileInfo {
     public accountName?: string;
     public versionControlUrl?: string;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
+    public saml2?: { ["button-label"]: string };
 }

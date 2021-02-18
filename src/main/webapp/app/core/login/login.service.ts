@@ -46,8 +46,7 @@ export class LoginService {
     }
 
     /**
-     * Login the user with SAML2.
-     * 
+     * Login the user with SAML2. 
      * @param callback The callback function to use (optional)
      */
     loginSAML2(callback?: any) {
