@@ -54,7 +54,7 @@ public class AssessmentDashboardService {
      * @param tutorParticipations participations of the tutors
      * @param examMode flag should be set for exam dashboard
      */
-    public void prepareExercisesForAssessmentDashboard(Set<Exercise> exercises, List<TutorParticipation> tutorParticipations, boolean examMode) {
+    public void generateStatisticsForExercisesForAssessmentDashboard(Set<Exercise> exercises, List<TutorParticipation> tutorParticipations, boolean examMode) {
         for (Exercise exercise : exercises) {
 
             DueDateStat numberOfSubmissions;
