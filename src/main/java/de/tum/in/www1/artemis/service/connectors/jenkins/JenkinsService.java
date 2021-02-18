@@ -531,7 +531,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Override
     public void enablePlan(String projectKey, String planKey) {
-        post(Endpoint.ENABLE, HttpStatus.FOUND, "Unable to enable plan " + planKey, String.class, projectKey, planKey);
+        jenkinsBuildPlanService.enablePlan(projectKey, planKey);
     }
 
     @Override
@@ -564,22 +564,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         catch (IOException e) {
             log.error(e.getMessage(), e);
             throw new JenkinsException("Error creating folder for exercise " + programmingExercise, e);
-        }
-    }
-
-    private <T> T post(Endpoint endpoint, HttpStatus allowedStatus, String messageInCaseOfError, Class<T> responseType, Object... args) {
-        final var builder = endpoint.buildEndpoint(serverUrl.toString(), args);
-        try {
-            final var response = restTemplate.postForEntity(builder.build(true).toString(), null, responseType);
-            if (response.getStatusCode() != allowedStatus) {
-                throw new JenkinsException(
-                        messageInCaseOfError + "; statusCode=" + response.getStatusCode() + "; headers=" + response.getHeaders() + "; body=" + response.getBody());
-            }
-            return response.getBody();
-        }
-        catch (HttpClientErrorException e) {
-            log.error(messageInCaseOfError, e);
-            throw new JenkinsException(messageInCaseOfError, e);
         }
     }
 
