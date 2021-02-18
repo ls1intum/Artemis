@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
 /**
@@ -55,6 +56,8 @@ public class AssessmentDashboardService {
      * @param examMode flag should be set for exam dashboard
      */
     public void generateStatisticsForExercisesForAssessmentDashboard(Set<Exercise> exercises, List<TutorParticipation> tutorParticipations, boolean examMode) {
+        log.info("generateStatisticsForExercisesForAssessmentDashboard invoked");
+        long start = System.nanoTime();
         for (Exercise exercise : exercises) {
 
             DueDateStat numberOfSubmissions;
@@ -62,11 +65,15 @@ public class AssessmentDashboardService {
 
             if (exercise instanceof ProgrammingExercise) {
                 numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
+                log.info("StatsTimeLog: number of submitted submissions done in " + TimeLogUtil.formatDurationFrom(start) + " for programming exercise " + exercise.getId());
                 totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
+                log.info("StatsTimeLog: number of submitted assessments done in " + TimeLogUtil.formatDurationFrom(start) + " for programming exercise " + exercise.getId());
             }
             else {
                 numberOfSubmissions = submissionRepository.countSubmissionsForExercise(exercise.getId(), examMode);
+                log.info("StatsTimeLog: number of submitted submissions done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
                 totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), examMode);
+                log.info("StatsTimeLog: number of submitted assessments done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             }
 
             exercise.setNumberOfSubmissions(numberOfSubmissions);
@@ -74,11 +81,14 @@ public class AssessmentDashboardService {
 
             final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
                     totalNumberOfAssessments);
+            log.info("StatsTimeLog: number of assessments per correction round in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
             complaintService.calculateNrOfOpenComplaints(exercise, examMode);
-
+            log.info("StatsTimeLog: number of open complaints done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exercise.getId());
+
+            log.info("StatsTimeLog: example submissions done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
 
             // Do not provide example submissions without any assessment
             exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getLatestResult() == null);
@@ -91,6 +101,8 @@ public class AssessmentDashboardService {
                         return emptyTutorParticipation;
                     });
             exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
+
+            log.info("StatsTimeLog: tutor participations done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
         }
     }
 }

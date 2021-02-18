@@ -119,6 +119,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param correctionRound correction round to find completed assessments by
      * @return the number of completed assessments for the specified correction round of an exam exercise
      */
+    // TODO: this query seems to be very slow on production, we should try to optimize it
     @Query("""
             SELECT COUNT(DISTINCT p)
             FROM StudentParticipation p WHERE p.exercise.id = :exerciseId
