@@ -119,13 +119,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param correctionRound correction round to find completed assessments by
      * @return the number of completed assessments for the specified correction round of an exam exercise
      */
-    // TODO: this query seems to be very slow on production, we should try to optimize it
     @Query("""
             SELECT COUNT(DISTINCT p)
             FROM StudentParticipation p WHERE p.exercise.id = :exerciseId
             AND p.testRun = FALSE
             AND (SELECT COUNT(r)
-                FROM Result r
+                FROM p.results r
                 WHERE r.assessor IS NOT NULL
                 AND r.rated = TRUE
                 AND r.submission = (select max(id) from p.submissions)
@@ -173,9 +172,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds];
 
         for (int i = 0; i < correctionRounds; i++) {
-            // TODO: currently disabled because it is too slow for large exams
-            // var finishedAssessments = this.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), i);
-            var finishedAssessments = 0;
+            var finishedAssessments = this.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), i);
             correctionRoundsDataStats[i] = new DueDateStat(finishedAssessments, 0L);
         }
         return correctionRoundsDataStats;

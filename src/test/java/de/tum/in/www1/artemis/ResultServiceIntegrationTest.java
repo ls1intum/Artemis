@@ -96,30 +96,24 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     private ProgrammingExercise programmingExercise;
 
-    private ProgrammingExercise programmingExerciseWithStaticCodeAnalysis;
-
     private ModelingExercise modelingExercise;
 
     private SolutionProgrammingExerciseParticipation solutionParticipation;
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
 
-    private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipationStaticCodeAnalysis;
-
     private StudentParticipation studentParticipation;
-
-    private Result result;
 
     @BeforeEach
     public void reset() {
         database.addUsers(10, 2, 2);
         course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAll().get(0);
-        programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true);
-        // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
+        ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true);
+        // This is done to avoid proxy issues in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-        programmingExerciseStudentParticipationStaticCodeAnalysis = database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, "student1");
+        database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, "student1");
 
         database.addCourseWithOneModelingExercise();
         modelingExercise = modelingExerciseRepository.findAll().get(0);
@@ -127,7 +121,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         modelingExerciseRepository.save(modelingExercise);
         studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "student2");
 
-        result = ModelFactory.generateResult(true, 200).resultString("Good effort!").participation(programmingExerciseStudentParticipation);
+        Result result = ModelFactory.generateResult(true, 200).resultString("Good effort!").participation(programmingExerciseStudentParticipation);
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -143,7 +137,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void testRemoveCIDirectoriesFromPath() throws Exception {
+    public void testRemoveCIDirectoriesFromPath() {
         // 1. Test that paths not containing the Constant.STUDENT_WORKING_DIRECTORY are not shortened
         String pathWithoutWorkingDir = "Path/Without/StudentWorkingDirectory/Constant";
 
@@ -243,7 +237,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldReturnNotFoundForNonExistingResult() throws Exception {
         Result result = database.addResultToParticipation(null, null, solutionParticipation);
-        result = database.addSampleFeedbackToResults(result);
+        database.addSampleFeedbackToResults(result);
         request.getList("/api/results/" + 11667 + "/details", HttpStatus.NOT_FOUND, Feedback.class);
     }
 
@@ -438,7 +432,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         result.setCompletionDate(ZonedDateTime.now().minusHours(10));
         Result latestResult = database.addResultToParticipation(null, null, studentParticipation);
         latestResult.setCompletionDate(ZonedDateTime.now());
-        result = database.addSampleFeedbackToResults(result);
+        database.addSampleFeedbackToResults(result);
         latestResult = database.addSampleFeedbackToResults(latestResult);
         Result returnedResult = request.get("/api/participations/" + studentParticipation.getId() + "/latest-result", HttpStatus.OK, Result.class);
         assertThat(returnedResult).isNotNull();
@@ -449,7 +443,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(value = "student1", roles = "USER")
     public void getLatestResultWithFeedbacks_asStudent() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
-        result = database.addSampleFeedbackToResults(result);
+        database.addSampleFeedbackToResults(result);
         request.get("/api/participations/" + studentParticipation.getId() + "/latest-result", HttpStatus.FORBIDDEN, Result.class);
     }
 
@@ -539,7 +533,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testGetAssessmentCountByCorrectionRound() throws Exception {
+    public void testGetAssessmentCountByCorrectionRound() {
         // exercise
         TextExercise textExercise = new TextExercise();
         textExerciseRepository.save(textExercise);
@@ -572,7 +566,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         textSubmission = submissionRepository.save(textSubmission);
 
         textSubmission.addResult(r2);
-        textSubmission = submissionRepository.save(textSubmission);
+        submissionRepository.save(textSubmission);
 
         long assessments = resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(textExercise.getId(), 0);
         assertThat(assessments).isEqualTo(1);
@@ -582,7 +576,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testGetAssessmentCountByCorrectionRoundForProgrammingExercise() throws Exception {
+    public void testGetAssessmentCountByCorrectionRoundForProgrammingExercise() {
         // exercise
         Course course = database.createCourse();
         ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
@@ -619,11 +613,10 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         programmingSubmission = submissionRepository.save(programmingSubmission);
 
         programmingSubmission.addResult(r2);
-        programmingSubmission = submissionRepository.save(programmingSubmission);
+        submissionRepository.save(programmingSubmission);
 
-        Long assessments = programmingExerciseRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(programmingExercise.getId(), 0);
-        assertThat(assessments).isEqualTo(1);
-        assessments = programmingExerciseRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(programmingExercise.getId(), 1);
-        assertThat(assessments).isEqualTo(1);
+        var assessments = resultRepository.countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(programmingExercise, 2);
+        assertThat(assessments[0].getInTime()).isEqualTo(1);    // correction round 1
+        assertThat(assessments[1].getInTime()).isEqualTo(1);    // correction round 2
     }
 }
