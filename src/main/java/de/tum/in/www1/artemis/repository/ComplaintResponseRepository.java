@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
@@ -49,7 +50,8 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
             AND cr.complaint.result.participation.exercise.id = :#{#exerciseId}
             AND cr.complaint.result.participation.testRun = FALSE
             """)
-    long countByComplaintResultParticipationExerciseIdAndComplaintComplaintTypeIgnoreTestRuns(long exerciseId, ComplaintType complaintType);
+    long countByComplaintResultParticipationExerciseIdAndComplaintComplaintTypeIgnoreTestRuns(@Param("exerciseId") long exerciseId,
+            @Param("complaintType") ComplaintType complaintType);
 
     /**
      * Delete all complaint responses that belong to complaints of submission results of a given participation

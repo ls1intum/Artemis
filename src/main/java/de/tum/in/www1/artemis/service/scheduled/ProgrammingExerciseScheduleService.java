@@ -259,7 +259,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 // Stash the not submitted/committed changes for exercises with manual assessment and with online editor enabled
                 // This is necessary for students who have used the online editor, to ensure that only submitted/committed changes are displayed during manual assessment
                 // in the case they still have saved changes on the Artemis server which have not been committed / pushed
-                if (Boolean.TRUE.equals(exercise.isAllowOnlineEditor()) && exercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
+                // NOTE: we always stash, also when manual assessment is not activated, because instructors might change this after the exam
+                if (Boolean.TRUE.equals(exercise.isAllowOnlineEditor())) {
                     List<ProgrammingExerciseStudentParticipation> failedStashOperations = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
                     long numberOfFailedStashOperations = failedStashOperations.size();
                     if (numberOfFailedStashOperations > 0) {
