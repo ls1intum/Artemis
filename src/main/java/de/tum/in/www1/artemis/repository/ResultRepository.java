@@ -140,14 +140,15 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return the number of completed assessments for the specified correction round of an exam exercise
      */
     @Query("""
-            SELECT COUNT(DISTINCT p) as countOfRound
-            FROM StudentParticipation p left join fetch  p.submissions s left join fetch s.results r
+            SELECT COUNT(p.id)
+            FROM StudentParticipation p left join  p.submissions s left join s.results r
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.rated = TRUE
                 AND r.assessor IS NOT NULL
+                GROUP BY p.id
             """)
     List<Long> countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
 
