@@ -56,6 +56,7 @@ export class ProfileService {
                         profileInfo.accountName = data.accountName;
                         profileInfo.versionControlUrl = data.versionControlUrl;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
+                        profileInfo.enabledMultipleOrganizations = data.enabledMultipleOrganizations;
 
                         return profileInfo;
                     }),

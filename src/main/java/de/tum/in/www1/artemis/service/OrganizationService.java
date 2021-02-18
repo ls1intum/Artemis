@@ -10,7 +10,6 @@ import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Organization;
@@ -24,7 +23,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * Service implementation for managing Organization entities
  */
 @Service
-@ConditionalOnProperty(value = "artemis.user-management.organizations.enable-multiple-organizations", havingValue = "true")
 public class OrganizationService {
 
     private final Logger log = LoggerFactory.getLogger(OrganizationService.class);

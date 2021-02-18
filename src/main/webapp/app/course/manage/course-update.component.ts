@@ -43,6 +43,7 @@ export class CourseUpdateComponent implements OnInit {
     complaintsEnabled = true; // default value
     requestMoreFeedbackEnabled = true; // default value
     customizeGroupNames = false; // default value
+    isMultiOrganizationEnabled = false;
 
     shortNamePattern = /^[a-zA-Z][a-zA-Z0-9]{2,}$/; // must start with a letter and cannot contain special characters, at least 3 characters
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
@@ -94,6 +95,7 @@ export class CourseUpdateComponent implements OnInit {
                         this.course.instructorGroupName = 'artemis-dev';
                     }
                 }
+                this.isMultiOrganizationEnabled = profileInfo.enabledMultipleOrganizations || false;
             }
         });
 

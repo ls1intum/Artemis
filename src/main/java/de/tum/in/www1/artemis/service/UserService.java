@@ -591,7 +591,9 @@ public class UserService {
         user.setActivated(updatedUserDTO.isActivated());
         user.setLangKey(updatedUserDTO.getLangKey());
         user.setGroups(updatedUserDTO.getGroups());
-        user.setOrganizations(updatedUserDTO.getOrganizations());
+        if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
+            user.setOrganizations(updatedUserDTO.getOrganizations());
+        }
         if (updatedUserDTO.getPassword() != null) {
             user.setPassword(passwordEncoder().encode(updatedUserDTO.getPassword()));
         }

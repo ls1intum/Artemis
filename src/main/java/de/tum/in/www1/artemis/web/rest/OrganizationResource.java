@@ -5,7 +5,6 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,7 +25,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RestController
 @RequestMapping("/api")
 @PreAuthorize("hasRole('ADMIN')")
-@ConditionalOnProperty(value = "artemis.user-management.organizations.enable-multiple-organizations", havingValue = "true")
 public class OrganizationResource {
 
     private final Logger log = LoggerFactory.getLogger(OrganizationResource.class);

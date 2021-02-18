@@ -131,9 +131,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select distinct team.students from Team team where team.exercise.course.id = :#{#courseId} and team.shortName = :#{#teamShortName}")
     Set<User> findAllInTeam(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
-    @Query("select distinct user from User user where size(user.organizations) = 0")
-    Set<User> findAllWithoutOrganization();
-
     @Query("select user from User user left join fetch user.organizations")
     List<User> findAllWithEagerOrganizations();
+
+    @Query("select user from User user left join fetch user.organizations where user.login like :#{#login}")
+    Optional<User> findOneWithOrganizations(@Param("login") String login);
 }

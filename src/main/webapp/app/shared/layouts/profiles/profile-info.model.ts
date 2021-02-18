@@ -27,4 +27,5 @@ export class ProfileInfo {
     public accountName?: string;
     public versionControlUrl?: string;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
+    public enabledMultipleOrganizations?: boolean;
 }

@@ -28,6 +28,9 @@ public class UserManagementInfoContributor implements InfoContributor {
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
     private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
 
+    @Value("${artemis.user-management.organizations.enable-multiple-organizations:#{null}}")
+    private Optional<Boolean> enabledMultipleOrganizations;
+
     @Value("${artemis.user-management.login.account-name:#{null}}")
     private Optional<String> accountName;
 
@@ -38,6 +41,7 @@ public class UserManagementInfoContributor implements InfoContributor {
         allowedEmailPatternReadable.ifPresent(patternReadable -> builder.withDetail(Constants.ALLOWED_EMAIL_PATTERN_READABLE, patternReadable));
         allowedLdapUsernamePattern.ifPresent(pattern -> builder.withDetail(Constants.ALLOWED_LDAP_USERNAME_PATTERN, pattern));
         allowedCourseRegistrationUsernamePattern.ifPresent(pattern -> builder.withDetail(Constants.ALLOWED_COURSE_REGISTRATION_USERNAME_PATTERN, pattern));
+        enabledMultipleOrganizations.ifPresent(pattern -> builder.withDetail(Constants.ENABLED_MULTIPLE_ORGANIZATIONS, pattern));
         accountName.ifPresent(accountName -> builder.withDetail(Constants.ACCOUNT_NAME, accountName));
     }
 }

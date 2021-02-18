@@ -7,6 +7,7 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -18,12 +19,15 @@ export class UserManagementUpdateComponent implements OnInit {
     authorities: string[];
     isSaving: boolean;
 
+    isMultiOrganizationEnabled = false;
+
     constructor(
         private languageHelper: JhiLanguageHelper,
         private userService: UserService,
         private route: ActivatedRoute,
         private organizationService: OrganizationManagementService,
         private modalService: NgbModal,
+        private profileService: ProfileService,
     ) {}
 
     /**
@@ -31,6 +35,12 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
+
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.isMultiOrganizationEnabled = profileInfo.enabledMultipleOrganizations || false;
+            }
+        });
         // create a new user, and only overwrite it if we fetch a user to edit
         this.user = new User();
         this.route.parent!.data.subscribe(({ user }) => {
