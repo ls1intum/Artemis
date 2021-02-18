@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis.config;
 
+import java.util.LinkedList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -11,19 +15,35 @@ import org.springframework.security.saml2.provider.service.registration.RelyingP
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrations;
 
+/**
+ * This class describes the security configuration for SAML2.
+ */
 @Configuration
 @Order(1)
 @Profile("saml2")
 public class SAML2Configuration extends WebSecurityConfigurerAdapter {
 
+    @Autowired
+    private SAML2Properties properties;
+
+    /**
+     * Returns the RelyingPartyRegistrationRepository used by SAML2 configuration.
+     *
+     * @return the RelyingPartyRegistrationRepository used by SAML2 configuration.
+     */
     @Bean
     RelyingPartyRegistrationRepository relyingPartyRegistrationRepository() {
-        final RelyingPartyRegistration relyingPartyRegistration = RelyingPartyRegistrations
-                .fromMetadataLocation("http://saml:8080/simplesaml/saml2/idp/metadata.php")
-                .registrationId("testidp") // inititates flow by calling {baseurl}/saml2/authenticate/testidp
-                .entityId("artemis")
-                .build();
-        return new InMemoryRelyingPartyRegistrationRepository(relyingPartyRegistration);
+        final List<RelyingPartyRegistration> relyingPartyRegistrations = new LinkedList<>();
+
+        for (SAML2Properties.RelyingPartyProperties config : properties.getIdentityProviders()) {
+            relyingPartyRegistrations.add(RelyingPartyRegistrations
+                .fromMetadataLocation(config.getMetadata())
+                .registrationId(config.getRegistrationId())
+                .entityId(config.getEntityId())
+                .build());
+        }
+
+        return new InMemoryRelyingPartyRegistrationRepository(relyingPartyRegistrations);
     }
 
     @Override
