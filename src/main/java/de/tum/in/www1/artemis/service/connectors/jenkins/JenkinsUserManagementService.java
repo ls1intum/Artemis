@@ -187,7 +187,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
                 try {
                     // We are assigning instructor permissions since the exercise's course teaching assistant group
                     // is the same as the one that is specified.
-                    jenkinsJobPermissionsService.addInstructorPermissionsToUserForJob(userLogin, null, jobName);
+                    jenkinsJobPermissionsService.addPermissionsForUserToFolder(userLogin, jobName, JenkinsJobPermission.getInstructorPermissions());
                 }
                 catch (IOException e) {
                     throw new JenkinsException("Cannot assign instructor permissions to user: " + userLogin, e);
@@ -197,7 +197,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
                 try {
                     // We are assigning teaching assistant permissions since the exercise's course teaching assistant group
                     // is the same as the one that is specified.
-                    jenkinsJobPermissionsService.addTeachingAssistantPermissionsToUserForJob(userLogin, null, jobName);
+                    jenkinsJobPermissionsService.addTeachingAssistantPermissionsToUserForFolder(userLogin, jobName);
                 }
                 catch (IOException e) {
                     throw new JenkinsException("Cannot assign teaching assistant permissions to user: " + userLogin, e);
@@ -224,7 +224,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
                 // The exercise's projectkey is also the name of the Jenkins folder job which groups the student's, solution,
                 // and template build plans together
                 var jobName = exercise.getProjectKey();
-                jenkinsJobPermissionsService.removePermissionsFromUserOfJob(userLogin, null, jobName, Set.of(JenkinsJobPermission.values()));
+                jenkinsJobPermissionsService.removePermissionsFromUserOfFolder(userLogin, jobName, Set.of(JenkinsJobPermission.values()));
             }
             catch (IOException e) {
                 throw new JenkinsException("Cannot revoke permissions from user: " + userLogin, e);
@@ -271,7 +271,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         exercises.forEach(exercise -> {
             var job = exercise.getProjectKey();
             try {
-                jenkinsJobPermissionsService.addInstructorAndTAPermissionsToUsersForJob(teachingAssistants, instructors, null, job);
+                jenkinsJobPermissionsService.addInstructorAndTAPermissionsToUsersForFolder(teachingAssistants, instructors, job);
             }
             catch (IOException e) {
                 throw new JenkinsException("Cannot assign teaching assistant and instructor permissions for job: " + job, e);
@@ -303,7 +303,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         // Revoke all permissions.
         exercises.forEach(exercise -> {
             try {
-                jenkinsJobPermissionsService.removePermissionsFromUsersForJob(usersFromOldGroup, null, exercise.getProjectKey(), Set.of(JenkinsJobPermission.values()));
+                jenkinsJobPermissionsService.removePermissionsFromUsersForFolder(usersFromOldGroup, exercise.getProjectKey(), Set.of(JenkinsJobPermission.values()));
             }
             catch (IOException e) {
                 throw new JenkinsException("Cannot remove permissions from all users for job: " + exercise.getProjectKey(), e);

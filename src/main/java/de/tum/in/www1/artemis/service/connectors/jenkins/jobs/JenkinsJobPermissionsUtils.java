@@ -5,21 +5,16 @@ import java.util.Set;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsJobPermission;
-
 public class JenkinsJobPermissionsUtils {
 
-    /**
-     * Removes the specified permissions belonging to the user from the xml document. Permission
-     * elements must be children of the AuthorizationMatrixProperty element. Doesn't do anything
-     * if AuthorizationMatrixProperty is missing.
-     *
-     * @param document The xml document
-     * @param permissionsToRemove  a list of permissions to remove from the user
-     * @param userLogin  the login of the user to remove the permissions from
-     */
-    public static void removePermissionsFromDocument(Document document, Set<JenkinsJobPermission> permissionsToRemove, String userLogin) {
-        removePermissionsFromDocument(document, permissionsToRemove, Set.of(userLogin));
+    public static void removePermissionsFromFolder(Document jobConfig, Set<JenkinsJobPermission> permissionsToRemove, Set<String> userLogins) {
+        var folderAuthorizationMatrix = "com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty";
+        removePermissionsFromElement(folderAuthorizationMatrix, jobConfig, permissionsToRemove, userLogins);
+    }
+
+    public static void removePermissionsFromJob(Document jobConfig, Set<JenkinsJobPermission> permissionsToRemove, Set<String> userLogins) {
+        var jobAuthorizationMatrix = "hudson.security.AuthorizationMatrixProperty";
+        removePermissionsFromElement(jobAuthorizationMatrix, jobConfig, permissionsToRemove, userLogins);
     }
 
     /**
@@ -31,9 +26,8 @@ public class JenkinsJobPermissionsUtils {
      * @param permissionsToRemove  a list of permissions to remove from the user
      * @param userLogins  the logins of the users to remove the permissions from
      */
-    public static void removePermissionsFromDocument(Document document, Set<JenkinsJobPermission> permissionsToRemove, Set<String> userLogins) {
-        var authorizationMatrixTagName = "com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty";
-        var authorizationMatrixElement = document.getElementsByTag(authorizationMatrixTagName).first();
+    private static void removePermissionsFromElement(String elementTagName, Document document, Set<JenkinsJobPermission> permissionsToRemove, Set<String> userLogins) {
+        var authorizationMatrixElement = document.getElementsByTag(elementTagName).first();
         if (authorizationMatrixElement == null) {
             return;
         }
@@ -47,6 +41,16 @@ public class JenkinsJobPermissionsUtils {
         });
     }
 
+    public static void addPermissionsToFolder(Document folderConfig, Set<JenkinsJobPermission> jenkinsJobPermissions, Set<String> userLogins) {
+        var folderAuthorizationMatrix = "com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty";
+        addPermissionsToDocument(folderAuthorizationMatrix, folderConfig, jenkinsJobPermissions, userLogins);
+    }
+
+    public static void addPermissionsToJob(Document jobConfig, Set<JenkinsJobPermission> jenkinsJobPermissions, Set<String> userLogins) {
+        var jobAuthorizationMatrix = "hudson.security.AuthorizationMatrixProperty";
+        addPermissionsToDocument(jobAuthorizationMatrix, jobConfig, jenkinsJobPermissions, userLogins);
+    }
+
     /**
      * Adds all jenkinsJobPermissions for all specific Jenkins users into the xml document.
      *
@@ -54,12 +58,9 @@ public class JenkinsJobPermissionsUtils {
      * @param jenkinsJobPermissions a list of Jenkins job permissions to be added for the specific user
      * @param userLogins the login names of the users
      */
-    public static void addPermissionsToDocument(Document document, Set<JenkinsJobPermission> jenkinsJobPermissions, Set<String> userLogins) {
-        // The authorization matrix is an element that holds the permissions for a specific
-        // job.
-        var authorizationMatrixElement = JenkinsJobPermissionsUtils.getOrCreateAuthorizationMatrixPropertyElement(document);
-
-        JenkinsJobPermissionsUtils.addPermissionsToAuthorizationMatrix(authorizationMatrixElement, jenkinsJobPermissions, userLogins);
+    private static void addPermissionsToDocument(String elementTagName, Document document, Set<JenkinsJobPermission> jenkinsJobPermissions, Set<String> userLogins) {
+        var authorizationMatrixElement = JenkinsJobPermissionsUtils.getOrCreateAuthorizationMatrixPropertyElement(elementTagName, document);
+        userLogins.forEach(userLogin -> addPermissionsToAuthorizationMatrix(authorizationMatrixElement, jenkinsJobPermissions, userLogin));
         JenkinsJobPermissionsUtils.addAuthorizationMatrixToDocument(authorizationMatrixElement, document);
     }
 
@@ -69,8 +70,7 @@ public class JenkinsJobPermissionsUtils {
      * @param document The xml document
      * @return AuthorizationMatrixProperty element
      */
-    private static Element getOrCreateAuthorizationMatrixPropertyElement(Document document) {
-        var authorizationMatrixTagName = "com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty";
+    private static Element getOrCreateAuthorizationMatrixPropertyElement(String authorizationMatrixTagName, Document document) {
         var authorizationMatrixElement = document.getElementsByTag(authorizationMatrixTagName).first();
         if (authorizationMatrixElement != null) {
             return authorizationMatrixElement;
@@ -81,29 +81,6 @@ public class JenkinsJobPermissionsUtils {
         authorizationMatrixElement = new Element(authorizationMatrixTagName);
         strategyElement.appendTo(authorizationMatrixElement);
         return authorizationMatrixElement;
-    }
-
-    /**
-     * Adds all jenkinsJobPermissions for all specific Jenkins users into the authorizationMatrixElement.
-     * The resulting output element has the following format:
-     * <pre>
-     * {@code
-     *      <com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
-     *          ...existing permissions
-     *          <permission>hudson.model.the.jenkins.permission1:userLogin1</permission>
-     *          ...
-     *          <permission>hudson.model.the.jenkins.permissionn:userLogin1</permission>
-     *          ...
-     *          <permission>hudson.model.the.jenkins.permissionn:userLoginN</permission>
-     *      </com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
-     * }
-     * </pre>
-     * @param authorizationMatrixElement the com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty element
-     * @param jenkinsJobPermissions      a list of Jenkins job permissions to be added for the specific user
-     * @param userLogins                  the login names of the users
-     */
-    private static void addPermissionsToAuthorizationMatrix(Element authorizationMatrixElement, Set<JenkinsJobPermission> jenkinsJobPermissions, Set<String> userLogins) {
-        userLogins.forEach(userLogin -> addPermissionsToAuthorizationMatrix(authorizationMatrixElement, jenkinsJobPermissions, userLogin));
     }
 
     /**

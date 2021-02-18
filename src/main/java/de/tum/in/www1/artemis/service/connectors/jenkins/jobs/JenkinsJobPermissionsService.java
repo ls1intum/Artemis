@@ -3,9 +3,6 @@ package de.tum.in.www1.artemis.service.connectors.jenkins.jobs;
 import java.io.IOException;
 import java.util.Set;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.parser.Parser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -21,41 +18,58 @@ public class JenkinsJobPermissionsService {
 
     private final JenkinsServer jenkinsServer;
 
-    public JenkinsJobPermissionsService(JenkinsServer jenkinsServer) {
+    private final JenkinsJobService jenkinsJobService;
+
+    public JenkinsJobPermissionsService(JenkinsServer jenkinsServer, JenkinsJobService jenkinsJobService) {
         this.jenkinsServer = jenkinsServer;
+        this.jenkinsJobService = jenkinsJobService;
     }
 
     /**
-     * Assigns instructor permissions to the user. Instructors have admin access to build plans.
+     * Assigns teaching assistant and instructor permissions to users for the specified Jenkins job.
      *
-     * @param userLogin the login of the user that will have the permissions
-     * @param jobName the name of the job where the permissions will take affect
-     * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
-     */
-    public void addInstructorPermissionsToUserForJob(String userLogin, String folderName, String jobName) throws IOException {
-        addPermissionsForUserToJob(userLogin, folderName, jobName, JenkinsJobPermission.getInstructorPermissions());
-    }
-
-    /**
-     * Assigns teaching assistant and instructor permissions to users.
-     *
-     * @param taLogins logins of the teaching assisstants
+     * @param taLogins logins of the teaching assistants
      * @param instructorLogins logins of the instructors
-     * @param jobName the name of the job where the permissions will take affect
-     * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
+     * @param folderName the name of the Jenkins folder
+     * @param jobName the name of the Jenkins job
+     * @throws IOException exception thrown when retrieving/updating the Jenkins folder failed
      */
     public void addInstructorAndTAPermissionsToUsersForJob(Set<String> taLogins, Set<String> instructorLogins, String folderName, String jobName) throws IOException {
-        var jobConfigDocument = getJobConfigXmlDocument(folderName, jobName);
+        var jobConfig = jenkinsJobService.getJobConfig(folderName, jobName);
 
         // Revoke previously-assigned permissions
-        JenkinsJobPermissionsUtils.removePermissionsFromDocument(jobConfigDocument, Set.of(JenkinsJobPermission.values()), taLogins);
-        JenkinsJobPermissionsUtils.removePermissionsFromDocument(jobConfigDocument, Set.of(JenkinsJobPermission.values()), instructorLogins);
+        var allPermissions = Set.of(JenkinsJobPermission.values());
+        JenkinsJobPermissionsUtils.removePermissionsFromJob(jobConfig, allPermissions, taLogins);
+        JenkinsJobPermissionsUtils.removePermissionsFromJob(jobConfig, allPermissions, instructorLogins);
+
+        JenkinsJobPermissionsUtils.addPermissionsToJob(jobConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), taLogins);
+        JenkinsJobPermissionsUtils.addPermissionsToJob(jobConfig, JenkinsJobPermission.getInstructorPermissions(), instructorLogins);
+
+        jenkinsJobService.updateJob(folderName, jobName, jobConfig);
+
+        addInstructorAndTAPermissionsToUsersForFolder(taLogins, instructorLogins, folderName);
+    }
+
+    /**
+     * Assigns teaching assistant and instructor permissions to users for the specified Jenkins folder.
+     *
+     * @param taLogins logins of the teaching assistants
+     * @param instructorLogins logins of the instructors
+     * @param folderName the name of the Jenkins folder
+     * @throws IOException exception thrown when retrieving/updating the Jenkins folder failed
+     */
+    public void addInstructorAndTAPermissionsToUsersForFolder(Set<String> taLogins, Set<String> instructorLogins, String folderName) throws IOException {
+        var folderConfig = jenkinsJobService.getFolderConfig(folderName);
+
+        // Revoke previously-assigned permissions
+        JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), taLogins);
+        JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), instructorLogins);
 
         // Assign teaching assistant permissions
-        JenkinsJobPermissionsUtils.addPermissionsToDocument(jobConfigDocument, JenkinsJobPermission.getTeachingAssistantPermissions(), taLogins);
-        JenkinsJobPermissionsUtils.addPermissionsToDocument(jobConfigDocument, JenkinsJobPermission.getInstructorPermissions(), instructorLogins);
+        JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), taLogins);
+        JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getInstructorPermissions(), instructorLogins);
 
-        jenkinsServer.updateJob(jobName, jobConfigDocument.toString(), useCrumb);
+        jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);
     }
 
     /**
@@ -63,98 +77,72 @@ public class JenkinsJobPermissionsService {
      * build plans.
      *
      * @param userLogin the login of the user that will have the permissions
-     * @param jobName the name of the job where the permissions will take affect
-     * @throws IOException exception thrown when retrieving/updating the Jenkins job failed
+     * @param folderName the name of the Jenkins folder
+     * @throws IOException exception thrown when retrieving/updating the Jenkins folder failed
      */
-    public void addTeachingAssistantPermissionsToUserForJob(String userLogin, String folderName, String jobName) throws IOException {
-        var jobConfigDocument = getJobConfigXmlDocument(folderName, jobName);
+    public void addTeachingAssistantPermissionsToUserForFolder(String userLogin, String folderName) throws IOException {
+        var folderConfig = jenkinsJobService.getFolderConfig(folderName);
 
         // Revoke previously-assigned permissions
-        JenkinsJobPermissionsUtils.removePermissionsFromDocument(jobConfigDocument, Set.of(JenkinsJobPermission.values()), userLogin);
+        JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), Set.of(userLogin));
 
         // Assign teaching assistant permissions
-        JenkinsJobPermissionsUtils.addPermissionsToDocument(jobConfigDocument, JenkinsJobPermission.getTeachingAssistantPermissions(), Set.of(userLogin));
+        JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), Set.of(userLogin));
 
-        jenkinsServer.updateJob(jobName, jobConfigDocument.toString(), useCrumb);
+        jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);
     }
 
     /**
-     * Adds all Jenkins job permissions for the specific Jenkins user to the job. This function does not overwrite
-     * permissions that have already been given.
+     * Adds all Jenkins folder permissions for the specific Jenkins user to the folder.
+     * This function does not overwrite permissions that have already been given.
      *
      * @param userLogin the login of the user that will have the permissions
-     * @param jobName the name of the job where the permissions will take affect
+     * @param folderName the name of the Jenkins folder
      * @param permissions a list of permissions to give to the user
-     * @throws IOException thrown when retrieving/updating the Jenkins job failed
+     * @throws IOException thrown when retrieving/updating the Jenkins folder failed
      */
-    public void addPermissionsForUserToJob(String userLogin, String folderName, String jobName, Set<JenkinsJobPermission> permissions) throws IOException {
-        addPermissionsForUsersToJob(Set.of(userLogin), folderName, jobName, permissions);
+    public void addPermissionsForUserToFolder(String userLogin, String folderName, Set<JenkinsJobPermission> permissions) throws IOException {
+        addPermissionsForUsersToFolder(Set.of(userLogin), folderName, permissions);
     }
 
     /**
-     * Adds all Jenkins job permissions for the specific Jenkins users to the job. This function does not overwrite
-     * permissions that have already been given.
+     * Adds all Jenkins folder permissions for the specific Jenkins users to the folder.
+     * This function does not overwrite permissions that have already been given.
      *
      * @param userLogins the logins of the users that will have the permissions
-     * @param jobName the name of the job where the permissions will take affect
+     * @param folderName the name of the Jenkins folder
      * @param permissions a list of permissions to give to the users
-     * @throws IOException thrown when retrieving/updating the Jenkins job failed
+     * @throws IOException thrown when retrieving/updating the Jenkins folder failed
      */
-    public void addPermissionsForUsersToJob(Set<String> userLogins, String folderName, String jobName, Set<JenkinsJobPermission> permissions) throws IOException {
-        var jobConfigDocument = getJobConfigXmlDocument(folderName, jobName);
-        JenkinsJobPermissionsUtils.addPermissionsToDocument(jobConfigDocument, permissions, userLogins);
-        jenkinsServer.updateJob(jobName, jobConfigDocument.toString(), useCrumb);
+    public void addPermissionsForUsersToFolder(Set<String> userLogins, String folderName, Set<JenkinsJobPermission> permissions) throws IOException {
+        var folderConfig = jenkinsJobService.getFolderConfig(folderName);
+        JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, permissions, userLogins);
+        jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);
     }
 
     /**
-     * Removes the permissions from the user for the specific Jenkins job.
+     * Removes the permissions from the user for the specific Jenkins folder.
      *
      * @param userLogin the login of the user to remove the permissions
-     * @param jobName the name of the job where the permissions will be removed
+     * @param folderName the name of the Jenkins folder
      * @param permissionsToRemove a list of permissions to remove from the user
-     * @throws IOException thrown when retrieving/updating the Jenkins job failed
+     * @throws IOException thrown when retrieving/updating the Jenkins folder failed
      */
-    public void removePermissionsFromUserOfJob(String userLogin, String folderName, String jobName, Set<JenkinsJobPermission> permissionsToRemove) throws IOException {
-        removePermissionsFromUsersForJob(Set.of(userLogin), folderName, jobName, permissionsToRemove);
+    public void removePermissionsFromUserOfFolder(String userLogin, String folderName, Set<JenkinsJobPermission> permissionsToRemove) throws IOException {
+        removePermissionsFromUsersForFolder(Set.of(userLogin), folderName, permissionsToRemove);
     }
 
     /**
-     * Removes the permissions from the users for the specific Jenkins job.
+     * Removes the permissions from the users for the specific Jenkins folder.
      *
      * @param userLogins the logins of the users to remove the permissions
-     * @param jobName the name of the job where the permissions will be removed
+     * @param folderName the name of the Jenkins folder
      * @param permissionsToRemove a list of permissions to remove from the users
-     * @throws IOException thrown when retrieving/updating the Jenkins job failed
+     * @throws IOException thrown when retrieving/updating the Jenkins folder failed
      */
-    public void removePermissionsFromUsersForJob(Set<String> userLogins, String folderName, String jobName, Set<JenkinsJobPermission> permissionsToRemove) throws IOException {
-        var jobConfigDocument = getJobConfigXmlDocument(folderName, jobName);
-        JenkinsJobPermissionsUtils.removePermissionsFromDocument(jobConfigDocument, permissionsToRemove, userLogins);
-        jenkinsServer.updateJob(jobName, jobConfigDocument.toString(), useCrumb);
-    }
-
-    /**
-     * Fetches the configuration file for the specified Jenkins job as an ml
-     * document.
-     * @param jobName the name of the Jenkins job to fetch the configuration file
-     * @return the job configuration file as an xml document
-     * @throws IOException thrown when retrieving/updating the Jenkins job failed
-     */
-    private Document getJobConfigXmlDocument(String folderName, String jobName) throws IOException {
-        var jobXml = "";
-
-        if (folderName != null && !folderName.isEmpty()) {
-            var job = jenkinsServer.getJob(folderName);
-            var folder = jenkinsServer.getFolderJob(job);
-            jobXml = jenkinsServer.getJobXml(folder.orNull(), jobName);
-        }
-        else {
-            jobXml = jenkinsServer.getJobXml(jobName);
-        }
-
-        // Parse the config xml file for the job and insert the permissions into it.
-        var document = Jsoup.parse(jobXml, "", Parser.xmlParser());
-        document.outputSettings().indentAmount(0).prettyPrint(false);
-
-        return document;
+    public void removePermissionsFromUsersForFolder(Set<String> userLogins, String folderName, Set<JenkinsJobPermission> permissionsToRemove) throws IOException {
+        var folderConfig = jenkinsJobService.getFolderConfig(folderName);
+        JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, permissionsToRemove, userLogins);
+        jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);
     }
 }
