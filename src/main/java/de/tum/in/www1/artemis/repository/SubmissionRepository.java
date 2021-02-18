@@ -149,7 +149,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the submission with its feedback and assessor
      */
     @Query("select distinct submission from Submission submission left join fetch submission.results r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
-    Optional<Submission> findWithEagerResultAndFeedbackById(long submissionId);
+    Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
 
     /**
      * Count number of submissions for exercise.

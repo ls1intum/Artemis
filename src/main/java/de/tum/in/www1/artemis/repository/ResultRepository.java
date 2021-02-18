@@ -124,7 +124,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             FROM StudentParticipation p WHERE p.exercise.id = :exerciseId
             AND p.testRun = FALSE
             AND (SELECT COUNT(r)
-                FROM Result r
+                FROM p.results r
                 WHERE r.assessor IS NOT NULL
                 AND r.rated = TRUE
                 AND r.submission = (select max(id) from p.submissions)
@@ -172,7 +172,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds];
 
         for (int i = 0; i < correctionRounds; i++) {
-            correctionRoundsDataStats[i] = new DueDateStat(this.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), i), 0L);
+            var finishedAssessments = this.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), i);
+            correctionRoundsDataStats[i] = new DueDateStat(finishedAssessments, 0L);
         }
         return correctionRoundsDataStats;
     }
