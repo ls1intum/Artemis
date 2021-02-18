@@ -17,6 +17,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -109,9 +110,10 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             c.teachingAssistantGroupName as teachingAssistantGroupName,
             c.instructorGroupName as instructorGroupName
             from Course c
-            where c.endDate is null or :#{#now} is null or c.endDate >= :#{#now}
+            where (c.endDate is null or :#{#now} is null or c.endDate >= :#{#now})
+                and (:isAdmin = true or c.teachingAssistantGroupName in :userGroups or c.instructorGroupName in :userGroups)
             """)
-    List<CourseManagementOverviewDetailsDTO> getAllDTOsForOverview(@Param("now") ZonedDateTime now);
+    List<CourseManagementOverviewDetailsDTO> getAllDTOsForOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
 
     default Course findByIdElseThrow(Long courseId) throws EntityNotFoundException {
         return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));

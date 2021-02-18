@@ -288,22 +288,10 @@ public class CourseService {
      * @return A list of Course DTOs for the course management overview
      */
     public List<CourseManagementOverviewDetailsDTO> getAllDTOsForOverview(Boolean isOnlyActive) {
-        ZonedDateTime now = isOnlyActive ? ZonedDateTime.now() : null;
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        var isAdmin = authCheckService.isAdmin(user);
-
-        List<CourseManagementOverviewDetailsDTO> courses = this.courseRepository.getAllDTOsForOverview(now);
-        List<CourseManagementOverviewDetailsDTO> dtos = new ArrayList<>();
-        for (var dto : courses) {
-            var teachingAssistantGroupName = dto.getTeachingAssistantGroupName();
-            var instructorGroupName = dto.getInstructorGroupName();
-            if (!isAdmin && !user.getGroups().contains(teachingAssistantGroupName) && !user.getGroups().contains(instructorGroupName)) {
-                continue;
-            }
-
-            dtos.add(dto);
-        }
-        return dtos;
+        var dateTimeNow = isOnlyActive ? ZonedDateTime.now() : null;
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var userGroups = new ArrayList<>(user.getGroups());
+        return courseRepository.getAllDTOsForOverview(dateTimeNow, authCheckService.isAdmin(user), userGroups);
     }
 
     /**
