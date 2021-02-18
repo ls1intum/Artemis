@@ -294,9 +294,9 @@
                             <span> {{ 'artemisApp.examManagement.checklist.textitems.correctionRound' | translate }} {{ index + 1 }}: </span>
                             <div style="padding-top: 5px">
                                 <jhi-progress-bar
-                                    [denominator]="examChecklist.numberOfGeneratedStudentExams! * exam.numberOfExercisesInExam!"
+                                    [denominator]="examChecklist.numberOfTotalParticipationsForAssessment"
                                     [numerator]="finishedByCorrectionRound!"
-                                    [percentage]="(finishedByCorrectionRound! / (examChecklist.numberOfGeneratedStudentExams! * exam.numberOfExercisesInExam!)) * 100"
+                                    [percentage]="(finishedByCorrectionRound! / (examChecklist.numberOfTotalParticipationsForAssessment)) * 100"
                                 >
                                 </jhi-progress-bar>
                             </div>
