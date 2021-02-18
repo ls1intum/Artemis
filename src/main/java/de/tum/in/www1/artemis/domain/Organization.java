@@ -43,18 +43,18 @@ public class Organization extends DomainObject {
     private String emailPattern;
 
     @ManyToMany
-    @JoinTable(name = "user_organization", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
-            @JoinColumn(name = "organization_id", referencedColumnName = "id") })
+    @JoinTable(name = "user_organization", joinColumns = { @JoinColumn(name = "organization_id", referencedColumnName = "id") }, inverseJoinColumns = {
+            @JoinColumn(name = "user_id", referencedColumnName = "id") })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @BatchSize(size = 20)
     private Set<User> users = new HashSet<User>();
 
     @ManyToMany
-    @JoinTable(name = "course_organization", joinColumns = { @JoinColumn(name = "course_id", referencedColumnName = "id") }, inverseJoinColumns = {
-            @JoinColumn(name = "organization_id", referencedColumnName = "id") })
+    @JoinTable(name = "course_organization", joinColumns = { @JoinColumn(name = "organization_id", referencedColumnName = "id") }, inverseJoinColumns = {
+            @JoinColumn(name = "course_id", referencedColumnName = "id") })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @BatchSize(size = 20)
-    private Set<Course> courses = new HashSet<Course>();
+    private Set<Course> courses = new HashSet<>();
 
     public String getName() {
         return name;

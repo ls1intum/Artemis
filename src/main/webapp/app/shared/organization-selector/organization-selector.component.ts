@@ -28,13 +28,15 @@ export class OrganizationSelectorComponent implements OnInit {
     ngOnInit(): void {
         this.organizationService.getOrganizations().subscribe((data) => {
             this.availableOrganizations = data;
-            this.availableOrganizations.forEach((organization) => {
-                this.organizations.forEach((currentOrganization) => {
-                    if (organization.id === currentOrganization.id) {
-                        this.availableOrganizations = this.availableOrganizations.filter((org) => org.id !== organization.id);
-                    }
+            if (this.organizations !== undefined) {
+                this.availableOrganizations.forEach((organization) => {
+                    this.organizations.forEach((currentOrganization) => {
+                        if (organization.id === currentOrganization.id) {
+                            this.availableOrganizations = this.availableOrganizations.filter((org) => org.id !== organization.id);
+                        }
+                    });
                 });
-            });
+            }
         });
     }
 
