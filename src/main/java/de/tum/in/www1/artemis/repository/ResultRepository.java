@@ -116,27 +116,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     /**
      * @param exerciseId id of exercise
-     * @param correctionRound correction round to find completed assessments by
-     * @return the number of completed assessments for the specified correction round of an exam exercise
-     */
-    @Query("""
-            SELECT COUNT(DISTINCT p)
-            FROM StudentParticipation p WHERE p.exercise.id = :exerciseId
-            AND p.testRun = FALSE
-            AND (SELECT COUNT(r)
-                FROM p.results r
-                WHERE r.assessor IS NOT NULL
-                AND r.rated = TRUE
-                AND r.submission = (select max(id) from p.submissions)
-                AND r.submission.submitted = TRUE
-                AND r.completionDate IS NOT NULL
-                AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
-            ) >= (:correctionRound + 1L)
-            """)
-    long countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("correctionRound") long correctionRound);
-
-    /**
-     * @param exerciseId id of exercise
      * @return the number of completed assessments for the specified correction round of an exam exercise
      */
     @Query("""

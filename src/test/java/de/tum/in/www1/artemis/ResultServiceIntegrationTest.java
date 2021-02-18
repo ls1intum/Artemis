@@ -568,7 +568,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         textSubmission.addResult(r2);
         submissionRepository.save(textSubmission);
 
-        var assessments = resultRepository.countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(programmingExercise, 2);
+        var assessments = resultRepository.countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(textExercise, 2);
         assertThat(assessments[0].getInTime()).isEqualTo(1);    // correction round 1
         assertThat(assessments[1].getInTime()).isEqualTo(1);    // correction round 2
     }
