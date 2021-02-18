@@ -606,6 +606,9 @@ public class ExamService {
      * @return a examStatisticsDTO filled with all statistics regarding the exam
      */
     public ExamChecklistDTO getStatsForChecklist(Exam exam) {
+        log.info("getStatsForChecklist invoked for exam " + exam.getId());
+        int numberOfCorrectionRoundsInExam = exam.getNumberOfCorrectionRoundsInExam();
+        long start = System.nanoTime();
         ExamChecklistDTO examChecklistDTO = new ExamChecklistDTO();
 
         List<Long> numberOfComplaintsOpenByExercise = new ArrayList<>();
@@ -614,28 +617,30 @@ public class ExamService {
         List<Long> numberOfParticipationsGeneratedByExercise = new ArrayList<>();
 
         // loop over all exercises and retrieve all needed counts for the properties at once
-        exam.getExerciseGroups().forEach(exerciseGroup -> {
-            exerciseGroup.getExercises().forEach(exercise -> {
-                // number of complaints open
-                numberOfComplaintsOpenByExercise
-                        .add(complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exercise.getId(), ComplaintType.COMPLAINT));
+        exam.getExerciseGroups().forEach(exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
+            // number of complaints open
+            numberOfComplaintsOpenByExercise.add(complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exercise.getId(), ComplaintType.COMPLAINT));
 
-                // number of complaints finished
-                numberOfComplaintResponsesByExercise.add(complaintResponseRepository
-                        .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT));
+            log.info("StatsTimeLog: number of complaints open done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            // number of complaints finished
+            numberOfComplaintResponsesByExercise.add(complaintResponseRepository
+                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT));
 
-                // number of assessments done
-                numberOfAssessmentsFinishedOfCorrectionRoundsByExercise
-                        .add(resultRepository.countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(exercise, exam.getNumberOfCorrectionRoundsInExam()));
+            log.info("StatsTimeLog: number of complaints finished done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            // number of assessments done
+            numberOfAssessmentsFinishedOfCorrectionRoundsByExercise
+                    .add(resultRepository.countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(exercise, numberOfCorrectionRoundsInExam));
 
-                // get number of all generated participations
-                numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId()));
-            });
-        });
+            log.info("StatsTimeLog: number of assessments done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            // get number of all generated participations
+            numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId()));
+
+            log.info("StatsTimeLog: number of generated participations in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+        }));
 
         long totalNumberOfComplaints = 0;
         long totalNumberOfComplaintResponse = 0;
-        Long[] totalNumberOfAssessmentsFinished = new Long[exam.getNumberOfCorrectionRoundsInExam()];
+        Long[] totalNumberOfAssessmentsFinished = new Long[numberOfCorrectionRoundsInExam];
         long totalNumberOfParticipationsGenerated = 0;
 
         // sum up all counts for the different properties
@@ -643,7 +648,7 @@ public class ExamService {
             totalNumberOfParticipationsGenerated += numberOfParticipations != null ? numberOfParticipations : 0;
         }
         for (DueDateStat[] dateStats : numberOfAssessmentsFinishedOfCorrectionRoundsByExercise) {
-            for (int i = 0; i < exam.getNumberOfCorrectionRoundsInExam(); i++) {
+            for (int i = 0; i < numberOfCorrectionRoundsInExam; i++) {
                 if (totalNumberOfAssessmentsFinished[i] == null) {
                     totalNumberOfAssessmentsFinished[i] = 0L;
                 }
@@ -664,9 +669,13 @@ public class ExamService {
         long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExamWithoutTestRuns(exam.getId());
         examChecklistDTO.setNumberOfGeneratedStudentExams(numberOfGeneratedStudentExams);
 
+        log.info("StatsTimeLog: number of generated student exams done in " + TimeLogUtil.formatDurationFrom(start));
+
         // set number of test runs
         long numberOfTestRuns = studentExamRepository.countTestRunsByExamId(exam.getId());
         examChecklistDTO.setNumberOfTestRuns(numberOfTestRuns);
+
+        log.info("StatsTimeLog: number of test runs done in " + TimeLogUtil.formatDurationFrom(start));
 
         // check if all exercises have been prepared for all students;
         boolean exercisesPrepared = numberOfGeneratedStudentExams != 0
@@ -675,7 +684,9 @@ public class ExamService {
 
         // set started and submitted exam properties
         long numberOfStudentExamsStarted = studentExamRepository.countStudentExamsStartedByExamIdIgnoreTestRuns(exam.getId());
+        log.info("StatsTimeLog: number of student exams started done in " + TimeLogUtil.formatDurationFrom(start));
         long numberOfStudentExamsSubmitted = studentExamRepository.countStudentExamsSubmittedByExamIdIgnoreTestRuns(exam.getId());
+        log.info("StatsTimeLog: number of student exams submitted done in " + TimeLogUtil.formatDurationFrom(start));
         examChecklistDTO.setNumberOfExamsStarted(numberOfStudentExamsStarted);
         examChecklistDTO.setNumberOfExamsSubmitted(numberOfStudentExamsSubmitted);
         return examChecklistDTO;
