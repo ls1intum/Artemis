@@ -31,7 +31,6 @@ public class ExamChecklistDTO {
         this.numberOfTotalParticipationsForAssessment = numberOfTotalParticipationsForAssessment;
     }
 
-
     public Long getNumberOfExamsStarted() {
         return numberOfExamsStarted;
     }

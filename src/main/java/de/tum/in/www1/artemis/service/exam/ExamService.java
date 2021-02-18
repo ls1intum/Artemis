@@ -9,7 +9,6 @@ import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -20,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -618,7 +618,6 @@ public class ExamService {
         List<Long> numberOfParticipationsGeneratedByExercise = new ArrayList<>();
         List<Long> numberOfParticipationsForAssessmentGeneratedByExercise = new ArrayList<>();
 
-
         // loop over all exercises and retrieve all needed counts for the properties at once
         exam.getExerciseGroups().forEach(exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
             // number of complaints open
@@ -627,12 +626,12 @@ public class ExamService {
             log.info("StatsTimeLog: number of complaints open done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             // number of complaints finished
             numberOfComplaintResponsesByExercise.add(complaintResponseRepository
-                .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT));
+                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT));
 
             log.info("StatsTimeLog: number of complaints finished done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             // number of assessments done
             numberOfAssessmentsFinishedOfCorrectionRoundsByExercise
-                .add(resultRepository.countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(exercise, numberOfCorrectionRoundsInExam));
+                    .add(resultRepository.countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(exercise, numberOfCorrectionRoundsInExam));
 
             log.info("StatsTimeLog: number of assessments done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             // get number of all generated participations
@@ -640,7 +639,7 @@ public class ExamService {
             numberOfParticipationsGeneratedByExercise.add(countOfParticipations);
 
             log.info("StatsTimeLog: number of generated participations in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
-            if(!(exercise instanceof QuizExercise || exercise.getAssessmentType() == AssessmentType.AUTOMATIC)){
+            if (!(exercise instanceof QuizExercise || exercise.getAssessmentType() == AssessmentType.AUTOMATIC)) {
                 numberOfParticipationsForAssessmentGeneratedByExercise.add(countOfParticipations);
             }
         }));
