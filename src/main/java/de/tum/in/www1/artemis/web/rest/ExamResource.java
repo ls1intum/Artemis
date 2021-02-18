@@ -307,7 +307,7 @@ public class ExamResource {
         }
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
-        assessmentDashboardService.prepareExercisesForAssessmentDashboard(exercises, tutorParticipations, true);
+        assessmentDashboardService.generateStatisticsForExercisesForAssessmentDashboard(exercises, tutorParticipations, true);
 
         return ResponseEntity.ok(exam);
     }

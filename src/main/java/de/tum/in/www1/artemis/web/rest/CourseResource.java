@@ -588,7 +588,7 @@ public class CourseResource {
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
-        assessmentDashboardService.prepareExercisesForAssessmentDashboard(course.getExercises(), tutorParticipations, false);
+        assessmentDashboardService.generateStatisticsForExercisesForAssessmentDashboard(course.getExercises(), tutorParticipations, false);
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
