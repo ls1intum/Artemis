@@ -160,11 +160,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     ngOnInit(): void {
         /** Initialize local constants **/
         this.showExistingQuestions = false;
-        this.showExistingQuestionsFromCourse = true;
-        this.showExistingQuestionsFromExam = false;
-        this.showExistingQuestionsFromFile = false;
-        this.courses = [];
-        this.exams = [];
         this.quizExercises = [];
         this.allExistingQuestions = [];
         this.existingQuestions = [];
@@ -450,19 +445,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.quizExerciseService.findForCourse(selectedCourse.id!).subscribe(
             (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
-                    const quizExercises = quizExercisesResponse.body!;
-                    for (const quizExercise of quizExercises) {
-                        this.quizExerciseService.find(quizExercise.id!).subscribe((response: HttpResponse<QuizExercise>) => {
-                            const quizExerciseResponse = response.body!;
-                            if (quizExerciseResponse.quizQuestions && quizExerciseResponse.quizQuestions.length > 0) {
-                                for (const question of quizExerciseResponse.quizQuestions) {
-                                    question.exercise = quizExercise;
-                                    this.allExistingQuestions.push(question);
-                                }
-                            }
-                            this.applyFilter();
-                        });
-                    }
+                    this.applyQuestionsAndFilter(quizExercisesResponse.body!);
                 }
             },
             (res: HttpErrorResponse) => this.onError(res),
@@ -482,23 +465,26 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.quizExerciseService.findForExam(selectedExam.id!).subscribe(
             (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
-                    const quizExercises = quizExercisesResponse.body!;
-                    for (const quizExercise of quizExercises) {
-                        this.quizExerciseService.find(quizExercise.id!).subscribe((response: HttpResponse<QuizExercise>) => {
-                            const quizExerciseResponse = response.body!;
-                            if (quizExerciseResponse.quizQuestions && quizExerciseResponse.quizQuestions.length > 0) {
-                                for (const question of quizExerciseResponse.quizQuestions) {
-                                    question.exercise = quizExercise;
-                                    this.allExistingQuestions.push(question);
-                                }
-                            }
-                            this.applyFilter();
-                        });
-                    }
+                    this.applyQuestionsAndFilter(quizExercisesResponse.body!);
                 }
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
+    }
+
+    private applyQuestionsAndFilter(quizExercises: QuizExercise[]) {
+        for (const quizExercise of quizExercises) {
+            this.quizExerciseService.find(quizExercise.id!).subscribe((response: HttpResponse<QuizExercise>) => {
+                const quizExerciseResponse = response.body!;
+                if (quizExerciseResponse.quizQuestions && quizExerciseResponse.quizQuestions.length > 0) {
+                    for (const question of quizExerciseResponse.quizQuestions) {
+                        question.exercise = quizExercise;
+                        this.allExistingQuestions.push(question);
+                    }
+                }
+                this.applyFilter();
+            });
+        }
     }
 
     private onError(error: HttpErrorResponse) {

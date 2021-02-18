@@ -309,7 +309,7 @@ public class QuizExerciseService {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (quizExercises.size() > 0) {
             Course course = quizExercises.get(0).getCourseViaExerciseGroupOrCourseMember();
-            if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
+            if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
                 return new LinkedList<>();
             }
         }
