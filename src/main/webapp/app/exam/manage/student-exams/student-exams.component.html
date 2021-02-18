@@ -193,12 +193,12 @@
                 <ngx-datatable-column prop="submissionDate" [minWidth]="130" [width]="130">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissionDate')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submissionDate"> Started </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submissionDate"> Submission Date </span>
                             <fa-icon [icon]="controls.iconForSortPropField('submissionDate')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ value | artemisDate: 'short':true }}</span>
+                        <span>{{ formatDate(value) }}</span>
                     </ng-template>
                 </ngx-datatable-column>
 

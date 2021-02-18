@@ -15,6 +15,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
+import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -349,5 +350,9 @@ export class StudentExamsComponent implements OnInit {
 
     private onError(error: any) {
         this.jhiAlertService.error(error.errorKey);
+    }
+
+    formatDate(date: Moment | Date | undefined) {
+        return date ? moment(date).format('YYYY-DD-MM HH:mm:ss') : '';
     }
 }
