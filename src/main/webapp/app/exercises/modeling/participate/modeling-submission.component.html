@@ -66,11 +66,6 @@
 
                 <div class="col-3 pt-5" *ngIf="submission?.submitted && (!isActive || result)">
                     <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title">Assessment</h4>
-                    <div class="alert alert-info" *ngIf="generalFeedbackText && generalFeedbackText.length >= 0">
-                        <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</span>:</b>
-                        <br />
-                        {{ generalFeedbackText }}
-                    </div>
                     <p
                         *ngIf="!assessmentResult || !assessmentResult.feedbacks || assessmentResult?.feedbacks.length === 0"
                         jhiTranslate="artemisApp.modelingSubmission.assessment.noAssessment"
