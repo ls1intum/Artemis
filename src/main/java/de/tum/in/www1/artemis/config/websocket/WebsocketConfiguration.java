@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,6 +47,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.*;
@@ -66,7 +66,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final TaskScheduler messageBrokerTaskScheduler;
 
-    private ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -85,18 +85,14 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private String brokerPassword;
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler,
-            AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
+            UserRepository userRepository) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
-    }
-
-    // Break the cycle
-    @Autowired
-    public void setParticipationService(ParticipationService participationService) {
-        this.participationService = participationService;
     }
 
     @Override
@@ -285,7 +281,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     }
 
     private boolean isParticipationOwnedByUser(Principal principal, Long participationId) {
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         return participation.isOwnedBy(principal.getName());
     }
 

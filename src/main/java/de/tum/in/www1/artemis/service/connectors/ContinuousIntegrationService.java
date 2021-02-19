@@ -296,7 +296,7 @@ public interface ContinuousIntegrationService {
      * @param language The programming language for which the docker image name is requested
      * @return The name of the image (published on hub.docker.com)
      */
-    default String getDockerImageName(ProgrammingLanguage language) {
+    static String getDockerImageName(ProgrammingLanguage language) {
         return switch (language) {
             case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-5";
             case PYTHON -> "ls1tum/artemis-python-docker:latest";
