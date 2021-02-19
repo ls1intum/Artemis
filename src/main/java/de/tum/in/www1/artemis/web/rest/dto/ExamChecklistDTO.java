@@ -11,6 +11,8 @@ public class ExamChecklistDTO {
 
     private Long[] numberOfTotalExamAssessmentsFinishedByCorrectionRound; // all exercises summed up
 
+    private Long numberOfTotalParticipationsForAssessment; // all exercises summed up
+
     private Long numberOfExamsSubmitted;
 
     private Long numberOfExamsStarted;
@@ -20,6 +22,14 @@ public class ExamChecklistDTO {
     private Long numberOfAllComplaintsDone;
 
     private boolean allExamExercisesAllStudentsPrepared;
+
+    public Long getNumberOfTotalParticipationsForAssessment() {
+        return numberOfTotalParticipationsForAssessment;
+    }
+
+    public void setNumberOfTotalParticipationsForAssessment(Long numberOfTotalParticipationsForAssessment) {
+        this.numberOfTotalParticipationsForAssessment = numberOfTotalParticipationsForAssessment;
+    }
 
     public Long getNumberOfExamsStarted() {
         return numberOfExamsStarted;

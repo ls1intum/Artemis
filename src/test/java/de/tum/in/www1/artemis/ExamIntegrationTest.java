@@ -1242,6 +1242,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(examChecklistDTO).isNotEqualTo(null);
         assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(15L);
         assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(true);
+        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(75);
 
         // set start and submitted date as results are created below
         studentExams.forEach(studentExam -> {
