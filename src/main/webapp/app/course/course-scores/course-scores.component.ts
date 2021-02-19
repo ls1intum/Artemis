@@ -15,6 +15,7 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { CourseScoresDTO, ParticipantScoresService } from 'app/shared/participant-scores/participant-scores.service';
 import { forkJoin } from 'rxjs';
 import { round } from 'app/shared/util/utils';
+import * as Sentry from '@sentry/browser';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
@@ -159,6 +160,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * This method compares the course scores computed on the client side with the ones on the server side
+     * using the participations score table. In the future we might switch to the server side method, so we use
+     * this method to detect discrepancys.
+     * @param courseScoreDTOs the course scores sent from the serv
+     */
     private compareCourseScoresCalculationWithRegularCalculation(courseScoreDTOs: any) {
         for (const courseScoreDTO of courseScoreDTOs) {
             this.studentIdToCourseScoreDTOs.set(courseScoreDTO.studentId!, courseScoreDTO);
@@ -176,20 +183,28 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             // checking if the same as in the course scores map
             const courseScoreDTO = this.studentIdToCourseScoreDTOs.get(student.user!.id!);
             if (!courseScoreDTO) {
-                console.log(`No Course Score exists for regular calculation: ${JSON.stringify(regularCalculation)}`);
+                const errorMessage = `No Course Score exists for regular calculation: ${JSON.stringify(regularCalculation)}`;
+                this.logErrorOnSentry(errorMessage);
             } else {
                 if (courseScoreDTO.pointsAchieved !== regularCalculation.overAllPoints) {
-                    console.log(
-                        `Different points in course scores dto. Regular Calculation: ${JSON.stringify(regularCalculation)}. Course Scores DTO : ${JSON.stringify(courseScoreDTO)}`,
-                    );
+                    const errorMessage = `Different points in course scores dto. Regular Calculation: ${JSON.stringify(regularCalculation)}. Course Scores DTO : ${JSON.stringify(
+                        courseScoreDTO,
+                    )}`;
+                    this.logErrorOnSentry(errorMessage);
                 }
                 if (courseScoreDTO.scoreAchieved !== regularCalculation.overallScore) {
-                    console.log(
-                        `Different score in course scores dto. Regular Calculation: ${JSON.stringify(regularCalculation)}. Course Scores DTO : ${JSON.stringify(courseScoreDTO)}`,
-                    );
+                    const errorMessage = `Different score in course scores dto. Regular Calculation: ${JSON.stringify(regularCalculation)}. Course Scores DTO : ${JSON.stringify(
+                        courseScoreDTO,
+                    )}`;
+                    this.logErrorOnSentry(errorMessage);
                 }
             }
         }
+    }
+
+    private logErrorOnSentry(errorMessage: string) {
+        console.log(errorMessage);
+        Sentry.captureException(new Error(errorMessage));
     }
 
     /**
