@@ -33,7 +33,7 @@ public class ExamDateService {
      * @throws EntityNotFoundException if no exam with the given examId can be found
      */
     public boolean isExamOver(Long examId) {
-        final var exam = examRepository.findExamByIdElseThrow(examId);
+        final var exam = examRepository.findByIdElseThrow(examId);
         return isExamOver(exam);
     }
 
@@ -61,7 +61,7 @@ public class ExamDateService {
      * @throws EntityNotFoundException if no exam with the given examId can be found
      */
     public ZonedDateTime getLatestIndividualExamEndDate(Long examId) {
-        final var exam = examRepository.findExamByIdElseThrow(examId);
+        final var exam = examRepository.findByIdElseThrow(examId);
         return getLatestIndividualExamEndDate(exam);
     }
 
@@ -91,7 +91,7 @@ public class ExamDateService {
      * @throws EntityNotFoundException if no exam with the given examId can be found
      */
     public Set<ZonedDateTime> getAllIndividualExamEndDates(Long examId) {
-        final var exam = examRepository.findExamByIdElseThrow(examId);
+        final var exam = examRepository.findByIdElseThrow(examId);
         return getAllIndividualExamEndDates(exam);
     }
 

@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.service.user.UserService;
+import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -29,7 +29,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     UserRepository userRepo;
 
     @Autowired
-    UserService userService;
+    UserCreationService userCreationService;
 
     @Autowired
     private PasswordService passwordService;
@@ -115,7 +115,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     public void getPassword() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
-        userService.createUser(new ManagedUserVM(user));
+        userCreationService.createUser(new ManagedUserVM(user));
 
         // make request
         Map response = request.get("/api/account/password", HttpStatus.OK, Map.class);
@@ -128,7 +128,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     public void saveAccount() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
-        User createdUser = userService.createUser(new ManagedUserVM(user));
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
         // update FirstName
         String updatedFirstName = "UpdatedFirstName";
         createdUser.setFirstName(updatedFirstName);
@@ -146,7 +146,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     public void changePassword() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
-        User createdUser = userService.createUser(new ManagedUserVM(user));
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
         // Password Data
         String updatedPassword = "12345678password-reset-init.component.spec.ts";
 
@@ -163,7 +163,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     @WithMockUser(username = "authenticateduser")
     public void invalidPassword() throws Exception {
         User user = ModelFactory.generateActivatedUser("authenticateduser");
-        User createdUser = userService.createUser(new ManagedUserVM(user));
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
         String updatedPassword = "123";
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
@@ -177,7 +177,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     public void passwordReset() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
-        User createdUser = userService.createUser(new ManagedUserVM(user));
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
         // init password reset
         request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
 

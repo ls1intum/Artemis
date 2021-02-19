@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.EmptyFileException;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -52,8 +53,8 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     public FileUploadSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService,
             FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
-            ParticipationService participationService, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
-        super(submissionRepository, resultService, participationService, authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService);
+            GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService, StudentParticipationRepository studentParticipationRepository) {
+        super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService, studentParticipationRepository);
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.gradingCriterionService = gradingCriterionService;
@@ -260,7 +261,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("/participations/{participationId}/file-upload-editor")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<FileUploadSubmission> getDataForFileUpload(@PathVariable Long participationId) {
-        StudentParticipation participation = participationService.findOneWithEagerSubmissionsResultsFeedback(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
         if (participation == null) {
             return ResponseEntity.notFound()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).build();

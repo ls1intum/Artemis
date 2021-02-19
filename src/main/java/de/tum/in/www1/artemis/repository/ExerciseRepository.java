@@ -6,6 +6,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -140,6 +142,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
+    @NotNull
     default Exercise findByIdElseThrow(Long exerciseId) throws EntityNotFoundException {
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
@@ -150,7 +153,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @param exerciseId the exerciseId of the entity
      * @return the entity
      */
-    default Exercise findOneWithCategoriesAndTeamAssignmentConfig(Long exerciseId) {
+    @NotNull
+    default Exercise findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(Long exerciseId) {
         return findWithEagerCategoriesAndTeamAssignmentConfigById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
@@ -170,7 +174,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @param exerciseId the exerciseId of the exercise entity
      * @return the exercise entity
      */
-    default Exercise findOneWithStudentParticipations(Long exerciseId) {
+    @NotNull
+    default Exercise findByIdWithStudentParticipationsElseThrow(Long exerciseId) {
         return findByIdWithEagerParticipations(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
@@ -234,7 +239,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             int numberOfPossibleParticipants = exerciseStatistics[3] != null ? ((Number) exerciseStatistics[3]).intValue() : 0;
 
             if (numberOfPossibleParticipants != 0) {
-                Double participationRate = ((courseExerciseStatisticsDTO.getNoOfParticipatingStudentsOrTeams() * 1.0) / (numberOfPossibleParticipants * 1.0)) * 100.0;
+                double participationRate = ((courseExerciseStatisticsDTO.getNoOfParticipatingStudentsOrTeams() * 1.0) / (numberOfPossibleParticipants * 1.0)) * 100.0;
                 courseExerciseStatisticsDTO.setParticipationRateInPercent(Math.round(participationRate * 100.0) / 100.0);
             }
             else {

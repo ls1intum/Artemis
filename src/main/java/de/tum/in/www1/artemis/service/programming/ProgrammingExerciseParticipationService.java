@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -32,8 +31,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class ProgrammingExerciseParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationService.class);
-
-    private final ParticipationService participationService;
 
     private final ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
@@ -53,11 +50,10 @@ public class ProgrammingExerciseParticipationService {
 
     private final GitService gitService;
 
-    public ProgrammingExerciseParticipationService(ParticipationService participationService, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
+    public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ParticipationRepository participationRepository, TeamRepository teamRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, Optional<VersionControlService> versionControlService,
             UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService) {
-        this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -70,7 +66,7 @@ public class ProgrammingExerciseParticipationService {
     }
 
     public Participation findParticipation(Long participationId) throws EntityNotFoundException {
-        return participationService.findOne(participationId);
+        return participationRepository.findByIdElseThrow(participationId);
     }
 
     public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipation(Long participationId) {
@@ -139,9 +135,7 @@ public class ProgrammingExerciseParticipationService {
         return participation.get();
     }
 
-    public List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseId(exerciseId);
-    }
+    // TODO move as default methods into ProgrammingExerciseStudentParticipationRepository
 
     public Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId) {
         return studentParticipationRepository.findByExerciseIdAndTeamId(exerciseId, teamId);
@@ -157,7 +151,7 @@ public class ProgrammingExerciseParticipationService {
 
     /**
      *
-     * @param participationId
+     * @param participationId the participation
      * @return the participation with all its manual/semi-automatic results
      */
     public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(

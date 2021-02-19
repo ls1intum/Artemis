@@ -40,9 +40,9 @@ public class ModelingSubmissionService extends SubmissionService {
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             CompassService compassService, UserRepository userRepository, SubmissionVersionService submissionVersionService, ParticipationService participationService,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository,
-            ExamDateService examDateService, CourseRepository courseRepository) {
+            ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                courseRepository);
+                courseRepository, participationRepository);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.compassService = compassService;
         this.submissionVersionService = submissionVersionService;

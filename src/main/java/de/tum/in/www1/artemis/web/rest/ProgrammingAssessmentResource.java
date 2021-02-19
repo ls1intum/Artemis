@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
@@ -42,17 +43,18 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final LtiService ltiService;
 
-    private final ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionService programmingSubmissionService, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
-            WebsocketMessagingService messagingService, LtiService ltiService, ParticipationService participationService, ExampleSubmissionService exampleSubmissionService) {
+            WebsocketMessagingService messagingService, LtiService ltiService, StudentParticipationRepository studentParticipationRepository,
+            ExampleSubmissionService exampleSubmissionService) {
         super(authCheckService, userRepository, exerciseRepository, programmingSubmissionService, programmingAssessmentService, resultRepository, examService, messagingService,
                 exampleSubmissionService);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.ltiService = ltiService;
-        this.participationService = participationService;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -118,7 +120,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestBody Result newManualResult) {
         log.debug("REST request to save a new result : {}", newManualResult);
-        final var participation = participationService.findOneWithEagerSubmissionsResultsFeedback(participationId);
+        final var participation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
 

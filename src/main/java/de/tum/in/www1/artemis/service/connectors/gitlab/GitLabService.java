@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -63,8 +64,8 @@ public class GitLabService extends AbstractVersionControlService {
     private final ScheduledExecutorService scheduler;
 
     public GitLabService(UserRepository userRepository, UrlService urlService, @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab,
-            GitLabUserManagementService gitLabUserManagementService, GitService gitService) {
-        super(urlService, gitService);
+            GitLabUserManagementService gitLabUserManagementService, GitService gitService, ApplicationContext applicationContext) {
+        super(applicationContext, urlService, gitService);
         this.userRepository = userRepository;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.gitlab = gitlab;
