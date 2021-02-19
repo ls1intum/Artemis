@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
@@ -24,6 +24,8 @@ import { ChartDataSets, ChartOptions, ChartType, LinearTickOptions } from 'chart
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
+import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
+import * as Sentry from '@sentry/browser';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -44,6 +46,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public histogramData: number[] = Array(100 / this.binWidth).fill(0);
     public noOfExamsFiltered: number;
 
+    // exam score dtos
+    studentIdToExamScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
+
     public predicate = 'id';
     public reverse = false;
     public isLoading = true;
@@ -60,7 +65,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
     private languageChangeSubscription?: Subscription;
-
     constructor(
         private route: ActivatedRoute,
         private examService: ExamManagementService,
@@ -70,13 +74,18 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private languageHelper: JhiLanguageHelper,
         private localeConversionService: LocaleConversionService,
         private translateService: TranslateService,
+        private participantScoresService: ParticipantScoresService,
     ) {}
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
-            this.examService.getExamScores(params['courseId'], params['examId']).subscribe(
-                (examResponse) => {
-                    this.examScoreDTO = examResponse!.body!;
+            const getExamScoresObservable = this.examService.getExamScores(params['courseId'], params['examId']);
+            // alternative exam scores calculation using participant scores table
+            const findExamScoresObservable = this.participantScoresService.findExamScores(params['examId']);
+
+            forkJoin([getExamScoresObservable, findExamScoresObservable]).subscribe(
+                ([getExamScoresResponse, findExamScoresResponse]) => {
+                    this.examScoreDTO = getExamScoresResponse!.body!;
                     if (this.examScoreDTO) {
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
@@ -109,6 +118,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     this.createChart();
                     this.isLoading = false;
                     this.changeDetector.detectChanges();
+                    this.compareNewExamScoresCalculationWithOldCalculation(findExamScoresResponse.body!);
                 },
                 (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
             );
@@ -437,5 +447,56 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     roundAndPerformLocalConversion(points: number | undefined, exp: number, fractions = 1) {
         return this.localeConversionService.toLocaleString(round(points, exp), fractions);
+    }
+
+    /**
+     * This method compares the exam scores computed via the two approaches on the server (one using
+     * participation -> submission -> result and the other one using the participationScores table)
+     * In the future we might switch to the server side method, so we use this method to detect discrepancies.
+     * @param examScoreDTOs the exam scores sent from the server (new calculation method)
+     */
+    private compareNewExamScoresCalculationWithOldCalculation(examScoreDTOs: ScoresDTO[]) {
+        if (!this.studentResults || !examScoreDTOs) {
+            return;
+        }
+        for (const examScoreDTO of examScoreDTOs) {
+            this.studentIdToExamScoreDTOs.set(examScoreDTO.studentId!, examScoreDTO);
+        }
+
+        for (const studentResult of this.studentResults) {
+            const overAllPoints = round(studentResult.overallPointsAchieved, 1);
+            const overallScore = round(studentResult.overallScoreAchieved, 1);
+
+            const regularCalculation = {
+                overallScore,
+                overAllPoints,
+                userId: studentResult.userId,
+                userLogin: studentResult.login,
+            };
+            // checking if the same as in the exam scores map
+            const examScoreDTO = this.studentIdToExamScoreDTOs.get(studentResult.userId);
+            if (!examScoreDTO) {
+                const errorMessage = `User scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
+                this.logErrorOnSentry(errorMessage);
+            } else {
+                if (examScoreDTO.pointsAchieved !== regularCalculation.overAllPoints) {
+                    const errorMessage = `Different exam points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
+                        examScoreDTO,
+                    )}`;
+                    this.logErrorOnSentry(errorMessage);
+                }
+                if (examScoreDTO.scoreAchieved !== regularCalculation.overallScore) {
+                    const errorMessage = `Different exam score in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation : ${JSON.stringify(
+                        examScoreDTO,
+                    )}`;
+                    this.logErrorOnSentry(errorMessage);
+                }
+            }
+        }
+    }
+
+    private logErrorOnSentry(errorMessage: string) {
+        console.log(errorMessage);
+        Sentry.captureException(new Error(errorMessage));
     }
 }

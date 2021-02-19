@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -20,13 +17,15 @@ import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 import de.tum.in.www1.artemis.repository.TeamScoreRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.web.rest.dto.CourseScoreDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 
 @Service
 public class ParticipantScoreService {
@@ -48,6 +47,30 @@ public class ParticipantScoreService {
     }
 
     /**
+     * This method represents a server based way to calculate a students achieved points / score in an exam.
+     * <p>
+     * Currently both this server based calculation method and the traditional client side calculation method is used
+     * side-by-side in exam-scores.component.ts.
+     * <p>
+     * The goal is to switch completely to this much faster server based calculation if the {@link de.tum.in.www1.artemis.service.listeners.ResultListener}
+     * has been battle tested enough.
+     *
+     * @param exam the exam with registered students, exercise groups and exercises for which to calculate the scores
+     * @return list of scores for every registered student
+     */
+    public List<ScoreDTO> calculateExamScores(Exam exam) {
+        if (exam == null || exam.getExerciseGroups() == null) {
+            throw new IllegalArgumentException();
+        }
+        Set<Exercise> exercisesOfExam = new HashSet<>();
+        exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).forEach(exercisesOfExam::addAll);
+        Set<Exercise> includedExercises = exercisesOfExam.stream().filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED))
+                .collect(Collectors.toSet());
+
+        return calculateScores(includedExercises, exam.getRegisteredUsers(), exam.getMaxPoints().doubleValue());
+    }
+
+    /**
      * This method represents a server based way to calculate a students achieved points / score in a course.
      * <p>
      * Currently both this server based calculation method and the traditional client side calculation method is used
@@ -59,13 +82,13 @@ public class ParticipantScoreService {
      * @param course the course with exercises for which to calculate the course scores
      * @return list of course scores for every member of the course
      */
-    public List<CourseScoreDTO> getCourseScoreDTOs(Course course) {
+    public List<ScoreDTO> calculateCourseScores(Course course) {
         if (course == null || course.getExercises() == null) {
             throw new IllegalArgumentException();
         }
 
         // we want the score for everybody who can perform exercises in the course (students, tutors and instructors)
-        List<User> usersOfCourse = new ArrayList<>();
+        Set<User> usersOfCourse = new HashSet<>();
         usersOfCourse.addAll(userRepository.findAllInGroupWithAuthorities(course.getStudentGroupName()));
         usersOfCourse.addAll(userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()));
         usersOfCourse.addAll(userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()));
@@ -75,16 +98,16 @@ public class ParticipantScoreService {
                 .filter(exercise -> exercise.getReleaseDate() == null || exercise.getReleaseDate().isBefore(ZonedDateTime.now()))
                 .filter(exercise -> exercise.getIncludedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED).collect(Collectors.toSet());
 
-        return calculateCourseScoreDTOs(exercisesToConsider, usersOfCourse);
-    }
-
-    private List<CourseScoreDTO> calculateCourseScoreDTOs(Set<Exercise> exercises, List<User> users) {
         // this is the denominator when we calculate the achieved score of a student
-        Double regularAchievablePoints = exercises.stream().filter(exercise -> exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY)
+        Double regularAchievablePoints = exercisesToConsider.stream().filter(exercise -> exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY)
                 .map(Exercise::getMaxPoints).reduce(0.0, Double::sum);
 
+        return calculateScores(exercisesToConsider, usersOfCourse, regularAchievablePoints);
+    }
+
+    private List<ScoreDTO> calculateScores(Set<Exercise> exercises, Set<User> users, Double scoreCalculationDenominator) {
         // 0.0 means we can not reasonably calculate the achieved points / scores
-        if (regularAchievablePoints.equals(0.0)) {
+        if (scoreCalculationDenominator.equals(0.0)) {
             return List.of();
         }
 
@@ -92,7 +115,7 @@ public class ParticipantScoreService {
         Set<Exercise> teamExercises = exercises.stream().filter(Exercise::isTeamMode).collect(Collectors.toSet());
 
         // For every student we want to calculate the score
-        Map<Long, CourseScoreDTO> userIdToScores = users.stream().collect(Collectors.toMap(User::getId, CourseScoreDTO::new));
+        Map<Long, ScoreDTO> userIdToScores = users.stream().collect(Collectors.toMap(User::getId, ScoreDTO::new));
 
         // individual exercises
         // [0] -> User
@@ -121,9 +144,10 @@ public class ParticipantScoreService {
         }
 
         // calculating achieved score
-        for (CourseScoreDTO scoreDTO : userIdToScores.values()) {
-            scoreDTO.scoreAchieved = round((scoreDTO.pointsAchieved / regularAchievablePoints) * 100.0);
-            scoreDTO.regularPointsAchievable = regularAchievablePoints;
+        for (ScoreDTO scoreDTO : userIdToScores.values()) {
+            scoreDTO.scoreAchieved = round((scoreDTO.pointsAchieved / scoreCalculationDenominator) * 100.0);
+            // sending this for debugging purposes to find out why the scores calculation could be wrong
+            scoreDTO.regularPointsAchievable = scoreCalculationDenominator;
         }
 
         return new ArrayList<>(userIdToScores.values());

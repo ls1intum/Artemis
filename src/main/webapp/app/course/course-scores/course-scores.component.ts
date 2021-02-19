@@ -12,7 +12,7 @@ import { CourseManagementService } from '../manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { CourseScoresDTO, ParticipantScoresService } from 'app/shared/participant-scores/participant-scores.service';
+import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { forkJoin } from 'rxjs';
 import { round } from 'app/shared/util/utils';
 import * as Sentry from '@sentry/browser';
@@ -65,7 +65,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     averageNumberOfOverallPoints = 0;
 
     // course score dtos
-    studentIdToCourseScoreDTOs: Map<number, CourseScoresDTO> = new Map<number, CourseScoresDTO>();
+    studentIdToCourseScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
 
     private languageChangeSubscription?: Subscription;
 
@@ -147,6 +147,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     calculateCourseStatistics(courseId: number) {
         const findParticipationsObservable = this.courseService.findAllParticipationsWithResults(courseId);
+        // alternative course scores calculation using participant scores table
         const courseScoresObservable = this.participantScoresService.findCourseScores(courseId);
         forkJoin([findParticipationsObservable, courseScoresObservable]).subscribe(([participationsOfCourse, courseScoresResult]) => {
             this.allParticipationsOfCourse = participationsOfCourse;
@@ -155,7 +156,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
             // comparing with calculation from course scores
             const courseScoreDTOs = courseScoresResult.body!;
-            this.compareCourseScoresCalculationWithRegularCalculation(courseScoreDTOs);
+            this.compareNewCourseScoresCalculationWithOldCalculation(courseScoreDTOs);
             this.changeDetector.detectChanges();
         });
     }
@@ -164,14 +165,17 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * This method compares the course scores computed on the client side with the ones on the server side
      * using the participations score table. In the future we might switch to the server side method, so we use
      * this method to detect discrepancys.
-     * @param courseScoreDTOs the course scores sent from the serv
+     * @param courseScoreDTOs the course scores sent from the server (new calculation method)
      */
-    private compareCourseScoresCalculationWithRegularCalculation(courseScoreDTOs: any) {
+    private compareNewCourseScoresCalculationWithOldCalculation(courseScoreDTOs: ScoresDTO[]) {
+        if (!this.students || !courseScoreDTOs) {
+            return;
+        }
         for (const courseScoreDTO of courseScoreDTOs) {
             this.studentIdToCourseScoreDTOs.set(courseScoreDTO.studentId!, courseScoreDTO);
         }
         for (const student of this.students) {
-            const overAllPoints = student.overallPoints;
+            const overAllPoints = round(student.overallPoints, 1);
             const overallScore = round((student.overallPoints / this.maxNumberOfOverallPoints) * 100, 1);
 
             const regularCalculation = {
@@ -181,19 +185,19 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 userLogin: student.user.login,
             };
             // checking if the same as in the course scores map
-            const courseScoreDTO = this.studentIdToCourseScoreDTOs.get(student.user!.id!);
+            const courseScoreDTO = this.studentIdToCourseScoreDTOs.get(student.user.id!);
             if (!courseScoreDTO) {
-                const errorMessage = `No Course Score exists for regular calculation: ${JSON.stringify(regularCalculation)}`;
+                const errorMessage = `User scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
                 this.logErrorOnSentry(errorMessage);
             } else {
                 if (courseScoreDTO.pointsAchieved !== regularCalculation.overAllPoints) {
-                    const errorMessage = `Different points in course scores dto. Regular Calculation: ${JSON.stringify(regularCalculation)}. Course Scores DTO : ${JSON.stringify(
+                    const errorMessage = `Different course points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
                         courseScoreDTO,
                     )}`;
                     this.logErrorOnSentry(errorMessage);
                 }
                 if (courseScoreDTO.scoreAchieved !== regularCalculation.overallScore) {
-                    const errorMessage = `Different score in course scores dto. Regular Calculation: ${JSON.stringify(regularCalculation)}. Course Scores DTO : ${JSON.stringify(
+                    const errorMessage = `Different course score in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation : ${JSON.stringify(
                         courseScoreDTO,
                     )}`;
                     this.logErrorOnSentry(errorMessage);

@@ -25,9 +25,9 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.dto.CourseScoreDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 
 public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -109,7 +109,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         request.getList("/api/exams/" + idOfExam + "/participant-scores", HttpStatus.FORBIDDEN, ParticipantScoreDTO.class);
         request.getList("/api/exams/" + idOfExam + "/participant-scores/average-participant", HttpStatus.FORBIDDEN, ParticipantScoreAverageDTO.class);
         request.get("/api/exams/" + idOfExam + "/participant-scores/", HttpStatus.FORBIDDEN, Long.class);
-        request.getList("/api/courses/" + idOfCourse + "/course-scores", HttpStatus.FORBIDDEN, CourseScoreDTO.class);
+        request.getList("/api/courses/" + idOfCourse + "/course-scores", HttpStatus.FORBIDDEN, ScoreDTO.class);
     }
 
     @Test
@@ -127,9 +127,9 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getCourseScores_asInstructorOfCourse_shouldReturnCourseScores() throws Exception {
-        List<CourseScoreDTO> courseScores = request.getList("/api/courses/" + idOfCourse + "/course-scores", HttpStatus.OK, CourseScoreDTO.class);
+        List<ScoreDTO> courseScores = request.getList("/api/courses/" + idOfCourse + "/course-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores.size()).isEqualTo(25);
-        CourseScoreDTO scoreOfStudent1 = courseScores.stream().filter(courseScoreDTO -> courseScoreDTO.studentId.equals(idOfStudent1)).findFirst().get();
+        ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(idOfStudent1)).findFirst().get();
         assertThat(scoreOfStudent1.studentLogin).isEqualTo("student1");
         assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(10.0);
         assertThat(scoreOfStudent1.scoreAchieved).isEqualTo(50.0);

@@ -3,8 +3,11 @@ package de.tum.in.www1.artemis.web.rest.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.User;
 
+/**
+ * Wrapper Class to send achieved points and achieved scores of a student to the client for courses / exam
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class CourseScoreDTO {
+public class ScoreDTO {
 
     public Long studentId;
 
@@ -16,7 +19,7 @@ public class CourseScoreDTO {
 
     public Double regularPointsAchievable;
 
-    public CourseScoreDTO(User user) {
+    public ScoreDTO(User user) {
         this.studentId = user.getId();
         this.studentLogin = user.getLogin();
         this.pointsAchieved = 0.0;
@@ -24,7 +27,7 @@ public class CourseScoreDTO {
         this.regularPointsAchievable = 0.0;
     }
 
-    public CourseScoreDTO() {
+    public ScoreDTO() {
         // for jackson
     }
 }
