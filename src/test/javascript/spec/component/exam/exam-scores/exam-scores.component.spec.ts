@@ -18,6 +18,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortService } from 'app/shared/service/sort.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ParticipantScoresService } from 'app/shared/participant-scores/participant-scores.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -144,6 +145,7 @@ describe('ExamScoresComponent', () => {
                 MockProvider(ExamManagementService),
                 MockProvider(SortService),
                 MockProvider(JhiAlertService),
+                MockProvider(ParticipantScoresService),
                 MockProvider(JhiLanguageHelper, { language: empty() }),
             ],
         })
@@ -152,6 +154,8 @@ describe('ExamScoresComponent', () => {
                 fixture = TestBed.createComponent(ExamScoresComponent);
                 comp = fixture.componentInstance;
                 examService = fixture.debugElement.injector.get(ExamManagementService);
+                const participationScoreService = fixture.debugElement.injector.get(ParticipantScoresService);
+                spyOn(participationScoreService, 'findExamScores').and.returnValue(of(new HttpResponse({ body: [] })));
             });
     });
 
