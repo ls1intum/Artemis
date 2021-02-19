@@ -107,7 +107,7 @@
 
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
-                                <a *ngIf="isAtLeastTutor" [routerLink]="['/course-management', course.id, 'exams', exam.id, 'scores']" class="btn btn-info btn-sm mr-1 mb-1">
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'exams', exam.id, 'scores']" class="btn btn-info btn-sm mr-1 mb-1">
                                     <fa-icon [icon]="'eye'"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'entity.action.scores' | translate }}</span>
                                 </a>
@@ -158,7 +158,8 @@
                                 </a>
                             </div>
                             <div class="d-flex flex-column mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                <button *ngIf="isAtLeastInstructor"
+                                <button
+                                    *ngIf="isAtLeastInstructor"
                                     jhiDeleteButton
                                     [entityTitle]="exam.title"
                                     deleteQuestion="artemisApp.examManagement.delete.question"
