@@ -197,39 +197,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
         if (originalQuizQuestion instanceof ShortAnswerQuestion) {
             ShortAnswerQuestion shortAnswerOriginalQuestion = (ShortAnswerQuestion) originalQuizQuestion;
             undoUnallowedSpotChanges(shortAnswerOriginalQuestion);
-            undoUnallowedSolutionChanges(shortAnswerOriginalQuestion);
         }
-    }
-
-    /**
-     * undo all solution-changes which are not allowed ( adding them)
-     *
-     * @param originalQuestion the original ShortAnswer-object, which will be compared with this question
-     */
-    private void undoUnallowedSolutionChanges(ShortAnswerQuestion originalQuestion) {
-
-        // find added solutions, which are not allowed to be added
-        Set<ShortAnswerSolution> notAllowedAddedSolutions = new HashSet<>();
-        // check every solution of the question
-        for (ShortAnswerSolution solution : this.getSolutions()) {
-            // check if the solution were already in the originalQuestion -> if not it's an added solution
-            if (originalQuestion.getSolutions().contains(solution)) {
-                // find original solution
-                ShortAnswerSolution originalSolution = originalQuestion.findSolutionById(solution.getId());
-                // correct invalid = null to invalid = false
-                if (solution.isInvalid() == null) {
-                    solution.setInvalid(false);
-                }
-                // reset invalid solution if it already set to true (it's not possible to set a solution valid again)
-                solution.setInvalid(solution.isInvalid() || (originalSolution.isInvalid() != null && originalSolution.isInvalid()));
-            }
-            else {
-                // mark the added solution (adding solutions is not allowed)
-                notAllowedAddedSolutions.add(solution);
-            }
-        }
-        // remove the added solutions
-        this.getSolutions().removeAll(notAllowedAddedSolutions);
     }
 
     /**
