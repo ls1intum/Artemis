@@ -73,7 +73,7 @@ public class ParticipantScoreResource {
             return forbidden();
         }
         List<ScoreDTO> scoreDTOS = participantScoreService.calculateCourseScores(course);
-        log.info("getCourseScoresOfCourse took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("getScoresOfCourse took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok().body(scoreDTOS);
     }
 
@@ -102,7 +102,7 @@ public class ParticipantScoreResource {
         }
 
         List<ScoreDTO> scoreDTOS = participantScoreService.calculateExamScores(exam);
-        log.info("getCourseScoresOfCourse took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("getScoresOfExam took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok().body(scoreDTOS);
     }
 

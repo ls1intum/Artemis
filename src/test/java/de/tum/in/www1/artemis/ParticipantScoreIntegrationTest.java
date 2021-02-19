@@ -96,6 +96,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         // setting up exam
         Exam exam = ModelFactory.generateExam(course);
         ModelFactory.generateExerciseGroup(true, exam);
+        exam.addRegisteredUser(student1);
         exam = examRepository.save(exam);
         idOfExam = exam.getId();
         createIndividualTextExerciseForExam();
@@ -110,6 +111,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         request.getList("/api/exams/" + idOfExam + "/participant-scores/average-participant", HttpStatus.FORBIDDEN, ParticipantScoreAverageDTO.class);
         request.get("/api/exams/" + idOfExam + "/participant-scores/", HttpStatus.FORBIDDEN, Long.class);
         request.getList("/api/courses/" + idOfCourse + "/course-scores", HttpStatus.FORBIDDEN, ScoreDTO.class);
+        request.getList("/api/exam/" + idOfExam + "/exam-scores", HttpStatus.FORBIDDEN, ScoreDTO.class);
     }
 
     @Test
@@ -134,6 +136,18 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(10.0);
         assertThat(scoreOfStudent1.scoreAchieved).isEqualTo(50.0);
         assertThat(scoreOfStudent1.regularPointsAchievable).isEqualTo(20.0);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getExamScores_asInstructorOfCourse_shouldReturnExamScores() throws Exception {
+        List<ScoreDTO> courseScores = request.getList("/api/exams/" + idOfExam + "/exam-scores", HttpStatus.OK, ScoreDTO.class);
+        assertThat(courseScores.size()).isEqualTo(1);
+        ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(idOfStudent1)).findFirst().get();
+        assertThat(scoreOfStudent1.studentLogin).isEqualTo("student1");
+        assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(5.0);
+        assertThat(scoreOfStudent1.scoreAchieved).isEqualTo(5.6);
+        assertThat(scoreOfStudent1.regularPointsAchievable).isEqualTo(90.0);
     }
 
     @Test
