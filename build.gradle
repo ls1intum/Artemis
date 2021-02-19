@@ -25,7 +25,7 @@ plugins {
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
-    id "com.diffplug.spotless" version "5.10.1"
+    id "com.diffplug.spotless" version "5.10.2"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.35.0"
 }
@@ -185,7 +185,7 @@ dependencies {
 
     implementation "io.github.jhipster:jhipster-framework"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.6.3"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.6.4"
     implementation "net.logstash.logback:logstash-logback-encoder:6.6"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -219,15 +219,15 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:2.3.3.RELEASE"
-    implementation "org.springframework.data:spring-data-ldap:2.4.3"
+    implementation "org.springframework.data:spring-data-ldap:2.4.5"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.2"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
     implementation "io.netty:netty-all:4.1.59.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.0.3"
-    implementation "org.springframework:spring-messaging:5.3.3"
+    implementation "io.projectreactor.netty:reactor-netty:1.0.4"
+    implementation "org.springframework:spring-messaging:5.3.4"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
