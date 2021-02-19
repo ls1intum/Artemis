@@ -137,6 +137,10 @@ public class ScoreService {
             return;
         }
         StudentParticipation studentParticipation = studentParticipationOptional.get();
+        // we ignore test runs of exams
+        if (studentParticipation.isTestRun()) {
+            return;
+        }
         Exercise exercise = studentParticipation.getExercise();
         ParticipantScore existingParticipationScoreForExerciseAndParticipant = getExistingParticipationScore(studentParticipation, exercise);
         // there already exists a participant score -> we need to update it

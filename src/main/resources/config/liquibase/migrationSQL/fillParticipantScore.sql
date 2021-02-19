@@ -10,6 +10,7 @@ WITH last_submission AS (
              JOIN submission s ON p.id = s.participation_id
     WHERE e.mode = 'INDIVIDUAL'
       AND p.student_id IS NOT NULL
+      AND (p.test_run IS NULL OR p.test_run = 0)
       AND (
             p.discriminator = 'SP'
             OR p.discriminator = 'PESP'
@@ -62,6 +63,7 @@ WITH last_submission AS (
              JOIN submission s ON p.id = s.participation_id
     WHERE e.mode = 'INDIVIDUAL'
       AND p.student_id IS NOT NULL
+      AND (p.test_run IS NULL OR p.test_run = 0)
       AND (
             p.discriminator = 'SP'
             OR p.discriminator = 'PESP'
@@ -118,6 +120,7 @@ WITH last_submission AS (
              JOIN submission s ON p.id = s.participation_id
     WHERE e.mode = 'TEAM'
       AND p.team_id IS NOT NULL
+      AND (p.test_run IS NULL OR p.test_run = 0)
       AND (
             p.discriminator = 'SP'
             OR p.discriminator = 'PESP'
@@ -169,6 +172,7 @@ WITH last_submission AS (
              JOIN submission s ON p.id = s.participation_id
     WHERE e.mode = 'TEAM'
       AND p.team_id IS NOT NULL
+      AND (p.test_run IS NULL OR p.test_run = 0)
       AND (
             p.discriminator = 'SP'
             OR p.discriminator = 'PESP'
