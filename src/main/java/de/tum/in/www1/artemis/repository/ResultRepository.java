@@ -97,7 +97,15 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
     Optional<Result> findWithEagerSubmissionAndFeedbackById(long resultId);
 
-    @Query("SELECT COUNT(DISTINCT p) FROM StudentParticipation p left join p.results r WHERE p.exercise.id = :exerciseId AND r.assessor IS NOT NULL AND r.rated = TRUE AND r.completionDate IS NOT NULL AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)")
+    @Query("""
+                SELECT COUNT(DISTINCT p) FROM StudentParticipation p left join p.results r
+                WHERE p.exercise.id = :exerciseId
+                AND r.assessor IS NOT NULL
+                AND r.rated = TRUE
+                AND r.completionDate IS NOT NULL
+                AND (p.exercise.dueDate IS NULL
+                    OR r.submission.submissionDate <= p.exercise.dueDate)
+            """)
     long countNumberOfFinishedAssessmentsForExercise(@Param("exerciseId") Long exerciseId);
 
     @Query("""
@@ -116,25 +124,20 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     /**
      * @param exerciseId id of exercise
-     * @param correctionRound correction round to find completed assessments by
-     * @return the number of completed assessments for the specified correction round of an exam exercise
+     * @return a list that contains the count of manual assessments for each studentParticipation of the exercise
      */
-    // TODO: this query seems to be very slow on production, we should try to optimize it
     @Query("""
-            SELECT COUNT(DISTINCT p)
-            FROM StudentParticipation p WHERE p.exercise.id = :exerciseId
-            AND p.testRun = FALSE
-            AND (SELECT COUNT(r)
-                FROM Result r
-                WHERE r.assessor IS NOT NULL
-                AND r.rated = TRUE
-                AND r.submission = (select max(id) from p.submissions)
-                AND r.submission.submitted = TRUE
+            SELECT COUNT(r.id)
+            FROM StudentParticipation p join  p.submissions s join s.results r
+            WHERE p.exercise.id = :exerciseId
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
                 AND r.completionDate IS NOT NULL
-                AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
-            ) >= (:correctionRound + 1L)
+                AND r.rated = TRUE
+                AND r.assessor IS NOT NULL
+                GROUP BY p.id
             """)
-    long countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("correctionRound") long correctionRound);
+    List<Long> countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
     List<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(Long exerciseId);
@@ -163,20 +166,26 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     boolean existsByParticipation_ExerciseId(long exerciseId);
 
     /**
-     * Given an exerciseId and a correctionRound, return the number of assessments for that exerciseId and correctionRound that have been finished
+     * Use this method only for exams!
+     * Given an exerciseId and the number of correctionRounds, return the number of assessments that have been finished, for that exerciseId and each correctionRound
      *
      * @param exercise  - the exercise we are interested in
-     * @param correctionRounds - the correction round we want finished assessments for
+     * @param numberOfCorrectionRounds - the correction round we want finished assessments for
      * @return an array of the number of assessments for the exercise for a given correction round
      */
-    default DueDateStat[] countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(Exercise exercise, int correctionRounds) {
-        DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds];
+    default DueDateStat[] countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRound(Exercise exercise, int numberOfCorrectionRounds) {
+        DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
 
-        for (int i = 0; i < correctionRounds; i++) {
-            // TODO: currently disabled because it is too slow for large exams
-            // var finishedAssessments = this.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), i);
-            var finishedAssessments = 0;
-            correctionRoundsDataStats[i] = new DueDateStat(finishedAssessments, 0L);
+        // here we receive a list which contains an entry for each studentparticipation of the exercise.
+        // the entry simply is the number of already created and submitted manual results, so the number is either 1 or 2
+        List<Long> countlist = countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(exercise.getId());
+
+        // depending on the number of correctionRounds we create 1 or 2 DueDateStats that contain the sum of all participations:
+        // with either 1 or more manual results, OR 2 or more manual results
+        correctionRoundsDataStats[0] = new DueDateStat(countlist.stream().filter(x -> x >= 1L).count(), 0L);
+        // so far the number of correctionRounds is limited to 2
+        if (numberOfCorrectionRounds == 2) {
+            correctionRoundsDataStats[1] = new DueDateStat(countlist.stream().filter(x -> x >= 2L).count(), 0L);
         }
         return correctionRoundsDataStats;
     }
@@ -218,7 +227,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         if (examMode) {
             // set number of corrections specific to each correction round
             int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
-            return countNumberOfFinishedAssessmentsForExerciseForCorrectionRound(exercise, numberOfCorrectionRounds);
+            return countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRound(exercise, numberOfCorrectionRounds);
         }
         else {
             // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments

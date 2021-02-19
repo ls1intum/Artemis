@@ -58,9 +58,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("select distinct exam from Exam exam left join fetch exam.studentExams studentExams left join fetch exam.exerciseGroups exerciseGroups left join fetch exerciseGroups.exercises where (exam.id = :#{#examId})")
     Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("examId") long examId);
 
-    // IMPORTANT: NEVER use the following EntityGraph because it will lead to crashes for exams with many users
-    // @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises", "registeredUsers", "studentExams" })
-
     /**
      * Checks if the user is registered for the exam.
      *
