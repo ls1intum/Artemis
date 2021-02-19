@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.CourseScoreDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
 
@@ -108,6 +109,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         request.getList("/api/exams/" + idOfExam + "/participant-scores", HttpStatus.FORBIDDEN, ParticipantScoreDTO.class);
         request.getList("/api/exams/" + idOfExam + "/participant-scores/average-participant", HttpStatus.FORBIDDEN, ParticipantScoreAverageDTO.class);
         request.get("/api/exams/" + idOfExam + "/participant-scores/", HttpStatus.FORBIDDEN, Long.class);
+        request.getList("/api/courses/" + idOfCourse + "/course-scores", HttpStatus.FORBIDDEN, CourseScoreDTO.class);
     }
 
     @Test
@@ -120,6 +122,18 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "student1", roles = "USER")
     public void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getCourseScores_asInstructorOfCourse_shouldReturnCourseScores() throws Exception {
+        List<CourseScoreDTO> courseScores = request.getList("/api/courses/" + idOfCourse + "/course-scores", HttpStatus.OK, CourseScoreDTO.class);
+        assertThat(courseScores.size()).isEqualTo(25);
+        CourseScoreDTO scoreOfStudent1 = courseScores.stream().filter(courseScoreDTO -> courseScoreDTO.studentId.equals(idOfStudent1)).findFirst().get();
+        assertThat(scoreOfStudent1.studentLogin).isEqualTo("student1");
+        assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(10.0);
+        assertThat(scoreOfStudent1.scoreAchieved).isEqualTo(50.0);
+        assertThat(scoreOfStudent1.regularPointsAchievable).isEqualTo(20.0);
     }
 
     @Test
