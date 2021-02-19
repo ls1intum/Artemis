@@ -393,7 +393,7 @@ public class ProgrammingSubmissionResource {
         }
 
         int numberOfManualResults = participation.getResults().stream().filter(Result::isManual).collect(Collectors.toList()).size();
-        if (numberOfManualResults == correctionRound + 1) {
+        if (numberOfManualResults >= correctionRound + 1) {
             return ResponseEntity.ok(participation);
         }
         else {
