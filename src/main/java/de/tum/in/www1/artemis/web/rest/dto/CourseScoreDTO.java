@@ -23,4 +23,8 @@ public class CourseScoreDTO {
         this.scoreAchieved = 0.0;
         this.regularPointsAchievable = 0.0;
     }
+
+    public CourseScoreDTO() {
+        // for jackson
+    }
 }
