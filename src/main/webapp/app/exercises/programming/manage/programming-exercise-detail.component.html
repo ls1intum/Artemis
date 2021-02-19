@@ -301,6 +301,22 @@
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
                 </dd>
+                <dd *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastInstructor && programmingExercise?.templateParticipation">
+                    <a
+                        [routerLink]="[
+                            '/course-management',
+                            programmingExercise.course.id,
+                            'exercises',
+                            programmingExercise.id,
+                            'participations',
+                            programmingExercise.templateParticipation?.id,
+                            'submissions'
+                        ]"
+                        [queryParams]="{ isTmpOrSolutionProgrParticipation: true }"
+                    >
+                        <span jhiTranslate="artemisApp.programmingExercise.detail.showTemplateSubmissions">Show Submissions</span>
+                    </a>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionResult">Solution Result</span></dt>
                 <dd>
                     <div *ngIf="programmingExercise?.solutionParticipation" class="d-flex align-items-center">
@@ -326,6 +342,22 @@
                             [participation]="programmingExercise.solutionParticipation"
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
+                </dd>
+                <dd *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastInstructor && programmingExercise?.solutionParticipation">
+                    <a
+                        [routerLink]="[
+                            '/course-management',
+                            programmingExercise.course.id,
+                            'exercises',
+                            programmingExercise.id,
+                            'participations',
+                            programmingExercise.solutionParticipation?.id,
+                            'submissions'
+                        ]"
+                        [queryParams]="{ isTmpOrSolutionProgrParticipation: true }"
+                    >
+                        <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions">Show Submissions</span>
+                    </a>
                 </dd>
             </dl>
         </div>

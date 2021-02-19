@@ -38,6 +38,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "templateParticipation.submissions", "solutionParticipation.submissions",
+            "templateParticipation.submissions.results", "solutionParticipation.submissions.results" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationSubmissionsAndResultsById(Long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = "testCases")
     Optional<ProgrammingExercise> findWithTestCasesById(Long exerciseId);
 
@@ -186,23 +190,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                         AND r.completionDate IS NOT NULL))
             """)
     long countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
-
-    @Query("""
-            SELECT COUNT(DISTINCT p)
-            FROM ProgrammingExerciseStudentParticipation p
-            WHERE p.exercise.id = :exerciseId
-            AND p.testRun = FALSE
-            AND (SELECT COUNT(r)
-                 FROM Result r
-                 WHERE r.assessor IS NOT NULL
-                 AND r.rated = TRUE
-                 AND r.submission = (select max(id) from p.submissions)
-                 AND r.submission.submitted = TRUE
-                 AND r.completionDate IS NOT NULL
-                 AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
-            ) >= (:correctionRound + 1L)
-             """)
-    long countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("correctionRound") long correctionRound);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.

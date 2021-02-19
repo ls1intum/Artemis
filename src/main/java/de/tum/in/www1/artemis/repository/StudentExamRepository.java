@@ -43,6 +43,12 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @Query("select count(se) from StudentExam se where se.exam.id = :#{#examId} and se.testRun = true")
     long countTestRunsByExamId(@Param("examId") Long examId);
 
+    @Query("select count(se) from StudentExam se where se.exam.id = :#{#examId} and se.started = true and se.testRun = false")
+    long countStudentExamsStartedByExamIdIgnoreTestRuns(@Param("examId") Long examId);
+
+    @Query("select count(se) from StudentExam se where se.exam.id = :#{#examId} and se.submitted = true and se.testRun = false")
+    long countStudentExamsSubmittedByExamIdIgnoreTestRuns(@Param("examId") Long examId);
+
     @Query("select distinct se from StudentExam se left join fetch se.exercises e left join fetch e.studentParticipations sp left join fetch sp.submissions s left join fetch s.results r left join fetch r.assessor a where se.exam.id = :#{#examId} and se.testRun = true and se.user.id = sp.student.id")
     List<StudentExam> findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(@Param("examId") Long examId);
 

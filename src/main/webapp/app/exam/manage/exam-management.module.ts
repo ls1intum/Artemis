@@ -34,8 +34,11 @@ import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.component';
+import { ExamChecklistCheckComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-check/exam-checklist-check.component';
+import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
+import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 import { ArtemisExamParticipantScoresModule } from 'app/exam/manage/exam-participant-scores/exam-participant-scores.module';
-import { ExamChecklistCheckComponent } from 'app/exam/manage/exams/exam-checklist-check/exam-checklist-check.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -60,6 +63,7 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisProgrammingExerciseStatusModule,
         ProgrammingExerciseUtilsModule,
         ArtemisMarkdownModule,
+        ArtemisTutorParticipationGraphModule,
         ArtemisExamParticipantScoresModule,
     ],
     declarations: [
@@ -79,6 +83,8 @@ const ENTITY_STATES = [...examManagementState];
         StudentExamDetailComponent,
         DurationPipe,
         StudentExamSummaryComponent,
+        ExamChecklistComponent,
+        ExamChecklistExerciseGroupTableComponent,
         ExamChecklistCheckComponent,
     ],
 })

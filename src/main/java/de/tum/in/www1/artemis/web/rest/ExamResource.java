@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -223,11 +224,31 @@ public class ExamResource {
             return ResponseEntity.ok(examService.findOneWithExerciseGroupsAndExercises(examId));
         }
         Exam exam = examService.findOneWithRegisteredUsers(examId);
-
-        examService.setStatsForChecklist(exam);
+        examService.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
 
         exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
         return ResponseEntity.ok(exam);
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId} : Find an exam by id.
+     *
+     * @param courseId              the course to which the exam belongs
+     * @param examId                the exam to find
+     * @return the ResponseEntity with status 200 (OK) and with the found exam as body
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<ExamChecklistDTO> getExamStatistics(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to get exam statistics: {}", examId);
+        Optional<ResponseEntity<ExamChecklistDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+        Exam exam = examService.findOneWithRegisteredUsersAndExerciseGroupsAndExercises(examId);
+        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam);
+
+        return ResponseEntity.ok(examChecklistDTO);
     }
 
     /**
@@ -288,7 +309,7 @@ public class ExamResource {
         }
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
-        assessmentDashboardService.prepareExercisesForAssessmentDashboard(exercises, tutorParticipations, true);
+        assessmentDashboardService.generateStatisticsForExercisesForAssessmentDashboard(exercises, tutorParticipations, true);
 
         return ResponseEntity.ok(exam);
     }

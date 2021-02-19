@@ -850,15 +850,23 @@ public class ProgrammingExerciseResource {
      * GET /programming-exercises/:exerciseId/with-template-and-solution-participation
      *
      * @param exerciseId the id of the programmingExercise to retrieve
+     * @param withSubmissionResults get all submission results
      * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
      */
     @GetMapping(Endpoints.PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId) {
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId,
+            @RequestParam(defaultValue = "false") boolean withSubmissionResults) {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId);
+        Optional<ProgrammingExercise> programmingExerciseOpt;
+        if (withSubmissionResults) {
+            programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationSubmissionsAndResultsById(exerciseId);
+        }
+        else {
+            programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId);
+        }
         if (programmingExerciseOpt.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
             Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();

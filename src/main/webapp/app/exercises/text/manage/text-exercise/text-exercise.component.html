@@ -52,7 +52,9 @@
                     <td>
                         <a [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{ textExercise.id }}</a>
                     </td>
-                    <td>{{ textExercise.title }}</td>
+                    <td>
+                        <a [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{ textExercise.title }}</a>
+                    </td>
                     <td>{{ textExercise.releaseDate | artemisDate }}</td>
                     <td>{{ textExercise.dueDate | artemisDate }}</td>
                     <td>{{ textExercise.assessmentDueDate | artemisDate }}</td>

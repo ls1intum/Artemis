@@ -63,7 +63,6 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
                 this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
                 this.setPermissions();
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
-                console.log(this.newManualResultAllowed);
             });
     }
 

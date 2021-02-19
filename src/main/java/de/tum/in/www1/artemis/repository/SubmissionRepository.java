@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
 /**
  * Spring Data repository for the Submission entity.
@@ -77,6 +78,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     boolean existsByParticipationId(long participationId);
 
     /**
+     * Count number of in-time submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
+     *
      * @param courseId the course id we are interested in
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
      *         due date at all
@@ -85,6 +88,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     long countByCourseIdSubmittedBeforeDueDate(@Param("courseId") long courseId);
 
     /**
+     * Count number of late submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
+     *
      * @param courseId the course id we are interested in
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date after the exercise due date
      */
@@ -110,7 +115,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             WHERE p.exercise.id = :#{#exerciseId}
             AND p.testRun = FALSE
             AND EXISTS (SELECT s
-                FROM Submission s
+                FROM p.submissions s
                 WHERE s.participation.id = p.id
                 AND s.submitted = TRUE
                 AND (p.exercise.dueDate IS NULL
@@ -144,5 +149,19 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the submission with its feedback and assessor
      */
     @Query("select distinct submission from Submission submission left join fetch submission.results r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
-    Optional<Submission> findWithEagerResultAndFeedbackById(long submissionId);
+    Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
+
+    /**
+     * Count number of submissions for exercise.
+     * @param exerciseId the exercise id we are interested in
+     * @param examMode should be set to ignore the test run submissions
+     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true, separated into before and after the due date
+     */
+    default DueDateStat countSubmissionsForExercise(long exerciseId, boolean examMode) {
+        if (examMode) {
+            return new DueDateStat(countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exerciseId), 0L);
+        }
+        return new DueDateStat(countByExerciseIdSubmittedBeforeDueDate(exerciseId), countByExerciseIdSubmittedAfterDueDate(exerciseId));
+    }
+
 }
