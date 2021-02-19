@@ -111,7 +111,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         request.getList("/api/exams/" + idOfExam + "/participant-scores/average-participant", HttpStatus.FORBIDDEN, ParticipantScoreAverageDTO.class);
         request.get("/api/exams/" + idOfExam + "/participant-scores/", HttpStatus.FORBIDDEN, Long.class);
         request.getList("/api/courses/" + idOfCourse + "/course-scores", HttpStatus.FORBIDDEN, ScoreDTO.class);
-        request.getList("/api/exam/" + idOfExam + "/exam-scores", HttpStatus.FORBIDDEN, ScoreDTO.class);
+        request.getList("/api/exams/" + idOfExam + "/exam-scores", HttpStatus.FORBIDDEN, ScoreDTO.class);
     }
 
     @Test

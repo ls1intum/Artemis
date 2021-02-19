@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 
@@ -37,6 +38,13 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
 
             """)
     List<ParticipantScoreAverageDTO> getAvgScoreOfTeamInExercises(@Param("exercises") Set<Exercise> exercises);
+
+    @Query("""
+                  SELECT DISTINCT t
+                  FROM TeamScore t
+                  WHERE t.exercise = :exercise AND :user MEMBER OF t.team.students
+            """)
+    Optional<TeamScore> findTeamScoreByExerciseAndUserLazy(@Param("exercise") Exercise exercise, @Param("user") User user);
 
     @Query("""
             SELECT ts.team, SUM(ts.lastRatedPoints)
