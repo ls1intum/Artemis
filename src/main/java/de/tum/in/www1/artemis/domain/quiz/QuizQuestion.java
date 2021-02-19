@@ -172,7 +172,7 @@ public abstract class QuizQuestion extends DomainObject {
      * @return the resulting score
      */
     public double scoreForAnswer(SubmittedAnswer submittedAnswer) {
-        return ScoringStrategyFactory.makeScoringStrategy(this).calculateScore(this, submittedAnswer);
+        return new ScoringStrategyFactory().makeScoringStrategy(this).calculateScore(this, submittedAnswer);
     }
 
     /**
@@ -182,7 +182,7 @@ public abstract class QuizQuestion extends DomainObject {
      * @return true, if the answer is 100% correct, false otherwise
      */
     public boolean isAnswerCorrect(SubmittedAnswer submittedAnswer) {
-        return ScoringStrategyFactory.makeScoringStrategy(this).calculateScore(this, submittedAnswer) == getPoints();
+        return new ScoringStrategyFactory().makeScoringStrategy(this).calculateScore(this, submittedAnswer) == getPoints();
     }
 
     /**
