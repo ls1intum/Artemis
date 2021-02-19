@@ -29,8 +29,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -62,7 +61,7 @@ public class ParticipationResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final QuizExerciseService quizExerciseService;
+    private final QuizExerciseRepository quizExerciseRepository;
 
     private final ExerciseService exerciseService;
 
@@ -71,8 +70,6 @@ public class ParticipationResource {
     private final AuthorizationCheckService authCheckService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
-    private final AuthorizationCheckService authorizationCheckService;
 
     private final UserRepository userRepository;
 
@@ -84,23 +81,32 @@ public class ParticipationResource {
 
     private final FeatureToggleService featureToggleService;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    private final SubmissionRepository submissionRepository;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            CourseRepository courseRepository, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamService teamService, FeatureToggleService featureToggleService) {
+            CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
+            AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamService teamService, FeatureToggleService featureToggleService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.quizExerciseService = quizExerciseService;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.exerciseService = exerciseService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
-        this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.auditEventRepository = auditEventRepository;
         this.guidedTourConfiguration = guidedTourConfiguration;
         this.teamService = teamService;
         this.featureToggleService = featureToggleService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -197,7 +203,7 @@ public class ParticipationResource {
 
         participation = participationService.resumeProgrammingExercise(participation);
         // Note: in this case we might need an empty commit to make sure the build plan works correctly for subsequent student commits
-        participation = participationService.performEmptyCommit(participation);
+        continuousIntegrationService.get().performEmptySetupCommit(participation);
         addLatestResultToParticipation(participation);
         participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getParticipant().getName())).body(participation);
@@ -208,9 +214,9 @@ public class ParticipationResource {
      *
      * @param participation The participation to which the latest result should get added
      */
-    private void addLatestResultToParticipation(Participation participation) {
+    private void addLatestResultToParticipation(StudentParticipation participation) {
         // Load results of participation as they are not contained in the current object
-        participation = participationService.findOneWithEagerResults(participation.getId());
+        participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
 
         Result result = participation.findLatestResult();
         if (result != null) {
@@ -224,16 +230,15 @@ public class ParticipationResource {
      * @param participation the participation to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated participation, or with status 400 (Bad Request) if the participation is not valid, or with status
      *         500 (Internal Server Error) if the participation couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     // TODO we should not use this global resource here, instead we should use /courses/:courseId/exercises/:exerciseId/participations
     @PutMapping("/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> updateParticipation(@RequestBody StudentParticipation participation) throws URISyntaxException {
+    public ResponseEntity<Participation> updateParticipation(@RequestBody StudentParticipation participation) {
         log.debug("REST request to update Participation : {}", participation);
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         if (participation.getId() == null) {
@@ -245,13 +250,13 @@ public class ParticipationResource {
         if (participation.getPresentationScore() > 1) {
             participation.setPresentationScore(1);
         }
-        StudentParticipation currentParticipation = participationService.findOneStudentParticipation(participation.getId());
+        StudentParticipation currentParticipation = studentParticipationRepository.findByIdElseThrow(participation.getId());
         if (currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
             log.info(user.getLogin() + " removed the presentation score of " + participation.getParticipantIdentifier() + " for exercise with participationId "
                     + participation.getExercise().getId());
         }
 
-        Participation result = participationService.save(participation);
+        Participation result = studentParticipationRepository.saveAndFlush(participation);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getParticipant().getName())).body(result);
     }
 
@@ -270,21 +275,26 @@ public class ParticipationResource {
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
         boolean examMode = exercise.isExamExercise();
         List<StudentParticipation> participations;
         if (withLatestResult) {
-            participations = participationService.findByExerciseIdWithLatestResult(exerciseId, examMode);
+            if (examMode) {
+                participations = studentParticipationRepository.findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(exerciseId);
+            }
+            else {
+                participations = studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
+            }
         }
         else {
-            participations = participationService.findByExerciseId(exerciseId);
+            participations = studentParticipationRepository.findByExerciseId(exerciseId);
         }
         participations = participations.stream().filter(participation -> participation.getParticipant() != null).collect(Collectors.toList());
 
-        Map<Long, Integer> submissionCountMap = participationService.countSubmissionsPerParticipationByExerciseId(exerciseId);
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         return ResponseEntity.ok(participations);
@@ -303,10 +313,10 @@ public class ParticipationResource {
         log.debug("REST request to get all Participations for Course {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
-        List<StudentParticipation> participations = participationService.findByCourseIdWithRelevantResult(courseId);
+        List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithRelevantResult(courseId);
         int resultCount = 0;
         for (StudentParticipation participation : participations) {
             // make sure the registration number is explicitly shown in the client
@@ -367,8 +377,8 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentParticipation> getParticipationWithLatestResult(@PathVariable Long participationId) {
         log.debug("REST request to get Participation : {}", participationId);
-        StudentParticipation participation = participationService.findOneWithEagerResults(participationId);
-        participationService.canAccessParticipation(participation);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
+        authCheckService.canAccessParticipation(participation);
         Result result = participation.getExercise().findLatestResultWithCompletionDate(participation);
         Set<Result> results = new HashSet<>();
         if (result != null) {
@@ -388,7 +398,7 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentParticipation> getParticipation(@PathVariable Long participationId) {
         log.debug("REST request to get participation : {}", participationId);
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionOwner(participation, user);
         return Optional.ofNullable(participation).map(result -> new ResponseEntity<>(result, HttpStatus.OK)).orElse(ResponseUtil.notFound());
@@ -404,7 +414,7 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<byte[]> getParticipationBuildArtifact(@PathVariable Long participationId) {
         log.debug("REST request to get Participation build artifact: {}", participationId);
-        ProgrammingExerciseStudentParticipation participation = participationService.findProgrammingExerciseParticipation(participationId);
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionOwner(participation, user);
 
@@ -426,7 +436,7 @@ public class ParticipationResource {
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
+        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         MappingJacksonValue response;
@@ -459,18 +469,18 @@ public class ParticipationResource {
         else if (quizExercise.isSubmissionAllowed()) {
             // Quiz is active => construct Participation from
             // filtered quizExercise and submission from HashMap
-            quizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
+            quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
             quizExercise.filterForStudentsDuringQuiz();
             StudentParticipation participation = participationService.participationForQuizWithResult(quizExercise, username);
             // set view
-            Class view = quizExerciseService.viewForStudentsInQuizExercise(quizExercise);
+            var view = quizExercise.viewForStudentsInQuizExercise();
             MappingJacksonValue value = new MappingJacksonValue(participation);
             value.setSerializationView(view);
             return value;
         }
         else {
             // quiz has ended => get participation from database and add full quizExercise
-            quizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
+            quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
             // TODO: we get a lot of error message here, when the quiz has ended, students reload the page (or navigate again into it), but the participation (+ submission
             // + result) has not yet been stored in the database (because for 1500 students this can take up to 60s). We should handle this case here properly
             // The best would be a message to the user: please wait while the quiz results are being processed (show a progress animation in the client)
@@ -502,7 +512,7 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
             @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
 
         if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)) {
             return forbidden();
@@ -536,7 +546,7 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteParticipationForGuidedTour(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
             @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
 
         if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)) {
             return forbidden();
@@ -577,7 +587,7 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOneStudentParticipation(participationId);
+        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
@@ -602,7 +612,7 @@ public class ParticipationResource {
     private void checkAccessPermissionOwner(StudentParticipation participation, User user) {
         Course course = findCourseFromParticipation(participation);
         if (!authCheckService.isOwnerOfParticipation(participation)) {
-            if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 throw new AccessForbiddenException("You are not allowed to access this resource");
             }
         }
@@ -613,7 +623,7 @@ public class ParticipationResource {
             return participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
 
-        return participationService.findOneStudentParticipation(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        return studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
     }
 
     /**
@@ -624,10 +634,10 @@ public class ParticipationResource {
     @GetMapping(value = "/participations/{participationId}/submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Submission>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
-        List<Submission> submissions = participationService.getSubmissionsWithResultsAndAssessorsByParticipationId(participationId);
+        List<Submission> submissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(participationId);
         return ResponseEntity.ok(submissions);
     }
 

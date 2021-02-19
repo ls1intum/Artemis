@@ -122,7 +122,7 @@ public class ProgrammingSubmissionResultSimulationResource {
     public ResponseEntity<Result> createNewProgrammingExerciseResult(@PathVariable Long exerciseId) {
         log.debug("Received result notify (NEW)");
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithStudentParticipationsAndSubmissionsByIdElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise, user);
 
         if (optionalStudentParticipation.isEmpty()) {

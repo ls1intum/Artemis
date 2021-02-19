@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.bamboo;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
+import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.getDockerImageName;
 
 import java.io.IOException;
 import java.net.URL;
@@ -11,7 +12,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
@@ -79,13 +79,10 @@ public class BambooBuildPlanService {
 
     private final Environment env;
 
-    private final BambooService bambooService;
-
-    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env, @Lazy BambooService bambooService) {
+    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env) {
         this.resourceLoaderService = resourceLoaderService;
         this.bambooServer = bambooServer;
         this.env = env;
-        this.bambooService = bambooService;
     }
 
     /**
@@ -333,7 +330,7 @@ public class BambooBuildPlanService {
     }
 
     private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage language) {
-        var dockerImage = bambooService.getDockerImageName(language);
+        var dockerImage = getDockerImageName(language);
         return new DockerConfiguration().image(dockerImage);
     }
 }

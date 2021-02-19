@@ -1,9 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -14,12 +10,10 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class TextExerciseService {
@@ -33,36 +27,6 @@ public class TextExerciseService {
     public TextExerciseService(TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService) {
         this.textExerciseRepository = textExerciseRepository;
         this.authCheckService = authCheckService;
-    }
-
-    /**
-     * Get one text exercise by id.
-     *
-     * @param exerciseId the id of the exercise
-     * @return the entity
-     */
-    public TextExercise findOne(long exerciseId) {
-        log.debug("Request to get Text Exercise : {}", exerciseId);
-        return textExerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise with id: \"" + exerciseId + "\" does not exist"));
-    }
-
-    /**
-     * Find all exercises with *Due Date* in the future.
-     *
-     * @return List of Text Exercises
-     */
-    public List<TextExercise> findAllAutomaticAssessmentTextExercisesWithFutureDueDate() {
-        return textExerciseRepository.findByAssessmentTypeAndDueDateIsAfter(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now());
-    }
-
-    /**
-     * Get one text exercise by id with eagerly fetched Student Participations and Submissions.
-     *
-     * @param exerciseId the id of the text exercise in question
-     * @return text exercise with eagerly fetched Student Participations and Submissions.
-     */
-    public Optional<TextExercise> findOneWithParticipationsAndSubmissionsAndResults(long exerciseId) {
-        return textExerciseRepository.findWithEagerStudentParticipationAndSubmissionsById(exerciseId);
     }
 
     /**

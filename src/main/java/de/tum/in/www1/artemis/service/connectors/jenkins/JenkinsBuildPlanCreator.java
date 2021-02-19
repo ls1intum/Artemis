@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
+import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.getDockerImageName;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
@@ -11,7 +13,6 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
@@ -75,11 +76,8 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    private final JenkinsService jenkinsService;
-
-    public JenkinsBuildPlanCreator(ResourceLoaderService resourceLoaderService, @Lazy JenkinsService jenkinsService) {
+    public JenkinsBuildPlanCreator(ResourceLoaderService resourceLoaderService) {
         this.resourceLoaderService = resourceLoaderService;
-        this.jenkinsService = jenkinsService;
     }
 
     @PostConstruct
@@ -104,7 +102,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         replacements.put(REPLACE_TESTS_CHECKOUT_PATH, Constants.TESTS_CHECKOUT_PATH);
         replacements.put(REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl);
         replacements.put(REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
-        replacements.put(REPLACE_DOCKER_IMAGE_NAME, jenkinsService.getDockerImageName(programmingLanguage));
+        replacements.put(REPLACE_DOCKER_IMAGE_NAME, getDockerImageName(programmingLanguage));
         replacements.put(REPLACE_JENKINS_TIMEOUT, buildTimeout);
         // at the moment, only Java and Swift are supported
         if (isStaticCodeAnalysisEnabled) {

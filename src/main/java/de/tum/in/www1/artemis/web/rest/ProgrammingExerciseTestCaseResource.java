@@ -66,7 +66,7 @@ public class ProgrammingExerciseTestCaseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> getTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to get test cases for programming exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -92,7 +92,7 @@ public class ProgrammingExerciseTestCaseResource {
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> updateTestCases(@PathVariable Long exerciseId,
             @RequestBody Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS) {
         log.debug("REST request to update the weights {} of the exercise {}", testCaseProgrammingExerciseTestCaseDTOS, exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userRepository.getUserWithGroupsAndAuthorities();
 

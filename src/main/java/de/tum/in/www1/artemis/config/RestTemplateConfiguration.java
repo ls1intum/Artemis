@@ -34,21 +34,21 @@ public class RestTemplateConfiguration {
 
     @Bean
     @Profile("gitlab")
-    @Autowired
+    @Autowired // ok
     public RestTemplate gitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
         return initializeRestTemplateWithInterceptors(gitlabInterceptor, createRestTemplate());
     }
 
     @Bean
     @Profile("jenkins")
-    @Autowired
+    @Autowired // ok
     public RestTemplate jenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createRestTemplate());
     }
 
     @Bean
     @Profile("jira")
-    @Autowired
+    @Autowired // ok
     public RestTemplate jiraRestTemplate(JiraAuthorizationInterceptor jiraAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(jiraAuthorizationInterceptor, createRestTemplate());
     }
@@ -70,21 +70,21 @@ public class RestTemplateConfiguration {
 
     @Bean
     @Profile("gitlab")
-    @Autowired
+    @Autowired // ok
     public RestTemplate shortTimeoutGitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
         return initializeRestTemplateWithInterceptors(gitlabInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
     @Profile("jenkins")
-    @Autowired
+    @Autowired // ok
     public RestTemplate shortTimeoutJenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
     @Profile("jira")
-    @Autowired
+    @Autowired // ok
     public RestTemplate shortTimeoutJiraRestTemplate(JiraAuthorizationInterceptor jiraAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(jiraAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
