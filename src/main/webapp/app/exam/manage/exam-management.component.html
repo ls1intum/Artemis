@@ -158,7 +158,7 @@
                                 </a>
                             </div>
                             <div class="d-flex flex-column mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                <button
+                                <button *ngIf="isAtLeastInstructor"
                                     jhiDeleteButton
                                     [entityTitle]="exam.title"
                                     deleteQuestion="artemisApp.examManagement.delete.question"

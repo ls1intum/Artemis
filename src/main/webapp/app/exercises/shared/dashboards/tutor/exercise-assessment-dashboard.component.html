@@ -24,7 +24,7 @@
         </div>
         <div class="col-lg-3 col-md-6 col-sm-6 align-self-center" *ngIf="isExamMode && !isTestRun">
             <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                <ng-container *ngIf="exam?.numberOfCorrectionRoundsInExam > 1">
+                <ng-container *ngIf="isAtLeastInstructor && exam?.numberOfCorrectionRoundsInExam > 1">
                     <jhi-second-correction-enable-button
                         (ngModelChange)="toggleSecondCorrection()"
                         [(secondCorrectionEnabled)]="secondCorrectionEnabled"
