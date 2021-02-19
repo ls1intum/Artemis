@@ -47,9 +47,11 @@ public class SubmissionService {
 
     protected final FeedbackRepository feedbackRepository;
 
+    protected final ParticipationRepository participationRepository;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
-            FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository) {
+            FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -59,6 +61,7 @@ public class SubmissionService {
         this.feedbackRepository = feedbackRepository;
         this.examDateService = examDateService;
         this.courseRepository = courseRepository;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -169,10 +172,16 @@ public class SubmissionService {
         List<StudentParticipation> participations;
 
         if (examMode) {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(exercise.getId(), correctionRound);
+            // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
+            // No manual result means that no user has started an assessment for the corresponding submission yet.
+            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exercise.getId(),
+                    correctionRound);
         }
         else {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId());
+            // Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for
+            // the
+            // corresponding submission yet.
+            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId());
         }
 
         List<Submission> submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)

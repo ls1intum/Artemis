@@ -83,6 +83,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> getCoursesForWhichUserHasInstructorAccess(@Param("userId") Long userId);
 
+    @NotNull
     default Course findByIdElseThrow(Long courseId) throws EntityNotFoundException {
         return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
@@ -123,21 +124,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @return the entity
      */
     @NotNull
-    default Course findOneWithLecturesAndExams(Long courseId) {
-        return findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
-    }
-
-    /**
-     * Get one course by id with all its exercises.
-     *
-     * @param courseId the id of the entity
-     * @return the entity
-     */
-    default Course findOneWithExercises(long courseId) {
-        return findWithEagerExercisesById(courseId);
-    }
-
-    default Course findOneWithExercisesAndLectures(long courseId) {
-        return findWithEagerExercisesAndLecturesById(courseId);
+    default Course findByIdWithLecturesAndExamsElseThrow(Long courseId) {
+        return findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 }

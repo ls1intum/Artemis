@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -39,6 +40,9 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
 
     @Autowired
     ExamService examService;
+
+    @Autowired
+    ExamRepository examRepository;
 
     @Autowired
     StudentExamRepository studentExamRepository;
@@ -65,7 +69,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         user = users.get(0);
         exercise = database.addCourseExamExerciseGroupWithOneTextExercise();
         course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        exam = examService.findAllByCourseId(course.getId()).get(0);
+        exam = examRepository.findByCourseId(course.getId()).get(0);
         studentExam = database.addStudentExam(exam);
         studentExam.setWorkingTime(7200); // 2 hours
         studentExam.setUser(user);
@@ -94,7 +98,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
     public void testCheckSubmissionAllowance_isSubmissionInTime() {
         // Should fail when submission is made before start date
         exam.setStartDate(ZonedDateTime.now().plusMinutes(5));
-        examService.save(exam);
+        examRepository.save(exam);
         Optional<ResponseEntity<Submission>> result = examSubmissionService.checkSubmissionAllowance(exercise, user);
         assertThat(result.isPresent()).isTrue();
         assertThat(result.get()).isEqualTo(forbidden());
@@ -102,7 +106,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         assertThat(result2).isFalse();
         // Should fail when submission is made after (start date + working time)
         exam.setStartDate(ZonedDateTime.now().minusMinutes(130));
-        examService.save(exam);
+        examRepository.save(exam);
         result = examSubmissionService.checkSubmissionAllowance(exercise, user);
         assertThat(result.isPresent()).isTrue();
         assertThat(result.get()).isEqualTo(forbidden());
@@ -110,7 +114,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         assertThat(result2).isFalse();
         // Should pass if submission is made in time
         exam.setStartDate(ZonedDateTime.now().minusMinutes(90));
-        examService.save(exam);
+        examRepository.save(exam);
         result = examSubmissionService.checkSubmissionAllowance(exercise, user);
         assertThat(result.isEmpty()).isTrue();
         result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, user);
@@ -120,7 +124,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         studentExamRepository.save(studentExam);
         exam.setStartDate(ZonedDateTime.now().minusMinutes(130));
         exam.setEndDate(ZonedDateTime.now().minusMinutes(120));
-        examService.save(exam);
+        examRepository.save(exam);
         result = examSubmissionService.checkSubmissionAllowance(exercise, user);
         assertThat(result.isPresent()).isTrue();
         assertThat(result.get()).isEqualTo(forbidden());
@@ -133,7 +137,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
     public void testCheckSubmissionAllowance_allowedToSubmitToExercise() {
         // Should fail if there is no student exam for user
         exam.setStartDate(ZonedDateTime.now().minusMinutes(90));
-        examService.save(exam);
+        examRepository.save(exam);
         studentExam.setUser(null);
         studentExamRepository.save(studentExam);
         assertThrows(EntityNotFoundException.class, () -> {

@@ -54,15 +54,15 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     @AfterEach
     public void resetDatabase() {
         exam1.removeExerciseGroup(exerciseGroup1);
-        examService.save(exam1);
+        examRepository.save(exam1);
         database.resetDatabase();
     }
 
     @Test
     public void testForNullIndexColumnError() {
-        Exam examResult = examService.findOne(exam1.getId());
+        Exam examResult = examRepository.findByIdElseThrow(exam1.getId());
         assertThat(examResult).isEqualTo(exam1);
-        examResult = examService.findOneWithExerciseGroups(exam1.getId());
+        examResult = examRepository.findByIdWithExerciseGroupsElseThrow(exam1.getId());
         assertThat(examResult).isEqualTo(exam1);
         assertThat(examResult.getExerciseGroups().get(0)).isEqualTo(exerciseGroup1);
     }
@@ -70,7 +70,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testCanGetCurrentAndUpcomingExams() {
-        List<Exam> exams = examService.findAllCurrentAndUpcomingExams();
+        List<Exam> exams = examRepository.findAllCurrentAndUpcomingExams();
         assertThat(exams.size()).isEqualTo(2);
         assertThat(exams).contains(exam1, examInTheFuture);
         assertThat(exams).doesNotContain(examInThePast);

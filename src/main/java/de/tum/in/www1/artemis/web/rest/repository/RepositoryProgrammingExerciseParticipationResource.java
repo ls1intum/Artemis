@@ -128,7 +128,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
             var participation = participationService.findParticipation(participationId);
-            var exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(participation.getExercise().getId());
+            var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(participation.getExercise().getId());
 
             Repository templateRepository = getRepository(exercise.getTemplateParticipation().getId(), RepositoryActionType.READ, true);
             var filesWithInformationAboutChange = super.repositoryService.getFilesWithInformationAboutChange(repository, templateRepository);
