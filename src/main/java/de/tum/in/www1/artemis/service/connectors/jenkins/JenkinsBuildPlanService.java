@@ -63,21 +63,17 @@ public class JenkinsBuildPlanService {
         this.jenkinsJobPermissionsService = jenkinsJobPermissionsService;
     }
 
-    public void createBuildPlanForProgrammingLanguage(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL) {
-        try {
-            // TODO support sequential test runs
-            var programmingLanguage = exercise.getProgrammingLanguage();
-            final var configBuilder = builderFor(programmingLanguage);
-            Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, testRepositoryURL, repositoryURL, Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL) {
+        // TODO support sequential test runs
+        var programmingLanguage = exercise.getProgrammingLanguage();
+        final var configBuilder = builderFor(programmingLanguage);
+        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, testRepositoryURL, repositoryURL, Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
 
-            planKey = exercise.getProjectKey() + "-" + planKey;
-            jenkinsServer.createJob(jenkinsJobService.getFolderJob(exercise.getProjectKey()), planKey, jenkinsJobService.writeXmlToString(jobConfig), useCrumb);
-            jenkinsJobService.getJobInFolder(exercise.getProjectKey(), planKey).build(useCrumb);
-        }
-        catch (IOException e) {
-            log.error(e.getMessage(), e);
-            throw new JenkinsException("Unable to create new build plan :" + planKey, e);
-        }
+        var jobFolder = exercise.getProjectKey();
+        var job = jobFolder + "-" + planKey;
+        jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
+        givePlanPermissions(exercise, planKey);
+        triggerBuild(jobFolder, job);
     }
 
     /**
@@ -181,7 +177,7 @@ public class JenkinsBuildPlanService {
      * the exercise' course and adding permissions to the Jenkins job.
      *
      * @param programmingExercise the programming exercise
-     * @param planName
+     * @param planName the name of the build plan
      */
     public void givePlanPermissions(ProgrammingExercise programmingExercise, String planName) {
         try {

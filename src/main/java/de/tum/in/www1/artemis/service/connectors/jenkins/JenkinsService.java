@@ -79,7 +79,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
-        jenkinsBuildPlanService.createBuildPlanForProgrammingLanguage(exercise, planKey, repositoryURL, testRepositoryURL);
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryURL, testRepositoryURL);
     }
 
     @Override
