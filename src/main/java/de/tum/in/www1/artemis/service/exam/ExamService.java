@@ -82,10 +82,10 @@ public class ExamService {
     private final StudentParticipationRepository studentParticipationRepository;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ParticipationService participationService, ExamQuizService examQuizService,
-                       ExerciseService exerciseService, InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService,
-                       AuditEventRepository auditEventRepository, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
-                       ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-                       ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository) {
+            ExerciseService exerciseService, InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService,
+            AuditEventRepository auditEventRepository, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
+            ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;

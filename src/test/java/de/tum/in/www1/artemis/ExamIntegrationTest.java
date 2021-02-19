@@ -113,7 +113,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam1 = database.addExam(course1);
         exam2 = database.addExamWithExerciseGroup(course1, true);
 
-        instructor = users.get(users.size()-1);
+        instructor = users.get(users.size() - 1);
 
         // Add users that are not in the course
         userRepo.save(ModelFactory.generateActivatedUser("student42"));
