@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
@@ -45,13 +45,13 @@ public class CourseExportService {
 
     private final ModelingSubmissionExportService modelingSubmissionExportService;
 
-    private final ExamService examService;
+    private final ExamRepository examRepository;
 
     private final WebsocketMessagingService websocketMessagingService;
 
     public CourseExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
             CourseRepository courseRepository, FileUploadSubmissionExportService fileUploadSubmissionExportService, TextSubmissionExportService textSubmissionExportService,
-            ModelingSubmissionExportService modelingSubmissionExportService, WebsocketMessagingService websocketMessagingService, ExamService examService) {
+            ModelingSubmissionExportService modelingSubmissionExportService, WebsocketMessagingService websocketMessagingService, ExamRepository examRepository) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
         this.fileService = fileService;
@@ -60,7 +60,7 @@ public class CourseExportService {
         this.textSubmissionExportService = textSubmissionExportService;
         this.modelingSubmissionExportService = modelingSubmissionExportService;
         this.websocketMessagingService = websocketMessagingService;
-        this.examService = examService;
+        this.examRepository = examRepository;
     }
 
     /**
@@ -171,12 +171,12 @@ public class CourseExportService {
      * @param exportErrors List of failures that occurred during the export
      */
     private void exportExam(long examId, String outputDir, List<String> exportErrors) {
-        var exam = examService.findOneWithExerciseGroupsAndExercises(examId);
+        var exam = examRepository.findByIdElseThrow(examId);
         Path examDir = Path.of(outputDir, exam.getId() + "-" + exam.getTitle());
         try {
             Files.createDirectory(examDir);
             // We retrieve every exercise from each exercise group and flatten the list.
-            var exercises = examService.getAllExercisesOfExam(examId);
+            var exercises = examRepository.findAllExercisesByExamId(examId);
             exportExercises(exam.getCourse().getId(), exercises, examDir.toString(), exportErrors);
         }
         catch (IOException e) {
@@ -229,7 +229,7 @@ public class CourseExportService {
                     exportedSubmissionsFileOrEmpty = modelingSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions);
                 }
                 else if (exercise instanceof QuizExercise) {
-                    // TODO: Quiz submssions aren't supported yet
+                    // TODO: Quiz submissions aren't supported yet
                     return;
                 }
                 else {

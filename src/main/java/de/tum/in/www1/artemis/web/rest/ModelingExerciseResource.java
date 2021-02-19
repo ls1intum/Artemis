@@ -328,7 +328,6 @@ public class ModelingExerciseResource {
      * This will import the whole exercise except for the participations and Dates.
      * Referenced entities will get cloned and assigned a new id.
      * Uses {@link ModelingExerciseImportService}.
-     * See {@link ExerciseImportService#importExercise(Exercise, Exercise)}
      *
      * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param importedExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
@@ -345,7 +344,7 @@ public class ModelingExerciseResource {
             return badRequest();
         }
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        final var optionalOriginalModelingExercise = modelingExerciseRepository.findByIdWithEagerExampleSubmissionsAndResults(sourceExerciseId);
+        final var optionalOriginalModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResults(sourceExerciseId);
         if (optionalOriginalModelingExercise.isEmpty()) {
             log.debug("Cannot find original exercise to import from {}", sourceExerciseId);
             return notFound();
@@ -376,14 +375,11 @@ public class ModelingExerciseResource {
             return forbidden();
         }
 
-        final var newExercise = modelingExerciseImportService.importExercise(originalModelingExercise, importedExercise);
-        if (newExercise == null) {
-            return conflict();
-        }
-
-        modelingExerciseRepository.save((ModelingExercise) newExercise);
-        return ResponseEntity.created(new URI("/api/modeling-exercises/" + newExercise.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newExercise.getId().toString())).body((ModelingExercise) newExercise);
+        final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
+        modelingExerciseRepository.save(newModelingExercise);
+        return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newModelingExercise.getId().toString()))
+                .body((ModelingExercise) newModelingExercise);
     }
 
     /**
@@ -448,20 +444,12 @@ public class ModelingExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) {
-        Optional<ModelingExercise> optionalModelingExercise = modelingExerciseService.findOneWithParticipationsSubmissionsResults(exerciseId);
-
-        if (optionalModelingExercise.isEmpty()) {
-            return notFound();
-        }
-
-        ModelingExercise modelingExercise = optionalModelingExercise.get();
-
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
         if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
             return forbidden();
         }
 
         ModelingPlagiarismResult result = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
-
         return ResponseEntity.ok(result);
     }
 }

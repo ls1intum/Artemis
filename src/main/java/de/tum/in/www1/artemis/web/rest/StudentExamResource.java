@@ -25,9 +25,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
@@ -56,9 +54,9 @@ public class StudentExamResource {
 
     private final ExamSessionService examSessionService;
 
-    private final QuizExerciseService quizExerciseService;
+    private final QuizExerciseRepository quizExerciseRepository;
 
-    private final ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final ExamRepository examRepository;
 
@@ -66,7 +64,7 @@ public class StudentExamResource {
 
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserRepository userRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
-            ParticipationService participationService, QuizExerciseService quizExerciseService, ExamRepository examRepository,
+            StudentParticipationRepository studentParticipationRepository, QuizExerciseRepository quizExerciseRepository, ExamRepository examRepository,
             AuthorizationCheckService authorizationCheckService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
@@ -75,8 +73,8 @@ public class StudentExamResource {
         this.studentExamRepository = studentExamRepository;
         this.examDateService = examDateService;
         this.examSessionService = examSessionService;
-        this.participationService = participationService;
-        this.quizExerciseService = quizExerciseService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.examRepository = examRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
@@ -105,7 +103,7 @@ public class StudentExamResource {
 
         // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
-        List<StudentParticipation> participations = participationService.findByStudentExamWithEagerSubmissionsResult(studentExam);
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam);
 
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
@@ -509,7 +507,7 @@ public class StudentExamResource {
     private void fetchParticipationsSubmissionsAndResultsForStudentExam(StudentExam studentExam, User currentUser) {
         // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
-        List<StudentParticipation> participations = participationService.findByStudentExamWithEagerSubmissionsResult(studentExam);
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
 
@@ -600,7 +598,7 @@ public class StudentExamResource {
 
     /**
      * Loads the quiz questions as is not possible to load them in a generic way with the entity graph used.
-     * See {@link ParticipationService#findByStudentExamWithEagerSubmissionsResult}
+     * See {@link StudentParticipationRepository#findByStudentExamWithEagerSubmissionsResult}
      *
      * @param studentExam the studentExam for which to load exercises
      */
@@ -609,7 +607,7 @@ public class StudentExamResource {
             var exercise = studentExam.getExercises().get(i);
             if (exercise instanceof QuizExercise) {
                 // reload and replace the quiz exercise
-                var quizExercise = quizExerciseService.findOneWithQuestions(exercise.getId());
+                var quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
                 // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
                 if (!(studentExam.areResultsPublishedYet() || studentExam.isTestRun())) {
                     quizExercise.filterForStudentsDuringQuiz();

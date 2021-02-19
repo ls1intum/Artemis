@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.exam;
 
 import java.security.SecureRandom;
 import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -33,8 +32,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -55,11 +52,11 @@ public class ExamService {
 
     private final ExerciseService exerciseService;
 
-    private final ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final QuizExerciseService quizExerciseService;
+    private final QuizExerciseRepository quizExerciseRepository;
 
     private final ExamQuizService examQuizService;
 
@@ -71,68 +68,29 @@ public class ExamService {
 
     private final AuditEventRepository auditEventRepository;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     private final ComplaintRepository complaintRepository;
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
     private final ResultRepository resultRepository;
 
-    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ParticipationService participationService, ExamQuizService examQuizService,
-            ExerciseService exerciseService, InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService,
-            AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ResultRepository resultRepository) {
+    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService, ExerciseService exerciseService,
+            InstanceMessageSendService instanceMessageSendService, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository,
+            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
-        this.participationService = participationService;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examQuizService = examQuizService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.exerciseService = exerciseService;
-        this.quizExerciseService = quizExerciseService;
         this.auditEventRepository = auditEventRepository;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
-    }
-
-    /**
-     * Save an exam.
-     *
-     * @param exam the entity to save
-     * @return the persisted entity
-     */
-    public Exam save(Exam exam) {
-        log.debug("Request to save exam : {}", exam);
-        return examRepository.save(exam);
-    }
-
-    /**
-     * Get one exam by id.
-     *
-     * @param examId the id of the entity
-     * @return the entity
-     */
-    @NotNull
-    public Exam findOne(Long examId) {
-        log.debug("Request to get exam : {}", examId);
-        return examRepository.findExamByIdElseThrow(examId);
-    }
-
-    /**
-     * Get one exam by id with exercise groups.
-     *
-     * @param examId the id of the entity
-     * @return the exam with exercise groups
-     */
-    @NotNull
-    public Exam findOneWithExerciseGroups(Long examId) {
-        log.debug("Request to get exam with exercise groups : {}", examId);
-        return examRepository.findWithExerciseGroupsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
     /**
@@ -143,19 +101,19 @@ public class ExamService {
      * @return the exam with exercise groups
      */
     @NotNull
-    public Exam findOneWithExerciseGroupsAndExercises(Long examId) {
+    public Exam findByIdWithExerciseGroupsAndExercisesElseThrow(Long examId) {
         log.debug("Request to get exam with exercise groups : {}", examId);
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             for (Exercise exercise : exerciseGroup.getExercises()) {
                 if (exercise instanceof ProgrammingExercise) {
                     ProgrammingExercise exerciseWithTemplateAndSolutionParticipation = programmingExerciseRepository
-                            .findWithTemplateAndSolutionParticipationWithResultsByIdElseThrow(exercise.getId());
+                            .findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(exercise.getId());
                     ((ProgrammingExercise) exercise).setTemplateParticipation(exerciseWithTemplateAndSolutionParticipation.getTemplateParticipation());
                     ((ProgrammingExercise) exercise).setSolutionParticipation(exerciseWithTemplateAndSolutionParticipation.getSolutionParticipation());
                 }
                 if (exercise instanceof QuizExercise) {
-                    QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exercise.getId());
+                    QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
                     ((QuizExercise) exercise).setQuizQuestions(quizExercise.getQuizQuestions());
                 }
             }
@@ -164,64 +122,7 @@ public class ExamService {
     }
 
     /**
-     * Get one exam by id with registered users.
-     *
-     * @param examId the id of the entity
-     * @return the exam with registered users
-     */
-    @NotNull
-    public Exam findOneWithRegisteredUsers(Long examId) {
-        log.debug("Request to get exam with registered users : {}", examId);
-        return examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
-    }
-
-    /**
-     * Get one exam by id with registered users and exercise groups.
-     *
-     * @param examId the id of the entity
-     * @return the exam with registered users and exercise groups
-     */
-    @NotNull
-    public Exam findOneWithRegisteredUsersAndExerciseGroupsAndExercises(Long examId) {
-        log.debug("Request to get exam with registered users and registered students : {}", examId);
-        return examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
-    }
-
-    /**
-     * Get all exams for the given course.
-     *
-     * @param courseId the id of the course
-     * @return the list of all exams
-     */
-    public List<Exam> findAllByCourseId(Long courseId) {
-        log.debug("REST request to get all exams for Course : {}", courseId);
-        return examRepository.findByCourseId(courseId);
-    }
-
-    /**
-     * Get all exams that are held today and/or in the future
-     * (does not return exams belonging to test courses).
-     *
-     * @return the list of all exams
-     */
-    public List<Exam> findAllCurrentAndUpcomingExams() {
-        log.debug("REST request to get all upcoming exams");
-        return examRepository.findAllByStartDateGreaterThanEqual(ZonedDateTime.now());
-    }
-
-    /**
-     * Get the exam of a course with exercise groups and student exams
-     *
-     * @param examId {Long} The courseId of the course which contains the exam
-     * @return The exam
-     */
-    public Exam findOneWithExercisesGroupsAndStudentExamsByExamId(Long examId) {
-        log.debug("REST request to get the exam with student exams and exercise groups for Id : {}", examId);
-        return examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
-    }
-
-    /**
-     * Fetches the exam using {@link #findOneWithExercisesGroupsAndStudentExamsByExamId} which eagerly loads all required elements and deletes all elements associated with the
+     * Fetches the exam and eagerly loads all required elements and deletes all elements associated with the
      * exam including:
      * <ul>
      *     <li>The Exam</li>
@@ -236,7 +137,7 @@ public class ExamService {
      */
     public void delete(@NotNull long examId) {
         User user = userRepository.getUser();
-        Exam exam = findOneWithExercisesGroupsAndStudentExamsByExamId(examId);
+        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
@@ -270,7 +171,7 @@ public class ExamService {
     public ExamScoresDTO getExamScore(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
-        List<StudentParticipation> studentParticipations = participationService.findByExamIdWithSubmissionRelevantResult(examId); // without test run participations
+        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithSubmissionRelevantResult(examId); // without test run participations
 
         // Adding exam information to DTO
         ExamScoresDTO scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
@@ -402,7 +303,7 @@ public class ExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(final Exam examWithRegisteredUsersAndExerciseGroupsAndExercises) {
-        final var examWithExistingStudentExams = findWithStudentExams(examWithRegisteredUsersAndExerciseGroupsAndExercises.getId());
+        final var examWithExistingStudentExams = examRepository.findByIdWithStudentExamsElseThrow(examWithRegisteredUsersAndExerciseGroupsAndExercises.getId());
         // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
         studentExamRepository.deleteAll(examWithExistingStudentExams.getStudentExams());
 
@@ -706,19 +607,6 @@ public class ExamService {
     }
 
     /**
-     * Finds an exam based on the id with all student exams which are not marked as test runs.
-     *
-     * @param examId the id of the exam
-     * @return the exam with student exams loaded
-     */
-    public Exam findWithStudentExams(long examId) {
-        Exam exam = examRepository.findWithStudentExamsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id " + examId + " does not exist"));
-        // drop all test runs and set the remaining student exams to the exam
-        exam.setStudentExams(exam.getStudentExams().stream().dropWhile(StudentExam::isTestRun).collect(Collectors.toSet()));
-        return exam;
-    }
-
-    /**
      * Converts List<[examId, registeredUsersCount]> into Map<examId -> registeredUsersCount>
      *
      * @param examIdAndRegisteredUsersCountPairs list of pairs (examId, registeredUsersCount)
@@ -831,21 +719,5 @@ public class ExamService {
         }
 
         return programmingExercises.size();
-    }
-
-    /**
-     * Returns a set containing all exercises that are defined in the
-     * specified exam.
-     *
-     * @param examId The id of the exam
-     * @return A set containing the exercises
-     */
-    public Set<Exercise> getAllExercisesOfExam(long examId) {
-        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId);
-        if (exam.isEmpty()) {
-            return Set.of();
-        }
-
-        return exam.get().getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
     }
 }

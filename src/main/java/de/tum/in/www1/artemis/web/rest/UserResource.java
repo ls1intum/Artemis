@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -70,16 +71,19 @@ public class UserResource {
 
     private final UserService userService;
 
+    private final UserCreationService userCreationService;
+
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final UserRepository userRepository;
 
     private final AuthorityRepository authorityRepository;
 
-    public UserResource(UserRepository userRepository, UserService userService, ArtemisAuthenticationProvider artemisAuthenticationProvider,
-            AuthorityRepository authorityRepository) {
+    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository) {
         this.userRepository = userRepository;
         this.userService = userService;
+        this.userCreationService = userCreationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.authorityRepository = authorityRepository;
     }
@@ -113,7 +117,7 @@ public class UserResource {
             throw new EntityNotFoundException("Not all groups are available: " + managedUserVM.getGroups());
         }
         else {
-            User newUser = userService.createUser(managedUserVM);
+            User newUser = userCreationService.createUser(managedUserVM);
 
             // NOTE: Mail service is NOT active at the moment
             // mailService.sendCreationEmail(newUser);

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -39,7 +40,7 @@ public class SubmissionResource {
 
     private final ResultService resultService;
 
-    private final ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -48,12 +49,13 @@ public class SubmissionResource {
     private final ExerciseRepository exerciseRepository;
 
     public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, ResultService resultService,
-            ParticipationService participationService, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            ExerciseRepository exerciseRepository) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.resultService = resultService;
         this.exerciseRepository = exerciseRepository;
-        this.participationService = participationService;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
     }
@@ -108,7 +110,8 @@ public class SubmissionResource {
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var testRunParticipations = participationService.findTestRunParticipationForExerciseWithEagerSubmissionsResult(user.getId(), List.of(exercise));
+        var testRunParticipations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
+                List.of(exercise));
         if (!testRunParticipations.isEmpty() && testRunParticipations.get(0).findLatestSubmission().isPresent()) {
             var latestSubmission = testRunParticipations.get(0).findLatestSubmission().get();
             if (latestSubmission.getManualResults().isEmpty()) {
@@ -137,6 +140,6 @@ public class SubmissionResource {
             return studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
 
-        return participationService.findOneStudentParticipation(studentParticipation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        return studentParticipationRepository.findByIdElseThrow(studentParticipation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
     }
 }
