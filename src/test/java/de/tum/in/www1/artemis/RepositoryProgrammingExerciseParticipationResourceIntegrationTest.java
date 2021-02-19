@@ -138,7 +138,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         Files.createDirectory(templateFolderPath).toFile();
 
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(), true);
@@ -266,7 +266,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         Files.createDirectory(solutionFolderPath).toFile();
 
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(programmingExercise.getSolutionParticipation().getVcsRepositoryUrl(), true);

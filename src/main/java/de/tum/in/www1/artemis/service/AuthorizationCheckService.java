@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
+
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -381,5 +383,32 @@ public class AuthorizationCheckService {
         return this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)
                 || (exercise.isCourseExercise() || (exercise.isExamExercise() && exercise.getExerciseGroup().getExam().getEndDate().isAfter(ZonedDateTime.now()))
                         || exercise.getExerciseGroup().getExam().resultsPublished());
+    }
+
+    /**
+     * Check if a participation can be accessed with the current user.
+     *
+     * @param participation to access
+     * @return can user access participation
+     */
+    public boolean canAccessParticipation(StudentParticipation participation) {
+        return Optional.ofNullable(participation).isPresent() && userHasPermissionsToAccessParticipation(participation);
+    }
+
+    /**
+     * Check if a user has permissions to access a certain participation. This includes not only the owner of the participation but also the TAs and instructors of the course.
+     *
+     * @param participation to access
+     * @return does user has permissions to access participation
+     */
+    private boolean userHasPermissionsToAccessParticipation(StudentParticipation participation) {
+        if (isOwnerOfParticipation(participation)) {
+            return true;
+        }
+        // if the user is not the owner of the participation, the user can only see it in case he is
+        // a teaching assistant or an instructor of the course, or in case he is admin
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        return isAtLeastTeachingAssistantInCourse(course, user);
     }
 }
