@@ -129,6 +129,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                     this.course = Course.from(res.body!);
                     this.courseService.checkAndSetCourseRights(this.course);
                     this.extractExercises(this.course.exercises);
+                    this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
                 },
                 (response: string) => this.onError(response),
             );
