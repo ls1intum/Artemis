@@ -37,14 +37,23 @@ public class SAML2Service {
 
     private final Logger log = LoggerFactory.getLogger(SAML2Service.class);
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+    private final UserRepository userRepository;
+    private final SAML2Properties properties;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private SAML2Properties properties;
+    /**
+     * Constructs a new instance.
+     *
+     * @param      userService     The user service
+     * @param      userRepository  The user repository
+     * @param      properties      The properties
+     */
+    public SAML2Service(final UserService userService, 
+            final UserRepository userRepository, final SAML2Properties properties) {
+        this.userService = userService;
+        this.userRepository = userRepository;
+        this.properties = properties;
+    }
 
     /**
      * Handles an authentication via SAML2.

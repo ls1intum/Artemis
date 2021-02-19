@@ -23,8 +23,16 @@ import org.springframework.security.saml2.provider.service.registration.RelyingP
 @Profile("saml2")
 public class SAML2Configuration extends WebSecurityConfigurerAdapter {
 
-    @Autowired
-    private SAML2Properties properties;
+    private final SAML2Properties properties;
+
+    /**
+     * Constructs a new instance.
+     *
+     * @param      properties  The SAML2 properties
+     */
+    public SAML2Configuration(final SAML2Properties properties) {
+        this.properties = properties;
+    }
 
     /**
      * Returns the RelyingPartyRegistrationRepository used by SAML2 configuration.
