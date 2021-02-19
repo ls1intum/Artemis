@@ -49,11 +49,11 @@ export class LoginService {
      * Login the user with SAML2. 
      * @param callback The callback function to use (optional)
      */
-    loginSAML2(callback?: any) {
+    loginSAML2(rememberMe: boolean,callback?: any) {
         const cb = callback || function () {};
 
         return new Promise((resolve, reject) => {
-            this.authServerProvider.loginSAML2().subscribe(
+            this.authServerProvider.loginSAML2(rememberMe).subscribe(
                 (data) => {
                     this.accountService.identity(true).then(() => {
                         resolve(data);

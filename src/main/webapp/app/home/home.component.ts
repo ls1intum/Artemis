@@ -181,7 +181,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     loginSAML2() {
         this.isSubmittingLogin = true;
         this.loginService
-            .loginSAML2()
+            .loginSAML2(this.rememberMe)
             .then(() => {
                 this.authenticationError = false;
                 this.authenticationAttempts = 0;
@@ -203,7 +203,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             .catch((error: HttpErrorResponse) => {
                 if (error.status === 401) {
                     // (re)set cookie
-                    document.cookie = 'SAML2flow=true; max-age=300; SameSite=Lax;';
+                    document.cookie = 'SAML2flow=true; max-age=120; SameSite=Lax;';
                     window.location.replace('/saml2/authenticate'); // arbitrary by SAML2 HTTP Filter Chain secured URL
                 }
             })

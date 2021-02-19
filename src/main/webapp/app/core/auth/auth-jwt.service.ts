@@ -34,8 +34,8 @@ export class AuthServerProvider implements IAuthServerProvider {
         return this.http.post<JwtToken>(SERVER_API_URL + 'api/authenticate', credentials).pipe(map((response) => this.authenticateSuccess(response, credentials.rememberMe)));
     }
 
-    loginSAML2(): Observable<void> {
-        return this.http.get<JwtToken>(SERVER_API_URL + 'api/saml2').pipe(map((response) => this.authenticateSuccess(response, false)));
+    loginSAML2(rememberMe: boolean): Observable<void> {
+        return this.http.post<JwtToken>(SERVER_API_URL + 'api/saml2', rememberMe.toString()).pipe(map((response) => this.authenticateSuccess(response, rememberMe)));
     }
 
     loginWithToken(jwt: string, rememberMe: boolean): Promise<string> {

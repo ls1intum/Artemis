@@ -6,7 +6,6 @@ import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -16,7 +15,11 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -79,26 +82,30 @@ public class UserJWTController {
     /**
      * Authorizes an User logged in with SAML2
      * 
+     * @param body the body of the request. "true" to remember the user.
      * @return a JWT Token if the authorization is successful
      */
-    @GetMapping("/saml2")
-    public ResponseEntity<JWTToken> authorizeSAML2() {
+    @PostMapping("/saml2")
+    public ResponseEntity<JWTToken> authorizeSAML2(@RequestBody final String body) {
         if (saml2Service.isEmpty()) {
             throw new AccessForbiddenException("SAML2 is disabled");
         }
 
+        final boolean rememberMe = Boolean.parseBoolean(body);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof Saml2AuthenticatedPrincipal)) {
+        if (authentication == null 
+            || !authentication.isAuthenticated() 
+            || !(authentication.getPrincipal() instanceof Saml2AuthenticatedPrincipal)) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         log.debug("SAML2 authentication: {}", authentication);
 
-        Saml2AuthenticatedPrincipal principal = (Saml2AuthenticatedPrincipal) authentication.getPrincipal();
+        final Saml2AuthenticatedPrincipal principal = (Saml2AuthenticatedPrincipal) authentication.getPrincipal();
         authentication = saml2Service.get().handleAuthentication(principal);
 
-        final String jwt = tokenProvider.createToken(authentication, false);
-        HttpHeaders httpHeaders = new HttpHeaders();
+        final String jwt = tokenProvider.createToken(authentication, rememberMe);
+        final HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
         return new ResponseEntity<>(new JWTToken(jwt), httpHeaders, HttpStatus.OK);
     }

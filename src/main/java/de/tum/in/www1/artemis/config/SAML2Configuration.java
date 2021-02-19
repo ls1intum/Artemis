@@ -55,6 +55,8 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/saml2/**")
                 .antMatchers("/login/**")
                 .and()
+            .csrf()
+                .disable()
             .authorizeRequests()
                 .antMatchers("/api/saml2").permitAll()
                 .anyRequest().authenticated()
