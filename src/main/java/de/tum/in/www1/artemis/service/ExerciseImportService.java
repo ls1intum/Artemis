@@ -29,15 +29,6 @@ public abstract class ExerciseImportService {
         this.textBlockRepository = textBlockRepository;
     }
 
-    /**
-     * Abstract method for importing Exercises. Implementations cast the parameters {@code templateExercise} and {@code importedExercise} to their respective type.
-     *
-     * @param templateExercise The template Exercise
-     * @param importedExercise The imported Exercise
-     * @return Returns the importedExercise. If the type casting fails, returns null.
-     */
-    public abstract Exercise importExercise(final Exercise templateExercise, final Exercise importedExercise);
-
     void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise) {
         if (importedExercise.isCourseExercise()) {
             newExercise.setCourse(importedExercise.getCourseViaExerciseGroupOrCourseMember());

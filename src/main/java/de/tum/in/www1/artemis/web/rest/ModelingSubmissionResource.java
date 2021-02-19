@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -64,9 +65,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     private final ExamSubmissionService examSubmissionService;
 
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ModelingSubmissionService modelingSubmissionService,
-            ModelingExerciseService modelingExerciseService, ParticipationService participationService, AuthorizationCheckService authCheckService, CompassService compassService,
-            ExerciseRepository exerciseRepository, UserRepository userRepository, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
-        super(submissionRepository, resultService, participationService, authCheckService, userRepository, exerciseRepository, modelingSubmissionService);
+            ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService, CompassService compassService, UserRepository userRepository,
+            ExerciseRepository exerciseRepository, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService,
+            StudentParticipationRepository studentParticipationRepository) {
+        super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.compassService = compassService;
@@ -278,7 +280,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
         else {
             // otherwise get a random (non-optimal) submission that is not assessed
-            var participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
+            // Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for
+            // the
+            // corresponding submission yet.
+            var participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
             var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
                     .collect(Collectors.toList());
 
@@ -319,7 +324,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("/participations/{participationId}/latest-modeling-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getLatestSubmissionForModelingEditor(@PathVariable long participationId) {
-        StudentParticipation participation = participationService.findOneWithEagerSubmissionsResultsFeedback(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         ModelingExercise modelingExercise;
 

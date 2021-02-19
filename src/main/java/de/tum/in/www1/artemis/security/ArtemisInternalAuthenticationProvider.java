@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.security;
 
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,13 +10,13 @@ import org.springframework.security.authentication.InternalAuthenticationService
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.user.UserCreationService;
 
 @Component
 @ConditionalOnProperty(value = "artemis.user-management.use-external", havingValue = "false")
@@ -25,8 +24,8 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
 
     private final Logger log = LoggerFactory.getLogger(ArtemisInternalAuthenticationProvider.class);
 
-    public ArtemisInternalAuthenticationProvider(UserRepository userRepository, PasswordService passwordService) {
-        super(userRepository, passwordService);
+    public ArtemisInternalAuthenticationProvider(UserRepository userRepository, PasswordService passwordService, UserCreationService userCreationService) {
+        super(userRepository, passwordService, userCreationService);
     }
 
     @Override
@@ -42,9 +41,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         if (!authentication.getCredentials().toString().equals(storedPassword)) {
             throw new AuthenticationServiceException("Invalid password for user " + user.get().getLogin());
         }
-        final var grantedAuthorities = user.get().getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).collect(Collectors.toList());
-
-        return new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), grantedAuthorities);
+        return new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), user.get().getGrantedAuthorities());
     }
 
     @Override
@@ -53,7 +50,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         final var optionalUser = userRepository.findOneByLogin(authentication.getName().toLowerCase());
         final User user;
         if (optionalUser.isEmpty()) {
-            user = userService.createUser(authentication.getName(), password, firstName, lastName, email, null, null, "en");
+            user = userCreationService.createUser(authentication.getName(), password, firstName, lastName, email, null, null, "en");
         }
         else {
             user = optionalUser.get();
@@ -103,7 +100,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
 
     @Override
     public void deleteGroup(String groupName) {
-        userService.removeGroupFromUsers(groupName);
+        // nothing to do here, because the user service already takes care about internal groups
     }
 
     @Override

@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -67,15 +65,5 @@ public class ModelingExerciseService {
             exercisePage = modelingExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), sorted);
         }
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
-    }
-
-    /**
-     * Get one modeling exercise by id with eagerly fetched Student participations, submissions and results.
-     *
-     * @param exerciseId the id of the modeling exercise in question
-     * @return modeling exercise with eagerly fetched Student participations, submissions and results.
-     */
-    public Optional<ModelingExercise> findOneWithParticipationsSubmissionsResults(long exerciseId) {
-        return modelingExerciseRepository.findWithEagerStudentParticipationSubmissionsResultsById(exerciseId);
     }
 }

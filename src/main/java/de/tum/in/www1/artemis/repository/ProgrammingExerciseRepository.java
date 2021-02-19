@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -254,6 +256,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      */
+    @NotNull
     default ProgrammingExercise findByIdElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
         return findById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
@@ -265,7 +268,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
-    default ProgrammingExercise findWithTemplateAndSolutionParticipationByIdElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
+    @NotNull
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
@@ -277,7 +281,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
-    default ProgrammingExercise findWithTemplateAndSolutionParticipationWithResultsByIdElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
+    @NotNull
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationLatestResultById(programmingExerciseId);
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
@@ -289,7 +294,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
-    default ProgrammingExercise findWithStudentParticipationsAndSubmissionsByIdElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+    @NotNull
+    default ProgrammingExercise findByIdWithStudentParticipationsAndSubmissionsElseThrow(long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = findWithEagerStudentParticipationsStudentAndSubmissionsById(programmingExerciseId);
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
