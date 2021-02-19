@@ -151,7 +151,8 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
         // drop all test runs and set the remaining student exams to the exam
         exam.setStudentExams(exam.getStudentExams().stream().dropWhile(StudentExam::isTestRun).collect(Collectors.toSet()));
         return exam;
-        
+    }
+
     default Exam findWithExerciseGroupsAndExercisesByIdOrElseThrow(Long examId) throws EntityNotFoundException {
         return findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }

@@ -70,11 +70,12 @@ public class TeamResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final teamScoreRepository teamScoreRepository;
+    private final TeamScoreRepository teamScoreRepository;
 
     public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseRepository courseRepository,
             ExerciseRepository exerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ParticipationService participationService,
-            SubmissionService submissionService, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository, teamScoreRepository teamScoreRepository) {
+            SubmissionService submissionService, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository,
+            TeamScoreRepository teamScoreRepository) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.teamWebsocketService = teamWebsocketService;
