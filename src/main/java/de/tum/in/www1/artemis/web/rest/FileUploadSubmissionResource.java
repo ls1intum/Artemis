@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.EmptyFileException;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -52,8 +53,8 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     public FileUploadSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService,
             FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
-            ParticipationService participationService, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
-        super(submissionRepository, resultService, participationService, authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService);
+            GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService, StudentParticipationRepository studentParticipationRepository) {
+        super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService, studentParticipationRepository);
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.gradingCriterionService = gradingCriterionService;
@@ -145,11 +146,13 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * GET /file-upload-submissions/:id : get the fileUploadSubmissions by it's id. Is used by tutor when assessing submissions.
      *
      * @param submissionId the id of the fileUploadSubmission to retrieve
+     * @param correctionRound the correctionRound of the result we want to receive
      * @return the ResponseEntity with status 200 (OK) and with body the fileUploadSubmission, or with status 404 (Not Found)
      */
     @GetMapping("/file-upload-submissions/{submissionId}")
     @PreAuthorize("hasAnyRole('TA','INSTRUCTOR','ADMIN')")
-    public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId) {
+    public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId,
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
         var fileUploadSubmission = fileUploadSubmissionService.findOne(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
@@ -160,11 +163,18 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
             return forbidden();
         }
-        fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmission(submissionId, fileUploadExercise);
+        fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmission(submissionId, fileUploadExercise, correctionRound);
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(fileUploadExercise);
         fileUploadSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         this.fileUploadSubmissionService.hideDetails(fileUploadSubmission, user);
+
+        if (correctionRound == 0 && fileUploadSubmission.getResults().size() == 2) {
+            var resultList = new ArrayList<Result>();
+            resultList.add(fileUploadSubmission.getFirstResult());
+            fileUploadSubmission.setResults(resultList);
+        }
+
         return ResponseEntity.ok(fileUploadSubmission);
     }
 
@@ -251,7 +261,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("/participations/{participationId}/file-upload-editor")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<FileUploadSubmission> getDataForFileUpload(@PathVariable Long participationId) {
-        StudentParticipation participation = participationService.findOneWithEagerSubmissionsResultsFeedback(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
         if (participation == null) {
             return ResponseEntity.notFound()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).build();

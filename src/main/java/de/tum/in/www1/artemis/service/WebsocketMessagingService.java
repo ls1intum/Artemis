@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 @Service
 public class WebsocketMessagingService {
 
-    SimpMessageSendingOperations messagingTemplate;
+    private final SimpMessageSendingOperations messagingTemplate;
 
     public WebsocketMessagingService(SimpMessageSendingOperations messagingTemplate) {
         this.messagingTemplate = messagingTemplate;

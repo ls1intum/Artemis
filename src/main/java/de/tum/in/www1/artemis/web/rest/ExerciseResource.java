@@ -60,11 +60,9 @@ public class ExerciseResource {
 
     private final TutorParticipationService tutorParticipationService;
 
-    private final SubmissionService submissionService;
+    private final SubmissionRepository submissionRepository;
 
     private final ExamDateService examDateService;
-
-    private final ResultService resultService;
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
@@ -78,11 +76,13 @@ public class ExerciseResource {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
+    private final ResultRepository resultRepository;
+
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserRepository userRepository, ExamDateService examDateService,
             AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ComplaintRepository complaintRepository, SubmissionService submissionService, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
+            ComplaintRepository complaintRepository, SubmissionRepository submissionRepository, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
             ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionService gradingCriterionService,
-            ExerciseRepository exerciseRepository) {
+            ExerciseRepository exerciseRepository, ResultRepository resultRepository) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userRepository = userRepository;
@@ -90,14 +90,14 @@ public class ExerciseResource {
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.complaintRepository = complaintRepository;
-        this.submissionService = submissionService;
+        this.submissionRepository = submissionRepository;
         this.complaintResponseRepository = complaintResponseRepository;
-        this.resultService = resultService;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gradingCriterionService = gradingCriterionService;
         this.examDateService = examDateService;
         this.exerciseRepository = exerciseRepository;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -113,7 +113,7 @@ public class ExerciseResource {
         log.debug("REST request to get Exercise : {}", exerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseRepository.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(exerciseId);
 
         // Exam exercise
         if (exercise.isExamExercise()) {
@@ -247,18 +247,18 @@ public class ExerciseResource {
             totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId, examMode), 0L);
         }
         else {
-            numberOfSubmissions = submissionService.countSubmissionsForExercise(exerciseId, examMode);
-            totalNumberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId, examMode);
+            numberOfSubmissions = submissionRepository.countSubmissionsForExercise(exerciseId, examMode);
+            totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId, examMode);
         }
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
         stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
-        final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultService.calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
+        final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
                 totalNumberOfAssessments);
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
-        final DueDateStat numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
+        final DueDateStat numberOfAutomaticAssistedAssessments = resultRepository.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);
 
         final long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);

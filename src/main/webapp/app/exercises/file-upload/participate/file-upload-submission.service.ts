@@ -37,11 +37,14 @@ export class FileUploadSubmissionService {
      * Returns File Upload submission from the server
      * @param fileUploadSubmissionId the id of the File Upload submission
      */
-    get(fileUploadSubmissionId: number): Observable<HttpResponse<FileUploadSubmission>> {
+    get(fileUploadSubmissionId: number, correctionRound = 0): Observable<HttpResponse<FileUploadSubmission>> {
+        const url = `api/file-upload-submissions/${fileUploadSubmissionId}`;
+        let params = new HttpParams();
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
+        }
         return this.http
-            .get<FileUploadSubmission>(`api/file-upload-submissions/${fileUploadSubmissionId}`, {
-                observe: 'response',
-            })
+            .get<FileUploadSubmission>(url, { params, observe: 'response' })
             .pipe(map((res: HttpResponse<FileUploadSubmission>) => this.convertResponse(res)));
     }
 

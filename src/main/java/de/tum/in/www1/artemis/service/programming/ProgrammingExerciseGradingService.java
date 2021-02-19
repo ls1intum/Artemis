@@ -27,8 +27,8 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -50,7 +50,7 @@ public class ProgrammingExerciseGradingService {
 
     private final ResultRepository resultRepository;
 
-    private final ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
@@ -67,14 +67,14 @@ public class ProgrammingExerciseGradingService {
     private final AuditEventRepository auditEventRepository;
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
-            ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
             ResultService resultService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.participationService = participationService;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationService = continuousIntegrationService;
         this.resultRepository = resultRepository;
         this.messagingTemplate = messagingTemplate;
@@ -276,7 +276,7 @@ public class ProgrammingExerciseGradingService {
         // filter the test cases for the student results if necessary
         Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
         // We only update the latest automatic results here, later manual assessments are not affected
-        List<StudentParticipation> participations = participationService.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId());
+        List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId());
 
         for (StudentParticipation studentParticipation : participations) {
             Result result = studentParticipation.findLatestResult();
@@ -287,7 +287,7 @@ public class ProgrammingExerciseGradingService {
         }
 
         // Update also manual results
-        List<StudentParticipation> participationsWithManualResult = participationService.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId());
+        List<StudentParticipation> participationsWithManualResult = studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId());
         for (StudentParticipation studentParticipation : participationsWithManualResult) {
             Result result = studentParticipation.findLatestResult();
             if (result != null) {

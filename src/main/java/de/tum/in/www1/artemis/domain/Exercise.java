@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
- * A Exercise.
+ * An Exercise.
  */
 @Entity
 @Table(name = "exercise")
@@ -189,6 +189,9 @@ public abstract class Exercise extends DomainObject {
 
     @Transient
     private boolean studentAssignedTeamIdComputedTransient = false; // set to true if studentAssignedTeamIdTransient was computed for the exercise
+
+    @Transient
+    private Long numberOfParticipationsTransient; // used for instructor exam checklist
 
     public String getTitle() {
         return title;
@@ -360,10 +363,9 @@ public abstract class Exercise extends DomainObject {
         return this;
     }
 
-    public Exercise removeParticipation(StudentParticipation participation) {
+    public void removeParticipation(StudentParticipation participation) {
         this.studentParticipations.remove(participation);
         participation.setExercise(null);
-        return this;
     }
 
     public void setStudentParticipations(Set<StudentParticipation> studentParticipations) {
@@ -434,10 +436,9 @@ public abstract class Exercise extends DomainObject {
         return this;
     }
 
-    public Exercise removeExampleSubmission(ExampleSubmission exampleSubmission) {
+    public void removeExampleSubmission(ExampleSubmission exampleSubmission) {
         this.exampleSubmissions.remove(exampleSubmission);
         exampleSubmission.setExercise(null);
-        return this;
     }
 
     public void setExampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
@@ -497,18 +498,16 @@ public abstract class Exercise extends DomainObject {
         this.learningGoals = learningGoals;
     }
 
-    public void addLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.add(learningGoal);
-        learningGoal.getExercises().add(this);
-    }
-
-    public void removeLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.remove(learningGoal);
-        learningGoal.getExercises().remove(this);
-    }
-
     public boolean isTeamMode() {
         return mode == ExerciseMode.TEAM;
+    }
+
+    public Long getNumberOfParticipations() {
+        return numberOfParticipationsTransient;
+    }
+
+    public void setNumberOfParticipations(Long numberOfParticipationsTransient) {
+        this.numberOfParticipationsTransient = numberOfParticipationsTransient;
     }
 
     /**
@@ -826,10 +825,9 @@ public abstract class Exercise extends DomainObject {
         return gradingCriteria;
     }
 
-    public Exercise addGradingCriteria(GradingCriterion gradingCriterion) {
+    public void addGradingCriteria(GradingCriterion gradingCriterion) {
         this.gradingCriteria.add(gradingCriterion);
         gradingCriterion.setExercise(this);
-        return this;
     }
 
     public void setGradingCriteria(List<GradingCriterion> gradingCriteria) {
@@ -839,9 +837,7 @@ public abstract class Exercise extends DomainObject {
     private void reconnectCriteriaWithExercise(List<GradingCriterion> gradingCriteria) {
         this.gradingCriteria = gradingCriteria;
         if (gradingCriteria != null) {
-            this.gradingCriteria.forEach(gradingCriterion -> {
-                gradingCriterion.setExercise(this);
-            });
+            this.gradingCriteria.forEach(gradingCriterion -> gradingCriterion.setExercise(this));
         }
     }
 
@@ -862,6 +858,23 @@ public abstract class Exercise extends DomainObject {
     public void checkCourseAndExerciseGroupExclusivity(String entityName) throws BadRequestAlertException {
         if (isCourseExercise() == isExamExercise()) {
             throw new BadRequestAlertException("An exercise must have either a course or an exerciseGroup", entityName, "eitherCourseOrExerciseGroupSet");
+        }
+    }
+
+    /**
+     * Return the individual release date for the exercise of the participation's user
+     * <p>
+     * Currently, exercise start dates are the same for all users
+     *
+     * @return the time from which on access to the exercise is allowed, for exercises that are not part of an exam, this is just the release date.
+     */
+    @JsonIgnore
+    public ZonedDateTime getIndividualReleaseDate() {
+        if (isExamExercise()) {
+            return getExerciseGroup().getExam().getStartDate();
+        }
+        else {
+            return getReleaseDate();
         }
     }
 

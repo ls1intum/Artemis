@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
@@ -56,20 +57,20 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final GroupNotificationService groupNotificationService;
 
-    private final ParticipationService participationService;
+    private final StudentExamRepository studentExamRepository;
 
     private final ExamDateService examDateService;
 
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository, ResultRepository resultRepository,
             Environment env, ProgrammingSubmissionService programmingSubmissionService, GroupNotificationService groupNotificationService,
-            ParticipationService participationService, ExamDateService examDateService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService) {
+            ProgrammingExerciseGradingService programmingExerciseGradingService, ExamDateService examDateService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, StudentExamRepository studentExamRepository) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.resultRepository = resultRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.groupNotificationService = groupNotificationService;
-        this.participationService = participationService;
+        this.studentExamRepository = studentExamRepository;
         this.examDateService = examDateService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -286,7 +287,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 // Stash the not submitted/committed changes for exercises with manual assessment and with online editor enabled
                 // This is necessary for students who have used the online editor, to ensure that only submitted/committed changes are displayed during manual assessment
                 // in the case they still have saved changes on the Artemis server which have not been committed / pushed
-                if (Boolean.TRUE.equals(exercise.isAllowOnlineEditor()) && exercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
+                // NOTE: we always stash, also when manual assessment is not activated, because instructors might change this after the exam
+                if (Boolean.TRUE.equals(exercise.isAllowOnlineEditor())) {
                     List<ProgrammingExerciseStudentParticipation> failedStashOperations = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
                     long numberOfFailedStashOperations = failedStashOperations.size();
                     if (numberOfFailedStashOperations > 0) {
@@ -323,8 +325,10 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates = new HashSet<>();
                 // This operation unlocks the repositories and collects all individual due dates
                 BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> unlockAndCollectOperation = (programmingExercise, participation) -> {
-                    var dueDate = participationService.getIndividualDueDate(programmingExercise, participation);
-                    individualDueDates.add(new Tuple<>(dueDate, participation));
+                    var dueDate = studentExamRepository.getIndividualDueDate(programmingExercise, participation);
+                    if (dueDate != null) {
+                        individualDueDates.add(new Tuple<>(dueDate, participation));
+                    }
                     programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
                 };
                 List<ProgrammingExerciseStudentParticipation> failedUnlockOperations = invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId,
@@ -352,7 +356,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     // the scheduler would execute the lock operation immediately, making the unlock obsolete, therefore we filter out all individual due dates in the past
                     // one use case is that the unlock all operation is invoked directly after exam start
                     Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> futureIndividualDueDates = individualDueDates.stream()
-                            .filter(tuple -> ZonedDateTime.now().isBefore(tuple.x)).collect(Collectors.toSet());
+                            .filter(tuple -> tuple.x != null && ZonedDateTime.now().isBefore(tuple.x)).collect(Collectors.toSet());
                     scheduleIndividualRepositoryLockTasks(exercise, futureIndividualDueDates);
                 }
             }
@@ -371,7 +375,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates = new HashSet<>();
         for (StudentParticipation studentParticipation : programmingExercise.get().getStudentParticipations()) {
             var programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            var dueDate = participationService.getIndividualDueDate(programmingExercise.get(), programmingExerciseStudentParticipation);
+            var dueDate = studentExamRepository.getIndividualDueDate(programmingExercise.get(), programmingExerciseStudentParticipation);
             individualDueDates.add(new Tuple<>(dueDate, programmingExerciseStudentParticipation));
         }
         scheduleIndividualRepositoryLockTasks(exercise, individualDueDates);

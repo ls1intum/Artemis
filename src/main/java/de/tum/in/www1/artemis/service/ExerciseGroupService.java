@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -23,8 +24,11 @@ public class ExerciseGroupService {
 
     private final ExerciseGroupRepository exerciseGroupRepository;
 
-    public ExerciseGroupService(ExerciseGroupRepository exerciseGroupRepository) {
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    public ExerciseGroupService(ExerciseGroupRepository exerciseGroupRepository, StudentParticipationRepository studentParticipationRepository) {
         this.exerciseGroupRepository = exerciseGroupRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -86,6 +90,21 @@ public class ExerciseGroupService {
     public List<ExerciseGroup> findAllWithExamAndExercises(Long examId) {
         log.debug("REST request to get all exercise groups for Exam : {}", examId);
         return exerciseGroupRepository.findWithEagerExamAndExercisesByExamId(examId);
+    }
+
+    /**
+     * Adds the transient property numberOfParticipations for each exercise to
+     * let instructors know which exercise has how many participations
+     *
+     * @param exerciseGroupList list of exercisegroups
+     */
+    public void addNumberOfExamExerciseParticipations(List<ExerciseGroup> exerciseGroupList) {
+        exerciseGroupList.forEach((exerciseGroup -> {
+            exerciseGroup.getExercises().forEach(exercise -> {
+                Long numberOfParticipations = studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId());
+                exercise.setNumberOfParticipations(numberOfParticipations);
+            });
+        }));
     }
 
     /**

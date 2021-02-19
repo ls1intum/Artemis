@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
@@ -17,12 +17,14 @@ import { SortService } from 'app/shared/service/sort.service';
     templateUrl: './file-upload-assessment-dashboard.component.html',
 })
 export class FileUploadAssessmentDashboardComponent implements OnInit {
+    ExerciseType = ExerciseType;
     exercise: FileUploadExercise;
     submissions: FileUploadSubmission[] = [];
     filteredSubmissions: FileUploadSubmission[] = [];
     busy = false;
     predicate = 'id';
     reverse = false;
+    numberOfCorrectionrounds = 1;
 
     private cancelConfirmationText: string;
 
@@ -46,18 +48,21 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         this.busy = true;
         const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
 
-        await this.getSubmissions(exerciseId)
-            // At least one submission present. Can get exercise from first submission.
-            .then(() => {
-                const exercise = this.submissions[0].participation!.exercise!;
-                FileUploadAssessmentDashboardComponent.verifyFileUploadExercise(exercise);
-                this.exercise = exercise as FileUploadExercise;
+        this.exerciseService
+            .find(exerciseId)
+            .map((exerciseResponse) => {
+                if (exerciseResponse.body!.type !== ExerciseType.FILE_UPLOAD) {
+                    throw new Error('Cannot use File-Upload Assessment Dashboard with non-file-upload Exercise type.');
+                }
+                return <FileUploadExercise>exerciseResponse.body!;
             })
-            // No Submissions found. Need extra call to get exercise.
-            .catch(async () => await this.getExercise(exerciseId));
-
-        this.setPermissions();
-        this.busy = false;
+            .subscribe((exercise) => {
+                this.exercise = exercise;
+                this.getSubmissions();
+                this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
+                this.setPermissions();
+                this.busy = false;
+            });
     }
 
     /**
@@ -66,19 +71,19 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
      * @return Resolved Promise if Submission list contains at least one submission. Rejected Promise if Submission list is empty.
      * @throws Error if exercise id is of other type.
      */
-    private getSubmissions(exerciseId: number): Promise<void> {
+    private getSubmissions(): Promise<void> {
         return new Promise((resolve, reject) => {
             this.fileUploadSubmissionService
-                .getFileUploadSubmissionsForExerciseByCorrectionRound(exerciseId, { submittedOnly: true })
+                .getFileUploadSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
                 .pipe(
                     map((response: HttpResponse<FileUploadSubmission[]>) =>
                         response.body!.map((submission: FileUploadSubmission) => {
-                            const result = getLatestSubmissionResult(submission);
-                            if (result) {
+                            const tmpResult = getLatestSubmissionResult(submission);
+                            if (tmpResult) {
                                 // reconnect some associations
-                                result!.submission = submission;
-                                result!.participation = submission.participation;
-                                submission.participation!.results = [result!];
+                                tmpResult.submission = submission;
+                                tmpResult.participation = submission.participation;
+                                submission.participation!.results = [tmpResult];
                             }
                             return submission;
                         }),
@@ -101,44 +106,14 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Fetch Exercise by id.
-     * @param exerciseId
-     * @return Resolve Promise once call is complete.
-     * @throws Error if exercise id is of other type.
-     */
-    private getExercise(exerciseId: number): Promise<void> {
-        return new Promise((resolve) => {
-            this.exerciseService
-                .find(exerciseId)
-                .pipe(
-                    map((exerciseResponse) => {
-                        const exercise = exerciseResponse.body!;
-                        FileUploadAssessmentDashboardComponent.verifyFileUploadExercise(exercise);
-                        return <FileUploadExercise>exercise;
-                    }),
-                )
-                .subscribe((exercise: FileUploadExercise) => {
-                    this.exercise = exercise;
-                    resolve();
-                });
-        });
-    }
-
-    /**
      * Cancel the current assessment and reload the submissions to reflect the change.
      */
     cancelAssessment(submission: Submission) {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
             this.fileUploadAssessmentsService.cancelAssessment(submission.id!).subscribe(() => {
-                this.getSubmissions(this.exercise.id!);
+                this.getSubmissions();
             });
-        }
-    }
-
-    private static verifyFileUploadExercise(exercise: Exercise): void {
-        if (exercise.type !== ExerciseType.FILE_UPLOAD) {
-            throw new Error('Cannot use File Upload Assessment Dashboard with different Exercise type.');
         }
     }
 
@@ -152,5 +127,16 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
 
     public sortRows() {
         this.sortService.sortByProperty(this.submissions, this.predicate, this.reverse);
+    }
+    /**
+     * get the link for the assessment of a specific submission of the current exercise
+     * @param submissionId
+     */
+    getAssessmentLink(submissionId: number) {
+        if (this.exercise.exerciseGroup) {
+            return ['/course-management', this.exercise.exerciseGroup.exam?.course?.id, 'file-upload-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
+        } else {
+            return ['/course-management', this.exercise.course?.id, 'file-upload-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
+        }
     }
 }

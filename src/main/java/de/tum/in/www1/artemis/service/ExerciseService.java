@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -68,11 +71,13 @@ public class ExerciseService {
 
     private final TutorParticipationRepository tutorParticipationRepository;
 
+    private final QuizExerciseRepository quizExerciseRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, StudentExamRepository studentExamRepository, ExamRepository examRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository) {
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
         this.participationService = participationService;
@@ -87,6 +92,7 @@ public class ExerciseService {
         this.studentExamRepository = studentExamRepository;
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.quizExerciseRepository = quizExerciseRepository;
     }
 
     /**
@@ -134,9 +140,9 @@ public class ExerciseService {
 
     /**
      * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
-     * NOTE: prefer #findOne if you don't need these additional details
+     * NOTE: prefer #ExerciseRepository.findByIdElseThrow() if you don't need these additional details
      * <p>
-     * DEPRECATED: Please use findOne() or write a custom method
+     * DEPRECATED: Please use findByIdElseThrow() or write a custom method
      *
      * @param exerciseId the exerciseId of the entity
      * @return the entity
@@ -151,11 +157,11 @@ public class ExerciseService {
         Exercise exercise = optionalExercise.get();
         if (exercise instanceof QuizExercise) {
             // eagerly load questions and statistic
-            exercise = quizExerciseService.findOneWithQuestionsAndStatistics(exerciseId);
+            exercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(exerciseId);
         }
         else if (exercise instanceof ProgrammingExercise) {
             // eagerly load template participation and solution participation
-            exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
+            exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         }
         return exercise;
     }
@@ -163,7 +169,7 @@ public class ExerciseService {
     /**
      * Resets an Exercise by deleting all its participations
      *
-     * @param exercise which should be resetted
+     * @param exercise which should be reset
      */
     public void reset(Exercise exercise) {
         log.debug("Request reset Exercise : {}", exercise.getId());
@@ -231,7 +237,7 @@ public class ExerciseService {
      * @param deleteRepositories if true, the repositories gets deleted
      */
     public void cleanup(Long exerciseId, boolean deleteRepositories) {
-        Exercise exercise = exerciseRepository.findOneWithStudentParticipations(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdWithStudentParticipationsElseThrow(exerciseId);
         log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
 
         if (exercise instanceof ProgrammingExercise) {
@@ -389,7 +395,7 @@ public class ExerciseService {
         // Check if max score is set
         if (exercise.getMaxPoints() == null || exercise.getMaxPoints() == 0) {
             return Optional
-                    .of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score needs to be greater than 0", "maxscoreInvalid")).body(null));
+                    .of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score needs to be greater than 0", "maxScoreInvalid")).body(null));
         }
 
         // Check IncludedInOverallScore

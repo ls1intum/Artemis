@@ -20,9 +20,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
-import de.tum.in.www1.artemis.service.TextExerciseService;
 import de.tum.in.www1.artemis.service.connectors.AtheneService;
 import io.github.jhipster.config.JHipsterConstants;
 
@@ -34,7 +34,7 @@ public class AtheneScheduleService {
 
     private final ExerciseLifecycleService exerciseLifecycleService;
 
-    private final TextExerciseService textExerciseService;
+    private final TextExerciseRepository textExerciseRepository;
 
     private final Environment env;
 
@@ -44,10 +44,10 @@ public class AtheneScheduleService {
 
     private final TaskScheduler scheduler;
 
-    public AtheneScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseService textExerciseService, @Qualifier("taskScheduler") TaskScheduler scheduler,
-            Environment env, AtheneService atheneService) {
+    public AtheneScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseRepository textExerciseRepository,
+            @Qualifier("taskScheduler") TaskScheduler scheduler, Environment env, AtheneService atheneService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
-        this.textExerciseService = textExerciseService;
+        this.textExerciseRepository = textExerciseRepository;
         this.scheduler = scheduler;
         this.env = env;
         this.atheneService = atheneService;
@@ -61,7 +61,7 @@ public class AtheneScheduleService {
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;
         }
-        final List<TextExercise> runningTextExercises = textExerciseService.findAllAutomaticAssessmentTextExercisesWithFutureDueDate();
+        final List<TextExercise> runningTextExercises = textExerciseRepository.findAllAutomaticAssessmentTextExercisesWithFutureDueDate();
         runningTextExercises.forEach(this::scheduleExerciseForAthene);
         log.info("Scheduled Athene for " + runningTextExercises.size() + " text exercises with future due dates.");
     }

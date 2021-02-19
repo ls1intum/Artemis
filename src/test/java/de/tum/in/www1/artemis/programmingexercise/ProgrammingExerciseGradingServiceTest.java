@@ -424,7 +424,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationWithResultsByIdElseThrow(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(programmingExercise.getId());
 
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
@@ -450,7 +450,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         // Tests
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationWithResultsByIdElseThrow(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(programmingExercise.getId());
 
         // template 0 %
         {
@@ -494,7 +494,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationWithResultsByIdElseThrow(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(programmingExercise.getId());
 
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
@@ -521,7 +521,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         // Tests
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationWithResultsByIdElseThrow(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(programmingExercise.getId());
 
         // the invisible test case should however be visible for the template and solution repos
 

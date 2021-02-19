@@ -27,7 +27,9 @@
                 "question": "Are you sure you want to reset the exercise <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all participations, existing results, student repositories and student build plans will be deleted."
             },
             "detail": {
-                "title": "Programming Exercise"
+                "title": "Programming Exercise",
+                "showTemplateSubmissions": "Show Template Submissions",
+                "showSolutionSubmissions": "Show Solution Submissions"
             },
             "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it would be published immediately and visible to the students.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
