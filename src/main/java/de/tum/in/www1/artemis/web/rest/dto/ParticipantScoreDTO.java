@@ -53,6 +53,7 @@ public class ParticipantScoreDTO {
     }
 
     public ParticipantScoreDTO() {
+        // for jackson
     }
 
     /**
