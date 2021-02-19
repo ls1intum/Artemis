@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.service.user.UserService;
+import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 /**
@@ -37,22 +37,22 @@ public class SAML2Service {
 
     private final Logger log = LoggerFactory.getLogger(SAML2Service.class);
 
-    private final UserService userService;
+    private final UserCreationService userCreationService;
     private final UserRepository userRepository;
     private final SAML2Properties properties;
 
     /**
      * Constructs a new instance.
      *
-     * @param      userService     The user service
      * @param      userRepository  The user repository
      * @param      properties      The properties
+     * @param      userCreationService The user creation service
      */
-    public SAML2Service(final UserService userService, 
-            final UserRepository userRepository, final SAML2Properties properties) {
-        this.userService = userService;
+    public SAML2Service(final UserRepository userRepository,
+            final SAML2Properties properties, final UserCreationService userCreationService) {
         this.userRepository = userRepository;
         this.properties = properties;
+        this.userCreationService = userCreationService;
     }
 
     /**
@@ -66,8 +66,7 @@ public class SAML2Service {
     public Authentication handleAuthentication(final Saml2AuthenticatedPrincipal principal) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        log.debug("User {} logged in with SAML2", auth.getName());
-        log.debug("User {} attributes {}", auth.getName(), principal.getAttributes());
+        log.debug("SAML2 User '{}' logged in, attributes {}", auth.getName(), principal.getAttributes());
 
         final String username = substituteAttributes(properties.getUsernamePattern(), principal);
         Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
@@ -93,7 +92,7 @@ public class SAML2Service {
 
         // userService.createUser(ManagedUserVM) does create an activated User, else use userService.registerUser()
         // a random password is generated
-        return userService.createUser(newUser);
+        return userCreationService.createUser(newUser);
     }
 
     private static Collection<GrantedAuthority> toGrantedAuthorities(final Collection<Authority> authorities) {
