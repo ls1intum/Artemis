@@ -197,6 +197,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
         if (originalQuizQuestion instanceof ShortAnswerQuestion) {
             ShortAnswerQuestion shortAnswerOriginalQuestion = (ShortAnswerQuestion) originalQuizQuestion;
             undoUnallowedSpotChanges(shortAnswerOriginalQuestion);
+            checkInvalidSolutions(shortAnswerOriginalQuestion);
         }
     }
 
@@ -229,6 +230,24 @@ public class ShortAnswerQuestion extends QuizQuestion {
         }
         // remove the added spots
         this.getSpots().removeAll(notAllowedAddedSpots);
+    }
+
+    /**
+     * check all solutions for unset inValid states or state changes
+     *
+     * @param originalQuestion the original ShortAnswer-object, which will be compared with this question
+     */
+    private void checkInvalidSolutions(ShortAnswerQuestion originalQuestion) {
+        // check every solution of the question
+        for (ShortAnswerSolution solution : this.getSolutions()) {
+            // correct invalid = null to invalid = false
+            if (solution.isInvalid() == null) {
+                solution.setInvalid(false);
+            }
+            ShortAnswerSolution originalSolution = originalQuestion.findSolutionById(solution.getId());
+            // reset invalid solution if it already set to true (it's not possible to set a solution valid again)
+            solution.setInvalid(solution.isInvalid() || (originalSolution != null && originalSolution.isInvalid() != null && originalSolution.isInvalid()));
+        }
     }
 
     @Override
