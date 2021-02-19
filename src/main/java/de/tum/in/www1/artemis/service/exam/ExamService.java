@@ -71,7 +71,7 @@ public class ExamService {
 
     private final AuditEventRepository auditEventRepository;
 
-    private final StudentParticipationRepository studentParticipationRepository;
+    private final SubmissionRepository submissionRepository;
 
     private final ComplaintRepository complaintRepository;
 
@@ -79,11 +79,13 @@ public class ExamService {
 
     private final ResultRepository resultRepository;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ParticipationService participationService, ExamQuizService examQuizService,
-            ExerciseService exerciseService, InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService,
-            AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ResultRepository resultRepository) {
+                       ExerciseService exerciseService, InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService,
+                       AuditEventRepository auditEventRepository, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
+                       ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+                       ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -94,10 +96,11 @@ public class ExamService {
         this.exerciseService = exerciseService;
         this.quizExerciseService = quizExerciseService;
         this.auditEventRepository = auditEventRepository;
-        this.studentParticipationRepository = studentParticipationRepository;
+        this.submissionRepository = submissionRepository;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -635,12 +638,11 @@ public class ExamService {
 
             log.info("StatsTimeLog: number of assessments done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             // get number of all generated participations
-            var countOfParticipations = studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId());
-            numberOfParticipationsGeneratedByExercise.add(countOfParticipations);
+            numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId()));
 
             log.info("StatsTimeLog: number of generated participations in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             if (!(exercise instanceof QuizExercise || exercise.getAssessmentType() == AssessmentType.AUTOMATIC)) {
-                numberOfParticipationsForAssessmentGeneratedByExercise.add(countOfParticipations);
+                numberOfParticipationsForAssessmentGeneratedByExercise.add(submissionRepository.countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exercise.getId()));
             }
         }));
 
