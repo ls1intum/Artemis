@@ -412,17 +412,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      */
     validateFeedback() {
         this.calculateTotalScore();
-        if ((!this.referencedFeedback || this.referencedFeedback.length === 0) && (!this.unreferencedFeedback || this.unreferencedFeedback.length === 0)) {
-            this.assessmentsAreValid = false;
-            return;
-        }
-        for (const feedback of this.referencedFeedback) {
-            if (feedback.credits == undefined || isNaN(feedback.credits)) {
-                this.assessmentsAreValid = false;
-                return;
-            }
-        }
-        this.assessmentsAreValid = true;
+        const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
+        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
+        // When unreferenced feedback is set, it has to be valid (score + detailed text)
+        this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
     }
 
     navigateBack() {

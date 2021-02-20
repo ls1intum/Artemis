@@ -27,7 +27,7 @@
             </button>
             <button
                 type="submit"
-                [disabled]="feedback.credits == null || (feedback.detailText ? feedback.detailText.trim().length === 0 : true)"
+                [disabled]="feedback.credits == null"
                 class="btn btn-primary btn-sm"
                 (click)="updateFeedback()"
             >

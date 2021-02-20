@@ -335,24 +335,10 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.assessmentsAreValid = true;
         this.invalidError = undefined;
 
-        if (this.unreferencedFeedback && this.unreferencedFeedback.length === 0) {
-            this.totalScore = 0;
-            this.assessmentsAreValid = false;
-            return;
-        }
+        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
+        // When unreferenced feedback is set, it has to be valid (score + detailed text)
+        this.assessmentsAreValid = hasUnreferencedFeedback;
 
-        let credits = this.unreferencedFeedback.map((assessment) => assessment.credits);
-
-        if (!this.invalidError && !credits.every((credit) => credit && !isNaN(credit))) {
-            this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidScoreMustBeNumber';
-            this.assessmentsAreValid = false;
-            credits = credits.filter((credit) => credit && !isNaN(credit));
-        }
-
-        if (!this.invalidError && !this.unreferencedFeedback.every((feedback) => feedback.credits !== 0)) {
-            this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidNeedScore';
-            this.assessmentsAreValid = false;
-        }
         this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
         // Cap totalScore to maxPoints
         const maxPoints = this.exercise.maxPoints! + this.exercise.bonusPoints! ?? 0.0;
