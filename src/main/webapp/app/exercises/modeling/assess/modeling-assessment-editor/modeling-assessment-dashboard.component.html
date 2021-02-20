@@ -112,7 +112,10 @@
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiTranslate="artemisApp.assessment.dashboard.columns.result"><a class="th-link">Result</a></th>
+                    <th jhiSortBy="latestResult.score">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.result">Result</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiSortBy="participation.submissions.length">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
@@ -121,11 +124,11 @@
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="result.assessmentType">
+                    <th jhiSortBy="latestResult.assessmentType">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentType">Assessment Type</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="result.assessor.name">
+                    <th jhiSortBy="latestResult.assessor.name">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>

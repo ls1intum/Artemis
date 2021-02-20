@@ -14,13 +14,12 @@
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th><a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.result">Result</a></th>
-                    <th jhiSortBy="participation.submissions.length">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</a>
+                    <th jhiSortBy="latestResult.score">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.result">Result</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="result.score">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</a>
+                    <th jhiSortBy="participation.submissions.length">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="durationInMinutes">
@@ -31,7 +30,7 @@
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.student">Student</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="result.assessor.name">
+                    <th jhiSortBy="latestResult.assessor.name">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -54,9 +53,6 @@
                         <ng-container *ngIf="submission.participation.submissions">
                             {{ submission.participation.submissions.length }}
                         </ng-container>
-                    </td>
-                    <td>
-                        <span *ngIf="submission.latestResult && submission.latestResult!.score != null">{{ submission.latestResult!.score }} %</span>
                     </td>
                     <td>
                         {{ submission.durationInMinutes }}

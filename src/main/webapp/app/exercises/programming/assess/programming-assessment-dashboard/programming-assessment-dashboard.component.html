@@ -25,11 +25,11 @@
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="result.assessmentType">
+                    <th jhiSortBy="latestResult.assessmentType">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentType">Assessment Type</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th *ngIf="newManualResultAllowed" jhiSortBy="result.assessor.name">
+                    <th *ngIf="newManualResultAllowed" jhiSortBy="latestResult.assessor.name">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
