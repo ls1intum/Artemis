@@ -72,7 +72,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     @Override
     public void createUser(User user) throws ContinuousIntegrationException {
         // Only create a user if it doesn't already exist.
-        if (getUser(user.getLogin()) != null) {
+        if (getUser(user) != null) {
             throw new JenkinsException("Cannot create user: " + user.getLogin() + " because the login already exists");
         }
 
@@ -114,24 +114,26 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         return new HttpEntity<>(formData, headers);
     }
 
-    /**
-     * Deletes the user from Jenkins.
-     *
-     * @param userLogin the login of the user to delete
-     */
     @Override
-    public void deleteUser(String userLogin) throws ContinuousIntegrationException {
+    public void deleteUser(User user) throws ContinuousIntegrationException {
         // Only delete a user if it exists.
-        if (getUser(userLogin) == null) {
+        var jenkinsUser = getUser(user);
+        if (jenkinsUser == null) {
+            return;
+        }
+
+        // Make sure that the Jenkins user is the Artemis user by checking
+        // if the emails are the same
+        if (!emailEqualToJenkinsUser(user.getEmail(), jenkinsUser)) {
             return;
         }
 
         try {
-            var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", userLogin, "doDelete").build().toUri();
+            var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", user.getLogin(), "doDelete").build().toUri();
             restTemplate.exchange(uri, HttpMethod.POST, null, Void.class);
         }
         catch (RestClientException e) {
-            throw new JenkinsException("Cannot delete user: " + userLogin, e);
+            throw new JenkinsException("Cannot delete user: " + user.getLogin(), e);
         }
     }
 
@@ -145,8 +147,15 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     @Override
     public void updateUser(User user) throws ContinuousIntegrationException {
         // Only update a user if it exists.
-        if (getUser(user.getLogin()) == null) {
+        var jenkinsUser = getUser(user);
+        if (jenkinsUser == null) {
             throw new JenkinsException("Cannot update user: " + user.getLogin() + " because it doesn't exist.");
+        }
+
+        // Make sure that the Jenkins user is the Artemis user by checking
+        // if the emails are the same
+        if (!emailEqualToJenkinsUser(user.getEmail(), jenkinsUser)) {
+            return;
         }
 
         try {
@@ -369,23 +378,36 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * Gets a Jenkins user if it exists. Otherwise returns
      * null.
      *
-     * @param userLogin the username of the user to look up
-     * @return the user or null if the user doesn't exist
+     * @param user the Artemis look up
+     * @return the Jenkins user or null if the user doesn't exist
      */
-    private JenkinsUserDTO getUser(String userLogin) throws ContinuousIntegrationException {
+    private JenkinsUserDTO getUser(User user) throws ContinuousIntegrationException {
         try {
-            var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", userLogin, "api", "json").build().toUri();
+            var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", user.getLogin(), "api", "json").build().toUri();
             return restTemplate.exchange(uri, HttpMethod.GET, null, JenkinsUserDTO.class).getBody();
+
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 return null;
             }
 
-            var errorMessage = "Could not get user " + userLogin;
+            var errorMessage = "Could not get user " + user.getLogin();
             log.error(errorMessage + ": " + e);
             throw new JenkinsException(errorMessage, e);
         }
+    }
+
+    /**
+     * Returns true/false whether the given email is the same as the email of the Jenkins
+     * user.
+     * @param email to email
+     * @param jenkinsUser the Jenkins user
+     * @return true or false
+     */
+    private boolean emailEqualToJenkinsUser(String email, JenkinsUserDTO jenkinsUser) {
+        var addressProperty = jenkinsUser.property.stream().filter(property -> property._class.equals("hudson.tasks.Mailer$UserProperty")).findFirst();
+        return addressProperty.map(property -> property.address.equals(email)).orElse(false);
     }
 
     /**

@@ -314,7 +314,7 @@ public class UserService {
             return false;
         }
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.deleteUser(existingUser.getLogin()));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.deleteUser(existingUser.getLogin()));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.deleteUser(existingUser));
 
         deleteUser(existingUser);
         return true;
@@ -590,9 +590,9 @@ public class UserService {
     public void deleteUser(String login) {
         // Delete the user in the connected VCS if necessary (e.g. for GitLab)
         optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.deleteUser(login));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.deleteUser(login));
         // Delete the user in the local Artemis database
         userRepository.findOneByLogin(login).ifPresent(user -> {
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.deleteUser(user));
             deleteUser(user);
             log.warn("Deleted User: {}", user);
         });

@@ -19,10 +19,10 @@ public interface CIUserManagementService {
     /**
      * Deletes the user under the specified login from the CIS.
      *
-     * @param userLogin The login of the user that should be deleted
+     * @param user The user that should be deleted
      * @throws ContinuousIntegrationException thrown when a job cannot be fetched/updated
      */
-    void deleteUser(String userLogin) throws ContinuousIntegrationException;
+    void deleteUser(User user) throws ContinuousIntegrationException;
 
     /**
      * Updates the user in the CIS with the data from the Artemis user. Throws
