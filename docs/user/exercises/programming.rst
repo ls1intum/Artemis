@@ -96,8 +96,7 @@ Its main features are
 Sending Feedback back to Artemis
 --------------------------------
 
-Per default the results of all unit tests are extracted and sent back to Artemis
-without any further manual interaction needed.
+Per default the results of all unit tests are extracted and sent back to Artemis without any further manual interaction needed.
 Only for some custom setups a semi-automatic approach might be necessary.
 
 Jenkins
@@ -114,7 +113,7 @@ Each one represents a single test case feedback and should have the format:
 ``{ "name": string, "successful": boolean, "message": string }``
 
 * ``name``: This is the name of the test case as it will be shown for example on the ‘Configure Grading’ page.
-  It should therefore have an for this exercise uniquely identifiable name and has to be non-null and not empty.
+  It should therefore have a for this exercise uniquely identifiable name and **has to be non-null and not empty**.
 * ``successful``: Indicates if the test case execution for this submission should be marked as successful or failed.
-* ``message``: The message shown as additional information to the student (optional).
-
+* ``message``: The message shown as additional information to the student.
+  **Required for non-successful tests/feedback**, optional otherwise.
