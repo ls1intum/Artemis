@@ -502,7 +502,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return true;
         }
         const model: UMLModel = this.modelingEditor.getCurrentModel();
-        const explanationIsUpToDate = this.explanation === this.submission.explanationText;
+        const explanationIsUpToDate = this.explanation === (this.submission.explanationText ?? '');
         return !this.modelHasUnsavedChanges(model) && explanationIsUpToDate;
     }
 

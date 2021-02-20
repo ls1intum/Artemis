@@ -123,7 +123,7 @@ public abstract class Submission extends DomainObject {
     @JsonIgnore
     public Result getResultForCorrectionRound(int correctionRound) {
         List<Result> filteredResults = filterNonAutomaticResults();
-        if (filteredResults.size() > correctionRound) {
+        if (correctionRound >= 0 && filteredResults.size() > correctionRound) {
             return filteredResults.get(correctionRound);
         }
         return null;

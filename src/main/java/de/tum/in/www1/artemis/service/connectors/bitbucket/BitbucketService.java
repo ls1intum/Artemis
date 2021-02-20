@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -61,8 +62,9 @@ public class BitbucketService extends AbstractVersionControlService {
     private final RestTemplate shortTimeoutRestTemplate;
 
     public BitbucketService(PasswordService passwordService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UserRepository userRepository,
-            @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, UrlService urlService, GitService gitService) {
-        super(urlService, gitService);
+            @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, UrlService urlService, GitService gitService,
+            ApplicationContext applicationContext) {
+        super(applicationContext, urlService, gitService);
         this.passwordService = passwordService;
         this.userRepository = userRepository;
         this.restTemplate = restTemplate;
