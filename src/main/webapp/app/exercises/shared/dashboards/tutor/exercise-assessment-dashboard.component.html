@@ -22,15 +22,13 @@
             >
             </jhi-tutor-participation-graph>
         </div>
-        <div class="col-lg-3 col-md-6 col-sm-6 align-self-center" *ngIf="isExamMode && !isTestRun">
+        <div class="col-lg-3 col-md-6 col-sm-6 align-self-center" *ngIf="isAtLeastInstructor && exam?.numberOfCorrectionRoundsInExam > 1 && isExamMode && !isTestRun">
             <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                <ng-container *ngIf="isAtLeastInstructor && exam?.numberOfCorrectionRoundsInExam > 1">
-                    <jhi-second-correction-enable-button
-                        (ngModelChange)="toggleSecondCorrection()"
-                        [(secondCorrectionEnabled)]="secondCorrectionEnabled"
-                        [(toggelingSecondCorrectionButton)]="toggelingSecondCorrectionButton"
-                    ></jhi-second-correction-enable-button>
-                </ng-container>
+                <jhi-second-correction-enable-button
+                    (ngModelChange)="toggleSecondCorrection()"
+                    [(secondCorrectionEnabled)]="secondCorrectionEnabled"
+                    [(toggelingSecondCorrectionButton)]="toggelingSecondCorrectionButton"
+                ></jhi-second-correction-enable-button>
             </ng-container>
         </div>
 

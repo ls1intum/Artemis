@@ -64,7 +64,7 @@
                             <a [routerLink]="[exam.id]">{{ exam.id }}</a>
                         </span>
                         <span *ngIf="!isAtLeastInstructor">
-                           {{ exam.id }}
+                            {{ exam.id }}
                         </span>
                     </td>
                     <td class="d-none d-md-table-cell">
@@ -72,7 +72,7 @@
                             <a [routerLink]="[exam.id]">{{ exam.title }}</a>
                         </span>
                         <span *ngIf="!isAtLeastInstructor">
-                           {{ exam.title }}
+                            {{ exam.title }}
                         </span>
                     </td>
                     <td>{{ exam.visibleDate | artemisDate }}</td>
