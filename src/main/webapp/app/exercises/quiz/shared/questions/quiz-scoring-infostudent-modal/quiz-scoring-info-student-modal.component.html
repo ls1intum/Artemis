@@ -9,11 +9,11 @@
         <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span></button>
     </div>
 
-    <div class="modal-body" *ngIf="this.question.scoringType === ALL_OR_NOTHING">
+    <div class="modal-body" *ngIf="this.question.scoringType === ScoringType.ALL_OR_NOTHING">
         <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothing"></span>
         <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothingExplanation"></span>
         <br />
-        <div *ngIf="this.question.type === MULTIPLE_CHOICE">
+        <div *ngIf="this.question.type === QuizQuestionType.MULTIPLE_CHOICE">
             <span *ngIf="this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">
                 <span
                     jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceAllOrNothingCorrect"
@@ -38,7 +38,7 @@
             ></span>
         </div>
 
-        <div *ngIf="this.question.type === DRAG_AND_DROP">
+        <div *ngIf="this.question.type === QuizQuestionType.DRAG_AND_DROP">
             <span *ngIf="this.wronglyMappedDragAndDropItems == 0">
                 <span
                     jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropAllOrNothingCorrect"
@@ -63,7 +63,7 @@
             ></span>
         </div>
 
-        <div *ngIf="this.question.type === SHORT_ANSWER">
+        <div *ngIf="this.question.type === QuizQuestionType.SHORT_ANSWER">
             <span *ngIf="!(this.shortAnswerWrongAnswers > 0)">
                 <span
                     jhiTranslate="artemisApp.quizExercise.explanationText.shortAnswerAllOrNothingCorrect"
@@ -89,11 +89,11 @@
         </div>
     </div>
 
-    <div class="modal-body" *ngIf="this.question.scoringType === PROPORTIONAL_WITH_PENALTY">
+    <div class="modal-body" *ngIf="this.question.scoringType === ScoringType.PROPORTIONAL_WITH_PENALTY">
         <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportional"></span>
         <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportionalExplanation"></span>
         <br />
-        <div *ngIf="this.question.type === MULTIPLE_CHOICE">
+        <div *ngIf="this.question.type === QuizQuestionType.MULTIPLE_CHOICE">
             <span *ngIf="this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">
                 <span
                     jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceAllOrNothingCorrect"
@@ -160,7 +160,7 @@
             </span>
         </div>
 
-        <div *ngIf="this.question.type === DRAG_AND_DROP">
+        <div *ngIf="this.question.type === QuizQuestionType.DRAG_AND_DROP">
             <span *ngIf="this.wronglyMappedDragAndDropItems == 0">
                 <span
                     jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropAllOrNothingCorrect"
@@ -217,7 +217,7 @@
             </span>
         </div>
 
-        <div *ngIf="this.question.type === SHORT_ANSWER">
+        <div *ngIf="this.question.type === QuizQuestionType.SHORT_ANSWER">
             <span *ngIf="!(this.shortAnswerWrongAnswers > 0)">
                 <span
                     jhiTranslate="artemisApp.quizExercise.explanationText.shortAnswerAllOrNothingCorrect"

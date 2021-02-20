@@ -377,7 +377,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             '[-option 1] is\n' +
             '[-option 2] input\n' +
             '[-option 1,2] correctInBothFields';
-        shortAnswerQuestion.scoringType = ScoringType.ALL_OR_NOTHING; // explicit default value for short answer questions
+        shortAnswerQuestion.scoringType = ScoringType.PROPORTIONAL_WITHOUT_PENALTY; // explicit default value for short answer questions
         shortAnswerQuestion.randomizeOrder = true;
         shortAnswerQuestion.points = 1;
         shortAnswerQuestion.spots = [];
