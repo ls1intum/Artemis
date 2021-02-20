@@ -63,6 +63,9 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
     UserRepository userRepository;
 
     @Autowired
+    QuizExerciseRepository quizExerciseRepository;
+
+    @Autowired
     StudentExamRepository studentExamRepository;
 
     private QuizExercise quizExercise;
@@ -341,7 +344,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     private void checkStatistics(QuizExercise quizExercise) {
-        QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(0);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
 
