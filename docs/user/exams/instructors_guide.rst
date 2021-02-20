@@ -41,7 +41,7 @@ During the exam creation and configuration, you can create your exam and configu
 - When you click on |create_new_exam| you are presented with the *Create Exam* view. Here you can set the basic information such as ``title``, ``examiner`` etc. The :ref:`timeline of the exam <timeline>` is defined by the dates: ``visible from``, ``start of working time``, ``end of working time``, ``release date of results``, ``begin of student review``, ``end of student review``.
 - The first three dates are mandatory when you create an exam. The rest can be set when required.
 - The ``grace period`` defines the amount of time the students have at their disposal to hand in their exam after the ``working time`` is over. This is set to 3 minutes by default.
-- _`Before the exams assessment` you can choose the ``Number of correction rounds in exam``. If you want two tutors to assess a student's exam subsequently, set the number two here. This enables the :ref:`second correction <second_correction_explanation>`.
+- _`Before the exam's assessment` you can choose the ``Number of correction rounds in exam``. If you want two tutors to assess a student's exam subsequently, set the number to two here. This enables the :ref:`second correction <second_correction_explanation>`.
 - You can also define the ``number of exercises`` in the exam. You can leave this out initially, however it must be set before you can generate the :ref:`student exams <student_exams>`. For more information, see `1.3 Exercise Groups`_.
 - Artemis will randomize the order of the exercises for each student if you activate ``randomize order of exercise groups``.
 - Finally, you can fill out the exam ``start text`` and ``end text``. Artemis will present these texts to the students during the :ref:`exam conduction <exam_conduction>`, at the *Start-* and *End* page respectively.
@@ -248,7 +248,7 @@ During this period, your team can assess the submissions of the students and pro
 Artemis executes the test suites for programming exercises automatically and grades these.
 You can enhance the automatic grading with a :ref:`manual review <manual_assessment>`.
 You can also trigger the :ref:`automatic grading of the quiz exercises <evaluate_quiz_exercises>` via the *Manage Student Exams Screen*.
-If you want you can also enable the :ref:`second correction <Before the exams assessment>` feature for the exam.
+If you want you can also enable the :ref:`second correction <Before the exam's assessment>` feature for the exam.
 
 3.1 Assess Student Exams
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -279,7 +279,40 @@ If you want you can also enable the :ref:`second correction <Before the exams as
 
    Manually Assessing a Programming Submission
 
-3.2 Plagiarism detection
+.. _second_correction_explanation:
+
+3.2 Assessment with Second Correction Round
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Set the number of correction rounds of the exam to 2.
+
+.. figure:: instructor/set_second_correction_exam.png
+    :alt: Configure exam
+    :align: center
+
+- When the second correction is enabled, the assessment progress can be observed in the Assessment Dashboard.
+- There you can see the state of the individual correction rounds, and the state of the complaints.
+
+.. figure:: instructor/second_correction_status.png
+    :alt: second correction status
+    :align: center
+
+- You can toggle if tutors can assess specific exercises in the second round. Disabling the second correction again, does not affect already created second assessments.
+- Correction in the second round can be enabled/disabled anytime.
+
+.. figure:: instructor/exam_assessment_dashboard_second_correction.png
+    :alt: Configure exam
+    :align: center
+
+- To assess a submission a second time go to the exercise assessment dashboard. When it is enabled, a |start_new_assessment| button will be visible in the second correction round.
+- The new second assessment will have all the feedback copied from the first assessment. Those can be overridden, and new feedback can be added as well. This does not override the original result, but saves a separate second result.
+- You can access each assessment of both rounds by going to the exam's |exercise_groups| -> |submissions|
+
+.. figure:: instructor/submissions.png
+    :alt: Submissions
+    :align: center
+
+3.3 Plagiarism detection
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Artemis also allows you to detect plagiarism attempts.
@@ -297,10 +330,8 @@ If you want you can also enable the :ref:`second correction <Before the exams as
 
 - At the bottom of the page you will find the option |check_plagiarism|.
 
-.. _second_correction_explanation:
 
-3.3 Assessment with Second Correction Round
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 
 
 4. **Publication of Results**
@@ -386,3 +417,4 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
 .. |summary| image:: instructor/buttons/summary.png
 .. |unlock_repo| image:: instructor/buttons/unlock_repo.png
 .. |view| image:: instructor/buttons/view.png
+.. |submissions| image:: instructor/buttons/submissions.png
