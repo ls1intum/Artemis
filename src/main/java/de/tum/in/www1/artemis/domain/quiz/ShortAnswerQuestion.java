@@ -233,7 +233,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
     }
 
     /**
-     * check all solutions for unset inValid states or state changes
+     * check all solutions for unset invalid states or state changes
      *
      * @param originalQuestion the original ShortAnswer-object, which will be compared with this question
      */
@@ -245,7 +245,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
                 solution.setInvalid(false);
             }
             ShortAnswerSolution originalSolution = originalQuestion.findSolutionById(solution.getId());
-            // reset invalid solution if it already set to true (it's not possible to set a solution valid again)
+            // reset invalid solution if it was already set to true (it's not possible to set a solution valid again)
             solution.setInvalid(solution.isInvalid() || (originalSolution != null && originalSolution.isInvalid() != null && originalSolution.isInvalid()));
         }
     }
