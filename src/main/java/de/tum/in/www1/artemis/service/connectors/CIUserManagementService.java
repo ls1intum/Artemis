@@ -34,6 +34,14 @@ public interface CIUserManagementService {
     void updateUser(User user) throws ContinuousIntegrationException;
 
     /**
+     * Updates the user login of the user.
+     *
+     * @param oldLogin the old login
+     * @param user The Artemis user with the new login
+     */
+    void updateUserLogin(String oldLogin, User user) throws ContinuousIntegrationException;
+
+    /**
      * Updates the user in the CIS with the data from the Artemis users. Also adds/removes
      * the user to/from the specified groups. Throws an exception if the user doesn't exist
      * in the CIS.
@@ -43,7 +51,7 @@ public interface CIUserManagementService {
      * @param groupsToRemove groups to remove the user from
      * @throws ContinuousIntegrationException thrown when a job cannot be fetched/updated
      */
-    void updateUserAndGroups(User user, Set<String> groupsToAdd, Set<String> groupsToRemove) throws ContinuousIntegrationException;
+    void updateUserAndGroups(String oldLogin, User user, Set<String> groupsToAdd, Set<String> groupsToRemove) throws ContinuousIntegrationException;
 
     /**
      * Adds the user to the specified group in the CIS. Groups define who has access

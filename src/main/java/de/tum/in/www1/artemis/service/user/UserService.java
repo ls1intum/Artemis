@@ -570,7 +570,7 @@ public class UserService {
         final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
         final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(oldUserLogin, user, removedGroups, addedGroups, true));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUserAndGroups(user, addedGroups, removedGroups));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUserAndGroups(oldUserLogin, user, addedGroups, removedGroups));
 
         removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group)); // e.g. Jira
         try {

@@ -21,7 +21,8 @@ import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.FolderJob;
 import com.offbytwo.jenkins.model.JobWithDetails;
 
-import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsException;
+import de.tum.in.www1.artemis.exception.JenkinsException;
+import de.tum.in.www1.artemis.exception.JenkinsJobNotFoundException;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Service
@@ -84,7 +85,11 @@ public class JenkinsJobService {
         }
     }
 
-    public org.jsoup.nodes.Document getFolderConfig(String folderName) throws IOException {
+    public org.jsoup.nodes.Document getFolderConfig(String folderName) throws JenkinsJobNotFoundException, IOException {
+        if (jenkinsServer.getJob(folderName) == null) {
+            throw new JenkinsJobNotFoundException("The job " + folderName + " does not exist.");
+        }
+
         var folderXml = jenkinsServer.getJobXml(folderName);
 
         // Parse the config xml file for the job and insert the permissions into it.
@@ -120,22 +125,17 @@ public class JenkinsJobService {
         }
     }
 
-    public org.jsoup.nodes.Document getJobConfig(String folderName, String jobName) throws IOException {
-        var jobXml = "";
-
-        if (folderName != null && !folderName.isEmpty()) {
-            var job = jenkinsServer.getJob(folderName);
-            var folder = jenkinsServer.getFolderJob(job);
-            jobXml = jenkinsServer.getJobXml(folder.orNull(), jobName);
+    public org.jsoup.nodes.Document getJobConfig(String folderName, String jobName) throws JenkinsJobNotFoundException, IOException {
+        var job = jenkinsServer.getJob(folderName);
+        if (job == null) {
+            throw new JenkinsJobNotFoundException("The job " + folderName + " does not exist.");
         }
-        else {
-            jobXml = jenkinsServer.getJobXml(jobName);
-        }
+        var folder = jenkinsServer.getFolderJob(job);
+        var jobXml = jenkinsServer.getJobXml(folder.orNull(), jobName);
 
         // Parse the config xml file for the job and insert the permissions into it.
         var document = Jsoup.parse(jobXml, "", Parser.xmlParser());
         document.outputSettings().indentAmount(0).prettyPrint(false);
-
         return document;
     }
 
