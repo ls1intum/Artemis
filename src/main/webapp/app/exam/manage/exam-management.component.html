@@ -60,11 +60,19 @@
             <tbody>
                 <tr *ngFor="let exam of exams; trackBy: trackId">
                     <td class="d-none d-md-table-cell">
-                        <a [routerLink]="[exam.id]">{{ exam.id }}</a>
+                        <span *ngIf="isAtLeastInstructor">
+                            <a [routerLink]="[exam.id]">{{ exam.id }}</a>
+                        </span>
+                        <span *ngIf="!isAtLeastInstructor">
+                           {{ exam.id }}
+                        </span>
                     </td>
                     <td class="d-none d-md-table-cell">
-                        <span class="bold">
+                        <span class="bold" *ngIf="isAtLeastInstructor">
                             <a [routerLink]="[exam.id]">{{ exam.title }}</a>
+                        </span>
+                        <span *ngIf="!isAtLeastInstructor">
+                           {{ exam.title }}
                         </span>
                     </td>
                     <td>{{ exam.visibleDate | artemisDate }}</td>
