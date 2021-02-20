@@ -132,7 +132,7 @@ public class ExamResource {
             return courseAccessFailure.get();
         }
 
-        Exam result = examService.save(exam);
+        Exam result = examRepository.save(exam);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
@@ -173,21 +173,21 @@ public class ExamResource {
         }
 
         // Make sure that the original references are preserved.
-        Exam originalExam = examService.findOne(updatedExam.getId());
+        Exam originalExam = examRepository.findByIdElseThrow(updatedExam.getId());
 
         // NOTE: Make sure that all references are preserved here
         updatedExam.setExerciseGroups(originalExam.getExerciseGroups());
         updatedExam.setStudentExams(originalExam.getStudentExams());
         updatedExam.setRegisteredUsers(originalExam.getRegisteredUsers());
 
-        Exam result = examService.save(updatedExam);
+        Exam result = examRepository.save(updatedExam);
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
         if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
                 || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0) {
             // get all exercises
-            Exam examWithExercises = examService.findOneWithExerciseGroupsAndExercises(result.getId());
+            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(result.getId());
             // for all programming exercises in the exam, send their ids for scheduling
             examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(exercise -> exercise instanceof ProgrammingExercise)
                     .map(Exercise::getId).forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
@@ -215,15 +215,15 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
         if (!withStudents && !withExerciseGroups) {
-            return ResponseEntity.ok(examService.findOne(examId));
+            return ResponseEntity.ok(examRepository.findByIdElseThrow(examId));
         }
         if (withStudents && withExerciseGroups) {
-            return ResponseEntity.ok(examService.findOneWithRegisteredUsersAndExerciseGroupsAndExercises(examId));
+            return ResponseEntity.ok(examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId));
         }
         if (withExerciseGroups) {
-            return ResponseEntity.ok(examService.findOneWithExerciseGroupsAndExercises(examId));
+            return ResponseEntity.ok(examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId));
         }
-        Exam exam = examService.findOneWithRegisteredUsers(examId);
+        Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
         examService.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
 
         exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
@@ -245,7 +245,7 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
-        Exam exam = examService.findOneWithRegisteredUsersAndExerciseGroupsAndExercises(examId);
+        Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
         ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam);
 
         return ResponseEntity.ok(examChecklistDTO);
@@ -284,7 +284,7 @@ public class ExamResource {
     public ResponseEntity<Exam> getExamForAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request /courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard");
 
-        Exam exam = examService.findOneWithExerciseGroupsAndExercises(examId);
+        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
         Course course = exam.getCourse();
         if (!course.getId().equals(courseId)) {
             return conflict();
@@ -326,7 +326,7 @@ public class ExamResource {
     public ResponseEntity<Exam> getExamForTestRunAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request /courses/{courseId}/exams/{examId}/exam-for-test-run-assessment-dashboard");
 
-        Exam exam = examService.findOneWithExerciseGroupsAndExercises(examId);
+        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
         Course course = exam.getCourse();
         if (!course.getId().equals(courseId)) {
             return conflict();
@@ -357,7 +357,7 @@ public class ExamResource {
         log.debug("REST request to get all exams for Course : {}", courseId);
         Optional<ResponseEntity<List<Exam>>> courseAccessFailure = examAccessService.checkCourseAccessForTeachingAssistant(courseId);
         return courseAccessFailure.orElseGet(() -> {
-            List<Exam> exams = examService.findAllByCourseId(courseId);
+            List<Exam> exams = examRepository.findByCourseId(courseId);
             examService.setNumberOfRegisteredUsersForExams(exams);
             return ResponseEntity.ok(exams);
         });
@@ -377,7 +377,7 @@ public class ExamResource {
             return forbidden();
         }
 
-        List<Exam> upcomingExams = examService.findAllCurrentAndUpcomingExams();
+        List<Exam> upcomingExams = examRepository.findAllCurrentAndUpcomingExams();
         return ResponseEntity.ok(upcomingExams);
     }
 
@@ -393,7 +393,7 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to delete exam : {}", examId);
-        var exam = examRepository.findExamByIdElseThrow(examId);
+        var exam = examRepository.findByIdElseThrow(examId);
         Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
@@ -422,7 +422,7 @@ public class ExamResource {
         }
 
         var course = courseRepository.findByIdElseThrow(courseId);
-        var exam = examService.findOneWithRegisteredUsers(examId);
+        var exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
 
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
         if (student.isEmpty()) {
@@ -450,7 +450,7 @@ public class ExamResource {
         long start = System.nanoTime();
         log.info("REST request to generate student exams for exam {}", examId);
 
-        final var exam = examService.findOneWithRegisteredUsersAndExerciseGroupsAndExercises(examId);
+        final var exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
 
         Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, exam);
         if (courseAndExamAccessFailure.isPresent()) {
@@ -486,7 +486,7 @@ public class ExamResource {
     public ResponseEntity<List<StudentExam>> generateMissingStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to generate missing student exams for exam {}", examId);
 
-        final var exam = examService.findOneWithRegisteredUsersAndExerciseGroupsAndExercises(examId);
+        final var exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
 
         Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
@@ -697,7 +697,7 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        Exam exam = examService.findOneWithExerciseGroups(examId);
+        Exam exam = examRepository.findByIdWithExerciseGroupsElseThrow(examId);
 
         // Ensure that exactly as many exercise groups have been received as are currently related to the exam
         if (orderedExerciseGroups.size() != exam.getExerciseGroups().size()) {
@@ -714,7 +714,7 @@ public class ExamResource {
         }
 
         exam.setExerciseGroups(orderedExerciseGroups);
-        examService.save(exam);
+        examRepository.save(exam);
 
         // Return the original request body as it might contain exercise details (e.g. quiz questions), which would be lost otherwise
         return ResponseEntity.ok(orderedExerciseGroups);

@@ -8,6 +8,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -22,8 +23,6 @@ public abstract class AbstractSubmissionResource {
 
     protected final ResultService resultService;
 
-    protected final ParticipationService participationService;
-
     protected final AuthorizationCheckService authCheckService;
 
     protected final UserRepository userRepository;
@@ -32,15 +31,18 @@ public abstract class AbstractSubmissionResource {
 
     protected final SubmissionService submissionService;
 
-    public AbstractSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ParticipationService participationService,
-            AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, SubmissionService submissionService) {
+    protected final StudentParticipationRepository studentParticipationRepository;
+
+    public AbstractSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, AuthorizationCheckService authCheckService,
+            UserRepository userRepository, ExerciseRepository exerciseRepository, SubmissionService submissionService,
+            StudentParticipationRepository studentParticipationRepository) {
         this.submissionRepository = submissionRepository;
         this.resultService = resultService;
         this.exerciseRepository = exerciseRepository;
-        this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.submissionService = submissionService;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**

@@ -6,6 +6,7 @@ import java.util.*;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
@@ -675,6 +676,25 @@ public class QuizExercise extends Exercise {
             if (pointCounter.getId() != null) {
                 pointCounter.setQuizPointStatistic(getQuizPointStatistic());
             }
+        }
+    }
+
+    /**
+     * get the view for students in the given quiz
+     *
+     * @return the view depending on the current state of the quiz
+     */
+    @JsonIgnore
+    @NotNull
+    public Class<?> viewForStudentsInQuizExercise() {
+        if (!isStarted()) {
+            return QuizView.Before.class;
+        }
+        else if (isSubmissionAllowed()) {
+            return QuizView.During.class;
+        }
+        else {
+            return QuizView.After.class;
         }
     }
 
