@@ -1,6 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.jenkins;
-
-import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
+package de.tum.in.www1.artemis.exception;
 
 public class JenkinsException extends ContinuousIntegrationException {
 
