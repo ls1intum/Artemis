@@ -63,7 +63,8 @@ Student Submission
 Assessment
 ----------
 
-- When the due date is over you can assess the submissions. Go to the
+- When the due date is over you can assess the submissions. From the assessment dashboard go to exercise assessment dashboard of the file-upload exercise.
+- There you can assess the submitted student submissions, by first downloading the file, and then creating feedback with points.
 
 .. |edit| image:: programming/edit.png
 .. |course-management| image:: programming/course-management.png
