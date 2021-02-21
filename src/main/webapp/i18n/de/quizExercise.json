@@ -178,7 +178,7 @@
             "scoringType": {
                 "all_or_nothing": "Alles-oder-Nichts",
                 "proportional_with_penalty": "Anteilig mit Abzügen",
-                "proportional_without_penalty": "Anteilig ohne Abzügen"
+                "proportional_without_penalty": "Anteilig ohne Abzüge"
             },
             "scoringTypeExplanation": {
                 "title": "Bewertungs Typen",

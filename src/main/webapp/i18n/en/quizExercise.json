@@ -183,7 +183,7 @@
             "scoringTypeExplanation": {
                 "title": "Scoring Types",
                 "all_or_nothing": "All correct choices must be chosen and all wrong choice must be empty to achieve the full score. If a mistake is made the participant achieves 0 points. There is no score in between.",
-                "proportional_with_penalty": "Each correct answer results in a fraction of the total score. To avoid guesswork, the same fraction is subtracted from the achieved points for each mistake. Example: if the score of the question is 3 and there are 5 options. Each correct answer option results in 0.6 points. Each wrong answer option subtracts 0.6 points. A student with 2 correct and 2 wrong answers would then receive 0.6 points.",
+                "proportional_with_penalty": "Each correct answer results in a fraction of the total score. To avoid guesswork, the same fraction is subtracted from the achieved points for each mistake. Example: if the score of the question is 3 and there are 5 options. Each correct answer option results in 0.6 points. Each wrong answer option subtracts 0.6 points. A student with 3 correct and 2 wrong answers would then receive 0.6 points.",
                 "proportional_without_penalty": "Each correct answer results in a fraction of the total score. No points are deducted for mistakes. Example: if the score of the question is 3 and there are 5 options. Each correct answer option results in 0.6 points. A student with 3 correct and 2 wrong answers would then receive 1.8 points."
             },
             "importJSON": "Import Question(s) in JSON Format",
