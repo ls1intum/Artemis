@@ -18,6 +18,7 @@ import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
+import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 
 enum FilterProp {
     ALL = 'all',
@@ -117,7 +118,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     formatDate(date: Moment | Date | undefined) {
         // TODO: we should try to use the artemis date pipe here
-        return date ? moment(date).format('long') : '';
+        return date ? moment(date).format(defaultLongDateTimeFormat) : '';
     }
 
     hasAccessRights() {

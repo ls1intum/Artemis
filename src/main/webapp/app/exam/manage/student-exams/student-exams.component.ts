@@ -16,6 +16,7 @@ import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-au
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { Moment } from 'moment';
+import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -354,6 +355,6 @@ export class StudentExamsComponent implements OnInit {
 
     formatDate(date: Moment | Date | undefined) {
         // TODO: we should try to use the artemis date pipe here
-        return date ? moment(date).format('long') : '';
+        return date ? moment(date).format(defaultLongDateTimeFormat) : '';
     }
 }

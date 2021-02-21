@@ -27,6 +27,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
+import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 
 /**
  * Filter properties for a result
@@ -327,6 +328,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     formatDate(date: Moment | Date | undefined) {
         // TODO: we should try to use the artemis date pipe here
-        return date ? moment(date).format('long') : '';
+        return date ? moment(date).format(defaultLongDateTimeFormat) : '';
     }
 }
