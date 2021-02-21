@@ -504,6 +504,55 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(quizSubmissionRepository.count()).isZero();
     }
 
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testQuizScoringTypes() throws Exception {
+        Course course = database.createCourse();
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null);
+        quizExercise.duration(60);
+        quizExercise.setIsPlannedToStart(true);
+        quizExercise.setIsVisibleBeforeStart(true);
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        QuizSubmission quizSubmission = new QuizSubmission();
+        for (var question : quizExercise.getQuizQuestions()) {
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(question));
+        }
+        quizSubmission.submitted(true);
+        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> "student1");
+
+        quizScheduleService.processCachedQuizSubmissions();
+
+        // End the quiz right now so that results can be processed
+        quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
+        exerciseRepository.saveAndFlush(quizExercise);
+
+        quizScheduleService.processCachedQuizSubmissions();
+
+        assertThat(quizSubmissionRepository.count()).isEqualTo(1);
+
+        List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
+        assertThat(results.size()).isEqualTo(1);
+        var result = results.get(0);
+
+        assertThat(result.getResultString()).isEqualTo("1 of 9 points");
+
+        var submittedAnswers = ((QuizSubmission) result.getSubmission()).getSubmittedAnswers();
+        for (SubmittedAnswer submittedAnswer : submittedAnswers) {
+            // MC submitted answers 0 points as one correct and one false -> ALL_OR_NOTHING
+            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
+                assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(0D);
+            } // DND submitted answers 0 points as one correct and two false -> PROPORTIONAL_WITH_PENALTY
+            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+                assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(0D);
+            } // SA submitted answers 1 points as one correct and one false -> PROPORTIONAL_WITHOUT_PENALTY
+            else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+                assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(1D);
+            }
+        }
+    }
+
     private void checkQuizNotStarted(String path) {
         // check that quiz has not started now
         log.debug("// Check that the quiz has not started and submissions are not allowed");
