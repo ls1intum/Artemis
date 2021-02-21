@@ -11,6 +11,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
@@ -551,6 +553,45 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
                 assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(1D);
             }
         }
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testQuizScoringTypeWithoutPenalty() throws Exception {
+        Course course = database.createCourse();
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null);
+        quizExercise.duration(60);
+        quizExercise.setIsPlannedToStart(true);
+        quizExercise.setIsVisibleBeforeStart(true);
+        quizExercise.setQuizQuestions(quizExercise.getQuizQuestions().stream().map(quizQuestion -> {
+            quizQuestion.setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
+            return quizQuestion;
+        }).collect(Collectors.toList()));
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        QuizSubmission quizSubmission = new QuizSubmission();
+        for (var question : quizExercise.getQuizQuestions()) {
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(question));
+        }
+        quizSubmission.submitted(true);
+        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> "student1");
+
+        quizScheduleService.processCachedQuizSubmissions();
+
+        // End the quiz right now so that results can be processed
+        quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
+        exerciseRepository.saveAndFlush(quizExercise);
+
+        quizScheduleService.processCachedQuizSubmissions();
+
+        assertThat(quizSubmissionRepository.count()).isEqualTo(1);
+
+        List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
+        assertThat(results.size()).isEqualTo(1);
+        var result = results.get(0);
+
+        assertThat(result.getResultString()).isEqualTo("4 of 9 points");
     }
 
     private void checkQuizNotStarted(String path) {
