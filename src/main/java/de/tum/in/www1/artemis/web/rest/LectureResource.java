@@ -175,15 +175,17 @@ public class LectureResource {
         }
         lecture = lectureService.filterActiveAttachments(lecture, user);
 
-        Set<Long> idsOfRelatedExercises = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
-                .map(lectureUnit -> ((ExerciseUnit) lectureUnit)).map(exerciseUnit -> exerciseUnit.getExercise()).map(exercise -> exercise.getId()).collect(Collectors.toSet());
+        Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
+                .map(lectureUnit -> ((ExerciseUnit) lectureUnit)).map(ExerciseUnit::getExercise).collect(Collectors.toSet());
 
-        Set<Exercise> filteredExercises = exerciseService.fetchAndFilterExercisesWithParticipationsSubmissionsAndResults(idsOfRelatedExercises, user);
+        Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.getSubsetThatUserIsAllowedToSee(relatedExercises, user);
+        Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
+                .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), user);
 
         List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().parallelStream().filter(lectureUnit -> {
             if (lectureUnit instanceof ExerciseUnit) {
                 return ((ExerciseUnit) lectureUnit).getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
-                        && filteredExercises.contains(((ExerciseUnit) lectureUnit).getExercise());
+                        && exercisesWithAllInformationNeeded.contains(((ExerciseUnit) lectureUnit).getExercise());
             }
             else if (lectureUnit instanceof AttachmentUnit) {
                 return ((AttachmentUnit) lectureUnit).getAttachment() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
@@ -191,12 +193,12 @@ public class LectureResource {
             else {
                 return authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
             }
-        }).map(lectureUnit -> {
+        }).peek(lectureUnit -> {
             if (lectureUnit instanceof ExerciseUnit) {
                 Exercise exercise = ((ExerciseUnit) lectureUnit).getExercise();
-                filteredExercises.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
+                // we replace the exercise with one that contains all the information needed for correct display
+                exercisesWithAllInformationNeeded.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
             }
-            return lectureUnit;
         }).collect(Collectors.toList());
 
         lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
