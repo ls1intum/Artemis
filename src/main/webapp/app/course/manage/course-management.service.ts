@@ -203,6 +203,18 @@ export class CourseManagementService {
     }
 
     /**
+     * finds all courses with quiz exercises using a GET request
+     */
+    getAllCoursesWithQuizExercises(): Observable<EntityArrayResponseType> {
+        this.fetchingCoursesForNotifications = true;
+        return this.http
+            .get<Course[]>(this.resourceUrl + '/courses-with-quiz', { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)));
+    }
+
+    /**
      * finds all courses together with user stats using a GET request
      * @param req
      */

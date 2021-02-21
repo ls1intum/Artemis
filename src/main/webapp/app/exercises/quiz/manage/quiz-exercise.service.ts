@@ -76,6 +76,18 @@ export class QuizExerciseService {
     }
 
     /**
+     * Note: the exercises in the response do not contain participations, the course and also not the exerciseGroup to save network bandwidth
+     * They also do not contain questions
+     *
+     * @param examId the exam for which the quiz exercises should be returned
+     */
+    findForExam(examId: number): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<QuizExercise[]>(`api/${examId}/quiz-exercises`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res)));
+    }
+
+    /**
      * Find the quiz exercise with the given id, with information filtered for students
      * @param quizExerciseId the id of the quiz exercise that should be loaded
      */
