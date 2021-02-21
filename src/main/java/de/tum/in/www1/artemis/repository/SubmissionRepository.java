@@ -118,15 +118,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      *         exercise due date at all
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM StudentParticipation p
+            SELECT COUNT (DISTINCT p) FROM StudentParticipation p join  p.submissions s
             WHERE p.exercise.id = :#{#exerciseId}
             AND p.testRun = FALSE
-            AND EXISTS (SELECT s
-                FROM p.submissions s
-                WHERE s.participation.id = p.id
-                AND s.submitted = TRUE
-                AND (p.exercise.dueDate IS NULL
-                    OR s.submissionDate <= p.exercise.dueDate))
+            AND s.participation.id = p.id
+            AND s.submitted = TRUE
+            AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
             """)
     long countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
