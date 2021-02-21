@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
-import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyFactory;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategy;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -172,7 +172,7 @@ public abstract class QuizQuestion extends DomainObject {
      * @return the resulting score
      */
     public double scoreForAnswer(SubmittedAnswer submittedAnswer) {
-        return ScoringStrategyFactory.makeScoringStrategy(this).calculateScore(this, submittedAnswer);
+        return makeScoringStrategy().calculateScore(this, submittedAnswer);
     }
 
     /**
@@ -182,8 +182,10 @@ public abstract class QuizQuestion extends DomainObject {
      * @return true, if the answer is 100% correct, false otherwise
      */
     public boolean isAnswerCorrect(SubmittedAnswer submittedAnswer) {
-        return ScoringStrategyFactory.makeScoringStrategy(this).calculateScore(this, submittedAnswer) == getPoints();
+        return makeScoringStrategy().calculateScore(this, submittedAnswer) == getPoints();
     }
+
+    protected abstract ScoringStrategy makeScoringStrategy();
 
     /**
      * filter out information about correct answers
