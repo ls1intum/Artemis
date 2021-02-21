@@ -326,6 +326,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     formatDate(date: Moment | Date | undefined) {
-        return date ? moment(date).format('MMM DD YYYY, HH:mm:ss') : '';
+        // TODO: we should try to use the artemis date pipe here
+        return date ? moment(date).format('long') : '';
     }
 }
