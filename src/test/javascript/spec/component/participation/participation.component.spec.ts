@@ -109,11 +109,11 @@ describe('ParticipationComponent', () => {
         expect(component.formatDate(undefined)).to.equal('');
 
         const momentDate = moment();
-        expect(component.formatDate(momentDate)).to.equal(momentDate.format('MMM DD YYYY, HH:mm:ss'));
+        expect(component.formatDate(momentDate)).to.equal(momentDate.format('long'));
 
         const date = new Date();
         const momentFromDate = moment(date);
-        expect(component.formatDate(date)).to.equal(momentFromDate.format('MMM DD YYYY, HH:mm:ss'));
+        expect(component.formatDate(date)).to.equal(momentFromDate.format('long'));
     });
 
     it('should format student login or team name from participation', () => {
