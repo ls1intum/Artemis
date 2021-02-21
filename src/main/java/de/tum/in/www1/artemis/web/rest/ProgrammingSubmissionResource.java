@@ -394,7 +394,7 @@ public class ProgrammingSubmissionResource {
         }
 
         int numberOfManualResults = participation.getResults().stream().filter(Result::isManual).collect(Collectors.toList()).size();
-        if (numberOfManualResults == correctionRound + 1) {
+        if (numberOfManualResults >= correctionRound + 1) {
             return ResponseEntity.ok(participation);
         }
         else {
@@ -403,9 +403,18 @@ public class ProgrammingSubmissionResource {
 
             // As no manual result is present we need to lock the submission for assessment
             Result latestAutomaticResult = participation.findLatestResult();
-            ProgrammingSubmission submission = programmingSubmissionService.findByResultId(latestAutomaticResult.getId());
+            ProgrammingSubmission submission;
+            if (latestAutomaticResult != null) {
+                submission = programmingSubmissionService.findByResultId(latestAutomaticResult.getId());
+            }
+            else {
+                // if the participation does not have a result we want to create a new result for the submission of the participation.
+                // If there isn't a submission either, we should not create any result.
+                submission = programmingSubmissionService.getLatestPendingSubmission(participation.getId(), false).orElseThrow();
+            }
             submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId(), correctionRound);
             return ResponseEntity.ok(submission.getParticipation());
+
         }
     }
 
