@@ -26,7 +26,9 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.LectureService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -54,16 +56,16 @@ public class LectureResource {
 
     private final UserRepository userRepository;
 
-    private final CourseResource courseResource;
+    private final ExerciseService exerciseService;
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, CourseResource courseResource) {
+            AuthorizationCheckService authCheckService, ExerciseService exerciseService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
-        this.courseResource = courseResource;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -173,15 +175,15 @@ public class LectureResource {
         }
         lecture = lectureService.filterActiveAttachments(lecture, user);
 
-        // to make sure that the information provided for lecture units is equal to the one in the course dashboard
-        // ToDo Improve performance by constructing a more precise call
-        course = this.courseResource.getCourseForDashboard(course.getId());
-        Set<Exercise> exercisesUserIsAllowedToSee = course.getExercises();
+        Set<Long> idsOfRelatedExercises = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
+                .map(lectureUnit -> ((ExerciseUnit) lectureUnit)).map(exerciseUnit -> exerciseUnit.getExercise()).map(exercise -> exercise.getId()).collect(Collectors.toSet());
+
+        Set<Exercise> filteredExercises = exerciseService.fetchAndFilterExercisesWithParticipationsSubmissionsAndResults(idsOfRelatedExercises, user);
 
         List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().parallelStream().filter(lectureUnit -> {
             if (lectureUnit instanceof ExerciseUnit) {
                 return ((ExerciseUnit) lectureUnit).getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
-                        && exercisesUserIsAllowedToSee.contains(((ExerciseUnit) lectureUnit).getExercise());
+                        && filteredExercises.contains(((ExerciseUnit) lectureUnit).getExercise());
             }
             else if (lectureUnit instanceof AttachmentUnit) {
                 return ((AttachmentUnit) lectureUnit).getAttachment() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
@@ -192,7 +194,7 @@ public class LectureResource {
         }).map(lectureUnit -> {
             if (lectureUnit instanceof ExerciseUnit) {
                 Exercise exercise = ((ExerciseUnit) lectureUnit).getExercise();
-                exercisesUserIsAllowedToSee.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
+                filteredExercises.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
             }
             return lectureUnit;
         }).collect(Collectors.toList());

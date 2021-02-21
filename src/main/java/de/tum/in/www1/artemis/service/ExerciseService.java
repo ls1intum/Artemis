@@ -1,10 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -73,11 +72,16 @@ public class ExerciseService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
+    private final LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, StudentExamRepository studentExamRepository, ExamRepository examRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository,
+            StudentParticipationRepository studentParticipationRepository) {
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
         this.participationService = participationService;
@@ -93,6 +97,90 @@ public class ExerciseService {
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.quizExerciseRepository = quizExerciseRepository;
+        this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
+    }
+
+    public Set<Exercise> fetchAndFilterExercisesWithParticipationsSubmissionsAndResults(Set<Long> exerciseIds, User user) {
+        if (exerciseIds == null || user == null) {
+            throw new IllegalArgumentException();
+        }
+        if (exerciseIds.isEmpty()) {
+            return new HashSet<>();
+        }
+        Set<Exercise> exercises = exerciseRepository.findByExerciseIdWithCategories(exerciseIds);
+        for (Exercise exercise : exercises) {
+            if (exercise.isExamExercise()) {
+                throw new IllegalArgumentException("All exercises must be course exercises");
+            }
+        }
+        Set<Course> courses = exercises.stream().map(Exercise::getCourseViaExerciseGroupOrCourseMember).collect(Collectors.toSet());
+        if (courses.size() > 1) {
+            throw new IllegalArgumentException("All exercises must be from the same course!");
+        }
+        Course course = exercises.stream().findFirst().get().getCourseViaExerciseGroupOrCourseMember();
+        Set<Exercise> filteredExercises = new HashSet<>();
+
+        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            // tutors/instructors/admins can see all exercises of the course
+            filteredExercises = new HashSet<>(exercises);
+        }
+        else if (authCheckService.isStudentInCourse(course, user)) {
+            for (Exercise exercise : exercises) {
+                if (course.isOnlineCourse()) {
+                    // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
+                    Optional<LtiOutcomeUrl> ltiOutcomeUrlOptional = ltiOutcomeUrlRepository.findByUserAndExercise(user, exercise);
+                    if (ltiOutcomeUrlOptional.isPresent()) {
+                        filteredExercises.add(exercise);
+                    }
+                }
+                else {
+                    filteredExercises.add(exercise);
+                }
+
+                // students for this course might not have the right to see it so we have to
+                // filter out exercises that are not released (or explicitly made visible to students) yet
+                filteredExercises = filteredExercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
+            }
+        }
+
+        for (Exercise filteredExercise : filteredExercises) {
+            setAssignedTeamIdForExerciseAndUser(filteredExercise, user);
+            // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
+            if (filteredExercise instanceof QuizExercise) {
+                QuizExercise quizExercise = (QuizExercise) filteredExercise;
+                quizExercise.filterSensitiveInformation();
+            }
+        }
+
+        Map<ExerciseMode, List<Exercise>> activeExercises = filteredExercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
+        List<Exercise> activeIndividualExercises = Optional.ofNullable(activeExercises.get(ExerciseMode.INDIVIDUAL)).orElse(List.of());
+        List<Exercise> activeTeamExercises = Optional.ofNullable(activeExercises.get(ExerciseMode.TEAM)).orElse(List.of());
+
+        // Note: we need two database calls here, because of performance reasons: the entity structure for team is significantly different and a combined database call
+        // would lead to a SQL statement that cannot be optimized
+
+        // 1st: fetch participations, submissions and results for individual exercises
+        List<StudentParticipation> individualParticipations = studentParticipationRepository
+                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(), activeIndividualExercises);
+
+        // 2nd: fetch participations, submissions and results for team exercises
+        List<StudentParticipation> teamParticipations = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), activeTeamExercises);
+
+        // 3rd: merge both into one list for further processing
+        List<StudentParticipation> participations = Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toList());
+
+        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        for (Exercise exercise : filteredExercises) {
+            // add participation with submission and result to each exercise
+            filterForCourseDashboard(exercise, participations, user.getLogin(), isStudent);
+            // remove sensitive information from the exercise for students
+            if (isStudent) {
+                exercise.filterSensitiveInformation();
+            }
+        }
+
+        return filteredExercises;
     }
 
     /**
