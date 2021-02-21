@@ -383,6 +383,9 @@ public class ExamResource {
             exams = examRepository.getExamsForWhichUserHasInstructorAccess(user.getId());
         }
 
+        // TODO: this is not the best performance that we iterate over all exams just to check if those exams have a quiz or not, we should directly get all courses
+        // with all quiz exercises from the database, potentially using paging
+
         List<Exam> examsWithQuiz = new ArrayList<>();
         exams.forEach(exam -> {
             Optional<Exam> optionalExam = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId());
