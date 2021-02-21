@@ -68,7 +68,8 @@
             "minutesShort": "min",
             "secondsShort": "s",
             "questions": "Fragen",
-            "noQuestionsFound": "Keine Fragen in Kurs gefunden",
+            "noQuestionsFoundCourse": "Keine Fragen in Kurs gefunden",
+            "noQuestionsFoundExam": "Keine Fragen in Klausur gefunden",
             "noMatchingQuestionsFound": "Keine Fragen des Kurses entsprechen den Suchkriterien",
             "multipleChoiceQuestion": "Multiple-Choice Frage",
             "dragAndDropQuestion": "Drag-And-Drop Frage",
@@ -79,7 +80,9 @@
             "addExistingQuestions": "Vorhandene Fragen hinzufügen",
             "fromAFile": "Aus einer Datei",
             "fromACourse": "Von einem Kurs",
+            "fromAnExam": "Von einer Klausur",
             "selectCourse": "Wähle einen Kurs",
+            "selectExam": "Wähle eine Klausur",
             "selectQuizExercise": "Wähle eine Quiz Übung aus",
             "addSelectedQuestions": "Ausgewählte Fragen hinzufügen",
             "status": "Status",
@@ -177,12 +180,14 @@
             },
             "scoringType": {
                 "all_or_nothing": "Alles-oder-Nichts",
-                "proportional_with_penalty": "Anteilig mit Abzügen"
+                "proportional_with_penalty": "Anteilig mit Abzügen",
+                "proportional_without_penalty": "Anteilig ohne Abzüge"
             },
             "scoringTypeExplanation": {
                 "title": "Bewertungs Typen",
                 "all_or_nothing": "Alle richtigen Auswahlmöglichkeiten müssen ausgewählt werden und alle falschen Auswahlmöglichkeiten müssen leer bleiben, um die volle Punktzahl zu erreichen. Wird eine falsche Antwortmöglichkeit ausgewählt gibt es 0 Punkte. Es gibt keine Punktzahl dazwischen.",
-                "proportional_with_penalty": "Jede richtige Antwort führt zu einem Bruchteil der Gesamtpunktzahl. Um Rätselraten zu vermeiden, wird für jeden Fehler der gleiche Anteil von den erreichten Punkten abgezogen. Beispiel: Wenn die gesamt Punktzahl der Frage 3 ist und es 5 Optionen gibt, ergibt jede richtige Antwortmöglichkeit 0,6 Punkte. Jede falsche Antwortmöglichkeit zieht 0,6 Punkte ab. Ein Student mit 4 richtigen und 1 falschen Auswahlmöglichkeit erhält dann 1,8 Punkte."
+                "proportional_with_penalty": "Jede richtige Antwort führt zu einem Bruchteil der Gesamtpunktzahl. Um Rätselraten zu vermeiden, wird für jeden Fehler der gleiche Anteil von den erreichten Punkten abgezogen. Beispiel: Wenn die Punktzahl der Frage 3 ist und es 5 Optionen gibt, ergibt jede richtige Antwortmöglichkeit 0,6 Punkte. Jede falsche Antwortmöglichkeit zieht 0,6 Punkte ab. Ein Student mit 3 richtigen und 2 falschen Antworten erhält dann 0,6 Punkte.",
+                "proportional_without_penalty": "Jede richtige Antwort führt zu einem Bruchteil der Gesamtpunktzahl. Bei falschen Antworten werden keine Punkte abezogen. Beispiel: Wenn die Punktzahl der Frage 3 ist und es 5 Optionen gibt, ergibt jede richtige Antwortmöglichkeit 0,6 Punkte. Ein Student mit 3 richtigen und 2 falschen Antworten erhält dann 1,8 Punkte."
             },
             "importJSON": "Fragen importieren (JSON)",
             "importWarningShort": "Ungültige Fragen gefunden",
@@ -199,8 +204,10 @@
                 "options": "Antwortmöglichkeiten",
                 "scoringTitle": "Erklärung zur Punkteverteilung in Frage {{paramIndex}} {{paramTitle}}",
                 "scoringTypeProportional": "Verteilung Anteilig mit Abzügen: ",
+                "scoringTypeProportionalWithout": "Verteilung Anteilig ohne Abzügen: ",
                 "scoringTypeAllOrNothing": "Verteilung Alles-oder-Nichts: ",
                 "scoringTypeProportionalExplanation": "Jede richtige Antwort gibt positive Punkte, jeder Fehler gibt negative Punkte, um Rätselraten zu vermeiden. ",
+                "scoringTypeProportionalWithoutExplanation": "Jede richtige Antwort gibt positive Punkte. Für Fehler werden keine Punkte abgezogen. ",
                 "scoringTypeAllOrNothingExplanation": "Du erhälst entweder alle oder gar keine Punkte.",
                 "multipleChoiceAllOrNothingCorrect": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht. Da du alle Antwortoptionen richtig ausgewählt hast, hast du in dieser Übung alle Punkte erreicht. Tolle Arbeit!",
                 "multipleChoiceAllOrNothingNotCorrect": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht, da du {{paramInTotalWrongOptions}} {{wrongOption}} falsch und {{paramInTotalRightOptions}} {{rightOption}} richtig ausgewählt hast. Versuchen es weiter! ",
