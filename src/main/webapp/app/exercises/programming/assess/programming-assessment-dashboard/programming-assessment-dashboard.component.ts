@@ -91,10 +91,9 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
                 this.submissions = submissions;
                 this.filteredSubmissions = submissions;
                 this.filteredSubmissions.forEach((sub) => {
-                    if (!sub.results) {
-                        sub.results = [];
+                    if (sub.results && sub.results.length > 0) {
+                        sub.results = sub.results.filter((r) => r.assessmentType !== AssessmentType.AUTOMATIC);
                     }
-                    sub.results = sub.results!.filter((r) => r.assessmentType !== AssessmentType.AUTOMATIC);
                 });
                 this.busy = false;
             });
