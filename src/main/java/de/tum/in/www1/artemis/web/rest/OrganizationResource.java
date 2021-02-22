@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.*;
 
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,9 +16,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
-import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.OrganizationService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -41,21 +41,21 @@ public class OrganizationResource {
 
     private final OrganizationRepository organizationRepository;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
-    private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
-    public OrganizationResource(OrganizationService organizationService, OrganizationRepository organizationRepository, UserService userService, CourseService courseService) {
+    public OrganizationResource(OrganizationService organizationService, OrganizationRepository organizationRepository, UserRepository userRepository, CourseRepository courseRepository) {
         this.organizationService = organizationService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
-        this.courseService = courseService;
+        this.courseRepository = courseRepository;
     }
 
     @PostMapping("/organizations/course/{courseId}/organization/{organizationId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> addCourseToOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         organizationRepository.addCourseToOrganization(course, organizationId);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, course.getTitle())).build();
@@ -64,7 +64,7 @@ public class OrganizationResource {
     @DeleteMapping("/organizations/course/{courseId}/organization/{organizationId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> removeCourseToOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
-        Course course = courseService.findOne(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         organizationRepository.removeCourseFromOrganization(course, organizationId);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, course.getTitle())).build();
@@ -73,26 +73,19 @@ public class OrganizationResource {
     @PostMapping("/organizations/user/{userLogin}/organization/{organizationId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> addUserToOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
-        Optional<User> user = userService.getUserByLogin(userLogin);
-        if (user.isPresent()) {
-            organizationRepository.addUserToOrganization(user.get(), organizationId);
-        }
-        else {
-            return ResponseEntity.notFound().headers(HeaderUtil.createAlert(applicationName, "User couldn't be found.", "userNotFound")).build();
-        }
+        User user = userRepository.getUserByLoginElseThrow(userLogin);
+        organizationRepository.addUserToOrganization(user, organizationId);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, user.get().getLogin())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, user.getLogin())).build();
     }
 
     @DeleteMapping("/organizations/user/{userLogin}/organization/{organizationId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> removeUserFromOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
-        Optional<User> user = userService.getUserByLogin(userLogin);
-        if (user.isPresent()) {
-            organizationRepository.removeUserFromOrganization(user.get(), organizationId);
-        }
+        User user = userRepository.getUserByLoginElseThrow(userLogin);
+        organizationRepository.removeUserFromOrganization(user, organizationId);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, user.get().getLogin())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, user.getLogin())).build();
     }
 
     @PostMapping("/organizations/add")

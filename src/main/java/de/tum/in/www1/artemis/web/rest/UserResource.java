@@ -158,7 +158,7 @@ public class UserResource {
         }
 
         User updatedUser = null;
-        existingUser = userRepository.findOneWithGroupsAndAuthoritiesById(managedUserVM.getId());
+        existingUser = userRepository.findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(managedUserVM.getLogin());
         if (existingUser.isPresent()) {
             updatedUser = userService.updateUser(existingUser.get(), managedUserVM);
         }

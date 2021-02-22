@@ -337,6 +337,7 @@ public class UserService {
         if (updatedUserDTO.getPassword() != null) {
             user.setPassword(passwordService.encodePassword(updatedUserDTO.getPassword()));
         }
+        user.setOrganizations(updatedUserDTO.getOrganizations());
         Set<Authority> managedAuthorities = user.getAuthorities();
         managedAuthorities.clear();
         updatedUserDTO.getAuthorities().stream().map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get).forEach(managedAuthorities::add);

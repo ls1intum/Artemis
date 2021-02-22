@@ -87,8 +87,6 @@ public class CourseResource {
 
     private final CourseRepository courseRepository;
 
-    private final UserRepository userRepository;
-
     private final ExerciseService exerciseService;
 
     private final TutorParticipationService tutorParticipationService;
@@ -106,8 +104,6 @@ public class CourseResource {
     private final Optional<VcsUserManagementService> vcsUserManagementService;
 
     private final Environment env;
-
-    private final CourseRepository courseRepository;
 
     private final ComplaintRepository complaintRepository;
 
@@ -772,8 +768,8 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseWithOrganizations(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request to get a course with its organizations : {}", courseId);
-        Course course = courseService.findOneWithOrganizations(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findWithEagerOrganizations(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }

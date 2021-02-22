@@ -183,6 +183,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     }
 
     /**
+     * Retrieve a user by its login, or else throw exception
+     * @param login the login of the user to search
+     * @return the user entity if it exists
+     */
+    @NotNull
+    default User getUserByLoginElseThrow(String login) {
+       return findOneByLogin(login).orElseThrow(() -> new EntityNotFoundException("User: " + login));
+    }
+
+    /**
      * Get user with user groups and authorities of currently logged in user
      *
      * @return currently logged in user
@@ -191,6 +201,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
     default User getUserWithGroupsAndAuthorities() {
         String currentUserLogin = getCurrentUserLogin();
         Optional<User> user = findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
+    }
+
+    /**
+     * Get user with user groups, authorities and organizations of currently logged in user
+     *
+     * @return currently logged in user
+     */
+    @NotNull
+    default User getUserWithGroupsAndAuthoritiesAndOrganizations() {
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(currentUserLogin);
         return unwrapOptionalUser(user, currentUserLogin);
     }
 
