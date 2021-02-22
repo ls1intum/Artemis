@@ -666,10 +666,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             this.quizExercise.quizQuestions != undefined &&
             !!this.quizExercise.quizQuestions.length;
         const areAllQuestionsValid = this.quizExercise.quizQuestions?.every(function (question) {
-            if (question.points == undefined) {
-                return false;
-            }
-            if (question.points && question.points < 1) {
+            console.log('question.points', question.points);
+            if (question.points == undefined || question.points < 1) {
                 return false;
             }
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
