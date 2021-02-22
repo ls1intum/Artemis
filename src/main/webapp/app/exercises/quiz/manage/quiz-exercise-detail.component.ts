@@ -850,14 +850,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 translateValues: {},
             });
         }
-        const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0).reduce((a, b) => a + b, 0);
-
-        if (!maxPointsReachableInQuiz) {
-            invalidReasons.push({
-                translateKey: 'artemisApp.quizExercise.invalidReasons.quizZeroPoints',
-                translateValues: {},
-            });
-        }
 
         /** We only verify the releaseDate if the checkbox is activated **/
         if (this.quizExercise.isPlannedToStart) {
@@ -884,7 +876,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     translateValues: { index: index + 1 },
                 });
             }
-            if (question.points == undefined || question.points < 0) {
+            if (question.points == undefined || question.points < 1) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionScore',
                     translateValues: { index: index + 1 },
