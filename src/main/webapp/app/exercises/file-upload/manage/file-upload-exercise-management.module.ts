@@ -14,11 +14,14 @@ import { ArtemisFileUploadExerciseManagementRoutingModule } from 'app/exercises/
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
+import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
         ArtemisCategorySelectorModule,
+        ArtemisIncludedInOverallScorePickerModule,
         ArtemisDifficultyPickerModule,
         ArtemisMarkdownEditorModule,
         ArtemisPresentationScoreModule,
@@ -29,6 +32,7 @@ import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-de
         StructuredGradingCriterionModule,
         AssessmentInstructionsModule,
         ExerciseDetailsModule,
+        ArtemisMarkdownModule,
     ],
     declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent],
     exports: [FileUploadExerciseComponent],

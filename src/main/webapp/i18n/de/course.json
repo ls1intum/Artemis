@@ -116,6 +116,24 @@
                 "removeFromGroup": {
                     "modalQuestion": "Soll der Nutzer mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Kurs-Gruppe entfernt werden?"
                 }
+            },
+            "archive": {
+                "archiveCourse": "Kurs Archivieren",
+                "archiveCourseSuccess": "Der Kurs wurde archiviert!",
+                "archiveCourseError": "Der Kurs konnte nicht archiviert werden",
+                "archiveDownloadError": "Beim Herunterladen des Archivs ist ein Problem aufgetreten",
+                "downloadCourseArchive": "Kursarchiv herunterladen",
+                "popup": {
+                    "title": "Kurs Archivieren",
+                    "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich archivieren?",
+                    "statement1": "Der Prozess komprimiert alle Repositories, Übungen zum Hochladen von Dateien, Modellierungsübungen und Textübungen im Kursen und in allen Prüfungen.",
+                    "statement2": "<strong class='text-danger'>Dieser Vorgang kann je nach Anzahl der Studenten und Programmierübungen mehrere Stunden dauern und beansprucht viele Serverressourcen. Bitte starte diesen Vorgang nur einmal, wenn die Serverlast niedrig ist (z.B. am frühen Morgen).</strong>",
+                    "footerStatement": "Du erhältst eine Benachrichtigung, wenn der Vorgang abgeschlossen ist. Anschließend kannst du das Archiv als Zip-Datei auf dieser Seite herunterladen."
+                }
+            },
+            "cleanup": {
+                "title": "Aufräumen",
+                "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studenten Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
             }
         }
     }

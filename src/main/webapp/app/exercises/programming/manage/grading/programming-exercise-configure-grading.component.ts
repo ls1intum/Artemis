@@ -32,7 +32,7 @@ export enum EditableField {
     STATE = 'state',
 }
 
-const DefaltFieldValues = {
+const DefaultFieldValues = {
     [EditableField.WEIGHT]: 1,
     [EditableField.BONUS_MULTIPLIER]: 1,
     [EditableField.BONUS_POINTS]: 0,
@@ -293,7 +293,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     checkFieldValue(newValue: any, oldValue: any, field: EditableField) {
         // Don't allow an empty string as a value!
         if (newValue === '') {
-            newValue = DefaltFieldValues[field];
+            newValue = DefaultFieldValues[field];
         }
         if (typeof oldValue === 'number') {
             newValue = Number(newValue);
@@ -416,7 +416,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     resetTestCases() {
         this.isSaving = true;
         this.gradingService
-            .reset(this.exercise.id!)
+            .resetTestCases(this.exercise.id!)
             .pipe(
                 tap((testCases: ProgrammingExerciseTestCase[]) => {
                     this.alertService.success(`artemisApp.programmingExercise.configureGrading.testCases.resetSuccessful`);
@@ -434,7 +434,24 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     resetCategories() {
-        // TODO
+        this.isSaving = true;
+        this.gradingService
+            .resetCategories(this.exercise.id!)
+            .pipe(
+                tap((categories: StaticCodeAnalysisCategory[]) => {
+                    this.alertService.success(`artemisApp.programmingExercise.configureGrading.categories.resetSuccessful`);
+                    this.staticCodeAnalysisCategories = categories;
+                    this.loadStatistics(this.exercise.id!);
+                }),
+                catchError(() => {
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.resetFailed`);
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
+                this.isSaving = false;
+                this.changedCategoryIds = [];
+            });
     }
 
     /**

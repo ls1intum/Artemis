@@ -40,6 +40,16 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void shouldUpdateFeedbackInSemiAutomaticResult() throws Exception {
+        var notification = ModelFactory.generateBambooBuildResult("assignment", List.of("test1"), List.of());
+        var loginName = "student1";
+        var planKey = (programmingExerciseResultTestService.getProgrammingExercise().getProjectKey() + "-" + loginName).toUpperCase();
+        notification.getPlan().setKey(planKey);
+        programmingExerciseResultTestService.shouldUpdateFeedbackInSemiAutomaticResult(notification, loginName);
+    }
+
+    @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() {
         var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of());

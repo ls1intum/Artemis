@@ -40,8 +40,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
@@ -59,9 +58,6 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Autowired
     ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
-    @Autowired
-    ProgrammingExerciseService programmingExerciseService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -142,7 +138,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         Files.createDirectory(templateFolderPath).toFile();
 
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(), true);
@@ -270,7 +266,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         Files.createDirectory(solutionFolderPath).toFile();
 
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(programmingExercise.getSolutionParticipation().getVcsRepositoryUrl(), true);
@@ -511,10 +507,14 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @WithMockUser(username = "student1", roles = "USER")
     public void testBuildLogsWithManualResult() throws Exception {
         var submission = database.createProgrammingSubmission(participation, true);
+        doReturn(logs).when(continuousIntegrationService).getLatestBuildLogs(submission);
         database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC);
-        var receivedLogs = request.get(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
+        var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).isNotNull();
-        assertThat(receivedLogs).hasSize(0);
+        assertThat(receivedLogs).hasSize(2);
+        assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
+        // due to timezone assertThat isEqualTo issues, we compare those directly first and ignore them afterwards
+        assertThat(receivedLogs).usingElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
     }
 
     @Test
@@ -638,20 +638,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void testStashChangesInStudentRepositoryAfterDueDateHasPassed_dueDateNotPassed() {
-        // Try to stash changes
-        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
-
-        // Check the logs
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.get(0).getMessage())
-                .isEqualTo("Cannot stash student repository for participation " + participation.getId() + " because the due date has not passed yet!");
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
     void testStashChangesInStudentRepositoryAfterDueDateHasPassed_throwError() {
-        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         // Try to stash changes, but it will throw error as the HEAD is not initialized in the remote repo (this is done with the initial commit)
         programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
 
@@ -753,7 +740,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
 
         assertThat(((ProgrammingExercise) participation.getExercise()).getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
-        assertThat(programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseStudentParticipation) participation)).isFalse();
+        assertThat(((ProgrammingExerciseStudentParticipation) participation).isLocked()).isFalse();
     }
 
     @Test
@@ -778,7 +765,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
                 programmingExercise.getProjectKey(), participation.getStudents());
 
         programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
-        assertThat(programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseStudentParticipation) participation)).isTrue();
+        assertThat(((ProgrammingExerciseStudentParticipation) participation).isLocked()).isTrue();
     }
 
     @Test
@@ -794,7 +781,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     }
 
     private List<FileSubmission> getFileSubmissions(String fileContent) {
-        List<FileSubmission> fileSubmissions = new ArrayList();
+        List<FileSubmission> fileSubmissions = new ArrayList<>();
         FileSubmission fileSubmission = new FileSubmission();
         fileSubmission.setFileName(currentLocalFileName);
         fileSubmission.setFileContent(fileContent);

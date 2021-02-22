@@ -1,7 +1,7 @@
-<jhi-test-run-ribbon *ngIf="!!testRunId"></jhi-test-run-ribbon>
+<jhi-test-run-ribbon id="testRunRibbon" *ngIf="!!testRunId"></jhi-test-run-ribbon>
 <ng-container *ngIf="exam">
     <jhi-exam-participation-cover
-        *ngIf="isVisible() && !isOver() && !examStartConfirmed"
+        *ngIf="isVisible() && !isGracePeriodOver() && !this.studentExam?.submitted && !examStartConfirmed"
         [startView]="true"
         [exam]="exam"
         [studentExam]="studentExam"
@@ -11,7 +11,7 @@
 
     <ng-container *ngIf="studentExam; else alert">
         <!-- exam participation -->
-        <ng-container *ngIf="isVisible() && isActive() && !isOver() && examStartConfirmed && !examEndConfirmed; else alert">
+        <ng-container *ngIf="isVisible() && isActive() && !isOver() && examStartConfirmed; else alert">
             <!-- exam nav -->
             <jhi-exam-navigation-bar
                 id="exam-navigation-bar"
@@ -37,6 +37,12 @@
                                     [exercise]="exercise"
                                     [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                                 ></jhi-quiz-submission-exam>
+                                <jhi-file-upload-submission-exam
+                                    *ngSwitchCase="FILEUPLOAD"
+                                    [exercise]="exercise"
+                                    [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
+                                    (onExerciseChanged)="saveFileUpload($event)"
+                                ></jhi-file-upload-submission-exam>
                                 <jhi-text-editor-exam
                                     *ngSwitchCase="TEXT"
                                     [exercise]="exercise"
@@ -112,12 +118,13 @@
             </div>
         </ng-container>
         <jhi-exam-participation-cover
-            *ngIf="isOver() && !studentExam.submitted"
+            *ngIf="!studentExam.submitted && ((isOver() && examStartConfirmed) || isGracePeriodOver())"
             [startView]="false"
             [exam]="exam"
             [studentExam]="studentExam"
             [handInEarly]="handInEarly"
             [handInPossible]="handInPossible"
+            [submitInProgress]="submitInProgress"
             (onExamEnded)="onExamEndConfirmed()"
             (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
         ></jhi-exam-participation-cover>

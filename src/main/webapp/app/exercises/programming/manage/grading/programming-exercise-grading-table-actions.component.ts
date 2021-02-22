@@ -20,7 +20,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
             id="reset-table-button"
             class="btn btn-secondary ml-3 my-1"
             (click)="onReset.emit()"
-            [disabled]="isSaving || disableReset"
+            [disabled]="isSaving"
             jhiTranslate="artemisApp.programmingExercise.configureGrading.reset"
         ></button>
     `,
@@ -28,7 +28,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 export class ProgrammingExerciseGradingTableActionsComponent {
     @Input() exercise: ProgrammingExercise;
     @Input() hasUnsavedChanges: boolean;
-    @Input() disableReset: boolean;
     @Input() isSaving: boolean;
 
     @Output() onSave = new EventEmitter();

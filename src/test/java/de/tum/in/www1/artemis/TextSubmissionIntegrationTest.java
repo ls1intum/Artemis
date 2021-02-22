@@ -19,11 +19,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -87,15 +89,24 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void getOwnTextSubmission() throws Exception {
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getTextSubmissionWithResult() throws Exception {
         textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
+        database.addResultToSubmission(textSubmission, AssessmentType.MANUAL);
 
         TextSubmission textSubmission = request.get("/api/text-submissions/" + this.textSubmission.getId(), HttpStatus.OK, TextSubmission.class);
 
         assertThat(textSubmission).as("text submission without assessment was found").isNotNull();
         assertThat(textSubmission.getId()).as("correct text submission was found").isEqualTo(this.textSubmission.getId());
         assertThat(textSubmission.getText()).as("text of text submission is correct").isEqualTo(this.textSubmission.getText());
+        assertThat(textSubmission.getResults()).as("results are not loaded properly").isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getTextSubmissionWithResult_NotAllowed() throws Exception {
+        textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
+        request.get("/api/text-submissions/" + this.textSubmission.getId(), HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test

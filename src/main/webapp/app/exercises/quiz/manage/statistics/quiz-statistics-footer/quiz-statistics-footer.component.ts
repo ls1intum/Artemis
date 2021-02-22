@@ -2,7 +2,6 @@ import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
@@ -20,7 +19,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 @Component({
     selector: 'jhi-quiz-statistics-footer',
     templateUrl: './quiz-statistics-footer.component.html',
-    providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdownService],
+    providers: [QuizStatisticUtil, ShortAnswerQuestionUtil],
     styleUrls: ['./quiz-statistics-footer.component.scss', '../../../shared/quiz.scss'],
 })
 export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {

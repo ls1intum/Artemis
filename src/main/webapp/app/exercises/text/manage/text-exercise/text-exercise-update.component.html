@@ -60,6 +60,12 @@
             ></jhi-date-time-picker>
             <span *ngIf="textExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | translate }}</span>
         </div>
+        <div class="form-group">
+            <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | translate }}</label>
+            <div>
+                <jhi-included-in-overall-score-picker [(includedInOverallScore)]="textExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
+            </div>
+        </div>
         <div class="row">
             <div class="col">
                 <div class="form-group">
@@ -68,29 +74,39 @@
                         required
                         type="number"
                         class="form-control"
-                        [pattern]="maxScorePattern"
-                        min="0"
-                        max="9999"
+                        customMin="1"
+                        customMax="9999"
                         name="points"
+                        #points="ngModel"
                         id="field_points"
-                        [(ngModel)]="textExercise.maxScore"
+                        [(ngModel)]="textExercise.maxPoints"
                     />
+                    <div *ngIf="points?.invalid && (points?.dirty || points?.touched) && points?.errors" class="alert alert-danger">
+                        {{ 'artemisApp.exercise.pointsError' | translate }}
+                    </div>
                 </div>
             </div>
             <div class="col">
-                <div class="form-group">
+                <div class="form-group" [hidden]="textExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints">Bonus Points</label>
                     <input
-                        required
                         type="number"
+                        [required]="textExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
                         class="form-control"
-                        [pattern]="maxScorePattern"
-                        min="0"
-                        max="9999"
+                        customMin="0"
+                        customMax="9999"
                         name="bonusPoints"
                         id="field_bonusPoints"
                         [(ngModel)]="textExercise.bonusPoints"
+                        #bonusPoints="ngModel"
                     />
+                    <div
+                        *ngIf="bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors"
+                        class="alert alert-danger"
+                        [hidden]="textExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                    >
+                        {{ 'artemisApp.exercise.bonusPointsError' | translate }}
+                    </div>
                 </div>
             </div>
         </div>
@@ -142,12 +158,9 @@
 
             <ul *ngIf="textExercise.id && !isImport">
                 <li *ngFor="let exampleSubmission of textExercise.exampleSubmissions; let i = index">
-                    <button
-                        [routerLink]="['/course-management', examCourseId, 'text-exercises', textExercise.id, 'example-submissions', exampleSubmission.id]"
-                        class="btn btn-link"
-                    >
+                    <a [routerLink]="['/course-management', examCourseId, 'text-exercises', textExercise.id, 'example-submissions', exampleSubmission.id]" class="btn btn-link">
                         Example submission {{ i + 1 }}
-                    </button>
+                    </a>
                     <fa-icon
                         *ngIf="exampleSubmission.usedForTutorial"
                         [icon]="'chalkboard-teacher'"
@@ -166,14 +179,14 @@
                 </li>
             </ul>
 
-            <button
+            <a
                 *ngIf="textExercise.id && !isImport"
                 class="btn btn-primary"
                 [routerLink]="['/course-management', examCourseId, 'text-exercises', textExercise.id, 'example-submissions', 'new']"
                 jhiTranslate="artemisApp.textExercise.createExampleSubmissions"
             >
                 Create example submission
-            </button>
+            </a>
 
             <div class="alert alert-info" *ngIf="!textExercise.id" jhiTranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise">
                 To create an example submission, you first need to finish creating the text exercise.

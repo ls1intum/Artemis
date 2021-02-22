@@ -75,6 +75,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     isLoading: boolean;
     isLate: boolean; // indicates if the submission is late
     ComplaintType = ComplaintType;
+    private examMode = false;
 
     // submission sync with team members
     teamSyncInterval: number;
@@ -143,6 +144,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
         this.modelingExercise = this.participation.exercise as ModelingExercise;
         this.modelingExercise.studentParticipations = [this.participation];
+        this.examMode = !!this.modelingExercise.exerciseGroup;
         this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
         if (this.modelingExercise.diagramType == undefined) {
             this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
@@ -500,7 +502,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return true;
         }
         const model: UMLModel = this.modelingEditor.getCurrentModel();
-        const explanationIsUpToDate = this.explanation === this.submission.explanationText;
+        const explanationIsUpToDate = this.explanation === (this.submission.explanationText ?? '');
         return !this.modelHasUnsavedChanges(model) && explanationIsUpToDate;
     }
 
@@ -543,7 +545,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return this.modelingExercise && (!this.modelingExercise.dueDate || moment(this.modelingExercise.dueDate).isSameOrAfter(moment()));
+        return this.modelingExercise && !this.examMode && (!this.modelingExercise.dueDate || moment(this.modelingExercise.dueDate).isSameOrAfter(moment()));
     }
 
     get submitButtonTooltip(): string {

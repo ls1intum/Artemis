@@ -146,6 +146,8 @@ public final class Constants {
 
     public static final String INFO_BUILD_PLAN_URL_DETAIL = "buildPlanURLTemplate";
 
+    public static final String INFO_COMMIT_HASH_URL_DETAIL = "commitHashURLTemplate";
+
     public static final String INFO_SSH_CLONE_URL_DETAIL = "sshCloneURLTemplate";
 
     public static final String INFO_SSH_KEYS_URL_DETAIL = "sshKeysURL";

@@ -26,7 +26,11 @@
         <div editorTitle>
             <span>{{ exercise?.title }}</span>
             <!-- prettier-ignore -->
-            <span>&nbsp;[{{ exercise?.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}<span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | translate }}</span>]</span>
+            <span>&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | translate }}<span
+                *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | translate }}</span>]
+            <jhi-included-in-score-badge
+                *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span>
         </div>
         <div editorToolbar>
             <jhi-updating-result
@@ -61,7 +65,7 @@
 <div *ngIf="!exercise.allowOnlineEditor && exercise.allowOfflineIde">
     <h4 class="mb-1">
         <span>{{ exercise.title }}</span>
-        <span>&nbsp;[{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
+        <span>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
     </h4>
     <jhi-exercise-details-student-actions jhiOrionFilter [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="true">
     </jhi-exercise-details-student-actions>

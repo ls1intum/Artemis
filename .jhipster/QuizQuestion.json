@@ -24,7 +24,7 @@
         {
             "fieldName": "scoringType",
             "fieldType": "ScoringType",
-            "fieldValues": "ALL_OR_NOTHING,PROPORTIONAL_CORRECT_OPTIONS,TRUE_FALSE_NEUTRAL"
+            "fieldValues": "ALL_OR_NOTHING,PROPORTIONAL_CORRECT_OPTIONS,"
         },
         {
             "fieldName": "randomizeOrder",
@@ -33,7 +33,14 @@
         {
             "fieldName": "invalid",
             "fieldType": "Boolean"
-        }
+        },
+        {
+            "fieldName": "similarityValue",
+            "fieldType": "Integer"
+        },
+        {
+            "fieldName": "matchLetterCase",
+            "fieldType": "Boolean",
     ],
     "relationships": [
         {

@@ -28,7 +28,8 @@
         <jhi-modeling-assessment
             *ngIf="submission"
             [diagramType]="modelingExercise?.diagramType"
-            [maxScore]="modelingExercise?.maxScore"
+            [maxScore]="modelingExercise?.maxPoints"
+            [maxBonusPoints]="modelingExercise?.bonusPoints"
             [totalScore]="totalScore"
             [model]="model"
             [readOnly]="readOnly"

@@ -240,22 +240,22 @@ describe('ModelingAssessmentEditorComponent', () => {
         feedback.credits = 1;
         component.generalFeedback = feedback;
 
+        component.result = ({
+            id: 2374,
+            resultString: '1 of 12 points',
+            score: 8,
+            rated: true,
+            hasFeedback: true,
+            hasComplaint: false,
+        } as unknown) as Result;
+
         component.submission = ({
             id: 1,
             submitted: true,
             type: 'MANUAL',
             text: 'Test\n\nTest\n\nTest',
         } as unknown) as ModelingSubmission;
-        component.submission.results = [
-            ({
-                id: 2374,
-                resultString: '1 of 12 points',
-                score: 8,
-                rated: true,
-                hasFeedback: true,
-                hasComplaint: false,
-            } as unknown) as Result,
-        ];
+        component.submission.results = [component.result];
         getLatestSubmissionResult(component.submission)!.feedbacks = [
             {
                 id: 2,
@@ -399,7 +399,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         const course = new Course();
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-        component.modelingExercise.maxScore = 5;
+        component.modelingExercise.maxPoints = 5;
         component.modelingExercise.bonusPoints = 5;
 
         component.onFeedbackChanged(feedbacks);

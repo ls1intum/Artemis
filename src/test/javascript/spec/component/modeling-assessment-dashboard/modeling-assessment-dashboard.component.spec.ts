@@ -26,11 +26,21 @@ const route = { params: of({ courseId: 3, exerciseId: 22 }) };
 const course = { id: 1 };
 const modelingExercise = {
     id: 22,
-    course_id: course.id,
+    course,
     type: ExerciseType.MODELING,
     studentAssignedTeamIdComputed: true,
     assessmentType: AssessmentType.SEMI_AUTOMATIC,
     numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: true,
+};
+const modelingExerciseOfExam = {
+    id: 23,
+    exerciseGroup: { id: 111, exam: { id: 112, course } },
+    type: ExerciseType.MODELING,
+    studentAssignedTeamIdComputed: true,
+    assessmentType: AssessmentType.SEMI_AUTOMATIC,
+    numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: true,
 };
 const modelingSubmission = { id: 1, submitted: true, results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [] } }] };
 const modelingSubmission2 = { id: 2, submitted: true, results: [{ id: 20, assessor: { id: 30, guidedTourSettings: [] } }] };
@@ -83,7 +93,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
         component.ngOnDestroy();
     });
 
-    it('should set parameters and call functions on init', fakeAsync(() => {
+    it('should set parameters and call functions on init', () => {
         // setup
         const getSubmissionsSpy = spyOn(component, 'getSubmissions');
         const registerChangeInResultsSpy = spyOn(component, 'registerChangeInResults');
@@ -99,7 +109,6 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
         // call
         component.ngOnInit();
-        tick();
 
         // check
         expect(getSubmissionsSpy).toHaveBeenCalledWith(true);
@@ -107,8 +116,8 @@ describe('ModelingAssessmentDashboardComponent', () => {
         expect(courseFindSpy).toHaveBeenCalled();
         expect(exerciseFindSpy).toHaveBeenCalled();
         expect(component.course).toEqual(course);
-        expect(component.modelingExercise).toEqual(modelingExercise as ModelingExercise);
-    }));
+        expect(component.exercise).toEqual(modelingExercise as ModelingExercise);
+    });
 
     it('should get Submissions', () => {
         // test getSubmissions
@@ -155,7 +164,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
             // setup
             const applyFilter = spyOn(component, 'applyFilter');
             const getOptimalSubmissionsSpy = spyOn(modelingAssessmentService, 'getOptimalSubmissions').and.returnValue(of([1]));
-            component.modelingExercise = modelingExercise;
+            component.exercise = modelingExercise;
             component.nextOptimalSubmissionIds = [];
 
             // call
@@ -172,8 +181,8 @@ describe('ModelingAssessmentDashboardComponent', () => {
             const applyFilter = spyOn(component, 'applyFilter');
             const getOptimalSubmissionsSpy = spyOn(modelingAssessmentService, 'getOptimalSubmissions').and.returnValue(of([1]));
 
-            component.modelingExercise = modelingExercise;
-            component.modelingExercise.assessmentType = AssessmentType.AUTOMATIC;
+            component.exercise = modelingExercise;
+            component.exercise.assessmentType = AssessmentType.AUTOMATIC;
             component.nextOptimalSubmissionIds = [];
 
             // call
@@ -204,8 +213,8 @@ describe('ModelingAssessmentDashboardComponent', () => {
     });
     describe('reset optimality', () => {
         it('should reset optimality', fakeAsync(() => {
-            component.modelingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-            component.modelingExercise = modelingExercise;
+            component.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            component.exercise = modelingExercise;
             const serviceResetOptSpy = spyOn(modelingAssessmentService, 'resetOptimality').and.returnValue(of(1));
             const filterSubmissionsSpy = spyOn(component, 'filterSubmissions');
 
@@ -220,7 +229,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
         it('should not reset optimality', () => {
             // setup
-            component.modelingExercise.assessmentType = AssessmentType.AUTOMATIC;
+            component.exercise.assessmentType = AssessmentType.AUTOMATIC;
             const filterSubmissionsSpy = spyOn(component, 'filterSubmissions');
 
             // call
@@ -261,7 +270,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
             const routerNavigateSpy = spyOn(router, 'navigate');
             const serviceResetOptSpy = spyOn(modelingAssessmentService, 'getOptimalSubmissions').and.returnValue(of([1]));
             const navigateToNextSpy = spyOn<any>(component, 'navigateToNextRandomOptimalSubmission').and.callThrough(); // <any> bc of private method
-            component.modelingExercise = modelingExercise;
+            component.exercise = modelingExercise;
 
             // call
             component.assessNextOptimal();
@@ -329,5 +338,35 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
         // check
         expect(paramSubSpy).toHaveBeenCalled();
+    });
+
+    describe('shouldGetAssessmentLink', () => {
+        it('should get assessment link for exam exercise', () => {
+            const submissionId = 7;
+            component.exercise = modelingExercise;
+            expect(component.getAssessmentLink(submissionId)).toEqual([
+                '/course-management',
+                component.exercise.course?.id,
+                'modeling-exercises',
+                component.exercise.id,
+                'submissions',
+                submissionId,
+                'assessment',
+            ]);
+        });
+
+        it('should get assessment link for normal exercise', () => {
+            const submissionId = 8;
+            component.exercise = modelingExerciseOfExam;
+            expect(component.getAssessmentLink(submissionId)).toEqual([
+                '/course-management',
+                component.exercise.exerciseGroup?.exam?.course?.id,
+                'modeling-exercises',
+                component.exercise.id,
+                'submissions',
+                submissionId,
+                'assessment',
+            ]);
+        });
     });
 });

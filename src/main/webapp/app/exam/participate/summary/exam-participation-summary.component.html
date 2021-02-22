@@ -1,4 +1,3 @@
-<jhi-test-run-ribbon id="testRunRibbon" *ngIf="isTestRun"></jhi-test-run-ribbon>
 <div>
     <h2>
         <ng-container *ngIf="!instructorView">
@@ -45,11 +44,18 @@
                     class="btn btn-primary float-right"
                     [routerLink]="generateLink(exercise)"
                 >
-                    <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon><span jhiTranslate="artemisApp.exam.examSummary.viewResult">&nbsp;View Result</span>
+                    <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                    <span jhiTranslate="artemisApp.exam.examSummary.viewResult">&nbsp;View Result</span>
                 </button>
             </div>
             <!-- prettier-ignore -->
-            <h5>{{ exercise.title }} [{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}<span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | translate }}</span>]</h5>
+            <h5>{{ exercise.title }} [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | translate }}
+                <span
+                    *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | translate }}</span>]
+                <jhi-included-in-score-badge
+                    *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                    [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+            </h5>
             <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING">
                 <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
             </h6>

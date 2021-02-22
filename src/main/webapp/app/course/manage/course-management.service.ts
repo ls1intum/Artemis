@@ -213,6 +213,18 @@ export class CourseManagementService {
     }
 
     /**
+     * finds all courses with quiz exercises using a GET request
+     */
+    getAllCoursesWithQuizExercises(): Observable<EntityArrayResponseType> {
+        this.fetchingCoursesForNotifications = true;
+        return this.http
+            .get<Course[]>(this.resourceUrl + '/courses-with-quiz', { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)));
+    }
+
+    /**
      * finds all courses together with user stats using a GET request
      * @param req
      */
@@ -257,6 +269,30 @@ export class CourseManagementService {
      */
     getAllUsersInCourseGroup(courseId: number, courseGroup: CourseGroup): Observable<HttpResponse<User[]>> {
         return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/${courseGroup}`, { observe: 'response' });
+    }
+
+    /**
+     * Downloads the course archive of the specified courseId. Returns an error
+     * if the archive does not exist.
+     * @param courseId The id of the course
+     */
+    downloadCourseArchive(courseId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${courseId}/download-archive`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
+    /**
+     * Archives the course of the specified courseId.
+     * @param courseId The id of the course to archive
+     */
+    archiveCourse(courseId: number): Observable<HttpResponse<any>> {
+        return this.http.put(`${this.resourceUrl}/${courseId}/archive`, {}, { observe: 'response' });
+    }
+
+    cleanupCourse(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/cleanup`, { observe: 'response' });
     }
 
     /**

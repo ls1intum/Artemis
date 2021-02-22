@@ -3,25 +3,48 @@ package de.tum.in.www1.artemis.service.connectors;
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Optional;
+
+import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.service.UrlService;
 
 public abstract class AbstractVersionControlService implements VersionControlService {
+
+    private final Logger log = LoggerFactory.getLogger(AbstractVersionControlService.class);
 
     @Value("${server.url}")
     protected String ARTEMIS_SERVER_URL;
 
-    private ApplicationContext applicationContext;
+    @Value("${artemis.lti.user-prefix-edx:#{null}}")
+    protected Optional<String> userPrefixEdx;
 
-    @Autowired
-    public void setApplicationContext(ApplicationContext applicationContext) {
+    @Value("${artemis.lti.user-prefix-u4i:#{null}}")
+    protected Optional<String> userPrefixU4I;
+
+    private final ApplicationContext applicationContext;
+
+    protected final UrlService urlService;
+
+    private final GitService gitService;
+
+    public AbstractVersionControlService(ApplicationContext applicationContext, UrlService urlService, GitService gitService) {
         this.applicationContext = applicationContext;
+        this.urlService = urlService;
+        this.gitService = gitService;
     }
 
     /**
@@ -66,5 +89,51 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             // first add a web hook from the version control service to Artemis, so that Artemis is notified can create a ProgrammingSubmission when students push their code
             addWebHook(participation.getVcsRepositoryUrl(), ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), "Artemis WebHook");
         }
+    }
+
+    @Override
+    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName)
+            throws VersionControlException {
+        sourceRepositoryName = sourceRepositoryName.toLowerCase();
+        targetRepositoryName = targetRepositoryName.toLowerCase();
+        final String targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
+        // get the remote url of the source repo
+        final var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceRepositoryName);
+        // get the remote url of the target repo
+        final var targetRepoUrl = getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
+        Repository targetRepo = null;
+        try {
+            // create the new target repo
+            createRepository(targetProjectKey, targetRepoSlug, null);
+            // clone the source repo to the target directory
+            targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(sourceRepoUrl, targetRepoUrl, true);
+            // copy by pushing the source's content to the target's repo
+            gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl);
+        }
+        catch (InterruptedException | GitAPIException e) {
+            Path localPath = gitService.getDefaultLocalPathOfRepo(targetRepoUrl);
+            try {
+                if (targetRepo != null) {
+                    // delete the target repo if an error occurs
+                    gitService.deleteLocalRepository(targetRepo);
+                }
+                else {
+                    // or delete the folder if it exists
+                    FileUtils.deleteDirectory(localPath.toFile());
+                }
+            }
+            catch (IOException ex) {
+                // ignore
+                log.error("Could not delete directory of the failed cloned repository in: " + localPath);
+            }
+            throw new VersionControlException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, e);
+        }
+
+        return targetRepoUrl;
+    }
+
+    @Override
+    public String getRepositoryName(VcsRepositoryUrl repositoryUrl) {
+        return urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
     }
 }

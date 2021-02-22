@@ -81,31 +81,18 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     /**
      * Similar to {@link ComplaintRepository#countByResult_Participation_Exercise_IdAndComplaintType}
      * but ignores test run submissions
-     * @param exerciseId - the id of the course we want to filter by
+     * @param exerciseId - the id of the exercise we want to filter by
      * @param complaintType - complaint type we want to filter by
      * @return  number of complaints associated to exercise exerciseId without test runs
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM StudentParticipation p
-            WHERE p.exercise.id = :#{#exerciseId}
-            AND EXISTS (SELECT s FROM p.submissions s
-                        WHERE s.results IS NOT EMPTY
-                        AND EXISTS (SELECT c FROM Complaint c
-                            WHERE EXISTS (SELECT r.id FROM s.results r WHERE r.id = c.result.id)
-                            AND c.complaintType = :#{#complaintType}))
-            AND NOT EXISTS (SELECT prs FROM p.results prs
-                        WHERE prs.assessor.id = p.student.id)
-            """)
-    long countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(Long exerciseId, ComplaintType complaintType);
+            SELECT count(c) FROM Complaint c
+            WHERE c.complaintType = :#{#complaintType}
+            AND c.result.participation.testRun = false
+            AND c.result.participation.exercise.id = :#{#exerciseId}
 
-    /**
-     * This magic method counts the number of complaints associated to a exercise id and to the results assessed by a specific user, identified by a tutor id
-     *
-     * @param exerciseId - the id of the exercise we want to filter by
-     * @param tutorId    - the id of the tutor we are interested in
-     * @return number of complaints associated to exercise exerciseId and tutor tutorId
-     */
-    long countByResult_Participation_Exercise_IdAndResult_Assessor_Id(Long exerciseId, Long tutorId);
+            """)
+    long countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("complaintType") ComplaintType complaintType);
 
     /**
      * Delete all complaints that belong to results of a given participation

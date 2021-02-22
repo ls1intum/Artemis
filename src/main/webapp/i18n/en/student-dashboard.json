@@ -5,7 +5,7 @@
             "exerciseTitle": "Current active exercise of \"{{ course }}\"",
             "exerciseTitleWithoutDueDate": "Current exercise of \"{{ course }}\":",
             "examTitle": "Current exam of \"{{ course }}\":",
-            "cardTitle": "Your overall score:",
+            "cardTitle": "Your overall points:",
             "cardNoExerciseLabel": "No exercise planned",
             "cardExerciseLabel": "Next Exercise:",
             "register": {
@@ -33,7 +33,7 @@
             "exerciseList": {
                 "releaseDate": "Release Date",
                 "dueDate": "Due Date",
-                "fullScore": "Hide full score",
+                "fullScore": "Hide full points",
                 "overdue": "Hide overdue",
                 "noExerciseDate": "No date associated",
                 "exerciseGroupHeader": "Exercises: {{ total }}",
@@ -84,7 +84,7 @@
                 }
             },
             "statistics": {
-                "totalScore": "Your overall score",
+                "totalScore": "Your overall points",
                 "totalPresentationScore": "Your total presentation score: {{ number }}",
                 "presentationScoreBonus": "Required presentation score for the bonus: {{ number }}",
                 "exerciseCount": "{{ number }} {{type}}",
@@ -93,8 +93,10 @@
                 "totalPoints": "Overall points: {{ number }} ({{ relative }}%)",
                 "presentationScore": "Presentation score: {{ number }}",
                 "noStatistics": "No statistics available for the course.",
-                "exerciseAchievedScore": "Achieved Score: {{ points }} points ({{ percentage }}%)",
-                "exerciseMissedScore": "Missed Score: {{ points }} points ({{ percentage }}%)",
+                "bonusPointTooltip": "Bonus Exercise: Points count as bonus points towards your course score!",
+                "notIncludedTooltip": "Not Included Exercise: Points do NOT count towards your course score!",
+                "exerciseAchievedScore": "Achieved Points: {{ points }} points ({{ percentage }}%)",
+                "exerciseMissedScore": "Missed Points: {{ points }} points ({{ percentage }}%)",
                 "exerciseNotGraded": "{{ exercise }} has not yet been graded.",
                 "exerciseNotParticipated": "You have not participated in {{ exercise }}.",
                 "exerciseParticipatedAfterDueDate": "You have participated in {{ exercise }}, but after the due date.",

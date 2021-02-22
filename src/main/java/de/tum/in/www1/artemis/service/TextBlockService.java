@@ -6,6 +6,7 @@ import java.text.BreakIterator;
 import java.util.*;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextSubmission;
@@ -62,25 +63,40 @@ public class TextBlockService {
 
         // Iterate over Sentences
         for (int end = breakIterator.next(); end != BreakIterator.DONE; start = end, end = breakIterator.next()) {
-            final String sentence = submissionText.substring(start, end).trim();
+            final String sentence = submissionText.substring(start, end);
 
             // The BreakIterator does not take linebreaks into account.
             // Therefore, we split each determined sentence by linebreaks.
             final String[] split = sentence.split(LINE_SEPARATOR);
             for (String lineOrSentence : split) {
-                final int startIndex = start;
-                final int endIndex = start + lineOrSentence.length();
-                start = endIndex + LINE_SEPARATOR_LENGTH;
-                if (startIndex == endIndex)
+                final String lineOrSentenceTrimed = lineOrSentence.trim();
+                final int offset = lineOrSentence.indexOf(lineOrSentenceTrimed);
+                final int startIndex = start + offset;
+                final int endIndex = startIndex + lineOrSentenceTrimed.length();
+                start = start + lineOrSentence.length() + LINE_SEPARATOR_LENGTH;
+                if (startIndex == endIndex || lineOrSentence.isBlank())
                     continue; // Do *not* define a text block for an empty line.
 
-                final TextBlock textBlock = new TextBlock().text(lineOrSentence).startIndex(startIndex).endIndex(endIndex).submission(submission).automatic();
+                final TextBlock textBlock = new TextBlock().text(lineOrSentenceTrimed).startIndex(startIndex).endIndex(endIndex).submission(submission).automatic();
                 textBlock.computeId();
                 blocks.add(textBlock);
             }
         }
 
         return blocks;
+    }
+
+    /**
+     * Save Iterable collection of text blocks.
+     * @param textBlocks Iterable of TextBlocks.
+     */
+    public void saveAll(Iterable<TextBlock> textBlocks) {
+        textBlockRepository.saveAll(textBlocks);
+    }
+
+    @Transactional // ok
+    public void deleteForSubmission(TextSubmission textSubmission) {
+        textBlockRepository.deleteAllBySubmission_Id(textSubmission.getId());
     }
 
 }

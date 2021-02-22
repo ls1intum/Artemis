@@ -27,7 +27,9 @@
                 "question": "Are you sure you want to reset the exercise <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all participations, existing results, student repositories and student build plans will be deleted."
             },
             "detail": {
-                "title": "Programming Exercise"
+                "title": "Programming Exercise",
+                "showTemplateSubmissions": "Show Template Submissions",
+                "showSolutionSubmissions": "Show Solution Submissions"
             },
             "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it would be published immediately and visible to the students.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
@@ -148,7 +150,9 @@
                     "notGraded": "Not graded.",
                     "noFeedback": "No visible feedback.",
                     "updated": "The categories were updated successfully.",
-                    "couldNotBeUpdated": "The following categories could not be updated: {{categories}}."
+                    "couldNotBeUpdated": "The following categories could not be updated: {{categories}}.",
+                    "resetSuccessful": "The categories were reset successfully.",
+                    "resetFailed": "The categories could not be reset."
                 },
                 "charts": {
                     "title": "Charts",
@@ -183,6 +187,7 @@
                 "notReleasedTooltip": "The programming exercise is not yet released or is relased but does not yet have student results. Therefore you can change the grading without having to trigger existing student submissions with the updated settings."
             },
             "export": {
+                "downloadRepo": "Download Repo",
                 "downloadAllStudents": "Or download the repositories of all students",
                 "downloadAllTeams": "Or download the repositories of all teams",
                 "filterLateSubmissions": "Filter late submissions",

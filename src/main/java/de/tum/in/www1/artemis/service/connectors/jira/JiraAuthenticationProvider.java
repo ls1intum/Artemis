@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREF
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -26,8 +25,6 @@ import org.springframework.security.authentication.ProviderNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -45,8 +42,10 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProviderImpl;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGroupDTO;
-import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
+import de.tum.in.www1.artemis.service.user.AuthorityService;
+import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -61,21 +60,22 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Value("${artemis.user-management.external.url}")
     private URL jiraUrl;
 
-    @Value("${artemis.user-management.ldap.allowed-username-pattern:#{null}}")
-    private Optional<Pattern> allowedLdapUsernamePattern;
-
     private final RestTemplate restTemplate;
 
     private final RestTemplate shortTimeoutRestTemplate;
 
     private final Optional<LdapUserService> ldapUserService;
 
+    private final AuthorityService authorityService;
+
     public JiraAuthenticationProvider(UserRepository userRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate,
-            @Qualifier("shortTimeoutJiraRestTemplate") RestTemplate shortTimeoutRestTemplate, Optional<LdapUserService> ldapUserService) {
-        super(userRepository);
+            @Qualifier("shortTimeoutJiraRestTemplate") RestTemplate shortTimeoutRestTemplate, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
+            AuthorityService authorityService, UserCreationService userCreationService) {
+        super(userRepository, passwordService, userCreationService);
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.restTemplate = restTemplate;
         this.ldapUserService = ldapUserService;
+        this.authorityService = authorityService;
     }
 
     /**
@@ -98,8 +98,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         User user = getOrCreateUser(authentication, false);
-        List<GrantedAuthority> grantedAuthorities = user.getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).collect(Collectors.toList());
-        return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), grantedAuthorities);
+        return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities());
     }
 
     @Override
@@ -156,42 +155,22 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             else {
                 // the user does not exist yet, we have to create it in the Artemis database
                 // Note: we use an empty password, so that we don't store the credentials of Jira users in the Artemis DB (Spring enforces a non null password)
-                user = userService.createUser(username, "", jiraUserDTO.getDisplayName(), "", jiraUserDTO.getEmailAddress(), null, null, "en");
+                user = userCreationService.createUser(username, "", jiraUserDTO.getDisplayName(), "", jiraUserDTO.getEmailAddress(), null, null, "en");
                 // load additional details if the ldap service is available and the user follows the allowed username pattern (if specified)
-                if (ldapUserService.isPresent()) {
-                    loadUserDetailsFromLdap(user);
-                }
+                ldapUserService.ifPresent(service -> service.loadUserDetailsFromLdap(user));
             }
             final var groups = jiraUserDTO.getGroups().getItems().stream().map(JiraUserGroupDTO::getName).collect(Collectors.toSet());
             user.setGroups(groups);
-            user.setAuthorities(userService.buildAuthorities(user));
+            user.setAuthorities(authorityService.buildAuthorities(user));
 
             if (!user.getActivated()) {
-                userService.activateUser(user);
+                user.setActivated(true);
+                user.setActivationKey(null);
             }
-            return userService.saveUser(user);
+            return userCreationService.saveUser(user);
         }
         else {
             throw new InternalAuthenticationServiceException("JIRA Authentication failed for user " + username);
-        }
-    }
-
-    /**
-     * loads the user details from the provided LDAP in case:
-     * 1) the allowedUsernamePattern is not specified (means all users should be loaded) or
-     * 2) the allowedUsernamePattern is specified and the username matches
-     * Example for TUM: ab12cde
-     * @param user the user for which the additional details (in particular the registration number should be loaded)
-     */
-    private void loadUserDetailsFromLdap(User user) {
-        if (allowedLdapUsernamePattern.isEmpty() || allowedLdapUsernamePattern.get().matcher(user.getLogin()).matches()) {
-            LdapUserDto ldapUserDto = userService.loadUserDetailsFromLdap(user.getLogin());
-            if (ldapUserDto != null) {
-                user.setFirstName(ldapUserDto.getFirstName());
-                user.setLastName(ldapUserDto.getLastName());
-                user.setEmail(ldapUserDto.getEmail());
-                user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
-            }
         }
     }
 
@@ -289,7 +268,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
                 log.error("Could not delete group " + groupName + " in JIRA. Error: " + e.getMessage());
             }
         }
-        userService.removeGroupFromUsers(groupName);
     }
 
     @Override

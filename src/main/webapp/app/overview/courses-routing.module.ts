@@ -6,8 +6,6 @@ import { CourseExercisesComponent } from 'app/overview/course-exercises/course-e
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
-import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
-import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { TeamComponent } from 'app/exercises/shared/team/team.component';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
@@ -75,22 +73,6 @@ const routes: Routes = [
         ],
     },
     {
-        path: 'courses/:courseId/exercises/:exerciseId',
-        component: CourseExerciseDetailsComponent,
-        data: {
-            authorities: [Authority.USER],
-            pageTitle: 'overview.exercise',
-        },
-        canActivate: [UserRouteAccessService],
-        children: [
-            {
-                path: '',
-                pathMatch: 'full',
-                loadChildren: () => import('app/overview/student-questions/student-questions.module').then((m) => m.ArtemisStudentQuestionsModule),
-            },
-        ],
-    },
-    {
         path: 'courses/:courseId/exercises/:exerciseId/teams/:teamId',
         component: TeamComponent,
         data: {
@@ -98,22 +80,6 @@ const routes: Routes = [
             pageTitle: 'artemisApp.team.detail.title',
         },
         canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'courses/:courseId/lectures/:lectureId',
-        component: CourseLectureDetailsComponent,
-        data: {
-            authorities: [Authority.USER],
-            pageTitle: 'overview.lectures',
-        },
-        canActivate: [UserRouteAccessService],
-        children: [
-            {
-                path: '',
-                pathMatch: 'full',
-                loadChildren: () => import('app/overview/student-questions/student-questions.module').then((m) => m.ArtemisStudentQuestionsModule),
-            },
-        ],
     },
 ];
 

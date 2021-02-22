@@ -6,11 +6,9 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockComponent } from 'ng-mocks';
-
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { JhiAlertService } from 'ng-jhipster';
 import { Router } from '@angular/router';
-import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resizable-instructions/resizable-instructions.component';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -42,6 +40,7 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -72,12 +71,7 @@ describe('FileUploadSubmissionComponent', () => {
                 ArtemisHeaderExercisePageWithDetailsModule,
                 RatingModule,
             ],
-            declarations: [
-                FileUploadSubmissionComponent,
-                MockComponent(ResizableInstructionsComponent),
-                MockComponent(ComplaintsForTutorComponent),
-                MockComponent(FileUploadResultComponent),
-            ],
+            declarations: [FileUploadSubmissionComponent, MockComponent(ComplaintsForTutorComponent), MockComponent(FileUploadResultComponent), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

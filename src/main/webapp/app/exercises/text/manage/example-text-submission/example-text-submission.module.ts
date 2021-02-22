@@ -7,7 +7,10 @@ import { ExampleTextSubmissionComponent } from 'app/exercises/text/manage/exampl
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ArtemisTextExerciseAssessmentModule } from 'app/exercises/text/assess/text-assessment.module';
+import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess/text-submission-assessment.module';
+import { ResizableInstructionsComponent } from 'app/exercises/text/manage/example-text-submission/resizable-instructions/resizable-instructions.component';
+import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 const ENTITY_STATES = [...exampleTextSubmissionRoute];
 
@@ -18,9 +21,11 @@ const ENTITY_STATES = [...exampleTextSubmissionRoute];
         MomentModule,
         ClipboardModule,
         RouterModule.forChild(ENTITY_STATES),
-        ArtemisTextExerciseAssessmentModule,
+        ArtemisTextSubmissionAssessmentModule,
         ArtemisAssessmentSharedModule,
+        AssessmentInstructionsModule,
+        ArtemisMarkdownModule,
     ],
-    declarations: [ExampleTextSubmissionComponent],
+    declarations: [ExampleTextSubmissionComponent, ResizableInstructionsComponent],
 })
 export class ArtemisExampleTextSubmissionModule {}

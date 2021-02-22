@@ -29,6 +29,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     @Input() studentExam: StudentExam;
     @Input() handInEarly = false;
     @Input() handInPossible = true;
+    @Input() submitInProgress = false;
     @Input() testRunStartTime: Moment | null;
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();

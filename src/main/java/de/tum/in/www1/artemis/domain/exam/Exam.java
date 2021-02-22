@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.domain.exam;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.persistence.*;
 
@@ -122,6 +125,12 @@ public class Exam extends DomainObject {
     @Transient
     private Long numberOfRegisteredUsersTransient;
 
+    @Transient
+    private Long numberOfGeneratedStudentExamsTransient;
+
+    @Transient
+    private Long numberOfTestRunsTransient;
+
     public String getTitle() {
         return title;
     }
@@ -235,7 +244,7 @@ public class Exam extends DomainObject {
     }
 
     public Integer getNumberOfCorrectionRoundsInExam() {
-        return numberOfCorrectionRoundsInExam;
+        return this.numberOfCorrectionRoundsInExam != null ? this.numberOfCorrectionRoundsInExam : 1;
     }
 
     public void setNumberOfCorrectionRoundsInExam(Integer numberOfCorrectionRoundsInExam) {
@@ -346,6 +355,22 @@ public class Exam extends DomainObject {
 
     public void setNumberOfRegisteredUsers(Long numberOfRegisteredUsers) {
         this.numberOfRegisteredUsersTransient = numberOfRegisteredUsers;
+    }
+
+    public Long getNumberOfGeneratedStudentExams() {
+        return this.numberOfGeneratedStudentExamsTransient;
+    }
+
+    public void setNumberOfGeneratedStudentExams(Long numberOfGeneratedStudentExams) {
+        this.numberOfGeneratedStudentExamsTransient = numberOfGeneratedStudentExams;
+    }
+
+    public Long getNumberOfTestRuns() {
+        return this.numberOfTestRunsTransient;
+    }
+
+    public void setNumberOfTestRuns(Long numberOfTestRuns) {
+        this.numberOfTestRunsTransient = numberOfTestRuns;
     }
 
     /**

@@ -742,25 +742,27 @@ public class DatabaseUtilService {
     }
 
     public StudentExam generateTestRunForInstructor(Exam exam, User instructor, List<Exercise> exercises) {
-        var testRun = ModelFactory.generateStudentExam(exam);
-        testRun.setTestRun(true);
+        var testRun = ModelFactory.generateExamTestRun(exam);
         testRun.setUser(instructor);
         examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         for (final var exercise : exercises) {
             testRun.addExercise(exercise);
+            assertThat(exercise.isExamExercise()).isTrue();
             Submission submission;
             if (exercise instanceof ModelingExercise) {
-                submission = markModelingParticipationForTestRun((ModelingExercise) exercise, instructor.getLogin());
+                submission = addModelingSubmission((ModelingExercise) exercise, ModelFactory.generateModelingSubmission("", false), instructor.getLogin());
             }
             else if (exercise instanceof TextExercise) {
-                submission = markTextExerciseParticipationForTestRun((TextExercise) exercise, instructor.getLogin());
+                submission = saveTextSubmission((TextExercise) exercise, ModelFactory.generateTextSubmission("", null, false), instructor.getLogin());
             }
             else {
-                submission = markProgrammingParticipationForTestRun((ProgrammingExercise) exercise, instructor.getLogin());
+                submission = new ProgrammingSubmission().submitted(true);
+                addProgrammingSubmission((ProgrammingExercise) exercise, (ProgrammingSubmission) submission, instructor.getLogin());
+                submission = submissionRepository.save(submission);
             }
-            assertThat(exercise.isExamExercise()).isTrue();
-            assertThat(submission.getLatestResult().getAssessor().getLogin()).isEqualTo(instructor.getLogin());
-            assertThat(((StudentParticipation) submission.getParticipation()).getStudent().get().getLogin()).isEqualTo(instructor.getLogin());
+            var studentParticipation = (StudentParticipation) submission.getParticipation();
+            studentParticipation.setTestRun(true);
+            studentParticipationRepo.save(studentParticipation);
         }
         return testRun;
     }
@@ -771,6 +773,7 @@ public class DatabaseUtilService {
         exam.setRandomizeExerciseOrder(true);
         exam.setStartDate(ZonedDateTime.now().plusHours(2));
         exam.setEndDate(ZonedDateTime.now().plusHours(4));
+        exam.setMaxPoints(20);
         exam = examRepository.save(exam);
 
         // add exercise groups: 3 mandatory, 2 optional
@@ -892,13 +895,18 @@ public class DatabaseUtilService {
         ModelFactory.generateExerciseGroup(true, exam); // quiz
         ModelFactory.generateExerciseGroup(true, exam); // file upload
         ModelFactory.generateExerciseGroup(true, exam); // modeling
-        exam.setNumberOfExercisesInExam(4);
+        ModelFactory.generateExerciseGroup(true, exam); // bonus text
+        ModelFactory.generateExerciseGroup(true, exam); // not included text
+        exam.setNumberOfExercisesInExam(6);
+        exam.setMaxPoints(24);
         exam = examRepository.save(exam);
         // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
         var exerciseGroup0 = exam.getExerciseGroups().get(0);
         var exerciseGroup1 = exam.getExerciseGroups().get(1);
         var exerciseGroup2 = exam.getExerciseGroups().get(2);
         var exerciseGroup3 = exam.getExerciseGroups().get(3);
+        var exerciseGroup4 = exam.getExerciseGroups().get(4);
+        var exerciseGroup5 = exam.getExerciseGroups().get(5);
 
         TextExercise textExercise1 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
         TextExercise textExercise2 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
@@ -924,18 +932,29 @@ public class DatabaseUtilService {
         exerciseRepo.save(modelingExercise1);
         exerciseRepo.save(modelingExercise2);
 
+        TextExercise bonusTextExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup4);
+        bonusTextExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        exerciseGroup4.setExercises(Set.of(bonusTextExercise));
+        exerciseRepo.save(bonusTextExercise);
+
+        TextExercise notIncludedTextExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup5);
+        notIncludedTextExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        exerciseGroup5.setExercises(Set.of(notIncludedTextExercise));
+        exerciseRepo.save(notIncludedTextExercise);
+
         if (withProgrammingExercise) {
             ModelFactory.generateExerciseGroup(true, exam); // programming
-            exam.setNumberOfExercisesInExam(5);
+            exam.setNumberOfExercisesInExam(7);
+            exam.setMaxPoints(29);
             exam = examRepository.save(exam);
-            var exerciseGroup4 = exam.getExerciseGroups().get(4);
+            var exerciseGroup6 = exam.getExerciseGroups().get(6);
             // Programming exercises need a proper setup for 'prepare exam start' to work
-            ProgrammingExercise programmingExercise1 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup4);
+            ProgrammingExercise programmingExercise1 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup6);
             exerciseRepo.save(programmingExercise1);
             addTemplateParticipationForProgrammingExercise(programmingExercise1);
             addSolutionParticipationForProgrammingExercise(programmingExercise1);
 
-            exerciseGroup4.setExercises(Set.of(programmingExercise1));
+            exerciseGroup6.setExercises(Set.of(programmingExercise1));
         }
 
         return exam;
@@ -997,48 +1016,6 @@ public class DatabaseUtilService {
             assertThat(storedParticipation).isPresent();
         }
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
-    }
-
-    public StudentParticipation saveStudentParticipation(StudentParticipation participation) {
-        return studentParticipationRepo.save(participation);
-    }
-
-    /**
-     * Stores test run participation of the user with the given login for the given modeling exercise
-     *
-     * @param exercise the exercise for which the participation will be created
-     * @param login    login of the user
-     * @return eagerly loaded representation of the participation object stored in the database
-     */
-    public ModelingSubmission markModelingParticipationForTestRun(ModelingExercise exercise, String login) {
-        var modelingSubmission = addModelingSubmissionWithEmptyResult(exercise, "", login);
-        modelingSubmission.getLatestResult().setAssessor(getUserByLogin(login));
-        resultRepo.save(modelingSubmission.getLatestResult());
-        return modelingSubmission;
-    }
-
-    /**
-     * Stores test run participation of the user with the given login for the given modeling exercise
-     *
-     * @param exercise the exercise for which the participation will be created
-     * @param login    login of the user
-     * @return eagerly loaded representation of the participation object stored in the database
-     */
-    public TextSubmission markTextExerciseParticipationForTestRun(TextExercise exercise, String login) {
-        var textSubmission = saveTextSubmissionWithResultAndAssessor(exercise, ModelFactory.generateTextSubmission("", null, false), login, login);
-        textSubmission.getLatestResult().setCompletionDate(null);
-        resultRepo.save(textSubmission.getLatestResult());
-        return textSubmission;
-    }
-
-    public ProgrammingSubmission markProgrammingParticipationForTestRun(ProgrammingExercise exercise, String login) {
-        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submitted(true);
-        submission = addProgrammingSubmissionWithResult(exercise, submission, login);
-        submission.getLatestResult().setAssessor(getUserByLogin(login));
-        submission.getLatestResult().setCompletionDate(null);
-        resultRepo.save(submission.getLatestResult());
-        submissionRepository.save(submission);
-        return submission;
     }
 
     /**
@@ -1192,6 +1169,12 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
+    public Result addFeedbackToResult(Feedback feedback, Result result) {
+        feedbackRepo.save(feedback);
+        result.addFeedback(feedback);
+        return resultRepo.save(result);
+    }
+
     public Result addFeedbackToResults(Result result) {
         List<Feedback> feedback = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
         feedback.addAll(ModelFactory.generateFeedback());
@@ -1225,7 +1208,8 @@ public class DatabaseUtilService {
     }
 
     public Exercise addMaxScoreAndBonusPointsToExercise(Exercise exercise) {
-        exercise.setMaxScore(100.0);
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(10.0);
         return exerciseRepo.save(exercise);
     }
@@ -1319,13 +1303,17 @@ public class DatabaseUtilService {
         return programmingExercise;
     }
 
-    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed) {
+    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed, String commitHash) {
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
         programmingSubmission.setBuildFailed(buildFailed);
         programmingSubmission.type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now());
-        programmingSubmission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
+        programmingSubmission.setCommitHash(commitHash);
         programmingSubmission.setParticipation(participation);
         return submissionRepository.save(programmingSubmission);
+    }
+
+    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed) {
+        return createProgrammingSubmission(participation, buildFailed, TestConstants.COMMIT_HASH_STRING);
     }
 
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
@@ -1547,7 +1535,7 @@ public class DatabaseUtilService {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
         programmingExercise.setBonusPoints(0D);
         programmingExercise.setPublishBuildPlanUrl(true);
-        programmingExercise.setMaxScore(42.0);
+        programmingExercise.setMaxPoints(42.0);
         programmingExercise.setDifficulty(DifficultyLevel.EASY);
         programmingExercise.setMode(ExerciseMode.INDIVIDUAL);
         programmingExercise.setProblemStatement("Lorem Ipsum");
@@ -1812,7 +1800,7 @@ public class DatabaseUtilService {
 
     public ModelingSubmission addModelingSubmission(ModelingExercise exercise, ModelingSubmission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         modelingSubmissionRepo.save(submission);
         studentParticipationRepo.save(participation);
@@ -1821,7 +1809,7 @@ public class DatabaseUtilService {
 
     public ModelingSubmission addModelingTeamSubmission(ModelingExercise exercise, ModelingSubmission submission, Team team) {
         StudentParticipation participation = addTeamParticipationForExercise(exercise, team.getId());
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         modelingSubmissionRepo.save(submission);
         studentParticipationRepo.save(participation);
@@ -1848,7 +1836,7 @@ public class DatabaseUtilService {
         StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
         submission = programmingSubmissionRepo.save(submission);
         Result result = resultRepo.save(new Result().participation(participation));
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         submission.addResult(result);
         submission = programmingSubmissionRepo.save(submission);
@@ -1894,14 +1882,14 @@ public class DatabaseUtilService {
         submission.setCommitHash(commitHash);
         resultRepo.save(result);
         result.setSubmission(submission);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         studentParticipationRepo.save(participation);
         return submissionRepository.save(submission);
     }
 
     public Submission addSubmission(Exercise exercise, Submission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
         studentParticipationRepo.save(participation);
@@ -1909,7 +1897,7 @@ public class DatabaseUtilService {
     }
 
     public Submission addSubmission(StudentParticipation participation, Submission submission) {
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
         studentParticipationRepo.save(participation);
@@ -1919,7 +1907,7 @@ public class DatabaseUtilService {
     public ModelingSubmission addModelingSubmissionWithResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
 
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission = modelingSubmissionRepo.save(submission);
 
         Result result = new Result();
@@ -1942,7 +1930,7 @@ public class DatabaseUtilService {
 
     public ModelingSubmission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission = modelingSubmissionRepo.save(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
@@ -1960,7 +1948,7 @@ public class DatabaseUtilService {
 
     public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(fileUploadExercise, login);
-        participation.addSubmissions(fileUploadSubmission);
+        participation.addSubmission(fileUploadSubmission);
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmissionRepo.save(fileUploadSubmission);
         studentParticipationRepo.save(participation);
@@ -1973,7 +1961,7 @@ public class DatabaseUtilService {
 
         submissionRepository.save(fileUploadSubmission);
 
-        participation.addSubmissions(fileUploadSubmission);
+        participation.addSubmission(fileUploadSubmission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100L);
@@ -2001,7 +1989,7 @@ public class DatabaseUtilService {
 
     public TextSubmission saveTextSubmission(TextExercise exercise, TextSubmission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         submission.setParticipation(participation);
         submission = textSubmissionRepo.save(submission);
         return submission;
@@ -2013,7 +2001,7 @@ public class DatabaseUtilService {
 
         submissionRepository.save(submission);
 
-        participation.addSubmissions(submission);
+        participation.addSubmission(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100L);
@@ -2109,13 +2097,14 @@ public class DatabaseUtilService {
     }
 
     public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission) {
+        Submission submission;
         if (exampleSubmission.getSubmission() instanceof ModelingSubmission) {
-            modelingSubmissionRepo.save((ModelingSubmission) exampleSubmission.getSubmission());
+            submission = modelingSubmissionRepo.save((ModelingSubmission) exampleSubmission.getSubmission());
         }
         else {
-            textSubmissionRepo.save((TextSubmission) exampleSubmission.getSubmission());
+            submission = textSubmissionRepo.save((TextSubmission) exampleSubmission.getSubmission());
         }
-
+        exampleSubmission.setSubmission(submission);
         return exampleSubmissionRepo.save(exampleSubmission);
     }
 
@@ -2260,6 +2249,9 @@ public class DatabaseUtilService {
             DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
             dragItem2.setQuestion((DragAndDropQuestion) question);
             System.out.println(dragItem2.toString());
+            DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
+            dragItem3.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem3.toString());
 
             DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
             dropLocation1.setQuestion((DragAndDropQuestion) question);
@@ -2267,14 +2259,19 @@ public class DatabaseUtilService {
             DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
             dropLocation2.setQuestion((DragAndDropQuestion) question);
             System.out.println(dropLocation2.toString());
+            DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
+            dropLocation3.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation3.toString());
 
             if (correct) {
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3));
             }
             else {
-                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation1));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation3));
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation2));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation1));
             }
 
             return submittedAnswer;
@@ -2286,11 +2283,76 @@ public class DatabaseUtilService {
             for (var spot : ((ShortAnswerQuestion) question).getSpots()) {
                 ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
                 submittedText.setSpot(spot);
+                var correctText = ((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText();
                 if (correct) {
-                    submittedText.setText(((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText());
+                    submittedText.setText(correctText);
                 }
                 else {
-                    submittedText.setText("wrong short answer");
+                    submittedText.setText(correctText.toUpperCase());
+                }
+                submittedAnswer.addSubmittedTexts(submittedText);
+                // also invoke remove once
+                submittedAnswer.removeSubmittedTexts(submittedText);
+                submittedAnswer.addSubmittedTexts(submittedText);
+            }
+            return submittedAnswer;
+        }
+        return null;
+    }
+
+    public SubmittedAnswer generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(QuizQuestion question) {
+        if (question instanceof MultipleChoiceQuestion) {
+            var submittedAnswer = new MultipleChoiceSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            for (var answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
+                submittedAnswer.addSelectedOptions(answerOption);
+            }
+            return submittedAnswer;
+        }
+        else if (question instanceof DragAndDropQuestion) {
+            var submittedAnswer = new DragAndDropSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().get(0);
+            dragItem1.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem1.toString());
+            DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
+            dragItem2.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem2.toString());
+            DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
+            dragItem3.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem3.toString());
+
+            DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
+            dropLocation1.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation1.toString());
+            DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
+            dropLocation2.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation2.toString());
+            DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
+            dropLocation3.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation3.toString());
+
+            submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
+            submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation3));
+            submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation2));
+
+            return submittedAnswer;
+        }
+        else if (question instanceof ShortAnswerQuestion) {
+            var submittedAnswer = new ShortAnswerSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            for (var spot : ((ShortAnswerQuestion) question).getSpots()) {
+                ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
+                submittedText.setSpot(spot);
+                var correctText = ((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText();
+                if (spot.getSpotNr() == 2) {
+                    submittedText.setText(correctText);
+                }
+                else {
+                    submittedText.setText("wrong submitted text");
                 }
                 submittedAnswer.addSubmittedTexts(submittedText);
                 // also invoke remove once
@@ -2308,7 +2370,7 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
-        quizExercise.setMaxScore(quizExercise.getMaxTotalScore());
+        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.setGradingInstructions(null);
         return quizExercise;
     }
@@ -2319,7 +2381,7 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
-        quizExercise.setMaxScore(quizExercise.getMaxTotalScore());
+        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.setGradingInstructions(null);
         return quizExercise;
     }
@@ -2327,7 +2389,10 @@ public class DatabaseUtilService {
     @NotNull
     public ShortAnswerQuestion createShortAnswerQuestion() {
         ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(2).text("This is a long answer text");
-        sa.setScoringType(ScoringType.ALL_OR_NOTHING);
+        sa.setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
+        // TODO: we should test different values here
+        sa.setMatchLetterCase(true);
+        sa.setSimilarityValue(100);
 
         var shortAnswerSpot1 = new ShortAnswerSpot().spotNr(0).width(1);
         shortAnswerSpot1.setTempID(generateTempId());
@@ -2383,22 +2448,28 @@ public class DatabaseUtilService {
         dropLocation1.setTempID(generateTempId());
         var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
         dropLocation2.setTempID(generateTempId());
+        var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
+        dropLocation3.setTempID(generateTempId());
         dnd.addDropLocation(dropLocation1);
         // also invoke remove once
         dnd.removeDropLocation(dropLocation1);
         dnd.addDropLocation(dropLocation1);
         dnd.addDropLocation(dropLocation2);
+        dnd.addDropLocation(dropLocation3);
 
         var dragItem1 = new DragItem().text("D1");
         dragItem1.setTempID(generateTempId());
         var dragItem2 = new DragItem().text("D2");
         dragItem2.setTempID(generateTempId());
+        var dragItem3 = new DragItem().text("D3");
+        dragItem3.setTempID(generateTempId());
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
         // also invoke remove once
         dnd.removeDragItem(dragItem1);
         dnd.addDragItem(dragItem1);
         dnd.addDragItem(dragItem2);
+        dnd.addDragItem(dragItem3);
 
         var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
         dragItem1.addMappings(mapping1);
@@ -2412,6 +2483,8 @@ public class DatabaseUtilService {
         dnd.addCorrectMapping(mapping1);
         var mapping2 = new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2);
         dnd.addCorrectMapping(mapping2);
+        var mapping3 = new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3);
+        dnd.addCorrectMapping(mapping3);
         dnd.setExplanation("Explanation");
         // invoke some util methods
         System.out.println("DnD: " + dnd.toString());

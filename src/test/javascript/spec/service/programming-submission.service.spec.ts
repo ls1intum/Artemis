@@ -21,6 +21,8 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock-participation-websocket.service';
+import { IProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { MockProgrammingExerciseParticipationService } from '../helpers/mocks/service/mock-programming-exercise-participation.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -30,6 +32,7 @@ describe('ProgrammingSubmissionService', () => {
     let httpService: MockHttpService;
     let participationWebsocketService: IParticipationWebsocketService;
     let alertService: MockAlertService;
+    let participationService: IProgrammingExerciseParticipationService;
     let submissionService: IProgrammingSubmissionService;
 
     let httpGetStub: SinonStub;
@@ -37,22 +40,30 @@ describe('ProgrammingSubmissionService', () => {
     let wsUnsubscribeStub: SinonStub;
     let wsReceiveStub: SinonStub;
     let participationWsLatestResultStub: SinonStub;
+    let getLatestResultStub: SinonStub;
+    let notifyAllResultSubscribersStub: SinonStub;
 
     let wsSubmissionSubject: Subject<Submission | undefined>;
     let wsLatestResultSubject: Subject<Result | undefined>;
 
     const participationId = 1;
     const submissionTopic = `/user/topic/newSubmissions`;
-    const currentSubmission = { id: 11, submissionDate: moment().subtract(20, 'seconds'), participation: { id: participationId } } as any;
-    const currentSubmission2 = { id: 12, submissionDate: moment().subtract(20, 'seconds'), participation: { id: participationId } } as any;
-    const result = { id: 31, submission: currentSubmission } as any;
-    const result2 = { id: 32, submission: currentSubmission2 } as any;
+    let currentSubmission: Submission;
+    let currentSubmission2: Submission;
+    let result: Result;
+    let result2: Result;
 
     beforeEach(() => {
+        currentSubmission = { id: 11, submissionDate: moment().subtract(20, 'seconds'), participation: { id: participationId } } as any;
+        currentSubmission2 = { id: 12, submissionDate: moment().subtract(20, 'seconds'), participation: { id: participationId } } as any;
+        result = { id: 31, submission: currentSubmission } as any;
+        result2 = { id: 32, submission: currentSubmission2 } as any;
+
         websocketService = new MockWebsocketService();
         httpService = new MockHttpService();
         participationWebsocketService = new MockParticipationWebsocketService();
         alertService = new MockAlertService();
+        participationService = new MockProgrammingExerciseParticipationService();
 
         httpGetStub = stub(httpService, 'get');
         wsSubscribeStub = stub(websocketService, 'subscribe');
@@ -61,9 +72,11 @@ describe('ProgrammingSubmissionService', () => {
         wsReceiveStub = stub(websocketService, 'receive').returns(wsSubmissionSubject);
         wsLatestResultSubject = new Subject<Result | undefined>();
         participationWsLatestResultStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(wsLatestResultSubject as any);
+        getLatestResultStub = stub(participationService, 'getLatestResultWithFeedback');
+        notifyAllResultSubscribersStub = stub(participationWebsocketService, 'notifyAllResultSubscribers');
 
         // @ts-ignore
-        submissionService = new ProgrammingSubmissionService(websocketService, httpService, participationWebsocketService, alertService);
+        submissionService = new ProgrammingSubmissionService(websocketService, httpService, participationWebsocketService, participationService, alertService);
     });
 
     afterEach(() => {
@@ -72,6 +85,8 @@ describe('ProgrammingSubmissionService', () => {
         wsUnsubscribeStub.restore();
         wsReceiveStub.restore();
         participationWsLatestResultStub.restore();
+        getLatestResultStub.restore();
+        notifyAllResultSubscribersStub.restore();
     });
 
     it('should return cached subject as Observable for provided participation if exists', () => {
@@ -154,14 +169,22 @@ describe('ProgrammingSubmissionService', () => {
         const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
         httpGetStub.returns(of(undefined));
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
+        // We simulate that the latest result from the server does not belong the pending submission
+        getLatestResultStub = getLatestResultStub.returns(of(result));
+
         expect(returnedSubmissions).to.deep.equal([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
         wsSubmissionSubject.next(currentSubmission2);
         expect(returnedSubmissions).to.deep.equal([
             { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
         ]);
-        // Wait 10ms.
-        await new Promise((resolve) => setTimeout(() => resolve(), 10));
+        // Wait 10ms for the timeout
+        await new Promise<void>((resolve) => setTimeout(() => resolve(), 10));
+
+        // Expect the fallback mechanism to kick in after the timeout
+        expect(getLatestResultStub).to.have.been.calledOnceWithExactly(participationId, true);
+
+        // HAS_FAILED_SUBMISSION is expected as the result provided by getLatestResult does not match the pending submission
         expect(returnedSubmissions).to.deep.equal([
             { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
@@ -174,6 +197,46 @@ describe('ProgrammingSubmissionService', () => {
             { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
             { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: currentSubmission2, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+        ]);
+    });
+
+    it('should emit has no pending submission if the fallback mechanism fetches the right result from the server', async () => {
+        // Set the timer to 10ms for testing purposes.
+        // @ts-ignore
+        submissionService.DEFAULT_EXPECTED_RESULT_ETA = 10;
+        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
+        httpGetStub.returns(of(undefined));
+        submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
+        // We simulate that the latest result from the server matches the pending submission
+        getLatestResultStub = getLatestResultStub.returns(of(result));
+
+        expect(returnedSubmissions).to.deep.equal([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
+        wsSubmissionSubject.next(currentSubmission);
+        expect(returnedSubmissions).to.deep.equal([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
+        ]);
+        // Wait 10ms for the timeout.
+        await new Promise<void>((resolve) => setTimeout(() => resolve(), 10));
+
+        // Expect the fallback mechanism to kick in after the timeout
+        expect(getLatestResultStub).to.have.been.calledOnceWithExactly(participationId, true);
+        expect(notifyAllResultSubscribersStub).to.have.been.calledOnceWithExactly({ ...result, participation: { id: participationId } });
+        wsLatestResultSubject.next(result);
+
+        // HAS_NO_PENDING_SUBMISSION is expected as the result provided by getLatestResult matches the pending submission
+        expect(returnedSubmissions).to.deep.equal([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+        ]);
+
+        // If the "real" websocket connection triggers now for some reason, the submission state should not change
+        wsLatestResultSubject.next(result);
+        expect(returnedSubmissions).to.deep.equal([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
             { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
         ]);
     });

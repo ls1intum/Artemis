@@ -30,7 +30,6 @@ import { cloneDeep } from 'lodash';
     templateUrl: './short-answer-question-edit.component.html',
     styleUrls: ['./short-answer-question-edit.component.scss', '../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
-    providers: [ArtemisMarkdownService],
 })
 export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
     @ViewChild('questionEditor', { static: false })
@@ -701,4 +700,14 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @desc reset the question and calls the parsing method of the markdown editor
      */
     prepareForSave(): void {}
+
+    /**
+     * @function toggleExactMatchCheckbox
+     * @desc Sets the similarity value to 100 if the checkbox was checked or to 85 if it was unchecked
+     * @param checked
+     */
+    toggleExactMatchCheckbox(checked: boolean): void {
+        this.question.similarityValue = checked ? 100 : 85;
+        this.questionUpdated.emit();
+    }
 }

@@ -33,6 +33,10 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="form-group-narrow">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
+                    <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
+                </div>
                 <form name="editForm" role="form" novalidate (ngSubmit)="saveAll()">
                     <div class="form-group-narrow mt-2">
                         <div>

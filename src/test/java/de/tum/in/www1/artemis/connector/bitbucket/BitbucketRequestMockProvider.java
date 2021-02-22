@@ -33,11 +33,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Component
 @Profile("bitbucket")
@@ -68,11 +67,11 @@ public class BitbucketRequestMockProvider {
 
     private MockRestServiceServer mockServerShortTimeout;
 
-    private final UserService userService;
+    private final PasswordService passwordService;
 
-    public BitbucketRequestMockProvider(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate,
+    public BitbucketRequestMockProvider(PasswordService passwordService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate) {
-        this.userService = userService;
+        this.passwordService = passwordService;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
@@ -141,23 +140,10 @@ public class BitbucketRequestMockProvider {
                 .andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockForkRepositoryForParticipation(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException {
+    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
-        final var templateRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var clonedRepoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
-        mockForkRepository(projectKey, projectKey, templateRepoName, clonedRepoName, status);
-    }
-
-    public void mockForkRepository(String sourceProjectKey, String targetProjectKey, String sourceRepoName, String targetRepoName, HttpStatus httpStatus)
-            throws JsonProcessingException, URISyntaxException {
-        sourceRepoName = sourceRepoName.toLowerCase();
-        targetRepoName = targetRepoName.toLowerCase();
-        final var copyRepoPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(sourceProjectKey).path("/repos/")
-                .pathSegment(sourceRepoName).build().toUri();
-        final var cloneBody = new BitbucketCloneDTO(targetRepoName, new BitbucketCloneDTO.CloneDetailsDTO(targetProjectKey));
-
-        mockServer.expect(requestTo(copyRepoPath)).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(cloneBody)))
-                .andRespond(withStatus(httpStatus));
+        mockCreateRepository(exercise, clonedRepoName);
     }
 
     public void mockGetBitbucketRepository(ProgrammingExercise exercise, String bitbucketRepoName, BitbucketRepositoryDTO bitbucketRepository)
@@ -182,7 +168,7 @@ public class BitbucketRequestMockProvider {
                     else {
                         mockUserDoesNotExist(loginName);
                         String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
-                        mockCreateUser(loginName, userService.encryptor().decrypt(user.getPassword()), user.getEmail(), displayName);
+                        mockCreateUser(loginName, passwordService.decryptPassword(user.getPassword()), user.getEmail(), displayName);
                         mockAddUserToGroups();
                     }
                 }

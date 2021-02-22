@@ -20,7 +20,7 @@
         <div class="question-card-header-inputs">
             <div class="form-group question-score">
                 <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score" (ngModelChange)="questionUpdated.emit()" />
+                <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.points" (ngModelChange)="questionUpdated.emit()" />
             </div>
             <div class="question-type">
                 <h3 class="mb-0"><span class="badge badge-success align-text-top">SA</span></h3>
@@ -68,11 +68,55 @@
                 <select class="form-control" [(ngModel)]="question.scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
                     <option value="ALL_OR_NOTHING">{{ 'artemisApp.quizExercise.scoringType.all_or_nothing' | translate }}</option>
                     <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | translate }}</option>
+                    <option value="PROPORTIONAL_WITHOUT_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_without_penalty' | translate }}</option>
                 </select>
                 <jhi-quiz-scoring-info-modal></jhi-quiz-scoring-info-modal>
             </div>
             <div class="form-group">
                 <div class="form-check custom-control custom-checkbox"></div>
+            </div>
+            <div class="form-group form-check custom-control custom-checkbox">
+                <input
+                    type="checkbox"
+                    id="{{ 'cbMatchLetterCase' + questionIndex }}"
+                    class="form-check-input custom-control-input"
+                    [(ngModel)]="question.matchLetterCase"
+                    (ngModelChange)="questionUpdated.emit()"
+                />
+                <label class="form-check-label custom-control-label" for="{{ 'cbMatchLetterCase' + questionIndex }}">{{
+                    'artemisApp.quizExercise.matchLetterCase.title' | translate
+                }}</label>
+            </div>
+            <div class="form-group match-percentage-container">
+                <div class="form-check custom-control custom-checkbox">
+                    <input
+                        #inputElement
+                        type="checkbox"
+                        id="{{ 'cbMatchAnswersExactly' + questionIndex }}"
+                        class="form-check-input custom-control-input"
+                        [checked]="question.similarityValue === 100"
+                        (change)="toggleExactMatchCheckbox(inputElement.checked)"
+                    />
+                    <label class="form-check-label custom-control-label" for="{{ 'cbMatchAnswersExactly' + questionIndex }}">{{
+                        'artemisApp.quizExercise.matchPercentage.title' | translate
+                    }}</label>
+                </div>
+                <div class="slider-container">
+                    <div class="slider-with-label">
+                        <input
+                            type="range"
+                            min="50"
+                            max="100"
+                            step="1"
+                            value="85"
+                            id="{{ 'matchPercentageSlider' + questionIndex }}"
+                            [(ngModel)]="question.similarityValue"
+                            (ngModelChange)="questionUpdated.emit()"
+                        />
+                        <p>{{ question.similarityValue }} %</p>
+                    </div>
+                    <jhi-match-percentage-info-modal></jhi-match-percentage-info-modal>
+                </div>
             </div>
             <div class="form-group" *ngIf="!reEvaluationInProgress">
                 <div class="delete-button" (click)="deleteQuestion()">

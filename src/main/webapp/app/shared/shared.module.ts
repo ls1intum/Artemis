@@ -18,6 +18,8 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
 import { ChartComponent } from 'app/shared/chart/chart.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { CircularProgressBarComponent } from 'app/shared/circular-progress-bar/circular-progress-bar.component';
+import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
+import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
 
 @NgModule({
@@ -36,6 +38,8 @@ import { OrganizationSelectorComponent } from './organization-selector/organizat
         JhiConnectionStatusComponent,
         ChartComponent,
         OrganizationSelectorComponent,
+        CustomMinDirective,
+        CustomMaxDirective,
     ],
     entryComponents: [DeleteDialogComponent],
     exports: [
@@ -57,6 +61,8 @@ import { OrganizationSelectorComponent } from './organization-selector/organizat
         SlideToggleComponent,
         JhiConnectionStatusComponent,
         ChartComponent,
+        CustomMinDirective,
+        CustomMaxDirective,
     ],
     providers: [ArtemisDatePipe],
 })

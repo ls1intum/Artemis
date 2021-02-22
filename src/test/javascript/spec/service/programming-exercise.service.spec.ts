@@ -14,6 +14,7 @@ import { FormsModule } from '@angular/forms';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
+import * as moment from 'moment';
 
 describe('ProgrammingExercise Service', () => {
     let injector: TestBed;
@@ -87,6 +88,24 @@ describe('ProgrammingExercise Service', () => {
             const expected = Object.assign({}, returnedFromService);
             service
                 .update(expected)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+            const req = httpMock.expectOne({ method: 'PUT' });
+            req.flush(JSON.stringify(returnedFromService));
+        });
+
+        it('should update the Timeline of a ProgrammingExercise', async () => {
+            const returnedFromService = Object.assign(
+                {
+                    releaseDate: moment('2020-12-10 10:00:00'),
+                    dueDate: moment('2021-01-01 10:00:00'),
+                    assessmentDueDate: moment('2021-01-02 10:00:00'),
+                },
+                elemDefault,
+            );
+            const expected = Object.assign({}, returnedFromService);
+            service
+                .updateTimeline(expected)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'PUT' });

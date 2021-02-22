@@ -30,6 +30,7 @@ import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorderedListCommand';
 import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
+import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
@@ -55,7 +56,6 @@ const getAceMode = (mode: EditorMode) => {
 
 @Component({
     selector: 'jhi-markdown-editor',
-    providers: [ArtemisMarkdownService],
     templateUrl: './markdown-editor.component.html',
     styleUrls: ['./markdown-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
@@ -101,6 +101,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
         new UnderlineCommand(),
         new ReferenceCommand(),
         new CodeCommand(),
+        new CodeBlockCommand(),
         new LinkCommand(),
         new AttachmentCommand(),
         new OrderedListCommand(),

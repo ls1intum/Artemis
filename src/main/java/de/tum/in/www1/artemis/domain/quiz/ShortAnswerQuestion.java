@@ -13,6 +13,11 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategy;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyShortAnswerAllOrNothing;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyShortAnswerProportionalWithPenalty;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyShortAnswerProportionalWithoutPenalty;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -44,6 +49,14 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.After.class)
     private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
+
+    @Column(name = "similarity_value")
+    @JsonView(QuizView.Before.class)
+    private Integer similarityValue = 85;
+
+    @Column(name = "match_letter_case")
+    @JsonView(QuizView.Before.class)
+    private Boolean matchLetterCase = false;
 
     public List<ShortAnswerSpot> getSpots() {
         return spots;
@@ -92,6 +105,22 @@ public class ShortAnswerQuestion extends QuizQuestion {
     public void setCorrectMappings(List<ShortAnswerMapping> shortAnswerMappings) {
         this.correctMappings = shortAnswerMappings;
     }
+
+    public Integer getSimilarityValue() {
+        return this.similarityValue;
+    }
+
+    public void setSimilarityValue(Integer similarityValue) {
+        this.similarityValue = similarityValue;
+    }
+
+    public Boolean matchLetterCase() {
+        return this.matchLetterCase;
+    }
+
+    public void setMatchLetterCase(Boolean matchLetterCase) {
+        this.matchLetterCase = matchLetterCase;
+    }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
@@ -101,8 +130,8 @@ public class ShortAnswerQuestion extends QuizQuestion {
             return false;
         }
 
-        // check if at least one correct mapping exists
-        return getCorrectMappings() != null && !getCorrectMappings().isEmpty();
+        // check if at least one correct mapping exists and if similarity values are in the allowed range
+        return getCorrectMappings() != null && !getCorrectMappings().isEmpty() && getSimilarityValue() >= 50 && getSimilarityValue() <= 100;
 
         // TODO (?): Add checks for "is solvable" and "no misleading correct mapping" --> look at the implementation in the client
     }
@@ -173,39 +202,8 @@ public class ShortAnswerQuestion extends QuizQuestion {
         if (originalQuizQuestion instanceof ShortAnswerQuestion) {
             ShortAnswerQuestion shortAnswerOriginalQuestion = (ShortAnswerQuestion) originalQuizQuestion;
             undoUnallowedSpotChanges(shortAnswerOriginalQuestion);
-            undoUnallowedSolutionChanges(shortAnswerOriginalQuestion);
+            checkInvalidSolutions(shortAnswerOriginalQuestion);
         }
-    }
-
-    /**
-     * undo all solution-changes which are not allowed ( adding them)
-     *
-     * @param originalQuestion the original ShortAnswer-object, which will be compared with this question
-     */
-    private void undoUnallowedSolutionChanges(ShortAnswerQuestion originalQuestion) {
-
-        // find added solutions, which are not allowed to be added
-        Set<ShortAnswerSolution> notAllowedAddedSolutions = new HashSet<>();
-        // check every solution of the question
-        for (ShortAnswerSolution solution : this.getSolutions()) {
-            // check if the solution were already in the originalQuestion -> if not it's an added solution
-            if (originalQuestion.getSolutions().contains(solution)) {
-                // find original solution
-                ShortAnswerSolution originalSolution = originalQuestion.findSolutionById(solution.getId());
-                // correct invalid = null to invalid = false
-                if (solution.isInvalid() == null) {
-                    solution.setInvalid(false);
-                }
-                // reset invalid solution if it already set to true (it's not possible to set a solution valid again)
-                solution.setInvalid(solution.isInvalid() || (originalSolution.isInvalid() != null && originalSolution.isInvalid()));
-            }
-            else {
-                // mark the added solution (adding solutions is not allowed)
-                notAllowedAddedSolutions.add(solution);
-            }
-        }
-        // remove the added solutions
-        this.getSolutions().removeAll(notAllowedAddedSolutions);
     }
 
     /**
@@ -237,6 +235,24 @@ public class ShortAnswerQuestion extends QuizQuestion {
         }
         // remove the added spots
         this.getSpots().removeAll(notAllowedAddedSpots);
+    }
+
+    /**
+     * check all solutions for unset invalid states or state changes
+     *
+     * @param originalQuestion the original ShortAnswer-object, which will be compared with this question
+     */
+    private void checkInvalidSolutions(ShortAnswerQuestion originalQuestion) {
+        // check every solution of the question
+        for (ShortAnswerSolution solution : this.getSolutions()) {
+            // correct invalid = null to invalid = false
+            if (solution.isInvalid() == null) {
+                solution.setInvalid(false);
+            }
+            ShortAnswerSolution originalSolution = originalQuestion.findSolutionById(solution.getId());
+            // reset invalid solution if it was already set to true (it's not possible to set a solution valid again)
+            solution.setInvalid(solution.isInvalid() || (originalSolution != null && originalSolution.isInvalid() != null && originalSolution.isInvalid()));
+        }
     }
 
     @Override
@@ -325,6 +341,20 @@ public class ShortAnswerQuestion extends QuizQuestion {
     public void filterForStatisticWebsocket() {
         super.filterForStatisticWebsocket();
         setCorrectMappings(null);
+    }
+
+    /**
+     * creates an instance of ScoringStrategy with the appropriate type for the given short answer question (based on polymorphism)
+     *
+     * @return an instance of the appropriate implementation of ScoringStrategy
+     */
+    @Override
+    public ScoringStrategy makeScoringStrategy() {
+        return switch (getScoringType()) {
+            case ALL_OR_NOTHING -> new ScoringStrategyShortAnswerAllOrNothing();
+            case PROPORTIONAL_WITH_PENALTY -> new ScoringStrategyShortAnswerProportionalWithPenalty();
+            case PROPORTIONAL_WITHOUT_PENALTY -> new ScoringStrategyShortAnswerProportionalWithoutPenalty();
+        };
     }
 
     @Override

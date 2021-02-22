@@ -21,7 +21,9 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -36,9 +38,11 @@ public class ModelingSubmissionService extends SubmissionService {
     private final SubmissionVersionService submissionVersionService;
 
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            CompassService compassService, UserService userService, SubmissionVersionService submissionVersionService, ParticipationService participationService,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository) {
-        super(submissionRepository, userService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
+            CompassService compassService, UserRepository userRepository, SubmissionVersionService submissionVersionService, ParticipationService participationService,
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository,
+            ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository) {
+        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
+                courseRepository, participationRepository);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.compassService = compassService;
         this.submissionVersionService = submissionVersionService;
@@ -131,7 +135,7 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        modelingSubmission.setResults(new ArrayList<Result>());
+        modelingSubmission.setResults(new ArrayList<>());
 
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here!
@@ -146,7 +150,7 @@ public class ModelingSubmissionService extends SubmissionService {
             if (modelingExercise.isTeamMode()) {
                 submissionVersionService.saveVersionForTeam(modelingSubmission, username);
             }
-            else {
+            else if (modelingExercise.isExamExercise()) {
                 submissionVersionService.saveVersionForIndividual(modelingSubmission, username);
             }
         }
@@ -154,7 +158,7 @@ public class ModelingSubmissionService extends SubmissionService {
             log.error("Modeling submission version could not be saved: " + ex);
         }
 
-        participation.addSubmissions(modelingSubmission);
+        participation.addSubmission(modelingSubmission);
 
         try {
             notifyCompass(modelingSubmission, modelingExercise);
@@ -239,7 +243,7 @@ public class ModelingSubmissionService extends SubmissionService {
             modelingSubmission.addResult(automaticResult);
             modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
 
-            compassService.removeAutomaticResultForSubmission(modelingSubmission.getId(), exerciseId);
+            compassService.removeSemiAutomaticResultForSubmission(modelingSubmission.getId(), exerciseId);
         }
 
         return modelingSubmission;

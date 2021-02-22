@@ -1,16 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +18,11 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @RestController
@@ -31,28 +31,28 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationResource.class);
 
-    private ParticipationService participationService;
+    private final ParticipationRepository participationRepository;
 
-    private ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private ResultService resultService;
+    private final ResultService resultService;
 
-    private ProgrammingSubmissionService submissionService;
+    private final ProgrammingSubmissionService submissionService;
 
-    private ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private AuthorizationCheckService authCheckService;
+    private final AuthorizationCheckService authCheckService;
 
-    private GradingCriterionService gradingCriterionService;
+    private final GradingCriterionService gradingCriterionService;
 
-    public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
-            ResultService resultService, ProgrammingSubmissionService submissionService, ProgrammingExerciseService programmingExerciseService,
-            AuthorizationCheckService authCheckService, GradingCriterionService gradingCriterionService) {
+    public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            ParticipationRepository participationRepository, ResultService resultService, ProgrammingSubmissionService submissionService,
+            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService, GradingCriterionService gradingCriterionService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.participationService = participationService;
+        this.participationRepository = participationRepository;
         this.resultService = resultService;
         this.submissionService = submissionService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.gradingCriterionService = gradingCriterionService;
     }
@@ -82,16 +82,18 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * Get the given student participation with its latest manual result and feedbacks.
+     * Get the given student participation with the manual result of the given correctionRound and its feedbacks.
      *
      * @param participationId for which to retrieve the student participation with result and feedbacks.
-     * @return the ResponseEntity with status 200 (OK) and the participation with its result in the body.
+     * @param correctionRound of the result that the participation must have, otherwise notFound is returned
+     * @return the ResponseEntity with status 200 (OK) and the participation with its results in the body.
      */
-    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-latest-manual-result-and-feedbacks")
+    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-result-and-feedbacks-for/{correctionRound}/correction-round")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> getParticipationWithLatestManualResultForStudentParticipation(@PathVariable Long participationId) {
+    public ResponseEntity<Participation> getParticipationWithManualResultByCorrectionRoundForStudentParticipation(@PathVariable Long participationId,
+            @PathVariable int correctionRound) {
         Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService
-                .findStudentParticipationWithLatestManualResultAndFeedbacksAndRelatedSubmissionAndAssessor(participationId);
+                .findStudentParticipationWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(participationId);
         if (participation.isEmpty()) {
             return notFound();
         }
@@ -101,7 +103,7 @@ public class ProgrammingExerciseParticipationResource {
 
         // Fetch template and solution participation into exercise of participation
         ProgrammingExercise exercise = (ProgrammingExercise) participation.get().getExercise();
-        exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
+        exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
 
         // Fetch grading criterion into exercise of participation
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
@@ -110,6 +112,23 @@ public class ProgrammingExerciseParticipationResource {
         // Set exercise back to participation
         participation.get().setExercise(exercise);
 
+        // get the result which belongs to the specific correctionround and set it as the single result in the participation
+        List<Result> results = new ArrayList<>(participation.get().getResults());
+
+        // usually this should not be necessary, but just in case the participation's results come in a wrong order this is important
+        results.sort((r1, r2) -> r1.getId().compareTo(r2.getId()));
+
+        if (results.size() > correctionRound) {
+            Result resultOfCorrectionRound = results.get(correctionRound);
+            Set<Result> resultSet = new HashSet<>();
+
+            resultSet.add(resultOfCorrectionRound);
+            participation.get().setResults(resultSet);
+        }
+        else {
+            return notFound();
+        }
+
         return ResponseEntity.ok(participation.get());
     }
 
@@ -117,24 +136,24 @@ public class ProgrammingExerciseParticipationResource {
      * Get the latest result for a given programming exercise participation including it's result.
      *
      * @param participationId for which to retrieve the programming exercise participation with latest result and feedbacks.
+     * @param withSubmission flag determining whether the corresponding submission should also be returned
      * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body, 404 if the participation can't be found or 403 if the user is not allowed to access the participation.
      */
     @GetMapping(value = "/programming-exercise-participations/{participationId}/latest-result-with-feedbacks")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> getLatestResultWithFeedbacksForProgrammingExerciseParticipation(@PathVariable Long participationId) {
-        Participation participation;
-        try {
-            participation = participationService.findOne(participationId);
+    public ResponseEntity<Result> getLatestResultWithFeedbacksForProgrammingExerciseParticipation(@PathVariable Long participationId,
+            @RequestParam(defaultValue = "false") boolean withSubmission) {
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+            return badRequest();
         }
-        catch (EntityNotFoundException ex) {
-            return notFound();
+        var programmingParticipation = (ProgrammingExerciseParticipation) participation;
+
+        if (!programmingExerciseParticipationService.canAccessParticipation(programmingParticipation)) {
+            return forbidden();
         }
-        if (participation instanceof ProgrammingExerciseParticipation) {
-            return getLatestResultWithFeedbacks((ProgrammingExerciseParticipation) participation);
-        }
-        else {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+        Optional<Result> result = resultService.findLatestResultWithFeedbacksForParticipation(programmingParticipation.getId(), withSubmission);
+        return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }
 
     /**
@@ -184,7 +203,7 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<Map<Long, Optional<ProgrammingSubmission>>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
         ProgrammingExercise programmingExercise;
         try {
-            programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+            programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         }
         catch (EntityNotFoundException ex) {
             return notFound();
@@ -202,19 +221,4 @@ public class ProgrammingExerciseParticipationResource {
         }));
         return ResponseEntity.ok(pendingSubmissions);
     }
-
-    /**
-     * Util method for retrieving the latest result with feedbacks of participation. Generates the appropriate response type (ok, forbidden, notFound).
-     *
-     * @param participation to retrieve the latest result for.
-     * @return the appropriate ResponseEntity for the result request.
-     */
-    private ResponseEntity<Result> getLatestResultWithFeedbacks(ProgrammingExerciseParticipation participation) {
-        if (!programmingExerciseParticipationService.canAccessParticipation(participation)) {
-            return forbidden();
-        }
-        Optional<Result> result = resultService.findLatestResultWithFeedbacksForParticipation(participation.getId());
-        return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
-    }
-
 }

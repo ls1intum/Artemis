@@ -1,6 +1,7 @@
 export const PROGRAMMING_EXERCISES_SETUP = '/programming-exercises/setup';
 export const PROGRAMMING_EXERCISES = '/programming-exercises';
 export const PROGRAMMING_EXERCISE = (exerciseId) => `${PROGRAMMING_EXERCISES}/${exerciseId}`;
+export const SCA_CATEGORIES = (exerciseId) => `/programming-exercise/${exerciseId}/static-code-analysis-categories`;
 export const QUIZ_EXERCISES = '/quiz-exercises';
 export const QUIZ_EXERCISE = (exerciseId) => `${QUIZ_EXERCISES}/${exerciseId}`;
 export const COURSES = '/courses';
@@ -25,12 +26,12 @@ export const EXERCISE_GROUPS = (courseId, examId) => `${EXAM(courseId, examId)}/
 export const TEXT_EXERCISE = '/text-exercises';
 export const EXAM_STUDENTS = (courseId, examId, username) => `${EXAM(courseId, examId)}/students/${username}`;
 export const GENERATE_STUDENT_EXAMS = (courseId, examId) => `${EXAM(courseId, examId)}/generate-student-exams`;
-export const STUDENT_EXAMS = (courseId, examId) => `${EXAM(courseId, examId)}/studentExams`;
-export const STUDENT_EXAM_WORKINGTIME = (courseId, examId, studentExamId) => `${EXAM(courseId, examId)}/studentExams/${studentExamId}/workingTime`;
+export const STUDENT_EXAMS = (courseId, examId) => `${EXAM(courseId, examId)}/student-exams`;
+export const STUDENT_EXAM_WORKINGTIME = (courseId, examId, studentExamId) => `${EXAM(courseId, examId)}/student-exams/${studentExamId}/working-time`;
 export const START_EXERCISES = (courseId, examId) => `${EXAM(courseId, examId)}/student-exams/start-exercises`;
 export const EVALUATE_QUIZ_EXAM = (courseId, examId) => `${EXAM(courseId, examId)}/student-exams/evaluate-quiz-exercises`;
-export const SUBMIT_EXAM = (courseId, examId) => `${EXAM(courseId, examId)}/studentExams/submit`;
-export const EXAM_CONDUCTION = (courseId, examId) => `${EXAM(courseId, examId)}/studentExams/conduction`;
+export const SUBMIT_EXAM = (courseId, examId) => `${EXAM(courseId, examId)}/student-exams/submit`;
+export const EXAM_CONDUCTION = (courseId, examId) => `${EXAM(courseId, examId)}/student-exams/conduction`;
 export const SUBMIT_TEXT_EXAM = (exerciseId) => `/exercises/${exerciseId}/text-submissions`;
 export const MODELING_EXERCISE = '/modeling-exercises';
 export const SUBMIT_MODELING_EXAM = (exerciseId) => `/exercises/${exerciseId}/modeling-submissions`;

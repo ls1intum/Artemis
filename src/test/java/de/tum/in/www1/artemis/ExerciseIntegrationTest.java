@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -124,7 +127,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 // Test that certain properties were set correctly
                 assertThat(exerciseServer.getReleaseDate()).as("Release date is present").isNotNull();
                 assertThat(exerciseServer.getDueDate()).as("Due date is present").isNotNull();
-                assertThat(exerciseServer.getMaxScore()).as("Max score was set correctly").isEqualTo(5.0);
+                assertThat(exerciseServer.getMaxPoints()).as("Max score was set correctly").isEqualTo(5.0);
                 assertThat(exerciseServer.getDifficulty()).as("Difficulty was set correctly").isEqualTo(DifficultyLevel.MEDIUM);
 
                 // Test that certain properties were filtered out as the test user is a student
@@ -412,7 +415,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 // Test that certain properties were set correctly
                 assertThat(exerciseForAssessmentDashboard.getReleaseDate()).as("Release date is present").isNotNull();
                 assertThat(exerciseForAssessmentDashboard.getDueDate()).as("Due date is present").isNotNull();
-                assertThat(exerciseForAssessmentDashboard.getMaxScore()).as("Max score was set correctly").isEqualTo(5.0);
+                assertThat(exerciseForAssessmentDashboard.getMaxPoints()).as("Max score was set correctly").isEqualTo(5.0);
                 assertThat(exerciseForAssessmentDashboard.getDifficulty()).as("Difficulty was set correctly").isEqualTo(DifficultyLevel.MEDIUM);
 
                 // Test presence of exercise type specific properties
@@ -626,5 +629,34 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     public void testCleanupExercise_forbidden() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         request.delete("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/cleanup", HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testSetSecondCorrectionEnabledFlagEnable() throws Exception {
+        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
+
+        Boolean bool = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.OK);
+        assertThat(bool).isEqualTo(true);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testSetSecondCorrectionEnabledFlagDisable() throws Exception {
+        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
+        exercise.setSecondCorrectionEnabled(true);
+        exerciseRepository.save(exercise);
+        Boolean bool = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.OK);
+        assertThat(bool).isEqualTo(false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor6", roles = "TA")
+    public void testSetSecondCorrectionEnabledFlagForbidden() throws Exception {
+        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
+        request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.FORBIDDEN);
     }
 }

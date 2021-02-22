@@ -59,7 +59,20 @@
             "assessmentDateError": "Einreichungsfrist der Bewertung muss nach dem Veröffentlichungsdatum und nach der Einreichungsfrist für Aufgaben sein. Bitte überprüfe deine Auswahl nochmal",
             "dateNotSet": "Kein Datum gesetzt",
             "points": "Punktzahl",
-            "bonusPoints": "Bonuspunktzahl",
+            "pointsError": "Muss eine Zahl zwischen 1 und 9999 sein.",
+            "bonusPoints": "Bonus points",
+            "bonusPointsError": "Muss eine Zahl zwischen 0 und 9999 sein.",
+            "includedInOverallScoreLabel": "Soll diese Aufgabe bei der Berechnung des Kurs- bzw Klausurergebnis miteinbezogen werden?",
+            "includedInOverallScore": "Miteinbezogen in Ergebnis",
+            "includedCompletely": "Miteinbezogen",
+            "includedCompletelyTooltip": "Alle erzielten Punkte und Bonuspunkte in dieser Aufgabe zählen zu dem Kurs- bzw Klausurergebnis!",
+            "includedAsBonus": "Bonus",
+            "includedAsBonusTooltip": "Alle erzielten Punkte in dieser Aufgabe zählen zu dem Kurs- bzw Klausurergebnis als Bonuspunkte!",
+            "notIncluded": "Optional",
+            "notIncludedTooltip": "Keine der in dieser Aufgabe erzielten Punkte zählen zu dem Kurs- bzw Klausurergebnis!",
+            "yes": "Ja",
+            "bonus": "Bonus",
+            "no": "Nein",
             "difficulty": "Schwierigkeit",
             "noLevel": "Keine Angabe",
             "easy": "Leicht",
@@ -79,6 +92,7 @@
             "categories": "Kategorien",
             "noCategory": "Keine Kategorie",
             "participations": "Teilnahmen",
+            "submissions": "Einreichungen",
             "teams": "Teams",
             "exportNames": "Namen exportieren",
             "exportResults": "Ergebnisse exportieren",
@@ -96,7 +110,7 @@
             "teamName": "Team Name",
             "teamShortName": "Kurzname",
             "completionDate": "Abgabedatum",
-            "result": "Ergebnis",
+            "lastResult": "Letztes Ergebnis",
             "submissionCount": "Abgaben",
             "score": "Punktzahl",
             "duration": "Dauer",
@@ -143,10 +157,12 @@
                     }
                 },
                 "points": {
-                    "pattern": "Die Punktzahl muss zwischen 1 und 9999 liegen!"
+                    "customMin": "Die Punkte müssen mindestens 1 betragen.",
+                    "customMax": "Die Punkte dürfen höchstens 9999 betragen."
                 },
                 "bonusPoints": {
-                    "pattern": "Die Bonuspunktzahl muss zwischen 1 und 9999 liegen!"
+                    "customMin": "Die Punkte müssen mindestens 0 betragen.",
+                    "customMax": "Die Punkte dürfen höchstens 9999 betragen."
                 },
                 "maxPenalty": {
                     "pattern": "Der maximale prozentuale Punktabzug muss zwischen 0 und 100 liegen!"

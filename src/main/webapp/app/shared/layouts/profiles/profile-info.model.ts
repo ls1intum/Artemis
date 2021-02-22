@@ -11,6 +11,7 @@ export class ProfileInfo {
     public features: ActiveFeatureToggles;
     public guidedTourMapping?: GuidedTourMapping;
     public buildPlanURLTemplate: string;
+    public commitHashURLTemplate: string;
     public sshCloneURLTemplate: string;
     public sshKeysURL: string;
     public externalUserManagementURL: string;

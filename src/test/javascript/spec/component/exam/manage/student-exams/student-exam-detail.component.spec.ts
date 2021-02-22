@@ -76,7 +76,7 @@ describe('StudentExamDetailComponent', () => {
         studentParticipation.results = [result];
 
         exercise = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, new ExerciseGroup());
-        exercise.maxScore = 100;
+        exercise.maxPoints = 100;
         exercise.studentParticipations = [studentParticipation];
 
         studentExam = {
@@ -147,6 +147,7 @@ describe('StudentExamDetailComponent', () => {
                             paramMap: convertToParamMap({
                                 courseId: '1',
                             }),
+                            url: [],
                         },
                     },
                 },

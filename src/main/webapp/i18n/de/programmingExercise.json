@@ -27,7 +27,9 @@
                 "question": "Soll die Übung <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Das bedeutet, dass alle Teilnahmen, vorhandenen Ergebnisse, Studenten Repositories und Studenten Build Pläne gelöscht werden."
             },
             "detail": {
-                "title": "Programmieraufgabe"
+                "title": "Programmieraufgabe",
+                "showTemplateSubmissions": "Zeige Template-Abgaben",
+                "showSolutionSubmissions": "Zeige Lösungs-Abgaben"
             },
             "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studenten sein.",
             "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",
@@ -148,7 +150,9 @@
                     "notGraded": "Nicht bewertet.",
                     "noFeedback": "Ohne sichtbares Feedback.",
                     "updated": "Die Kategorien wurden erfolgreich gespeichert.",
-                    "couldNotBeUpdated": "Die folgenden Kategorien konnten nicht gespeichert werden: {{categories}}."
+                    "couldNotBeUpdated": "Die folgenden Kategorien konnten nicht gespeichert werden: {{categories}}.",
+                    "resetSuccessful": "Die Kategorien wurden erfolgreich zurückgesetzt.",
+                    "resetFailed": "Die Kategorien konnten nicht zurückgesetzt werden."
                 },
                 "charts": {
                     "title": "Diagramme",
@@ -183,6 +187,7 @@
                 "notReleasedTooltip": "Die Programmierübung ist nicht veröffentlicht oder ist veröffentlicht und besitzt noch keine Ergebnisse von Studenten. Daher kann die Bewertung geändert werden, ohne dass die Studentenabgaben erneut ausgeführt werden müssen."
             },
             "export": {
+                "downloadRepo": "Repo Herunterladen",
                 "downloadAllStudents": "Oder lade die Repositories aller Studenten herunter",
                 "downloadAllTeams": "Oder lade die Repositories aller Teams herunter",
                 "filterLateSubmissions": "Verspätete Abgaben herausfiltern",

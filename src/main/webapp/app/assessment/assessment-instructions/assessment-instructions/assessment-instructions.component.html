@@ -4,7 +4,7 @@
     <ng-container *ngSwitchCase="ExerciseType.PROGRAMMING">
         <jhi-programming-exercise-instructions
             [exercise]="programmingExercise!"
-            [participation]="programmingExercise!.templateParticipation"
+            [participation]="programmingParticipation ? programmingParticipation : programmingExercise!.templateParticipation"
             [personalParticipation]="false"
         ></jhi-programming-exercise-instructions>
     </ng-container>

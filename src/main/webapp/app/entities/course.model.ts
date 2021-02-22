@@ -55,6 +55,8 @@ export class Course implements BaseEntity {
     public absoluteScore?: number;
     public maxScore?: number;
 
+    public courseArchivePath?: string;
+
     constructor() {
         this.onlineCourse = false; // default value
         this.isAtLeastTutor = false; // default value

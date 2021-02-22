@@ -9,7 +9,7 @@ const routes: Routes = [
         path: ':examId/scores',
         component: ExamScoresComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.examScores.title',
         },

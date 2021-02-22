@@ -18,9 +18,9 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 
@@ -58,13 +58,10 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
     private ProgrammingExercise programmingExercise;
 
-    private Result result;
-
     @BeforeEach
     public void setUp() {
         database.addUsers(5, 1, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
-        result = new Result();
         var programmingExercises = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations();
         programmingExercise = programmingExercises.get(0);
         bambooRequestMockProvider.enableMockingOfRequests();
@@ -141,7 +138,9 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
         database.addProgrammingParticipationWithResultForExercise(programmingExercise, "student1");
         new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50.0);
+        // After a test case reset, the solution and template repository should be build, so the ContinuousIntegrationService needs to be triggered
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
+        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getTemplateParticipation());
 
         assertThat(programmingExercise.getTestCasesChanged()).isFalse();
 
@@ -154,17 +153,14 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
         verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_NOTIFICATION);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
-
-        // After a test case update, the solution repository should be build, so the ContinuousIntegrationService needs to be triggered and a submission created.
-        List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAll();
-        assertThat(submissions).hasSize(1);
-        assertThat(submissions.get(0).getCommitHash()).isEqualTo(dummyHash);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void shouldUpdateTestWeight() throws Exception {
+        // After a test case update, the solution and template repository should be build, so the ContinuousIntegrationService needs to be triggered
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
+        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getTemplateParticipation());
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
 
@@ -189,10 +185,5 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
         verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_NOTIFICATION);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
-
-        // After a test case update, the solution repository should be build, so the ContinuousIntegrationService needs to be triggered and a submission created.
-        List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAll();
-        assertThat(submissions).hasSize(1);
-        assertThat(submissions.get(0).getCommitHash()).isEqualTo(dummyHash);
     }
 }

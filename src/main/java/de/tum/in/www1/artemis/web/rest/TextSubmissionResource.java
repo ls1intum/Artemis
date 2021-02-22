@@ -16,9 +16,13 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.scheduled.AtheneScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -36,9 +40,9 @@ public class TextSubmissionResource {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
-    private final TextExerciseService textExerciseService;
+    private final TextExerciseRepository textExerciseRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -46,7 +50,7 @@ public class TextSubmissionResource {
 
     private final TextAssessmentService textAssessmentService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final GradingCriterionService gradingCriterionService;
 
@@ -56,16 +60,16 @@ public class TextSubmissionResource {
 
     private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
 
-    public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
-            AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService,
+    public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository, TextExerciseRepository textExerciseRepository,
+            AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
             GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<AtheneScheduleService> atheneScheduleService,
             ExamSubmissionService examSubmissionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
         this.textSubmissionRepository = textSubmissionRepository;
-        this.exerciseService = exerciseService;
-        this.textExerciseService = textExerciseService;
+        this.exerciseRepository = exerciseRepository;
+        this.textExerciseRepository = textExerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.textSubmissionService = textSubmissionService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.gradingCriterionService = gradingCriterionService;
         this.atheneScheduleService = atheneScheduleService;
         this.textAssessmentService = textAssessmentService;
@@ -120,8 +124,8 @@ public class TextSubmissionResource {
     @NotNull
     private ResponseEntity<TextSubmission> handleTextSubmission(Long exerciseId, Principal principal, TextSubmission textSubmission) {
         long start = System.currentTimeMillis();
-        final User user = userService.getUserWithGroupsAndAuthorities();
-        final TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
         // Apply further checks if it is an exam submission
         Optional<ResponseEntity<TextSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(textExercise, user);
@@ -150,18 +154,22 @@ public class TextSubmissionResource {
     /**
      * GET /text-submissions/:id : get the "id" textSubmission.
      *
-     * @param id the id of the textSubmission to retrieve
+     * @param submissionId the id of the textSubmission to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the textSubmission, or with status 404 (Not Found)
      */
-    @GetMapping("/text-submissions/{id}")
-    public ResponseEntity<TextSubmission> getTextSubmission(@PathVariable Long id) {
-        log.debug("REST request to get TextSubmission : {}", id);
-        Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findWithEagerResultsById(id);
+    @GetMapping("/text-submissions/{submissionId}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<TextSubmission> getTextSubmissionWithResults(@PathVariable Long submissionId) {
+        log.debug("REST request to get TextSubmission : {}", submissionId);
+        Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findWithEagerResultsById(submissionId);
 
         if (optionalTextSubmission.isEmpty()) {
             return notFound();
         }
-        final TextSubmission textSubmission = optionalTextSubmission.get();
+        final var textSubmission = optionalTextSubmission.get();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(textSubmission.getParticipation().getExercise())) {
+            return forbidden();
+        }
 
         // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
@@ -190,8 +198,8 @@ public class TextSubmissionResource {
     public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all TextSubmissions");
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Exercise exercise = textExerciseService.findOne(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Exercise exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         if (assessedByTutor) {
             if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
                 throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -207,7 +215,7 @@ public class TextSubmissionResource {
             textSubmissions = textSubmissionService.getAllTextSubmissionsAssessedByTutorWithForExercise(exerciseId, user, examMode, correctionRound);
         }
         else {
-            textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly, examMode, correctionRound);
+            textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly, examMode);
         }
 
         // tutors should not see information about the student of a submission
@@ -241,7 +249,7 @@ public class TextSubmissionResource {
             @RequestParam(value = "head", defaultValue = "false") boolean skipAssessmentOrderOptimization,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a text submission without assessment");
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
@@ -251,10 +259,7 @@ public class TextSubmissionResource {
         }
 
         // Check if tutors can start assessing the students submission
-        boolean startAssessingSubmissions = this.textSubmissionService.checkIfExerciseDueDateIsReached(exercise);
-        if (!startAssessingSubmissions) {
-            return forbidden();
-        }
+        this.textSubmissionService.checkIfExerciseDueDateIsReached(exercise);
 
         // Tutors cannot start assessing submissions if Athene is currently processing automatic feedback
         if (atheneScheduleService.isPresent() && atheneScheduleService.get().currentlyProcessing((TextExercise) exercise)) {
@@ -293,7 +298,7 @@ public class TextSubmissionResource {
         studentParticipation.setExercise(exercise);
         textSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         // Remove sensitive information of submission depending on user
-        textSubmissionService.hideDetails(textSubmission, userService.getUserWithGroupsAndAuthorities());
+        textSubmissionService.hideDetails(textSubmission, userRepository.getUserWithGroupsAndAuthorities());
 
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
 

@@ -147,7 +147,7 @@ During the exam creation and configuration, you can create your exam and configu
 - Here you can have an overview of all student exams. When you press ``View`` on a student exam, you can view the ``details of the student``, the allocated ``working time``, his/her ``participation status``, their ``summary``, as well as their ``scores``. Additionally, you will also be able to view which assessor is responsible for each exercise. 
 
     .. note::
-        You can change the individual working time of students from here. 
+        You can change the individual working time of students from here. The screenshot *Individual Working Time* below shows where you can do that.
 
 - To generate student exams you must click on |generate_individual_exams|. This will trigger Artemis to create a student exam for every registered user. 
 - Artemis determines the number of exercises from the :ref:`exam configuration <exam_creation_and_configuration>` and randomly selects one exercise per :ref:`exercise group <exercise_groups>`.
@@ -173,11 +173,23 @@ During the exam creation and configuration, you can create your exam and configu
     .. note::
        If you do not press this button, the students quiz exercises will not be graded.
 
+- After the :ref:`exam conduction <exam_conduction>` ends, you can click on |assess_unsubmitted_student_exams|. This action will automatically evaluate the text and modeling exercise submissions with 0 points for the unsubmitted student exams. Additionally, empty submissions will be automatically graded with 0 points.
+
+    .. note::
+        If you do not press this button, the unsubmitted student submissions and the empty submissions will appear in the assessment dashboard of the exam, which leads to unnecessary effort during grading.
+
 .. figure:: instructor/student_exams.png
    :alt: Student Exam Page
    :align: center
 
    Student Exam Page
+   
+.. figure:: instructor/individual_working_time.png
+   :alt: Individual Working Time
+   :align: center
+
+   Individual Working Time
+
 
 1.7 Conducting Test Runs
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -339,6 +351,7 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
    Assessor responding to a Complaint
 
 .. |assess_test_runs| image:: instructor/buttons/assess_test_runs.png
+.. |assess_unsubmitted_student_exams| image:: instructor/buttons/assess_unsubmitted_student_exams.png
 .. |check_plagiarism| image:: instructor/buttons/check_plagiarism.png
 .. |configure_grading| image:: instructor/buttons/configure_grading.png
 .. |course_management| image:: instructor/buttons/course_management.png

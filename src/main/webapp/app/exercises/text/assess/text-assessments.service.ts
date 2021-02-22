@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
@@ -78,10 +78,11 @@ export class TextAssessmentsService {
             .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
-    saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<EntityResponseType> {
+    saveExampleAssessment(exampleSubmissionId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/text-submissions/${exampleSubmissionId}/example-assessment`;
+        const body = TextAssessmentsService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
-            .put<Result>(url, feedbacks, { observe: 'response' })
+            .put<Result>(url, body, { observe: 'response' })
             .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
@@ -99,8 +100,10 @@ export class TextAssessmentsService {
      * @param submissionId id of the submission for which the feedback items should be retrieved of type {number}
      */
     public getFeedbackDataForExerciseSubmission(submissionId: number, correctionRound = 0): Observable<StudentParticipation> {
+        let params = new HttpParams();
+        params = params.set('correction-round', correctionRound.toString());
         return this.http
-            .get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`, { observe: 'response' })
+            .get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`, { observe: 'response', params })
             .pipe(
                 // Wire up Result and Submission
                 tap((response) => {
@@ -128,6 +131,10 @@ export class TextAssessmentsService {
      */
     public getExampleResult(exerciseId: number, submissionId: number): Observable<Result> {
         return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/example-result`);
+    }
+
+    public deleteExampleFeedback(exampleSubmissionId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/text-submissions/${exampleSubmissionId}/example-assessment/feedback`);
     }
 
     /**

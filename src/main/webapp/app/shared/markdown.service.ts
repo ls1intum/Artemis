@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import * as showdown from 'showdown';
 import * as showdownKatex from 'showdown-katex';
+import * as showdownHighlight from 'showdown-highlight';
 import * as DOMPurify from 'dompurify';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
@@ -137,7 +138,7 @@ export class ArtemisMarkdownService {
             tables: true,
             openLinksInNewWindow: true,
             backslashEscapesHTMLTags: true,
-            extensions: [...extensions, showdownKatex(), ...addCSSClass],
+            extensions: [...extensions, showdownKatex(), showdownHighlight(), ...addCSSClass],
         });
         const html = converter.makeHtml(markdownText);
         const purifyParameters = {};

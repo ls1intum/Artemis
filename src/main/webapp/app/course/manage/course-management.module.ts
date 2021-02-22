@@ -27,7 +27,6 @@ import { ArtemisModelingExerciseManagementModule } from 'app/exercises/modeling/
 import { ArtemisCourseScoresModule } from 'app/course/course-scores/course-scores.module';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
-import { ArtemisTextExerciseAssessmentModule } from 'app/exercises/text/assess/text-assessment.module';
 import { ArtemisFileUploadAssessmentModule } from 'app/exercises/file-upload/assess/file-upload-assessment.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';
@@ -41,6 +40,7 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
 import { ArtemisCourseQuestionsModule } from 'app/course/course-questions/course-questions.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
     imports: [
@@ -71,7 +71,6 @@ import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-g
         ArtemisParticipationModule,
         ArtemisComplaintsForTutorModule,
         ArtemisListOfComplaintsModule,
-        ArtemisTextExerciseAssessmentModule,
         ArtemisFileUploadAssessmentModule,
         ArtemisModelingAssessmentEditorModule,
         NgxDatatableModule,
@@ -79,6 +78,7 @@ import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-g
         ArtemisAssessmentSharedModule,
         ArtemisCourseQuestionsModule,
         ArtemisSharedPipesModule,
+        ArtemisMarkdownModule,
     ],
     declarations: [CourseManagementComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseManagementExercisesComponent, CourseGroupComponent],
 })

@@ -11,8 +11,11 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.exam.ExamService;
 
 /**
  * REST controller for managing FileUploadAssessment.
@@ -29,10 +32,10 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
     private final FileUploadSubmissionService fileUploadSubmissionService;
 
-    public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserService userService,
+    public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserRepository userRepository,
             FileUploadExerciseService fileUploadExerciseService, FileUploadSubmissionService fileUploadSubmissionService, WebsocketMessagingService messagingService,
-            ExerciseService exerciseService, ResultRepository resultRepository, ExamService examService, ExampleSubmissionService exampleSubmissionService) {
-        super(authCheckService, userService, exerciseService, fileUploadSubmissionService, assessmentService, resultRepository, examService, messagingService,
+            ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService, ExampleSubmissionService exampleSubmissionService) {
+        super(authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService, assessmentService, resultRepository, examService, messagingService,
                 exampleSubmissionService);
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
@@ -51,7 +54,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * PUT file-upload-submissions/:submissionId/assessment : save or submit manual assessment for file upload exercise. See {@link AssessmentResource#saveAssessment}.
+     * PUT file-upload-submissions/:submissionId/feedback : save or submit manual assessment for file upload exercise. See {@link AssessmentResource#saveAssessment}.
      *
      * @param submissionId the id of the submission that should be sent to the client
      * @param submit       defines if assessment is submitted or saved
@@ -81,7 +84,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateFileUploadAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();

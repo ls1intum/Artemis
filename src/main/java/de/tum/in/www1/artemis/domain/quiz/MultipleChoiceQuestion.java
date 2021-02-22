@@ -13,6 +13,11 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategy;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyMultipleChoiceAllOrNothing;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyMultipleChoiceProportionalWithPenalty;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyMultipleChoiceProportionalWithoutPenalty;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -190,10 +195,24 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         return false;
     }
 
+    /**
+     * creates an instance of ScoringStrategy with the appropriate type for the given multiple choice question (based on polymorphism)
+     *
+     * @return an instance of the appropriate implementation of ScoringStrategy
+     */
+    @Override
+    public ScoringStrategy makeScoringStrategy() {
+        return switch (getScoringType()) {
+            case ALL_OR_NOTHING -> new ScoringStrategyMultipleChoiceAllOrNothing();
+            case PROPORTIONAL_WITH_PENALTY -> new ScoringStrategyMultipleChoiceProportionalWithPenalty();
+            case PROPORTIONAL_WITHOUT_PENALTY -> new ScoringStrategyMultipleChoiceProportionalWithoutPenalty();
+        };
+    }
+
     @Override
     public String toString() {
         return "MultipleChoiceQuestion{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", text='" + getText() + "'" + ", hint='" + getHint() + "'" + ", explanation='"
-                + getExplanation() + "'" + ", score='" + getScore() + "'" + ", scoringType='" + getScoringType() + "'" + ", randomizeOrder='" + isRandomizeOrder() + "'"
+                + getExplanation() + "'" + ", score='" + getPoints() + "'" + ", scoringType='" + getScoringType() + "'" + ", randomizeOrder='" + isRandomizeOrder() + "'"
                 + ", exerciseTitle='" + ((getExercise() == null) ? null : getExercise().getTitle()) + "'" + "}";
     }
 

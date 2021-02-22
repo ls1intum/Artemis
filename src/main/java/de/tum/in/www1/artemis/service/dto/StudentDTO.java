@@ -72,7 +72,11 @@ public class StudentDTO {
 
     @Override
     public String toString() {
-        return "StudentDTO{" + "login='" + login + '\'' + "firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber + '\''
-                + '}';
+        return "StudentDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber
+                + '\'' + '}';
+    }
+
+    public String toDatabaseString() {
+        return "Student: login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber + '\'';
     }
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, pipe } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
-import { Participation } from '../entities/participation/participation.model';
+import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -19,6 +19,7 @@ export interface IParticipationWebsocketService {
     subscribeForParticipationChanges: () => BehaviorSubject<Participation | undefined>;
     subscribeForLatestResultOfParticipation: (participationId: number, personal: boolean, exerciseId?: number) => BehaviorSubject<Result | undefined>;
     unsubscribeForLatestResultOfParticipation: (participationId: number, exercise: Exercise) => void;
+    notifyAllResultSubscribers: (result: Result) => void;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -29,9 +30,13 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | undefined>> = new Map<number, BehaviorSubject<Result>>();
     participationObservable?: BehaviorSubject<Participation | undefined>;
     subscribedExercises: Map<number /* ID of exercise */, Set<number> /* IDs of the participations of this exercise */> = new Map<number, Set<number>>();
-    participationSubscriptionTypes: Map<number /* ID of participation */, boolean /* Whether the particiation was subscribed in personal mode */> = new Map<number, boolean>();
+    participationSubscriptionTypes: Map<number /* ID of participation */, boolean /* Whether the participation was subscribed in personal mode */> = new Map<number, boolean>();
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private participationService: ParticipationService) {}
+
+    private getNotifyAllSubscribersPipe = () => {
+        return pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers));
+    };
 
     /**
      * remove all local participations
@@ -120,9 +125,9 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * Returns the student participation for the given exercise. The participation objects include the exercise data and all results.
      *
      * @param exerciseId ID of the exercise that the participations belong to.
-     * @return the cached student participation for the exercise or null
+     * @return the cached student participation for the exercise or undefined
      */
-    public getParticipationForExercise(exerciseId: number): StudentParticipation | undefined {
+    public getParticipationForExercise(exerciseId: number) {
         const participationsForExercise = [...this.cachedParticipations.values()].filter((participation) => {
             return participation.exercise?.id === exerciseId;
         });
@@ -146,7 +151,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         this.participationSubscriptionTypes.delete(participationId);
 
         // We are only interested if there is a value
-        if (subscriptionTypePersonal !== undefined && subscriptionTypePersonal !== null) {
+        if (subscriptionTypePersonal != undefined) {
             if (subscriptionTypePersonal) {
                 // The subscription was a personal subscription, so it should only be removed if it was the last of it kind
                 const openPersonalSubscriptions = [...this.participationSubscriptionTypes.values()].filter((personal: boolean) => personal).length;
@@ -198,12 +203,19 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             subscribedParticipations!.add(participationId);
 
             this.jhiWebsocketService.subscribe(participationResultTopic);
-            this.jhiWebsocketService
-                .receive(participationResultTopic)
-                .pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers))
-                .subscribe();
+            this.jhiWebsocketService.receive(participationResultTopic).pipe(this.getNotifyAllSubscribersPipe()).subscribe();
         }
     }
+
+    /**
+     * Notifies the result and participation subscribers with the newest result.
+     * Note: the result must contain the participation id
+     *
+     * @param result The result with which the subscribers get notified
+     */
+    public notifyAllResultSubscribers = (result: Result) => {
+        of(result).pipe(this.getNotifyAllSubscribersPipe()).subscribe();
+    };
 
     /**
      * Subscribing for general changes in a participation object. This will triggered if a new result is received by the service.

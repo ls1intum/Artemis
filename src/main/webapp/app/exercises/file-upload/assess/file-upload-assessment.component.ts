@@ -1,14 +1,11 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
-import interact from 'interactjs';
 import * as moment from 'moment';
 import { now } from 'moment';
-import * as $ from 'jquery';
-import { Interactable } from '@interactjs/core/Interactable';
 import { Location } from '@angular/common';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -34,10 +31,10 @@ import { getLatestSubmissionResult } from 'app/entities/submission.model';
 @Component({
     providers: [FileUploadAssessmentsService],
     templateUrl: './file-upload-assessment.component.html',
-    styleUrls: ['./file-upload-assessment.component.scss'],
+    styles: [],
     encapsulation: ViewEncapsulation.None,
 })
-export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnDestroy {
+export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     text: string;
     participation: StudentParticipation;
     submission: FileUploadSubmission;
@@ -45,8 +42,9 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     result: Result;
     generalFeedback: Feedback = new Feedback();
     // TODO: rename this, because right now there is no reference
-    referencedFeedback: Feedback[] = [];
+    unreferencedFeedback: Feedback[] = [];
     exercise: FileUploadExercise;
+    exerciseId: number;
     totalScore = 0;
     assessmentsAreValid: boolean;
     invalidError?: string;
@@ -62,13 +60,8 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     isTestRun = false;
     courseId: number;
     hasAssessmentDueDatePassed: boolean;
-
-    /** Resizable constants **/
-    resizableMinWidth = 100;
-    resizableMaxWidth = 1200;
-    resizableMinHeight = 200;
-    interactResizable: Interactable;
-    interactResizableTop: Interactable;
+    correctionRound = 0;
+    hasNewSubmissions = true;
 
     private cancelConfirmationText: string;
 
@@ -94,7 +87,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     }
 
     get assessments(): Feedback[] {
-        return [this.generalFeedback, ...this.referencedFeedback];
+        return [this.generalFeedback, ...this.unreferencedFeedback];
     }
 
     public ngOnInit(): void {
@@ -107,11 +100,15 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
+            if (queryParams.get('correction-round')) {
+                this.correctionRound = parseInt(queryParams.get('correction-round')!, 10);
+            }
         });
 
         this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
+            this.exerciseId = exerciseId;
             const submissionValue = params['submissionId'];
             const submissionId = Number(submissionValue);
             if (submissionValue === 'new') {
@@ -131,7 +128,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     }
 
     private loadOptimalSubmission(exerciseId: number): void {
-        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true).subscribe(
+        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound).subscribe(
             (submission: FileUploadSubmission) => {
                 this.initializePropertiesFromSubmission(submission);
                 // Update the url with the new id, without reloading the page, to make the history consistent
@@ -154,7 +151,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
     private loadSubmission(submissionId: number): void {
         this.fileUploadSubmissionService
-            .get(submissionId)
+            .get(submissionId, this.correctionRound)
             .pipe(filter((res) => !!res))
             .subscribe(
                 (res) => {
@@ -197,82 +194,19 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.isLoading = false;
     }
 
-    /**
-     * @function ngAfterViewInit
-     * @desc After the view was initialized, we create an interact.js resizable object,
-     *       designate the edges which can be used to resize the target element and set min and max values.
-     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
-     */
-    ngAfterViewInit(): void {
-        this.resizableMinWidth = window.screen.width / 6;
-        this.resizableMinHeight = window.screen.height / 7;
-
-        this.interactResizable = interact('.resizable-submission')
-            .resizable({
-                // Enable resize from left edge; triggered by class .resizing-bar
-                edges: { left: '.resizing-bar', right: false, bottom: false, top: false },
-                // Set min and max width
-                modifiers: [
-                    // Set maximum width
-                    interact.modifiers!.restrictSize({
-                        min: { width: this.resizableMinWidth, height: 0 },
-                        max: { width: this.resizableMaxWidth, height: 2000 },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function (event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', function (event: any) {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', function (event: any) {
-                const target = event.target;
-                // Update element width
-                target.style.width = event.rect.width + 'px';
-                target.style.minWidth = event.rect.width + 'px';
-            });
-
-        this.interactResizableTop = interact('.resizable-horizontal')
-            .resizable({
-                // Enable resize from bottom edge; triggered by class .resizing-bar-bottom
-                edges: { left: false, right: false, top: false, bottom: '.resizing-bar-bottom' },
-                // Set min height
-                modifiers: [
-                    interact.modifiers!.restrictSize({
-                        min: { width: 0, height: this.resizableMinHeight },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function (event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', function (event: any) {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', function (event: any) {
-                const target = event.target;
-                // Update element height
-                target.style.minHeight = event.rect.height + 'px';
-                $('#submission-area').css('min-height', event.rect.height - 100 + 'px');
-            });
-    }
-
     public ngOnDestroy(): void {
         this.changeDetectorRef.detach();
     }
 
     public addFeedback(): void {
         const feedback = new Feedback();
-        this.referencedFeedback.push(feedback);
+        this.unreferencedFeedback.push(feedback);
         this.validateAssessment();
     }
 
     public deleteAssessment(assessmentToDelete: Feedback): void {
-        const indexToDelete = this.referencedFeedback.indexOf(assessmentToDelete);
-        this.referencedFeedback.splice(indexToDelete, 1);
+        const indexToDelete = this.unreferencedFeedback.indexOf(assessmentToDelete);
+        this.unreferencedFeedback.splice(indexToDelete, 1);
         this.validateAssessment();
     }
 
@@ -283,8 +217,8 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
      */
     assessNext() {
         this.generalFeedback = new Feedback();
-        this.referencedFeedback = [];
-        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!).subscribe(
+        this.unreferencedFeedback = [];
+        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, false, this.correctionRound).subscribe(
             (response: FileUploadSubmission) => {
                 this.unassessedSubmission = response;
                 this.router.onSameUrlNavigation = 'reload';
@@ -298,6 +232,8 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
                     this.jhiAlertService.error('artemisApp.exerciseAssessmentDashboard.noSubmissions');
+                    this.isLoading = true;
+                    this.hasNewSubmissions = false;
                 } else {
                     this.onError(error.message);
                 }
@@ -393,22 +329,22 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     /**
      * Checks if the assessment is valid:
      *   - There must be at least one referenced feedback or a general feedback.
-     *   - Each reference feedback must have either a score or a feedback text or both.
+     *   - Each feedback must have either a score or a feedback text or both.
      *   - The score must be a valid number.
      *
      * Additionally, the total score is calculated for all numerical credits.
      */
-    public validateAssessment() {
+    public validateAssessment(): void {
         this.assessmentsAreValid = true;
         this.invalidError = undefined;
 
-        if ((!this.generalFeedback.detailText || this.generalFeedback.detailText.length === 0) && this.referencedFeedback && this.referencedFeedback.length === 0) {
+        if ((!this.generalFeedback.detailText || this.generalFeedback.detailText.length === 0) && this.unreferencedFeedback && this.unreferencedFeedback.length === 0) {
             this.totalScore = 0;
             this.assessmentsAreValid = false;
             return;
         }
 
-        let credits = this.referencedFeedback.map((assessment) => assessment.credits);
+        let credits = this.unreferencedFeedback.map((assessment) => assessment.credits);
 
         if (!this.invalidError && !credits.every((credit) => credit && !isNaN(credit))) {
             this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidScoreMustBeNumber';
@@ -416,13 +352,13 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             credits = credits.filter((credit) => credit && !isNaN(credit));
         }
 
-        if (!this.invalidError && !this.referencedFeedback.every((feedback) => feedback.credits !== 0)) {
+        if (!this.invalidError && !this.unreferencedFeedback.every((feedback) => feedback.credits !== 0)) {
             this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidNeedScore';
             this.assessmentsAreValid = false;
         }
         this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
         // Cap totalScore to maxPoints
-        const maxPoints = this.exercise.maxScore! + this.exercise.bonusPoints! ?? 0.0;
+        const maxPoints = this.exercise.maxPoints! + this.exercise.bonusPoints! ?? 0.0;
         if (this.totalScore > maxPoints) {
             this.totalScore = maxPoints;
         }
@@ -514,7 +450,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         } else {
             this.generalFeedback = new Feedback();
         }
-        this.referencedFeedback = feedbacks;
+        this.unreferencedFeedback = feedbacks;
     }
 
     get readOnly(): boolean {

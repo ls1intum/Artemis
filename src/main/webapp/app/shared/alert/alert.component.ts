@@ -9,7 +9,7 @@ import { checkForMissingTranslationKey } from 'app/shared/util/utils';
         <div class="alerts" role="alert">
             <div *ngFor="let alert of alerts" [ngClass]="setClasses(alert)">
                 <ngb-alert *ngIf="alert && alert.type && alert.msg" [type]="alert.type" (close)="alert.close(alerts)">
-                    <pre [innerHTML]="alert.msg"></pre>
+                    <pre [innerHTML]="getAlertMessage(alert)"></pre>
                 </ngb-alert>
             </div>
         </div>
@@ -25,12 +25,6 @@ export class AlertComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.alerts = this.alertService.get();
-        // This is a workaround to avoid translation not found issues.
-        if (this.alerts && Array.isArray(this.alerts)) {
-            this.alerts.forEach((alert) => {
-                checkForMissingTranslationKey(alert);
-            });
-        }
     }
 
     /**
@@ -51,5 +45,15 @@ export class AlertComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy(): void {
         this.alertService.clear();
+    }
+
+    /**
+     * The recveived alert may contain a message which could not be translated.
+     * We slice the wrapping 'translation-not-found[..]' and return the response.
+     * @param alert which contains the alert message
+     */
+    getAlertMessage(alert: JhiAlert): String {
+        checkForMissingTranslationKey(alert);
+        return alert.msg;
     }
 }

@@ -18,7 +18,7 @@ export class OrderedListCommand extends Command {
      * @desc 1. Split the text at the line break into an array
      *       2. Assign each line the position it has in the array
      *       3. Call for each textLine the replaceText method
-     * @param {string} the selected text by the cursor
+     * @param selectedText the selected text by the cursor
      */
     splitText(selectedText: string): void {
         const parseArray = selectedText.split('\n');
@@ -35,7 +35,8 @@ export class OrderedListCommand extends Command {
      *       2. If included, reduce the selected text by 3 (number, dot, whitespace) and replace the selected text by textToAdd
      *       3. If not included, place the position {number} before the selected text {string} and add them to the editor
      *       4. An ordered list in markdown language appears
-     * @param extracted textLine {string} with the position {number} it has in the overall selectedText{array}
+     * @param element textLine {string}
+     * @param position {number} it has in the overall selectedText{array}
      */
     replaceText(element: string, position: number): void {
         /** case 1: text is formed in as an ordered list and the list should be unformed by deleting number + (.) + whitespace */

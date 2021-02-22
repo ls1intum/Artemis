@@ -112,7 +112,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private loadSubmission(submissionId: number): void {
-        this.modelingSubmissionService.getSubmission(submissionId).subscribe(
+        this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
             },
@@ -285,7 +285,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
-        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id!).subscribe(
+        this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!).subscribe(
             (result: Result) => {
                 this.result = result;
                 this.handleFeedback(this.result.feedbacks);
@@ -326,8 +326,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.jhiAlertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
             return;
         }
-
-        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id!, true).subscribe(
+        this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!, true).subscribe(
             (result: Result) => {
                 result.participation!.results = [result];
                 this.result = result;
@@ -504,7 +503,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     calculateTotalScore() {
         this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
         // Cap totalScore to maxPoints
-        const maxPoints = this.modelingExercise!.maxScore! + this.modelingExercise!.bonusPoints! ?? 0.0;
+        const maxPoints = this.modelingExercise!.maxPoints! + this.modelingExercise!.bonusPoints! ?? 0.0;
         if (this.totalScore > maxPoints) {
             this.totalScore = maxPoints;
         }

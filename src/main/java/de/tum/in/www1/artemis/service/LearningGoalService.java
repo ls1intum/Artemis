@@ -10,6 +10,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
@@ -17,13 +19,13 @@ import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
 @Service
 public class LearningGoalService {
 
-    private final ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
-    public LearningGoalService(ParticipationService participationService, ExerciseService exerciseService) {
-        this.exerciseService = exerciseService;
-        this.participationService = participationService;
+    public LearningGoalService(StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository) {
+        this.exerciseRepository = exerciseRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -45,7 +47,7 @@ public class LearningGoalService {
                 .collect(Collectors.toMap(ExerciseUnit::getExercise, exerciseUnit -> {
                     IndividualLearningGoalProgress.IndividualLectureUnitProgress individualLectureUnitProgress = new IndividualLearningGoalProgress.IndividualLectureUnitProgress();
                     individualLectureUnitProgress.lectureUnitId = exerciseUnit.getId();
-                    individualLectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit = exerciseUnit.getExercise().getMaxScore();
+                    individualLectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit = exerciseUnit.getExercise().getMaxPoints();
                     return individualLectureUnitProgress;
                 }, (progress1, progress2) -> progress1)); // in the case of two exercises referencing the same exercise, take the first one
 
@@ -81,7 +83,7 @@ public class LearningGoalService {
                 .filter(exerciseUnit -> exerciseUnit.getExercise() != null && exerciseUnit.getExercise().isAssessmentDueDateOver()).collect(Collectors.toList());
         List<Long> exerciseIds = filteredExerciseUnits.stream().map(exerciseUnit -> exerciseUnit.getExercise().getId()).distinct().collect(Collectors.toList());
 
-        Map<Long, CourseExerciseStatisticsDTO> exerciseIdToExerciseCourseStatistics = this.exerciseService.calculateExerciseStatistics(exerciseIds).stream()
+        Map<Long, CourseExerciseStatisticsDTO> exerciseIdToExerciseCourseStatistics = exerciseRepository.calculateExerciseStatistics(exerciseIds).stream()
                 .collect(Collectors.toMap(CourseExerciseStatisticsDTO::getExerciseId, courseExerciseStatisticsDTO -> courseExerciseStatisticsDTO));
 
         // for each exercise unit, the exercise will be mapped to a freshly created lecture unit course progress.
@@ -90,7 +92,7 @@ public class LearningGoalService {
                     CourseExerciseStatisticsDTO courseExerciseStatisticsDTO = exerciseIdToExerciseCourseStatistics.get(exerciseUnit.getExercise().getId());
                     CourseLearningGoalProgress.CourseLectureUnitProgress courseLectureUnitProgress = new CourseLearningGoalProgress.CourseLectureUnitProgress();
                     courseLectureUnitProgress.lectureUnitId = exerciseUnit.getId();
-                    courseLectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit = exerciseUnit.getExercise().getMaxScore();
+                    courseLectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit = exerciseUnit.getExercise().getMaxPoints();
                     courseLectureUnitProgress.averageScoreAchievedByStudentInLectureUnit = courseExerciseStatisticsDTO.getAverageScoreInPercent();
                     courseLectureUnitProgress.noOfParticipants = courseExerciseStatisticsDTO.getNoOfParticipatingStudentsOrTeams();
                     courseLectureUnitProgress.participationRate = courseExerciseStatisticsDTO.getParticipationRateInPercent();
@@ -133,11 +135,12 @@ public class LearningGoalService {
      */
     private List<StudentParticipation> getStudentParticipationsWithSubmissionsAndResults(User user, List<Exercise> individualExercises, List<Exercise> teamExercises) {
         // 1st: fetch participations, submissions and results for individual exercises
-        List<StudentParticipation> participationsOfIndividualExercises = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
-                individualExercises);
+        List<StudentParticipation> participationsOfIndividualExercises = studentParticipationRepository
+                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
 
         // 2nd: fetch participations, submissions and results for team exercises
-        List<StudentParticipation> participationsOfTeamExercises = participationService.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), teamExercises);
+        List<StudentParticipation> participationsOfTeamExercises = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(),
+                teamExercises);
 
         // 3rd: merge both into one list for further processing
         return Stream.concat(participationsOfIndividualExercises.stream(), participationsOfTeamExercises.stream()).collect(Collectors.toList());

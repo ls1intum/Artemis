@@ -42,6 +42,10 @@ Navbar
     }
 }
 
+.dropdown-menu-index {
+    z-index: 2000;
+}
+
 .breadcrumb-container {
     background-color: #e4e5e6;
     overflow: auto;
@@ -56,15 +60,27 @@ Navbar
 
         .breadcrumb-link {
             font-weight: lighter;
+            display: inline;
         }
     }
 
     .breadcrumb-item::before {
         content: '>';
     }
+
     // Hide the first divider
     .breadcrumb-item:first-of-type::before {
         content: '';
+    }
+}
+
+@media not all and (min-resolution: 0.001dpcm) {
+    @supports (-webkit-appearance: none) {
+        .breadcrumb-item:first-of-type {
+            .breadcrumb-link {
+                display: block !important;
+            }
+        }
     }
 }
 

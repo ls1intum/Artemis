@@ -14,7 +14,12 @@ import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue
 import { ScoreChartPreset } from 'app/shared/chart/presets/scoreChartPreset';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
-import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import {
+    isProgrammingExerciseStudentParticipation,
+    isProgrammingExerciseParticipation,
+    isResultPreliminary,
+} from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export enum FeedbackItemType {
     Issue,
@@ -39,8 +44,8 @@ export class FeedbackItem {
     styleUrls: ['./result-detail.scss'],
 })
 export class ResultDetailComponent implements OnInit {
-    PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES = 100;
-    BuildLogType = BuildLogType;
+    readonly BuildLogType = BuildLogType;
+    readonly AssessmentType = AssessmentType;
 
     @Input() result: Result;
     // Specify the feedback.text values that should be shown, all other values will not be visible.
@@ -76,6 +81,11 @@ export class ResultDetailComponent implements OnInit {
                 // If the result already has feedbacks assigned to it, don't query the server.
                 switchMap((feedbacks: Feedback[] | undefined | null) => (feedbacks && feedbacks.length ? of(feedbacks) : this.getFeedbackDetailsForResult(this.result.id!))),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
+                    // In case the exerciseType is not set, we try to set it back if the participation is from a programming exercise
+                    if (!this.exerciseType && isProgrammingExerciseParticipation(this.result?.participation)) {
+                        this.exerciseType = ExerciseType.PROGRAMMING;
+                    }
+
                     /*
                      * If we have feedback, filter it if needed, distinguish between test case and static code analysis
                      * feedback and assign the lists to the component
@@ -297,8 +307,8 @@ export class ResultDetailComponent implements OnInit {
         const exercise = this.result.participation.exercise;
 
         // cap test points
-        const maxPoints = this.getMaxPointsRespectingZeroPointExercises(exercise);
-        const maxPointsWithBonus = exercise.maxScore! > 0 ? maxPoints + (exercise.bonusPoints || 0) : maxPoints;
+        const maxPoints = exercise.maxPoints!;
+        const maxPointsWithBonus = maxPoints + (exercise.bonusPoints || 0);
 
         if (testCaseCredits > maxPointsWithBonus) {
             testCaseCredits = maxPointsWithBonus;
@@ -323,16 +333,6 @@ export class ResultDetailComponent implements OnInit {
 
         // the chart preset handles the capping to the maximum score of the exercise
         this.scoreChartPreset.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, maxPoints, maxPointsWithBonus);
-    }
-
-    private getMaxPointsRespectingZeroPointExercises(programmingExercise: ProgrammingExercise): number {
-        if (programmingExercise.maxScore! > 0) {
-            return programmingExercise.maxScore!;
-        }
-        if (programmingExercise.bonusPoints! > 0) {
-            return programmingExercise.bonusPoints!;
-        }
-        return this.PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
     }
 
     /**

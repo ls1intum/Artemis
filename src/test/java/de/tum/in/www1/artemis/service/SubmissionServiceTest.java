@@ -20,9 +20,11 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.exam.ExamService;
 
 public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -31,6 +33,9 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     ExamService examService;
+
+    @Autowired
+    ExamRepository examRepository;
 
     @Autowired
     ResultRepository resultRepository;
@@ -94,7 +99,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         exam = database.addExam(course);
 
         exam.setNumberOfCorrectionRoundsInExam(2);
-        exam = examService.save(exam);
+        exam = examRepository.save(exam);
 
         exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
 
@@ -102,7 +107,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
         examModelingExercise = (ModelingExercise) exam.getExerciseGroups().get(3).getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise).findAny()
                 .orElse(null);
-        examProgrammingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(4).getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
+        examProgrammingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
                 .findAny().orElse(null);
 
     }
@@ -141,7 +146,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
         exam.setNumberOfCorrectionRoundsInExam(2);
 
-        examService.save(exam);
+        examRepository.save(exam);
 
         submission1.submitted(true);
         submission2.submitted(true);
