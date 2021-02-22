@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
@@ -67,6 +68,9 @@ public class CourseResource {
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
     private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
 
+    @Value("${artemis.user-management.organizations.enable-multiple-organizations:#{null}}")
+    private Optional<Boolean> enabledMultipleOrganizations;
+
     private final UserService userService;
 
     private final CourseService courseService;
@@ -76,6 +80,8 @@ public class CourseResource {
     private final AuthorizationCheckService authCheckService;
 
     private final CourseRepository courseRepository;
+
+    private final UserRepository userRepository;
 
     private final ExerciseService exerciseService;
 
@@ -110,7 +116,7 @@ public class CourseResource {
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
             ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
-            AssessmentDashboardService assessmentDashboardService) {
+            AssessmentDashboardService assessmentDashboardService, UserRepository userRepository) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
@@ -130,6 +136,7 @@ public class CourseResource {
         this.auditEventRepository = auditEventRepository;
         this.env = env;
         this.assessmentDashboardService = assessmentDashboardService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -358,8 +365,16 @@ public class CourseResource {
     @PostMapping("/courses/{courseId}/register")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) {
-        Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course;
+        User user;
+        if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
+            course = courseRepository.findWithEagerOrganizations(courseId);
+            user = userService.getUserWithGroupsAndAuthoritiesAndOrganizations();
+        }
+        else {
+            course = courseService.findOne(courseId);
+            user = userService.getUserWithGroupsAndAuthorities();
+        }
         log.debug("REST request to register {} for Course {}", user.getName(), course.getTitle());
         if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationNotAllowed",
@@ -379,6 +394,12 @@ public class CourseResource {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationDisabled", "The course does not allow registration. Cannot register user"))
                     .body(null);
+        }
+        if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
+            if (!checkIfUserIsMemberOfCourseOrganizations(user, course)) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationNotAllowed",
+                        "User is not member of any organization of this course. Cannot register user")).body(null);
+            }
         }
         courseService.registerUserForCourse(user, course);
         return ResponseEntity.ok(user);
@@ -436,7 +457,15 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCoursesToRegister() {
         log.debug("REST request to get all currently active Courses that are not online courses");
-        return courseService.findAllCurrentlyActiveNotOnlineAndRegistrationEnabled();
+        if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
+            User user = userService.getUserWithGroupsAndAuthoritiesAndOrganizations();
+            List<Course> allRegistrable = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations(ZonedDateTime.now());
+            allRegistrable.removeIf(course -> !checkIfUserIsMemberOfCourseOrganizations(user, course));
+            return allRegistrable;
+        }
+        else {
+            return courseService.findAllCurrentlyActiveNotOnlineAndRegistrationEnabled();
+        }
     }
 
     /**
@@ -1041,5 +1070,25 @@ public class CourseResource {
         else {
             return forbidden();
         }
+    }
+
+    /**
+     * Utility method used to check whether a user is member of at least one organization of a given course
+     * @param user the user to check
+     * @param course the course to check
+     * @return true if the user is member of at least one organization of the course. false otherwise
+     */
+    private boolean checkIfUserIsMemberOfCourseOrganizations(User user, Course course) {
+        if (course.getOrganizations() == null) {
+            course = courseRepository.findWithEagerOrganizations(course.getId());
+        }
+        boolean isMember = false;
+        for (Organization organization : course.getOrganizations()) {
+            if (user.getOrganizations().contains(organization)) {
+                isMember = true;
+                break;
+            }
+        }
+        return isMember;
     }
 }
