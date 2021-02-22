@@ -18,6 +18,7 @@ class SortingExampleBehaviorTest: XCTestCase {
 		dateFormat.timeZone = TimeZone(identifier: "UTC")
 		var orderedSeconds: Double = 0.00
 		for _ in 0 ..< amount {
+		    /// create random dates in an ascending order
 			orderedSeconds += Double.random(in: 1000000...1000000000)
 			let orderedDate: Date! = Date(timeIntervalSince1970: orderedSeconds)
 			list.append(orderedDate)
@@ -34,15 +35,15 @@ class SortingExampleBehaviorTest: XCTestCase {
 
     func testBubbleSort() {
         let bubbleSort = BubbleSort()
-        bubbleSort.performSort(&unorderedDates)
+        let sortedInput = bubbleSort.performSort(unorderedDates)
 
-        XCTAssertEqual(unorderedDates!, orderedDates!, "BubbleSort does not sort correctly.")
+        XCTAssertEqual(sortedInput, orderedDates, "BubbleSort does not sort correctly.")
     }
 
     func testMergeSort() {
         let mergeSort = MergeSort()
-        mergeSort.performSort(&unorderedDates)
+        let sortedInput = mergeSort.performSort(unorderedDates)
 
-        XCTAssertEqual(unorderedDates!, orderedDates!, "MergeSort does not sort correctly.")
+        XCTAssertEqual(sortedInput, orderedDates, "MergeSort does not sort correctly.")
     }
 }

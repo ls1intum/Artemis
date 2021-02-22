@@ -6,49 +6,54 @@ public class MergeSort: SortStrategy {
 
      - Parameter input: the List of Dates to be sorted
     */
-    public func performSort(_ input: inout [Date]) {
-        mergesort(&input, 0, input.count - 1)
+    public func performSort(_ input: [Date]) -> [Date] {
+        return mergesort(input, 0, input.count - 1)
     }
 
     /// Recursive merge sort method
-    private func mergesort(_ input: inout [Date], _ low: Int, _ high: Int) {
+    private func mergesort(_ input: [Date], _ low: Int, _ high: Int) -> [Date] {
+        var sortedInput = input
         if (high - low) < 1 {
-            return
+            /// break recursion and last input
+            return input
         }
         let mid: Int = (low + high) / 2
-        mergesort(&input, low, mid)
-        mergesort(&input, mid + 1, high)
-        merge(&input, low, mid, high)
+        sortedInput = mergesort(sortedInput, low, mid)
+        sortedInput = mergesort(sortedInput, mid + 1, high)
+        sortedInput = merge(sortedInput, low, mid, high)
+        return sortedInput
     }
 
     /// Merge method
-    private func merge(_ input: inout [Date], _ low: Int, _ middle: Int, _ high: Int) {
+    private func merge(_ input: [Date], _ low: Int, _ middle: Int, _ high: Int) -> [Date] {
+        var sortedInput = input
         var temp: [Date] = [Date]()
         var leftIndex: Int = low
         var rightIndex: Int = middle + 1
         while (leftIndex <= middle) && (rightIndex <= high) {
-            if input[leftIndex] <= input[rightIndex] {
-                temp.append(input[leftIndex])
+            if sortedInput[leftIndex] <= sortedInput[rightIndex] {
+                temp.append(sortedInput[leftIndex])
                 leftIndex += 1
             } else {
-                temp.append(input[rightIndex])
+                temp.append(sortedInput[rightIndex])
                 rightIndex += 1
             }
         }
 
         if (leftIndex <= middle) && (rightIndex > high) {
             while leftIndex <= middle {
-                temp.append(input[leftIndex])
+                temp.append(sortedInput[leftIndex])
                 leftIndex += 1
             }
         } else {
             while rightIndex <= high {
-                temp.append(input[rightIndex])
+                temp.append(sortedInput[rightIndex])
                 rightIndex += 1
             }
         }
         for wholeIndex in 0 ..< temp.count {
-            input[wholeIndex + low] = temp[wholeIndex]
+            sortedInput[wholeIndex + low] = temp[wholeIndex]
         }
+        return sortedInput
     }
 }
