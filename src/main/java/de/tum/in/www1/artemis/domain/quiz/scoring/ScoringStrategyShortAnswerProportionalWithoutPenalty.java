@@ -6,8 +6,7 @@ import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 
 /**
- * Proportional with Penalty means that every correct mapping increases the score by x and every incorrect mapping decreases the score by x where x = maxScore /
- * numberOfSpotsThatShouldHaveAMapping if the result is negative, a score of 0 is given instead
+ * Proportional without penalty means that every correct mapping increases the score by maxScore / numberOfSpotsThatShouldHaveAMapping
  */
 public class ScoringStrategyShortAnswerProportionalWithoutPenalty implements ScoringStrategy {
 
