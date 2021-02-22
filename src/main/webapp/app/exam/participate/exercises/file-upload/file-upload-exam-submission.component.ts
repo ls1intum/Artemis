@@ -134,7 +134,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         this.fileUploadSubmissionService.update(this.studentSubmission as FileUploadSubmission, this.exercise.id!, this.submissionFile).subscribe(
             (res) => {
                 const submissionFromServer = res.body!;
-                this.filePath = submissionFromServer.filePath;
+                this.studentSubmission.filePath = submissionFromServer.filePath;
                 this.studentSubmission.isSynced = true;
                 this.studentSubmission.submitted = true;
                 this.updateViewFromSubmission();
