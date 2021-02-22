@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.domain.Organization;
+import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +42,9 @@ public class UserCreationService {
     @Value("${info.guided-tour.course-group-instructors:#{null}}")
     private Optional<String> tutorialGroupInstructors;
 
+    @Value("${artemis.user-management.organizations.enable-multiple-organizations:#{null}}")
+    private Optional<Boolean> enabledMultipleOrganizations;
+
     private final Logger log = LoggerFactory.getLogger(UserCreationService.class);
 
     private final UserRepository userRepository;
@@ -50,18 +55,21 @@ public class UserCreationService {
 
     private final CourseRepository courseRepository;
 
+    private final OrganizationRepository organizationRepository;
+
     private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
 
     private final CacheManager cacheManager;
 
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository, CourseRepository courseRepository,
-            Optional<VcsUserManagementService> optionalVcsUserManagementService, CacheManager cacheManager) {
+            Optional<VcsUserManagementService> optionalVcsUserManagementService, CacheManager cacheManager, OrganizationRepository organizationRepository) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
         this.courseRepository = courseRepository;
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.cacheManager = cacheManager;
+        this.organizationRepository = organizationRepository;
     }
 
     /**
@@ -141,7 +149,10 @@ public class UserCreationService {
         // needs to be mutable --> new HashSet<>(Set.of(...))
         final var authorities = new HashSet<>(Set.of(authority));
         newUser.setAuthorities(authorities);
-
+        if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
+            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(email);
+            newUser.setOrganizations(matchingOrganizations);
+        }
         saveUser(newUser);
         log.debug("Created user: {}", newUser);
         return newUser;
@@ -180,6 +191,10 @@ public class UserCreationService {
         user.setResetDate(Instant.now());
         if (!useExternalUserManagement) {
             addTutorialGroups(userDTO); // Automatically add interactive tutorial course groups to the new created user if it has been specified
+        }
+        if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
+            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
+            user.setOrganizations(matchingOrganizations);
         }
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);

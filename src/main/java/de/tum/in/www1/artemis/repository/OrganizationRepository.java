@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.constraints.NotNull;
@@ -88,4 +92,22 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
         }
     }
 
+    /**
+     * Retrieve a set containing all organizations with an emailPattern matching the
+     * provided user's email.
+     * @param userEmail the email of the user to match
+     * @return a set of all matching organizations
+     */
+    @NotNull
+    default Set<Organization> getAllMatchingOrganizationsByUserEmail(String userEmail) {
+        Set<Organization> matchingOrganizations = new HashSet<>();
+        this.findAll().forEach(organization -> {
+            Pattern pattern = Pattern.compile(organization.getEmailPattern());
+            Matcher matcher = pattern.matcher(userEmail);
+            if (matcher.matches()) {
+                matchingOrganizations.add(organization);
+            }
+        });
+        return matchingOrganizations;
+    }
 }
