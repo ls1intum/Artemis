@@ -424,19 +424,15 @@ public class CourseResource {
         List<Course> courses;
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
-            courses = courseRepository.findAll();
+            courses = courseRepository.findAllWithEagerExercises();
         }
         else {
             courses = courseRepository.getCoursesForWhichUserHasInstructorAccess(user.getId());
         }
 
-        // TODO: this is not the best performance that we iterate over all courses just to check if those course have a quiz or not, we should directly get all courses
-        // with all quiz exercises from the database, potentially using paging
-
         List<Course> coursesWithQuiz = new ArrayList<>();
         courses.forEach(course -> {
-            Course courseWithExercises = courseRepository.findWithEagerExercisesById(course.getId());
-            if (courseWithExercises != null && courseWithExercises.getExercises().stream().anyMatch(exercise -> exercise instanceof QuizExercise)) {
+            if (course.getExercises().stream().anyMatch(exercise -> exercise instanceof QuizExercise)) {
                 coursesWithQuiz.add(course);
             }
         });

@@ -373,7 +373,7 @@ public class ExamResource {
         List<Exam> exams;
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
-            exams = examRepository.findAll();
+            exams = examRepository.findAllWithEagerExerciseGroupsAndExercises();
         }
         else {
             Course course = courseRepository.findByIdElseThrow(courseId);
@@ -388,15 +388,11 @@ public class ExamResource {
 
         List<Exam> examsWithQuiz = new ArrayList<>();
         exams.forEach(exam -> {
-            Optional<Exam> optionalExam = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId());
-            var eagerExam = optionalExam.orElse(null);
-            if (eagerExam != null) {
-                List<Exercise> exercises = new ArrayList<>();
-                var exerciseGroups = eagerExam.getExerciseGroups();
-                exerciseGroups.forEach(exerciseGroup -> exercises.addAll(exerciseGroup.getExercises()));
-                if (exercises.stream().anyMatch(exercise -> exercise instanceof QuizExercise)) {
-                    examsWithQuiz.add(exam);
-                }
+            List<Exercise> exercises = new ArrayList<>();
+            var exerciseGroups = exam.getExerciseGroups();
+            exerciseGroups.forEach(exerciseGroup -> exercises.addAll(exerciseGroup.getExercises()));
+            if (exercises.stream().anyMatch(exercise -> exercise instanceof QuizExercise)) {
+                examsWithQuiz.add(exam);
             }
         });
         return ResponseEntity.ok(examsWithQuiz);
