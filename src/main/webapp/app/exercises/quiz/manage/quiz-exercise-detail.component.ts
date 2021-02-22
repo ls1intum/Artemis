@@ -669,7 +669,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             if (question.points == undefined) {
                 return false;
             }
-            if (question.points && question.points < 0) {
+            if (question.points && question.points < 1) {
                 return false;
             }
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
