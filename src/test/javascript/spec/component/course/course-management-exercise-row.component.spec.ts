@@ -12,10 +12,10 @@ import { CourseManagementExerciseRowComponent } from 'app/course/manage/overview
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
-import { CourseManagementOverviewDetailsDto } from 'app/course/manage/overview/course-management-overview-details-dto.model';
 import { CourseManagementOverviewExerciseDetailsDTO } from 'app/course/manage/overview/course-management-overview-exercise-details-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -27,8 +27,6 @@ describe('CourseManagementExerciseRowComponent', () => {
     const exerciseDetailDTO = new CourseManagementOverviewExerciseDetailsDTO();
     exerciseDetailDTO.teamMode = false;
     exerciseDetailDTO.exerciseTitle = 'ModelingExercise';
-
-    const coursesDTO = new CourseManagementOverviewDetailsDto();
 
     const exerciseStatisticsDTO = new CourseManagementOverviewExerciseStatisticsDTO();
     exerciseStatisticsDTO.averageScoreInPercent = 50;
@@ -55,7 +53,7 @@ describe('CourseManagementExerciseRowComponent', () => {
     });
 
     it('should initialize component', () => {
-        component.course = coursesDTO;
+        component.course = new Course();
         component.details = exerciseDetailDTO;
         component.ngOnChanges();
         expect(component.displayTitle).to.equal('ModelingExercise');

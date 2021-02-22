@@ -4,9 +4,7 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
-
 import { SERVER_API_URL } from 'app/app.constants';
-
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -15,7 +13,6 @@ import { setUser } from '@sentry/browser';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { CourseManagementOverviewDetailsDto } from 'app/course/manage/overview/course-management-overview-details-dto.model';
 
 export interface IAccountService {
     fetch: () => Observable<HttpResponse<User>>;
@@ -171,7 +168,7 @@ export class AccountService implements IAccountService {
      * checks if the currently logged in user is at least tutor in the given course
      * @param course
      */
-    isAtLeastTutorInCourse(course?: Course | CourseManagementOverviewDetailsDto): boolean {
+    isAtLeastTutorInCourse(course?: Course): boolean {
         return this.hasGroup(course?.instructorGroupName) || this.hasGroup(course?.teachingAssistantGroupName) || this.hasAnyAuthorityDirect([Authority.ADMIN]);
     }
 
@@ -179,7 +176,7 @@ export class AccountService implements IAccountService {
      * checks if the currently logged in user is at least instructor in the given course
      * @param course
      */
-    isAtLeastInstructorInCourse(course?: Course | CourseManagementOverviewDetailsDto): boolean {
+    isAtLeastInstructorInCourse(course?: Course): boolean {
         return this.hasGroup(course?.instructorGroupName) || this.hasAnyAuthorityDirect([Authority.ADMIN]);
     }
 

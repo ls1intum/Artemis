@@ -13,7 +13,6 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { CourseManagementOverviewDto } from 'app/course/manage/overview/course-management-overview-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
-import { CourseManagementOverviewDetailsDto } from './overview/course-management-overview-details-dto.model';
 
 @Component({
     selector: 'jhi-course',
@@ -26,12 +25,12 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     reverse: boolean;
     showOnlyActive = true;
 
-    courses: CourseManagementOverviewDetailsDto[];
+    courses: Course[];
     details = new Map<number, CourseManagementOverviewDto>();
     statistics = new Map<number, CourseManagementOverviewStatisticsDto>();
     courseSemesters: string[];
     semesterCollapsed: { [key: string]: boolean };
-    coursesBySemester: { [key: string]: CourseManagementOverviewDetailsDto[] };
+    coursesBySemester: { [key: string]: Course[] };
     eventSubscriber: Subscription;
 
     private dialogErrorSource = new Subject<string>();
@@ -58,7 +57,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
      */
     loadAll() {
         this.courseService.getCourseOverview({ onlyActive: this.showOnlyActive }).subscribe(
-            (res: HttpResponse<CourseManagementOverviewDetailsDto[]>) => {
+            (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.courseSemesters = this.courses
                     // test courses get their own section later

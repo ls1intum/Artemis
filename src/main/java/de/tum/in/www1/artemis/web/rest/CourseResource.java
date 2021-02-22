@@ -474,8 +474,8 @@ public class CourseResource {
      */
     @GetMapping("/courses/course-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public List<CourseManagementOverviewDetailsDTO> getAllCoursesForOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        return courseService.getAllDTOsForOverview(onlyActive);
+    public List<Course> getAllCoursesForOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
+        return courseService.getAllCoursesForOverview(onlyActive);
     }
 
     /**

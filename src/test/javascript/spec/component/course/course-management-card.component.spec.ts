@@ -12,11 +12,11 @@ import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementStatisticsComponent } from 'app/course/manage/overview/course-management-statistics.component';
 import * as moment from 'moment';
-import { CourseManagementOverviewDetailsDto } from 'app/course/manage/overview/course-management-overview-details-dto.model';
 import { CourseManagementOverviewDto } from 'app/course/manage/overview/course-management-overview-dto.model';
 import { CourseManagementOverviewExerciseDetailsDTO } from 'app/course/manage/overview/course-management-overview-exercise-details-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
+import { Course } from "app/entities/course.model";
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -39,9 +39,9 @@ describe('CourseManagementCardComponent', () => {
     futureExercise2.releaseDate = moment().add(6, 'days');
     courseDTO.exerciseDetails = [pastExercise, currentExercise, futureExercise2, futureExercise1];
 
-    const courseDetailsDTO = new CourseManagementOverviewDetailsDto();
-    courseDetailsDTO.id = 1;
-    courseDetailsDTO.color = 'red';
+    const course = new Course();
+    course.id = 1;
+    course.color = 'red';
 
     const courseStatisticsDTO = new CourseManagementOverviewStatisticsDto();
     const exerciseDTO = new CourseManagementOverviewExerciseStatisticsDTO();
@@ -71,7 +71,7 @@ describe('CourseManagementCardComponent', () => {
     });
 
     it('should initialize component', () => {
-        component.course = courseDetailsDTO;
+        component.course = course;
         component.courseStatistics = courseStatisticsDTO;
         component.ngOnChanges();
         expect(component.statisticsPerExercise[exerciseDTO.exerciseId!]).to.deep.equal(exerciseDTO);

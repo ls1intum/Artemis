@@ -25,7 +25,6 @@ import { MomentModule } from 'ngx-moment';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementOverviewDto } from 'app/course/manage/overview/course-management-overview-dto.model';
 import { CourseManagementOverviewExerciseDetailsDTO } from 'app/course/manage/overview/course-management-overview-exercise-details-dto.model';
-import { CourseManagementOverviewDetailsDto } from 'app/course/manage/overview/course-management-overview-details-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 
@@ -78,13 +77,13 @@ describe('CourseManagementComponent', () => {
         semester: 'WS19/20',
     } as Course;
 
-    const courseDetailsDTO187 = new CourseManagementOverviewDetailsDto();
-    courseDetailsDTO187.id = 187;
-    courseDetailsDTO187.semester = 'SS19';
+    const courseDetails187 = new Course();
+    courseDetails187.id = 187;
+    courseDetails187.semester = 'SS19';
 
-    const courseDetailsDTO188 = new CourseManagementOverviewDetailsDto();
-    courseDetailsDTO187.id = 188;
-    courseDetailsDTO187.semester = 'WS19/20';
+    const courseDetails188 = new Course();
+    courseDetails188.id = 188;
+    courseDetails188.semester = 'WS19/20';
 
     const courseStatisticsDTO = new CourseManagementOverviewStatisticsDto();
     const exerciseDTO = new CourseManagementOverviewExerciseStatisticsDTO();
@@ -124,7 +123,7 @@ describe('CourseManagementComponent', () => {
     });
 
     it('should initialize', () => {
-        sinon.stub(service, 'getCourseOverview').returns(of(new HttpResponse({ body: [courseDetailsDTO187, courseDetailsDTO188] })));
+        sinon.stub(service, 'getCourseOverview').returns(of(new HttpResponse({ body: [courseDetails187, courseDetails188] })));
         sinon.stub(service, 'getExercisesForManagementOverview').returns(of(new HttpResponse({ body: [courseDTO187, courseDTO188] })));
         sinon.stub(service, 'getStatsForManagementOverview').returns(of(new HttpResponse({ body: [] })));
         sinon.stub(service, 'getWithUserStats').returns(of(new HttpResponse({ body: [course187, course188] })));
