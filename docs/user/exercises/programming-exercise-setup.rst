@@ -36,7 +36,7 @@ Instructors can still use those templates to generate programming exercises and 
   Depending on the feature set, some options might not be available during the creation of the programming exercise.
   The table below provides an overview of the supported features:
 
-  +----------------------+----------------------+----------------------+------------------+--------------+---------------------------------------------+
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
   | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Project Type | Solution Repository Checkout |
   +======================+======================+======================+==================+==============+==============+==============================+
   | Java                 | yes                  | yes                  | yes              | yes          | yes          | no                           |
@@ -96,18 +96,18 @@ Exercise Creation
               :align: center
 
     - **Title:** The title of the exercise. It is used to create a project on the VCS server for the exercise.
-        Instructors can change the title of the exercise after its creation.
+      Instructors can change the title of the exercise after its creation.
     - **Short Name:** Together with the course short name, the exercise short name is used as a unique identifier for
-        the exercise across Artemis (incl. repositories and build plans). The short name **cannot** be changed after the
-        creation of the exercise.
+      the exercise across Artemis (incl. repositories and build plans). The short name **cannot** be changed after the
+      creation of the exercise.
     - **Preview**: Given the short name of the exercise and the short name of the course, Artemis displays a preview of the
-        generated repositories and build plans.
+      generated repositories and build plans.
 
     .. figure:: programming/programming-options-general-information.png
               :align: center
 
     - **Categories:** Instructors can freely define up to two categories per exercise. The categories are visible to students
-        and should be used consistently to group similar kinds of exercises.
+      and should be used consistently to group similar kinds of exercises.
     - **Difficulty:** Instructors can give students information about the difficulty of the exercise.
 
     .. figure:: programming/programming-options-mode.png
@@ -115,13 +115,13 @@ Exercise Creation
 
     - **Mode:** The mode determines whether students work on the exercise alone or in teams. **Cannot** be changed after the exercise creation.
     - **Team size:** If ``Team`` mode is chosen, instructors can additionally give recommendations for the team size. Instructors/Tutors define the teams after
-        the exercise creation.
+      the exercise creation.
 
     .. figure:: programming/programming-options-programming-language.png
               :align: center
 
     - **Programming Language:** The programming language for the exercise. Artemis chooses the template accordingly.
-        Refer to the :ref:`programming exercise features <programming_features>` for an overview of the supported features for each template.
+      Refer to the :ref:`programming exercise features <programming_features>` for an overview of the supported features for each template.
     - **Project Type:** Determines the project structure of the template. Not available for all programming languages.
     - **Package Name:** The package name used for this exercise. Not available for all programming languages. Not available for all programming languages.
 
@@ -130,8 +130,8 @@ Exercise Creation
 
     - **Release Date:** Release date of the exercise. Students will only be able to participate in the exercise after this date.
     - **Automatic Tests:** Every commit of a participant triggers the execution of the tests in the **Test** repository.
-        Exempt are tests, which are specified to run after the due date. This is only possible if **Run Tests once after Due Date:** has been activated.
-        The tests that only run after the due date are chosen in the :ref:`grading configuration <configure_grading>`.
+      Exempt are tests, which are specified to run after the due date. This is only possible if **Run Tests once after Due Date:** has been activated.
+      The tests that only run after the due date are chosen in the :ref:`grading configuration <configure_grading>`.
     - **Due Date:** The deadline for the exercise. Commits made after this date are not graded.
 
     .. note::
