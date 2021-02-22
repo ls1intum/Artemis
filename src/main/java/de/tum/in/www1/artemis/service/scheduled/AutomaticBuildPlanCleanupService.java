@@ -60,7 +60,7 @@ public class AutomaticBuildPlanCleanupService {
         long countSuccessfulLatestResultAfter1Days = 0;
         long countUnsuccessfulLatestResultAfter5Days = 0;
 
-        List<ProgrammingExerciseStudentParticipation> allParticipationsWithBuildPlanId = programmingExerciseStudentParticipationRepository.findAllWithBuildPlanId();
+        List<ProgrammingExerciseStudentParticipation> allParticipationsWithBuildPlanId = programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults();
         Set<ProgrammingExerciseStudentParticipation> participationsWithBuildPlanToDelete = new HashSet<>();
 
         for (ProgrammingExerciseStudentParticipation participation : allParticipationsWithBuildPlanId) {
@@ -76,6 +76,14 @@ public class AutomaticBuildPlanCleanupService {
 
             if (participation.getProgrammingExercise() != null && Hibernate.isInitialized(participation.getProgrammingExercise())) {
                 var programmingExercise = participation.getProgrammingExercise();
+
+                if (programmingExercise.isExamExercise() && programmingExercise.getExerciseGroup().getExam() != null) {
+                    var exam = programmingExercise.getExerciseGroup().getExam();
+                    if (exam.getEndDate().plusDays(1).isAfter(now())) {
+                        // we don't clean up plans that will definitely be executed in the future as part of an exam (and we have 1 day buffer time for exams)
+                        continue;
+                    }
+                }
 
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
                     if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(now())) {

@@ -207,14 +207,14 @@ public class QuizExerciseResource {
      * GET /courses/:courseId/quiz-exercises : get all the exercises.
      *
      * @param courseId id of the course of which all exercises should be fetched
-     * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
+     * @return the ResponseEntity with status 200 (OK) and the list of quiz exercises in body
      */
     @GetMapping(value = "/courses/{courseId}/quiz-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         var quizExercises = quizExerciseRepository.findByCourseId(courseId);
@@ -224,6 +224,32 @@ public class QuizExerciseResource {
             // not required in the returned json body
             quizExercise.setStudentParticipations(null);
             quizExercise.setCourse(null);
+        }
+        return quizExercises;
+    }
+
+    /**
+     * GET /:examId/quiz-exercises : get all the quiz exercises of an exam.
+     *
+     * @param examId id of the exam of which all exercises should be fetched
+     * @return the ResponseEntity with status 200 (OK) and the list of quiz exercises in body
+     */
+    @GetMapping("/{examId}/quiz-exercises")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public List<QuizExercise> getQuizExercisesForExam(@PathVariable Long examId) {
+        List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
+        Course course = quizExercises.get(0).getCourseViaExerciseGroupOrCourseMember();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        for (QuizExercise quizExercise : quizExercises) {
+            quizExercise.setQuizQuestions(null);
+            // not required in the returned json body
+            quizExercise.setStudentParticipations(null);
+            quizExercise.setCourse(null);
+            quizExercise.setExerciseGroup(null);
         }
         return quizExercises;
     }
