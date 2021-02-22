@@ -40,6 +40,8 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
+import { Exam } from 'app/entities/exam.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -48,6 +50,7 @@ describe('QuizExercise Management Detail Component', () => {
     let comp: QuizExerciseDetailComponent;
     let exerciseGroupService: ExerciseGroupService;
     let courseManagementService: CourseManagementService;
+    let examManagementService: ExamManagementService;
     let quizExerciseService: QuizExerciseService;
     let exerciseService: ExerciseService;
     let fileUploaderService: FileUploaderService;
@@ -63,6 +66,8 @@ describe('QuizExercise Management Detail Component', () => {
     const quizExercise = new QuizExercise(course, undefined);
     const mcQuestion = new MultipleChoiceQuestion();
     const answerOption = new AnswerOption();
+    const exam = new Exam();
+    exam.id = 1;
 
     const resetQuizExercise = () => {
         quizExercise.id = 456;
@@ -70,7 +75,7 @@ describe('QuizExercise Management Detail Component', () => {
         quizExercise.duration = 600;
         answerOption.isCorrect = true;
         mcQuestion.title = 'test';
-        mcQuestion.score = 10;
+        mcQuestion.points = 10;
         mcQuestion.answerOptions = [answerOption];
         quizExercise.quizQuestions = [mcQuestion];
         quizExercise.isPlannedToStart = false;
@@ -94,7 +99,7 @@ describe('QuizExercise Management Detail Component', () => {
         answerOption1.explanation = 'right explanation';
         answerOption1.isCorrect = true;
         question.answerOptions = [answerOption1, answerOption2];
-        question.score = 10;
+        question.points = 10;
         return { question, answerOption1, answerOption2 };
     };
 
@@ -115,7 +120,7 @@ describe('QuizExercise Management Detail Component', () => {
         question.dropLocations = [dropLocation];
         const correctDragAndDropMapping = new DragAndDropMapping(dragItem1, dropLocation);
         question.correctMappings = [correctDragAndDropMapping];
-        question.score = 10;
+        question.points = 10;
         return { question, dragItem1, dragItem2, dropLocation, correctDragAndDropMapping };
     };
 
@@ -139,7 +144,7 @@ describe('QuizExercise Management Detail Component', () => {
         const shortAnswerMapping1 = new ShortAnswerMapping(spot1, shortAnswerSolution1);
         const shortAnswerMapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
         question.correctMappings = [shortAnswerMapping1, shortAnswerMapping2];
-        question.score = 10;
+        question.points = 10;
         return { question, shortAnswerMapping1, shortAnswerMapping2, spot1, spot2, shortAnswerSolution1, shortAnswerSolution2 };
     };
 
@@ -165,6 +170,7 @@ describe('QuizExercise Management Detail Component', () => {
         fixture = TestBed.createComponent(QuizExerciseDetailComponent);
         comp = fixture.componentInstance;
         courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
+        examManagementService = fixture.debugElement.injector.get(ExamManagementService);
         quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
         router = fixture.debugElement.injector.get(Router);
         fileUploaderService = TestBed.inject(FileUploaderService);
@@ -566,15 +572,15 @@ describe('QuizExercise Management Detail Component', () => {
                 resetQuizExercise();
                 comp.quizExercise = quizExercise;
                 const { question: multiQuestion } = createValidMCQuestion();
-                multiQuestion.score = 1;
+                multiQuestion.points = 1;
                 comp.quizExercise.quizQuestions = [multiQuestion];
                 expect(comp.calculateMaxExerciseScore()).to.equal(1);
                 const { question: dndQuestion } = createValidDnDQuestion();
-                dndQuestion.score = 2;
+                dndQuestion.points = 2;
                 comp.quizExercise.quizQuestions = [multiQuestion, dndQuestion];
                 expect(comp.calculateMaxExerciseScore()).to.equal(3);
                 const { question: saQuestion } = createValidSAQuestion();
-                saQuestion.score = 3;
+                saQuestion.points = 3;
                 comp.quizExercise.quizQuestions = [multiQuestion, dndQuestion, saQuestion];
                 expect(comp.calculateMaxExerciseScore()).to.equal(6);
             });
@@ -686,9 +692,64 @@ describe('QuizExercise Management Detail Component', () => {
                     comp.onCourseSelect();
                     expect(alertServiceStub).to.have.been.called;
                 });
-
                 afterAll(() => {
                     quizExerciseServiceFindForCourseStub.restore();
+                    quizExerciseServiceFindStub.restore();
+                });
+            });
+            describe('select exam', () => {
+                let quizExerciseServiceFindForExamStub: SinonStub;
+                let quizExerciseServiceFindStub: SinonStub;
+                const exerciseGroup = new ExerciseGroup();
+
+                beforeEach(() => {
+                    comp.allExistingQuestions = [];
+                    exerciseGroup.exam = exam;
+                    quizExercise.exerciseGroup = exerciseGroup;
+                    comp.exams = [exam];
+                    comp.selectedExamId = exam.id;
+                    resetQuizExercise();
+                    comp.quizExercise = quizExercise;
+                    quizExerciseServiceFindForExamStub = stub(quizExerciseService, 'findForExam');
+                    quizExerciseServiceFindForExamStub.returns(
+                        of(
+                            new HttpResponse<QuizExercise[]>({ body: [quizExercise] }),
+                        ),
+                    );
+                    quizExerciseServiceFindStub = stub(quizExerciseService, 'find');
+                    quizExerciseServiceFindStub.returns(
+                        of(
+                            new HttpResponse<QuizExercise>({ body: quizExercise }),
+                        ),
+                    );
+                });
+
+                afterEach(() => {
+                    quizExerciseServiceFindForExamStub.reset();
+                    quizExerciseServiceFindStub.reset();
+                });
+                it('should call find exam with selected id', () => {
+                    comp.onExamSelect();
+                    expect(quizExerciseServiceFindForExamStub).to.have.been.calledWithExactly(comp.selectedExamId);
+                    expect(quizExerciseServiceFindStub).to.have.been.calledWithExactly(quizExercise.id);
+                    expect(comp.allExistingQuestions).to.deep.equal(quizExercise.quizQuestions);
+                });
+                it('should not call find exam without selected id', () => {
+                    comp.selectedExamId = undefined;
+                    comp.onExamSelect();
+                    expect(quizExerciseServiceFindForExamStub).to.not.have.been.called;
+                    expect(quizExerciseServiceFindStub).to.not.have.been.called;
+                });
+                it('should call alert service if fails', () => {
+                    quizExerciseServiceFindForExamStub.returns(throwError({ status: 404 }));
+                    console.error = jest.fn();
+                    let alertServiceStub: SinonStub;
+                    alertServiceStub = stub(alertService, 'error');
+                    comp.onExamSelect();
+                    expect(alertServiceStub).to.have.been.called;
+                });
+                afterAll(() => {
+                    quizExerciseServiceFindForExamStub.restore();
                     quizExerciseServiceFindStub.restore();
                 });
             });
@@ -862,7 +923,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should not be valid if a question has negative score', () => {
                 const { question } = createValidMCQuestion();
-                question.score = -1;
+                question.points = -1;
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).to.equal(false);
@@ -1036,7 +1097,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should go back to quiz exercise page on cancel', () => {
                 comp.cancel();
-                expect(routerSpy).to.have.been.calledOnceWithExactly(['/course-management', comp.quizExercise.course!.id, 'quiz-exercise']);
+                expect(routerSpy).to.have.been.calledOnceWithExactly(['/course-management', comp.quizExercise.course!.id, 'quiz-exercises']);
             });
 
             it('should go back to quiz exercise page on cancel', () => {
@@ -1069,12 +1130,19 @@ describe('QuizExercise Management Detail Component', () => {
 
         describe('show existing questions', () => {
             let courseManagementServiceStub: SinonStub;
+            let examManagementServiceStub: SinonStub;
             beforeEach(() => {
                 comp.courseRepository = courseManagementService;
-                courseManagementServiceStub = stub(comp.courseRepository, 'getAll');
+                courseManagementServiceStub = stub(comp.courseRepository, 'getAllCoursesWithQuizExercises');
                 courseManagementServiceStub.returns(
                     of(
                         new HttpResponse<Course>({ body: course }),
+                    ),
+                );
+                examManagementServiceStub = stub(examManagementService, 'findAllExamsAccessibleToUser');
+                examManagementServiceStub.returns(
+                    of(
+                        new HttpResponse<Exam>({ body: exam }),
                     ),
                 );
             });
@@ -1085,14 +1153,16 @@ describe('QuizExercise Management Detail Component', () => {
                 const setQuestionsFromCourseSpy = spy(comp, 'setExistingQuestionSourceToCourse');
                 comp.showHideExistingQuestions();
                 expect(courseManagementServiceStub).to.have.been.called;
+                expect(examManagementServiceStub).to.have.been.called;
                 expect(comp.showExistingQuestions).to.equal(true);
-                expect(setQuestionsFromCourseSpy).to.have.been.calledWith(true);
+                expect(setQuestionsFromCourseSpy).to.have.been.calledOnce;
             });
             it('should not call getAll if there are courses', () => {
                 comp.courses = [course];
                 comp.quizExercise = quizExercise;
                 comp.showHideExistingQuestions();
                 expect(courseManagementServiceStub).to.not.have.been.called;
+                expect(examManagementServiceStub).to.have.been.called;
             });
             it('should initialize quizExercise if it is not', () => {
                 comp.courses = [course];
@@ -1110,10 +1180,18 @@ describe('QuizExercise Management Detail Component', () => {
                 const element = document.createElement('input');
                 const control = { ...element, value: 'test' };
                 const getElementStub = stub(document, 'getElementById').returns(control);
-                comp.setExistingQuestionSourceToCourse(true);
+                comp.setExistingQuestionSourceToCourse();
                 expect(comp.showExistingQuestionsFromCourse).to.equal(true);
-                comp.setExistingQuestionSourceToCourse(false);
+                expect(comp.showExistingQuestionsFromFile).to.equal(false);
+                expect(comp.showExistingQuestionsFromExam).to.equal(false);
+                comp.setExistingQuestionSourceToFile();
                 expect(comp.showExistingQuestionsFromCourse).to.equal(false);
+                expect(comp.showExistingQuestionsFromFile).to.equal(true);
+                expect(comp.showExistingQuestionsFromExam).to.equal(false);
+                comp.setExistingQuestionSourceToExam();
+                expect(comp.showExistingQuestionsFromCourse).to.equal(false);
+                expect(comp.showExistingQuestionsFromFile).to.equal(false);
+                expect(comp.showExistingQuestionsFromExam).to.equal(true);
                 expect(getElementStub).to.have.been.called;
                 expect(control.value).to.equal('');
                 getElementStub.restore();
@@ -1305,7 +1383,7 @@ describe('QuizExercise Management Detail Component', () => {
                     comp.quizExercise.quizQuestions = [question];
                 });
                 it('should put reason for negative score ', () => {
-                    question.score = -1;
+                    question.points = -1;
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionScore');
                 });
                 it('should put reason for no title', () => {
@@ -1404,7 +1482,7 @@ describe('QuizExercise Management Detail Component', () => {
                 });
 
                 it('should put reason for misleading correct mappings ', () => {
-                    const shortAnswerUtilMisleadingStub = stub(shortAnswerQuestionUtil, 'validateNoMisleadingCorrectShortAnswerMapping').returns(false);
+                    const shortAnswerUtilMisleadingStub = stub(shortAnswerQuestionUtil, 'validateNoMisleadingShortAnswerMapping').returns(false);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping');
                     shortAnswerUtilMisleadingStub.restore();
                 });

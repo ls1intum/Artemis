@@ -47,6 +47,7 @@ describe('JhiCloneRepoButtonComponent', () => {
         activeProfiles: [],
         allowedMinimumOrionVersion: '',
         buildPlanURLTemplate: '',
+        commitHashURLTemplate: '',
         contact: '',
         externalUserManagementName: '',
         externalUserManagementURL: '',

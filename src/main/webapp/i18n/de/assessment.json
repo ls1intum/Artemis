@@ -2,6 +2,7 @@
     "artemisApp": {
         "assessment": {
             "assessment": "Bewertung",
+            "testRunAssessment": "Testlauf Bewertung",
             "generalFeedback": "Allgemeines Feedback",
             "unreferencedFeedback": "Feedback für fehlende Elemente",
             "automaticGenerated": "Automatisch erstelltes Feedback",
@@ -41,14 +42,14 @@
                 "loading": "Laden..",
                 "columns": {
                     "submissionDate": "Einreichungsdatum",
-                    "result": "Ergebnis",
+                    "result": "Letztes Ergebnis",
                     "submissionCount": "Anzahl der Einreichungen",
                     "score": "Punkte",
                     "duration": "Dauer",
                     "assessmentType": "Bewertungsart",
                     "student": "Student",
                     "assessor": "Prüfer/in",
-                    "action": "Bewertung",
+                    "action": "Bewertungsaktionen",
                     "assessmentFirst": "Korrekturrunde 1",
                     "assessmentSecond": "Korrekturrunde 2"
                 },

@@ -12,6 +12,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
+import { ExamChecklist } from 'app/entities/exam-checklist.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -70,12 +71,31 @@ export class ExamManagementService {
     }
 
     /**
+     * Get the exam statistics used within the instructor exam checklist
+     * @param courseId The id of the course.
+     * @param examId The id of the exam.
+     */
+    getExamStatistics(courseId: number, examId: number): Observable<HttpResponse<ExamChecklist>> {
+        return this.http.get<ExamChecklist>(`${this.resourceUrl}/${courseId}/exams/${examId}/statistics`, { observe: 'response' });
+    }
+
+    /**
      * Find all exams for the given course.
      * @param courseId The course id.
      */
     findAllExamsForCourse(courseId: number): Observable<HttpResponse<Exam[]>> {
         return this.http
             .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
+    }
+
+    /**
+     * Find all exams where the in the course they are conducted the user has instructor rights
+     * @param courseId The course id where the quiz should be created
+     */
+    findAllExamsAccessibleToUser(courseId: number): Observable<HttpResponse<Exam[]>> {
+        return this.http
+            .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams-for-user`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
     }
 
@@ -97,9 +117,9 @@ export class ExamManagementService {
     getExamWithInterestingExercisesForAssessmentDashboard(courseId: number, examId: number, isTestRun: boolean): Observable<EntityResponseType> {
         let url: string;
         if (isTestRun) {
-            url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-test-run-dashboard`;
+            url = `${this.resourceUrl}/${courseId}/exams/${examId}/exam-for-test-run-assessment-dashboard`;
         } else {
-            url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-dashboard`;
+            url = `${this.resourceUrl}/${courseId}/exams/${examId}/exam-for-assessment-dashboard`;
         }
         return this.http
             .get<Exam>(url, { observe: 'response' })
@@ -148,6 +168,15 @@ export class ExamManagementService {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, studentDtos, { observe: 'response' });
     }
 
+    /**
+     * Add all students of the course to the exam
+     * @param courseId
+     * @param examId
+     * @return studentDtos of students that were not found in the system
+     */
+    addAllStudentsOfCourseToExam(courseId: number, examId: number): Observable<HttpResponse<StudentDTO[]>> {
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, { observe: 'response' });
+    }
     /**
      * Remove a student to the registered users for an exam
      * @param courseId The course id
@@ -270,7 +299,7 @@ export class ExamManagementService {
      * @param exerciseGroups List of exercise groups.
      */
     updateOrder(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<ExerciseGroup[]>> {
-        return this.http.put<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroupsOrder`, exerciseGroups, { observe: 'response' });
+        return this.http.put<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups-order`, exerciseGroups, { observe: 'response' });
     }
 
     public static convertDateFromClient(exam: Exam): Exam {

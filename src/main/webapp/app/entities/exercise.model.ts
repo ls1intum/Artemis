@@ -73,7 +73,7 @@ export abstract class Exercise implements BaseEntity {
     public releaseDate?: Moment;
     public dueDate?: Moment;
     public assessmentDueDate?: Moment;
-    public maxScore?: number;
+    public maxPoints?: number;
     public bonusPoints?: number;
     public assessmentType?: AssessmentType;
     public difficulty?: DifficultyLevel;
@@ -106,6 +106,7 @@ export abstract class Exercise implements BaseEntity {
     public numberOfOpenMoreFeedbackRequests?: number;
     public studentAssignedTeamId?: number;
     public studentAssignedTeamIdComputed = false;
+    public numberOfParticipations?: number;
 
     // helper attributes
     public secondCorrectionEnabled = false;

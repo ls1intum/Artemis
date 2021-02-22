@@ -1,10 +1,10 @@
 <div>
     <h2 id="page-heading">
         <span jhiTranslate="artemisApp.lecture.home.title">Lectures</span>
-        <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-lecture" [routerLink]="['new']">
+        <a id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-lecture" [routerLink]="['new']">
             <fa-icon [icon]="'plus'"></fa-icon>
-            <span jhiTranslate="artemisApp.lecture.home.createLabel"> Create new Lecture </span>
-        </button>
+            <span jhiTranslate="artemisApp.lecture.home.createLabel">Create new Lecture</span>
+        </a>
     </h2>
     <jhi-alert></jhi-alert>
     <br />
@@ -40,21 +40,21 @@
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1">
-                                <button type="submit" *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'attachments']" class="btn btn-primary mb-1 btn-sm">
+                                <a *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'attachments']" class="btn btn-primary mb-1 btn-sm">
                                     <fa-icon [icon]="'file'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.attachments">Attachment</span>
-                                </button>
-                                <button type="submit" *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm">
+                                </a>
+                                <a *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm">
                                     <fa-icon [icon]="'puzzle-piece'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.units">Units</span>
-                                </button>
+                                </a>
                             </div>
 
                             <div class="btn-group-vertical mr-1 mb-1">
-                                <button type="submit" *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'edit']" class="btn btn-primary mb-1 btn-sm">
+                                <a *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'edit']" class="btn btn-primary mb-1 btn-sm">
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                                </button>
+                                </a>
                                 <button
                                     jhiDeleteButton
                                     *ngIf="lecture.isAtLeastInstructor"

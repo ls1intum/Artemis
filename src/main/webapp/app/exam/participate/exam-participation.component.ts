@@ -30,6 +30,9 @@ import { Moment } from 'moment';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash';
 import { Course } from 'app/entities/course.model';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
+import * as Sentry from '@sentry/browser';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -46,6 +49,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly QUIZ = ExerciseType.QUIZ;
     readonly MODELING = ExerciseType.MODELING;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly FILEUPLOAD = ExerciseType.FILE_UPLOAD;
 
     courseId: number;
     examId: number;
@@ -61,6 +65,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     studentExam: StudentExam;
 
     individualStudentEndDate: Moment;
+    individualStudentEndDateWithGracePeriod: Moment;
 
     activeExercise: Exercise;
     unsavedChanges = false;
@@ -68,6 +73,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     handInEarly = false;
     handInPossible = true;
+    submitInProgress = false;
 
     exerciseIndex = 0;
 
@@ -84,7 +90,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     examStartConfirmed = false;
-    examEndConfirmed = false;
 
     /**
      * Websocket channels
@@ -140,7 +145,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam.exam!.course.id = this.courseId;
                         this.exam = studentExam.exam!;
                         this.testRunStartTime = moment();
-                        this.individualStudentEndDate = moment(this.testRunStartTime).add(this.studentExam.workingTime, 'seconds');
+                        this.initIndividualEndDates(this.testRunStartTime);
                         this.loadingExam = false;
                     },
                     // if error occurs
@@ -151,7 +156,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     (studentExam) => {
                         this.studentExam = studentExam;
                         this.exam = studentExam.exam!;
-                        this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
+                        this.initIndividualEndDates(this.exam.startDate!);
                         // only show the summary if the student was able to submit on time.
                         if (this.isOver() && this.studentExam.submitted) {
                             this.examParticipationService
@@ -224,11 +229,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         });
                     } else if (exercise.type === ExerciseType.PROGRAMMING) {
                         // We need to provide a submission to update the navigation bar status indicator
+                        // This is important otherwise the save mechanisms would not work properly
                         if (!participation.submissions || participation.submissions.length === 0) {
                             participation.submissions = [];
                             participation.submissions.push(ProgrammingSubmission.createInitialCleanSubmissionForExam());
                         }
                     }
+
+                    // reconnect the participation with the exercise, in case this relationship was deleted before (e.g. due to breaking circular dependencies)
+                    participation.exercise = exercise;
 
                     // setup subscription for programming exercises
                     if (exercise.type === ExerciseType.PROGRAMMING) {
@@ -249,7 +258,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exercise to check
      * @returns true if valid, false otherwise
      */
-    private isExerciseParticipationValid(exercise: Exercise): boolean {
+    private static isExerciseParticipationValid(exercise: Exercise): boolean {
         // check if there is at least one participation with state === Initialized or state === FINISHED
         return (
             exercise.studentParticipations !== undefined &&
@@ -278,17 +287,60 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     onExamEndConfirmed() {
         // temporary lock the submit button in order to protect against spam
         this.handInPossible = false;
+        this.submitInProgress = true;
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
-        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe(
-            (studentExam) => (this.studentExam = studentExam),
-            (error: Error) => {
-                this.alertService.error(error.message);
-                // Explicitly check whether the error was caused by the submission not being in-time, in this case, set hand in not possible
-                this.handInPossible = error.message !== 'studentExam.submissionNotInTime';
-            },
-        );
+
+        // Submit the exam with a timeout of 20s = 20000ms
+        // If we don't receive a response within that time throw an error the subscription can then handle
+        this.examParticipationService
+            .submitStudentExam(this.courseId, this.examId, this.studentExam)
+            .timeoutWith(20000, Observable.throw(new Error('Submission request timed out. Please check your connection and try again.')))
+            .subscribe(
+                (studentExam: StudentExam) => {
+                    this.studentExam = studentExam;
+                },
+                (error: Error) => {
+                    // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible
+                    const alreadySubmitted = error.message === 'studentExam.alreadySubmitted';
+
+                    // When we have already submitted load the existing submission
+                    if (alreadySubmitted) {
+                        if (!!this.testRunId) {
+                            this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe(
+                                (studentExam: StudentExam) => {
+                                    this.studentExam = studentExam;
+                                },
+                                (loadError: Error) => {
+                                    this.alertService.error(loadError.message);
+
+                                    // Allow the user to try to reload the exam from the server
+                                    this.submitInProgress = false;
+                                    this.handInPossible = true;
+                                },
+                            );
+                        } else {
+                            this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe(
+                                (existingExam: StudentExam) => {
+                                    this.studentExam = existingExam;
+                                },
+                                (loadError: Error) => {
+                                    this.alertService.error(loadError.message);
+
+                                    // Allow the user to try to reload the exam from the server
+                                    this.submitInProgress = false;
+                                    this.handInPossible = true;
+                                },
+                            );
+                        }
+                    } else {
+                        this.alertService.error(error.message);
+                        this.submitInProgress = false;
+                        this.handInPossible = error.message !== 'studentExam.submissionNotInTime';
+                    }
+                },
+            );
     }
 
     /**
@@ -332,6 +384,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
+     * check if the grace period has already passed
+     */
+    isGracePeriodOver() {
+        return this.individualStudentEndDateWithGracePeriod && this.individualStudentEndDateWithGracePeriod.isBefore(this.serverDateService.now());
+    }
+
+    /**
      * check if exam is visible
      */
     isVisible(): boolean {
@@ -364,6 +423,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         window.clearInterval(this.autoSaveInterval);
     }
 
+    initIndividualEndDates(startDate: Moment) {
+        this.individualStudentEndDate = moment(startDate).add(this.studentExam.workingTime, 'seconds');
+        this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod, 'seconds');
+    }
+
     initLiveMode() {
         // listen to connect / disconnect events
         this.onConnected = () => {
@@ -384,12 +448,26 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * update the current exercise from the navigation
      * @param exerciseChange
      */
-    onExerciseChange(exerciseChange: { exercise: Exercise; force: boolean }): void {
+    onExerciseChange(exerciseChange: { exercise: Exercise; forceSave: boolean }): void {
         const activeComponent = this.activeSubmissionComponent;
         if (activeComponent) {
             activeComponent.onDeactivate();
         }
-        this.triggerSave(exerciseChange.force);
+        try {
+            this.triggerSave(exerciseChange.forceSave);
+        } catch (error) {
+            // an error here should never lead to the wrong exercise being shown
+            Sentry.captureException(error);
+        }
+        this.initializeExercise(exerciseChange.exercise);
+    }
+
+    /**
+     * update the current exercise from the navigation
+     * @param exerciseChange
+     */
+    saveFileUpload(exerciseChange: { exercise: Exercise; forceSave: boolean }): void {
+        this.triggerSave(exerciseChange.forceSave);
         this.initializeExercise(exerciseChange.exercise);
     }
 
@@ -401,13 +479,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private initializeExercise(exercise: Exercise) {
         this.activeExercise = exercise;
         // if we do not have a valid participation for the exercise -> initialize it
-        if (!this.isExerciseParticipationValid(exercise)) {
+        if (!ExamParticipationComponent.isExerciseParticipationValid(exercise)) {
             // TODO: after client is online again, subscribe is not executed, might be a problem of the Observable in createParticipationForExercise
             this.createParticipationForExercise(exercise).subscribe((participation) => {
                 if (participation) {
                     // for programming exercises -> wait for latest submission before showing exercise
                     if (exercise.type === ExerciseType.PROGRAMMING) {
                         const subscription = this.createProgrammingExerciseSubmission(exercise.id!, participation.id!);
+                        // we have to create a fake submission here, otherwise the navigation bar status will not work and the save mechanism might have problems
                         participation.submissions = [ProgrammingSubmission.createInitialCleanSubmissionForExam()];
                         this.programmingSubmissionSubscriptions.push(subscription);
                     }
@@ -419,6 +498,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
     }
 
+    /**
+     * this will make sure that the component is displayed in the user interface
+     */
     private activateActiveComponent() {
         this.submissionComponentVisited[this.activeExerciseIndex] = true;
         const activeComponent = this.activeSubmissionComponent;
@@ -428,16 +510,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
-     * creates a participation for the exercise, if it did not exist already
+     * This is a fallback mechanism in case the instructor did not prepare the exercise start before the student started it on the client.
+     * In this case, no participation and not submission exist and first need to be created on the server before the student can work on this exercise locally
      * @param exercise
      */
     createParticipationForExercise(exercise: Exercise): Observable<StudentParticipation | undefined> {
         this.generateParticipationStatus.next('generating');
         return this.courseExerciseService.startExercise(this.exam.course!.id!, exercise.id!).pipe(
             map((createdParticipation: StudentParticipation) => {
-                // remove because of circular dependency when converting to JSON
-                delete createdParticipation.exercise;
-                exercise.studentParticipations!.push(createdParticipation);
+                // note: it is important that we exchange the existing student participation and that we do not push it
+                exercise.studentParticipations = [createdParticipation];
                 if (createdParticipation.submissions && createdParticipation.submissions.length > 0) {
                     createdParticipation.submissions[0].isSynced = true;
                 }
@@ -459,16 +541,17 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * 4) exam is about to end (<1s left)
      *      --> in this case, we can even save all submissions with isSynced = true
      *
-     * @param force is set to true, when the current exercise should be saved (even if there are no changes)
+     * @param forceSave is set to true, when the current exercise should be saved (even if there are no changes)
      */
-    triggerSave(force: boolean) {
+    triggerSave(forceSave: boolean) {
         // before the request, we would mark the submission as isSynced = true
         // right after the response - in case it was successful - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
 
         const activeComponent = this.activeSubmissionComponent;
 
-        if ((activeComponent && force) || activeComponent?.hasUnsavedChanges()) {
+        // in the case saving is forced, we mark the current exercise as not synced, so it will definitely be saved
+        if ((activeComponent && forceSave) || activeComponent?.hasUnsavedChanges()) {
             const activeSubmission = activeComponent?.getSubmission();
             if (activeSubmission) {
                 // this will lead to a save below, because isSynced will be set to false
@@ -477,51 +560,72 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             activeComponent.updateSubmissionFromView();
         }
 
-        // goes through all exercises and checks if there are unsynced submissions
+        // go through ALL student exam exercises and check if there are unsynced submissions
+        // we do this, because due to connectivity problems, other submissions than the currently active one might have not been saved to the server yet
         const submissionsToSync: { exercise: Exercise; submission: Submission }[] = [];
         this.studentExam.exercises!.forEach((exercise: Exercise) => {
-            exercise.studentParticipations!.forEach((participation) => {
-                participation
-                    .submissions!.filter((submission) => !submission.isSynced)
-                    .forEach((unsynchedSubmission) => {
-                        submissionsToSync.push({ exercise, submission: unsynchedSubmission });
-                    });
-            });
+            if (exercise.studentParticipations) {
+                exercise.studentParticipations!.forEach((participation) => {
+                    if (participation.submissions) {
+                        participation.submissions
+                            .filter((submission) => !submission.isSynced)
+                            .forEach((unsynchedSubmission) => {
+                                submissionsToSync.push({ exercise, submission: unsynchedSubmission });
+                            });
+                    }
+                });
+            }
         });
 
         // if no connection available -> don't try to sync, except it is forced
-        if (force || !this.disconnected) {
+        // based on the submissions that need to be saved and the exercise, we perform different actions
+        if (forceSave || !this.disconnected) {
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
                         this.textSubmissionService.update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id!).subscribe(
-                            () => this.onSaveSubmissionSuccess(submissionToSync.submission),
+                            () => ExamParticipationComponent.onSaveSubmissionSuccess(submissionToSync.submission),
                             () => this.onSaveSubmissionError(),
                         );
                         break;
-                    case ExerciseType.FILE_UPLOAD:
-                        // nothing to do
-                        break;
                     case ExerciseType.MODELING:
                         this.modelingSubmissionService.update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id!).subscribe(
-                            () => this.onSaveSubmissionSuccess(submissionToSync.submission),
+                            () => ExamParticipationComponent.onSaveSubmissionSuccess(submissionToSync.submission),
                             () => this.onSaveSubmissionError(),
                         );
                         break;
                     case ExerciseType.PROGRAMMING:
-                        // nothing to do
+                        // nothing to do here, because programming exercises are submitted differently
                         break;
                     case ExerciseType.QUIZ:
                         this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission as QuizSubmission).subscribe(
-                            () => this.onSaveSubmissionSuccess(submissionToSync.submission),
+                            () => ExamParticipationComponent.onSaveSubmissionSuccess(submissionToSync.submission),
                             () => this.onSaveSubmissionError(),
                         );
+                        break;
+                    case ExerciseType.FILE_UPLOAD:
+                        const fileUploadComponent = activeComponent as FileUploadExamSubmissionComponent;
+                        if (!fileUploadComponent.submissionFile) {
+                            return;
+                        }
+                        this.fileUploadSubmissionService
+                            .update(submissionToSync.submission as FileUploadSubmission, submissionToSync.exercise.id!, fileUploadComponent.submissionFile)
+                            .subscribe(
+                                (res) => {
+                                    const submissionFromServer = res.body!;
+                                    (submissionToSync.submission as FileUploadSubmission).filePath = submissionFromServer.filePath;
+                                    ExamParticipationComponent.onSaveSubmissionSuccess(submissionToSync.submission);
+                                    activeComponent!.updateViewFromSubmission();
+                                },
+                                () => this.onSaveSubmissionError(),
+                            );
                         break;
                 }
             });
         }
 
-        // overwrite studentExam in localStorage
+        // save the studentExam in localStorage, so that we would be able to retrieve it later on, in case the student needs to reload the page while being offline
+        // NOTE: this recovery behavior is NOT yet implemented
         this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
     }
 
@@ -529,7 +633,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.currentSubmissionComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
     }
 
-    private onSaveSubmissionSuccess(submission: Submission) {
+    private static onSaveSubmissionSuccess(submission: Submission) {
         submission.isSynced = true;
         submission.submitted = true;
     }

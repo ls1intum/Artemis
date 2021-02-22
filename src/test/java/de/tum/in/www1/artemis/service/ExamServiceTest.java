@@ -21,6 +21,8 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -52,15 +54,15 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     @AfterEach
     public void resetDatabase() {
         exam1.removeExerciseGroup(exerciseGroup1);
-        examService.save(exam1);
+        examRepository.save(exam1);
         database.resetDatabase();
     }
 
     @Test
     public void testForNullIndexColumnError() {
-        Exam examResult = examService.findOne(exam1.getId());
+        Exam examResult = examRepository.findByIdElseThrow(exam1.getId());
         assertThat(examResult).isEqualTo(exam1);
-        examResult = examService.findOneWithExerciseGroups(exam1.getId());
+        examResult = examRepository.findByIdWithExerciseGroupsElseThrow(exam1.getId());
         assertThat(examResult).isEqualTo(exam1);
         assertThat(examResult.getExerciseGroups().get(0)).isEqualTo(exerciseGroup1);
     }
@@ -68,7 +70,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testCanGetCurrentAndUpcomingExams() {
-        List<Exam> exams = examService.findAllCurrentAndUpcomingExams();
+        List<Exam> exams = examRepository.findAllCurrentAndUpcomingExams();
         assertThat(exams.size()).isEqualTo(2);
         assertThat(exams).contains(exam1, examInTheFuture);
         assertThat(exams).doesNotContain(examInThePast);
@@ -154,6 +156,21 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertTrue(thrown.getMessage().contains("Check that you set the exam max points correctly! The max points a student can earn in the exercise groups is too low"));
     }
 
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void getChecklistStatsEmpty() {
+        // check if general method works. More sophisticated test are within the ExamIntegrationTests
+        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam1);
+        assertThat(examChecklistDTO).isNotEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfTestRuns()).isEqualTo(0);
+        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(0);
+        assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isEqualTo(0);
+        assertThat(examChecklistDTO.getNumberOfExamsStarted()).isEqualTo(0);
+        assertThat(examChecklistDTO.getNumberOfAllComplaints()).isEqualTo(0);
+        assertThat(examChecklistDTO.getNumberOfAllComplaintsDone()).isEqualTo(0);
+        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(false);
+    }
+
     private Exam createExam(int numberOfExercisesInExam, Long id, Integer maxPoints) {
         Exam exam = new Exam();
         exam.setMaxPoints(maxPoints);
@@ -161,6 +178,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         exam.setNumberOfExercisesInExam(numberOfExercisesInExam);
         exam.setStartDate(ZonedDateTime.now().plusDays(1));
         exam.setEndDate(ZonedDateTime.now().plusDays(2));
+        exam.setNumberOfCorrectionRoundsInExam(1);
         return exam;
     }
 
@@ -177,7 +195,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
             IncludedInOverallScore includedInOverallScore) {
         TextExercise includedTextExercise = new TextExercise();
         includedTextExercise.setId(id);
-        includedTextExercise.setMaxScore(maxPoints);
+        includedTextExercise.setMaxPoints(maxPoints);
         includedTextExercise.setBonusPoints(maxBonusPoints);
         includedTextExercise.setIncludedInOverallScore(includedInOverallScore);
         includedTextExercise.setExerciseGroup(exerciseGroup);

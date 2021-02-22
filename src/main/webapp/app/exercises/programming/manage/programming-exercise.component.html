@@ -84,7 +84,7 @@
                     <td class="d-none d-md-table-cell">{{ programmingExercise.shortName }}</td>
                     <td>{{ programmingExercise.releaseDate | artemisDate }}</td>
                     <td>{{ programmingExercise.dueDate | artemisDate }}</td>
-                    <td class="d-none d-md-table-cell">{{ programmingExercise.maxScore }}</td>
+                    <td class="d-none d-md-table-cell">{{ programmingExercise.maxPoints }}</td>
                     <td>{{ programmingExercise.bonusPoints }}</td>
                     <td>{{ exerciseService.isIncludedInScore(programmingExercise) }}</td>
                     <td *ngIf="!isOrion" class="d-flex flex-column">
@@ -211,53 +211,39 @@
                     <td jhiOrionFilter [showInOrionWindow]="false" class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1">
-                                <button
-                                    type="submit"
+                                <a
                                     *ngIf="programmingExercise.isAtLeastTutor"
-                                    [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'scores']"
-                                    class="btn btn-info btn-sm mr-1 mb-1"
+                                    [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'assessment']"
+                                    class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'eye'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-                                </button>
-                                <button
-                                    type="submit"
+                                    <fa-icon [icon]="'list-alt'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
+                                </a>
+                                <a
                                     *ngIf="programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'participations']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'list-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-                                </button>
-                                <button
-                                    type="submit"
+                                </a>
+                                <a
                                     *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'teams']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'users'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
-                                </button>
+                                </a>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
-                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-                                    type="submit"
-                                    *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
-                                    jhiOrionFilter
-                                    [showInOrionWindow]="false"
-                                    [routerLink]="[
-                                        '/course-management',
-                                        courseId,
-                                        'programming-exercises',
-                                        programmingExercise.id,
-                                        'code-editor',
-                                        programmingExercise.templateParticipation.id
-                                    ]"
+                                    *ngIf="programmingExercise.isAtLeastTutor"
+                                    [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'scores']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
+                                    <fa-icon [icon]="'eye'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                                 </button>
                                 <button
                                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
@@ -271,24 +257,36 @@
                                 </button>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
+                                <!-- converting this and other buttons to anchors here leads to failed tests in programming-exercise.service.spec.ts.
+                                This should be adressed at some point. -->
                                 <button
+                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                                    [attr.disabled]="false"
                                     type="submit"
-                                    *ngIf="programmingExercise.isAtLeastInstructor"
-                                    [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id]"
-                                    class="btn btn-info btn-sm mr-1 mb-1"
+                                    *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
+                                    jhiOrionFilter
+                                    [showInOrionWindow]="false"
+                                    [routerLink]="[
+                                        '/course-management',
+                                        courseId,
+                                        'programming-exercises',
+                                        programmingExercise.id,
+                                        'code-editor',
+                                        programmingExercise.templateParticipation.id
+                                    ]"
+                                    class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'eye'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
                                 </button>
-                                <button
-                                    type="submit"
+                                <a
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'edit']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                                </button>
+                                </a>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button

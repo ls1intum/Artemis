@@ -23,6 +23,11 @@ export class CreateTestRunModalComponent implements OnInit {
     ngOnInit(): void {
         this.initWorkingTimeForm();
         this.ignoreEmptyExerciseGroups();
+        for (const exerciseGroup of this.exam.exerciseGroups!) {
+            if (exerciseGroup.exercises?.length === 1) {
+                this.onSelectExercise(exerciseGroup.exercises[0], exerciseGroup);
+            }
+        }
     }
 
     /**

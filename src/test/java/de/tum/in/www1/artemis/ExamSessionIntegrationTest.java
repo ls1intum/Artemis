@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.service.ExamSessionService;
+import de.tum.in.www1.artemis.service.exam.ExamSessionService;
 import inet.ipaddr.IPAddressString;
 
 public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {

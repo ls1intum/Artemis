@@ -1,5 +1,5 @@
-import { nextAlphanumeric, nextWSSubscriptionId, extractDestination } from '../util/utils.js';
-import { COMMIT, NEW_FILE, PARTICIPATION_WITH_RESULT, PARTICIPATIONS, PROGRAMMING_EXERCISE, SCA_CATEGORIES, PROGRAMMING_EXERCISES_SETUP, FILES } from './endpoints.js';
+import { extractDestination, nextAlphanumeric, nextWSSubscriptionId } from '../util/utils.js';
+import { COMMIT, FILES, NEW_FILE, PARTICIPATION_WITH_RESULT, PARTICIPATIONS, PROGRAMMING_EXERCISE, PROGRAMMING_EXERCISES_SETUP, SCA_CATEGORIES } from './endpoints.js';
 import { fail, sleep } from 'k6';
 import { programmingExerciseProblemStatementJava } from '../resource/constants_java.js';
 import { programmingExerciseProblemStatementPython } from '../resource/constants_python.js';
@@ -78,7 +78,7 @@ export function createProgrammingExercise(artemis, courseId, exerciseGroup = und
     const exercise = {
         title: 'TEST ' + nextAlphanumeric(10),
         shortName: 'TEST' + nextAlphanumeric(5).toUpperCase(),
-        maxScore: 42,
+        maxPoints: 42,
         assessmentType: 'AUTOMATIC',
         type: 'programming',
         programmingLanguage: programmingLanguage,
@@ -202,12 +202,14 @@ function updateFileContent(artemis, participationId, content) {
 
 export function simulateSubmission(artemis, participationSimulation, expectedResult, resultString) {
     // First, we have to create all new files
-    participationSimulation.newFiles.forEach((file) => createNewFile(artemis, participationSimulation.participationId, file));
+    if (participationSimulation.newFiles) {
+        participationSimulation.newFiles.forEach((file) => createNewFile(artemis, participationSimulation.participationId, file));
+    }
 
     artemis.websocket(function (socket) {
         // Subscribe to new results and participations
         socket.setTimeout(function () {
-            subscribe(participationSimulation.exerciseId, participationSimulation.participationId);
+            subscribe(socket, participationSimulation.exerciseId);
         }, 5 * 1000);
 
         socket.setTimeout(function () {

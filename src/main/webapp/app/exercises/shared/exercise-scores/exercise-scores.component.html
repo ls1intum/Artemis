@@ -36,10 +36,10 @@
         </div>
         <div class="d-flex justify-content-end">
             <div class="button-toolbar">
-                <button type="submit" routerLink="/course-management/{{ course.id }}/exercises/{{ exercise.id }}/participations" class="btn btn-primary btn-sm mr-1">
+                <a routerLink="/course-management/{{ course.id }}/exercises/{{ exercise.id }}/participations" class="btn btn-primary btn-sm mr-1">
                     <fa-icon [icon]="'list-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-                </button>
+                </a>
                 <button class="btn btn-info btn-sm mr-1" (click)="exportNames()">
                     <fa-icon [icon]="'download'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportNames">Export Names</span>
@@ -157,7 +157,6 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <!-- TODO: Had to Remove Date Pipe as UI did not update when sorting. Investigate the reason -->
                         {{ formatDate(value) }}
                     </ng-template>
                 </ngx-datatable-column>
@@ -223,10 +222,10 @@
                     [width]="470"
                 >
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <button class="btn btn-primary btn-sm mr-1" (click)="goToRepository(value)">
+                        <a class="btn btn-primary btn-sm mr-1" href="{{ getRepositoryLink(value) }}">
                             <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>
                             Repository
-                        </button>
+                        </a>
                         <button class="btn btn-primary btn-sm mr-1" jhiBuildPlanButton [projectKey]="projectKey()" [buildPlanId]="buildPlanId(value)">
                             <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>
                             Build plan
@@ -240,15 +239,15 @@
                             <fa-icon class="mr-1" [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             Online editor
                         </button>
-                        <button
+                        <a
                             *ngIf="exercise.course && newManualResultAllowed"
                             [routerLink]="['/course-management', exercise.course?.id, 'programming-exercises', exercise.id, 'code-editor', value.participation.id, 'assessment']"
                             class="btn btn-primary btn-sm mr-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.programmingSubmission.view' | translate }}
-                        </button>
-                        <button
+                        </a>
+                        <a
                             *ngIf="exercise.exerciseGroup && newManualResultAllowed && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
                             [routerLink]="[
                                 '/course-management',
@@ -263,7 +262,7 @@
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.programmingSubmission.view' | translate }}
-                        </button>
+                        </a>
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -275,15 +274,15 @@
                     [width]="180"
                 >
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <button
+                        <a
                             *ngIf="exercise.course"
                             [routerLink]="['/course-management', exercise.course?.id, 'file-upload-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             class="btn btn-primary btn-sm mr-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.fileUploadSubmission.view' | translate }}
-                        </button>
-                        <button
+                        </a>
+                        <a
                             *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
                             [routerLink]="[
                                 '/course-management',
@@ -298,13 +297,13 @@
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.fileUploadSubmission.view' | translate }}
-                        </button>
+                        </a>
                     </ng-template>
                 </ngx-datatable-column>
 
                 <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.MODELING && exercise.isAtLeastInstructor" [resizeable]="false" [minWidth]="180" [width]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <button
+                        <a
                             *ngIf="exercise.course"
                             [routerLink]="['/course-management', exercise.course?.id, 'modeling-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             [queryParams]="{ optimal: false, hideBackButton: true }"
@@ -312,8 +311,8 @@
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.modelingSubmission.view' | translate }}
-                        </button>
-                        <button
+                        </a>
+                        <a
                             *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
                             [routerLink]="[
                                 '/course-management',
@@ -329,7 +328,7 @@
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.modelingSubmission.view' | translate }}
-                        </button>
+                        </a>
                     </ng-template>
                 </ngx-datatable-column>
 

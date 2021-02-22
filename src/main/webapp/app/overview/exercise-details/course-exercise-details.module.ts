@@ -25,7 +25,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 const routes: Routes = [
     {
-        path: '',
+        path: 'courses/:courseId/exercises/:exerciseId',
         component: CourseExerciseDetailsComponent,
         data: {
             authorities: [Authority.USER],

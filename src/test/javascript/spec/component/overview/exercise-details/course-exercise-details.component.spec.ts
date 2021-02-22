@@ -28,7 +28,6 @@ import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-de
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import { Directive, HostListener, Input } from '@angular/core';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
-import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { BuildPlanButtonDirective } from 'app/exercises/programming/shared/utils/build-plan-button.directive';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
@@ -52,6 +51,7 @@ import * as moment from 'moment';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { HttpResponse } from '@angular/common/http';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 chai.use(sinonChai);

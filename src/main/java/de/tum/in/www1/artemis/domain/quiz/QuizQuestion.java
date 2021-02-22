@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
-import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyFactory;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategy;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -45,9 +45,9 @@ public abstract class QuizQuestion extends DomainObject {
     @JsonView(QuizView.After.class)
     private String explanation;
 
-    @Column(name = "score")
+    @Column(name = "points")
     @JsonView(QuizView.Before.class)
-    private Integer score;
+    private Integer points;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "scoring_type")
@@ -112,17 +112,17 @@ public abstract class QuizQuestion extends DomainObject {
         this.explanation = explanation;
     }
 
-    public Integer getScore() {
-        return score;
+    public Integer getPoints() {
+        return points;
     }
 
     public QuizQuestion score(Integer score) {
-        this.score = score;
+        this.points = score;
         return this;
     }
 
-    public void setScore(Integer score) {
-        this.score = score;
+    public void setPoints(Integer score) {
+        this.points = score;
     }
 
     public ScoringType getScoringType() {
@@ -172,7 +172,7 @@ public abstract class QuizQuestion extends DomainObject {
      * @return the resulting score
      */
     public double scoreForAnswer(SubmittedAnswer submittedAnswer) {
-        return ScoringStrategyFactory.makeScoringStrategy(this).calculateScore(this, submittedAnswer);
+        return makeScoringStrategy().calculateScore(this, submittedAnswer);
     }
 
     /**
@@ -182,8 +182,10 @@ public abstract class QuizQuestion extends DomainObject {
      * @return true, if the answer is 100% correct, false otherwise
      */
     public boolean isAnswerCorrect(SubmittedAnswer submittedAnswer) {
-        return ScoringStrategyFactory.makeScoringStrategy(this).calculateScore(this, submittedAnswer) == getScore();
+        return makeScoringStrategy().calculateScore(this, submittedAnswer) == getPoints();
     }
+
+    protected abstract ScoringStrategy makeScoringStrategy();
 
     /**
      * filter out information about correct answers
@@ -208,7 +210,7 @@ public abstract class QuizQuestion extends DomainObject {
     @JsonIgnore
     public Boolean isValid() {
         // check title and score
-        return getTitle() != null && !getTitle().equals("") && getScore() >= 0;
+        return getTitle() != null && !getTitle().equals("") && getPoints() >= 0;
     }
 
     /**

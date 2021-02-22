@@ -42,7 +42,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
 @Service
@@ -72,7 +72,7 @@ public class LtiService {
     @Value("${artemis.lti.user-group-name-u4i:#{null}}")
     private Optional<String> USER_GROUP_NAME_U4I;
 
-    private final UserService userService;
+    private final UserCreationService userCreationService;
 
     private final UserRepository userRepository;
 
@@ -90,9 +90,9 @@ public class LtiService {
 
     public final Map<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
 
-    public LtiService(UserService userService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository,
+    public LtiService(UserCreationService userCreationService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, HttpServletResponse response) {
-        this.userService = userService;
+        this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
         this.resultRepository = resultRepository;
@@ -160,7 +160,7 @@ public class LtiService {
      */
     public void onSuccessfulLtiAuthentication(LtiLaunchRequestDTO launchRequest, Exercise exercise) {
         // Auth was successful
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Make sure user is added to group for this exercise
         addUserToExerciseGroup(user, exercise.getCourseViaExerciseGroupOrCourseMember());
@@ -235,11 +235,11 @@ public class LtiService {
             final var groups = new HashSet<String>();
             if (TUMX.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_EDX.isPresent()) {
                 groups.add(USER_GROUP_NAME_EDX.get());
-                newUser = userService.createUser(username, groups, USER_GROUP_NAME_EDX.get(), fullname, email, null, null, "en");
+                newUser = userCreationService.createUser(username, groups, USER_GROUP_NAME_EDX.get(), fullname, email, null, null, "en");
             }
             else if (U4I.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_U4I.isPresent()) {
                 groups.add(USER_GROUP_NAME_U4I.get());
-                newUser = userService.createUser(username, groups, USER_GROUP_NAME_U4I.get(), fullname, email, null, null, "en");
+                newUser = userCreationService.createUser(username, groups, USER_GROUP_NAME_U4I.get(), fullname, email, null, null, "en");
             }
             else {
                 String message = "User group not activated or unknown context_label sent in LTI Launch Request: " + launchRequest.toString();
@@ -254,7 +254,7 @@ public class LtiService {
 
         // Make sure the user is activated
         if (!user.getActivated()) {
-            userService.activateUser(user);
+            userCreationService.activateUser(user);
         }
 
         log.info("Signing in as {}", username);
@@ -305,7 +305,7 @@ public class LtiService {
             Set<String> groups = user.getGroups();
             groups.add(courseStudentGroupName);
             user.setGroups(groups);
-            userService.saveUser(user);
+            userCreationService.saveUser(user);
 
             if (!user.getLogin().startsWith("edx")) {
                 // try to sync with authentication service for actual users (not for edx users)

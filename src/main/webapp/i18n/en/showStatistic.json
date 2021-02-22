@@ -10,15 +10,15 @@
         "switchToUnrated": "Show unrated Results",
         "showSolution": "Show Solution",
         "hideSolution": "Hide Solution",
-        "quizPointStatisticTitle": "Score-Distribution",
+        "quizPointStatisticTitle": "Points-Distribution",
         "quizStatisticTitle": "Quiz-Statistic",
         "recalculateStatistics": "Recalculate Statistics",
         "quizQuestions": "Quiz questions",
         "quizPointStatistic": {
-            "maxScore": "Maximum Score: ",
-            "titleRated": "Score-Distribution (rated)",
-            "titleUnrated": "Score-Distribution (unrated)",
-            "xAxes": "Scores",
+            "maxScore": "Maximum Points: ",
+            "titleRated": "Points-Distribution (rated)",
+            "titleUnrated": "Points-Distribution (unrated)",
+            "xAxes": "Points",
             "yAxes": "Amount"
         },
         "quizStatistic": {

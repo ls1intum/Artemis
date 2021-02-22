@@ -59,7 +59,11 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
-    comp.unreferencedFeedback.push({ type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'unreferenced feedback', credits: pointsAwarded });
+    comp.unreferencedFeedback.push({
+        type: FeedbackType.MANUAL_UNREFERENCED,
+        detailText: 'unreferenced feedback',
+        credits: pointsAwarded,
+    });
     comp.validateFeedback();
     expect(comp.manualResult?.score).to.equal(scoreExpected);
 }
@@ -103,8 +107,12 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
     const exercise = ({
         id: 1,
-        templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, submission: { id: 1, buildFailed: false } }] },
-        maxScore: 100,
+        templateParticipation: {
+            id: 3,
+            repositoryUrl: 'test2',
+            results: [{ id: 9, submission: { id: 1, buildFailed: false } }],
+        },
+        maxPoints: 100,
         gradingInstructions: 'Grading Instructions',
         course: <Course>{ instructorGroupName: 'instructorGroup' },
     } as unknown) as ProgrammingExercise;
@@ -169,7 +177,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 repositoryFileService = debugElement.injector.get(CodeEditorRepositoryFileService);
 
                 updateAfterComplaintStub = stub(programmingAssessmentManualResultService, 'updateAfterComplaint').returns(of(afterComplaintResult));
-                getStudentParticipationWithResultsStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithLatestManualResult').returns(
+                getStudentParticipationWithResultsStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithResultOfCorrectionRound').returns(
                     of(participation).pipe(delay(100)),
                 );
                 findByResultIdStub = stub(complaintService, 'findByResultId').returns(of({ body: complaint } as HttpResponse<Complaint>));
@@ -236,7 +244,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         tick(100);
 
-        comp.exercise.maxScore = 10;
+        comp.exercise.maxPoints = 10;
         comp.exercise.bonusPoints = 10;
         comp.automaticFeedback = [];
         comp.referencedFeedback = [];
@@ -255,7 +263,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         tick(100);
 
-        comp.exercise.maxScore = 10;
+        comp.exercise.maxPoints = 10;
         comp.exercise.bonusPoints = 0;
         comp.automaticFeedback = [];
         comp.referencedFeedback = [];
@@ -272,7 +280,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         tick(100);
 
-        comp.exercise.maxScore = 10;
+        comp.exercise.maxPoints = 10;
         comp.exercise.bonusPoints = 0;
         comp.automaticFeedback = [];
         comp.referencedFeedback = [];
@@ -289,7 +297,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         tick(100);
 
-        comp.exercise.maxScore = 10;
+        comp.exercise.maxPoints = 10;
         comp.exercise.bonusPoints = 0;
         comp.automaticFeedback = [];
         comp.referencedFeedback = [];

@@ -1,4 +1,3 @@
-<jhi-test-run-ribbon id="testRunRibbon" *ngIf="isTestRun"></jhi-test-run-ribbon>
 <div>
     <h2>
         <ng-container *ngIf="!instructorView">
@@ -50,7 +49,7 @@
                 </button>
             </div>
             <!-- prettier-ignore -->
-            <h5>{{ exercise.title }} [{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}
+            <h5>{{ exercise.title }} [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | translate }}
                 <span
                     *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | translate }}</span>]
                 <jhi-included-in-score-badge

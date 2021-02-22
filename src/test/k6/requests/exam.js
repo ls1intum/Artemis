@@ -1,15 +1,15 @@
 import {
+    EVALUATE_QUIZ_EXAM,
+    EXAM_CONDUCTION,
+    EXAM_STUDENTS,
     EXAMS,
     EXERCISE_GROUPS,
-    TEXT_EXERCISE,
-    EXAM_STUDENTS,
     GENERATE_STUDENT_EXAMS,
     START_EXERCISES,
-    EXAM_CONDUCTION,
-    STUDENT_EXAMS,
     STUDENT_EXAM_WORKINGTIME,
-    EVALUATE_QUIZ_EXAM,
+    STUDENT_EXAMS,
     SUBMIT_EXAM,
+    TEXT_EXERCISE,
 } from './endpoints.js';
 import { nextAlphanumeric } from '../util/utils.js';
 import { fail } from 'k6';
@@ -25,7 +25,7 @@ export function newExam(artemis, course) {
         visibleDate: visibleDate,
         startDate: startDate,
         endDate: endDate,
-        maxPoints: 10,
+        maxPoints: 54,
         numberOfExercisesInExam: 4,
         randomizeExerciseOrder: false,
         started: false,
@@ -70,7 +70,7 @@ export function newExerciseGroup(artemis, exam, mandatory = true) {
 export function newTextExercise(artemis, exerciseGroup) {
     const textExercise = {
         exerciseGroup: exerciseGroup,
-        maxScore: 1,
+        maxPoints: 1,
         title: 'text' + nextAlphanumeric(5),
         type: 'text',
         mode: 'INDIVIDUAL',

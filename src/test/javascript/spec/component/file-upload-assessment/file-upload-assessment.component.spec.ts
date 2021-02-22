@@ -60,7 +60,7 @@ describe('FileUploadAssessmentComponent', () => {
     let router: Router;
     const activatedRouteMock: MockActivatedRoute = new MockActivatedRoute();
 
-    const exercise = { id: 20, type: ExerciseType.FILE_UPLOAD, maxScore: 100, bonusPoints: 0 } as FileUploadExercise;
+    const exercise = { id: 20, type: ExerciseType.FILE_UPLOAD, maxPoints: 100, bonusPoints: 0 } as FileUploadExercise;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -186,27 +186,27 @@ describe('FileUploadAssessmentComponent', () => {
 
         fixture.detectChanges();
         expect(comp.generalFeedback).to.deep.equal(feedbacks[0]);
-        expect(comp.referencedFeedback.length).to.equal(1);
+        expect(comp.unreferencedFeedback.length).to.equal(1);
         expect(comp.busy).to.be.false;
         expect(comp.totalScore).to.equal(10);
 
         // delete feedback
-        comp.deleteAssessment(comp.referencedFeedback[0]);
-        expect(comp.referencedFeedback.length).to.equal(0);
+        comp.deleteAssessment(comp.unreferencedFeedback[0]);
+        expect(comp.unreferencedFeedback.length).to.equal(0);
         expect(comp.totalScore).to.equal(0);
     });
 
     it('should add a feedback', () => {
-        expect(comp.referencedFeedback.length).to.equal(0);
+        expect(comp.unreferencedFeedback.length).to.equal(0);
         comp.addFeedback();
-        expect(comp.referencedFeedback.length).to.equal(1);
+        expect(comp.unreferencedFeedback.length).to.equal(1);
         expect(comp.totalScore).to.equal(0);
     });
 
     it('should delete a feedback', () => {
-        expect(comp.referencedFeedback.length).to.equal(0);
+        expect(comp.unreferencedFeedback.length).to.equal(0);
         comp.addFeedback();
-        expect(comp.referencedFeedback.length).to.equal(1);
+        expect(comp.unreferencedFeedback.length).to.equal(1);
         expect(comp.totalScore).to.equal(0);
     });
 
@@ -217,7 +217,7 @@ describe('FileUploadAssessmentComponent', () => {
         const feedback2 = new Feedback();
         feedback2.credits = 85;
         feedback2.type = FeedbackType.AUTOMATIC;
-        comp.referencedFeedback = [feedback, feedback2];
+        comp.unreferencedFeedback = [feedback, feedback2];
         comp.updateAssessment();
         expect(comp.totalScore).to.equal(100);
     });

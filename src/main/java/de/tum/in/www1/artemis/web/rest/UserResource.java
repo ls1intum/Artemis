@@ -22,10 +22,12 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.user.UserCreationService;
+import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
@@ -67,16 +69,23 @@ public class UserResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final UserRepository userRepository;
-
     private final UserService userService;
+
+    private final UserCreationService userCreationService;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    public UserResource(UserRepository userRepository, UserService userService, ArtemisAuthenticationProvider artemisAuthenticationProvider) {
+    private final UserRepository userRepository;
+
+    private final AuthorityRepository authorityRepository;
+
+    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository) {
         this.userRepository = userRepository;
         this.userService = userService;
+        this.userCreationService = userCreationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
+        this.authorityRepository = authorityRepository;
     }
 
     /**
@@ -108,7 +117,7 @@ public class UserResource {
             throw new EntityNotFoundException("Not all groups are available: " + managedUserVM.getGroups());
         }
         else {
-            User newUser = userService.createUser(managedUserVM);
+            User newUser = userCreationService.createUser(managedUserVM);
 
             // NOTE: Mail service is NOT active at the moment
             // mailService.sendCreationEmail(newUser);
@@ -129,19 +138,23 @@ public class UserResource {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) {
         log.debug("REST request to update User : {}", managedUserVM);
+
         Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail());
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(managedUserVM.getId()))) {
             throw new EmailAlreadyUsedException();
         }
+
         existingUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(managedUserVM.getLogin().toLowerCase());
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(managedUserVM.getId()))) {
             throw new LoginAlreadyUsedException();
         }
+
         if (managedUserVM.getGroups().stream().anyMatch(group -> !artemisAuthenticationProvider.isGroupAvailable(group))) {
             throw new EntityNotFoundException("Not all groups are available: " + managedUserVM.getGroups());
         }
 
         User updatedUser = null;
+        existingUser = userRepository.findOneWithGroupsAndAuthoritiesById(managedUserVM.getId());
         if (existingUser.isPresent()) {
             updatedUser = userService.updateUser(existingUser.get(), managedUserVM);
         }
@@ -159,7 +172,7 @@ public class UserResource {
     @GetMapping("/users")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<List<UserDTO>> getAllUsers(@ApiParam PageableSearchDTO<String> userSearch) {
-        final Page<UserDTO> page = userService.getAllManagedUsers(userSearch);
+        final Page<UserDTO> page = userRepository.getAllManagedUsers(userSearch);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -179,16 +192,18 @@ public class UserResource {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
         }
         // limit search results to 25 users (larger result sizes would impact performance and are not useful for specific user searches)
-        final Page<UserDTO> page = userService.searchAllUsersByLoginOrName(PageRequest.of(0, 25), loginOrName);
+        final Page<UserDTO> page = userRepository.searchAllUsersByLoginOrName(PageRequest.of(0, 25), loginOrName);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
-    /** @return a string list of the all of the roles */
+    /**
+     * @return a string list of the all of the roles
+     */
     @GetMapping("/users/authorities")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public List<String> getAuthorities() {
-        return userService.getAuthorities();
+        return authorityRepository.getAuthorities();
     }
 
     /**
@@ -201,7 +216,7 @@ public class UserResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<UserDTO> getUser(@PathVariable String login) {
         log.debug("REST request to get User : {}", login);
-        return ResponseUtil.wrapOrNotFound(userService.getUserWithAuthoritiesByLogin(login).map(UserDTO::new));
+        return ResponseUtil.wrapOrNotFound(userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).map(UserDTO::new));
     }
 
     /**
@@ -222,8 +237,8 @@ public class UserResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> updateUserNotificationDate() {
         log.debug("REST request to update notification date for logged in user");
-        User user = userService.getUser();
-        userService.updateUserNotificationReadDate(user.getId());
+        User user = userRepository.getUser();
+        userRepository.updateUserNotificationReadDate(user.getId());
         return ResponseEntity.ok().build();
     }
 }

@@ -41,7 +41,7 @@
                     </td>
                     <td>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
-                            <button
+                            <a
                                 [routerLink]="[
                                     '/course-management',
                                     courseId,
@@ -54,7 +54,7 @@
                                 class="btn btn-outline-secondary btn-sm mb-1"
                             >
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
-                            </button>
+                            </a>
                         </span>
                         <span>
                             <button *ngIf="!submission.latestResult!.completionDate" (click)="cancelAssessment(submission)" class="btn btn-outline-secondary btn-sm mb-1">

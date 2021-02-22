@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -18,11 +17,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -32,9 +29,9 @@ public class SubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(SubmissionService.class);
 
-    private ExamService examService;
+    private final ExamDateService examDateService;
 
-    private CourseService courseService;
+    private final CourseRepository courseRepository;
 
     protected final SubmissionRepository submissionRepository;
 
@@ -46,31 +43,25 @@ public class SubmissionService {
 
     protected final ParticipationService participationService;
 
-    protected final UserService userService;
+    protected final UserRepository userRepository;
 
     protected final FeedbackRepository feedbackRepository;
 
-    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
-            StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, FeedbackRepository feedbackRepository) {
+    protected final ParticipationRepository participationRepository;
+
+    public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
+            ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
+            FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository) {
         this.submissionRepository = submissionRepository;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.feedbackRepository = feedbackRepository;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setExamService(ExamService examService) {
-        this.examService = examService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setCourseService(CourseService courseService) {
-        this.courseService = courseService;
+        this.examDateService = examDateService;
+        this.courseRepository = courseRepository;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -85,7 +76,8 @@ public class SubmissionService {
      */
     public <T> Optional<ResponseEntity<T>> checkSubmissionAllowance(Exercise exercise, Submission submission, User currentUser) {
         // Fetch course from database to make sure client didn't change groups
-        final Course course = courseService.findOne(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        final var courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        final var course = courseRepository.findByIdElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, currentUser)) {
             return Optional.of(forbidden());
         }
@@ -123,20 +115,10 @@ public class SubmissionService {
      * @param courseId the id of the course
      */
     public void checkSubmissionLockLimit(long courseId) {
-        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
         if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
             throw new BadRequestAlertException("The limit of locked submissions has been reached", "submission", "lockedSubmissionsLimitReached");
         }
-    }
-
-    /**
-     * Get the number of simultaneously locked submissions (i.e. unfinished assessments) for the current user in the given course.
-     *
-     * @param courseId the id of the course
-     * @return number of locked submissions for the current user in the given course
-     */
-    public long countSubmissionLocks(long courseId) {
-        return submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
     }
 
     /**
@@ -146,7 +128,7 @@ public class SubmissionService {
      * @return number of locked submissions for the current user in the given course
      */
     public List<Submission> getLockedSubmissions(long courseId) {
-        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
     }
 
     /**
@@ -190,10 +172,16 @@ public class SubmissionService {
         List<StudentParticipation> participations;
 
         if (examMode) {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(exercise.getId(), correctionRound);
+            // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
+            // No manual result means that no user has started an assessment for the corresponding submission yet.
+            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exercise.getId(),
+                    correctionRound);
         }
         else {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId());
+            // Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for
+            // the
+            // corresponding submission yet.
+            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId());
         }
 
         List<Submission> submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
@@ -203,7 +191,7 @@ public class SubmissionService {
             // remove submission if user already assessed first correction round
             // if disabled, please switch tutorAssessUnique within the tests
             submissionsWithoutResult = submissionsWithoutResult.stream()
-                    .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1).getAssessor().equals(userService.getUser())).collect(Collectors.toList());
+                    .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1).getAssessor().equals(userRepository.getUser())).collect(Collectors.toList());
         }
 
         if (submissionsWithoutResult.isEmpty()) {
@@ -238,38 +226,6 @@ public class SubmissionService {
     public Submission findOneWithEagerResultAndFeedback(long submissionId) {
         return submissionRepository.findWithEagerResultAndFeedbackById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * Count number of in-time submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
-     * @param courseId the course id we are interested in
-     * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
-     *         due date at all
-     */
-    public long countInTimeSubmissionsForCourse(long courseId) {
-        return submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
-    }
-
-    /**
-     * Count number of late submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
-     * @param courseId the course id we are interested in
-     * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date after the exercise due date
-     */
-    public long countLateSubmissionsForCourse(long courseId) {
-        return submissionRepository.countByCourseIdSubmittedAfterDueDate(courseId);
-    }
-
-    /**
-     * Count number of submissions for exercise.
-     * @param exerciseId the exercise id we are interested in
-     * @param examMode should be set to ignore the test run submissions
-     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true, separated into before and after the due date
-     */
-    public DueDateStat countSubmissionsForExercise(long exerciseId, boolean examMode) {
-        if (examMode) {
-            return new DueDateStat(submissionRepository.countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exerciseId), 0L);
-        }
-        return new DueDateStat(submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId), submissionRepository.countByExerciseIdSubmittedAfterDueDate(exerciseId));
     }
 
     /**
@@ -388,7 +344,7 @@ public class SubmissionService {
 
     /**
      * Add a result to the last {@link Submission} of a {@link StudentParticipation}, see {@link StudentParticipation#findLatestSubmission()}, with a feedback of type {@link FeedbackType#AUTOMATIC}.
-     * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment, see {@link StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation}.
+     * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment, see {@link StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation}.
      * Sets the feedback text and result score.
      *
      * @param studentParticipation the studentParticipation containing the latest result
@@ -425,14 +381,42 @@ public class SubmissionService {
     }
 
     /**
-     * Soft the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
+     * Serves as a wrapper method to {@link SubmissionService#lockSubmission} for exam test runs
+     * Creates an empty draft assessment with the user as an assessor and copies the automatic feedback (if present) into the new result.
+     * NOTE: We only support one correction round for test runs.
+     *
+     * @param submission the submission
+     * @return the draft assessment
+     */
+    public Result prepareTestRunSubmissionForAssessment(Submission submission) {
+        Optional<Result> existingAutomaticResult = Optional.empty();
+        if (submission.getLatestResult() != null && AssessmentType.AUTOMATIC.equals(submission.getLatestResult().getAssessmentType())) {
+            existingAutomaticResult = resultRepository.findByIdWithEagerFeedbacks(submission.getLatestResult().getId());
+        }
+
+        // we only support one correction round for test runs
+        var draftAssessment = lockSubmission(submission, 0);
+
+        // copy feedback from automatic result
+        if (existingAutomaticResult.isPresent()) {
+            draftAssessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+            draftAssessment.setResultString(existingAutomaticResult.get().getResultString());
+            // also saves the draft assessment
+            draftAssessment.setFeedbacks(copyFeedbackToNewResult(draftAssessment, existingAutomaticResult.get()));
+        }
+
+        return draftAssessment;
+    }
+
+    /**
+     * Soft locks the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
      * tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
      *
      * @param submission the submission to lock
      */
     protected Result lockSubmission(Submission submission, int correctionRound) {
         Result result = submission.getResultForCorrectionRound(correctionRound);
-        if (result == null && correctionRound > 0L) {
+        if (result == null && correctionRound > 0) {
             // copy the result of the previous correction round
             result = copyResultFromPreviousRoundAndSave(submission, submission.getResultForCorrectionRound(correctionRound - 1));
         }
@@ -441,7 +425,7 @@ public class SubmissionService {
         }
 
         if (result.getAssessor() == null) {
-            result.setAssessor(userService.getUser());
+            result.setAssessor(userRepository.getUser());
         }
 
         result.setAssessmentType(AssessmentType.MANUAL);
@@ -504,7 +488,7 @@ public class SubmissionService {
         final boolean isExamMode = exercise.isExamExercise();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (isExamMode) {
-            ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
+            ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                 log.debug("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");

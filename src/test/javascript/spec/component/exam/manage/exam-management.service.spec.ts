@@ -121,7 +121,7 @@ describe('Exam Management Service Tests', () => {
         service.getExamWithInterestingExercisesForAssessmentDashboard(course.id!, mockExam.id!, false).subscribe((res) => expect(res.body).to.equal([]));
 
         // THEN
-        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/for-exam-tutor-dashboard` });
+        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/exam-for-assessment-dashboard` });
     });
 
     it('should getExamWithInterestingExercisesForAssessmentDashboard with isTestRun=true', () => {
@@ -132,7 +132,7 @@ describe('Exam Management Service Tests', () => {
         service.getExamWithInterestingExercisesForAssessmentDashboard(course.id!, mockExam.id!, true).subscribe((res) => expect(res.body).to.equal([]));
 
         // THEN
-        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/for-exam-tutor-test-run-dashboard` });
+        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/exam-for-test-run-assessment-dashboard` });
     });
 
     it('should get latest individual end date of exam', () => {
@@ -388,7 +388,20 @@ describe('Exam Management Service Tests', () => {
         // THEN
         httpMock.expectOne({
             method: 'PUT',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/exerciseGroupsOrder`,
+            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/exercise-groups-order`,
         });
+    });
+
+    it('should enroll all registered students to exam', () => {
+        // GIVEN
+        const mockExam: Exam = { id: 1 };
+        const mockStudents: StudentDTO[] = [
+            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1' },
+            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2' },
+        ];
+
+        service.addAllStudentsOfCourseToExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.eq(mockStudents));
+
+        httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/register-course-students` });
     });
 });
