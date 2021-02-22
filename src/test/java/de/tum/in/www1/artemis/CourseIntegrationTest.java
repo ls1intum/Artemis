@@ -432,6 +432,18 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetCoursesWithQuizExercises() throws Exception {
+        database.createCoursesWithExercisesAndLectures(true);
+        List<Course> courses = request.getList("/api/courses/courses-with-quiz", HttpStatus.OK, Course.class);
+        assertThat(courses.size()).as("All courses are available").isEqualTo(1);
+        for (Exercise exercise : courses.get(0).getExercises()) {
+            assertThat(exercise.getGradingInstructions()).as("Grading instructions are not filtered out").isNotNull();
+            assertThat(exercise.getProblemStatement()).as("Problem statements are not filtered out").isNotNull();
+        }
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetCourseForDashboard() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);

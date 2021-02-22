@@ -12,7 +12,7 @@ export class SortService {
             const valueA = this.customGet(a, key, undefined);
             const valueB = this.customGet(b, key, undefined);
 
-            if ((!valueA && valueA !== 0) || (!valueB && valueB !== 0)) {
+            if (valueA == undefined || valueB == undefined) {
                 return SortService.compareWithUndefinedNull(valueA, valueB);
             }
 

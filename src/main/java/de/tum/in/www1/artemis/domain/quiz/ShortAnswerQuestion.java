@@ -13,6 +13,11 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategy;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyShortAnswerAllOrNothing;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyShortAnswerProportionalWithPenalty;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyShortAnswerProportionalWithoutPenalty;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -336,6 +341,20 @@ public class ShortAnswerQuestion extends QuizQuestion {
     public void filterForStatisticWebsocket() {
         super.filterForStatisticWebsocket();
         setCorrectMappings(null);
+    }
+
+    /**
+     * creates an instance of ScoringStrategy with the appropriate type for the given short answer question (based on polymorphism)
+     *
+     * @return an instance of the appropriate implementation of ScoringStrategy
+     */
+    @Override
+    public ScoringStrategy makeScoringStrategy() {
+        return switch (getScoringType()) {
+            case ALL_OR_NOTHING -> new ScoringStrategyShortAnswerAllOrNothing();
+            case PROPORTIONAL_WITH_PENALTY -> new ScoringStrategyShortAnswerProportionalWithPenalty();
+            case PROPORTIONAL_WITHOUT_PENALTY -> new ScoringStrategyShortAnswerProportionalWithoutPenalty();
+        };
     }
 
     @Override
