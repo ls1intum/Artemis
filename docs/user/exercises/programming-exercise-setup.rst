@@ -103,12 +103,14 @@ Exercise Creation
     - **Preview**: Given the short name of the exercise and the short name of the course, Artemis displays a preview of the
       generated repositories and build plans.
 
+
     .. figure:: programming/programming-options-general-information.png
               :align: center
 
     - **Categories:** Instructors can freely define up to two categories per exercise. The categories are visible to students
       and should be used consistently to group similar kinds of exercises.
     - **Difficulty:** Instructors can give students information about the difficulty of the exercise.
+
 
     .. figure:: programming/programming-options-mode.png
               :align: center
@@ -117,6 +119,7 @@ Exercise Creation
     - **Team size:** If ``Team`` mode is chosen, instructors can additionally give recommendations for the team size. Instructors/Tutors define the teams after
       the exercise creation.
 
+
     .. figure:: programming/programming-options-programming-language.png
               :align: center
 
@@ -124,6 +127,7 @@ Exercise Creation
       Refer to the :ref:`programming exercise features <programming_features>` for an overview of the supported features for each template.
     - **Project Type:** Determines the project structure of the template. Not available for all programming languages.
     - **Package Name:** The package name used for this exercise. Not available for all programming languages. Not available for all programming languages.
+
 
     .. figure:: programming/programming-options-timeline.png
               :align: center
@@ -143,6 +147,7 @@ Exercise Creation
     - **Manual Review:** Instructors/Tutors have to manually review the latest student submissions after the automatic tests were executed.
     - **Assessment Due Date:** The deadline for the manual reviews. On this date, all manual assessments will be released to the students.
 
+
     .. figure:: programming/programming-options-score.png
               :align: center
 
@@ -152,6 +157,7 @@ Exercise Creation
         The achieved total points will count towards the total course/exam score
       - ``Bonus``: The achieved **Points** will count towards the total course/exam score as a bonus.
       - ``No``: The achieved **Points** will **not** count towards the total course/exam score.
+
 
     .. figure:: programming/programming-options-sca.png
               :align: center
@@ -169,15 +175,18 @@ Exercise Creation
       Given an exercise with 10 **Points**. If **Max Static Code Analysis Penalty** is 20%, at most 2 points will be deducted
       from the points achieved by passing test cases for code quality issues in the submission.
 
+
     .. figure:: programming/programming-options-instructions.png
               :align: center
 
     - **Problem Statement:** The problem statement of the exercise. Refer to :ref:`interactive problem statement <interactive_problem_statement>` for more information.
 
+
     .. figure:: programming/programming-options-grading-instructions.png
               :align: center
 
     - **Grading Instructions:** Available if **Manual Review** is active. Create instructions for the manual assessment of the exercise.
+
 
     .. figure:: programming/programming-options-advanced-configuration.png
               :align: center
