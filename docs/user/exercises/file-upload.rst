@@ -9,8 +9,7 @@ File Upload Exercise
 Overview
 --------
 
-Conducting a file exercise consists of 3 steps distributed among
-instructor, Artemis and students:
+Conducting a file upload exercise consists of 3 steps:
 
 1. **Instructor prepares exercise:** Creates and configures the exercise in Artemis.
 2. **Student solves exercise:** Creates a submission file, and uploads it.
@@ -63,7 +62,7 @@ Student Submission
 Assessment
 ----------
 
-- When the due date is over you can assess the submissions. From the assessment dashboard go to exercise assessment dashboard of the file-upload exercise.
+- When the due date is over you can assess the submissions. From the assessment dashboard go to exercise assessment dashboard of the file upload exercise.
 - There you can assess the submitted student submissions, by first downloading the file, and then creating feedback with points.
 
 .. |edit| image:: programming/edit.png
