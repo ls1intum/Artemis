@@ -86,10 +86,12 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     private String validModel;
 
+    private Course course;
+
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(6, 2, 1);
-        Course course = database.addCourseWithDifferentModelingExercises();
+        this.course = database.addCourseWithDifferentModelingExercises();
         classExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         activityExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
         objectExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");
@@ -188,6 +190,12 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentNotFinished(storedResult, assessor);
         assertThat(storedResult.getParticipation()).isNotNull();
+
+        Course course = request.get("/api/courses/" + this.course + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
+        Exercise exercise = (Exercise) course.getExercises().toArray()[0];
+        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
+        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(1L);
+
     }
 
     @Test
