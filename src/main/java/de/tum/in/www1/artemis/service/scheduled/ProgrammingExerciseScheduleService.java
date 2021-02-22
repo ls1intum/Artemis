@@ -87,11 +87,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     .findAllByManualAssessmentAndDueDateAfterDate(ZonedDateTime.now());
             programmingExercisesWithFutureManualAssessment.forEach(this::scheduleExercise);
 
-            // for exams (TODO take info account that the individual due dates can be after the exam end date)
             List<ProgrammingExercise> programmingExercisesWithExam = programmingExerciseRepository.findAllWithEagerExamAllByExamEndDateAfterDate(ZonedDateTime.now());
             programmingExercisesWithExam.forEach(this::scheduleExamExercise);
-            log.info("Scheduled building the student submissions for " + programmingExercisesWithBuildAfterDueDate.size()
-                    + " programming exercises with a buildAndTestAfterDueDate.");
+            log.info("Scheduled " + programmingExercisesWithBuildAfterDueDate.size() + " programming exercises with a buildAndTestAfterDueDate.");
+            log.info("Scheduled " + programmingExercisesWithFutureManualAssessment.size() + " programming exercises with future manual assessment.");
+            log.info("Scheduled " + programmingExercisesWithExam.size() + " exam programming exercises.");
         }
         catch (Exception e) {
             log.error("Failed to start ProgrammingExerciseScheduleService", e);
