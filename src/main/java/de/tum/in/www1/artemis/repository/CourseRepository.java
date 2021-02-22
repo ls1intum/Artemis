@@ -76,6 +76,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     Optional<Course> findById(long courseId);
 
+    @Query("""
+            select c
+            from Course c, User u
+            where u.id = :#{#userId} and c.instructorGroupName member of u.groups
+            """)
+    List<Course> getCoursesForWhichUserHasInstructorAccess(@Param("userId") Long userId);
+
     @NotNull
     default Course findByIdElseThrow(Long courseId) throws EntityNotFoundException {
         return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));

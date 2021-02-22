@@ -52,6 +52,13 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises" })
     Optional<Exam> findWithStudentExamsExercisesById(Long id);
 
+    @Query("""
+            select e
+            from Exam e, User u
+            where u.id = :#{#userId} and e.course.instructorGroupName member of u.groups
+            """)
+    List<Exam> getExamsForWhichUserHasInstructorAccess(@Param("userId") Long userId);
+
     // IMPORTANT: NEVER use the following EntityGraph because it will lead to crashes for exams with many users
     // The problem is that 2000 student Exams with 10 exercises and 2000 existing participations would load 2000*10*2000 = 40 mio objects
     // @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises", "studentExams.exercises.participations" })
