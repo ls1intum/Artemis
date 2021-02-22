@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Optional;
 
 import javax.validation.Valid;
 
@@ -139,13 +138,13 @@ public class UserResource {
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) {
         log.debug("REST request to update User : {}", managedUserVM);
 
-        Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail());
-        if (existingUser.isPresent() && (!existingUser.get().getId().equals(managedUserVM.getId()))) {
+        var existingUserByEmail = userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail());
+        if (existingUserByEmail.isPresent() && (!existingUserByEmail.get().getId().equals(managedUserVM.getId()))) {
             throw new EmailAlreadyUsedException();
         }
 
-        existingUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(managedUserVM.getLogin().toLowerCase());
-        if (existingUser.isPresent() && (!existingUser.get().getId().equals(managedUserVM.getId()))) {
+        var existingUserByLogin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(managedUserVM.getLogin().toLowerCase());
+        if (existingUserByLogin.isPresent() && (!existingUserByLogin.get().getId().equals(managedUserVM.getId()))) {
             throw new LoginAlreadyUsedException();
         }
 
@@ -153,14 +152,13 @@ public class UserResource {
             throw new EntityNotFoundException("Not all groups are available: " + managedUserVM.getGroups());
         }
 
-        User updatedUser = null;
-        existingUser = userRepository.findOneWithGroupsAndAuthoritiesById(managedUserVM.getId());
-        if (existingUser.isPresent()) {
-            updatedUser = userService.updateUser(existingUser.get(), managedUserVM);
-        }
+        var existingUser = userRepository.findWithGroupsAndAuthoritiesByIdElseThrow(managedUserVM.getId());
+        final var oldUserLogin = existingUser.getLogin();
+        final var oldGroups = existingUser.getGroups();
+        var updatedUser = userCreationService.updateInternalUser(existingUser, managedUserVM);
+        userService.updateUserInConnectorsAndAuthProvider(existingUser, oldUserLogin, oldGroups);
 
-        final var responseDTO = Optional.ofNullable(updatedUser != null ? new UserDTO(updatedUser) : null);
-        return ResponseUtil.wrapOrNotFound(responseDTO, HeaderUtil.createAlert(applicationName, "userManagement.updated", managedUserVM.getLogin()));
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.updated", managedUserVM.getLogin())).body(new UserDTO(updatedUser));
     }
 
     /**
