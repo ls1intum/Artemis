@@ -39,14 +39,10 @@
         </div>
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise.id)">
             <div *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && resultsPublished">
-                <button
-                    *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0"
-                    class="btn btn-primary float-right"
-                    [routerLink]="generateLink(exercise)"
-                >
+                <a *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0" class="btn btn-primary float-right" [routerLink]="generateLink(exercise)">
                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                     <span jhiTranslate="artemisApp.exam.examSummary.viewResult">&nbsp;View Result</span>
-                </button>
+                </a>
             </div>
             <!-- prettier-ignore -->
             <h5>{{ exercise.title }} [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | translate }}
