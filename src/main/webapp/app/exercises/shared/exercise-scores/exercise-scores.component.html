@@ -36,7 +36,7 @@
         </div>
         <div class="d-flex justify-content-end">
             <div class="button-toolbar">
-                <a routerLink="/course-management/{{ course.id }}/exercises/{{ exercise.id }}/participations" class="btn btn-primary btn-sm mr-1">
+                <a [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'participations']" class="btn btn-primary btn-sm mr-1">
                     <fa-icon [icon]="'list-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                 </a>
@@ -116,7 +116,7 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <span *ngIf="exercise.isAtLeastInstructor">
-                            <a routerLink="../participations/{{ value.id }}/submissions">
+                            <a [routerLink]="['..', 'participations', value.id, 'submissions']">
                                 {{ value.student?.name || value.team?.name }}
                             </a>
                         </span>
@@ -157,7 +157,6 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <!-- TODO: Had to Remove Date Pipe as UI did not update when sorting. Investigate the reason -->
                         {{ formatDate(value) }}
                     </ng-template>
                 </ngx-datatable-column>
@@ -195,7 +194,7 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-center">
-                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" routerLink="../participations/{{ value.id }}/submissions">
+                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" [routerLink]="['..', 'participations', value.id, 'submissions']">
                                 {{ value.submissionCount }}
                             </a>
                             <ng-template #displayTextOnly>
@@ -231,15 +230,15 @@
                             <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>
                             Build plan
                         </button>
-                        <button
-                            routerLink="/courses/{{ course.id }}/programming-exercises/{{ exercise.id }}/code-editor/{{ value.participation.id }}"
+                        <a
+                            [routerLink]="['/courses', course.id, 'programming-exercises', exercise.id, 'code-editor', value.participation.id]"
                             class="btn btn-info btn-sm mr-1"
                             *ngIf="value.participation.exercise.allowOnlineEditor"
-                            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                            [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
                         >
                             <fa-icon class="mr-1" [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             Online editor
-                        </button>
+                        </a>
                         <a
                             *ngIf="exercise.course && newManualResultAllowed"
                             [routerLink]="['/course-management', exercise.course?.id, 'programming-exercises', exercise.id, 'code-editor', value.participation.id, 'assessment']"
@@ -335,15 +334,15 @@
 
                 <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.TEXT && exercise.isAtLeastInstructor" [resizeable]="false" [minWidth]="180" [width]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <button
+                        <a
                             *ngIf="exercise.course"
                             [routerLink]="['/course-management', exercise.course?.id, 'text-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             class="btn btn-primary btn-sm mr-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.textSubmission.view' | translate }}
-                        </button>
-                        <button
+                        </a>
+                        <a
                             *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
                             [routerLink]="[
                                 '/course-management',
@@ -358,7 +357,7 @@
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.textSubmission.view' | translate }}
-                        </button>
+                        </a>
                     </ng-template>
                 </ngx-datatable-column>
             </ngx-datatable>

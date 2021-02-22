@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
@@ -56,7 +57,7 @@ public class ParticipationTeamWebsocketService {
 
     private final UserRepository userRepository;
 
-    private final ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -65,12 +66,12 @@ public class ParticipationTeamWebsocketService {
     private final ModelingSubmissionService modelingSubmissionService;
 
     public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
-            ParticipationService participationService, ExerciseRepository exerciseRepository, TextSubmissionService textSubmissionService,
+            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, TextSubmissionService textSubmissionService,
             ModelingSubmissionService modelingSubmissionService, HazelcastInstance hazelcastInstance) {
         this.messagingTemplate = messagingTemplate;
         this.simpUserRegistry = simpUserRegistry;
         this.userRepository = userRepository;
-        this.participationService = participationService;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.textSubmissionService = textSubmissionService;
         this.modelingSubmissionService = modelingSubmissionService;
@@ -162,7 +163,7 @@ public class ParticipationTeamWebsocketService {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
 
-        final StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        final StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
 
         // user must belong to the team who owns the participation in order to update a submission
         if (!participation.isOwnedBy(principal.getName())) {

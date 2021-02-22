@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
@@ -77,7 +78,7 @@ public class CourseResource {
 
     private final CourseService courseService;
 
-    private final ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -113,15 +114,15 @@ public class CourseResource {
 
     private final ResultRepository resultRepository;
 
-    public CourseResource(UserRepository userRepository, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
-            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-            SubmissionService submissionService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
-            ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
-            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository,
-            ResultRepository resultRepository) {
+    public CourseResource(UserRepository userRepository, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
+            CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+            Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository,
+            ComplaintResponseRepository complaintResponseRepository, SubmissionService submissionService, ComplaintService complaintService,
+            TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository,
+            Optional<VcsUserManagementService> vcsUserManagementService, AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository,
+            SubmissionRepository submissionRepository, ResultRepository resultRepository) {
         this.courseService = courseService;
-        this.participationService = participationService;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -413,6 +414,36 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/courses-with-quiz : get all courses with quiz exercises for administration purposes.
+     *
+     * @return the list of courses
+     */
+    @GetMapping("/courses/courses-with-quiz")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public List<Course> getAllCoursesWithQuizExercises() {
+        List<Course> courses;
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (authCheckService.isAdmin(user)) {
+            courses = courseRepository.findAll();
+        }
+        else {
+            courses = courseRepository.getCoursesForWhichUserHasInstructorAccess(user.getId());
+        }
+
+        // TODO: this is not the best performance that we iterate over all courses just to check if those course have a quiz or not, we should directly get all courses
+        // with all quiz exercises from the database, potentially using paging
+
+        List<Course> coursesWithQuiz = new ArrayList<>();
+        courses.forEach(course -> {
+            Course courseWithExercises = courseRepository.findWithEagerExercisesById(course.getId());
+            if (courseWithExercises != null && courseWithExercises.getExercises().stream().anyMatch(exercise -> exercise instanceof QuizExercise)) {
+                coursesWithQuiz.add(course);
+            }
+        });
+        return coursesWithQuiz;
+    }
+
+    /**
      * GET /courses : get all courses for administration purposes with user stats.
      *
      * @param onlyActive if true, only active courses will be considered in the result
@@ -483,11 +514,11 @@ public class CourseResource {
         // would lead to a SQL statement that cannot be optimized
 
         // 1st: fetch participations, submissions and results for individual exercises
-        List<StudentParticipation> individualParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
-                activeIndividualExercises);
+        List<StudentParticipation> individualParticipations = studentParticipationRepository
+                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(), activeIndividualExercises);
 
         // 2nd: fetch participations, submissions and results for team exercises
-        List<StudentParticipation> teamParticipations = participationService.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), activeTeamExercises);
+        List<StudentParticipation> teamParticipations = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), activeTeamExercises);
 
         // 3rd: merge both into one list for further processing
         List<StudentParticipation> participations = Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toList());
@@ -549,7 +580,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseForAssessmentDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
-        Course course = courseRepository.findOneWithExercises(courseId);
+        Course course = courseRepository.findWithEagerExercisesById(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -560,7 +591,7 @@ public class CourseResource {
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
-        assessmentDashboardService.prepareExercisesForAssessmentDashboard(course.getExercises(), tutorParticipations, false);
+        assessmentDashboardService.generateStatisticsForExercisesForAssessmentDashboard(course.getExercises(), tutorParticipations, false);
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
@@ -644,7 +675,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
-        Course course = courseRepository.findOneWithExercises(courseId);
+        Course course = courseRepository.findWithEagerExercisesById(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -665,7 +696,7 @@ public class CourseResource {
     public ResponseEntity<Course> getCourseWithExercisesAndRelevantParticipations(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request to get Course with exercises and relevant participations : {}", courseId);
         long start = System.currentTimeMillis();
-        Course course = courseRepository.findOneWithExercises(courseId);
+        Course course = courseRepository.findWithEagerExercisesById(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -714,7 +745,7 @@ public class CourseResource {
     public ResponseEntity<List<Submission>> getLockedSubmissionsForCourse(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
         long start = System.currentTimeMillis();
-        Course course = courseRepository.findOneWithExercises(courseId);
+        Course course = courseRepository.findWithEagerExercisesById(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -831,7 +862,7 @@ public class CourseResource {
         log.info("REST request to archive Course : {}", courseId);
 
         // Get the course with all exercises
-        final Course course = courseRepository.findOneWithExercisesAndLectures(courseId);
+        final Course course = courseRepository.findWithEagerExercisesAndLecturesById(courseId);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {

@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
@@ -18,13 +19,13 @@ import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
 @Service
 public class LearningGoalService {
 
-    private final ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final ExerciseRepository exerciseRepository;
 
-    public LearningGoalService(ParticipationService participationService, ExerciseRepository exerciseRepository) {
+    public LearningGoalService(StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository) {
         this.exerciseRepository = exerciseRepository;
-        this.participationService = participationService;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -134,11 +135,12 @@ public class LearningGoalService {
      */
     private List<StudentParticipation> getStudentParticipationsWithSubmissionsAndResults(User user, List<Exercise> individualExercises, List<Exercise> teamExercises) {
         // 1st: fetch participations, submissions and results for individual exercises
-        List<StudentParticipation> participationsOfIndividualExercises = participationService
+        List<StudentParticipation> participationsOfIndividualExercises = studentParticipationRepository
                 .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
 
         // 2nd: fetch participations, submissions and results for team exercises
-        List<StudentParticipation> participationsOfTeamExercises = participationService.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), teamExercises);
+        List<StudentParticipation> participationsOfTeamExercises = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(),
+                teamExercises);
 
         // 3rd: merge both into one list for further processing
         return Stream.concat(participationsOfIndividualExercises.stream(), participationsOfTeamExercises.stream()).collect(Collectors.toList());
