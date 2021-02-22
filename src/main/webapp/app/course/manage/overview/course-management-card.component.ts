@@ -8,6 +8,7 @@ import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overvie
 import { CourseManagementOverviewExerciseDetailsDTO } from 'app/course/manage/overview/course-management-overview-exercise-details-dto.model';
 import { CourseManagementOverviewDto } from 'app/course/manage/overview/course-management-overview-dto.model';
 import { Course } from 'app/entities/course.model';
+import { CachingStrategy } from 'app/shared/image/secured-image.component';
 
 @Component({
     selector: 'jhi-course-management-card',
@@ -17,6 +18,7 @@ import { Course } from 'app/entities/course.model';
 export class CourseManagementCardComponent implements OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
+    CachingStrategy = CachingStrategy;
     @Input() course: Course;
     @Input() courseDetails: CourseManagementOverviewDto;
     @Input() courseStatistics: CourseManagementOverviewStatisticsDto;

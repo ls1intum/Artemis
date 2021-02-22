@@ -110,8 +110,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             where (c.endDate is null or :#{#now} is null or c.endDate >= :#{#now})
                 and (:isAdmin = true or c.teachingAssistantGroupName in :userGroups or c.instructorGroupName in :userGroups)
             """)
-    List<Course> getAllCoursesForOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin,
-            @Param("userGroups") List<String> userGroups);
+    List<Course> getAllCoursesForOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
 
     @NotNull
     default Course findByIdElseThrow(Long courseId) throws EntityNotFoundException {
