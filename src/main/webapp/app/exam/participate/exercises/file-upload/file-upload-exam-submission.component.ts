@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, Input, ChangeDetectorRef, EventEmitter, Output } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, Input, ChangeDetectorRef } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -17,6 +17,7 @@ import { Result } from 'app/entities/result.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',
@@ -32,8 +33,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     @Input()
     exercise: FileUploadExercise;
 
-    @Output()
-    onExerciseChanged = new EventEmitter<{ exercise: Exercise; force: boolean }>();
+    private synchronizationAlert$ = new Subject();
 
     submittedFileName: string;
     submittedFileExtension: string;
@@ -70,6 +70,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     /**
      * Sets file submission for exercise
+     * Here the file selected with the -browse- button is handeled.
      * @param $event {object} Event object which contains the uploaded file
      */
     setFileSubmissionForExercise($event: any): void {
@@ -127,6 +128,23 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     }
 
     saveUploadedFile() {
-        this.onExerciseChanged.emit({ exercise: this.exercise, force: false });
+        if (!this.submissionFile) {
+            return;
+        }
+        this.fileUploadSubmissionService.update(this.studentSubmission as FileUploadSubmission, this.exercise.id!, this.submissionFile).subscribe(
+            (res) => {
+                const submissionFromServer = res.body!;
+                this.filePath = submissionFromServer.filePath;
+                this.studentSubmission.isSynced = true;
+                this.studentSubmission.submitted = true;
+                this.updateViewFromSubmission();
+            },
+            () => this.onSaveSubmissionError(),
+        );
+    }
+
+    private onSaveSubmissionError() {
+        // show an only one error for 5s - see constructor
+        this.synchronizationAlert$.next();
     }
 }

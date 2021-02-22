@@ -30,8 +30,6 @@ import { Moment } from 'moment';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash';
 import { Course } from 'app/entities/course.model';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import * as Sentry from '@sentry/browser';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
@@ -604,21 +602,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         );
                         break;
                     case ExerciseType.FILE_UPLOAD:
-                        const fileUploadComponent = activeComponent as FileUploadExamSubmissionComponent;
-                        if (!fileUploadComponent.submissionFile) {
-                            return;
-                        }
-                        this.fileUploadSubmissionService
-                            .update(submissionToSync.submission as FileUploadSubmission, submissionToSync.exercise.id!, fileUploadComponent.submissionFile)
-                            .subscribe(
-                                (res) => {
-                                    const submissionFromServer = res.body!;
-                                    (submissionToSync.submission as FileUploadSubmission).filePath = submissionFromServer.filePath;
-                                    ExamParticipationComponent.onSaveSubmissionSuccess(submissionToSync.submission);
-                                    activeComponent!.updateViewFromSubmission();
-                                },
-                                () => this.onSaveSubmissionError(),
-                            );
+                        // nothing to do here, because file upload exercisees are only submitted manually, not when you switch between exercises
                         break;
                 }
             });
