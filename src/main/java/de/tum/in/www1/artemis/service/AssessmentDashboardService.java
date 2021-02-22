@@ -74,8 +74,16 @@ public class AssessmentDashboardService {
             }
             exercise.setNumberOfSubmissions(numberOfSubmissions);
 
-            final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
-                totalNumberOfAssessments);
+            final DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
+            if (examMode) {
+                // set number of corrections specific to each correction round
+                int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+                numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRound(exercise, numberOfCorrectionRounds);
+            }
+            else {
+                // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
+                numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+            }
             log.info("StatsTimeLog: number of assessments per correction round in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
 
             exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
