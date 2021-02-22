@@ -111,6 +111,7 @@
                 "lectureGroupHeader": "Lectures: {{ total }}",
                 "totalLectures": "Total lectures:",
                 "totalAttachments": "Total attachments:",
+                "totalUnits": "Total lecture units: ",
                 "isLecture": "This is a lecture",
                 "noLectures": "No lectures available for the course.",
                 "sortLectures": "Sort lectures"
@@ -119,6 +120,10 @@
                 "description": "Description",
                 "lectureUnits": "Lecture Units",
                 "attachments": "Attachments",
+                "exerciseUnits": " {{ number }} Exercises",
+                "textUnits": " {{ number }} Texts",
+                "attachmentUnits": " {{ number }} Attachments",
+                "videoUnits": " {{ number }} Videos",
                 "noAttachments": "There are no attachments available for this lecture.",
                 "date": "Date",
                 "notReleased": "Not released",

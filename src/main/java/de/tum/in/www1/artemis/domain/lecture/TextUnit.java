@@ -23,4 +23,14 @@ public class TextUnit extends LectureUnit {
     public void setContent(String content) {
         this.content = content;
     }
+
+    /**
+     * Removes information from a lecture unit that is not needed in the course dashboard
+     */
+    @Override
+    public TextUnit slimDownForDashboard() {
+        super.slimDownForDashboard();
+        this.content = "";
+        return this;
+    }
 }

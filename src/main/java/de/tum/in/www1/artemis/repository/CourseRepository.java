@@ -46,12 +46,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("select distinct course from Course course where (course.startDate <= :#{#now} or course.startDate is null) and (course.endDate >= :#{#now} or course.endDate is null)")
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "lectures.lectureUnits", "exams" })
     @Query("select distinct course from Course course where (course.startDate <= :#{#now} or course.startDate is null) and (course.endDate >= :#{#now} or course.endDate is null)")
     List<Course> findAllActiveWithLecturesAndExams(@Param("now") ZonedDateTime now);
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
-    Optional<Course> findWithEagerLecturesAndExamsById(long courseId);
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "lectures.lectureUnits", "exams" })
+    Optional<Course> findWithEagerLecturesAndLectureUnitsAndExamsById(long courseId);
 
     // Note: this is currently only used for testing purposes
     @Query("select distinct course from Course course left join fetch course.exercises exercises left join fetch course.lectures lectures left join fetch lectures.attachments left join fetch exercises.categories where (course.startDate <= :#{#now} or course.startDate is null) and (course.endDate >= :#{#now} or course.endDate is null)")
@@ -124,7 +124,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @return the entity
      */
     @NotNull
-    default Course findByIdWithLecturesAndExamsElseThrow(Long courseId) {
-        return findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findByIdWithLecturesAndLectureUnitsAndExamsElseThrow(Long courseId) {
+        return findWithEagerLecturesAndLectureUnitsAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 }

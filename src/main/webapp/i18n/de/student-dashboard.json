@@ -109,6 +109,7 @@
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",
                 "totalLectures": "Vorlesungen insgesamt:",
                 "totalAttachments": "Anhänge insgesamt:",
+                "totalUnits": "Vorlesungseinheiten insgesamt: ",
                 "isLecture": "Das ist eine Vorlesung",
                 "noLectures": "Es gibt keine Vorlesungen für diesen Kurs.",
                 "sortLectures": "Vorlesungen sortieren"
@@ -117,6 +118,10 @@
                 "description": "Beschreibung",
                 "lectureUnits": "Vorlesungseinheiten",
                 "attachments": "Anhänge",
+                "exerciseUnits": " {{ number }} Aufgaben",
+                "textUnits": " {{ number }} Texte",
+                "attachmentUnits": " {{ number }} Anhänge",
+                "videoUnits": " {{ number }} Videos",
                 "noAttachments": "Für diese Vorlesung sind keine Anhänge verfügbar.",
                 "date": "Datum",
                 "notReleased": "Nicht freigegeben",

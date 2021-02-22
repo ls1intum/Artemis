@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -21,6 +23,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
@@ -98,7 +101,9 @@ public class CourseService {
      * @return the course including exercises and lectures for the user
      */
     public Course findOneWithExercisesAndLecturesForUser(Long courseId, User user) {
-        Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
+        Course course = courseRepository.findByIdWithLecturesAndLectureUnitsAndExamsElseThrow(courseId);
+
+        filterLectureUnits(course);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -108,6 +113,14 @@ public class CourseService {
             course.setExams(examService.filterVisibleExams(course.getExams()));
         }
         return course;
+    }
+
+    private void filterLectureUnits(Course course) {
+        for (Lecture lecture : course.getLectures()) {
+            List<LectureUnit> visibleLectureUnits = lecture.getLectureUnits().stream().filter(LectureUnit::isVisibleToStudents).map(LectureUnit::slimDownForDashboard)
+                    .collect(Collectors.toList());
+            lecture.setLectureUnits(visibleLectureUnits);
+        }
     }
 
     /**
@@ -138,6 +151,7 @@ public class CourseService {
                     if (authCheckService.isOnlyStudentInCourse(course, user)) {
                         course.setExams(examService.filterVisibleExams(course.getExams()));
                     }
+                    filterLectureUnits(course);
                 }).collect(Collectors.toList());
     }
 
@@ -333,7 +347,7 @@ public class CourseService {
         }
 
         // Clean up exams
-        var exams = courseRepository.findByIdWithLecturesAndExamsElseThrow(course.getId()).getExams();
+        var exams = courseRepository.findByIdWithLecturesAndLectureUnitsAndExamsElseThrow(course.getId()).getExams();
         var examExercises = exams.stream().map(exam -> examRepository.findAllExercisesByExamId(exam.getId())).flatMap(Collection::stream).collect(Collectors.toSet());
 
         var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());

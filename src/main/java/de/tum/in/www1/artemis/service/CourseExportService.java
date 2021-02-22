@@ -145,7 +145,7 @@ public class CourseExportService {
             Files.createDirectory(examsDir);
 
             // Lazy load the exams of the course.
-            var courseWithExams = courseRepository.findWithEagerLecturesAndExamsById(course.getId());
+            var courseWithExams = courseRepository.findWithEagerLecturesAndLectureUnitsAndExamsById(course.getId());
             if (courseWithExams.isPresent()) {
                 var exams = courseWithExams.get().getExams();
                 exams.forEach(exam -> exportExam(exam.getId(), examsDir.toString(), exportErrors));

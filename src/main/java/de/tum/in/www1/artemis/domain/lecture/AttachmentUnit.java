@@ -45,4 +45,15 @@ public class AttachmentUnit extends LectureUnit {
     public void setAttachment(Attachment attachment) {
         this.attachment = attachment;
     }
+
+    /**
+     * Removes information from a lecture unit that is not needed in the course dashboard
+     */
+    @Override
+    public AttachmentUnit slimDownForDashboard() {
+        super.slimDownForDashboard();
+        this.description = "";
+        this.attachment = null;
+        return this;
+    }
 }
