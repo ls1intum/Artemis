@@ -117,9 +117,11 @@ public class CourseService {
 
     private void filterLectureUnits(Course course) {
         for (Lecture lecture : course.getLectures()) {
-            List<LectureUnit> visibleLectureUnits = lecture.getLectureUnits().stream().filter(LectureUnit::isVisibleToStudents).map(LectureUnit::trimForDashboard)
-                    .collect(Collectors.toList());
-            lecture.setLectureUnits(visibleLectureUnits);
+            List<LectureUnit> visibleLectureUnits = lecture.getLectureUnits().stream().filter(LectureUnit::isVisibleToStudents).collect(Collectors.toList());
+            // do not combine into two streams as order of execution is not determined and can lead to null pointer
+            List<LectureUnit> trimmedLectureUnits = visibleLectureUnits.stream().map(LectureUnit::trimForDashboard).collect(Collectors.toList());
+
+            lecture.setLectureUnits(trimmedLectureUnits);
         }
     }
 
@@ -141,7 +143,7 @@ public class CourseService {
      * @return the list of all courses including exercises and lectures for the user
      */
     public List<Course> findAllActiveWithExercisesAndLecturesForUser(User user) {
-        return courseRepository.findAllActiveWithLecturesAndExams().stream()
+        return courseRepository.findAllActiveWithLecturesAndLectureUnitsAndExams().stream()
                 // filter old courses and courses the user should not be able to see
                 // skip old courses that have already finished
                 .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now())).filter(course -> isActiveCourseVisibleForUser(user, course))
