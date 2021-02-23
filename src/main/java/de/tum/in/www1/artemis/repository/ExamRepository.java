@@ -31,6 +31,13 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     List<Exam> findByCourseId(Long courseId);
 
+    @Query("""
+            SELECT ex
+            FROM Exam ex LEFT JOIN FETCH ex.exerciseGroups eg LEFT JOIN FETCH eg.exercises
+            WHERE ex.course.id = :courseId
+            """)
+    List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") Long courseId);
+
     @Query("select exam from Exam exam where exam.course.testCourse = false and exam.startDate >= :#{#date} order by exam.startDate asc")
     List<Exam> findAllByStartDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 

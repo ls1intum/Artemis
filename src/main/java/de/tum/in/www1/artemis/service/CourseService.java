@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -355,8 +352,9 @@ public class CourseService {
         }
 
         // Clean up exams
-        var exams = courseRepository.findByIdWithLecturesAndLectureUnitsAndExamsElseThrow(course.getId()).getExams();
-        var examExercises = exams.stream().map(exam -> examRepository.findAllExercisesByExamId(exam.getId())).flatMap(Collection::stream).collect(Collectors.toSet());
+        Set<Exercise> examExercises = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId).stream().filter(Objects::nonNull).map(Exam::getExerciseGroups)
+                .flatMap(Collection::stream).filter(Objects::nonNull).map(ExerciseGroup::getExercises).flatMap(Collection::stream).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
 
         var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());
         exercisesToCleanup.forEach(exercise -> {
