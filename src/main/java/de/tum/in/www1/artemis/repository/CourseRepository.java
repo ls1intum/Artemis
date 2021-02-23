@@ -46,8 +46,10 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("select distinct course from Course course where (course.startDate <= :#{#now} or course.startDate is null) and (course.endDate >= :#{#now} or course.endDate is null)")
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "lectures.lectureUnits", "exams" })
-    @Query("select distinct course from Course course where (course.startDate <= :#{#now} or course.startDate is null) and (course.endDate >= :#{#now} or course.endDate is null)")
+    @Query("""
+            select distinct course
+            from Course course LEFT JOIN FETCH course.lectures l LEFT JOIN FETCH l.lectureUnits LEFT JOIN FETCH l.attachments LEFT JOIN FETCH course.exams
+            where (course.startDate <= :#{#now} or course.startDate is null) and (course.endDate >= :#{#now} or course.endDate is null)""")
     List<Course> findAllActiveWithLecturesAndLectureUnitsAndExams(@Param("now") ZonedDateTime now);
 
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "lectures.lectureUnits", "exams" })

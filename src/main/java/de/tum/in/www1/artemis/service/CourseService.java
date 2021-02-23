@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -117,7 +118,12 @@ public class CourseService {
 
     private void filterLectureUnits(Course course) {
         for (Lecture lecture : course.getLectures()) {
-            List<LectureUnit> visibleLectureUnits = lecture.getLectureUnits().stream().filter(LectureUnit::isVisibleToStudents).collect(Collectors.toList());
+            if (lecture.getLectureUnits() == null) {
+                return;
+            }
+
+            List<LectureUnit> visibleLectureUnits = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(LectureUnit::isVisibleToStudents)
+                    .collect(Collectors.toList());
             // do not combine into two streams as order of execution is not determined and can lead to null pointer
             List<LectureUnit> trimmedLectureUnits = visibleLectureUnits.stream().map(LectureUnit::trimForDashboard).collect(Collectors.toList());
 
@@ -148,12 +154,12 @@ public class CourseService {
                 // skip old courses that have already finished
                 .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now())).filter(course -> isActiveCourseVisibleForUser(user, course))
                 .peek(course -> {
+                    filterLectureUnits(course);
                     course.setExercises(exerciseService.findAllForCourse(course, user));
                     course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
                     if (authCheckService.isOnlyStudentInCourse(course, user)) {
                         course.setExams(examService.filterVisibleExams(course.getExams()));
                     }
-                    filterLectureUnits(course);
                 }).collect(Collectors.toList());
     }
 
