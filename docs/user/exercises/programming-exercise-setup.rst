@@ -126,7 +126,7 @@ Exercise Creation
     - **Programming Language:** The programming language for the exercise. Artemis chooses the template accordingly.
       Refer to the :ref:`programming exercise features <programming_features>` for an overview of the supported features for each template.
     - **Project Type:** Determines the project structure of the template. Not available for all programming languages.
-    - **Package Name:** The package name used for this exercise. Not available for all programming languages. Not available for all programming languages.
+    - **Package Name:** The package name used for this exercise. Not available for all programming languages.
     |
 
     .. figure:: programming/programming-options-timeline.png
@@ -134,7 +134,7 @@ Exercise Creation
 
     - **Release Date:** Release date of the exercise. Students will only be able to participate in the exercise after this date.
     - **Automatic Tests:** Every commit of a participant triggers the execution of the tests in the **Test** repository.
-      Exempt are tests, which are specified to run after the due date. This is only possible if **Run Tests once after Due Date:** has been activated.
+      Excluded are tests, which are specified to run after the due date. This is only possible if **Run Tests once after Due Date:** has been activated.
       The tests that only run after the due date are chosen in the :ref:`grading configuration <configure_grading>`.
     - **Due Date:** The deadline for the exercise. Commits made after this date are not graded.
 
