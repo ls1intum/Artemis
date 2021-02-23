@@ -14,7 +14,7 @@ import { Result } from 'app/entities/result.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { notUndefined } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -77,7 +77,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         private route: ActivatedRoute,
         protected jhiAlertService: JhiAlertService,
         protected accountService: AccountService,
-        protected assessmentsService: TextAssessmentsService,
+        protected assessmentsService: TextAssessmentService,
         private complaintService: ComplaintService,
         translateService: TranslateService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
@@ -317,7 +317,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         const feedbacks = this.result.feedbacks || [];
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
 
-        const matchBlocksWithFeedbacks = TextAssessmentsService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks);
+        const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
     }
 

@@ -105,7 +105,7 @@
         </jhi-fullscreen>
         <jhi-complaint-interactions *ngIf="modelingExercise" [exercise]="modelingExercise" [participation]="participation" [result]="result"> </jhi-complaint-interactions>
         <div class="row" *ngIf="result">
-            <jhi-rating class="mt-2 alert alert-info" [result]="resultForRating"></jhi-rating>
+            <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)"></jhi-rating>
         </div>
     </div>
     <!--endregion-->

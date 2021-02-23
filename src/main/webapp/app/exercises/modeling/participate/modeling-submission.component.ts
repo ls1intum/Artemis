@@ -25,11 +25,12 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { ButtonType } from 'app/shared/components/button.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { cloneDeep, omit } from 'lodash';
+import { omit } from 'lodash';
 import * as moment from 'moment';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subject } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
+import { addParticipationToResult } from 'app/exercises/shared/result/result-utils';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -38,6 +39,7 @@ import { Subscription } from 'rxjs/Subscription';
 })
 // TODO CZ: move assessment functionality to separate assessment result view?
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    readonly addParticipationToResult = addParticipationToResult;
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
     ButtonType = ButtonType;
@@ -542,20 +544,5 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
 
         return 'entity.action.submitDeadlineMissedTooltip';
-    }
-
-    /**
-     * Prepare a result that contains a participation which is needed in the rating component
-     */
-    get resultForRating() {
-        const ratingResult = cloneDeep(this.result);
-        if (ratingResult) {
-            // remove circular dependency
-            const ratingParticipation = cloneDeep(this.participation);
-            ratingParticipation.exercise!.studentParticipations = [];
-
-            ratingResult.participation = ratingParticipation;
-        }
-        return ratingResult;
     }
 }
