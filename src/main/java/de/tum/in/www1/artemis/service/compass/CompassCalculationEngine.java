@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 
-public class CompassCalculationEngine implements CalculationEngine {
+public class CompassCalculationEngine{
 
     private final Logger log = LoggerFactory.getLogger(CompassCalculationEngine.class);
 
@@ -152,13 +152,24 @@ public class CompassCalculationEngine implements CalculationEngine {
         automaticAssessmentController.assessModelsAutomatically(modelIndex, assessmentIndex);
     }
 
-    @Override
+    /**
+     * Get the given number of ids of the next optimal modeling submissions. Optimal means that an assessment for this model results in the biggest knowledge gain for Compass which
+     * can be used for automatic assessments.
+     *
+     * @param numberOfModels the number of next optimal models to load
+     * @return the ids of the next optimal modeling submissions, or an empty list if there are no unhandled submissions
+     */
     public List<Long> getNextOptimalModels(int numberOfModels) {
         lastUsed = LocalDateTime.now();
         return modelSelector.selectNextModels(modelIndex, numberOfModels);
     }
 
-    @Override
+    /**
+     * Get the assessment result for a model. If no assessment is saved for the given model, it tries to create a new one automatically with the existing information of the engine.
+     *
+     * @param modelSubmissionId the id of the model
+     * @return the assessment result for the model
+     */
     public Grade getGradeForModel(long modelSubmissionId) {
         lastUsed = LocalDateTime.now();
         if (!modelIndex.getModelMap().containsKey(modelSubmissionId)) {
@@ -174,12 +185,16 @@ public class CompassCalculationEngine implements CalculationEngine {
         return compassResult;
     }
 
-    @Override
     public Collection<Long> getModelIds() {
         return modelIndex.getModelMap().keySet();
     }
 
-    @Override
+    /**
+     * Update the engine with a new manual assessment.
+     *
+     * @param modelingAssessment the new assessment as list of individual Feedback objects
+     * @param assessedModelSubmissionId  the id of the corresponding model
+     */
     public void notifyNewAssessment(List<Feedback> modelingAssessment, long assessedModelSubmissionId) {
         lastUsed = LocalDateTime.now();
         modelSelector.addAlreadyHandledModel(assessedModelSubmissionId);
@@ -193,7 +208,12 @@ public class CompassCalculationEngine implements CalculationEngine {
         assessModelsAutomatically();
     }
 
-    @Override
+    /**
+     * Add a new model
+     *
+     * @param model   the new model as raw sting
+     * @param modelId the id of the new model
+     */
     public void notifyNewModel(String model, long modelId) {
         lastUsed = LocalDateTime.now();
         // Do not add models that might already exist
@@ -208,17 +228,30 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
     }
 
-    @Override
+    /**
+     * @return the time when the engine has been used last
+     */
     public LocalDateTime getLastUsedAt() {
         return lastUsed;
     }
 
-    @Override
+    /**
+     * Get the list of model IDs which have been selected for the next manual assessments. Typically these models are the ones where Compass learns the most, when they are
+     * assessed. All returned models do not have a complete assessment.
+     *
+     * @return a list of modelIds that should be assessed next
+     */
     public List<Long> getModelsWaitingForAssessment() {
         return modelSelector.getModelsWaitingForAssessment();
     }
 
-    @Override
+    /**
+     * Removes the model with the given id from the list of models that should be assessed next. The isAssessed flag indicates if the corresponding model still needs an assessment
+     * or not, i.e. if the flag is true, the model will no longer be considered for assessment by Compass.
+     *
+     * @param modelSubmissionId    the id of the model
+     * @param isAssessed a flag indicating if the model still needs an assessment or not
+     */
     public void removeModelWaitingForAssessment(long modelSubmissionId, boolean isAssessed) {
         modelSelector.removeModelWaitingForAssessment(modelSubmissionId);
         if (isAssessed) {
@@ -229,12 +262,24 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
     }
 
-    @Override
+    /**
+     * Mark a model as unassessed, i.e. that it (still) needs to be assessed. By that it is not locked anymore and can be returned for assessment by Compass again.
+     *
+     * @param modelSubmissionId the id of the model that should be marked as unassessed
+     */
     public void markModelAsUnassessed(long modelSubmissionId) {
         modelSelector.removeAlreadyHandledModel(modelSubmissionId);
     }
 
-    @Override
+    /**
+     * Generate a Feedback list from the given Grade for the given model. The Grade was generated by Compass earlier in the automatic assessment process. It basically contains the
+     * Compass internal representation of the automatic assessment for the given model.
+     *
+     * @param grade   the Grade generated by Compass from which the Feedback list should be generated from
+     * @param modelId the id of the corresponding model
+     * @param result  the corresponding result that will be linked to the newly created feedback items
+     * @return the list of Feedback items generated from the Grade
+     */
     public List<Feedback> convertToFeedback(Grade grade, long modelId, Result result) {
         UMLDiagram model = this.modelIndex.getModelMap().get(modelId);
 
@@ -294,7 +339,6 @@ public class CompassCalculationEngine implements CalculationEngine {
      * @return statistics about the UML model
      */
     // TODO: I don't think we should expose JSONObject to this internal server class. It would be better to return Java objects here
-    @Override
     public JsonObject getStatistics() {
         JsonObject jsonObject = new JsonObject();
 
@@ -344,7 +388,14 @@ public class CompassCalculationEngine implements CalculationEngine {
         return jsonObject;
     }
 
-    @Override
+    /**
+     * Get the confidence for a specific model element with the given id. The confidence is the percentage indicating how certain Compass is about the assessment of the given model
+     * element. If it is smaller than a configured threshold, the element with the given id will not be assessed automatically.
+     *
+     * @param elementId    the id of the model element
+     * @param submissionId the id of the submission that contains the corresponding model
+     * @return the confidence for the model element with the given id
+     */
     public double getConfidenceForElement(String elementId, long submissionId) {
         UMLDiagram model = modelIndex.getModel(submissionId);
         UMLElement element = model.getElementByJSONID(elementId);
@@ -397,7 +448,12 @@ public class CompassCalculationEngine implements CalculationEngine {
         return !feedbackList.stream().allMatch(feedback -> feedback.getCredits().equals(feedbackList.get(0).getCredits()));
     }
 
-    @Override
+    /**
+     * Used for internal analysis of modeling data. Do not remove, usage is commented out due to performance reasons.
+     *
+     * @param exerciseId the id of the modeling exercise that is analyzed
+     * @param finishedResults the list of finished results, i.e. results for which assessor and completion date is not null
+     */
     public void printStatistic(long exerciseId, List<Result> finishedResults) {
         log.info("Statistics for exercise " + exerciseId + "\n\n\n");
 

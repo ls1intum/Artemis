@@ -54,7 +54,7 @@ public class CompassService {
     /**
      * Map exerciseId to compass CalculationEngines
      */
-    private static Map<Long, CalculationEngine> compassCalculationEngines = new ConcurrentHashMap<>();
+    private static Map<Long, CompassCalculationEngine> compassCalculationEngines = new ConcurrentHashMap<>();
 
     public CompassService(ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             StudentParticipationRepository studentParticipationRepository) {
@@ -221,7 +221,7 @@ public class CompassService {
             return;
         }
 
-        CalculationEngine engine = compassCalculationEngines.get(exerciseId);
+        CompassCalculationEngine engine = compassCalculationEngines.get(exerciseId);
         engine.notifyNewAssessment(modelingAssessment, submissionId);
 
         // Check all models for new automatic assessments
@@ -264,7 +264,7 @@ public class CompassService {
      * @param exerciseId   the id of the corresponding exercise
      */
     private void generateAutomaticFeedbackSuggestions(long submissionId, long exerciseId) {
-        CalculationEngine engine = compassCalculationEngines.get(exerciseId);
+        CompassCalculationEngine engine = compassCalculationEngines.get(exerciseId);
         ModelingSubmission modelingSubmission = findModelingSubmissionById(submissionId);
 
         if (engine == null || modelingSubmission == null) {
@@ -286,7 +286,7 @@ public class CompassService {
      * @param exerciseId    the id of the corresponding exercise
      */
     private void assessAllAutomatically(Collection<Long> submissionIds, long exerciseId) {
-        CalculationEngine engine = compassCalculationEngines.get(exerciseId);
+        CompassCalculationEngine engine = compassCalculationEngines.get(exerciseId);
         List<ModelingSubmission> modelingSubmissions = modelingSubmissionRepository.findWithEagerResultsFeedbacksAssessorAndParticipationResultsByIdIn(submissionIds);
 
         if (engine == null) {
@@ -311,7 +311,7 @@ public class CompassService {
      * @param engine the calculation engine for the corresponding exercise
      * @param exerciseId the exercise the given submission belongs to
      */
-    private void generateSemiAutomaticResult(long submissionId, Result result, CalculationEngine engine, long exerciseId) {
+    private void generateSemiAutomaticResult(long submissionId, Result result, CompassCalculationEngine engine, long exerciseId) {
         if (result.getAssessmentType() != AssessmentType.MANUAL && result.getAssessor() == null) {
             // Round compass grades to avoid machine precision errors, make the grades more readable and give a slight advantage.
             Grade grade = roundGrades(engine.getGradeForModel(submissionId));
@@ -446,7 +446,6 @@ public class CompassService {
             return;
         }
         compassCalculationEngines.get(exerciseId).notifyNewModel(model, modelId);
-        generateAutomaticFeedbackSuggestions(modelId, exerciseId);
     }
 
     /**
@@ -479,7 +478,7 @@ public class CompassService {
         log.info("Loading Compass calculation engine for exercise " + exerciseId);
 
         Set<ModelingSubmission> modelingSubmissions = getSubmissionsForExercise(exerciseId);
-        CalculationEngine calculationEngine = new CompassCalculationEngine(modelingSubmissions);
+        CompassCalculationEngine calculationEngine = new CompassCalculationEngine(modelingSubmissions);
         compassCalculationEngines.put(exerciseId, calculationEngine);
         assessAllAutomatically(calculationEngine.getModelIds(), exerciseId);
     }
