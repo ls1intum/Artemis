@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { Result } from 'app/entities/result.model';
-import { TextAssessmentsService } from '../text-assessments.service';
+import { TextAssessmentService } from '../text-assessment.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -33,7 +33,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
         private exerciseService: ExerciseService,
         private accountService: AccountService,
         private textSubmissionService: TextSubmissionService,
-        private assessmentsService: TextAssessmentsService,
+        private assessmentsService: TextAssessmentService,
         private translateService: TranslateService,
         private sortService: SortService,
     ) {
