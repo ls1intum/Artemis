@@ -378,7 +378,8 @@ public class ExamResource {
             if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
                 return forbidden();
             }
-            return ResponseEntity.ok(examRepository.getExamsWithQuizExercisesForWhichUserHasInstructorAccess(user.getId()));
+            var userGroups = new ArrayList<>(user.getGroups());
+            return ResponseEntity.ok(examRepository.getExamsWithQuizExercisesForWhichUserHasInstructorAccess(userGroups));
         }
     }
 

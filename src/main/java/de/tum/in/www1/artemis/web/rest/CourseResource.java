@@ -425,7 +425,8 @@ public class CourseResource {
             return courseRepository.findAllWithQuizExercisesWithEagerExercises();
         }
         else {
-            return courseRepository.getCoursesWithQuizExercisesForWhichUserHasInstructorAccess(user.getId());
+            var userGroups = new ArrayList<>(user.getGroups());
+            return courseRepository.getCoursesWithQuizExercisesForWhichUserHasInstructorAccess(userGroups);
         }
     }
 

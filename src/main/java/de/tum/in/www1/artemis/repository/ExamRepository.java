@@ -55,10 +55,9 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("""
             select distinct e
             from Exam e left join fetch e.exerciseGroups eg left join fetch eg.exercises ex, User u
-            where u.id = :#{#userId} and e.course.instructorGroupName member of u.groups and
-            TYPE(ex) = QuizExercise
+            where e.course.instructorGroupName in :#{#userGroups} and TYPE(ex) = QuizExercise
             """)
-    List<Exam> getExamsWithQuizExercisesForWhichUserHasInstructorAccess(@Param("userId") Long userId);
+    List<Exam> getExamsWithQuizExercisesForWhichUserHasInstructorAccess(@Param("userGroups") List<String> userGroups);
 
     @Query("""
             select distinct e
