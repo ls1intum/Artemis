@@ -111,7 +111,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.answer = this.submission.text;
             }
         }
-        // check wether the student looks at the result
+        // check whether the student looks at the result
         this.isOwnerOfParticipation = this.accountService.isOwnerOfParticipation(this.participation);
     }
 
