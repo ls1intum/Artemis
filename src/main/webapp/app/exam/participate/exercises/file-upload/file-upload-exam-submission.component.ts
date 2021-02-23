@@ -116,6 +116,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         // we do nothing here as the new file path comes from the server
     }
 
+    /**
+     *  Here the new filePath, which was received from the server, is used to display the name and type of the just uploaded file.
+     */
     updateViewFromSubmission(): void {
         if (this.studentSubmission.isSynced && this.studentSubmission.filePath) {
             // clear submitted file so that it is not displayed in the input (this might be confusing)
@@ -127,6 +130,10 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         }
     }
 
+    /**
+     *  Here we send the submissionFile obtained in setFileSubmissionForExercise() to the server with the update method. The server returns the path to the file, and we
+     *  set it in the submission.
+     */
     saveUploadedFile() {
         if (!this.submissionFile) {
             return;
