@@ -21,7 +21,7 @@ type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
 @Injectable({
     providedIn: 'root',
 })
-export class TextAssessmentsService {
+export class TextAssessmentService {
     private readonly resourceUrl = SERVER_API_URL + 'api/text-assessments';
 
     constructor(private http: HttpClient) {}
@@ -34,10 +34,10 @@ export class TextAssessmentsService {
      * @param textBlocks list of text blocks of type {TextBlock[]}
      */
     public save(exerciseId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
-        const body = TextAssessmentsService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
+        const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
             .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, body, { observe: 'response' })
-            .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
+            .map((res: EntityResponseType) => TextAssessmentService.convertResponse(res));
     }
 
     /**
@@ -48,10 +48,10 @@ export class TextAssessmentsService {
      * @param textBlocks list of text blocks of type {TextBlock[]}
      */
     public submit(exerciseId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
-        const body = TextAssessmentsService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
+        const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
             .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, body, { observe: 'response' })
-            .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
+            .map((res: EntityResponseType) => TextAssessmentService.convertResponse(res));
     }
 
     /**
@@ -75,15 +75,15 @@ export class TextAssessmentsService {
         };
         return this.http
             .put<Result>(url, assessmentUpdate, { observe: 'response' })
-            .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
+            .map((res: EntityResponseType) => TextAssessmentService.convertResponse(res));
     }
 
     saveExampleAssessment(exampleSubmissionId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/text-submissions/${exampleSubmissionId}/example-assessment`;
-        const body = TextAssessmentsService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
+        const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
             .put<Result>(url, body, { observe: 'response' })
-            .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
+            .map((res: EntityResponseType) => TextAssessmentService.convertResponse(res));
     }
 
     /**
@@ -117,7 +117,7 @@ export class TextAssessmentsService {
                     result.participation = participation;
                     // Make sure Feedbacks Array is initialized
                     result.feedbacks = result.feedbacks || [];
-                    TextAssessmentsService.convertFeedbackConflictsFromServer(result.feedbacks);
+                    TextAssessmentService.convertFeedbackConflictsFromServer(result.feedbacks);
                     (submission as TextSubmission).atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
                 }),
                 map((response) => response.body!),
@@ -174,7 +174,7 @@ export class TextAssessmentsService {
     }
 
     private static convertResponse(res: EntityResponseType): EntityResponseType {
-        const result = TextAssessmentsService.convertItemFromServer(res.body!);
+        const result = TextAssessmentService.convertItemFromServer(res.body!);
 
         if (result.completionDate) {
             result.completionDate = moment(result.completionDate);

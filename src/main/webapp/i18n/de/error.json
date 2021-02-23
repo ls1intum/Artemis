@@ -8,6 +8,7 @@
             "405": "Die verwendete Anfrage Methode ist für diese URL nicht erlaubt.",
             "500": "Interner Serverfehler."
         },
+        "fileUploadSavingError": "Fehler! Der Upload schlug fehl. Stelle sicher, dass eine Internetverbindung besteht!",
         "concurrencyFailure": "Ein anderer Benutzer hat diese Daten zeitgleich mit dir geändert. Deine Änderungen wurden abgelehnt.",
         "validation": "Validierungsfehler auf dem Server.",
         "resultStringNull": "Fehler! Ein Ergebnis Text ist erforderlich.",

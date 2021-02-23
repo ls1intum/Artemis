@@ -30,8 +30,6 @@ import { Moment } from 'moment';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash';
 import { Course } from 'app/entities/course.model';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import * as Sentry from '@sentry/browser';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
@@ -76,6 +74,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     submitInProgress = false;
 
     exerciseIndex = 0;
+
+    errorSubscription: Subscription;
 
     isProgrammingExercise() {
         return this.activeExercise.type === ExerciseType.PROGRAMMING;
@@ -124,7 +124,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private courseExerciseService: CourseExerciseService,
     ) {
         // show only one synchronization error every 5s
-        this.synchronizationAlert$.pipe(throttleTime(5000)).subscribe(() => this.alertService.error('artemisApp.examParticipation.saveSubmissionError'));
+        this.errorSubscription = this.synchronizationAlert$.pipe(throttleTime(5000)).subscribe(() => this.alertService.error('artemisApp.examParticipation.saveSubmissionError'));
     }
 
     /**
@@ -225,7 +225,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     if (participation.submissions && participation.submissions.length > 0) {
                         participation.submissions.forEach((submission) => {
                             submission.isSynced = true;
-                            submission.submitted = false;
+                            if (submission.submitted == undefined) {
+                                // only set submitted to false it the value was not specified before
+                                submission.submitted = false;
+                            }
                         });
                     } else if (exercise.type === ExerciseType.PROGRAMMING) {
                         // We need to provide a submission to update the navigation bar status indicator
@@ -235,7 +238,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                             participation.submissions.push(ProgrammingSubmission.createInitialCleanSubmissionForExam());
                         }
                     }
-
                     // reconnect the participation with the exercise, in case this relationship was deleted before (e.g. due to breaking circular dependencies)
                     participation.exercise = exercise;
 
@@ -420,6 +422,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.programmingSubmissionSubscriptions.forEach((subscription) => {
             subscription.unsubscribe();
         });
+        this.errorSubscription.unsubscribe();
         window.clearInterval(this.autoSaveInterval);
     }
 
@@ -604,21 +607,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         );
                         break;
                     case ExerciseType.FILE_UPLOAD:
-                        const fileUploadComponent = activeComponent as FileUploadExamSubmissionComponent;
-                        if (!fileUploadComponent.submissionFile) {
-                            return;
-                        }
-                        this.fileUploadSubmissionService
-                            .update(submissionToSync.submission as FileUploadSubmission, submissionToSync.exercise.id!, fileUploadComponent.submissionFile)
-                            .subscribe(
-                                (res) => {
-                                    const submissionFromServer = res.body!;
-                                    (submissionToSync.submission as FileUploadSubmission).filePath = submissionFromServer.filePath;
-                                    ExamParticipationComponent.onSaveSubmissionSuccess(submissionToSync.submission);
-                                    activeComponent!.updateViewFromSubmission();
-                                },
-                                () => this.onSaveSubmissionError(),
-                            );
+                        // nothing to do here, because file upload exercises are only submitted manually, not when you switch between exercises
                         break;
                 }
             });

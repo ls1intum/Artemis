@@ -99,7 +99,7 @@ public class UserService {
     }
 
     /**
-     * find all users who do not have registration numbers: in case they are TUM users, try to retrieve their registration number and set a proper first name and last name
+     * Make sure that the internal artemis admin (in case it is defined in the yml configuration) is available in the database
      */
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
@@ -170,7 +170,7 @@ public class UserService {
             user.setResetKey(null);
             user.setResetDate(null);
             saveUser(user);
-            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, null, null, true));
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, true));
             return user;
         });
     }
@@ -240,7 +240,7 @@ public class UserService {
         newUser.setAuthorities(authorities);
         saveUser(newUser);
         // we need to save first so that the user can be found in the database in the subsequent method
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createUser(newUser));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(newUser));
         log.debug("Created Information for User: {}", newUser);
         return newUser;
     }
@@ -255,7 +255,7 @@ public class UserService {
         if (existingUser.getActivated()) {
             return false;
         }
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.deleteUser(existingUser.getLogin()));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.deleteVcsUser(existingUser.getLogin()));
         deleteUser(existingUser);
         return true;
     }
@@ -289,8 +289,8 @@ public class UserService {
                 }
 
                 // Use empty password, so that we don't store the credentials of Jira users in the Artemis DB
-                User user = userCreationService.createUser(ldapUser.getUsername(), "", ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(), registrationNumber,
-                        null, "en");
+                User user = userCreationService.createInternalUser(ldapUser.getUsername(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
+                        registrationNumber, null, "en");
                 if (useExternalUserManagement) {
                     artemisAuthenticationProvider.createUserInExternalUserManagement(user);
                 }
@@ -304,72 +304,18 @@ public class UserService {
     }
 
     /**
-     * Update basic information (first name, last name, email, language) for the current user.
-     *
-     * @param firstName first name of user
-     * @param lastName  last name of user
-     * @param email     email id of user
-     * @param langKey   language key
-     * @param imageUrl  image URL of user
-     */
-    public void updateUser(String firstName, String lastName, String email, String langKey, String imageUrl) {
-        SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
-            user.setFirstName(firstName);
-            user.setLastName(lastName);
-            user.setEmail(email.toLowerCase());
-            user.setLangKey(langKey);
-            user.setImageUrl(imageUrl);
-            saveUser(user);
-            log.info("Changed Information for User: {}", user);
-            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, null, null, true));
-        });
-    }
-
-    /**
-     * Update all information for a specific user (incl. its password), and return the modified user.
-     *
-     * @param user           The user that should get updated
-     * @param updatedUserDTO The DTO containing the to be updated values
-     * @return updated user
-     */
-    public User updateUser(User user, ManagedUserVM updatedUserDTO) {
-        final var oldUserLogin = user.getLogin();
-        final var oldGroups = user.getGroups();
-        user.setLogin(updatedUserDTO.getLogin().toLowerCase());
-        user.setFirstName(updatedUserDTO.getFirstName());
-        user.setLastName(updatedUserDTO.getLastName());
-        user.setEmail(updatedUserDTO.getEmail().toLowerCase());
-        user.setImageUrl(updatedUserDTO.getImageUrl());
-        user.setActivated(updatedUserDTO.isActivated());
-        user.setLangKey(updatedUserDTO.getLangKey());
-        user.setGroups(updatedUserDTO.getGroups());
-        if (updatedUserDTO.getPassword() != null) {
-            user.setPassword(passwordService.encodePassword(updatedUserDTO.getPassword()));
-        }
-        Set<Authority> managedAuthorities = user.getAuthorities();
-        managedAuthorities.clear();
-        updatedUserDTO.getAuthorities().stream().map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get).forEach(managedAuthorities::add);
-        user = saveUser(user);
-
-        updateUserInConnectorsAndAuthProvider(user, oldUserLogin, oldGroups);
-
-        log.debug("Changed Information for User: {}", user);
-        return user;
-    }
-
-    /**
-     * Updates the user (optionally also synchronizes its password) and its groups in the connected version control system (e.g. GitLab if available).
+     * Updates the user (and synchronizes its password) and its groups in the connected version control system (e.g. GitLab if available).
      * Also updates the user groups in the used authentication provider (like {@link JiraAuthenticationProvider}.
      *
      * @param oldUserLogin The username of the user. If the username is updated in the user object, it must be the one before the update in order to find the user in the VCS
      * @param user         The updated user in Artemis (this method assumes that the user including its groups was already saved to the Artemis database)
      * @param oldGroups    The old groups of the user before the update
      */
-    private void updateUserInConnectorsAndAuthProvider(User user, String oldUserLogin, Set<String> oldGroups) {
+    public void updateUserInConnectorsAndAuthProvider(User user, String oldUserLogin, Set<String> oldGroups) {
         final var updatedGroups = user.getGroups();
         final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
         final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(oldUserLogin, user, removedGroups, addedGroups, true));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(oldUserLogin, user, removedGroups, addedGroups, true));
         removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group)); // e.g. JIRA
         try {
             addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(user, group)); // e.g. JIRA
@@ -387,7 +333,7 @@ public class UserService {
     @Transactional // ok because entities are deleted
     public void deleteUser(String login) {
         // Delete the user in the connected VCS if necessary (e.g. for GitLab)
-        optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.deleteUser(login));
+        optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.deleteVcsUser(login));
         // Delete the user in the local Artemis database
         userRepository.findOneByLogin(login).ifPresent(user -> {
             deleteUser(user);
@@ -431,7 +377,7 @@ public class UserService {
             String encryptedPassword = passwordService.encodePassword(newPassword);
             user.setPassword(encryptedPassword);
             saveUser(user);
-            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, null, null, true));
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, true));
             log.debug("Changed password for User: {}", user);
         });
     }
@@ -518,7 +464,7 @@ public class UserService {
             // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
         }
         // e.g. Gitlab
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, Set.of(), Set.of(group), false));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(), Set.of(group), false));
     }
 
     /**
@@ -546,7 +492,7 @@ public class UserService {
         removeUserFromGroupInternal(user, group); // internal Artemis database
         artemisAuthenticationProvider.removeUserFromGroup(user, group); // e.g. JIRA
         // e.g. Gitlab
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user.getLogin(), user, Set.of(group), Set.of(), false));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(group), Set.of(), false));
     }
 
     /**

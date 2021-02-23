@@ -48,7 +48,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     @Override
-    public void createUser(User user) {
+    public void createVcsUser(User user) {
         final var userId = getUserIdCreateIfNotExists(user);
 
         // Add user to existing exercises
@@ -62,7 +62,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     @Override
-    public void updateUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword) {
+    public void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword) {
         try {
             var userApi = gitlabApi.getUserApi();
             final var gitlabUser = userApi.getUser(vcsLogin);
@@ -248,7 +248,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     @Override
-    public void deleteUser(String login) {
+    public void deleteVcsUser(String login) {
         try {
             // Delete by login String doesn't work, so we need to get the actual userId first.
             final var userId = getUserId(login);

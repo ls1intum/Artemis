@@ -152,8 +152,8 @@ public class LtiServiceTest {
         user.setActivated(false);
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
         when(userRepository.findOneByLogin(username)).thenReturn(Optional.empty());
-        when(userCreationService.createUser(username, groups, "", launchRequest.getLis_person_sourcedid(), launchRequest.getLis_person_contact_email_primary(), null, null, "en"))
-                .thenReturn(user);
+        when(userCreationService.createInternalUser(username, null, groups, "", launchRequest.getLis_person_sourcedid(), launchRequest.getLis_person_contact_email_primary(), null,
+                null, "en")).thenReturn(user);
 
         onSuccessfulAuthenticationSetup(user, ltiUserId);
 
