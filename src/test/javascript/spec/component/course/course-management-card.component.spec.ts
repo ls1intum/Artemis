@@ -18,7 +18,7 @@ import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overvie
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Course } from 'app/entities/course.model';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import {ArtemisDatePipe} from "app/shared/pipes/artemis-date.pipe";
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
