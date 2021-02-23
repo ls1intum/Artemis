@@ -1,5 +1,8 @@
+.. _programming_features:
+
 Features
 ^^^^^^^^
+
 Artemis and its version control and continuous integration infrastructure is independent of the programming language and thus supports
 teaching and learning with any programming language that can be compiled and tested on the command line.
 Instructors have a lot of freedom in defining the environment (e.g. using build agents and Docker images) in which student code is executed and tested.
@@ -33,25 +36,25 @@ Instructors can still use those templates to generate programming exercises and 
   Depending on the feature set, some options might not be available during the creation of the programming exercise.
   The table below provides an overview of the supported features:
 
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Solution Repository Checkout |
-  +======================+======================+======================+==================+==============+==============================+
-  | Java                 | yes                  | yes                  | yes              | yes          | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | Python               | yes                  | no                   | yes              | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | C                    | no                   | no                   | yes              | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | Haskell              | yes                  | no                   | no               | no           | yes                          |
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | Kotlin               | yes                  | no                   | no               | yes          | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | VHDL                 | no                   | no                   | no               | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | Assembler            | no                   | no                   | no               | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | Swift                | no                   | no                   | no               | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
+  | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Project Type | Solution Repository Checkout |
+  +======================+======================+======================+==================+==============+==============+==============================+
+  | Java                 | yes                  | yes                  | yes              | yes          | yes          | no                           |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
+  | Python               | yes                  | no                   | yes              | no           | no           | no                           |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
+  | C                    | no                   | no                   | yes              | no           | no           | no                           |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
+  | Haskell              | yes                  | no                   | no               | no           | no           | yes                          |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
+  | Kotlin               | yes                  | no                   | no               | yes          | no           | no                           |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
+  | VHDL                 | no                   | no                   | no               | no           | no           | no                           |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
+  | Assembler            | no                   | no                   | no               | no           | no           | no                           |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
+  | Swift                | no                   | no                   | no               | no           | no           | no                           |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
 
   - *Sequential Test Runs*: ``Artemis`` can generate a build plan which first executes structural and then behavioral tests. This feature can help students to better concentrate on the immediate challenge at hand.
   - *Static Code Analysis*: ``Artemis`` can generate a build plan which additionally executes static code analysis tools.
@@ -87,13 +90,124 @@ Exercise Creation
     .. figure:: programming/course-management-exercise-dashboard.png
               :align: center
 
-- Fill out all mandatory values and click on |generate|
+- Artemis provides various options to customize programming exercises:
 
-    .. figure:: programming/create-programming-1.png
+    .. figure:: programming/programming-options-naming.png
               :align: center
 
-    .. figure:: programming/create-programming-2.png
+    - **Title:** The title of the exercise. It is used to create a project on the VCS server for the exercise.
+      Instructors can change the title of the exercise after its creation.
+    - **Short Name:** Together with the course short name, the exercise short name is used as a unique identifier for
+      the exercise across Artemis (incl. repositories and build plans). The short name **cannot** be changed after the
+      creation of the exercise.
+    - **Preview**: Given the short name of the exercise and the short name of the course, Artemis displays a preview of the
+      generated repositories and build plans.
+    |
+
+    .. figure:: programming/programming-options-general-information.png
               :align: center
+
+    - **Categories:** Instructors can freely define up to two categories per exercise. The categories are visible to students
+      and should be used consistently to group similar kinds of exercises.
+    - **Difficulty:** Instructors can give students information about the difficulty of the exercise.
+    |
+
+    .. figure:: programming/programming-options-mode.png
+              :align: center
+
+    - **Mode:** The mode determines whether students work on the exercise alone or in teams. **Cannot** be changed after the exercise creation.
+    - **Team size:** If ``Team`` mode is chosen, instructors can additionally give recommendations for the team size. Instructors/Tutors define the teams after
+      the exercise creation.
+    |
+
+    .. figure:: programming/programming-options-programming-language.png
+              :align: center
+
+    - **Programming Language:** The programming language for the exercise. Artemis chooses the template accordingly.
+      Refer to the :ref:`programming exercise features <programming_features>` for an overview of the supported features for each template.
+    - **Project Type:** Determines the project structure of the template. Not available for all programming languages.
+    - **Package Name:** The package name used for this exercise. Not available for all programming languages.
+    |
+
+    .. figure:: programming/programming-options-timeline.png
+              :align: center
+
+    - **Release Date:** Release date of the exercise. Students will only be able to participate in the exercise after this date.
+    - **Automatic Tests:** Every commit of a participant triggers the execution of the tests in the **Test** repository.
+      Excluded are tests, which are specified to run after the due date. This is only possible if **Run Tests once after Due Date** has been activated.
+      The tests that only run after the due date are chosen in the :ref:`grading configuration <configure_grading>`.
+    - **Due Date:** The deadline for the exercise. Commits made after this date are not graded.
+
+      .. note::
+        Students can still commit code and receive feedback after the exercise due date, if manual review is not activated.
+        The results for these submissions will not be rated.
+
+    - **Run Tests once after Due Date:** Activate this option to build and test the latest in-time submission of each student on this date.
+      This date must be after the due date. The results created by this test run will be rated.
+    - **Manual Review:** Instructors/Tutors have to manually review the latest student submissions after the automatic tests were executed.
+    - **Assessment Due Date:** The deadline for the manual reviews. On this date, all manual assessments will be released to the students.
+    |
+
+    .. figure:: programming/programming-options-score.png
+              :align: center
+
+    - **Should this exercise be included in the course / exam score calculation?**
+
+      - ``Yes``: Instructors can define the maximum achievable **Points** and **Bonus points** for the exercise.
+        The achieved total points will count towards the total course/exam score
+      - ``Bonus``: The achieved **Points** will count towards the total course/exam score as a bonus.
+      - ``No``: The achieved **Points** will **not** count towards the total course/exam score.
+    |
+
+    .. figure:: programming/programming-options-sca.png
+              :align: center
+
+    - **Enable Static Code Analysis:** Enable static code analysis for the exercise.
+      The build plans will additionally execute static code analysis tools to find code quality issues in the submissions.
+      This option cannot be changed after the exercise creation. Artemis provides a default configuration for the static code analysis tools
+      but instructors are free to :ref:`configure the static code analysis tools <configure_static_code_analysis_tools>`.
+      Refer to the :ref:`programming exercise features <programming_features>` to see which programming languages support static code analysis.
+    - **Max Static Code Analysis Penalty:** Available if static code analysis is active.
+      Determines the maximum amount of points that can be deducted for code quality issues found in a submission as a percentage (between 0% and 100%) of **Points**.
+      Defaults to 100% if left empty. Further options to configure the grading of code quality issues are available in the :ref:`grading configuration <configure_grading>`.
+
+      .. note::
+        Given an exercise with 10 **Points**. If **Max Static Code Analysis Penalty** is 20%, at most 2 points will be deducted
+        from the points achieved by passing test cases for code quality issues in the submission.
+    |
+
+    .. figure:: programming/programming-options-instructions.png
+              :align: center
+
+    - **Problem Statement:** The problem statement of the exercise. Refer to :ref:`interactive problem statement <interactive_problem_statement>` for more information.
+    |
+
+    .. figure:: programming/programming-options-grading-instructions.png
+              :align: center
+
+    - **Grading Instructions:** Available if **Manual Review** is active. Create instructions for the manual assessment of the exercise.
+    |
+
+    .. figure:: programming/programming-options-advanced-configuration.png
+              :align: center
+
+    - **Sequential Test Runs:** Activate this option to first run structural and then behavior tests.
+      This feature allows students to better concentrate on the immediate challenge at hand.
+      Not supported together with static code analysis. Cannot be changed after the exercise creation.
+    - **Check out repository of sample solution:** Activate this option to checkout the solution into the 'solution' path.
+      This option is useful to compare the student's submission with the sample solution. This option is not available for all programming languages.
+    - **Allow Offline IDE:** Allow students to clone their personal repository and work on the exercise with their preferred IDE.
+    - **Allow Online Editor:** Allow students to work on the exercise using the Artemis Online Code Editor.
+
+      .. note::
+        At least one of the options **Allow Offline IDE:** and **Allow Online Editor:** must be active
+
+    - **Show Test Names to Students:** Activate this option to show the names of the automated test cases to the students.
+      If this option is disabled, students will not be able to visually differentiate between automatic and manual feedback.
+    - **Publish Build Plan:** Allow students to access and edit their personal build plan. Useful for exercises where students should
+      configure parts of the build plan themselves.
+
+- Click on |generate| to create the exercise
 
   Result: **Programming Exercise**
 
@@ -187,6 +301,8 @@ Exercise Creation
 - However, if you have additional build steps or different configurations, you can adapt the BASE and SOLUTION build plan as needed
 - When students start the programming exercise, the current version of the BASE build plan will be copied. All changes in the configuration will be considered
 
+.. _configure_static_code_analysis_tools:
+
 5. **Optional:** Configure static code analysis tools
 
 - The **Test** repository contains files for the configuration of static code analysis tools, if static code analysis was activated during the creation/import of the exercise
@@ -220,6 +336,8 @@ Exercise Creation
   Alternatively, instructors can alter the task/script that executes the tools in the build plan.
   PMD and PMD CPD are a special case as both tools share a common plugin. To disable one or the other, instructors must delete the execution of a tool from the build plan.
 
+.. _interactive_problem_statement:
+
 6. Adapt the interactive problem statement
 
   .. figure:: programming/course-dashboard-programming-edit.png
@@ -227,6 +345,8 @@ Exercise Creation
 
 - Click the |edit| button of the programming exercise or navigate into |edit-in-editor| and adapt the interactive problem statement.
 - The initial example shows how to integrate tasks, link tests and integrate interactive UML diagrams
+
+.. _configure_grading:
 
 7. Configure Grading
 
