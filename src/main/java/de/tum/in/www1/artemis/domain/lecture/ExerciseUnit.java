@@ -44,8 +44,8 @@ public class ExerciseUnit extends LectureUnit {
      * Removes information from a lecture unit that is not needed in the course dashboard
      */
     @Override
-    public ExerciseUnit slimDownForDashboard() {
-        super.slimDownForDashboard();
+    public ExerciseUnit trimForDashboard() {
+        super.trimForDashboard();
         this.exercise = null;
         return this;
     }

@@ -117,7 +117,7 @@ public class CourseService {
 
     private void filterLectureUnits(Course course) {
         for (Lecture lecture : course.getLectures()) {
-            List<LectureUnit> visibleLectureUnits = lecture.getLectureUnits().stream().filter(LectureUnit::isVisibleToStudents).map(LectureUnit::slimDownForDashboard)
+            List<LectureUnit> visibleLectureUnits = lecture.getLectureUnits().stream().filter(LectureUnit::isVisibleToStudents).map(LectureUnit::trimForDashboard)
                     .collect(Collectors.toList());
             lecture.setLectureUnits(visibleLectureUnits);
         }

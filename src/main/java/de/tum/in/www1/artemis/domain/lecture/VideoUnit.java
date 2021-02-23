@@ -40,8 +40,8 @@ public class VideoUnit extends LectureUnit {
      * Removes information from a lecture unit that is not needed in the course dashboard
      */
     @Override
-    public VideoUnit slimDownForDashboard() {
-        super.slimDownForDashboard();
+    public VideoUnit trimForDashboard() {
+        super.trimForDashboard();
         this.source = "";
         this.description = "";
         return this;

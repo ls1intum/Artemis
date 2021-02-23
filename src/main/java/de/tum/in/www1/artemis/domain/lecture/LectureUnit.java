@@ -105,7 +105,7 @@ public abstract class LectureUnit extends DomainObject {
     /**
      * Removes information from a lecture unit that is not needed in the course dashboard
      */
-    public LectureUnit slimDownForDashboard() {
+    public LectureUnit trimForDashboard() {
         this.learningGoals = Set.of();
         this.lecture = null;
         return this;
