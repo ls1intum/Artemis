@@ -22,6 +22,9 @@ import { stringifyCircular } from 'app/shared/util/utils';
 import { createFileUploadSubmission } from '../../../../helpers/mocks/service/mock-file-upload-submission.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { JhiAlertService } from 'ng-jhipster';
+import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
+import { HttpResponse } from '@angular/common/http';
+import { of } from 'rxjs';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -32,6 +35,7 @@ describe('FileUploadExamSubmissionComponent', () => {
     let jhiAlertService: JhiAlertService;
     let mockSubmission: FileUploadSubmission;
     let mockExercise: FileUploadExercise;
+    let fileUploadSubmissionService: FileUploadSubmissionService;
 
     const resetComponent = () => {
         if (comp) {
@@ -66,6 +70,7 @@ describe('FileUploadExamSubmissionComponent', () => {
                 fixture = TestBed.createComponent(FileUploadExamSubmissionComponent);
                 comp = fixture.componentInstance;
                 jhiAlertService = TestBed.inject(JhiAlertService);
+                fileUploadSubmissionService = fixture.debugElement.injector.get(FileUploadSubmissionService);
             });
     });
 
@@ -256,11 +261,28 @@ describe('FileUploadExamSubmissionComponent', () => {
         sinon.restore();
     }));
 
-    it('should emit on upload button press', () => {
-        const emitSpy = sinon.spy(comp.onExerciseChanged, 'emit');
-        resetComponent();
-        fixture.detectChanges();
-        comp.saveUploadedFile();
-        expect(emitSpy).to.have.been.calledOnce;
+    describe('saveUploadedFile', () => {
+        beforeEach(() => {
+            resetComponent();
+            fixture.detectChanges();
+        });
+        afterEach(() => {
+            sinon.restore();
+        });
+        it('should just return if submissionFile is undefined', () => {
+            const updateStub = sinon.stub(fileUploadSubmissionService, 'update');
+            comp.saveUploadedFile();
+            expect(updateStub).to.not.have.been.called;
+        });
+
+        it('should save if submissionFile is defined', () => {
+            const newFilePath = 'new/path/image.png';
+            const updateStub = sinon.stub(fileUploadSubmissionService, 'update').returns(of(new HttpResponse({ body: { id: 1, filePath: newFilePath } })));
+            comp.submissionFile = new File([], 'name.png');
+            expect(comp.studentSubmission.filePath).to.not.equal(newFilePath);
+            comp.saveUploadedFile();
+            expect(updateStub).to.have.been.called;
+            expect(comp.studentSubmission.filePath).to.deep.equal(newFilePath);
+        });
     });
 });
