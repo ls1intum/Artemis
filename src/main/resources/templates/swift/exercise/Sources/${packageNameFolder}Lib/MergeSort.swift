@@ -6,7 +6,7 @@ public class MergeSort {
 
      - Parameter input: the List of Dates to be sorted
     */
-    public func performSort(_ input: inout [Date]) {
+    public func performSort(_ input: [Date]) -> [Date] {
         /// TODO: implement
     }
 }
