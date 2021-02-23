@@ -190,12 +190,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentNotFinished(storedResult, assessor);
         assertThat(storedResult.getParticipation()).isNotNull();
-
-        Course course = request.get("/api/courses/" + this.course + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
-        Exercise exercise = (Exercise) course.getExercises().toArray()[0];
-        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
-        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(1L);
-
     }
 
     @Test
@@ -223,6 +217,11 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
         assertThat(storedResult.getParticipation()).isNotNull();
+
+        Course course = request.get("/api/courses/" + this.course.getId() + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
+        Exercise exercise = (Exercise) course.getExercises().toArray()[0];
+        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
+        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(1L);
     }
 
     @Test
