@@ -666,7 +666,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             this.quizExercise.quizQuestions != undefined &&
             !!this.quizExercise.quizQuestions.length;
         const areAllQuestionsValid = this.quizExercise.quizQuestions?.every(function (question) {
-            console.log('question.points', question.points);
             if (question.points == undefined || question.points < 1) {
                 return false;
             }
