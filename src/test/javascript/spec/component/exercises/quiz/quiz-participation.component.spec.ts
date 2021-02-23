@@ -182,7 +182,7 @@ describe('QuizParticipationComponent', () => {
         }));
 
         it('should refresh quiz', () => {
-            const exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
+            exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
             fixture.detectChanges();
 
             component.quizExercise.started = false;
