@@ -27,29 +27,25 @@ export class CourseLectureRowComponent implements OnChanges {
     ngOnChanges(changes: SimpleChanges) {
         for (const propName in changes) {
             if (changes.hasOwnProperty(propName)) {
-                switch (propName) {
-                    case 'lecture': {
-                        if (this.lecture && this.lecture.lectureUnits) {
-                            this.noOfExerciseUnits = 0;
-                            this.noOfTextUnits = 0;
-                            this.noOfVideoUnits = 0;
-                            this.noOfAttachmentUnits = 0;
-                            for (const lectureUnit of this.lecture.lectureUnits) {
-                                switch (lectureUnit.type) {
-                                    case LectureUnitType.ATTACHMENT:
-                                        this.noOfAttachmentUnits += 1;
-                                        break;
-                                    case LectureUnitType.EXERCISE:
-                                        this.noOfExerciseUnits += 1;
-                                        break;
-                                    case LectureUnitType.TEXT:
-                                        this.noOfTextUnits += 1;
-                                        break;
-                                    case LectureUnitType.VIDEO:
-                                        this.noOfVideoUnits += 1;
-                                        break;
-                                }
-                            }
+                if (propName === 'lecture' && this.lecture && this.lecture.lectureUnits) {
+                    this.noOfExerciseUnits = 0;
+                    this.noOfTextUnits = 0;
+                    this.noOfVideoUnits = 0;
+                    this.noOfAttachmentUnits = 0;
+                    for (const lectureUnit of this.lecture.lectureUnits) {
+                        switch (lectureUnit.type) {
+                            case LectureUnitType.ATTACHMENT:
+                                this.noOfAttachmentUnits += 1;
+                                break;
+                            case LectureUnitType.EXERCISE:
+                                this.noOfExerciseUnits += 1;
+                                break;
+                            case LectureUnitType.TEXT:
+                                this.noOfTextUnits += 1;
+                                break;
+                            case LectureUnitType.VIDEO:
+                                this.noOfVideoUnits += 1;
+                                break;
                         }
                     }
                 }
