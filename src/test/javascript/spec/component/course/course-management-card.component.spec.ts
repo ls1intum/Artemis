@@ -17,6 +17,8 @@ import { CourseManagementOverviewExerciseDetailsDTO } from 'app/course/manage/ov
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Course } from 'app/entities/course.model';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import {ArtemisDatePipe} from "app/shared/pipes/artemis-date.pipe";
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -56,10 +58,12 @@ describe('CourseManagementCardComponent', () => {
             declarations: [
                 CourseManagementCardComponent,
                 MockPipe(TranslatePipe),
+                MockPipe(ArtemisDatePipe),
                 MockDirective(NgbTooltip),
                 MockRouterLinkDirective,
                 MockComponent(CourseManagementExerciseRowComponent),
                 MockComponent(CourseManagementStatisticsComponent),
+                MockComponent(SecuredImageComponent),
             ],
             providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
         })

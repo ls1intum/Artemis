@@ -398,13 +398,6 @@ ui bootstrap tweaks
     color: inherit;
 }
 
-.card-description {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100ch;
-}
-
 .card-resizable {
     user-select: none;
 }

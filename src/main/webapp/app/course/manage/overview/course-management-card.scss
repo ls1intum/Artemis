@@ -11,6 +11,46 @@
         .container-padding {
             padding: 10px;
         }
+
+        .card-description {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100ch;
+            display: inline-block;
+        }
+
+        .card-date {
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            padding-left: 15px;
+        }
+
+        .card-groups {
+            white-space: nowrap;
+            display: flex;
+            padding-right: 15px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            flex-direction: column;
+            align-self: center;
+
+            a {
+                color: white;
+                font-weight: normal;
+            }
+        }
+
+        jhi-secured-image {
+            padding: 5px 0 5px 5px;
+
+            ::ng-deep img {
+                border-radius: 50%;
+                height: 100px;
+                width: auto;
+            }
+        }
     }
 
     .section-card {
