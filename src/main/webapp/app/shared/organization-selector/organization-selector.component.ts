@@ -2,8 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpErrorResponse, HttpResponse, HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
 import { Organization } from 'app/entities/organization.model';
 import { Course } from 'app/entities/course.model';
@@ -22,7 +20,6 @@ export class OrganizationSelectorComponent implements OnInit {
         private translateService: TranslateService,
         private jhiAlertService: JhiAlertService,
         private organizationService: OrganizationManagementService,
-        private http: HttpClient,
     ) {}
 
     ngOnInit(): void {
