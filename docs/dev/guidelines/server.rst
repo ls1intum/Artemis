@@ -70,6 +70,7 @@ Avoid code duplication. If we cannot reuse a method elsewhere, then the method i
 * Write performant queries that can also deal with more than 1000 objects in a reasonable time.
 * Prefer one query that fetches additional data instead of many small queries, but don't overdo it. A good rule of thumb is to query not more than 3 associations at the same time.
 * Think about lazy vs. eager fetching when modeling the data types.
+* Only if it is inevitable, use nested queries. You should try use as few tables as possible.
 * Simple datatypes: immediately think about whether ``null`` should be supported as additional state or not. In most cases it is preferable to avoid ``null``.
 * Use ``Timestamp`` instead of ``Datetime``.
 
@@ -182,7 +183,8 @@ This approach has several benefits:
 * We don't need to check for an ``EntityNotFoundException`` in the service since we throw in the repository already
 * The "ElseThrow" suffix at the end of the method name makes the behaviour clear to outside callers
 
-In general everything changing small database objects can go into the repository. More complex operations have to be done in the service.  
+In general everything changing small database objects can go into the repository. More complex operations have to be done in the service.
+
 Another approach is moving objects into the domain classes, but be aware that you need to add ``@JsonIgnore`` where necessary:
 
 .. code-block:: java

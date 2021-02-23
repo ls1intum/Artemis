@@ -8,14 +8,6 @@
                     {{ exam?.title }}
                 </h2>
                 <a
-                    class="text-primary card-link"
-                    *ngIf="course?.isAtLeastInstructor && !isExamMode"
-                    routerLink="/course-management/{{ course?.id }}/scores"
-                    routerLinkActive="active"
-                >
-                    <fa-icon [icon]="'info-circle'" [fixedWidth]="true" style="color: white"></fa-icon>
-                </a>
-                <a
                     *ngIf="!isExamMode && course?.studentQuestionsEnabled && course?.isAtLeastTutor"
                     routerLinkActive="active"
                     [routerLink]="['/course-management', course?.id, 'questions']"
