@@ -138,9 +138,9 @@ Exercise Creation
       The tests that only run after the due date are chosen in the :ref:`grading configuration <configure_grading>`.
     - **Due Date:** The deadline for the exercise. Commits made after this date are not graded.
 
-    .. note::
-      Students can still commit code and receive feedback after the exercise due date, if manual review is not activated.
-      The results for these submissions will not be rated.
+      .. note::
+        Students can still commit code and receive feedback after the exercise due date, if manual review is not activated.
+        The results for these submissions will not be rated.
 
     - **Run Tests once after Due Date:** Activate this option to build and test the latest in-time submission of each student on this date.
       This date must be after the due date. The results created by this test run will be rated.
@@ -171,9 +171,9 @@ Exercise Creation
       Determines the maximum amount of points that can be deducted for code quality issues found in a submission as a percentage (between 0% and 100%) of **Points**.
       Defaults to 100% if left empty. Further options to configure the grading of code quality issues are available in the :ref:`grading configuration <configure_grading>`.
 
-    .. note::
-      Given an exercise with 10 **Points**. If **Max Static Code Analysis Penalty** is 20%, at most 2 points will be deducted
-      from the points achieved by passing test cases for code quality issues in the submission.
+      .. note::
+        Given an exercise with 10 **Points**. If **Max Static Code Analysis Penalty** is 20%, at most 2 points will be deducted
+        from the points achieved by passing test cases for code quality issues in the submission.
     |
 
     .. figure:: programming/programming-options-instructions.png
@@ -199,8 +199,8 @@ Exercise Creation
     - **Allow Offline IDE:** Allow students to clone their personal repository and work on the exercise with their preferred IDE.
     - **Allow Online Editor:** Allow students to work on the exercise using the Artemis Online Code Editor.
 
-    .. note::
-      At least one of the options **Allow Offline IDE:** and **Allow Online Editor:** must be active
+      .. note::
+        At least one of the options **Allow Offline IDE:** and **Allow Online Editor:** must be active
 
     - **Show Test Names to Students:** Activate this option to show the names of the automated test cases to the students.
       If this option is disabled, students will not be able to visually differentiate between automatic and manual feedback.
