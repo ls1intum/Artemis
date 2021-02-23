@@ -1033,4 +1033,15 @@ public class ModelFactory {
 
         return textSubmissions;
     }
+
+    public static Organization generateOrganization(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
+        Organization organization = new Organization();
+        organization.setName(name);
+        organization.setShortName(shortName);
+        organization.setUrl(url);
+        organization.setDescription(description);
+        organization.setLogoUrl(logoUrl);
+        organization.setEmailPattern(emailPattern);
+        return organization;
+    }
 }

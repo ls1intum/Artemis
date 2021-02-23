@@ -4,6 +4,7 @@ import java.util.*;
 
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -99,7 +100,7 @@ public class OrganizationResource {
     @PutMapping("/organizations/update")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Organization> updateOrganization(@RequestBody Organization organization) {
-        if (organization.getId() != null && organizationService.findOne(organization.getId()) != null) {
+        if (organization.getId() != null && organizationRepository.findOneOrElseThrow(organization.getId()) != null) {
             Organization updated = organizationService.update(organization);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updated.getName())).body(updated);
         }
@@ -111,8 +112,8 @@ public class OrganizationResource {
     @DeleteMapping("/organizations/delete/{organizationId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> deleteOrganization(@PathVariable Long organizationId) {
-        Organization organization = organizationService.findOne(organizationId);
-        organizationService.deleteOrganization(organization);
+        Organization organization = organizationRepository.findOneOrElseThrow(organizationId);
+        organizationRepository.delete(organization);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, organization.getName())).build();
     }
@@ -120,20 +121,20 @@ public class OrganizationResource {
     @GetMapping("/organizations/all")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<List<Organization>> getAllOrganizations() {
-        List<Organization> organizations = organizationService.getAllOrganizations();
+        List<Organization> organizations = organizationRepository.findAll();
         return new ResponseEntity<>(organizations, HttpStatus.OK);
     }
 
     @GetMapping("/organizations/allCount")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Map<Long, Map<String, Long>>> getAllOrganizationsWithNumberOfUsersAndCourses() {
+    public ResponseEntity<Map<Long, Map<String, Long>>> getNumberOfUsersAndCoursesOfAllOrganizations() {
         Map<Long, Map<String, Long>> result = new HashMap<>();
 
-        List<Organization> organizations = organizationService.getAllOrganizations();
+        List<Organization> organizations = organizationRepository.findAll();
         for (Organization organization : organizations) {
             Map<String, Long> numberOfUsersAndCourses = new HashMap<>();
-            numberOfUsersAndCourses.put("users", organizationService.getNumberOfUsersByOrganization(organization.getId()));
-            numberOfUsersAndCourses.put("courses", organizationService.getNumberOfCoursesByOrganization(organization.getId()));
+            numberOfUsersAndCourses.put("users", organizationRepository.getNumberOfUsersByOrganizationId(organization.getId()));
+            numberOfUsersAndCourses.put("courses", organizationRepository.getNumberOfCoursesByOrganizationId(organization.getId()));
             result.put(organization.getId(), numberOfUsersAndCourses);
         }
 
@@ -143,14 +144,14 @@ public class OrganizationResource {
     @GetMapping("/organizations/{organizationId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Organization> getOrganizationById(@PathVariable long organizationId) {
-        Organization organization = organizationService.findOne(organizationId);
+        Organization organization = organizationRepository.findOneOrElseThrow(organizationId);
         return new ResponseEntity<>(organization, HttpStatus.OK);
     }
 
     @GetMapping("/organizations/{organizationId}/full")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Organization> getOrganizationByIdWithUsersAndCourses(@PathVariable long organizationId) {
-        Organization organization = organizationService.findOneWithEagerUsersAndCourses(organizationId);
+        Organization organization = organizationRepository.findOneWithEagerUsersAndCoursesOrElseThrow(organizationId);
         return new ResponseEntity<>(organization, HttpStatus.OK);
     }
 
@@ -158,22 +159,22 @@ public class OrganizationResource {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Map<String, Long>> getNumberOfUsersAndCoursesByOrganization(@PathVariable long organizationId) {
         Map<String, Long> numberOfUsersAndCourses = new HashMap<>();
-        numberOfUsersAndCourses.put("users", organizationService.getNumberOfUsersByOrganization(organizationId));
-        numberOfUsersAndCourses.put("courses", organizationService.getNumberOfCoursesByOrganization(organizationId));
+        numberOfUsersAndCourses.put("users", organizationRepository.getNumberOfUsersByOrganizationId(organizationId));
+        numberOfUsersAndCourses.put("courses", organizationRepository.getNumberOfCoursesByOrganizationId(organizationId));
         return new ResponseEntity<>(numberOfUsersAndCourses, HttpStatus.OK);
     }
 
     @GetMapping("/organizations/course/{courseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<Organization>> getAllOrganizationsByCourse(@PathVariable Long courseId) {
-        Set<Organization> organizations = organizationService.getAllOrganizationsByCourse(courseId);
+        Set<Organization> organizations = organizationRepository.findAllOrganizationsByCourseId(courseId);
         return new ResponseEntity<>(organizations, HttpStatus.OK);
     }
 
     @GetMapping("/organizations/user/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Set<Organization>> getAllOrganizationsByUser(@PathVariable Long userId) {
-        Set<Organization> organizations = organizationService.getAllOrganizationsByUser(userId);
+        Set<Organization> organizations = organizationRepository.findAllOrganizationsByUserId(userId);
         return new ResponseEntity<>(organizations, HttpStatus.OK);
     }
 }

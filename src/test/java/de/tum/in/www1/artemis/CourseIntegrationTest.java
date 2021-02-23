@@ -556,6 +556,15 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetCourseWithOrganizations() throws Exception {
+        Course courseWithOrganization = database.createCourseWithOrganizations();
+        Course course = request.get("/api/courses/" + courseWithOrganization.getId() + "/with-organizations", HttpStatus.OK, Course.class);
+        assertThat(course.getOrganizations() == courseWithOrganization.getOrganizations());
+        assertThat(course.getOrganizations().size() > 0);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllCoursesWithUserStats() throws Exception {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         List<Course> receivedCourse = request.getList("/api/courses/with-user-stats", HttpStatus.OK, Course.class);

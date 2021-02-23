@@ -1,0 +1,21 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.1.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+    <changeSet author="qe (generated)" id="1613638346754-58">
+        <addForeignKeyConstraint baseColumnNames="organization_id" baseTableName="user_organization" constraintName="FKfdnaj8emi62iffmg6w6ykjxf4" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="organization" validate="true"/>
+    </changeSet>
+    <changeSet author="qe (generated)" id="1613638346754-59">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_organization" constraintName="FKnfyuy63doxihtl3pu8rnm46n4" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+    </changeSet>
+    <changeSet author="qe (generated)" id="1613638346754-60">
+        <dropForeignKeyConstraint baseTableName="course_organization" constraintName="FK71cxcwaglhos8x0qxs61vpxkb"/>
+    </changeSet>
+    <changeSet author="qe (generated)" id="1613638346754-61">
+        <dropForeignKeyConstraint baseTableName="user_organization" constraintName="FK8nq93qlc30a91c7nkl3o02jow"/>
+    </changeSet>
+    <changeSet author="qe (generated)" id="1613638346754-62">
+        <dropForeignKeyConstraint baseTableName="course_organization" constraintName="FKdythnvneadrsbvfa3hxd1tq4h"/>
+    </changeSet>
+    <changeSet author="qe (generated)" id="1613638346754-63">
+        <dropForeignKeyConstraint baseTableName="user_organization" constraintName="FKrk7non8pu8ve0qdddcp001qkh"/>
+    </changeSet>
+</databaseChangeLog>

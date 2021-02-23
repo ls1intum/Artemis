@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -145,91 +144,5 @@ public class OrganizationService {
         else {
             throw new EntityNotFoundException("Organization with id: \"" + organization.getId() + "\" does not exist");
         }
-    }
-
-    /**
-     *  Alias for saving an organization
-     *
-     * @param organization the entity to save
-     * @return the persisted entity
-     */
-    public Organization addOrganization(Organization organization) {
-        return save(organization);
-    }
-
-    /**
-     * Delete an organization entity by providing its id
-     * @param organizationId the id of the entity to delete
-     */
-    public void deleteOrganization(long organizationId) {
-        organizationRepository.deleteById(organizationId);
-    }
-
-    /**
-     * Delete an organization entity
-     * @param organization the entity to delete
-     */
-    public void deleteOrganization(Organization organization) {
-        organizationRepository.delete(organization);
-    }
-
-    public Organization findOne(long organizationId) {
-        log.debug("Request to get Organization : {}", organizationId);
-        return organizationRepository.findById(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization with id: \"" + organizationId + "\" does not exist"));
-    }
-
-    /**
-     * Get an organization containing the eagerly loaded list of users and courses
-     * @param organizationId the id of the organization to retrieve
-     * @return the organization with the given Id containing eagerly loaded list of users and courses
-     */
-    public Organization findOneWithEagerUsersAndCourses(long organizationId) {
-        log.debug("Request to get Organization : {}", organizationId);
-        return organizationRepository.findByIdWithEagerUsersAndCourses(organizationId)
-                .orElseThrow(() -> new EntityNotFoundException("Organization with id: \"" + organizationId + "\" does not exist"));
-    }
-
-    /**
-     * Get all organizations
-     * @return all organizations
-     */
-    public List<Organization> getAllOrganizations() {
-        return organizationRepository.findAll();
-    }
-
-    /**
-     * Get all organizations where the given user is currently in
-     * @param userId the id of the user used to retrieve the organizations
-     * @return a Set of all organizations the given user is currently in
-     */
-    public Set<Organization> getAllOrganizationsByUser(long userId) {
-        return organizationRepository.findAllOrganizationsByUserId(userId);
-    }
-
-    /**
-     * Get all organizations where the given course is currently in
-     * @param courseId the id of the course used to retrieve the organizations
-     * @return a Set of all organizations the given course is currently in
-     */
-    public Set<Organization> getAllOrganizationsByCourse(long courseId) {
-        return organizationRepository.findAllOrganizationsByCourseId(courseId);
-    }
-
-    /**
-     * Get the number of users currently mapped to the given organization
-     * @param organizationId the id of the organization where the users are in
-     * @return the number of users contained in the organization
-     */
-    public long getNumberOfUsersByOrganization(long organizationId) {
-        return organizationRepository.getNumberOfUsersByOrganizationId(organizationId);
-    }
-
-    /**
-     * Get the number of courses currently mapped to the given organization
-     * @param organizationId the id of the organization where the courses are in
-     * @return the number of courses contained in the organization
-     */
-    public long getNumberOfCoursesByOrganization(long organizationId) {
-        return organizationRepository.getNumberOfCoursesByOrganizationId(organizationId);
     }
 }

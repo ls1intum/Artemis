@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -34,15 +33,35 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     @Query("select organization from Organization organization left join fetch organization.users ou left join fetch organization.courses oc where organization.id = :#{#organizationId}")
     Optional<Organization> findByIdWithEagerUsersAndCourses(@Param("organizationId") long organizationId);
 
+    /**
+     * Get all organizations where the given user is currently in
+     * @param userId the id of the user used to retrieve the organizations
+     * @return a Set of all organizations the given user is currently in
+     */
     @Query("select distinct organization from Organization organization join organization.users ou where ou.id = :#{#userId}")
     Set<Organization> findAllOrganizationsByUserId(@Param("userId") long userId);
 
+    /**
+     * Get all organizations where the given course is currently in
+     * @param courseId the id of the course used to retrieve the organizations
+     * @return a Set of all organizations the given course is currently in
+     */
     @Query("select distinct organization from Organization organization join organization.courses oc where oc.id = :#{#courseId}")
     Set<Organization> findAllOrganizationsByCourseId(@Param("courseId") long courseId);
 
+    /**
+     * Get the number of users currently mapped to the given organization
+     * @param organizationId the id of the organization where the users are in
+     * @return the number of users contained in the organization
+     */
     @Query("select count(users.id) as num_user from Organization organization left join organization.users users where organization.id = :#{#organizationId} group by organization.id")
     Long getNumberOfUsersByOrganizationId(@Param("organizationId") long organizationId);
 
+    /**
+     * Get the number of courses currently mapped to the given organization
+     * @param organizationId the id of the organization where the courses are in
+     * @return the number of courses contained in the organization
+     */
     @Query("select count(courses.id) as num_courses from Organization organization left join organization.courses courses where organization.id = :#{#organizationId} group by organization.id")
     Long getNumberOfCoursesByOrganizationId(@Param("organizationId") long organizationId);
 
@@ -109,5 +128,21 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
             }
         });
         return matchingOrganizations;
+    }
+
+    @NotNull
+    default Organization findOneOrElseThrow(long organizationId) {
+        return findById(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization with id: \"" + organizationId + "\" does not exist"));
+    }
+
+    /**
+     * Get an organization containing the eagerly loaded list of users and courses
+     * @param organizationId the id of the organization to retrieve
+     * @return the organization with the given Id containing eagerly loaded list of users and courses
+     */
+    @NotNull
+    default Organization findOneWithEagerUsersAndCoursesOrElseThrow(long organizationId) {
+        return findByIdWithEagerUsersAndCourses(organizationId)
+            .orElseThrow(() -> new EntityNotFoundException("Organization with id: \"" + organizationId + "\" does not exist"));
     }
 }
