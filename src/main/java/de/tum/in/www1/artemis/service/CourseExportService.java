@@ -136,7 +136,7 @@ public class CourseExportService {
      * Exports all exams of the course by zipping each one separately and adds them into the directory
      * outputDir/exams/
      *
-     * @param course       The course where the exercises are located
+     * @param course       The course where the exams are located
      * @param outputDir    The directory that will be used to store the exams
      * @param exportErrors List of failures that occurred during the export
      */
@@ -144,17 +144,8 @@ public class CourseExportService {
         Path examsDir = Path.of(outputDir, "exams");
         try {
             Files.createDirectory(examsDir);
-
-            boolean courseExists = courseRepository.existsById(course.getId());
-            if (courseExists) {
-                List<Exam> exams = examRepository.findByCourseId(course.getId());
-                exams.forEach(exam -> exportExam(exam.getId(), examsDir.toString(), exportErrors));
-            }
-            else {
-                var error = "Failed to export exams of course " + course.getId() + " because the course doesn't exist.";
-                log.info(error);
-                exportErrors.add(error);
-            }
+            List<Exam> exams = examRepository.findByCourseId(course.getId());
+            exams.forEach(exam -> exportExam(exam.getId(), examsDir.toString(), exportErrors));
         }
         catch (IOException e) {
             var error = "Failed to create course exams directory " + examsDir + ".";
