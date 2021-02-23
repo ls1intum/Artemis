@@ -146,12 +146,15 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
                 this.studentSubmission.submitted = true;
                 this.updateViewFromSubmission();
             },
-            () => this.onSaveSubmissionError(),
+            () => this.onError(),
         );
     }
 
-    private onSaveSubmissionError() {
-        // show only one error for 5s - see constructor
-        this.synchronizationAlert$.next();
+    /**
+     * Pass on an error to the browser console and the jhiAlertService.
+     * @param error
+     */
+    private onError() {
+        this.jhiAlertService.error(this.translateService.instant('error.fileUploadSavingError'));
     }
 }

@@ -75,6 +75,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     exerciseIndex = 0;
 
+    errorSubscription: Subscription;
+
     isProgrammingExercise() {
         return this.activeExercise.type === ExerciseType.PROGRAMMING;
     }
@@ -122,7 +124,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private courseExerciseService: CourseExerciseService,
     ) {
         // show only one synchronization error every 5s
-        this.synchronizationAlert$.pipe(throttleTime(5000)).subscribe(() => this.alertService.error('artemisApp.examParticipation.saveSubmissionError'));
+        this.errorSubscription = this.synchronizationAlert$.pipe(throttleTime(5000)).subscribe(() => this.alertService.error('artemisApp.examParticipation.saveSubmissionError'));
     }
 
     /**
@@ -420,6 +422,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.programmingSubmissionSubscriptions.forEach((subscription) => {
             subscription.unsubscribe();
         });
+        this.errorSubscription.unsubscribe();
         window.clearInterval(this.autoSaveInterval);
     }
 
