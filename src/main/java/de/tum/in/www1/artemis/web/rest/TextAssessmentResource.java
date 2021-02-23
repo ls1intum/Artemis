@@ -87,7 +87,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
     /**
      * Saves a given manual textAssessment
-     *
+     * TODO SE: refactor this restcall to not use the exerciseId anymore, and make uniform with other save..Assessment callse
      * @param exerciseId the exerciseId of the exercise which will be saved
      * @param resultId the resultId the assessment belongs to
      * @param textAssessment the assessments
