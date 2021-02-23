@@ -23,9 +23,8 @@ import { createFileUploadSubmission } from '../../../../helpers/mocks/service/mo
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { JhiAlertService } from 'ng-jhipster';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

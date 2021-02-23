@@ -31,7 +31,6 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { cloneDeep } from 'lodash';
 import { Course } from 'app/entities/course.model';
 import * as Sentry from '@sentry/browser';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
