@@ -79,17 +79,14 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("""
             select distinct c
             from Course c left join fetch c.exercises e, User u
-            where u.id = :#{#userId} and c.instructorGroupName member of u.groups and
-            exists (select exercise from Exercise exercise
-                where exercise.course.id = c.id and TYPE(exercise) = QuizExercise)
+            where u.id = :#{#userId} and c.instructorGroupName member of u.groups and TYPE(e) = QuizExercise
             """)
     List<Course> getCoursesWithQuizExercisesForWhichUserHasInstructorAccess(@Param("userId") Long userId);
 
     @Query("""
             select distinct c
             from Course c left join fetch c.exercises e
-            where exists (select exercise from Exercise exercise
-                where exercise.course.id = c.id and TYPE(exercise) = QuizExercise)
+            where TYPE(e) = QuizExercise
             """)
     List<Course> findAllWithQuizExercisesWithEagerExercises();
 
