@@ -26,6 +26,8 @@ public class TextUnit extends LectureUnit {
 
     /**
      * Removes information from a lecture unit that is not needed in the course dashboard
+     *
+     * @return trimmed text unit
      */
     @Override
     public TextUnit trimForDashboard() {

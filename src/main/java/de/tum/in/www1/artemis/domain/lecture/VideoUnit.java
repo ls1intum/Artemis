@@ -38,6 +38,8 @@ public class VideoUnit extends LectureUnit {
 
     /**
      * Removes information from a lecture unit that is not needed in the course dashboard
+     *
+     * @return trimmed video unit
      */
     @Override
     public VideoUnit trimForDashboard() {

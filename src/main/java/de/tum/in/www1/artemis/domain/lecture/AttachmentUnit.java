@@ -48,6 +48,8 @@ public class AttachmentUnit extends LectureUnit {
 
     /**
      * Removes information from a lecture unit that is not needed in the course dashboard
+     *
+     * @return trimmed attachment unit
      */
     @Override
     public AttachmentUnit trimForDashboard() {

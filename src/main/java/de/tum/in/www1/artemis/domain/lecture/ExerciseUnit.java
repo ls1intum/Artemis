@@ -42,6 +42,8 @@ public class ExerciseUnit extends LectureUnit {
 
     /**
      * Removes information from a lecture unit that is not needed in the course dashboard
+     *
+     * @return trimmed exercise unit
      */
     @Override
     public ExerciseUnit trimForDashboard() {
