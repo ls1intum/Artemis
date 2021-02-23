@@ -184,6 +184,7 @@ This approach has several benefits:
 * The "ElseThrow" suffix at the end of the method name makes the behaviour clear to outside callers
 
 In general everything changing small database objects can go into the repository. More complex operations have to be done in the service.
+
 Another approach is moving objects into the domain classes, but be aware that you need to add ``@JsonIgnore`` where necessary:
 
 .. code-block:: java
