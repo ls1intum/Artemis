@@ -95,6 +95,7 @@
                 </button>
                 <button
                     *jhiHasAnyAuthority="['ROLE_ADMIN']"
+                    [buttonSize]="ButtonSize.MEDIUM"
                     jhiDeleteButton
                     [entityTitle]="course.title"
                     deleteQuestion="artemisApp.course.delete.question"
