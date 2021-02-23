@@ -62,9 +62,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     private final ExamDateService examDateService;
 
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository, ResultRepository resultRepository,
-            Environment env, ProgrammingSubmissionService programmingSubmissionService, GroupNotificationService groupNotificationService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, ExamDateService examDateService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, StudentExamRepository studentExamRepository) {
+            Environment env, ProgrammingSubmissionService programmingSubmissionService, ProgrammingExerciseGradingService programmingExerciseGradingService,
+            GroupNotificationService groupNotificationService, ExamDateService examDateService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            StudentExamRepository studentExamRepository) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.resultRepository = resultRepository;
@@ -89,15 +89,20 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             }
             SecurityUtils.setAuthorizationObject();
 
-            List<ProgrammingExercise> programmingExercisesAllByDueDateOrBuildStudentSubmissionsDateAfterDate = programmingExerciseRepository
+            List<ProgrammingExercise> programmingExercisesWithDueDateOrBuildAfterDueDate = programmingExerciseRepository
                     .findAllByDueDateOrBuildStudentSubmissionsDateAfterDate(ZonedDateTime.now());
-            programmingExercisesAllByDueDateOrBuildStudentSubmissionsDateAfterDate.forEach(this::scheduleExercise);
+            programmingExercisesWithDueDateOrBuildAfterDueDate.forEach(this::scheduleExercise);
 
-            // for exams (TODO take info account that the individual due dates can be after the exam end date)
+            List<ProgrammingExercise> programmingExercisesWithFutureManualAssessment = programmingExerciseRepository
+                    .findAllByManualAssessmentAndDueDateAfterDate(ZonedDateTime.now());
+            programmingExercisesWithFutureManualAssessment.forEach(this::scheduleExercise);
+
             List<ProgrammingExercise> programmingExercisesWithExam = programmingExerciseRepository.findAllWithEagerExamAllByExamEndDateAfterDate(ZonedDateTime.now());
             programmingExercisesWithExam.forEach(this::scheduleExamExercise);
-            log.info("Scheduled updating the score of student submissions for " + programmingExercisesAllByDueDateOrBuildStudentSubmissionsDateAfterDate.size()
-                    + " programming exercises with a due date in the future.");
+
+            log.info("Scheduled " + programmingExercisesWithDueDateOrBuildAfterDueDate.size() + " programming exercises with a dueDate or buildAndTestAfterDueDate.");
+            log.info("Scheduled " + programmingExercisesWithFutureManualAssessment.size() + " programming exercises with future manual assessment.");
+            log.info("Scheduled " + programmingExercisesWithExam.size() + " exam programming exercises.");
         }
         catch (Exception e) {
             log.error("Failed to start ProgrammingExerciseScheduleService", e);
@@ -159,7 +164,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleCourseExercise(ProgrammingExercise exercise) {
-        // For any course exercise that needsToBeScheduled (buildAndTestAfterDueDate and/or manual assessment)
+        // For any course exercise that needsToBeScheduled (dueDate, buildAndTestAfterDueDate and/or manual assessment)
         if (exercise.getDueDate() != null && ZonedDateTime.now().isBefore(exercise.getDueDate())) {
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, () -> {
                 lockAllStudentRepositories(exercise).run();
@@ -191,10 +196,10 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     startDate);
             return;
         }
-        var releaseDate = getExamProgrammingExerciseReleaseDate(exercise);
-        if (releaseDate.isAfter(ZonedDateTime.now())) {
+        var unlockDate = getExamProgrammingExerciseUnlockDate(exercise);
+        if (unlockDate.isAfter(ZonedDateTime.now())) {
             // Use the custom date from the exam rather than the of the exercise's lifecycle
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(releaseDate, unlockAllStudentRepositories(exercise))));
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(unlockDate, unlockAllStudentRepositories(exercise))));
         }
         else if (examDateService.getLatestIndividualExamEndDate(exam).isBefore(ZonedDateTime.now())) {
             // This is only a backup (e.g. a crash of this node and restart during the exam)
@@ -366,21 +371,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         };
     }
 
-    private void scheduleIndividualRepositoryLockTasks(ProgrammingExercise exercise) {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId());
-        if (programmingExercise.isEmpty()) {
-            throw new EntityNotFoundException("programming exercise not found with id " + exercise.getId());
-        }
-        // Collect all individual due dates
-        Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates = new HashSet<>();
-        for (StudentParticipation studentParticipation : programmingExercise.get().getStudentParticipations()) {
-            var programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            var dueDate = studentExamRepository.getIndividualDueDate(programmingExercise.get(), programmingExerciseStudentParticipation);
-            individualDueDates.add(new Tuple<>(dueDate, programmingExerciseStudentParticipation));
-        }
-        scheduleIndividualRepositoryLockTasks(exercise, individualDueDates);
-    }
-
     /**
      * this method schedules individual lock tasks for programming exercises (mostly in the context of exams)
      * @param exercise the programming exercise for which the lock is executed
@@ -405,29 +395,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         return exercise.isExamExercise();
     }
 
-    private static ZonedDateTime getExamProgrammingExerciseReleaseDate(ProgrammingExercise exercise) {
-        // Should we take the exercise's own release date more into account?
-        // using visible date here because unlocking will take some time, see delay below.
-        var releaseDate = exercise.getExerciseGroup().getExam().getVisibleDate();
-        if (releaseDate == null) {
-            releaseDate = exercise.getExerciseGroup().getExam().getStartDate();
-        }
-        if (releaseDate == null) {
-            releaseDate = exercise.getReleaseDate();
-        }
-        return releaseDate;
-    }
-
-    /**
-     * Remove the write permissions for all students for their programming exercise repository.
-     * They will still be able to read the code, but won't be able to change it.
-     *
-     * @param programmingExerciseId     ProgrammingExercise id.
-     * @return a list of participations for which the locking operation has failed. If everything went as expected, this should be an empty list.
-     * @throws EntityNotFoundException  if the programming exercise can't be found.
-     */
-    public List<ProgrammingExerciseStudentParticipation> removeWritePermissionsFromAllStudentRepositories(Long programmingExerciseId) throws EntityNotFoundException {
-        return removeWritePermissionsFromAllStudentRepositories(programmingExerciseId, participation -> true);
+    private static ZonedDateTime getExamProgrammingExerciseUnlockDate(ProgrammingExercise exercise) {
+        // using start date minus 5 minutes here because unlocking will take some time (it is invoked synchronously).
+        return exercise.getExerciseGroup().getExam().getStartDate().minusMinutes(5);
     }
 
     private List<ProgrammingExerciseStudentParticipation> removeWritePermissionsFromAllStudentRepositories(Long programmingExerciseId,
@@ -440,19 +410,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             Predicate<ProgrammingExerciseStudentParticipation> condition) throws EntityNotFoundException {
         return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::stashChangesInStudentRepositoryAfterDueDateHasPassed,
                 condition, "stash changes from all student repositories");
-    }
-
-    /**
-     * Add the write permission for all students for their programming exercise repository.
-     * This allows them to work on the programming exercise if the repositories were locked before.
-     *
-     * @param programmingExerciseId     ProgrammingExercise id.
-     * @return a list of participations for which the unlocking operation has failed. If everything went as expected, this should be an empty list.
-     * @throws EntityNotFoundException  if the programming exercise can't be found.
-     */
-    public List<ProgrammingExerciseStudentParticipation> addWritePermissionsToAllStudentRepositories(Long programmingExerciseId) throws EntityNotFoundException {
-        return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::unlockStudentRepository, participation -> true,
-                "add write permissions to all student repositories");
     }
 
     /**

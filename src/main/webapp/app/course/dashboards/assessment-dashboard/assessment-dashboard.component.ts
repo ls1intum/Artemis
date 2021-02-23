@@ -46,6 +46,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
     numberOfAssessmentLocks = 0;
     totalAssessmentPercentage = 0;
     showFinishedExercises = false;
+    isAtLeastInstructor = false;
 
     stats = new StatsForDashboard();
 
@@ -107,6 +108,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                 this.exam = res.body!;
                 this.course = Course.from(this.exam.course!);
                 this.courseService.checkAndSetCourseRights(this.course);
+                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
 
                 // get all exercises
                 const exercises: Exercise[] = [];
@@ -127,6 +129,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                     this.course = Course.from(res.body!);
                     this.courseService.checkAndSetCourseRights(this.course);
                     this.extractExercises(this.course.exercises);
+                    this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
                 },
                 (response: string) => this.onError(response),
             );

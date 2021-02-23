@@ -22,11 +22,13 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { addParticipationToResult } from 'app/exercises/shared/result/result-utils';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
 })
 export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeactivate {
+    readonly addParticipationToResult = addParticipationToResult;
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
     submission?: FileUploadSubmission;
     submittedFileName: string;

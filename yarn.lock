@@ -1854,10 +1854,15 @@
   resolved "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-3.0.3.tgz#3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d"
   integrity sha512-tHq6qdbT9U1IRSGf14CL0pUlULksvY9OZ+5eEgl1N7t+OA3tGvNpxJCzuKQlsNgCVwbAs670L1vcVQi8j9HjnA==
 
-"@types/node@*", "@types/node@14.14.29":
+"@types/node@*":
   version "14.14.29"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.29.tgz#2bbaefda2b715f9a0cd31c55b55b9092c5920e59"
   integrity sha512-z1PF7SVwqolmqu21eoWM82FPx699C2sCmrxTcCRotRn+2gt9Ve4dwmZsDntxgGyEHFHXYaqMcMMCdPKUeTKXsA==
+
+"@types/node@14.14.31":
+  version "14.14.31"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.31.tgz#72286bd33d137aa0d152d47ec7c1762563d34055"
+  integrity sha512-vFHy/ezP5qI0rFgJ7aQnjDXwAMrG0KqqIH7tQG5PPv3BWBayOPIQNBjVc/P6hhdZfMx51REc6tfDNXHUio893g==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.0"
@@ -8512,10 +8517,10 @@ ng-jhipster@0.16.0:
   dependencies:
     tslib "^2.0.0"
 
-ng-mocks@11.6.0:
-  version "11.6.0"
-  resolved "https://registry.yarnpkg.com/ng-mocks/-/ng-mocks-11.6.0.tgz#727fadd9de9626d7840c92545e54201dc3eb2066"
-  integrity sha512-4uequxfy0koFg/jHacW/9DU3AZDg+nBKMZEFM/534OkkhKoRWa2BmuMZwq8LfxxZ5vnyAJaVvUCJY2VBuBOktA==
+ng-mocks@11.7.0:
+  version "11.7.0"
+  resolved "https://registry.yarnpkg.com/ng-mocks/-/ng-mocks-11.7.0.tgz#cb85d1c2be7a83fb1d3bb0939bf69eb70afe073a"
+  integrity sha512-B5VapKCw58vm6CUYSOY/I9PJmdvxrsz41k0rYjl+PCxz9Dk4XcRds8qsDcJbhfRyA/T7PECCZMBXDlXI6Wxh2w==
 
 ng-pick-datetime@7.0.0:
   version "7.0.0"

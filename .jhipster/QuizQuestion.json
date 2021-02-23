@@ -24,7 +24,7 @@
         {
             "fieldName": "scoringType",
             "fieldType": "ScoringType",
-            "fieldValues": "ALL_OR_NOTHING,PROPORTIONAL_CORRECT_OPTIONS,TRUE_FALSE_NEUTRAL"
+            "fieldValues": "ALL_OR_NOTHING,PROPORTIONAL_CORRECT_OPTIONS,"
         },
         {
             "fieldName": "randomizeOrder",

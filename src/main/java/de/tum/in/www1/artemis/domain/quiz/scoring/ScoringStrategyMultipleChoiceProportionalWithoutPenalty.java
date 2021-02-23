@@ -3,10 +3,9 @@ package de.tum.in.www1.artemis.domain.quiz.scoring;
 import de.tum.in.www1.artemis.domain.quiz.*;
 
 /**
- * Proportional with penalty means that every correctly selected/unselected answer increases the score by x and every incorrectly selected/unselected answer the score by x where x
- * = maxScore / numberOfAnswerOptions if the result is negative, a score of 0 is given instead
+ * Proportional without penalty means that every correctly selected/unselected answer increases the score by maxScore / numberOfAnswerOptions
  */
-public class ScoringStrategyMultipleChoiceProportionalWithPenalty implements ScoringStrategy {
+public class ScoringStrategyMultipleChoiceProportionalWithoutPenalty implements ScoringStrategy {
 
     @Override
     public double calculateScore(QuizQuestion quizQuestion, SubmittedAnswer submittedAnswer) {
@@ -21,7 +20,6 @@ public class ScoringStrategyMultipleChoiceProportionalWithPenalty implements Sco
 
             double totalOptions = mcQuestion.getAnswerOptions().size();
             double correctSelections = 0;
-            double incorrectSelections = 0;
 
             // iterate through each answer option and count the correctly selected and incorrectly selected options
             for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
@@ -31,14 +29,10 @@ public class ScoringStrategyMultipleChoiceProportionalWithPenalty implements Sco
                 if (answerOption.isInvalid() || (answerOption.isIsCorrect() && isSelected) || (!answerOption.isIsCorrect() && !isSelected)) {
                     correctSelections++;
                 }
-                else {
-                    incorrectSelections++;
-                }
             }
             // calculate the fraction of the total score this submission should get
             // every correct selection increases fraction by 1/totalOptions,
-            // every incorrect selection decreases fraction by 1/totalOptions
-            double fraction = ((correctSelections / totalOptions) - (incorrectSelections / totalOptions));
+            double fraction = correctSelections / totalOptions;
 
             // end result is maxScore * fraction, but at least 0
             return Math.max(0, quizQuestion.getPoints() * fraction);

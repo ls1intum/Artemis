@@ -5,10 +5,9 @@ import java.util.Set;
 import de.tum.in.www1.artemis.domain.quiz.*;
 
 /**
- * Proportional with penalty means that every correct mapping increases the score by x and every incorrect mapping decreases the score by x where x = maxScore /
- * numberOfDropLocationsThatShouldHaveAMapping if the result is negative, a score of 0 is given instead
+ * Proportional without penalty means that every correct mapping increases the score by maxScore / numberOfDropLocationsThatShouldHaveAMapping
  */
-public class ScoringStrategyDragAndDropProportionalWithPenalty implements ScoringStrategy {
+public class ScoringStrategyDragAndDropProportionalWithoutPenalty implements ScoringStrategy {
 
     @Override
     public double calculateScore(QuizQuestion quizQuestion, SubmittedAnswer submittedAnswer) {
@@ -23,7 +22,6 @@ public class ScoringStrategyDragAndDropProportionalWithPenalty implements Scorin
 
             double mappedDropLocations = 0;
             double correctMappings = 0;
-            double incorrectMappings = 0;
 
             // iterate through each drop location and compare its correct mappings with the answer's mapping
             for (DropLocation dropLocation : dndQuestion.getDropLocations()) {
@@ -50,17 +48,12 @@ public class ScoringStrategyDragAndDropProportionalWithPenalty implements Scorin
                             correctMappings++;
                         }
                     }
-                    else {
-                        // wrong mappings always deduct points
-                        incorrectMappings++;
-                    }
                 }
             }
 
             // calculate the fraction of the total score the user should get
             // every correct mapping increases fraction by 1/mappedDropLocations,
-            // every incorrect mapping decreases fraction by 1/mappedDropLocations
-            double fraction = ((correctMappings / mappedDropLocations) - (incorrectMappings / mappedDropLocations));
+            double fraction = correctMappings / mappedDropLocations;
 
             // end result is maxScore * fraction, but at least 0
             return Math.max(0, quizQuestion.getPoints() * fraction);

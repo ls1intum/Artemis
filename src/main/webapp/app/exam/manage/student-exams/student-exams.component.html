@@ -144,7 +144,7 @@
 
                 <ngx-datatable-column prop="user" [minWidth]="120" [width]="120">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('user')">
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('user.name')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.student"> Student </span>
                             <fa-icon [icon]="controls.iconForSortPropField('user.name')"></fa-icon>
                         </span>
@@ -193,28 +193,16 @@
                 <ngx-datatable-column prop="submissionDate" [minWidth]="130" [width]="130">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissionDate')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submissionDate"> Started </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submissionDate"> Submission Date </span>
                             <fa-icon [icon]="controls.iconForSortPropField('submissionDate')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ value | artemisDate: 'short':true }}</span>
+                        <span>{{ formatDate(value) }}</span>
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="result" [width]="180">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('result')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.result"> Result </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('result')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ value }}
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="" [minWidth]="350" [width]="350">
+                <ngx-datatable-column prop="" [minWidth]="100" [width]="100">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-right">
                             <div class="btn-group" *ngIf="course?.isAtLeastTutor">

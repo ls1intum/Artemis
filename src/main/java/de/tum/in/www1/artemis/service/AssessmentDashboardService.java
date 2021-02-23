@@ -60,7 +60,6 @@ public class AssessmentDashboardService {
         for (Exercise exercise : exercises) {
 
             DueDateStat numberOfSubmissions;
-            DueDateStat totalNumberOfAssessments;
 
             if (exercise instanceof ProgrammingExercise) {
                 numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
