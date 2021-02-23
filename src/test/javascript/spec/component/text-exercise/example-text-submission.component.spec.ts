@@ -13,7 +13,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { Result } from 'app/entities/result.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -33,7 +33,7 @@ describe('ExampleTextSubmissionComponent', () => {
     let comp: ExampleTextSubmissionComponent;
     let exerciseService: ExerciseService;
     let exampleSubmissionService: ExampleSubmissionService;
-    let assessmentsService: TextAssessmentsService;
+    let assessmentsService: TextAssessmentService;
 
     const EXERCISE_ID = 1;
     const EXAMPLE_SUBMISSION_ID = 2;
@@ -78,7 +78,7 @@ describe('ExampleTextSubmissionComponent', () => {
         activatedRouteSnapshot = fixture.debugElement.injector.get(ActivatedRoute).snapshot;
         exerciseService = fixture.debugElement.injector.get(ExerciseService);
         exampleSubmissionService = fixture.debugElement.injector.get(ExampleSubmissionService);
-        assessmentsService = fixture.debugElement.injector.get(TextAssessmentsService);
+        assessmentsService = fixture.debugElement.injector.get(TextAssessmentService);
 
         exercise = new TextExercise(undefined, undefined);
         exercise.id = EXERCISE_ID;
