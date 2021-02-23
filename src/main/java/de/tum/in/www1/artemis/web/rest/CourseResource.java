@@ -850,7 +850,9 @@ public class CourseResource {
 
         // Get the course with all exercises
         final Course course = courseRepository.findWithEagerExercisesAndLecturesById(courseId);
-
+        if (course == null) {
+            return notFound();
+        }
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");

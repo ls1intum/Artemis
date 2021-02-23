@@ -308,7 +308,7 @@ public class CourseService {
             return;
         }
 
-        // This contains possible errors encountered during the archve process
+        // This contains possible errors encountered during the archive process
         ArrayList<String> exportErrors = new ArrayList<>();
 
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_STARTED, exportErrors);

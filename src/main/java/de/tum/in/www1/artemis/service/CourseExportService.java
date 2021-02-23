@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -144,10 +145,9 @@ public class CourseExportService {
         try {
             Files.createDirectory(examsDir);
 
-            // Lazy load the exams of the course.
-            var courseWithExams = courseRepository.findWithEagerLecturesAndLectureUnitsAndExamsById(course.getId());
-            if (courseWithExams.isPresent()) {
-                var exams = courseWithExams.get().getExams();
+            boolean courseExists = courseRepository.existsById(course.getId());
+            if (courseExists) {
+                List<Exam> exams = examRepository.findByCourseId(course.getId());
                 exams.forEach(exam -> exportExam(exam.getId(), examsDir.toString(), exportErrors));
             }
             else {
