@@ -157,7 +157,7 @@ describe('Modeling Assessment Service', () => {
                     .cancelAssessment(submissionId)
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
-                const req = httpMock.expectOne({
+                httpMock.expectOne({
                     url: `${SERVER_API_URL}api/file-upload-submissions/${submissionId}/cancel-assessment`,
                     method: 'PUT',
                 });
