@@ -547,7 +547,15 @@ public class StudentExamService {
         User instructor = testRun.getUser();
         var participations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructor.getId(),
                 testRun.getExercises());
-        testRun.getExercises().forEach(exercise -> exercise.setStudentParticipations(Set.of(exercise.findRelevantParticipation(participations))));
+        testRun.getExercises().forEach(exercise -> {
+            var relevantParticipation = exercise.findRelevantParticipation(participations);
+            if (relevantParticipation != null) {
+                exercise.setStudentParticipations(Set.of(relevantParticipation));
+            }
+            else {
+                exercise.setStudentParticipations(new HashSet<>());
+            }
+        });
 
         List<StudentExam> otherTestRunsOfInstructor = findAllTestRunsWithExercisesForUser(testRun.getExam().getId(), instructor.getId()).stream()
                 .filter(studentExam -> !studentExam.getId().equals(testRunId)).collect(Collectors.toList());
