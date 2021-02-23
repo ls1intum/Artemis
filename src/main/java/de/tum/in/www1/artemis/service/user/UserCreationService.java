@@ -97,7 +97,7 @@ public class UserCreationService {
         newUser.setFirstName(firstName);
         newUser.setLastName(lastName);
         // needs to be mutable --> new HashSet<>(Set.of())
-        newUser.setGroups(groups != null ? groups : new HashSet<>(Set.of()));
+        newUser.setGroups(groups != null ? new HashSet<>(groups) : new HashSet<>());
         newUser.setEmail(email);
         newUser.setRegistrationNumber(registrationNumber);
         newUser.setImageUrl(imageUrl);

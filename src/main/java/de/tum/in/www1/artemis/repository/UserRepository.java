@@ -256,7 +256,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     }
 
     @NotNull
-    default User findWithGroupsAndAuthoritiesByIdElseThrow(long userId) {
+    default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
         return findOneWithGroupsAndAuthoritiesById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
 
