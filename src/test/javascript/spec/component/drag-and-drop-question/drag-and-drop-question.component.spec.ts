@@ -61,13 +61,8 @@ describe('DragAndDropQuestionComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         sinon.restore();
-    });
-
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(comp).to.be.ok;
     });
 
     it('should update html when question changes', () => {
@@ -201,7 +196,7 @@ describe('DragAndDropQuestionComponent', () => {
     ) => {
         comp.mappings = mappings;
         const dragEvent = { dragData: dragItem };
-        let fnOnMappingUpdate = sinon.fake();
+        const fnOnMappingUpdate = sinon.fake();
         comp.fnOnMappingUpdate = fnOnMappingUpdate;
         comp.onDragDrop(dropLocation, dragEvent);
         expect(comp.mappings).to.deep.equal(expectedMappings);

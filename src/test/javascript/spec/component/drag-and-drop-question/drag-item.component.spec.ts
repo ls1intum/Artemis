@@ -7,7 +7,6 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { DndModule } from 'ng2-dnd';
 import { DeviceDetectorService, DeviceInfo } from 'ngx-device-detector';
 import * as sinon from 'sinon';
-import { stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 
@@ -53,8 +52,8 @@ describe('DragItemComponent', () => {
             deviceType: 'deviceType',
             orientation: 'orientation',
         } as DeviceInfo;
-        const deviceInfoStub = stub(deviceDetectorService, 'getDeviceInfo').returns(deviceInfo);
-        const isMobileStub = stub(deviceDetectorService, 'isMobile').returns(true);
+        const deviceInfoStub = sinon.stub(deviceDetectorService, 'getDeviceInfo').returns(deviceInfo);
+        const isMobileStub = sinon.stub(deviceDetectorService, 'isMobile').returns(true);
         comp.ngOnInit();
         expect(deviceInfoStub).to.have.been.called;
         expect(isMobileStub).to.have.been.called;
