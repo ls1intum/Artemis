@@ -162,7 +162,7 @@
                 "invalidStartTime": "Quiz: Die Startzeit ist nicht gültig.",
                 "startTimeInPast": "Quiz: Die Startzeit liegt in der Vergangenheit.",
                 "questionTitle": "Frage {{index}}: Der Titel fehlt.",
-                "questionScore": "Frage {{index}}: Ungültige Punktzahl.",
+                "questionScore": "Frage {{index}}: Mindestens einen Punkt pro Aufgabe erforderlich.",
                 "questionCorrectAnswerOption": "Frage {{index}}: Es existiert keine korrekte Antwortmöglichkeit.",
                 "questionCorrectMapping": "Frage {{index}}: Es existiert keine korrekte Zuordnung.",
                 "questionUnsolvable": "Frage {{index}}: Es gibt Drag Items, die auf mehrere Drop Locations gleichzeitig platziert werden müssten um die Frage richtig zu beantworten.",
