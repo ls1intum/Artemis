@@ -169,23 +169,6 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     /**
-     * Deletes the course
-     * @param courseId id the course that will be deleted
-     */
-    deleteCourse(courseId: number) {
-        this.courseService.delete(courseId).subscribe(
-            () => {
-                this.eventManager.broadcast({
-                    name: 'courseListModification',
-                    content: 'Deleted an course',
-                });
-                this.dialogErrorSource.next('');
-            },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
-    }
-
-    /**
      * toggles the attribute showOnlyActive and reloads all courses
      */
     toggleShowOnlyActive() {

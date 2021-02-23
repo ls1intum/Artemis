@@ -138,13 +138,4 @@ describe('CourseManagementComponent', () => {
         fixture.detectChanges();
         expect(component).to.be.ok;
     });
-
-    it('should delete course', () => {
-        const course = new Course();
-        course.id = 187;
-        sinon.stub(service, 'delete').returns(of(new HttpResponse({ body: null })));
-
-        component.deleteCourse(187);
-        expect(component).to.be.ok;
-    });
 });
