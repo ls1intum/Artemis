@@ -226,8 +226,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         unreferencedFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
         unreferencedFeedback.id = 1;
         component.unreferencedFeedback = [unreferencedFeedback];
-        textAssessmentsService = fixture.debugElement.injector.get(TextAssessmentsService);
-        spyOn(textAssessmentsService, 'updateAssessmentAfterComplaint').and.returnValue(
+        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
+        spyOn(textAssessmentService, 'updateAssessmentAfterComplaint').and.returnValue(
             of(
                 new HttpResponse({
                     body: new Result(),
