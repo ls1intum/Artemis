@@ -82,18 +82,18 @@ describe('DragAndDropQuestionComponent', () => {
     });
 
     it('should count correct mappings as zero if no correct mappings', () => {
-        const [dropLocation] = getDropLocationMappingAndItem();
+        const { dropLocation } = getDropLocationMappingAndItem();
         comp.question.dropLocations = [dropLocation];
         comp.ngOnChanges();
         expect(comp.correctAnswer).to.equal(0);
     });
 
     it('should count correct mappings on changes', () => {
-        const [dropLocation1, correctMapping1] = getDropLocationMappingAndItem();
-        const [dropLocation2, correctMapping2] = getDropLocationMappingAndItem();
-        const [dropLocation3, correctMapping3] = getDropLocationMappingAndItem();
-        const [_, correctMapping4] = getDropLocationMappingAndItem();
-        const [dropLocation5] = getDropLocationMappingAndItem();
+        const { dropLocation: dropLocation1, mapping: correctMapping1 } = getDropLocationMappingAndItem();
+        const { dropLocation: dropLocation2, mapping: correctMapping2 } = getDropLocationMappingAndItem();
+        const { dropLocation: dropLocation3, mapping: correctMapping3 } = getDropLocationMappingAndItem();
+        const { mapping: correctMapping4 } = getDropLocationMappingAndItem();
+        const { dropLocation: dropLocation5 } = getDropLocationMappingAndItem();
         comp.question.dropLocations = [dropLocation1, dropLocation2, dropLocation3];
         // Mappings do not have any of drop locations so no selected item
         comp.mappings = [correctMapping4];
@@ -117,17 +117,17 @@ describe('DragAndDropQuestionComponent', () => {
     });
 
     it('should return correct drag item for drop location', () => {
-        const [dropLocation, mapping, dragItem] = getDropLocationMappingAndItem();
-        const [falseDropLocation] = getDropLocationMappingAndItem();
+        const { dropLocation, mapping, dragItem } = getDropLocationMappingAndItem();
+        const { dropLocation: falseDropLocation } = getDropLocationMappingAndItem();
         comp.sampleSolutionMappings = [mapping];
         expect(comp.correctDragItemForDropLocation(dropLocation)).to.deep.equal(dragItem);
         expect(comp.correctDragItemForDropLocation(falseDropLocation)).to.null;
     });
 
     it('should show sample solution if force sample solution is set to true', () => {
-        const [_1, mapping1] = getDropLocationMappingAndItem();
+        const { mapping } = getDropLocationMappingAndItem();
         const solveStub = stub(dragAndDropQuestionUtil, 'solve').returnsArg(1);
-        const mappings = [mapping1];
+        const mappings = [mapping];
         comp.mappings = mappings;
         comp.forceSampleSolution = true;
         expect(comp.forceSampleSolution).to.equal(true);
@@ -143,16 +143,16 @@ describe('DragAndDropQuestionComponent', () => {
     });
 
     it('should return unassigned drag items', () => {
-        const [_1, mapping1, dragItem1] = getDropLocationMappingAndItem();
-        const [_2, _m2, dragItem2] = getDropLocationMappingAndItem();
+        const { mapping: mapping1, dragItem: dragItem1 } = getDropLocationMappingAndItem();
+        const { dragItem: dragItem2 } = getDropLocationMappingAndItem();
         comp.mappings = [mapping1];
         comp.question.dragItems = [dragItem1, dragItem2];
         expect(comp.getUnassignedDragItems()).to.deep.equal([dragItem2]);
     });
 
     it('should return invalid dragItem for location', () => {
-        const [dropLocation1, mapping1] = getDropLocationMappingAndItem();
-        const [dropLocation2, mapping2, dragItem2] = getDropLocationMappingAndItem();
+        const { dropLocation: dropLocation1, mapping: mapping1 } = getDropLocationMappingAndItem();
+        const { dropLocation: dropLocation2, mapping: mapping2, dragItem: dragItem2 } = getDropLocationMappingAndItem();
         comp.mappings = [mapping1, mapping2];
         expect(comp.invalidDragItemForDropLocation(dropLocation1)).to.equal(false);
         dragItem2.invalid = true;
@@ -160,14 +160,14 @@ describe('DragAndDropQuestionComponent', () => {
     });
 
     it('should return no drag item if there is no mapping', () => {
-        const [dropLocation] = getDropLocationMappingAndItem();
+        const { dropLocation } = getDropLocationMappingAndItem();
         expect(comp.dragItemForDropLocation(dropLocation)).to.null;
     });
 
     it('should remove existing mappings when there is no drop location', () => {
-        const [_, mapping, dragItem] = getDropLocationMappingAndItem();
-        const [_1, mapping1] = getDropLocationMappingAndItem();
-        const [_2, mapping2] = getDropLocationMappingAndItem();
+        const { mapping, dragItem } = getDropLocationMappingAndItem();
+        const { mapping: mapping1 } = getDropLocationMappingAndItem();
+        const { mapping: mapping2 } = getDropLocationMappingAndItem();
         checkDragDrop(undefined, dragItem, [mapping, mapping1], [mapping1], 1);
 
         // should not call update if mappings did not change
@@ -175,14 +175,14 @@ describe('DragAndDropQuestionComponent', () => {
     });
 
     it('should not do anything if given droplocation and dragEvent dragData is mapped', () => {
-        const [dropLocation, mapping, dragItem] = getDropLocationMappingAndItem();
+        const { dropLocation, mapping, dragItem } = getDropLocationMappingAndItem();
         checkDragDrop(dropLocation, dragItem, [mapping], [mapping], 0);
     });
 
     it('should map dragItem to new drop location', () => {
-        const [dropLocation, mapping, dragItem] = getDropLocationMappingAndItem();
-        const [dropLocation1, mapping1, dragItem1] = getDropLocationMappingAndItem();
-        const [_, mapping2] = getDropLocationMappingAndItem();
+        const { dropLocation, mapping, dragItem } = getDropLocationMappingAndItem();
+        const { dropLocation: dropLocation1, mapping: mapping1, dragItem: dragItem1 } = getDropLocationMappingAndItem();
+        const { mapping: mapping2 } = getDropLocationMappingAndItem();
         const newMappings = [mapping2, new DragAndDropMapping(dragItem1, dropLocation), new DragAndDropMapping(dragItem, dropLocation1)];
         checkDragDrop(dropLocation, dragItem1, [mapping, mapping1, mapping2], newMappings, 1);
     });
@@ -218,6 +218,6 @@ describe('DragAndDropQuestionComponent', () => {
         const dropLocation = new DropLocation();
         const dragItem = new DragItem();
         const mapping = new DragAndDropMapping(dragItem, dropLocation);
-        return [dropLocation, mapping, dragItem];
+        return { dropLocation, mapping, dragItem };
     };
 });
