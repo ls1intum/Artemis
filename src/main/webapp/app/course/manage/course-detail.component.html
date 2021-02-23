@@ -80,6 +80,7 @@
                     <span jhiTranslate="artemisApp.course.archive.downloadCourseArchive">Download Course Archive</span>
                 </button>
                 <button
+                    class="mb-1"
                     *ngIf="canCleanupCourse()"
                     [disabled]="courseIsBeingArchived"
                     jhiDeleteButton
@@ -94,6 +95,7 @@
                     <fa-icon [icon]="'eraser'"></fa-icon>
                 </button>
                 <button
+                    class="mb-1"
                     *jhiHasAnyAuthority="['ROLE_ADMIN']"
                     [buttonSize]="ButtonSize.MEDIUM"
                     jhiDeleteButton
