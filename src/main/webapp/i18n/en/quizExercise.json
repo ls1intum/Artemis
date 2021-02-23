@@ -162,7 +162,7 @@
                 "invalidStartTime": "Quiz: The Start Time is not valid.",
                 "startTimeInPast": "Quiz: The Start Time lies in the past.",
                 "questionTitle": "Question {{index}}: The title is missing.",
-                "questionScore": "Question {{index}}: The points are invalid.",
+                "questionScore": "Question {{index}}: At least one point per question required.",
                 "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
                 "questionCorrectMapping": "Question {{index}}: No correct mapping.",
                 "questionUnsolvable": "Question {{index}}: The question cannot be answered correctly without using a drag item twice.",
