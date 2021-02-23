@@ -35,6 +35,9 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizStatus, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { StudentQuestionsComponent } from 'app/overview/student-questions/student-questions.component';
+import { now } from 'moment';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
 @Component({
@@ -61,6 +64,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public exerciseCategories: ExerciseCategory[];
     private participationUpdateListener: Subscription;
     private teamAssignmentUpdateListener: Subscription;
+    private submissionSubscription: Subscription;
     studentParticipation?: StudentParticipation;
     isAfterAssessmentDueDate: boolean;
     public gradingCriteria: GradingCriterion[];
@@ -94,6 +98,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
         private teamService: TeamService,
         private quizExerciseService: QuizExerciseService,
+        private submissionService: ProgrammingSubmissionService,
     ) {}
 
     ngOnInit() {
@@ -136,6 +141,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (this.teamAssignmentUpdateListener) {
             this.teamAssignmentUpdateListener.unsubscribe();
         }
+        if (this.submissionSubscription) {
+            this.submissionSubscription.unsubscribe();
+        }
     }
 
     loadExercise() {
@@ -161,6 +169,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
         this.subscribeForNewResults();
         this.subscribeToTeamAssignmentUpdates();
+
+        // Subscribe for late programming submissions to show the student a success message
+        if (this.exercise.type === ExerciseType.PROGRAMMING && this.exercise.dueDate && this.exercise.dueDate.isBefore(now())) {
+            this.subscribeForNewSubmissions();
+        }
 
         if (this.studentQuestions && this.exercise) {
             // We need to manually update the exercise property of the student questions component
@@ -249,11 +262,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
+                // Notify student about late submission result
+                if (changedParticipation.exercise?.dueDate?.isBefore(now()) && changedParticipation.results?.length! > this.studentParticipation?.results?.length!) {
+                    this.jhiAlertService.success('artemisApp.exercise.lateSubmissionResultReceived');
+                }
                 this.exercise.studentParticipations =
                     this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0
-                        ? this.exercise.studentParticipations.map((el) => {
-                              return el.id === changedParticipation.id ? changedParticipation : el;
-                          })
+                        ? this.exercise.studentParticipations.map((el) => (el.id === changedParticipation.id ? changedParticipation : el))
                         : [changedParticipation];
                 this.mergeResultsAndSubmissionsForParticipations();
             }
@@ -270,6 +285,20 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.exercise!.studentAssignedTeamId = teamAssignment.teamId;
                 this.exercise!.studentParticipations = teamAssignment.studentParticipations;
                 this.exercise!.participationStatus = participationStatus(this.exercise!);
+            });
+    }
+
+    /**
+     * Subscribe for incoming (late) submissions to show a message if the student submitted after the due date.
+     */
+    subscribeForNewSubmissions() {
+        this.submissionSubscription = this.submissionService
+            .getLatestPendingSubmissionByParticipationId(this.studentParticipation?.id!, this.exercise?.id!, true)
+            .subscribe(({ submission }) => {
+                // Notify about received late submission
+                if (submission && this.exercise?.dueDate && this.exercise.dueDate.isBefore(submission.submissionDate)) {
+                    this.jhiAlertService.success('artemisApp.exercise.lateSubmissionReceived');
+                }
             });
     }
 
