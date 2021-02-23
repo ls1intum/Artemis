@@ -438,8 +438,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         List<Course> courses = request.getList("/api/courses/courses-with-quiz", HttpStatus.OK, Course.class);
         assertThat(courses.size()).as("All courses are available").isEqualTo(1);
         for (Exercise exercise : courses.get(0).getExercises()) {
-            assertThat(exercise.getGradingInstructions()).as("Grading instructions are not filtered out").isNotNull();
-            assertThat(exercise.getProblemStatement()).as("Problem statements are not filtered out").isNotNull();
+            assertThat(exercise.getGradingInstructions()).as("Grading instructions are filtered out").isNull();
+            assertThat(exercise.getProblemStatement()).as("Problem statements are filtered out").isNull();
         }
     }
 
