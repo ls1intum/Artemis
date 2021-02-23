@@ -1,7 +1,7 @@
+.. _programming_features:
+
 Features
 ^^^^^^^^
-
-.. _programming_features:
 
 Artemis and its version control and continuous integration infrastructure is independent of the programming language and thus supports
 teaching and learning with any programming language that can be compiled and tested on the command line.
@@ -301,9 +301,9 @@ Exercise Creation
 - However, if you have additional build steps or different configurations, you can adapt the BASE and SOLUTION build plan as needed
 - When students start the programming exercise, the current version of the BASE build plan will be copied. All changes in the configuration will be considered
 
-5. **Optional:** Configure static code analysis tools
-
 .. _configure_static_code_analysis_tools:
+
+5. **Optional:** Configure static code analysis tools
 
 - The **Test** repository contains files for the configuration of static code analysis tools, if static code analysis was activated during the creation/import of the exercise
 - The folder *staticCodeAnalysisConfig* contains configuration files for each used static code analysis tool
@@ -336,9 +336,9 @@ Exercise Creation
   Alternatively, instructors can alter the task/script that executes the tools in the build plan.
   PMD and PMD CPD are a special case as both tools share a common plugin. To disable one or the other, instructors must delete the execution of a tool from the build plan.
 
-6. Adapt the interactive problem statement
-
 .. _interactive_problem_statement:
+
+6. Adapt the interactive problem statement
 
   .. figure:: programming/course-dashboard-programming-edit.png
             :align: center
@@ -346,9 +346,9 @@ Exercise Creation
 - Click the |edit| button of the programming exercise or navigate into |edit-in-editor| and adapt the interactive problem statement.
 - The initial example shows how to integrate tasks, link tests and integrate interactive UML diagrams
 
-7. Configure Grading
-
 .. _configure_grading:
+
+7. Configure Grading
 
 - **General Actions**
 
