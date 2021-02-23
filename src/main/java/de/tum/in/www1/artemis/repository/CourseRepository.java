@@ -48,7 +48,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "lectures.lectureUnits", "exams" })
     @Query("select distinct course from Course course where (course.startDate <= :#{#now} or course.startDate is null) and (course.endDate >= :#{#now} or course.endDate is null)")
-    List<Course> findAllActiveWithLecturesAndExams(@Param("now") ZonedDateTime now);
+    List<Course> findAllActiveWithLecturesAndLectureUnitsAndExams(@Param("now") ZonedDateTime now);
 
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "lectures.lectureUnits", "exams" })
     Optional<Course> findWithEagerLecturesAndLectureUnitsAndExamsById(long courseId);
@@ -104,8 +104,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      *
      * @return the list of entities
      */
-    default List<Course> findAllActiveWithLecturesAndExams() {
-        return findAllActiveWithLecturesAndExams(ZonedDateTime.now());
+    default List<Course> findAllActiveWithLecturesAndLectureUnitsAndExams() {
+        return findAllActiveWithLecturesAndLectureUnitsAndExams(ZonedDateTime.now());
     }
 
     /**
