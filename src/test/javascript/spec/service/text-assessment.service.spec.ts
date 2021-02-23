@@ -2,7 +2,7 @@ import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -11,7 +11,7 @@ import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 describe('TextAssessment Service', () => {
     let injector: TestBed;
-    let service: TextAssessmentsService;
+    let service: TextAssessmentService;
     let httpMock: HttpTestingController;
     let textSubmission: TextSubmission;
     let mockResponse: any;
@@ -21,7 +21,7 @@ describe('TextAssessment Service', () => {
             imports: [HttpClientTestingModule],
         });
         injector = getTestBed();
-        service = injector.get(TextAssessmentsService);
+        service = injector.get(TextAssessmentService);
         httpMock = injector.get(HttpTestingController);
 
         textSubmission = new TextSubmission();
