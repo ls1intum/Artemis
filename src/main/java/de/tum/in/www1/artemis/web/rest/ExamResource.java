@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -370,36 +369,18 @@ public class ExamResource {
     @GetMapping("/courses/{courseId}/exams-for-user")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<List<Exam>> getExamsForUser(@PathVariable Long courseId) {
-        List<Exam> exams;
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
-            exams = examRepository.findAll();
+            return ResponseEntity.ok(examRepository.findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises());
         }
         else {
             Course course = courseRepository.findByIdElseThrow(courseId);
             if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
                 return forbidden();
             }
-            exams = examRepository.getExamsForWhichUserHasInstructorAccess(user.getId());
+            var userGroups = new ArrayList<>(user.getGroups());
+            return ResponseEntity.ok(examRepository.getExamsWithQuizExercisesForWhichUserHasInstructorAccess(userGroups));
         }
-
-        // TODO: this is not the best performance that we iterate over all exams just to check if those exams have a quiz or not, we should directly get all courses
-        // with all quiz exercises from the database, potentially using paging
-
-        List<Exam> examsWithQuiz = new ArrayList<>();
-        exams.forEach(exam -> {
-            Optional<Exam> optionalExam = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId());
-            var eagerExam = optionalExam.orElse(null);
-            if (eagerExam != null) {
-                List<Exercise> exercises = new ArrayList<>();
-                var exerciseGroups = eagerExam.getExerciseGroups();
-                exerciseGroups.forEach(exerciseGroup -> exercises.addAll(exerciseGroup.getExercises()));
-                if (exercises.stream().anyMatch(exercise -> exercise instanceof QuizExercise)) {
-                    examsWithQuiz.add(exam);
-                }
-            }
-        });
-        return ResponseEntity.ok(examsWithQuiz);
     }
 
     /**

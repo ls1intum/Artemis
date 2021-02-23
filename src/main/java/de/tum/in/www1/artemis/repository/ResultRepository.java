@@ -216,26 +216,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     }
 
     /**
-     * Calculates the number of assessments done for each correction round.
-     *
-     * @param exercise the exercise for which we want to calculate the # of assessments for each correction round
-     * @param examMode states whether or not the the function is called in the exam mode
-     * @param totalNumberOfAssessments so total number of assessments sum up over all correction rounds
-     * @return the number of assessments for each correction rounds
-     */
-    default DueDateStat[] countNrOfAssessmentsOfCorrectionRoundsForDashboard(Exercise exercise, boolean examMode, DueDateStat totalNumberOfAssessments) {
-        if (examMode) {
-            // set number of corrections specific to each correction round
-            int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
-            return countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRound(exercise, numberOfCorrectionRounds);
-        }
-        else {
-            // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
-            return new DueDateStat[] { totalNumberOfAssessments };
-        }
-    }
-
-    /**
      * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
      *
      * @param courseId - the course we are interested in
