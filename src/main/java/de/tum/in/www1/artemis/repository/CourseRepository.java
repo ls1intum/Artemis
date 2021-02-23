@@ -78,16 +78,20 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     @Query("""
             select distinct c
-            from Course c left join fetch c.exercises, User u
-            where u.id = :#{#userId} and c.instructorGroupName member of u.groups
+            from Course c left join fetch c.exercises e, User u
+            where u.id = :#{#userId} and c.instructorGroupName member of u.groups and
+            exists (select exercise from Exercise exercise
+                where exercise.course.id = c.id and TYPE(exercise) = QuizExercise)
             """)
-    List<Course> getCoursesForWhichUserHasInstructorAccess(@Param("userId") Long userId);
+    List<Course> getCoursesWithQuizExercisesForWhichUserHasInstructorAccess(@Param("userId") Long userId);
 
     @Query("""
             select distinct c
-            from Course c left join fetch c.exercises
+            from Course c left join fetch c.exercises e
+            where exists (select exercise from Exercise exercise
+                where exercise.course.id = c.id and TYPE(exercise) = QuizExercise)
             """)
-    List<Course> findAllWithEagerExercises();
+    List<Course> findAllWithQuizExercisesWithEagerExercises();
 
     @NotNull
     default Course findByIdElseThrow(Long courseId) throws EntityNotFoundException {

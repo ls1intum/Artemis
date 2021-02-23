@@ -54,16 +54,21 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     @Query("""
             select distinct e
-            from Exam e left join fetch e.exerciseGroups eg left join fetch eg.exercises, User u
-            where u.id = :#{#userId} and e.course.instructorGroupName member of u.groups
+            from Exam e left join fetch e.exerciseGroups eg left join fetch eg.exercises ex, User u
+            where u.id = :#{#userId} and e.course.instructorGroupName member of u.groups and
+            exists (select exercise
+                from Exercise exercise
+                where exercise.exerciseGroup.exam.id = e.id and TYPE(exercise) = QuizExercise)
             """)
-    List<Exam> getExamsForWhichUserHasInstructorAccess(@Param("userId") Long userId);
+    List<Exam> getExamsWithQuizExercisesForWhichUserHasInstructorAccess(@Param("userId") Long userId);
 
     @Query("""
             select distinct e
-            from Exam e left join fetch e.exerciseGroups eg left join fetch eg.exercises
+            from Exam e left join fetch e.exerciseGroups eg left join fetch eg.exercises ex
+            where exists (select exercise from Exercise exercise
+                where exercise.exerciseGroup.exam.id = e.id and TYPE(exercise) = QuizExercise)
             """)
-    List<Exam> findAllWithEagerExerciseGroupsAndExercises();
+    List<Exam> findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises();
 
     // IMPORTANT: NEVER use the following EntityGraph because it will lead to crashes for exams with many users
     // The problem is that 2000 student Exams with 10 exercises and 2000 existing participations would load 2000*10*2000 = 40 mio objects

@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
@@ -421,22 +420,13 @@ public class CourseResource {
     @GetMapping("/courses/courses-with-quiz")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCoursesWithQuizExercises() {
-        List<Course> courses;
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
-            courses = courseRepository.findAllWithEagerExercises();
+            return courseRepository.findAllWithQuizExercisesWithEagerExercises();
         }
         else {
-            courses = courseRepository.getCoursesForWhichUserHasInstructorAccess(user.getId());
+            return courseRepository.getCoursesWithQuizExercisesForWhichUserHasInstructorAccess(user.getId());
         }
-
-        List<Course> coursesWithQuiz = new ArrayList<>();
-        courses.forEach(course -> {
-            if (course.getExercises().stream().anyMatch(exercise -> exercise instanceof QuizExercise)) {
-                coursesWithQuiz.add(course);
-            }
-        });
-        return coursesWithQuiz;
     }
 
     /**

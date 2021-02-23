@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -370,29 +369,17 @@ public class ExamResource {
     @GetMapping("/courses/{courseId}/exams-for-user")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<List<Exam>> getExamsForUser(@PathVariable Long courseId) {
-        List<Exam> exams;
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
-            exams = examRepository.findAllWithEagerExerciseGroupsAndExercises();
+            return ResponseEntity.ok(examRepository.findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises());
         }
         else {
             Course course = courseRepository.findByIdElseThrow(courseId);
             if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
                 return forbidden();
             }
-            exams = examRepository.getExamsForWhichUserHasInstructorAccess(user.getId());
+            return ResponseEntity.ok(examRepository.getExamsWithQuizExercisesForWhichUserHasInstructorAccess(user.getId()));
         }
-
-        List<Exam> examsWithQuiz = new ArrayList<>();
-        exams.forEach(exam -> {
-            List<Exercise> exercises = new ArrayList<>();
-            var exerciseGroups = exam.getExerciseGroups();
-            exerciseGroups.forEach(exerciseGroup -> exercises.addAll(exerciseGroup.getExercises()));
-            if (exercises.stream().anyMatch(exercise -> exercise instanceof QuizExercise)) {
-                examsWithQuiz.add(exam);
-            }
-        });
-        return ResponseEntity.ok(examsWithQuiz);
     }
 
     /**
