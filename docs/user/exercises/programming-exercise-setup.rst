@@ -134,7 +134,7 @@ Exercise Creation
 
     - **Release Date:** Release date of the exercise. Students will only be able to participate in the exercise after this date.
     - **Automatic Tests:** Every commit of a participant triggers the execution of the tests in the **Test** repository.
-      Excluded are tests, which are specified to run after the due date. This is only possible if **Run Tests once after Due Date:** has been activated.
+      Excluded are tests, which are specified to run after the due date. This is only possible if **Run Tests once after Due Date** has been activated.
       The tests that only run after the due date are chosen in the :ref:`grading configuration <configure_grading>`.
     - **Due Date:** The deadline for the exercise. Commits made after this date are not graded.
 
