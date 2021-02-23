@@ -151,7 +151,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     }
 
     private onSaveSubmissionError() {
-        // show an only one error for 5s - see constructor
+        // show only one error for 5s - see constructor
         this.synchronizationAlert$.next();
     }
 }
