@@ -1,6 +1,5 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
-import { Observable, of, throwError } from 'rxjs';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { Observable, of } from 'rxjs';
 
 import { OrganizationManagementUpdateComponent } from 'app/admin/organization-management/organization-management-update.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';

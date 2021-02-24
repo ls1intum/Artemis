@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { Observable, of } from 'rxjs';

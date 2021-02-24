@@ -86,6 +86,7 @@ public class OrganizationService {
      * Performs indexing over all users using the email pattern of the provided organization.
      * Users matching the pattern will be added to the organization.
      * Users not matching the pattern will be removed from the organization (if contained).
+     * @param organization the organization used to perform the indexing
      */
     public void indexing(Organization organization) {
         log.debug("Start indexing for organization: {}", organization.getName());

@@ -65,16 +65,31 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     @Query("select count(courses.id) as num_courses from Organization organization left join organization.courses courses where organization.id = :#{#organizationId} group by organization.id")
     Long getNumberOfCoursesByOrganizationId(@Param("organizationId") long organizationId);
 
+    /**
+     * Get an organization with eagerly loaded users, or else throw exception
+     * @param organizationId the id of the organization to find
+     * @return the organization entity with eagerly loaded users, if it exists
+     */
     @NotNull
     default Organization findByIdWithUsersElseThrow(Long organizationId) {
         return findByIdWithEagerUsers(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization: " + organizationId));
     }
 
+    /**
+     * Get an organization with eagerly loaded courses, or else throw exception
+     * @param organizationId the id of the organization to find
+     * @return the organization entity with eagerly loaded courses, if it exists
+     */
     @NotNull
     default Organization findByIdWithCoursesElseThrow(Long organizationId) {
         return findByIdWithEagerCourses(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization: " + organizationId));
     }
 
+    /**
+     * Add user to an organization, if not contained already
+     * @param user the user to add to the organization
+     * @param organizationId the id of the organization where the user should be added
+     */
     @NotNull
     default void addUserToOrganization(User user, Long organizationId) {
         Organization organization = findByIdWithUsersElseThrow(organizationId);
@@ -84,6 +99,11 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
         }
     }
 
+    /**
+     * Remove user from an organization, if currently contained
+     * @param user the user to remove from the organization
+     * @param organizationId the id of the organization from which the user should be removed
+     */
     @NotNull
     default void removeUserFromOrganization(User user, Long organizationId) {
         Organization organization = findByIdWithUsersElseThrow(organizationId);
@@ -93,6 +113,11 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
         }
     }
 
+    /**
+     * Add course to an organization, if not contained already
+     * @param course the course to add to the organization
+     * @param organizationId the id of the organization where the course should be added
+     */
     @NotNull
     default void addCourseToOrganization(Course course, Long organizationId) {
         Organization organization = findByIdWithCoursesElseThrow(organizationId);
@@ -102,6 +127,11 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
         }
     }
 
+    /**
+     * Remove course from an organization, if currently contained
+     * @param course the course to remove from the organization
+     * @param organizationId the id of the organization from which the course should be removed
+     */
     @NotNull
     default void removeCourseFromOrganization(Course course, Long organizationId) {
         Organization organization = findByIdWithCoursesElseThrow(organizationId);
@@ -130,6 +160,11 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
         return matchingOrganizations;
     }
 
+    /**
+     * Get an organization by its Id, or else throw exception
+     * @param organizationId the id of the organization to find
+     * @return the organization entity, if it exists
+     */
     @NotNull
     default Organization findOneOrElseThrow(long organizationId) {
         return findById(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization with id: \"" + organizationId + "\" does not exist"));

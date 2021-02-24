@@ -53,6 +53,14 @@ public class OrganizationResource {
         this.courseRepository = courseRepository;
     }
 
+    /**
+     * POST /organizations/course/:courseId/organization/:organizationId :
+     * Add a course to an organization
+     *
+     * @param courseId the id of the course to add
+     * @param organizationId the id of the organization where the course should be added
+     * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
+     */
     @PostMapping("/organizations/course/{courseId}/organization/{organizationId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> addCourseToOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
@@ -62,6 +70,14 @@ public class OrganizationResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, course.getTitle())).build();
     }
 
+    /**
+     * DELETE /organizations/course/:courseId/organization/:organizationId :
+     * Remove a course from an organization
+     *
+     * @param courseId the id of the course to remove
+     * @param organizationId the id of the organization from with the course should be removed
+     * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
+     */
     @DeleteMapping("/organizations/course/{courseId}/organization/{organizationId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> removeCourseToOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
@@ -71,6 +87,14 @@ public class OrganizationResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, course.getTitle())).build();
     }
 
+    /**
+     * POST /organizations/user/:userlogin/organization/:organizationId :
+     * Add a user to an organization
+     *
+     * @param userLogin the login of the user to add
+     * @param organizationId the id of the organization where the user should be added
+     * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
+     */
     @PostMapping("/organizations/user/{userLogin}/organization/{organizationId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> addUserToOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
@@ -80,6 +104,14 @@ public class OrganizationResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, user.getLogin())).build();
     }
 
+    /**
+     * DELETE /organizations/user/:userLogin/organization/:organizationId :
+     * Remove a user from an organization
+     *
+     * @param userLogin the login of the user to remove
+     * @param organizationId the id of the organization from with the user should be removed
+     * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
+     */
     @DeleteMapping("/organizations/user/{userLogin}/organization/{organizationId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> removeUserFromOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
@@ -89,6 +121,12 @@ public class OrganizationResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, user.getLogin())).build();
     }
 
+    /**
+     * POST /organizations/add : Add a new organization
+     *
+     * @param organization the organization entity to add
+     * @return the ResponseEntity containing the added organization with status 200 (OK), or 404 (Not Found) otherwise
+     */
     @PostMapping("/organizations/add")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Organization> addOrganization(@RequestBody Organization organization) {
@@ -97,6 +135,12 @@ public class OrganizationResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, created.getName())).body(created);
     }
 
+    /**
+     * PUT /organizations/update : Update an existing organization
+     *
+     * @param organization the updated organization entity
+     * @return the ResponseEntity containing the updated organization with status 200 (OK), or 404 (Not Found) otherwise
+     */
     @PutMapping("/organizations/update")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Organization> updateOrganization(@RequestBody Organization organization) {
@@ -109,6 +153,12 @@ public class OrganizationResource {
         }
     }
 
+    /**
+     * DELETE /organizations/delete/:organizationId : Delete an existing organization
+     *
+     * @param organizationId the id of the organization to remove
+     * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
+     */
     @DeleteMapping("/organizations/delete/{organizationId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> deleteOrganization(@PathVariable Long organizationId) {
@@ -118,6 +168,11 @@ public class OrganizationResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, organization.getName())).build();
     }
 
+    /**
+     * GET /organizations/all : Get all organizations
+     *
+     * @return ResponseEntity containing a list of all organizations with status 200 (OK)
+     */
     @GetMapping("/organizations/all")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<List<Organization>> getAllOrganizations() {
@@ -125,6 +180,26 @@ public class OrganizationResource {
         return new ResponseEntity<>(organizations, HttpStatus.OK);
     }
 
+    /**
+     * GET /organizations/:organizationId/count : Get the number of users and courses currently mapped to an organization
+     *
+     * @return ResponseEntity containing a map containing the numbers of users and courses
+     */
+    @GetMapping("/organizations/{organizationId}/count")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Map<String, Long>> getNumberOfUsersAndCoursesByOrganization(@PathVariable long organizationId) {
+        Map<String, Long> numberOfUsersAndCourses = new HashMap<>();
+        numberOfUsersAndCourses.put("users", organizationRepository.getNumberOfUsersByOrganizationId(organizationId));
+        numberOfUsersAndCourses.put("courses", organizationRepository.getNumberOfCoursesByOrganizationId(organizationId));
+        return new ResponseEntity<>(numberOfUsersAndCourses, HttpStatus.OK);
+    }
+
+    /**
+     * GET /organizations/allCount : Get the number of users and courses currently mapped to each organization
+     *
+     * @return ResponseEntity containing a map containing the organizations' id as key and an inner map
+     * containing their relative numbers of users and courses
+     */
     @GetMapping("/organizations/allCount")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Map<Long, Map<String, Long>>> getNumberOfUsersAndCoursesOfAllOrganizations() {
@@ -141,6 +216,13 @@ public class OrganizationResource {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
+    /**
+     * GET /organizations/:organizationId : Get an organization by its id
+     *
+     * @param organizationId the id of the organization to get
+     * @return ResponseEntity containing the organization with status 200 (OK)
+     * if exists, else with status 404 (Not Found)
+     */
     @GetMapping("/organizations/{organizationId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Organization> getOrganizationById(@PathVariable long organizationId) {
@@ -148,6 +230,13 @@ public class OrganizationResource {
         return new ResponseEntity<>(organization, HttpStatus.OK);
     }
 
+    /**
+     * GET /organizations/:organizationId/full : Get an organization by its id with eagerly loaded users and courses
+     *
+     * @param organizationId the id of the organization to get
+     * @return ResponseEntity containing the organization with eagerly loaded users and courses, with status 200 (OK)
+     * if exists, else with status 404 (Not Found)
+     */
     @GetMapping("/organizations/{organizationId}/full")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Organization> getOrganizationByIdWithUsersAndCourses(@PathVariable long organizationId) {
@@ -155,15 +244,12 @@ public class OrganizationResource {
         return new ResponseEntity<>(organization, HttpStatus.OK);
     }
 
-    @GetMapping("/organizations/{organizationId}/count")
-    @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Map<String, Long>> getNumberOfUsersAndCoursesByOrganization(@PathVariable long organizationId) {
-        Map<String, Long> numberOfUsersAndCourses = new HashMap<>();
-        numberOfUsersAndCourses.put("users", organizationRepository.getNumberOfUsersByOrganizationId(organizationId));
-        numberOfUsersAndCourses.put("courses", organizationRepository.getNumberOfCoursesByOrganizationId(organizationId));
-        return new ResponseEntity<>(numberOfUsersAndCourses, HttpStatus.OK);
-    }
-
+    /**
+     * GET /organizations/course/:courseId : Get all organizations currently containing a given course
+     *
+     * @param courseId the id of the course that the organizations should contain
+     * @return ResponseEntity containing a set of organizations containing the given course
+     */
     @GetMapping("/organizations/course/{courseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<Organization>> getAllOrganizationsByCourse(@PathVariable Long courseId) {
@@ -171,6 +257,12 @@ public class OrganizationResource {
         return new ResponseEntity<>(organizations, HttpStatus.OK);
     }
 
+    /**
+     * GET /organizations/user/:userId : Get all organizations currently containing a given user
+     *
+     * @param userId the id of the user that the organizations should contain
+     * @return ResponseEntity containing a set of organizations containing the given user
+     */
     @GetMapping("/organizations/user/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Set<Organization>> getAllOrganizationsByUser(@PathVariable Long userId) {

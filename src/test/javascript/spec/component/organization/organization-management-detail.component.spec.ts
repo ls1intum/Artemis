@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Observable, of, throwError } from 'rxjs';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 
@@ -13,13 +13,11 @@ import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/entities/organization.model';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
-import { UserService } from 'app/core/user/user.service';
 
 describe('OrganizationManagementDetailComponent', () => {
     let component: OrganizationManagementDetailComponent;
     let fixture: ComponentFixture<OrganizationManagementDetailComponent>;
     let organizationService: OrganizationManagementService;
-    let userService: UserService;
     const organization1 = new Organization();
     organization1.id = 5;
     const route = ({
@@ -43,7 +41,6 @@ describe('OrganizationManagementDetailComponent', () => {
         fixture = TestBed.createComponent(OrganizationManagementDetailComponent);
         component = fixture.componentInstance;
         organizationService = TestBed.inject(OrganizationManagementService);
-        userService = TestBed.inject(UserService);
     });
 
     afterEach(async () => {
