@@ -31,5 +31,12 @@
             "title": "Organisationen"
         },
         "patternChangeWarning": "Beim ändern des Emailmusters, wird eine Neuzuweisung der Nutzern zu dieser Organisation ausgeführt"
+    },
+    "artemisApp": {
+        "organization": {
+            "updated": "Organization updated!",
+            "deleted": "Organization deleted!",
+            "created": "Organization created!"
+        }
     }
 }
