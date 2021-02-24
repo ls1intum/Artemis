@@ -35,7 +35,6 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizStatus, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { StudentQuestionsComponent } from 'app/overview/student-questions/student-questions.component';
-import { now } from 'moment';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
@@ -171,7 +170,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.subscribeToTeamAssignmentUpdates();
 
         // Subscribe for late programming submissions to show the student a success message
-        if (this.exercise.type === ExerciseType.PROGRAMMING && this.exercise.dueDate && this.exercise.dueDate.isBefore(now())) {
+        if (this.exercise.type === ExerciseType.PROGRAMMING && this.exercise.dueDate && this.exercise.dueDate.isBefore(moment.now())) {
             this.subscribeForNewSubmissions();
         }
 
@@ -263,7 +262,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
                 // Notify student about late submission result
-                if (changedParticipation.exercise?.dueDate?.isBefore(now()) && changedParticipation.results?.length! > this.studentParticipation?.results?.length!) {
+                if (changedParticipation.exercise?.dueDate?.isBefore(moment.now()) && changedParticipation.results?.length! > this.studentParticipation?.results?.length!) {
                     this.jhiAlertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                 }
                 this.exercise.studentParticipations =
