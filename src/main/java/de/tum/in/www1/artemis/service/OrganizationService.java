@@ -110,6 +110,17 @@ public class OrganizationService {
     }
 
     /**
+     * Add a new organization and execute indexing based on its emailPattern
+     * @param organization the organization zo add
+     * @return the persisted organization entity
+     */
+    public Organization add(Organization organization) {
+        organization = save(organization);
+        indexing(organization);
+        return organization;
+    }
+
+    /**
      * Update an organization
      * To avoid removing the currently mapped users and courses of the organization,
      * these are loaded eagerly and the edited values changed within the loaded entity.
