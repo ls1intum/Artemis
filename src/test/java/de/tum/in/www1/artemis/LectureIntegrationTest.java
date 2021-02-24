@@ -87,12 +87,14 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         userRepository.save(ModelFactory.generateActivatedUser("instructor42"));
 
         // Setting up a lecture with various kinds of content
-        createExerciseUnit();
-        createAttachmentUnit();
-        createTextUnit();
-        createVideoUnit();
-        addLectureUnitsToLecture();
+        this.exerciseUnit = database.createExerciseUnit(textExercise);
+        this.attachmentUnit = database.createAttachmentUnit();
+        this.attachmentOfAttachmentUnit = attachmentUnit.getAttachment();
+        this.videoUnit = database.createVideoUnit();
+        this.textUnit = database.createTextUnit();
         addAttachmentToLecture();
+
+        this.lecture1 = database.addLectureUnitsToLecture(this.lecture1, Set.of(this.exerciseUnit, this.attachmentUnit, this.videoUnit, this.textUnit));
     }
 
     private void addAttachmentToLecture() {
@@ -101,49 +103,6 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         this.attachmentDirectOfLecture = attachmentRepository.save(this.attachmentDirectOfLecture);
         this.lecture1.addAttachments(this.attachmentDirectOfLecture);
         this.lecture1 = lectureRepository.save(this.lecture1);
-    }
-
-    private void addLectureUnitsToLecture() {
-        this.lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture1.getId()).get();
-        this.lecture1.addLectureUnit(this.exerciseUnit);
-        this.lecture1.addLectureUnit(this.attachmentUnit);
-        this.lecture1.addLectureUnit(this.textUnit);
-        this.lecture1.addLectureUnit(this.videoUnit);
-        this.lecture1 = lectureRepository.save(lecture1);
-        this.exerciseUnit = exerciseUnitRepository.findById(this.exerciseUnit.getId()).get();
-        this.attachmentUnit = attachmentUnitRepository.findById(this.attachmentUnit.getId()).get();
-        this.textUnit = textUnitRepository.findById(this.textUnit.getId()).get();
-        this.videoUnit = videoUnitRepository.findById(this.videoUnit.getId()).get();
-    }
-
-    private void createVideoUnit() {
-        this.videoUnit = new VideoUnit();
-        this.videoUnit.setDescription("Lorem Ipsum");
-        this.videoUnit.setSource("Some URL");
-        this.videoUnit = videoUnitRepository.save(this.videoUnit);
-    }
-
-    private void createTextUnit() {
-        this.textUnit = new TextUnit();
-        this.textUnit.setContent("Lorem Ipsum");
-        this.textUnit = textUnitRepository.save(this.textUnit);
-    }
-
-    private void createAttachmentUnit() {
-        this.attachmentOfAttachmentUnit = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
-        this.attachmentUnit = new AttachmentUnit();
-        this.attachmentUnit.setDescription("Lorem Ipsum");
-        this.attachmentUnit = attachmentUnitRepository.save(this.attachmentUnit);
-        this.attachmentOfAttachmentUnit.setAttachmentUnit(this.attachmentUnit);
-        this.attachmentOfAttachmentUnit = attachmentRepository.save(this.attachmentOfAttachmentUnit);
-        this.attachmentUnit.setAttachment(this.attachmentOfAttachmentUnit);
-        this.attachmentUnit = attachmentUnitRepository.save(this.attachmentUnit);
-    }
-
-    private void createExerciseUnit() {
-        this.exerciseUnit = new ExerciseUnit();
-        this.exerciseUnit.setExercise(this.textExercise);
-        this.exerciseUnit = exerciseUnitRepository.save(exerciseUnit);
     }
 
     private void testAllPreAuthorize() throws Exception {
