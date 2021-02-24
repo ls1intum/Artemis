@@ -174,6 +174,12 @@ public class LectureResource {
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
+        lecture = filterLectureContentForUser(lecture, user);
+
+        return ResponseEntity.ok(lecture);
+    }
+
+    private Lecture filterLectureContentForUser(Lecture lecture, User user) {
         lecture = lectureService.filterActiveAttachments(lecture, user);
 
         Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
@@ -206,8 +212,7 @@ public class LectureResource {
         }).collect(Collectors.toList());
 
         lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
-
-        return ResponseEntity.ok(lecture);
+        return lecture;
     }
 
     /**
