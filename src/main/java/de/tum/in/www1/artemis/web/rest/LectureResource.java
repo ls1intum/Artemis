@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -175,7 +176,7 @@ public class LectureResource {
         }
         lecture = lectureService.filterActiveAttachments(lecture, user);
 
-        Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
+        Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
                 .map(lectureUnit -> ((ExerciseUnit) lectureUnit)).map(ExerciseUnit::getExercise).collect(Collectors.toSet());
 
         Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.getSubsetThatUserIsAllowedToSee(relatedExercises, user);
