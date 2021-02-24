@@ -138,7 +138,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 // since login is successful, go to stored previousState and clear previousState
                 const redirect = this.stateStorageService.getUrl();
                 if (redirect) {
-                    this.stateStorageService.storeUrl(null);
+                    this.stateStorageService.storeUrl('');
                     this.router.navigate([redirect]);
                 }
 
