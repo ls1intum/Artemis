@@ -12,7 +12,6 @@ import { LogsComponent } from 'app/admin/logs/logs.component';
 import { JhiMetricsMonitoringComponent } from 'app/admin/metrics/metrics.component';
 import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 import { DocsComponent } from 'app/admin/docs/docs.component';
-import { OrganizationManagementComponent } from 'app/admin/organization-management/organization-management.component';
 import { organizationMgmtRoute } from 'app/admin/organization-management/organization-management.route';
 
 export const adminState: Routes = [
