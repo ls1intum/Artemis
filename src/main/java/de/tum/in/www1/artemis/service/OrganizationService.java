@@ -9,6 +9,7 @@ import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Organization;
@@ -25,6 +26,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class OrganizationService {
 
     private final Logger log = LoggerFactory.getLogger(OrganizationService.class);
+
+    @Value("${artemis.user-management.organizations.enable-multiple-organizations:#{null}}")
+    private Optional<Boolean> enabledMultipleOrganizations;
 
     private final OrganizationRepository organizationRepository;
 
@@ -43,6 +47,9 @@ public class OrganizationService {
      */
     @PostConstruct
     public void init() {
+        if (enabledMultipleOrganizations.isEmpty() || !enabledMultipleOrganizations.get()) {
+            return;
+        }
         // to avoid 'Authentication object cannot be null'
         SecurityUtils.setAuthorizationObject();
 
@@ -52,7 +59,8 @@ public class OrganizationService {
         usersToAssign.forEach(user -> {
             for (Organization organization : organizations) {
                 /*
-                 * TODO: strict re-indexing policy or additive? if (user.getOrganizations().contains(organization) && !match(user, organization)) {
+                 * TODO: strict re-indexing policy or additive?
+                 *  if (user.getOrganizations().contains(organization) && !match(user, organization)) {
                  * log.debug("User {} does not match {} email pattern anymore. Removing", user.getLogin(), organization.getName()); removeUserFromOrganization(user,
                  * organization.getId()); continue; }
                  */
