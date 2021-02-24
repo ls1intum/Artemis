@@ -1,13 +1,10 @@
 package de.tum.in.www1.artemis;
 
-import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Organization;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.OrganizationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.ZonedDateTime;
+import java.util.*;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,13 +13,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
 
-import java.time.ZonedDateTime;
-import java.util.*;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Organization;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.OrganizationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.util.ModelFactory;
 
 @TestPropertySource(properties = { "{artemis.user-management.organizations.enable-multiple-organizations=true",
-"artemis.user-management.course-registration.allowed-username-pattern=.*"})
+        "artemis.user-management.course-registration.allowed-username-pattern=.*" })
 public class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
@@ -41,7 +42,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @BeforeEach
     public void initTestCase() {
-        users = database.addUsers(1,1,1);
+        users = database.addUsers(1, 1, 1);
 
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.enableMockingOfRequests();
@@ -52,6 +53,11 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         database.resetDatabase();
     }
 
+    /**
+     * Test if getting courses a user can register to works with multi organization and
+     * filters out basing on user's organizations
+     * @throws Exception exception
+     */
     @Test
     @WithMockUser(username = "ab12cde")
     public void testGetCoursesToRegisterWithOrganizationsEnabled() throws Exception {
@@ -83,6 +89,10 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(!coursesToRegister.contains(course2));
     }
 
+    /**
+     * Test if course registration works properly having multiple Organizations enabled
+     * @throws Exception
+     */
     @Test
     @WithMockUser(username = "ab12cde")
     public void testRegisterForCourseWithOrganizationsEnabled() throws Exception {
@@ -115,6 +125,10 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         request.postWithResponseBody("/api/courses/" + course2.getId() + "/register", null, User.class, HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * Test adding a course to a given organization
+     * @throws Exception exception
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testAddCourseToOrganization() throws Exception {
@@ -132,6 +146,10 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(updatedOrganization.getCourses().contains(course1));
     }
 
+    /**
+     * Test removing a course from a given organization
+     * @throws Exception exception
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testRemoveCourseToOrganization() throws Exception {
@@ -152,6 +170,10 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(!updatedOrganization.getCourses().contains(course1));
     }
 
+    /**
+     * Test adding user to a given organization
+     * @throws Exception exception
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testAddUserToOrganization() throws Exception {
@@ -165,6 +187,10 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(updatedOrganization.getUsers().contains(users.get(0)));
     }
 
+    /**
+     * Test removing user from a given organization
+     * @throws Exception exception
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testRemoveUserToOrganization() throws Exception {
@@ -182,6 +208,10 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(!updatedOrganization.getUsers().contains(users.get(0)));
     }
 
+    /**
+     * Test adding a new organization
+     * @throws Exception exception
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testAddOrganization() throws Exception {
@@ -195,6 +225,10 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(updatedOrganization2);
     }
 
+    /**
+     * Test updating an existing organization
+     * @throws Exception exception
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testUpdateOrganization() throws Exception {
@@ -207,9 +241,13 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat("UpdatedName".compareTo(updatedOrganization.getName()) == 0);
     }
 
+    /**
+     * Test delete an organization
+     * @throws Exception exception
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testDeleteOrganization() throws Exception{
+    public void testDeleteOrganization() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
         Organization organization = database.createOrganization();
@@ -220,6 +258,10 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         request.get("/api/organizations/" + organization.getId(), HttpStatus.INTERNAL_SERVER_ERROR, Organization.class);
     }
 
+    /**
+     * Test get all organizations
+     * @throws Exception exception
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testGetAllOrganizations() throws Exception {
@@ -236,6 +278,10 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(result.size() == 2);
     }
 
+    /**
+     * Test get number of users and courses of all organizations
+     * @throws Exception exception
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testGetNumberOfUsersAndCoursesOfAllOrganizations() throws Exception {
@@ -256,6 +302,10 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(resultEntry.get("courses") == 1);
     }
 
+    /**
+     * Test get number of users and courses of a given organization
+     * @throws Exception exception
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testGetNumberOfUsersAndCoursesOfOrganization() throws Exception {
@@ -273,6 +323,10 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(result.get("courses") == 1L);
     }
 
+    /**
+     * Test retriving an organization by its id
+     * @throws Exception exception
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testGetOrganizationById() throws Exception {
@@ -284,13 +338,17 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         Organization result = request.get("/api/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
         Organization resultWithCoursesAndUsers = request.get("/api/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
 
-        assertThat(result.getId() == organization.getId());
-        assertThat(result.getName() == organization.getName());
+        assertThat(result.getId().equals(organization.getId()));
+        assertThat(result.getName().equals(organization.getName()));
 
         assertThat(resultWithCoursesAndUsers.getCourses() != null);
         assertThat(resultWithCoursesAndUsers.getUsers() != null);
     }
 
+    /**
+     * Test retriving all organizations containing a given course
+     * @throws Exception exception
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllOrganizationByCourse() throws Exception {
@@ -307,6 +365,10 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(result.contains(organization));
     }
 
+    /**
+     * Test retrieve all organization containing a given user
+     * @throws Exception exception
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testGetAllOrganizationByUser() throws Exception {
@@ -320,6 +382,10 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(result.contains(organization));
     }
 
+    /**
+     * Test indexing of organization over all users
+     * @throws Exception exception
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testOrganizationIndexing() throws Exception {

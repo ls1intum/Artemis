@@ -17,13 +17,13 @@ import org.springframework.cache.CacheManager;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Organization;
-import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;

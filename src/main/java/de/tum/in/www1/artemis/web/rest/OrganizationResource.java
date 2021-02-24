@@ -2,9 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.*;
 
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.OrganizationService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -43,7 +42,8 @@ public class OrganizationResource {
 
     private final CourseRepository courseRepository;
 
-    public OrganizationResource(OrganizationService organizationService, OrganizationRepository organizationRepository, UserRepository userRepository, CourseRepository courseRepository) {
+    public OrganizationResource(OrganizationService organizationService, OrganizationRepository organizationRepository, UserRepository userRepository,
+            CourseRepository courseRepository) {
         this.organizationService = organizationService;
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
@@ -130,7 +130,7 @@ public class OrganizationResource {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Organization> addOrganization(@RequestBody Organization organization) {
         log.debug("REST request to add new organization : {}", organization);
-        Organization created = organizationService.save(organization);
+        Organization created = organizationService.add(organization);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, created.getName())).body(created);
     }

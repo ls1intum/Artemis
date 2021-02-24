@@ -192,7 +192,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     @NotNull
     default User getUserByLoginElseThrow(String login) {
-       return findOneByLogin(login).orElseThrow(() -> new EntityNotFoundException("User: " + login));
+        return findOneByLogin(login).orElseThrow(() -> new EntityNotFoundException("User: " + login));
     }
 
     /**

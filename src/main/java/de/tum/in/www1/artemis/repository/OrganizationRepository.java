@@ -177,7 +177,6 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
      */
     @NotNull
     default Organization findOneWithEagerUsersAndCoursesOrElseThrow(long organizationId) {
-        return findByIdWithEagerUsersAndCourses(organizationId)
-            .orElseThrow(() -> new EntityNotFoundException("Organization with id: \"" + organizationId + "\" does not exist"));
+        return findByIdWithEagerUsersAndCourses(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization with id: \"" + organizationId + "\" does not exist"));
     }
 }
