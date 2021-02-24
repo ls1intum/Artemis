@@ -68,7 +68,7 @@ export class AccountService implements IAccountService {
     }
 
     save(user: User): Observable<HttpResponse<{}>> {
-        return this.http.post(SERVER_API_URL + 'api/account', user, { observe: 'response' });
+        return this.http.put(SERVER_API_URL + 'api/account', user, { observe: 'response' });
     }
 
     authenticate(identity?: User) {
