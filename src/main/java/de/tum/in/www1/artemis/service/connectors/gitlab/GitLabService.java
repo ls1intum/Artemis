@@ -105,7 +105,7 @@ public class GitLabService extends AbstractVersionControlService {
             // Only add the member to the repository if it doesn't exist. Otherwise
             // update the existing member.
             var projectApi = gitlab.getProjectApi();
-            if (projectApi.getMember(repositoryId, userId) != null) {
+            if (projectApi.getOptionalMember(repositoryId, userId).isPresent()) {
                 updateMemberPermissionInRepository(repositoryUrl, user.getLogin(), DEVELOPER);
             }
             else {
