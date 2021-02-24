@@ -182,7 +182,10 @@ public class LectureResource {
         Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
                 .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), user);
 
-        List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().parallelStream().filter(lectureUnit -> {
+        List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().stream().filter(lectureUnit -> {
+            if (lectureUnit == null) {
+                return false;
+            }
             if (lectureUnit instanceof ExerciseUnit) {
                 return ((ExerciseUnit) lectureUnit).getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
                         && exercisesWithAllInformationNeeded.contains(((ExerciseUnit) lectureUnit).getExercise());
