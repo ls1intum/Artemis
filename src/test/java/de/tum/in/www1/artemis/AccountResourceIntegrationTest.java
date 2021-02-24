@@ -134,7 +134,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         createdUser.setFirstName(updatedFirstName);
 
         // make request
-        request.postWithoutLocation("/api/account", new UserDTO(createdUser), HttpStatus.OK, null);
+        request.put("/api/account", new UserDTO(createdUser), HttpStatus.OK);
 
         // check if update successful
         User updatedUser = userRepo.findOneByLogin("authenticateduser").get();
