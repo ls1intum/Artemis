@@ -104,6 +104,8 @@ export class StudentExamDetailComponent implements OnInit {
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
         this.initWorkingTimeForm();
+        this.maxTotalScore = 0;
+        this.achievedTotalScore = 0;
         studentExam.exercises!.forEach((exercise) => {
             this.maxTotalScore += exercise.maxPoints!;
             if (
