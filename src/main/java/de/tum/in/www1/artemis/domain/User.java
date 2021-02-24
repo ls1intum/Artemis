@@ -121,7 +121,7 @@ public class User extends AbstractAuditingEntity implements Participant {
             @JoinColumn(name = "organization_id", referencedColumnName = "id") })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @BatchSize(size = 20)
-    private Set<Organization> organizations = new HashSet<Organization>();
+    private Set<Organization> organizations = new HashSet<>();
 
     public String getLogin() {
         return login;

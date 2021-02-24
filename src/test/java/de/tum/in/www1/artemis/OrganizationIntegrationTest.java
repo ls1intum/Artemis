@@ -54,7 +54,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "ab12cde")
-    public void testGetCoursesToRegister_withOrganizationsEnabled() throws Exception {
+    public void testGetCoursesToRegisterWithOrganizationsEnabled() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
         Organization organization = database.createOrganization();
@@ -85,7 +85,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "ab12cde")
-    public void testRegisterForCourse_withOrganizationsEnabled() throws Exception {
+    public void testRegisterForCourseWithOrganizationsEnabled() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
         Organization organization = database.createOrganization();
@@ -204,7 +204,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         organization.setName("UpdatedName");
 
         Organization updatedOrganization = request.putWithResponseBody("/api/organizations/update", organization, Organization.class, HttpStatus.OK);
-        assertThat(updatedOrganization.getName().compareTo("UpdatedName") == 0);
+        assertThat("UpdatedName".compareTo(updatedOrganization.getName()) == 0);
     }
 
     @Test

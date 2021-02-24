@@ -74,12 +74,7 @@ public class OrganizationService {
     private boolean match(User user, Organization organization) {
         Pattern pattern = Pattern.compile(organization.getEmailPattern());
         Matcher matcher = pattern.matcher(user.getEmail());
-        if (matcher.matches()) {
-            return true;
-        }
-        else {
-            return false;
-        }
+        return matcher.matches();
     }
 
     /**

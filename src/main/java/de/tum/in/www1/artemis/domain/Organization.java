@@ -47,7 +47,7 @@ public class Organization extends DomainObject {
             @JoinColumn(name = "user_id", referencedColumnName = "id") })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @BatchSize(size = 20)
-    private Set<User> users = new HashSet<User>();
+    private Set<User> users = new HashSet<>();
 
     @ManyToMany
     @JoinTable(name = "course_organization", joinColumns = { @JoinColumn(name = "organization_id", referencedColumnName = "id") }, inverseJoinColumns = {

@@ -73,8 +73,6 @@ public class UserResource {
 
     private final UserCreationService userCreationService;
 
-    private final OrganizationRepository organizationRepository;
-
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final UserRepository userRepository;
@@ -82,10 +80,9 @@ public class UserResource {
     private final AuthorityRepository authorityRepository;
 
     public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository, OrganizationRepository organizationRepository) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository) {
         this.userRepository = userRepository;
         this.userService = userService;
-        this.organizationRepository = organizationRepository;
         this.userCreationService = userCreationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.authorityRepository = authorityRepository;

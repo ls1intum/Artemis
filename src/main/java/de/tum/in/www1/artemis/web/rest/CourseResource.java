@@ -398,11 +398,9 @@ public class CourseResource {
                     HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationDisabled", "The course does not allow registration. Cannot register user"))
                     .body(null);
         }
-        if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
-            if (!checkIfUserIsMemberOfCourseOrganizations(user, course)) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationNotAllowed",
-                        "User is not member of any organization of this course. Cannot register user")).body(null);
-            }
+        if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get() && !checkIfUserIsMemberOfCourseOrganizations(user, course)) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationNotAllowed",
+                    "User is not member of any organization of this course. Cannot register user")).body(null);
         }
         courseService.registerUserForCourse(user, course);
         return ResponseEntity.ok(user);
@@ -480,7 +478,7 @@ public class CourseResource {
         log.debug("REST request to get all currently active Courses that are not online courses");
         if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
             User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-            List<Course> allRegistrable = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations(ZonedDateTime.now());
+            List<Course> allRegistrable = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations(now());
             allRegistrable.removeIf(course -> !checkIfUserIsMemberOfCourseOrganizations(user, course));
             return allRegistrable;
         }
@@ -1199,11 +1197,8 @@ public class CourseResource {
      * @return true if the user is member of at least one organization of the course. false otherwise
      */
     private boolean checkIfUserIsMemberOfCourseOrganizations(User user, Course course) {
-        if (course.getOrganizations() == null) {
-            course = courseRepository.findWithEagerOrganizations(course.getId());
-        }
         boolean isMember = false;
-        for (Organization organization : course.getOrganizations()) {
+        for (Organization organization : courseRepository.findWithEagerOrganizations(course.getId()).getOrganizations()) {
             if (user.getOrganizations().contains(organization)) {
                 isMember = true;
                 break;
