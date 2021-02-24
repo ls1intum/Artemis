@@ -70,15 +70,18 @@ public class ParticipantScoreDTO {
 
         if (participantScore.getClass().equals(StudentScore.class)) {
             StudentScore studentScore = (StudentScore) participantScore;
-            userName = studentScore.getUser() != null && studentScore.getUser().getLogin() != null ? studentScore.getUser().getLogin() : null;
-            userId = studentScore.getUser() != null ? studentScore.getUser().getId() : null;
+            if (studentScore.getUser() != null) {
+                userName = studentScore.getUser().getLogin();
+                userId = studentScore.getUser().getId();
+            }
         }
         else {
             TeamScore teamScore = (TeamScore) participantScore;
-            teamName = teamScore.getTeam() != null && teamScore.getTeam().getName() != null ? teamScore.getTeam().getName() : null;
-            teamId = teamScore.getTeam() != null ? teamScore.getTeam().getId() : null;
+            if (teamScore.getTeam() != null) {
+                teamName = teamScore.getTeam().getName();
+                teamId = teamScore.getTeam().getId();
+            }
         }
-
         Long id = participantScore.getId();
         String exerciseTitle = participantScore.getExercise() != null && participantScore.getExercise().getTitle() != null ? participantScore.getExercise().getTitle() : null;
         Long exerciseId = participantScore.getExercise() != null ? participantScore.getExercise().getId() : null;

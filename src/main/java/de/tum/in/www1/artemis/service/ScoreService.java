@@ -87,6 +87,19 @@ public class ScoreService {
         // There are two possibilities now:
         // A: Another result exists for the exercise and the student / team -> update participant score with the newest one
         // B: No other result exists for the exercise and the student / team -> remove participant score
+        tryToFindNewLastResult(resultToBeDeleted, associatedParticipantScore, exercise);
+
+        if (associatedParticipantScore.getLastResult() == null && associatedParticipantScore.getLastRatedResult() == null) {
+            participantScoreRepository.deleteById(associatedParticipantScore.getId());
+            logger.info("Deleted an existing participant score: " + originalParticipantScoreStructure);
+        }
+        else {
+            ParticipantScore updatedParticipantScore = participantScoreRepository.saveAndFlush(associatedParticipantScore);
+            logger.info("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + updatedParticipantScore.toString());
+        }
+    }
+
+    private void tryToFindNewLastResult(Result resultToBeDeleted, ParticipantScore associatedParticipantScore, Exercise exercise) {
         if (resultToBeDeleted.equals(associatedParticipantScore.getLastRatedResult())) {
             Optional<Result> newLastRatedResultOptional = getNewLastRatedResultForParticipantScore(associatedParticipantScore);
             if (newLastRatedResultOptional.isPresent()) {
@@ -107,15 +120,6 @@ public class ScoreService {
             else {
                 setLastAttributes(associatedParticipantScore, null, exercise);
             }
-        }
-
-        if (associatedParticipantScore.getLastResult() == null && associatedParticipantScore.getLastRatedResult() == null) {
-            participantScoreRepository.deleteById(associatedParticipantScore.getId());
-            logger.info("Deleted an existing participant score: " + originalParticipantScoreStructure);
-        }
-        else {
-            ParticipantScore updatedParticipantScore = participantScoreRepository.saveAndFlush(associatedParticipantScore);
-            logger.info("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + updatedParticipantScore.toString());
         }
     }
 
@@ -255,7 +259,7 @@ public class ScoreService {
             setLastAttributes(participantScoreToSave, updatedOrNewlyCreatedResult, exercise);
         }
         // update the last rated result and last rated score if either it has not been set previously or new rated result is either the old one (=) or newer (>)
-        if ((updatedOrNewlyCreatedResult.isRated() != null && updatedOrNewlyCreatedResult.isRated())
+        if (updatedOrNewlyCreatedResult.isRated() != null && updatedOrNewlyCreatedResult.isRated()
                 && (participantScoreToSave.getLastRatedResult() == null || updatedOrNewlyCreatedResult.getId() >= participantScoreToSave.getLastRatedResult().getId())) {
             setLastRatedAttributes(participantScoreToSave, updatedOrNewlyCreatedResult, exercise);
         }

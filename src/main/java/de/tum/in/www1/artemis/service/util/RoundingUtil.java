@@ -34,7 +34,7 @@ public class RoundingUtil {
     }
 
     private static double roundToNDecimalPlaces(double number, int numberOfDecimalPlaces) {
-        return new BigDecimal(number).setScale(numberOfDecimalPlaces, RoundingMode.HALF_UP).doubleValue();
+        return new BigDecimal(String.valueOf(number)).setScale(numberOfDecimalPlaces, RoundingMode.HALF_UP).doubleValue();
     }
 
 }

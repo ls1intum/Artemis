@@ -125,10 +125,14 @@ public class ParticipantScoreResource {
             return forbidden();
         }
         Set<Exercise> exercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise).collect(Collectors.toSet());
+        Pageable page;
         if (getUnpaged) {
-            pageable = Pageable.unpaged();
+            page = Pageable.unpaged();
         }
-        List<ParticipantScoreDTO> resultsOfAllExercises = participantScoreService.getParticipantScoreDTOs(pageable, exercisesOfCourse);
+        else {
+            page = pageable;
+        }
+        List<ParticipantScoreDTO> resultsOfAllExercises = participantScoreService.getParticipantScoreDTOs(page, exercisesOfCourse);
         log.info("getParticipantScoresOfCourse took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok().body(resultsOfAllExercises);
     }
@@ -209,10 +213,14 @@ public class ParticipantScoreResource {
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             exercisesOfExam.addAll(exerciseGroup.getExercises());
         }
+        Pageable page;
         if (getUnpaged) {
-            pageable = Pageable.unpaged();
+            page = Pageable.unpaged();
         }
-        List<ParticipantScoreDTO> resultsOfAllExercises = participantScoreService.getParticipantScoreDTOs(pageable, exercisesOfExam);
+        else {
+            page = pageable;
+        }
+        List<ParticipantScoreDTO> resultsOfAllExercises = participantScoreService.getParticipantScoreDTOs(page, exercisesOfExam);
         log.info("getParticipantScoresOfExam took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok().body(resultsOfAllExercises);
     }
