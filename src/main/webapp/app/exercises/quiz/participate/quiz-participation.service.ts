@@ -37,15 +37,6 @@ export class QuizParticipationService {
         return res.clone({ body });
     }
 
-    private convertArrayResponse(res: HttpResponse<QuizSubmission[]>): HttpResponse<QuizSubmission[]> {
-        const jsonResponse: QuizSubmission[] = res.body!;
-        const body: QuizSubmission[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
-        }
-        return res.clone({ body });
-    }
-
     /**
      * Convert a returned JSON object to QuizSubmission.
      */

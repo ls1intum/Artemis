@@ -537,6 +537,7 @@ public abstract class Exercise extends DomainObject {
      * @param participations the list of available participations
      * @return the found participation, or null, if none exist
      */
+    @Nullable
     public StudentParticipation findRelevantParticipation(List<StudentParticipation> participations) {
         StudentParticipation relevantParticipation = null;
         for (StudentParticipation participation : participations) {
