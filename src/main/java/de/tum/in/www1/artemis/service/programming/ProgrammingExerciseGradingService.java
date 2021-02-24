@@ -306,12 +306,6 @@ public class ProgrammingExerciseGradingService {
         log.info("User " + user.getLogin() + " triggered a re-evaluation of {} results for exercise {} with id {}", results.size(), exercise.getTitle(), exercise.getId());
     }
 
-    public void logResetGrading(User user, ProgrammingExercise exercise, Course course) {
-        var auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_GRADING, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
-        auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " requested to reset the grading configuration for exercise {} with id {}", exercise.getTitle(), exercise.getId());
-    }
-
     /**
      * Filter all test cases from the score calculation that are never visible or ones with visibility "after due date" if the due date has not yet passed.
      * @param exercise to which the test cases belong to.
