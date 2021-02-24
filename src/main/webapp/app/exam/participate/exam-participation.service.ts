@@ -27,7 +27,7 @@ export class ExamParticipationService {
         private exerciseService: ExerciseService,
     ) {}
 
-    private getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
+    private static getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
         const prefix = 'artemis_student_exam';
         return `${prefix}_${courseId}_${examId}`;
     }
@@ -65,7 +65,7 @@ export class ExamParticipationService {
                 return this.convertStudentExamFromServer(studentExam);
             }),
             catchError(() => {
-                const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(this.getLocalStorageKeyForStudentExam(courseId, examId)));
+                const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
                 return Observable.of(localStoredExam);
             }),
         );
@@ -157,7 +157,7 @@ export class ExamParticipationService {
     public saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {
         const studentExamCopy = cloneDeep(studentExam);
         ExamParticipationService.breakCircularDependency(studentExamCopy);
-        this.localStorageService.store(this.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExamCopy));
+        this.localStorageService.store(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExamCopy));
     }
 
     /**

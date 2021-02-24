@@ -3,10 +3,12 @@ import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { LoginService } from 'app/core/login/login.service';
+import { StateStorageService } from 'app/core/auth/state-storage.service';
+import { Router } from '@angular/router';
 
 @Injectable()
 export class AuthExpiredInterceptor implements HttpInterceptor {
-    constructor(private loginService: LoginService) {}
+    constructor(private loginService: LoginService, private stateStorageService: StateStorageService, private router: Router) {}
 
     /**
      * Identifies and handles a given HTTP request. If the request's error status is 401, the current user will be logged out.
@@ -22,7 +24,14 @@ export class AuthExpiredInterceptor implements HttpInterceptor {
                 (err: any) => {
                     if (err instanceof HttpErrorResponse) {
                         if (err.status === 401) {
-                            this.loginService.logout();
+                            // save the url before the logout navigates to another page in a constant
+                            const currentUrl = this.router.routerState.snapshot.url;
+                            this.loginService.logout(false);
+                            // TODO: logging out the user automatically interferes with the canDeactivate functionality.
+                            // In such a case the error message should be different or we should even send one additional message to the user
+                            // store url so that the user could navigate directly to it after login
+                            // store the url in the session storage after the logout, because the logout will
+                            this.stateStorageService.storeUrl(currentUrl);
                         }
                     }
                 },
