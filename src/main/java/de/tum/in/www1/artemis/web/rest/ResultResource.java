@@ -183,10 +183,10 @@ public class ResultResource {
     @Nullable
     private ProgrammingExerciseParticipation getParticipationWithResults(String planKey) {
         // we have to support template, solution and student build plans here
-        if (planKey.contains(BuildPlanType.TEMPLATE.getName())) {
+        if (planKey.endsWith("-" + BuildPlanType.TEMPLATE.getName())) {
             return templateProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
         }
-        else if (planKey.contains(BuildPlanType.SOLUTION.getName())) {
+        else if (planKey.endsWith("-" + BuildPlanType.SOLUTION.getName())) {
             return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
         }
         List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findByBuildPlanId(planKey);
