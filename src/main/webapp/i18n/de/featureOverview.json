@@ -1,9 +1,9 @@
 {
     "featureOverview": {
         "title": "Onlineklausuren in Artemis",
-        "featureDetails": "Feature-Details",
+        "featureDetails": "Featuredetails",
         "instructor": {
-            "pageTitle": "Klausurfeatures für Instructors",
+            "pageTitle": "Klausurfeatures für Instruktoren",
             "featureOverview": "Features für Instruktoren",
             "feature": {
                 "createConductAssess": {

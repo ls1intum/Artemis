@@ -4,7 +4,7 @@
             "instructions": "Instruktionen",
             "editor": {
                 "addCredits": "[credits] Punkte",
-                "addInstruction": "[instruction] Bewertungsinstruktionen",
+                "addInstruction": "[instruction] Bewertungsinstruktion",
                 "addFeedback": "[feedback] Feedback",
                 "addGradingScale": "[gradingScale] Bewertungsmaßstab",
                 "addCountUsage": "[count] Anzahl Anwendung",
