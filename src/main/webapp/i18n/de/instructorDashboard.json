@@ -8,21 +8,21 @@
         "participated": "Teilgenommen an Übungen",
         "successful": "Erfolgreich abgeschlossen",
         "quizPoints": "Quiz Points (%)",
-        "programmingPoints": "Programmier Punkte (%)",
-        "modelingPoints": "Modelierungs Punkte (%)",
+        "programmingPoints": "Programmierpunkte (%)",
+        "modelingPoints": "Modellierungspunkte (%)",
         "textPoints": "Text Punkte (%)",
-        "file-uploadPoints": "Datei Upload Punkte (%)",
+        "file-uploadPoints": "Datei-Upload-Punkte (%)",
         "overallScore": "Gesamtpunkte",
         "max": "Max",
         "average": "Durchschnitt",
         "students": "Studenten",
         "cleanup": {
             "title": "Aufräumen",
-            "question": "Sollen wirklich ALLE Studierenden Build Pläne für die Programmieraufgabe <strong>{{ title }}</strong> dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
+            "question": "Sollen wirklich ALLE Studierenden-Build-Pläne für die Programmieraufgabe <strong>{{ title }}</strong> dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
         },
         "archive": {
             "title": "Archivieren",
-            "question": "Sollen wirklich ALLE Studierenden Repositories für die Programmieraufgabe {{ exerciseTitle }} im Kurs {{ courseTitle }} archiviert werden?"
+            "question": "Sollen wirklich ALLE Studierenden-Repositories für die Programmieraufgabe {{ exerciseTitle }} im Kurs {{ courseTitle }} archiviert werden?"
         },
         "exportRepos": {
             "warning": "Export zustimmen",
