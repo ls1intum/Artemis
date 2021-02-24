@@ -214,7 +214,7 @@ public class AssessmentService {
         /*
          * We only want to be able to cancel a result if it is not of the AUTOMATIC AssessmentType
          */
-        if (result.getAssessmentType() != null && result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
+        if (result != null && result.getAssessmentType() != null && !result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
             participation.removeResult(result);
             feedbackRepository.deleteByResult_Id(result.getId());
             resultRepository.deleteById(result.getId());

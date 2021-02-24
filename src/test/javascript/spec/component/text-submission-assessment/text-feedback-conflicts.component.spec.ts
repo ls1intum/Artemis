@@ -10,7 +10,7 @@ import { HttpResponse } from '@angular/common/http';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TextFeedbackConflictsComponent } from 'app/exercises/text/assess/conflicts/text-feedback-conflicts.component';
-import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
@@ -38,7 +38,7 @@ import { ParticipationType } from 'app/entities/participation/participation.mode
 describe('TextFeedbackConflictsComponent', () => {
     let component: TextFeedbackConflictsComponent;
     let fixture: ComponentFixture<TextFeedbackConflictsComponent>;
-    let textAssessmentsService: TextAssessmentsService;
+    let textAssessmentService: TextAssessmentService;
     let router: Router;
 
     const exercise = {
@@ -222,7 +222,7 @@ describe('TextFeedbackConflictsComponent', () => {
     });
 
     it('should solve conflict by overriding left submission', () => {
-        textAssessmentsService = fixture.debugElement.injector.get(TextAssessmentsService);
+        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
 
@@ -238,7 +238,7 @@ describe('TextFeedbackConflictsComponent', () => {
         expect(component.leftTotalScore).toBe(2);
         expect(component.isOverrideDisabled).toBe(false);
 
-        spyOn(textAssessmentsService, 'submit').and.returnValue(
+        spyOn(textAssessmentService, 'submit').and.returnValue(
             of(
                 new HttpResponse({
                     body: component.leftSubmission!.latestResult,
@@ -246,7 +246,7 @@ describe('TextFeedbackConflictsComponent', () => {
             ),
         );
         component.overrideLeftSubmission();
-        expect(textAssessmentsService.submit).toHaveBeenCalledWith(
+        expect(textAssessmentService.submit).toHaveBeenCalledWith(
             exercise.id!,
             textSubmission.latestResult!.id!,
             [component.leftTextBlockRefs[0].feedback!],
@@ -307,7 +307,7 @@ describe('TextFeedbackConflictsComponent', () => {
     });
 
     it('should discard conflict', () => {
-        textAssessmentsService = fixture.debugElement.injector.get(TextAssessmentsService);
+        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
 
@@ -316,7 +316,7 @@ describe('TextFeedbackConflictsComponent', () => {
         const feedbackConflict = textSubmission.latestResult!.feedbacks![0].conflictingTextAssessments![0];
         feedbackConflict.conflict = false;
         feedbackConflict.discard = true;
-        spyOn(textAssessmentsService, 'solveFeedbackConflict').and.returnValue(
+        spyOn(textAssessmentService, 'solveFeedbackConflict').and.returnValue(
             of(
                 new HttpResponse({
                     body: feedbackConflict,
@@ -324,7 +324,7 @@ describe('TextFeedbackConflictsComponent', () => {
             ),
         );
         component.discardConflict();
-        expect(textAssessmentsService.solveFeedbackConflict).toHaveBeenCalledWith(exercise.id!, feedbackConflict.id!);
+        expect(textAssessmentService.solveFeedbackConflict).toHaveBeenCalledWith(exercise.id!, feedbackConflict.id!);
     });
 
     it('should switch submissions when it changed in the header', () => {

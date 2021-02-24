@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { TextSubmissionAssessmentComponent } from './text-submission-assessment.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextFeedbackConflictsComponent } from './conflicts/text-feedback-conflicts.component';
@@ -17,7 +17,7 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
     constructor(private textSubmissionService: TextSubmissionService) {}
 
     /**
-     * Resolves the needed StudentParticipations for the TextSubmissionAssessmentComponent using the TextAssessmentsService.
+     * Resolves the needed StudentParticipations for the TextSubmissionAssessmentComponent using the TextAssessmentService.
      * @param route
      */
     resolve(route: ActivatedRouteSnapshot) {
@@ -35,17 +35,17 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
 
 @Injectable({ providedIn: 'root' })
 export class StudentParticipationResolver implements Resolve<StudentParticipation | undefined> {
-    constructor(private textAssessmentsService: TextAssessmentsService) {}
+    constructor(private textAssessmentService: TextAssessmentService) {}
 
     /**
-     * Resolves the needed StudentParticipations for the TextSubmissionAssessmentComponent using the TextAssessmentsService.
+     * Resolves the needed StudentParticipations for the TextSubmissionAssessmentComponent using the TextAssessmentService.
      * @param route
      */
     resolve(route: ActivatedRouteSnapshot) {
         const submissionId = Number(route.paramMap.get('submissionId'));
         const correctionRound = Number(route.queryParamMap.get('correction-round'));
         if (submissionId) {
-            return this.textAssessmentsService.getFeedbackDataForExerciseSubmission(submissionId, correctionRound).catch(() => Observable.of(undefined));
+            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, correctionRound).catch(() => Observable.of(undefined));
         }
         return Observable.of(undefined);
     }
@@ -53,17 +53,17 @@ export class StudentParticipationResolver implements Resolve<StudentParticipatio
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackConflictResolver implements Resolve<TextSubmission[] | undefined> {
-    constructor(private textAssessmentsService: TextAssessmentsService) {}
+    constructor(private textAssessmentService: TextAssessmentService) {}
 
     /**
-     * Resolves the needed TextSubmissions for the TextFeedbackConflictsComponent using the TextAssessmentsService.
+     * Resolves the needed TextSubmissions for the TextFeedbackConflictsComponent using the TextAssessmentService.
      * @param route
      */
     resolve(route: ActivatedRouteSnapshot) {
         const submissionId = Number(route.paramMap.get('submissionId'));
         const feedbackId = Number(route.paramMap.get('feedbackId'));
         if (submissionId && feedbackId) {
-            return this.textAssessmentsService.getConflictingTextSubmissions(submissionId, feedbackId).catch(() => Observable.of(undefined));
+            return this.textAssessmentService.getConflictingTextSubmissions(submissionId, feedbackId).catch(() => Observable.of(undefined));
         }
         return Observable.of(undefined);
     }

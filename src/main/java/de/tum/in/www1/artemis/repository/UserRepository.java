@@ -60,7 +60,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findOneWithGroupsAndAuthoritiesById(Long id);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
-    Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(String login);
+    Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsById(Long id);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings" })
     Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
@@ -231,10 +231,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @NotNull
     private User unwrapOptionalUser(Optional<User> optionalUser, String currentUserLogin) {
-        if (optionalUser.isPresent()) {
-            return optionalUser.get();
-        }
-        throw new EntityNotFoundException("No user found with login: " + currentUserLogin);
+        return optionalUser.orElseThrow(() -> new EntityNotFoundException("No user found with login: " + currentUserLogin));
     }
 
     private String getCurrentUserLogin() {
@@ -281,6 +278,22 @@ public interface UserRepository extends JpaRepository<User, Long> {
             return Optional.empty();
         }
         return findOneWithGroupsAndAuthoritiesByLogin(login);
+    }
+
+    @NotNull
+    default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
+        return findOneWithGroupsAndAuthoritiesById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
+    }
+
+    /**
+     * Find user with eagerly loaded groups, authorities and organizations by its id
+     *
+     * @param userId the id of the user to find
+     * @return the user with groups, authorities and organizations if it exists, else throw exception
+     */
+    @NotNull
+    default User findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(long userId) {
+        return findOneWithGroupsAndAuthoritiesAndOrganizationsById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
 
     /**

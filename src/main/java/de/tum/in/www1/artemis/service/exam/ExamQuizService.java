@@ -174,37 +174,38 @@ public class ExamQuizService {
                         resultExisting = true;
                         result = participation.getResults().iterator().next();
                     }
-                    // delete result from quizSubmission, to be able to set a new one
-                    if (quizSubmission.getLatestResult() != null) {
-                        resultService.deleteResultWithComplaint(quizSubmission.getLatestResult().getId());
-                    }
-                    result.setRated(true);
-                    result.setAssessmentType(AssessmentType.AUTOMATIC);
-                    result.setCompletionDate(ZonedDateTime.now());
-
-                    // set submission to calculate scores
-                    result.setSubmission(quizSubmission);
-                    // calculate scores and update result and submission accordingly
-                    quizSubmission.calculateAndUpdateScores(quizExercise);
-                    result.evaluateSubmission();
-                    // remove submission to follow save order for ordered collections
-                    result.setSubmission(null);
-
-                    // NOTE: we save participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
-                    submissionRepository.save(quizSubmission);
-                    result = resultRepository.save(result);
-
-                    // add result to participation
-                    participation.addResult(result);
-                    studentParticipationRepository.save(participation);
-
-                    // add result to submission
-                    result.setSubmission(quizSubmission);
-                    quizSubmission.addResult(result);
-                    submissionRepository.save(quizSubmission);
-
-                    // Add result so that it can be returned (and processed later)
+                    // Only create Results once after the first evaluation
                     if (!resultExisting) {
+                        // delete result from quizSubmission, to be able to set a new one
+                        if (quizSubmission.getLatestResult() != null) {
+                            resultService.deleteResultWithComplaint(quizSubmission.getLatestResult().getId());
+                        }
+                        result.setRated(true);
+                        result.setAssessmentType(AssessmentType.AUTOMATIC);
+                        result.setCompletionDate(ZonedDateTime.now());
+
+                        // set submission to calculate scores
+                        result.setSubmission(quizSubmission);
+                        // calculate scores and update result and submission accordingly
+                        quizSubmission.calculateAndUpdateScores(quizExercise);
+                        result.evaluateSubmission();
+                        // remove submission to follow save order for ordered collections
+                        result.setSubmission(null);
+
+                        // NOTE: we save participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
+                        submissionRepository.save(quizSubmission);
+                        result = resultRepository.save(result);
+
+                        // add result to participation
+                        participation.addResult(result);
+                        studentParticipationRepository.save(participation);
+
+                        // add result to submission
+                        result.setSubmission(quizSubmission);
+                        quizSubmission.addResult(result);
+                        submissionRepository.save(quizSubmission);
+
+                        // Add result so that it can be returned (and processed later)
                         createdResults.add(result);
                     }
                 }
