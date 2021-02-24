@@ -91,10 +91,11 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                     this.coursesBySemester[semester] = this.courses.filter((c) => !c.testCourse && (c.semester ?? '') === semester);
                 }
                 // Add an extra category for test courses
-                if (this.courses.find((c) => c.testCourse) !== null) {
+                const testCourses = this.courses.filter((c) => c.testCourse);
+                if (testCourses.length > 0) {
                     this.courseSemesters[this.courseSemesters.length] = 'test';
                     this.semesterCollapsed['test'] = false;
-                    this.coursesBySemester['test'] = this.courses.filter((c) => c.testCourse);
+                    this.coursesBySemester['test'] = testCourses;
                 }
 
                 // First fetch important data like title for each course
