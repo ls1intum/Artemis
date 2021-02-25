@@ -110,6 +110,7 @@ public class StudentExamResource {
             // add participation with submission and result to each exercise
             filterParticipation(studentExam, exercise, participations, true);
         }
+        studentExam.getUser().setVisibleRegistrationNumber();
 
         return ResponseEntity.ok(studentExam);
     }
@@ -617,4 +618,35 @@ public class StudentExamResource {
         }
     }
 
+    /**
+     * PUT /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggleToSubmitted : Toggles the submission
+     * status of the specified studentExam
+     *
+     * @param courseId      the course to which the student exams belong to
+     * @param examId        the exam to which the student exams belong to
+     * @param studentExamId the student exam id where we want to set to be submitted
+     * @return state of the exam submission
+     * 200 if successful
+     * 400 if student exam was in an illegal state
+     */
+    @PutMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggleToSubmitted ")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        User instructor = userRepository.getUser();
+        log.debug("REST request by user: {} for exam with id {} to set student-exam {} to SUBMITTED", instructor.getLogin(), examId, studentExamId);
+        Optional<ResponseEntity<StudentExam>> accessFailure = examAccessService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
+        if (accessFailure.isPresent()) {
+            // the user must be instructor for the exam
+            return accessFailure.get();
+        }
+        StudentExam studentExam = studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("studentExam", studentExamId));
+        if (studentExam.isSubmitted()) {
+            return badRequest();
+        }
+        ZonedDateTime submissionTime = ZonedDateTime.now();
+        studentExam.setSubmissionDate(submissionTime);
+        studentExam.setSubmitted(true);
+        studentExamRepository.save(studentExam);
+        return ResponseEntity.ok(studentExam);
+    }
 }

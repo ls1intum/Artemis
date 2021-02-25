@@ -11,6 +11,8 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
 import { JhiAlertService } from 'ng-jhipster';
 import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonSize } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -18,6 +20,7 @@ import * as moment from 'moment';
     providers: [ArtemisDurationFromSecondsPipe],
 })
 export class StudentExamDetailComponent implements OnInit {
+    readonly ButtonSize = ButtonSize;
     courseId: number;
     studentExam: StudentExam;
     course: Course;
@@ -35,6 +38,7 @@ export class StudentExamDetailComponent implements OnInit {
         private courseService: CourseManagementService,
         private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
         private alertService: JhiAlertService,
+        private modalService: NgbModal,
     ) {}
 
     /**
@@ -151,6 +155,15 @@ export class StudentExamDetailComponent implements OnInit {
         return true;
     }
 
+    examIsOver(): boolean {
+        if (this.studentExam.exam) {
+            // only show the button when the exam is over
+            return moment(this.studentExam.exam.endDate).add(this.studentExam.exam.gracePeriod, 'seconds').isBefore(moment());
+        }
+        // if exam is undefined, we do not want to show the button
+        return false;
+    }
+
     getWorkingTimeToolTip(): string {
         return this.examIsVisible()
             ? 'You cannot change the individual working time after the exam has become visible.'
@@ -158,5 +171,25 @@ export class StudentExamDetailComponent implements OnInit {
     }
     rounding(number: number) {
         return round(number, 1);
+    }
+
+    toggle() {
+        console.log('in');
+        this.studentExam.submitted = !this.studentExam.submitted;
+    }
+
+    /**
+     * Open a modal that requires the user's confirmation.
+     * @param content the modal content
+     */
+    openConfirmationModal(content: any) {
+        this.modalService.open(content).result.then(
+            (result: string) => {
+                if (result === 'confirm') {
+                    this.toggle();
+                }
+            },
+            () => {},
+        );
     }
 }
