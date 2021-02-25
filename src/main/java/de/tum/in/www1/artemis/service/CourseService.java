@@ -107,7 +107,10 @@ public class CourseService {
             filterLectureUnits(course);
         }
         catch (Exception e) {
-            Sentry.captureException(e);
+            log.error(e.getMessage());
+            if (Sentry.isEnabled()) {
+                Sentry.captureException(e);
+            }
         }
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -163,7 +166,10 @@ public class CourseService {
                         filterLectureUnits(course);
                     }
                     catch (Exception e) {
-                        Sentry.captureException(e);
+                        log.error(e.getMessage());
+                        if (Sentry.isEnabled()) {
+                            Sentry.captureException(e);
+                        }
                     }
                     course.setExercises(exerciseService.findAllForCourse(course, user));
                     course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
