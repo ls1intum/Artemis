@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -38,8 +39,8 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") Long courseId);
 
-    @Query("select exam from Exam exam where exam.course.testCourse = false and exam.startDate >= :#{#date} order by exam.startDate asc")
-    List<Exam> findAllByStartDateGreaterThanEqual(@Param("date") ZonedDateTime date);
+    @Query("select exam from Exam exam where exam.course.testCourse = false and exam.endDate >= :#{#date} order by exam.startDate asc")
+    List<Exam> findAllByEndDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups" })
     Optional<Exam> findWithExerciseGroupsById(Long examId);
@@ -157,7 +158,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return the list of all exams
      */
     default List<Exam> findAllCurrentAndUpcomingExams() {
-        return findAllByStartDateGreaterThanEqual(ZonedDateTime.now());
+        return findAllByEndDateGreaterThanEqual(ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS));
     }
 
     /**
