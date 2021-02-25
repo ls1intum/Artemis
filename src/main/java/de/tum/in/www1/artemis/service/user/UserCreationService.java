@@ -45,9 +45,6 @@ public class UserCreationService {
     @Value("${info.guided-tour.course-group-instructors:#{null}}")
     private Optional<String> tutorialGroupInstructors;
 
-    @Value("${artemis.user-management.organizations.enable-multiple-organizations:#{null}}")
-    private Optional<Boolean> enabledMultipleOrganizations;
-
     private final Logger log = LoggerFactory.getLogger(UserCreationService.class);
 
     private final UserRepository userRepository;
@@ -119,10 +116,8 @@ public class UserCreationService {
         // needs to be mutable --> new HashSet<>(Set.of(...))
         final var authorities = new HashSet<>(Set.of(authority));
         newUser.setAuthorities(authorities);
-        if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
-            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(email);
-            newUser.setOrganizations(matchingOrganizations);
-        }
+        Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(email);
+        newUser.setOrganizations(matchingOrganizations);
         saveUser(newUser);
         log.debug("Created user: {}", newUser);
         return newUser;
@@ -160,10 +155,8 @@ public class UserCreationService {
         if (!useExternalUserManagement) {
             addTutorialGroups(userDTO); // Automatically add interactive tutorial course groups to the new created user if it has been specified
         }
-        if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
-            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
-            user.setOrganizations(matchingOrganizations);
-        }
+        Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
+        user.setOrganizations(matchingOrganizations);
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);
         saveUser(user);

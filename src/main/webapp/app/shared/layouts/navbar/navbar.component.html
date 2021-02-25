@@ -72,7 +72,7 @@
                             <span jhiTranslate="global.menu.admin.userManagement">User management</span>
                         </a>
                     </li>
-                    <li *ngIf="isMultiOrganizationEnabled">
+                    <li>
                         <a class="dropdown-item" routerLink="admin/organization-management" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="'university'" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.organizationManagement">Organization management</span>

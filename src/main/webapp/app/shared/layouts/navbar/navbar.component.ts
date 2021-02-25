@@ -38,7 +38,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     version: string;
     currAccount?: User;
     isRegistrationEnabled = false;
-    isMultiOrganizationEnabled = false;
     breadcrumbs: Breadcrumb[];
 
     private authStateSubscription: Subscription;
@@ -74,7 +73,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.inProduction = profileInfo.inProduction;
                 this.openApiEnabled = profileInfo.openApiEnabled;
                 this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
-                this.isMultiOrganizationEnabled = profileInfo.enabledMultipleOrganizations || false;
             }
         });
 

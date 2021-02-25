@@ -71,9 +71,6 @@ public class CourseResource {
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
     private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
 
-    @Value("${artemis.user-management.organizations.enable-multiple-organizations:#{null}}")
-    private Optional<Boolean> enabledMultipleOrganizations;
-
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final UserRepository userRepository;
@@ -368,16 +365,8 @@ public class CourseResource {
     @PostMapping("/courses/{courseId}/register")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) {
-        Course course;
-        User user;
-        if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
-            course = courseRepository.findWithEagerOrganizations(courseId);
-            user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-        }
-        else {
-            course = courseRepository.findByIdElseThrow(courseId);
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
+        Course course = courseRepository.findWithEagerOrganizations(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         log.debug("REST request to register {} for Course {}", user.getName(), course.getTitle());
         if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationNotAllowed",
@@ -398,7 +387,7 @@ public class CourseResource {
                     HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationDisabled", "The course does not allow registration. Cannot register user"))
                     .body(null);
         }
-        if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get() && !checkIfUserIsMemberOfCourseOrganizations(user, course)) {
+        if (course.getOrganizations() != null && course.getOrganizations().size() > 0 && !checkIfUserIsMemberOfCourseOrganizations(user, course)) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationNotAllowed",
                     "User is not member of any organization of this course. Cannot register user")).body(null);
         }
@@ -476,15 +465,16 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCoursesToRegister() {
         log.debug("REST request to get all currently active Courses that are not online courses");
-        if (enabledMultipleOrganizations.isPresent() && enabledMultipleOrganizations.get()) {
-            User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-            List<Course> allRegistrable = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations(now());
-            allRegistrable.removeIf(course -> !checkIfUserIsMemberOfCourseOrganizations(user, course));
-            return allRegistrable;
-        }
-        else {
-            return courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabled();
-        }
+        User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+
+        List<Course> allRegistrable = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations();
+        return allRegistrable.stream().filter((course -> {
+            if (course.getOrganizations() != null && course.getOrganizations().size() > 0) {
+                return checkIfUserIsMemberOfCourseOrganizations(user, course);
+            } else {
+                return true;
+            }
+        })).collect(Collectors.toList());
     }
 
     /**

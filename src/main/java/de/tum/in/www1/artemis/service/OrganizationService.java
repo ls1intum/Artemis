@@ -27,9 +27,6 @@ public class OrganizationService {
 
     private final Logger log = LoggerFactory.getLogger(OrganizationService.class);
 
-    @Value("${artemis.user-management.organizations.enable-multiple-organizations:#{null}}")
-    private Optional<Boolean> enabledMultipleOrganizations;
-
     private final OrganizationRepository organizationRepository;
 
     private final UserRepository userRepository;
@@ -47,9 +44,6 @@ public class OrganizationService {
      */
     @PostConstruct
     public void init() {
-        if (enabledMultipleOrganizations.isEmpty() || !enabledMultipleOrganizations.get()) {
-            return;
-        }
         // to avoid 'Authentication object cannot be null'
         SecurityUtils.setAuthorizationObject();
 
@@ -60,7 +54,7 @@ public class OrganizationService {
             for (Organization organization : organizations) {
                 /*
                  * TODO: strict re-indexing policy or additive?
-                 *  if (user.getOrganizations().contains(organization) && !match(user, organization)) {
+                 * if (user.getOrganizations().contains(organization) && !match(user, organization)) {
                  * log.debug("User {} does not match {} email pattern anymore. Removing", user.getLogin(), organization.getName()); removeUserFromOrganization(user,
                  * organization.getId()); continue; }
                  */

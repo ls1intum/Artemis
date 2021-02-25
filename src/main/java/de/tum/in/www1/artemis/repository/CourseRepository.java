@@ -131,6 +131,15 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     /**
+     * Get all the courses to register with eagerly loaded organizations.
+     *
+     * @return the list of course entities
+     */
+    default List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations() {
+        return findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations(ZonedDateTime.now());
+    }
+
+    /**
      * Get one course by id.
      *
      * @param courseId the id of the entity

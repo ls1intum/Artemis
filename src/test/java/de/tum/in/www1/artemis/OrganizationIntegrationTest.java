@@ -22,8 +22,7 @@ import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-@TestPropertySource(properties = { "{artemis.user-management.organizations.enable-multiple-organizations=true",
-        "artemis.user-management.course-registration.allowed-username-pattern=.*" })
+@TestPropertySource(properties = { "{artemis.user-management.course-registration.allowed-username-pattern=.*" })
 public class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired

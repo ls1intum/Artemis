@@ -166,8 +166,6 @@ public final class Constants {
 
     public static final String ALLOWED_COURSE_REGISTRATION_USERNAME_PATTERN = "allowedCourseRegistrationUsernamePattern";
 
-    public static final String ENABLED_MULTIPLE_ORGANIZATIONS = "enabledMultipleOrganizations";
-
     public static final String ARTEMIS_GROUP_DEFAULT_PREFIX = "artemis-";
 
     public static final String HAZELCAST_QUIZ_SCHEDULER = "quizScheduleServiceExecutor";
