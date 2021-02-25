@@ -370,10 +370,10 @@ public class CourseService {
             return;
         }
 
-        // Clean up exams
-        Set<Exercise> examExercises = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId).stream().filter(Objects::nonNull).map(Exam::getExerciseGroups)
-                .flatMap(Collection::stream).filter(Objects::nonNull).map(ExerciseGroup::getExercises).flatMap(Collection::stream).filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        // The Objects::nonNull is needed here because the relationship exam -> exercise groups is ordered and
+        // hibernate sometimes adds nulls to in the list of exercise groups to keep the order
+        Set<Exercise> examExercises = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId).stream().map(Exam::getExerciseGroups).flatMap(Collection::stream)
+                .filter(Objects::nonNull).map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
 
         var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());
         exercisesToCleanup.forEach(exercise -> {
