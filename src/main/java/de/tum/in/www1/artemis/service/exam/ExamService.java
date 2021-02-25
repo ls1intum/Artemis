@@ -528,21 +528,21 @@ public class ExamService {
             // number of complaints open
             numberOfComplaintsOpenByExercise.add(complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exercise.getId(), ComplaintType.COMPLAINT));
 
-            log.info("StatsTimeLog: number of complaints open done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            log.debug("StatsTimeLog: number of complaints open done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             // number of complaints finished
             numberOfComplaintResponsesByExercise.add(complaintResponseRepository
                     .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT));
 
-            log.info("StatsTimeLog: number of complaints finished done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            log.debug("StatsTimeLog: number of complaints finished done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             // number of assessments done
             numberOfAssessmentsFinishedOfCorrectionRoundsByExercise
                     .add(resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRound(exercise, numberOfCorrectionRoundsInExam));
 
-            log.info("StatsTimeLog: number of assessments done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            log.debug("StatsTimeLog: number of assessments done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             // get number of all generated participations
             numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId()));
 
-            log.info("StatsTimeLog: number of generated participations in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            log.debug("StatsTimeLog: number of generated participations in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             if (!(exercise instanceof QuizExercise || exercise.getAssessmentType() == AssessmentType.AUTOMATIC)) {
                 numberOfParticipationsForAssessmentGeneratedByExercise.add(submissionRepository.countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exercise.getId()));
             }
@@ -585,13 +585,13 @@ public class ExamService {
         long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExamWithoutTestRuns(exam.getId());
         examChecklistDTO.setNumberOfGeneratedStudentExams(numberOfGeneratedStudentExams);
 
-        log.info("StatsTimeLog: number of generated student exams done in " + TimeLogUtil.formatDurationFrom(start));
+        log.debug("StatsTimeLog: number of generated student exams done in " + TimeLogUtil.formatDurationFrom(start));
 
         // set number of test runs
         long numberOfTestRuns = studentExamRepository.countTestRunsByExamId(exam.getId());
         examChecklistDTO.setNumberOfTestRuns(numberOfTestRuns);
 
-        log.info("StatsTimeLog: number of test runs done in " + TimeLogUtil.formatDurationFrom(start));
+        log.debug("StatsTimeLog: number of test runs done in " + TimeLogUtil.formatDurationFrom(start));
 
         // check if all exercises have been prepared for all students;
         boolean exercisesPrepared = numberOfGeneratedStudentExams != 0
@@ -600,9 +600,9 @@ public class ExamService {
 
         // set started and submitted exam properties
         long numberOfStudentExamsStarted = studentExamRepository.countStudentExamsStartedByExamIdIgnoreTestRuns(exam.getId());
-        log.info("StatsTimeLog: number of student exams started done in " + TimeLogUtil.formatDurationFrom(start));
+        log.debug("StatsTimeLog: number of student exams started done in " + TimeLogUtil.formatDurationFrom(start));
         long numberOfStudentExamsSubmitted = studentExamRepository.countStudentExamsSubmittedByExamIdIgnoreTestRuns(exam.getId());
-        log.info("StatsTimeLog: number of student exams submitted done in " + TimeLogUtil.formatDurationFrom(start));
+        log.debug("StatsTimeLog: number of student exams submitted done in " + TimeLogUtil.formatDurationFrom(start));
         examChecklistDTO.setNumberOfTotalParticipationsForAssessment(totalNumberOfParticipationsForAssessment);
         examChecklistDTO.setNumberOfExamsStarted(numberOfStudentExamsStarted);
         examChecklistDTO.setNumberOfExamsSubmitted(numberOfStudentExamsSubmitted);

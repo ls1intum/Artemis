@@ -21,7 +21,7 @@
             "feedbackResultDetail": "with the following feedback: {{ detailText }}",
             "confirmSubmission": "Are you sure you want to submit? You cannot edit your answer anymore until you get an assessment!",
             "file": "File",
-            "fileTooBigError": "The file {{ fileName }} is too large. The maximum file size is 2 MB",
+            "fileTooBigError": "The file {{ fileName }} is too large. The maximum file size is 4 MB",
             "fileExtensionError": "Incorrect file extension. Please upload a file with one of the allowed file extensions listed below.",
             "fileUploadError": "Your submission for file {{ fileName }} failed!",
             "submitted": "Submitted",
