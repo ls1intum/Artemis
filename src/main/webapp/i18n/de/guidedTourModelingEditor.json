@@ -16,8 +16,8 @@
                 "hint": "Du kannst den Typ der Beziehung ändern, indem du das Element per Doppelklick auswählst."
             },
             "executeTasks": {
-                "headline": "Modelierungsaufgabe.",
-                "content": "Löse die unten angebene Aufgabe, um zum nächsten Schritt zu gelangen.",
+                "headline": "Modellierungsaufgabe.",
+                "content": "Löse die unten angegebene Aufgabe, um zum nächsten Schritt zu gelangen.",
                 "personClass": "Erstelle die UML Klasse <tt>Person</tt> mit dem Attribut <tt>name: String</tt>",
                 "studentClass": "Erstelle die UML Klasse <tt>Student</tt> mit dem Attribut <tt>major: String</tt> und der Methode <tt>visitLecture()</tt>.",
                 "association": "Stelle sicher, dass <tt>Student</tt> eine Subklasse von <tt>Person</tt> ist."

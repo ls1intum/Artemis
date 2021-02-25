@@ -4,15 +4,15 @@
             "instructions": "Instruktionen",
             "editor": {
                 "addCredits": "[credits] Punkte",
-                "addInstruction": "[instruction] Bewertung Instruktionen",
+                "addInstruction": "[instruction] Bewertungsinstruktion",
                 "addFeedback": "[feedback] Feedback",
                 "addGradingScale": "[gradingScale] Bewertungsmaßstab",
                 "addCountUsage": "[count] Anzahl Anwendung",
-                "addCriterion": "[criterion] Bewertung Kriterium"
+                "addCriterion": "[criterion] Bewertungskriterium"
             }
         },
         "problemStatement": "Aufgabenstellung",
-        "sampleSolution": "Beispiel Lösung",
+        "sampleSolution": "Beispiellösung",
         "gradingCriteria": "Bewertungskriterien",
         "usageCount": "Anzahl Anwendungen"
     }
