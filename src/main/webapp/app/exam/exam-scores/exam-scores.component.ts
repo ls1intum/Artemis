@@ -495,7 +495,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         }
     }
 
-    private logErrorOnSentry(errorMessage: string) {
+    logErrorOnSentry(errorMessage: string) {
         console.log(errorMessage);
         Sentry.captureException(new Error(errorMessage));
     }

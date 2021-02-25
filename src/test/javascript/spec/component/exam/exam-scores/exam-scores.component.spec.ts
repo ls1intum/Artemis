@@ -18,7 +18,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortService } from 'app/shared/service/sort.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { ParticipantScoresService } from 'app/shared/participant-scores/participant-scores.service';
+import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
+import * as _ from 'lodash';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -113,6 +114,23 @@ describe('ExamScoresComponent', () => {
         exerciseGroupIdToExerciseResult: { [exGroup1Id]: exResult3ForGroup1 },
     } as StudentResult;
 
+    let findExamScoresSpy: sinon.SinonStub;
+
+    const examScoreStudent1 = new ScoresDTO();
+    examScoreStudent1.studentId = studentResult1.userId;
+    examScoreStudent1.pointsAchieved = studentResult1.overallPointsAchieved;
+    examScoreStudent1.studentLogin = studentResult1.login;
+    examScoreStudent1.scoreAchieved = studentResult1.overallScoreAchieved;
+    const examScoreStudent2 = new ScoresDTO();
+    examScoreStudent2.studentId = studentResult2.userId;
+    examScoreStudent2.pointsAchieved = studentResult2.overallPointsAchieved;
+    examScoreStudent2.studentLogin = studentResult2.login;
+    examScoreStudent2.scoreAchieved = studentResult2.overallScoreAchieved;
+    const examScoreStudent3 = new ScoresDTO();
+    examScoreStudent3.studentId = studentResult3.userId;
+    examScoreStudent3.pointsAchieved = studentResult3.overallPointsAchieved;
+    examScoreStudent3.studentLogin = studentResult3.login;
+    examScoreStudent3.scoreAchieved = studentResult3.overallScoreAchieved;
     const examScoreDTO = {
         examId: 1,
         title: 'exam1',
@@ -155,7 +173,9 @@ describe('ExamScoresComponent', () => {
                 comp = fixture.componentInstance;
                 examService = fixture.debugElement.injector.get(ExamManagementService);
                 const participationScoreService = fixture.debugElement.injector.get(ParticipantScoresService);
-                spyOn(participationScoreService, 'findExamScores').and.returnValue(of(new HttpResponse({ body: [] })));
+                findExamScoresSpy = sinon
+                    .stub(participationScoreService, 'findExamScores')
+                    .returns(of(new HttpResponse({ body: [examScoreStudent1, examScoreStudent2, examScoreStudent3] })));
             });
     });
 
@@ -166,6 +186,49 @@ describe('ExamScoresComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(comp).to.be.ok;
+    });
+
+    it('should not log error on sentry when correct participant score calculation', () => {
+        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        fixture.detectChanges();
+        const errorSpy = sinon.spy(comp, 'logErrorOnSentry');
+        fixture.detectChanges();
+        expect(errorSpy).to.not.have.been.called;
+    });
+
+    it('should log error on sentry when missing participant score calculation', () => {
+        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        findExamScoresSpy.returns(of(new HttpResponse({ body: [] })));
+        const errorSpy = sinon.spy(comp, 'logErrorOnSentry');
+        fixture.detectChanges();
+        expect(errorSpy).to.have.been.calledThrice;
+    });
+    it('should log error on sentry when wrong points calculation', () => {
+        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        const cs1 = _.cloneDeep(examScoreStudent1);
+        cs1.pointsAchieved = 99;
+        const cs2 = _.cloneDeep(examScoreStudent2);
+        cs2.pointsAchieved = 99;
+        const cs3 = _.cloneDeep(examScoreStudent3);
+        cs3.pointsAchieved = 99;
+        findExamScoresSpy.returns(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
+        const errorSpy = sinon.spy(comp, 'logErrorOnSentry');
+        fixture.detectChanges();
+        expect(errorSpy).to.have.been.calledThrice;
+    });
+
+    it('should log error on sentry when wrong score calculation', () => {
+        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        const cs1 = _.cloneDeep(examScoreStudent1);
+        cs1.scoreAchieved = 99;
+        const cs2 = _.cloneDeep(examScoreStudent2);
+        cs2.scoreAchieved = 99;
+        const cs3 = _.cloneDeep(examScoreStudent3);
+        cs3.scoreAchieved = 99;
+        findExamScoresSpy.returns(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
+        const errorSpy = sinon.spy(comp, 'logErrorOnSentry');
+        fixture.detectChanges();
+        expect(errorSpy).to.have.been.calledThrice;
     });
 
     it('should make duplicated titles unique', () => {
