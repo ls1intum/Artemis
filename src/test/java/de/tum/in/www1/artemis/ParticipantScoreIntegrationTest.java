@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,15 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.Participant;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -82,16 +75,20 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         // creating course
         Course course = this.database.createCourse();
         idOfCourse = course.getId();
-        createIndividualTextExercise(pastTimestamp, pastTimestamp, pastTimestamp);
-        createTeamTextExerciseAndTeam(pastTimestamp, pastTimestamp, pastTimestamp);
-
-        // Creating result for student1
+        TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        idOfIndividualTextExercise = textExercise.getId();
+        Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        idOfTeamTextExercise = teamExercise.getId();
         User student1 = userRepository.findOneByLogin("student1").get();
         idOfStudent1 = student1.getId();
-        createParticipationSubmissionAndResult(idOfIndividualTextExercise, student1, 10.0, 10.0, 50, true);
+        User tutor1 = userRepository.findOneByLogin("tutor1").get();
+        idOfTeam1 = database.createTeam(Set.of(student1), tutor1, teamExercise).getId();
+
+        // Creating result for student1
+        database.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student1, 10.0, 10.0, 50, true);
         // Creating result for team1
         Team team = teamRepository.findById(idOfTeam1).get();
-        createParticipationSubmissionAndResult(idOfTeamTextExercise, team, 10.0, 10.0, 50, true);
+        database.createParticipationSubmissionAndResult(idOfTeamTextExercise, team, 10.0, 10.0, 50, true);
 
         // setting up exam
         Exam exam = ModelFactory.generateExam(course);
@@ -100,7 +97,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         exam = examRepository.save(exam);
         idOfExam = exam.getId();
         createIndividualTextExerciseForExam();
-        createParticipationSubmissionAndResult(getIdOfIndividualTextExerciseOfExam, student1, 10.0, 10.0, 50, true);
+        database.createParticipationSubmissionAndResult(getIdOfIndividualTextExerciseOfExam, student1, 10.0, 10.0, 50, true);
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -213,18 +210,6 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         assertThat(average).isEqualTo(50L);
     }
 
-    private void createIndividualTextExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
-        Course course;
-        // creating text exercise with Result
-        course = courseRepository.findWithEagerExercisesById(idOfCourse);
-        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
-        textExercise.setMaxPoints(10.0);
-        textExercise.setBonusPoints(0.0);
-        textExercise = exerciseRepository.save(textExercise);
-
-        idOfIndividualTextExercise = textExercise.getId();
-    }
-
     private void createIndividualTextExerciseForExam() {
         Exam exam;
         exam = examRepository.findWithExerciseGroupsAndExercisesById(idOfExam).get();
@@ -234,79 +219,6 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         textExercise.setBonusPoints(0.0);
         textExercise = exerciseRepository.save(textExercise);
         getIdOfIndividualTextExerciseOfExam = textExercise.getId();
-    }
-
-    private Result createParticipationSubmissionAndResult(Long idOfExercise, Participant participant, Double pointsOfExercise, Double bonusPointsOfExercise, long scoreAwarded,
-            boolean rated) {
-        Exercise exercise = exerciseRepository.findById(idOfExercise).get();
-
-        if (!exercise.getMaxPoints().equals(pointsOfExercise)) {
-            exercise.setMaxPoints(pointsOfExercise);
-        }
-        if (!exercise.getBonusPoints().equals(bonusPointsOfExercise)) {
-            exercise.setBonusPoints(bonusPointsOfExercise);
-        }
-        exercise = exerciseRepository.saveAndFlush(exercise);
-
-        StudentParticipation studentParticipation = participationService.startExercise(exercise, participant, false);
-
-        return createSubmissionAndResult(studentParticipation, scoreAwarded, rated);
-    }
-
-    private Result createSubmissionAndResult(StudentParticipation studentParticipation, long scoreAwarded, boolean rated) {
-        Exercise exercise = studentParticipation.getExercise();
-        Submission submission;
-        if (exercise instanceof ProgrammingExercise) {
-            submission = new ProgrammingSubmission();
-        }
-        else if (exercise instanceof ModelingExercise) {
-            submission = new ModelingSubmission();
-        }
-        else if (exercise instanceof TextExercise) {
-            submission = new TextSubmission();
-        }
-        else if (exercise instanceof FileUploadExercise) {
-            submission = new FileUploadSubmission();
-        }
-        else if (exercise instanceof QuizExercise) {
-            submission = new QuizSubmission();
-        }
-        else {
-            throw new RuntimeException("Unsupported exercise type: " + exercise);
-        }
-
-        submission.setType(SubmissionType.MANUAL);
-        submission.setParticipation(studentParticipation);
-        submission = submissionRepository.saveAndFlush(submission);
-
-        Result result = ModelFactory.generateResult(rated, scoreAwarded);
-        result.setParticipation(studentParticipation);
-        result.setSubmission(submission);
-        result.completionDate(ZonedDateTime.now());
-        return resultRepository.saveAndFlush(result);
-    }
-
-    private void createTeamTextExerciseAndTeam(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
-        Course course;
-        // creating text exercise with Result
-        course = courseRepository.findWithEagerExercisesById(idOfCourse);
-        TextExercise teamTextExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
-        teamTextExercise.setMaxPoints(10.0);
-        teamTextExercise.setBonusPoints(0.0);
-        teamTextExercise.setMode(ExerciseMode.TEAM);
-        teamTextExercise = exerciseRepository.save(teamTextExercise);
-
-        User student1 = userRepository.findOneByLogin("student1").get();
-        User tutor1 = userRepository.findOneByLogin("tutor1").get();
-        Team team = new Team();
-        team.addStudents(student1);
-        team.setOwner(tutor1);
-        team.setShortName("team1");
-        team.setName("team1");
-        team = teamRepository.saveAndFlush(team);
-
-        idOfTeam1 = team.getId();
-        idOfTeamTextExercise = teamTextExercise.getId();
     }
 
     private void assertParticipantScoreDTOStructure(ParticipantScoreDTO participantScoreDTO, Long expectedUserId, Long expectedTeamId, Long expectedExerciseId,
