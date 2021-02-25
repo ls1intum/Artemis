@@ -112,11 +112,11 @@ public class ExerciseService {
         if (exercises == null || user == null || exercises.isEmpty()) {
             return Set.of();
         }
-        Set<Course> courses = exercises.stream().map(Exercise::getCourseViaExerciseGroupOrCourseMember).collect(Collectors.toSet());
+        List<Course> courses = exercises.stream().map(Exercise::getCourseViaExerciseGroupOrCourseMember).collect(Collectors.toList());
         if (courses.size() != 1) {
             throw new IllegalArgumentException("All exercises must be from the same course!");
         }
-        Course course = exercises.stream().findFirst().get().getCourseViaExerciseGroupOrCourseMember();
+        Course course = courses.get(0);
 
         Set<Exercise> exercisesUserIsAllowedToSee = new HashSet<>();
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
