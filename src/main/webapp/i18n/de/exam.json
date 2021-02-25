@@ -395,7 +395,9 @@
             "openAssessment": " Bewertung öffnen",
             "cancelAssessment": " Bewertung abbrechen",
             "workingTimeCouldNotBeSaved": "Die Bearbeitungszeit konnte nicht gespeichert werden.",
-            "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert."
+            "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert.",
+            "toggleSuccessful": "Der Abgabestatus wurde erfolgreich geändert.",
+            "togglefailed": "Der Abgabestatus konnte nicht geändert werden!"
         }
     },
     "studentExam": {

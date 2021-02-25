@@ -31,6 +31,7 @@ export class StudentExamDetailComponent implements OnInit {
     maxTotalScore = 0;
     achievedTotalScore = 0;
     bonusTotalScore = 0;
+    busy = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -174,8 +175,22 @@ export class StudentExamDetailComponent implements OnInit {
     }
 
     toggle() {
-        console.log('in');
-        this.studentExam.submitted = !this.studentExam.submitted;
+        this.busy = true;
+        if (this.studentExam.exam && this.studentExam.exam.id) {
+            this.studentExamService.toggleSubmittedState(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, this.studentExam!.submitted!).subscribe(
+                (res) => {
+                    if (res.body) {
+                        this.setStudentExam(res.body);
+                    }
+                    this.alertService.success('artemisApp.studentExamDetail.toggleSuccessful');
+                    this.busy = false;
+                },
+                () => {
+                    this.alertService.error('artemisApp.studentExamDetail.togglefailed');
+                    this.busy = false;
+                },
+            );
+        }
     }
 
     /**

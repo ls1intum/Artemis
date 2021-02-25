@@ -396,7 +396,9 @@
             "openAssessment": " Open Assessment",
             "cancelAssessment": " Cancel Assessment",
             "workingTimeCouldNotBeSaved": "The working time could not be saved.",
-            "saveWorkingTimeSuccessful": "The working time was saved successfully."
+            "saveWorkingTimeSuccessful": "The working time was saved successfully.",
+            "toggleSuccessful": "The submitted status was changed successfully.",
+            "togglefailed": "The submitted status was could not be changed!"
         }
     },
     "studentExam": {

@@ -94,7 +94,7 @@
             </button>
         </div>
     </ng-template>
-    <button class="btn btn-danger mb-3" *ngIf="course?.isAtLeastInstructor && examIsOver()" type="button" (click)="openConfirmationModal(toggleSubmitPopUp)" [disabled]="">
+    <button class="btn btn-danger mb-3" *ngIf="course?.isAtLeastInstructor && examIsOver()" type="button" (click)="openConfirmationModal(toggleSubmitPopUp)" [disabled]="busy">
         <span *ngIf="!studentExam.submitted" jhiTranslate="entity.action.toggleToSubmitted"></span>
         <span *ngIf="studentExam.submitted" jhiTranslate="entity.action.toggleToUnsubmitted"></span>
     </button>

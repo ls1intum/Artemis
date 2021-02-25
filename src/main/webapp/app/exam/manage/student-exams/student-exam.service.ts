@@ -43,4 +43,13 @@ export class StudentExamService {
     updateWorkingTime(courseId: number, examId: number, studentExamId: number, workingTime: number): Observable<EntityResponseType> {
         return this.http.patch<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}/working-time`, workingTime, { observe: 'response' });
     }
+
+    toggleSubmittedState(courseId: number, examId: number, studentExamId: number, unsubmit: boolean): Observable<EntityResponseType> {
+        const url = `${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}/toggle-to-`;
+        if (unsubmit) {
+            return this.http.put<EntityResponseType>(url + `unsubmitted`, { observe: 'response' });
+        } else {
+            return this.http.put<EntityResponseType>(url + `submitted`, { observe: 'response' });
+        }
+    }
 }
