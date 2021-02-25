@@ -108,12 +108,9 @@ public class ExerciseService {
      * @param user      user
      * @return subset of the exercises that a user allowed to see
      */
-    public Set<Exercise> getSubsetThatUserIsAllowedToSee(Set<Exercise> exercises, User user) {
-        if (exercises == null || user == null) {
-            throw new IllegalArgumentException();
-        }
-        if (exercises.isEmpty()) {
-            return exercises;
+    public Set<Exercise> filterOutExercisesThatUserShouldNotSee(Set<Exercise> exercises, User user) {
+        if (exercises == null || user == null || exercises.isEmpty()) {
+            return Set.of();
         }
         Set<Course> courses = exercises.stream().map(Exercise::getCourseViaExerciseGroupOrCourseMember).collect(Collectors.toSet());
         if (courses.size() != 1) {

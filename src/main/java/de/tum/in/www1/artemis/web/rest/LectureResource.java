@@ -185,7 +185,7 @@ public class LectureResource {
         Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
                 .map(lectureUnit -> ((ExerciseUnit) lectureUnit)).map(ExerciseUnit::getExercise).collect(Collectors.toSet());
 
-        Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.getSubsetThatUserIsAllowedToSee(relatedExercises, user);
+        Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(relatedExercises, user);
         Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
                 .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), user);
 
