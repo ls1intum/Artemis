@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import io.sentry.Sentry;
 
 /**
  * Service Implementation for managing Course.
@@ -101,7 +102,13 @@ public class CourseService {
     public Course findOneWithExercisesAndLecturesAndLectureUnitsAndExamsForUser(Long courseId, User user) {
         Course course = courseRepository.findByIdWithLecturesAndLectureUnitsAndExamsElseThrow(courseId);
 
-        filterLectureUnits(course);
+        // try catch requested by stephan krusche for extra safety to prevent application crash
+        try {
+            filterLectureUnits(course);
+        }
+        catch (Exception e) {
+            Sentry.captureException(e);
+        }
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -151,7 +158,13 @@ public class CourseService {
                 // skip old courses that have already finished
                 .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now())).filter(course -> isActiveCourseVisibleForUser(user, course))
                 .peek(course -> {
-                    filterLectureUnits(course);
+                    // try catch requested by stephan krusche for extra safety to prevent application crash
+                    try {
+                        filterLectureUnits(course);
+                    }
+                    catch (Exception e) {
+                        Sentry.captureException(e);
+                    }
                     course.setExercises(exerciseService.findAllForCourse(course, user));
                     course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
                     if (authCheckService.isOnlyStudentInCourse(course, user)) {
