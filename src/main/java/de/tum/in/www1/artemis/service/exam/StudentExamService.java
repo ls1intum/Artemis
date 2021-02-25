@@ -264,16 +264,20 @@ public class StudentExamService {
     }
 
     /**
-     * Assess the modeling- and text exercises of student exams of an exam which are not submitted with 0 points.
+     * Assess the modeling-, text and file upload exercises of student exams of an exam which are not submitted with 0 points.
      *
      * @param exam the exam
      * @param assessor the assessor should be the instructor making the call.
      * @return returns the set of unsubmitted StudentExams, the participations of which were assessed
      */
     public Set<StudentExam> assessUnsubmittedStudentExams(final Exam exam, final User assessor) {
+        // TODO: we should also do this for programming exercises with manual assessment
         Set<StudentExam> unsubmittedStudentExams = findAllUnsubmittedStudentExams(exam.getId());
-        Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
-                .stream().filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
+        Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream()
+                .collect(Collectors.toMap(StudentExam::getUser,
+                        studentExam -> studentExam.getExercises().stream()
+                                .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise)
+                                .collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
@@ -284,7 +288,6 @@ public class StudentExamService {
                         studentParticipation.findLatestSubmission().get().submitted(true);
                         submissionService.addResultWithFeedbackByCorrectionRound(studentParticipation, assessor, 0L, "You did not submit your exam", correctionRound);
                     }
-
                 }
             }
         }
@@ -292,7 +295,7 @@ public class StudentExamService {
     }
 
     /**
-     * Assess the modeling- and  text submissions of an exam which are empty.
+     * Assess the modeling-, file upload and text submissions of an exam which are empty.
      *
      * @param exam the exam
      * @param assessor the assessor should be the instructor making the call
@@ -300,11 +303,15 @@ public class StudentExamService {
      * @return returns the set of StudentExams of which the empty submissions were assessed
      */
     public Set<StudentExam> assessEmptySubmissionsOfStudentExams(final Exam exam, final User assessor, final Set<StudentExam> excludeStudentExams) {
+        // TODO: we should also do this for programming exercises with manual assessment
         Set<StudentExam> studentExams = findAllWithExercisesByExamId(exam.getId());
         // remove student exams which should be excluded
         studentExams = studentExams.stream().filter(studentExam -> !excludeStudentExams.contains(studentExam)).collect(Collectors.toSet());
-        Map<User, List<Exercise>> exercisesOfUser = studentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises().stream()
-                .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
+        Map<User, List<Exercise>> exercisesOfUser = studentExams.stream()
+                .collect(Collectors.toMap(StudentExam::getUser,
+                        studentExam -> studentExam.getExercises().stream()
+                                .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise)
+                                .collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
