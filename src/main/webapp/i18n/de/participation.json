@@ -13,7 +13,7 @@
                 "question": "Soll die Teilnahme von <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?"
             },
             "cleanupBuildPlan": {
-                "question": "Soll der Build Plan der Teilnahme von <strong>{{ title }}</strong> wirklich gelöscht werden?"
+                "question": "Soll der Build-Plan der Teilnahme von <strong>{{ title }}</strong> wirklich gelöscht werden?"
             },
             "addPresentation": {
                 "label": "Füge Präsentation hinzu",
@@ -26,8 +26,8 @@
             "detail": {
                 "title": "Teilnahme"
             },
-            "repositoryUrl": "Repository Link",
-            "buildPlanId": "Build Plan Link",
+            "repositoryUrl": "Repository-Link",
+            "buildPlanId": "Build-Plan-Link",
             "initializationState": "Status",
             "initializationDate": "Teilnahme Start",
             "presentationScore": "Präsentationsergebnis",
@@ -36,15 +36,15 @@
             "student": "Student",
             "team": "Team",
             "students": "Studenten",
-            "templateParticipation": "Template Teilname",
-            "solutionParticipation": "Lösungs Teilname",
+            "templateParticipation": "Template-Teilname",
+            "solutionParticipation": "Lösungsteilname",
             "noParticipation": "Die Teilnahme konnte nicht gefunden werden!",
             "exercise": "Übung",
             "deleteRepository": "Repository löschen",
-            "deleteBuildPlan": "Build Plan löschen",
+            "deleteBuildPlan": "Build-Plan löschen",
             "participationSubmission": {
-                "submissionType": "Abgabe Typ",
-                "submissionDate": "Abgabe Datum",
+                "submissionType": "Abgabentyp",
+                "submissionDate": "Abgabedatum",
                 "resultCount": "Anzahl Ergebnisse",
                 "results": "Ergebnisse",
                 "assessor": "Bewerter",
