@@ -129,12 +129,12 @@ public class CourseService {
                 return;
             }
 
-            List<LectureUnit> visibleLectureUnits = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(LectureUnit::isVisibleToStudents)
-                    .collect(Collectors.toList());
-            // do not combine into two streams as order of execution is not determined and can lead to null pointer
-            List<LectureUnit> trimmedLectureUnits = visibleLectureUnits.stream().map(LectureUnit::trimForDashboard).collect(Collectors.toList());
+            // The Objects::nonNull is needed here because the relationship lecture -> lecture units is ordered and
+            // hibernate sometimes adds nulls to in the list of lecture units to keep the order
+            List<LectureUnit> filteredLectureUnits = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(LectureUnit::isVisibleToStudents)
+                    .map(LectureUnit::trimForDashboard).collect(Collectors.toList());
 
-            lecture.setLectureUnits(trimmedLectureUnits);
+            lecture.setLectureUnits(filteredLectureUnits);
         }
     }
 
