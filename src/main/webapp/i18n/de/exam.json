@@ -190,14 +190,14 @@
             "lockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden gesperrt.",
             "lockAllRepositoriesFailure": "Es gab einen Fehler beim Sperren der Repositories:\n {{message}}",
             "confirmDialog": {
-                "titleToUnsubmitted": "Setze Studentenklauszur auf nicht abgegeben",
-                "titleToSubmitted": "Setze Studentenklauszur auf abgegeben",
+                "titleToUnsubmitted": "Setze Studentenklausur auf nicht abgegeben",
+                "titleToSubmitted": "Setze Studentenklausur auf abgegeben",
                 "question": "Sind Sie sich sicher, dass Sie den Abgabestatus ändern wollen?",
                 "submitText": "Das Abgabedatum wird auf diesen Zeitpunkt gesetzt, und der Abgabestatus wird auf 'Ja' gesetzt. Die Abgabe kann auch wieder rückgängig gemacht werden.\n",
-                "unSubmitText": "\"Das Abgabedatum wird gelöscht und der Abgabestatus wird auf 'Nein' gesetzt.",
+                "unSubmitText": "Das Abgabedatum wird gelöscht und der Abgabestatus wird auf 'Nein' gesetzt.",
                 "warningRemove": "<strong class='text-danger'>Wiederherstellen des ursprünglichen Abgabedatums ist nach der Löschung nicht möglich!</strong>",
-                "submit": "Submit",
-                "unsubmit": "Unsubmit"
+                "submit": "Abgeben",
+                "unsubmit": "Abgabe entfernen"
             }
         },
         "examManagement": {
