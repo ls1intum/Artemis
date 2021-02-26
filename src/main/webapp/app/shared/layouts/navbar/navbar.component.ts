@@ -55,6 +55,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private routerEventSubscription: Subscription;
     private exam?: Exam;
     private examId?: number;
+    private routeExamId = 0;
+    private routeCourseId = 0;
+    private lastRouteUrlSegment: string;
 
     constructor(
         private loginService: LoginService,
@@ -194,7 +197,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tutor_exam_dashboard: 'artemisApp.examManagement.assessmentDashboard',
     };
 
-    buildBreadcrumbs(fullURI: string) {
+    /**
+     * Fills the breadcrumbs array with entries for admin and course-management routes
+     */
+    private buildBreadcrumbs(fullURI: string): void {
         this.breadcrumbs = [];
 
         // Temporarily restrict routes
@@ -202,138 +208,186 @@ export class NavbarComponent implements OnInit, OnDestroy {
             return;
         }
 
-        // Go through all parts (children) of the route starting from the root
-        let path = '';
-        let previousPart = '';
-        let breadcrumbIndex = 0;
-        let courseId = 0;
-        let examId = 0;
-        let child = this.route.root.firstChild;
-        while (child) {
-            if (!child.snapshot.url || child.snapshot.url.length === 0) {
-                // This child is not part of the route, skip to the next
-                child = child.firstChild;
-                continue;
+        // try catch for extra safety measures
+        try {
+            // Go through all parts (children) of the route starting from the root
+            this.addBreadcrumbForRouteChild(this.route.root.firstChild, '');
+        } catch (e) { }
+    }
+
+    /**
+     * Recursively adds a breadcrumb for every segment in the url of the child route
+     *
+     * @param child the part of the route to be parsed at this moment
+     * @param completePath the complete path up until the child (excluding the child's path)
+     */
+    private addBreadcrumbForRouteChild(child: ActivatedRoute | null, completePath: string): void {
+        if (!child) {
+            return;
+        }
+
+        // This child is not part of a route, skip to the next
+        if (!child.snapshot.url || child.snapshot.url.length === 0) {
+            this.addBreadcrumbForRouteChild(child!.firstChild, completePath);
+            return;
+        }
+
+        for (const urlSegment of child.snapshot.url) {
+            const segment = urlSegment.toString();
+            completePath += segment + '/';
+
+            // If we parse an entity ID we need to check the previous segment which entity the ID refers to
+            if (!isNaN(Number(segment))) {
+                this.addBreadcrumbForNumberSegment(completePath, segment);
+            } else {
+                this.addBreadcrumbForUrlSegment(completePath, segment);
             }
 
-            for (const urlSegment of child.snapshot.url) {
-                const part = urlSegment.toString();
-                path += part + '/';
-
-                // If we parse an entity ID we need to check the previous segment which entity the ID refers to
-                if (!isNaN(Number(part))) {
-                    switch (previousPart) {
-                        // Displays the path segment as breadcrumb (no other title exists)
-                        case 'system-notification-management':
-                        case 'teams':
-                        case 'code-editor':
-                            this.addBreadcrumb(path, part, breadcrumbIndex++, false);
-                            break;
-                        case 'course-management':
-                            courseId = Number(part);
-                            this.addResolvedTitleAsCrumb<Course>(this.courseManagementService.find(courseId), path, part, breadcrumbIndex++);
-                            break;
-                        case 'exercises':
-                        case 'text-exercises':
-                        case 'modeling-exercises':
-                        case 'file-upload-exercises':
-                        case 'programming-exercises':
-                        case 'quiz-exercises':
-                            this.addResolvedTitleAsCrumb<Exercise>(this.exerciseService.find(Number(part)), path, part, breadcrumbIndex++);
-                            break;
-                        case 'hints':
-                            this.addResolvedTitleAsCrumb<ExerciseHint>(this.hintService.find(Number(part)), path, part, breadcrumbIndex++);
-                            break;
-                        case 'apollon-diagrams':
-                            this.addResolvedTitleAsCrumb<ApollonDiagram>(this.apollonDiagramService.find(Number(part), courseId), path, part, breadcrumbIndex++);
-                            break;
-                        case 'lectures':
-                            this.addResolvedTitleAsCrumb<Lecture>(this.lectureService.find(Number(part)), path, part, breadcrumbIndex++);
-                            break;
-                        case 'exams':
-                            examId = Number(part);
-                            this.addResolvedTitleAsCrumb<Exam>(this.examService.find(courseId, examId), path, part, breadcrumbIndex++);
-                            break;
-                        case 'import':
-                            // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
-                            // This has to go in the future
-                            this.addTranslationAsCrumb('import', path, breadcrumbIndex++);
-                            break;
-                        case 'example-submissions':
-                            // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
-                            this.addTranslationAsCrumb('example-submissions', path, breadcrumbIndex++);
-                            break;
-                        case 'text-feedback-conflict':
-                            // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
-                            this.addTranslationAsCrumb('text-feedback-conflict', path, breadcrumbIndex++);
-                            break;
-                        // No breadcrumbs for those segments
-                        case 'goal-management':
-                        case 'unit-management':
-                        case 'exercise-groups':
-                        case 'student-exams':
-                        case 'test-runs':
-                        default:
-                            break;
-                    }
-                } else {
-                    // When we're not dealing with an ID we need to translate the current part
-                    // The translation might still depend on the previous parts
-                    switch (part) {
-                        // No breadcrumbs for those segments
-                        case 'reset':
-                        case 'groups':
-                        case 'code-editor':
-                        case 'admin':
-                        case 'ide':
-                        case 'example-submissions':
-                        case 'text-units':
-                        case 'exercise-units':
-                        case 'attachment-units':
-                        case 'video-units':
-                        case 'text-feedback-conflict':
-                        case 'grading':
-                            break;
-                        default:
-                            // Special cases:
-                            if (previousPart === 'user-management') {
-                                // - Users display their login name directly as crumb
-                                this.addBreadcrumb(path, part, breadcrumbIndex++, false);
-                                break;
-                            } else if (previousPart === 'example-submissions') {
-                                // - Creating a new example submission should display the text for example submissions
-                                this.addTranslationAsCrumb('example-submissions', path, breadcrumbIndex++);
-                                break;
-                            } else if (previousPart === 'grading') {
-                                // - Opening a grading tab should only display the text for grading
-                                this.addTranslationAsCrumb('grading', path, breadcrumbIndex++);
-                                break;
-                            } else if (previousPart === 'code-editor' && part === 'new') {
-                                // - This route is bogus an needs to be replaced in the future, display no crumb
-                                break;
-                            } else if (previousPart === 'programming-exercises' && part === 'import') {
-                                // - This route is bogus an needs to be replaced in the future, display no crumb
-                                break;
-                            }
-
-                            this.addTranslationAsCrumb(part, path, breadcrumbIndex++);
-                            break;
-                    }
-
-                    // Special case: Don't add invalid breadcrumbs for the exercise group segments
-                    if ('exercise-groups' === part) {
-                        return;
-                    }
-
-                    previousPart = part;
-                }
+            // Special case: Don't add invalid breadcrumbs for the exercise group segments
+            if ('exercise-groups' === segment) {
+                return;
             }
 
-            child = child.firstChild;
+            this.lastRouteUrlSegment = segment;
+        }
+
+        this.addBreadcrumbForRouteChild(child.firstChild, completePath);
+    }
+
+    /**
+     * Adds a breadcrumb depending on the given entityID as string
+     *
+     * @param completePath the complete path up until the child (excluding the child's path)
+     * @param segment the current url segment (string representation of an entityID) to add a crumb for
+     */
+    private addBreadcrumbForNumberSegment(completePath: string, segment: string): void {
+        switch (this.lastRouteUrlSegment) {
+            // Displays the path segment as breadcrumb (no other title exists)
+            case 'system-notification-management':
+            case 'teams':
+            case 'code-editor':
+                this.addBreadcrumb(completePath, segment, false);
+                break;
+            case 'course-management':
+                this.routeCourseId = Number(segment);
+                this.addResolvedTitleAsCrumb<Course>(this.courseManagementService.find(this.routeCourseId), completePath, segment);
+                break;
+            case 'exercises':
+            case 'text-exercises':
+            case 'modeling-exercises':
+            case 'file-upload-exercises':
+            case 'programming-exercises':
+            case 'quiz-exercises':
+                this.addResolvedTitleAsCrumb<Exercise>(this.exerciseService.find(Number(segment)), completePath, segment);
+                break;
+            case 'hints':
+                this.addResolvedTitleAsCrumb<ExerciseHint>(this.hintService.find(Number(segment)), completePath, segment);
+                break;
+            case 'apollon-diagrams':
+                this.addResolvedTitleAsCrumb<ApollonDiagram>(this.apollonDiagramService.find(Number(segment), this.routeCourseId), completePath, segment);
+                break;
+            case 'lectures':
+                this.addResolvedTitleAsCrumb<Lecture>(this.lectureService.find(Number(segment)), completePath, segment);
+                break;
+            case 'exams':
+                this.routeExamId = Number(segment);
+                this.addResolvedTitleAsCrumb<Exam>(this.examService.find(this.routeCourseId, this.routeExamId), completePath, segment);
+                break;
+            case 'import':
+                // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
+                // This has to go in the future
+                this.addTranslationAsCrumb(completePath, 'import');
+                break;
+            case 'example-submissions':
+                // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
+                this.addTranslationAsCrumb(completePath, 'example-submissions');
+                break;
+            case 'text-feedback-conflict':
+                // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
+                this.addTranslationAsCrumb(completePath, 'text-feedback-conflict');
+                break;
+            // No breadcrumbs for those segments
+            case 'goal-management':
+            case 'unit-management':
+            case 'exercise-groups':
+            case 'student-exams':
+            case 'test-runs':
+            default:
+                break;
         }
     }
 
-    addBreadcrumb(uri: string, label: string, index: number, translate: boolean) {
+    /**
+     * Adds a breadcrumb for the given url segment
+     *
+     * @param completePath the complete path up until the child (excluding the child's path)
+     * @param segment the current url segment to add a (translated) crumb for
+     */
+    private addBreadcrumbForUrlSegment(completePath: string, segment: string): void {
+        // When we're not dealing with an ID we need to translate the current part
+        // The translation might still depend on the previous parts
+        switch (segment) {
+            // No breadcrumbs for those segments
+            case 'reset':
+            case 'groups':
+            case 'code-editor':
+            case 'admin':
+            case 'ide':
+            case 'example-submissions':
+            case 'text-units':
+            case 'exercise-units':
+            case 'attachment-units':
+            case 'video-units':
+            case 'text-feedback-conflict':
+            case 'grading':
+                break;
+            default:
+                // Special cases:
+                if (this.lastRouteUrlSegment === 'user-management') {
+                    // - Users display their login name directly as crumb
+                    this.addBreadcrumb(completePath, segment, false);
+                    break;
+                } else if (this.lastRouteUrlSegment === 'example-submissions') {
+                    // - Creating a new example submission should display the text for example submissions
+                    this.addTranslationAsCrumb(completePath, 'example-submissions');
+                    break;
+                } else if (this.lastRouteUrlSegment === 'grading') {
+                    // - Opening a grading tab should only display the text for grading
+                    this.addTranslationAsCrumb(completePath, 'grading');
+                    break;
+                } else if (this.lastRouteUrlSegment === 'code-editor' && segment === 'new') {
+                    // - This route is bogus an needs to be replaced in the future, display no crumb
+                    break;
+                } else if (this.lastRouteUrlSegment === 'programming-exercises' && segment === 'import') {
+                    // - This route is bogus an needs to be replaced in the future, display no crumb
+                    break;
+                }
+
+                this.addTranslationAsCrumb(completePath, segment);
+                break;
+        }
+    }
+
+    /**
+     * Appends a breadcrumb to the list of breadcrumbs
+     *
+     * @param uri the uri/path for the breadcrumb
+     * @param label the displayed label for the breadcrumb
+     * @param translate if the label should be translated
+     */
+    private addBreadcrumb(uri: string, label: string, translate: boolean): void {
+        this.setBreadcrumb(uri, label, translate, this.breadcrumbs.length);
+    }
+
+    /**
+     * Sets a breadcrumb in the list of breadcrumbs at the given index
+     *
+     * @param uri the uri/path for the breadcrumb
+     * @param label the displayed label for the breadcrumb
+     * @param translate if the label should be translated
+     * @param index the index of the breadcrumbs array to set the breadcrumb at
+     */
+    private setBreadcrumb(uri: string, label: string, translate: boolean, index: number): void {
         const crumb = new Breadcrumb();
         crumb.label = label;
         crumb.translate = translate;
@@ -341,30 +395,43 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.breadcrumbs[index] = crumb;
     }
 
-    addResolvedTitleAsCrumb<T>(observable: Observable<HttpResponse<T>>, path: string, part: string, index: number) {
-        // Insert the part until we fetched a title from the server
-        this.addBreadcrumb(path, part, index, false);
+    /**
+     * Uses the server response to add a title for a breadcrumb
+     * While waiting for the response or in case of an error the segment is displayed directly as fallback
+     *
+     * @param observable the observable returning an entity to display the title of
+     * @param uri the uri/path for the breadcrumb
+     * @param segment the current url segment to add a breadcrumb for
+     */
+    private addResolvedTitleAsCrumb<T>(observable: Observable<HttpResponse<T>>, uri: string, segment: string): void {
+        // Insert the segment until we fetched a title from the server to insert at the correct index
+        const index = this.breadcrumbs.length;
+        this.addBreadcrumb(uri, segment, false);
+
         observable.subscribe(
             (response: HttpResponse<T>) => {
-                const title = !!response.body ? response.body!['title'] : part;
-                this.addBreadcrumb(path, title, index, false);
+                const title = !!response.body ? response.body!['title'] : segment;
+                this.setBreadcrumb(uri, title, false, index);
             },
             (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
-    addTranslationAsCrumb(part: string, path: string, index: number) {
-        let label = '';
-        let translate = false;
-        const key = part.split('-').join('_');
+    /**
+     * Adds a breadcrumb with a translated label
+     * If no translation can be found the key is displayed
+     *
+     * @param uri the uri/path for the breadcrumb
+     * @param translationKey the string to index the breadcrumbTranslation table with
+     */
+    private addTranslationAsCrumb(uri: string, translationKey: string): void {
+        const key = translationKey.split('-').join('_');
         if (this.breadcrumbTranslation[key]) {
-            label = this.breadcrumbTranslation[key];
-            translate = true;
+            this.addBreadcrumb(uri, this.breadcrumbTranslation[key], true);
         } else {
-            label = part;
+            // If there is no valid entry in the mapping display the raw key instead of a "not found"
+            this.addBreadcrumb(uri, key, false);
         }
-
-        this.addBreadcrumb(path, label, index, translate);
     }
 
     /**
