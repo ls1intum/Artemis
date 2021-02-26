@@ -38,14 +38,18 @@ export class ExamParticipationService {
      * @param examId the id of the exam
      */
     public loadStudentExamWithExercisesForConduction(courseId: number, examId: number): Observable<StudentExam> {
-        // If the last save failed the local exam is more up-to-date
-        if (!this.wasLastSaveSuccessful(courseId, examId)) {
-            const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
-            return Observable.of(localStoredExam);
-        }
-
         const url = this.getResourceURL(courseId, examId) + '/student-exams/conduction';
         return this.getStudentExamFromServer(url, courseId, examId);
+    }
+
+    /**
+     * Retrieves a {@link StudentExam} from server or localstorage. Will also mark the student exam as started
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
+     */
+    public loadStudentExamWithExercisesForConductionFromLocalStorage(courseId: number, examId: number): Observable<StudentExam> {
+        const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
+        return Observable.of(localStoredExam);
     }
 
     /**
@@ -185,17 +189,14 @@ export class ExamParticipationService {
         return this.httpClient.put<QuizSubmission>(url, quizSubmission);
     }
 
-    public setLastSaveSubmissionSuccessful(wasSaved: boolean, courseId: number, examId: number): void {
-        const key = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId) + '-saved';
-        this.localStorageService.store(key, wasSaved);
+    public setLastSaveFailed(saveFailed: boolean, courseId: number, examId: number): void {
+        const key = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId) + '-save-failed';
+        this.localStorageService.store(key, saveFailed);
     }
 
-    public wasLastSaveSuccessful(courseId: number, examId: number): boolean {
-        const key = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId) + '-saved';
-        const wasSaved = this.localStorageService.retrieve(key);
-
-        // Count as successful if there was no last save
-        return wasSaved === undefined || wasSaved;
+    public lastSaveFailed(courseId: number, examId: number): boolean {
+        const key = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId) + '-save-failed';
+        return this.localStorageService.retrieve(key);
     }
 
     private convertStudentExamFromServer(studentExam: StudentExam): StudentExam {
