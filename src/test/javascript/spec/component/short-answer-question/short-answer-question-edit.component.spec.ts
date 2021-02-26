@@ -123,6 +123,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         spyOn(document, 'getElementById').and.returnValue(element);
 
         component.addSpotAtCursorVisualMode();
+        // TODO
     });
 
     it('should add and delete text solution', () => {
@@ -143,5 +144,26 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.deleteSolution(shortAnswerSolution2);
 
         expect(component.question.solutions.length).to.equal(2);
+    });
+
+    it('should react to a solution being dropped on a spot', () => {
+        const questionUpdatedSpy = sinon.spy(component.questionUpdated, 'emit');
+        const solution = new ShortAnswerSolution();
+        solution.id = 2;
+        solution.text = 'solution text';
+        const spot = new ShortAnswerSpot();
+        spot.id = 2;
+        spot.spotNr = 2;
+        component.question.solutions = [solution];
+        const alternativeMapping = new ShortAnswerMapping(new ShortAnswerSpot(), new ShortAnswerSolution());
+        component.question.correctMappings = [alternativeMapping];
+        const event = { dragData: solution };
+
+        fixture.detectChanges();
+        // component.onDragDrop(spot, event);
+
+        const mapping = new ShortAnswerMapping(spot, solution);
+        // expect(component.question.correctMappings.pop()).to.deep.equal(mapping);
+        // expect(questionUpdatedSpy).to.have.been.calledOnce;
     });
 });
