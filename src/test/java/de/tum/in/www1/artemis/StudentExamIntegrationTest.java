@@ -1518,4 +1518,46 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/submit", testRun, HttpStatus.OK, null);
         // TODO: make sure the quiz was evaluated
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSubmitAndUnSubmitStudentExamAfterExamIsOver() throws Exception {
+        final var studentExams = prepareStudentExamsForConduction();
+        var studentExam = studentExams.get(0);
+
+        // now we change to the point of time when the student exam needs to be submitted
+        // IMPORTANT NOTE: this needs to be configured in a way that the individual student exam ended, but we are still in the grace period time
+        exam2.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        studentExam.setStarted(true);
+        studentExam.setStartedDate(ZonedDateTime.now().minusMinutes(8));
+        exam2.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        exam2 = examRepository.save(exam2);
+        studentExam = studentExamRepository.save(studentExam);
+        assertThat(studentExam.isSubmitted()).isFalse();
+        assertThat(studentExam.getSubmissionDate()).isNull();
+
+        // submitting the exam, although the endDate is over
+        database.changeUser("student1");
+        request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, HttpStatus.FORBIDDEN);
+        database.changeUser("tutor1");
+        request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, HttpStatus.FORBIDDEN);
+        database.changeUser("instructor1");
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, HttpStatus.CONFLICT);
+        request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, HttpStatus.OK);
+        studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
+        assertThat(studentExam.isSubmitted()).isTrue();
+        assertThat(studentExam.getSubmissionDate()).isNotNull();
+
+        // setting the exam to unsubmitted again
+        database.changeUser("student1");
+        request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, HttpStatus.FORBIDDEN);
+        database.changeUser("tutor1");
+        request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, HttpStatus.FORBIDDEN);
+        database.changeUser("instructor1");
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, HttpStatus.CONFLICT);
+        request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, HttpStatus.OK);
+        studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
+        assertThat(studentExam.isSubmitted()).isFalse();
+        assertThat(studentExam.getSubmissionDate()).isNull();
+    }
 }
