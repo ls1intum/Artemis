@@ -5,6 +5,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-upcoming-exams-and-exercises',
@@ -18,7 +19,7 @@ export class UpcomingExamsAndExercisesComponent implements OnInit {
     predicate: string;
     reverse: boolean;
 
-    DATE_FORMAT = 'dddd MMM D, YYYY H:mm';
+    DATE_FORMAT = defaultLongDateTimeFormat;
 
     constructor(private exerciseService: ExerciseService, private examManagementService: ExamManagementService, private sortService: SortService) {}
 

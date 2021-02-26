@@ -78,7 +78,7 @@ public final class Constants {
 
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
 
-    public static final long MAX_UPLOAD_FILESIZE_BYTES = 2 * 1024 * 1024; // 2 MiB
+    public static final long MAX_UPLOAD_FILESIZE_BYTES = 4 * 1024 * 1024; // 4 MB
 
     public static final String TEST_CASES_CHANGED_NOTIFICATION = "The test cases of this programming exercise were updated. The student submissions should be build and tested so that results with the updated settings can be created.";
 
