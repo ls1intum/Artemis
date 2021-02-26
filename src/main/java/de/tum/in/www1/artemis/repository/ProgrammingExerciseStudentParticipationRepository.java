@@ -7,6 +7,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,6 +16,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -40,7 +43,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     /**
      * Will return the participation with the provided participationId. The participation will come with all it's manual results, submissions, feedbacks and assessors
-     * @param participationId
+     * @param participationId the participation id
      * @return a participation with all it's manual results.
      */
     @Query("""
@@ -60,7 +63,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     List<ProgrammingExerciseStudentParticipation> findByBuildPlanId(String buildPlanId);
 
     @Query("select distinct p from ProgrammingExerciseStudentParticipation p left join fetch p.results where p.buildPlanId is not null and (p.student is not null or p.team is not null)")
-    List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanId();
+    List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanIdWithResults();
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
@@ -81,4 +84,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     @EntityGraph(type = LOAD, attributePaths = "student")
     Optional<ProgrammingExerciseStudentParticipation> findWithStudentById(Long participationId);
+
+    @NotNull
+    default ProgrammingExerciseStudentParticipation findByIdElseThrow(Long participationId) {
+        return findById(participationId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", participationId));
+    }
 }

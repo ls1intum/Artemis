@@ -23,10 +23,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -68,9 +65,11 @@ public class TeamResource {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseRepository courseRepository,
             ExerciseRepository exerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ParticipationService participationService,
-            SubmissionService submissionService, AuditEventRepository auditEventRepository) {
+            SubmissionService submissionService, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.teamWebsocketService = teamWebsocketService;
@@ -81,6 +80,7 @@ public class TeamResource {
         this.participationService = participationService;
         this.submissionService = submissionService;
         this.auditEventRepository = auditEventRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -187,7 +187,7 @@ public class TeamResource {
 
         savedTeam.filterSensitiveInformation();
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
-        List<StudentParticipation> participationsOfSavedTeam = participationService.findByExerciseAndTeamWithEagerResultsAndSubmissions(exercise, savedTeam);
+        var participationsOfSavedTeam = studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndSubmissions(exercise.getId(), savedTeam.getId());
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeam.get(), savedTeam, participationsOfSavedTeam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(savedTeam);
     }
@@ -450,17 +450,17 @@ public class TeamResource {
         List<StudentParticipation> participations;
         if (authCheckService.isAtLeastInstructorInCourse(course, user) || teams.stream().map(Team::getOwner).allMatch(user::equals)) {
             // fetch including submissions and results for team tutor and instructors
-            participations = participationService.findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(course.getId(), teamShortName);
+            participations = studentParticipationRepository.findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(course.getId(), teamShortName);
             submissionService.reduceParticipationSubmissionsToLatest(participations, false);
         }
         else {
             // for other tutors and for students: submissions not needed, hide results
-            participations = participationService.findAllByCourseIdAndTeamShortName(course.getId(), teamShortName);
+            participations = studentParticipationRepository.findAllByCourseIdAndTeamShortName(course.getId(), teamShortName);
             participations.forEach(participation -> participation.setResults(null));
         }
 
         // Set the submission count for all participations
-        Map<Long, Integer> submissionCountMap = participationService.countSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName);
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByCourseIdAndTeamShortNameAsMap(courseId, teamShortName);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         // Set studentParticipations on all exercises
@@ -486,7 +486,7 @@ public class TeamResource {
      */
     private void sendTeamAssignmentUpdates(Exercise exercise, List<Team> teams) {
         // Get participation to given exercise into a map which participation identifiers as key and a lists of all participation with that identifier as value
-        Map<String, List<StudentParticipation>> participationsMap = participationService.findByExerciseIdWithEagerSubmissionsResult(exercise.getId()).stream()
+        Map<String, List<StudentParticipation>> participationsMap = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResult(exercise.getId()).stream()
                 .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, List::of, (a, b) -> Stream.concat(a.stream(), b.stream()).collect(Collectors.toList())));
 
         // Send out team assignment update via websockets to each team

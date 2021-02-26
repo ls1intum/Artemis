@@ -48,20 +48,20 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws IllegalAccessException, InterruptedException, GitAPIException {
-        final var exercise = (ProgrammingExercise) programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
+        final var exercise = (ProgrammingExercise) programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         final var repoUrl = exercise.getVcsTestRepositoryUrl();
         return repositoryService.checkoutRepositoryByName(exercise, repoUrl, pullOnGet);
     }
 
     @Override
     VcsRepositoryUrl getRepositoryUrl(Long exerciseId) {
-        ProgrammingExercise exercise = (ProgrammingExercise) programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
+        ProgrammingExercise exercise = (ProgrammingExercise) programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         return exercise.getVcsTestRepositoryUrl();
     }
 
     @Override
     boolean canAccessRepository(Long exerciseId) {
-        ProgrammingExercise exercise = (ProgrammingExercise) programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
+        ProgrammingExercise exercise = (ProgrammingExercise) programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         return authCheckService.isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), userRepository.getUserWithGroupsAndAuthorities());
     }
 
@@ -143,7 +143,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @PutMapping("/test-repository/{exerciseId}/files")
     public ResponseEntity<Map<String, String>> updateTestFiles(@PathVariable("exerciseId") Long exerciseId, @RequestBody List<FileSubmission> submissions,
             @RequestParam Boolean commit, Principal principal) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         if (versionControlService.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "VCSNotPresent");

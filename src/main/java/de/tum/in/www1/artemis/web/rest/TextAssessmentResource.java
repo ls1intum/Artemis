@@ -51,7 +51,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final TextAssessmentService textAssessmentService;
 
-    private final TextExerciseService textExerciseService;
+    private final TextExerciseRepository textExerciseRepository;
 
     private final TextSubmissionService textSubmissionService;
 
@@ -66,9 +66,9 @@ public class TextAssessmentResource extends AssessmentResource {
     private final FeedbackConflictRepository feedbackConflictRepository;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockService textBlockService,
-            TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository, TextSubmissionService textSubmissionService,
-            WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository, GradingCriterionService gradingCriterionService,
-            Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
+            TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository,
+            TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
+            GradingCriterionService gradingCriterionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
             Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository,
             ExampleSubmissionService exampleSubmissionService) {
         super(authCheckService, userRepository, exerciseRepository, textSubmissionService, textAssessmentService, resultRepository, examService, messagingService,
@@ -76,7 +76,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         this.textAssessmentService = textAssessmentService;
         this.textBlockService = textBlockService;
-        this.textExerciseService = textExerciseService;
+        this.textExerciseRepository = textExerciseRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.textSubmissionService = textSubmissionService;
         this.gradingCriterionService = gradingCriterionService;
@@ -87,7 +87,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
     /**
      * Saves a given manual textAssessment
-     *
+     * TODO SE: refactor this restcall to not use the exerciseId anymore, and make uniform with other save..Assessment callse
      * @param exerciseId the exerciseId of the exercise which will be saved
      * @param resultId the resultId the assessment belongs to
      * @param textAssessment the assessments
@@ -186,7 +186,7 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
-        final TextExercise exercise = textExerciseService.findOne(exerciseId);
+        final TextExercise exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         final TextSubmission textSubmission = textSubmissionService.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(resultId);
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, true, textAssessment.getFeedbacks(), resultId);
 
@@ -219,7 +219,7 @@ public class TextAssessmentResource extends AssessmentResource {
         TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(textExercise, user);
         saveTextBlocks(assessmentUpdate.getTextBlocks(), textSubmission);
         Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getLatestResult(), textExercise, assessmentUpdate);
@@ -320,7 +320,7 @@ public class TextAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> getExampleResultForTutor(@PathVariable long exerciseId, @PathVariable long submissionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
-        final var textExercise = textExerciseService.findOne(exerciseId);
+        final var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
         // If the user is not at least a tutor for this exercise, return error
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
@@ -417,7 +417,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        final var textExercise = textExerciseService.findOne(exerciseId);
+        final var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
         Optional<FeedbackConflict> optionalFeedbackConflict = this.feedbackConflictRepository.findByFeedbackConflictId(feedbackConflictId);
         if (optionalFeedbackConflict.isEmpty()) {

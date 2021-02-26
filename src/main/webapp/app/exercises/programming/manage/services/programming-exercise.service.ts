@@ -179,9 +179,11 @@ export class ProgrammingExerciseService {
      * Finds the programming exercise for the given exerciseId with the template and solution participation
      * @param programmingExerciseId of the programming exercise to retrieve
      */
-    findWithTemplateAndSolutionParticipation(programmingExerciseId: number): Observable<EntityResponseType> {
+    findWithTemplateAndSolutionParticipation(programmingExerciseId: number, withSubmissionResults = false): Observable<EntityResponseType> {
+        let params = new HttpParams();
+        params = params.set('withSubmissionResults', withSubmissionResults.toString());
         return this.http
-            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-template-and-solution-participation`, { observe: 'response' })
+            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-template-and-solution-participation`, { params, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 

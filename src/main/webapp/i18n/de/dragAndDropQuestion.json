@@ -2,18 +2,18 @@
     "artemisApp": {
         "dragAndDropQuestion": {
             "home": {
-                "title": "Drag And Drop Questions",
-                "createLabel": "Drag And Drop Question erstellen",
-                "createOrEditLabel": "Drag And Drop Question erstellen oder bearbeiten"
+                "title": "Drag-And-Drop Questions",
+                "createLabel": "Drag-And-Drop Question erstellen",
+                "createOrEditLabel": "Drag-And-Drop Question erstellen oder bearbeiten"
             },
-            "created": "Drag And Drop Question erstellt mit ID {{ param }}",
-            "updated": "Drag And Drop Question aktualisiert mit ID {{ param }}",
-            "deleted": "Drag And Drop Question gelöscht mit ID {{ param }}",
+            "created": "Drag-And-Drop Question erstellt mit ID {{ param }}",
+            "updated": "Drag-And-Drop Question aktualisiert mit ID {{ param }}",
+            "deleted": "Drag-And-Drop Question gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Drag And Drop Question {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Drag-And-Drop Question {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Drag And Drop Question"
+                "title": "Drag-And-Drop Question"
             },
             "backgroundFilePath": "Background File Path",
             "dropLocations": "Drop Locations",

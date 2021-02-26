@@ -16,7 +16,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -213,16 +212,9 @@ public class AssessmentService {
         Result result = submission.getLatestResult();
 
         /*
-         * For programming exercises we need to delete the submission of the manual result as well, as for the first new manual result a new submission will be generated. For the
-         * following manual results this submission will be reused. The CascadeType.REMOVE of {@link Submission#result} will delete also the result and the corresponding feedbacks
-         * {@link Result#feedbacks}.
+         * We only want to be able to cancel a result if it is not of the AUTOMATIC AssessmentType
          */
-        if (participation instanceof ProgrammingExerciseStudentParticipation && submission.getResults().size() == 1) {
-            participation.removeSubmission(submission);
-            participation.removeResult(result);
-            submissionRepository.deleteById(submission.getId());
-        }
-        else {
+        if (result != null && result.getAssessmentType() != null && !result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
             participation.removeResult(result);
             feedbackRepository.deleteByResult_Id(result.getId());
             resultRepository.deleteById(result.getId());

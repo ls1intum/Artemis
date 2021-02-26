@@ -202,7 +202,9 @@ function updateFileContent(artemis, participationId, content) {
 
 export function simulateSubmission(artemis, participationSimulation, expectedResult, resultString) {
     // First, we have to create all new files
-    participationSimulation.newFiles.forEach((file) => createNewFile(artemis, participationSimulation.participationId, file));
+    if (participationSimulation.newFiles) {
+        participationSimulation.newFiles.forEach((file) => createNewFile(artemis, participationSimulation.participationId, file));
+    }
 
     artemis.websocket(function (socket) {
         // Subscribe to new results and participations

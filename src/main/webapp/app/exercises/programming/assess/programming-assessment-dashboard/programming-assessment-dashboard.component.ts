@@ -63,7 +63,6 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
                 this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
                 this.setPermissions();
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
-                console.log(this.newManualResultAllowed);
             });
     }
 
@@ -92,7 +91,9 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
                 this.submissions = submissions;
                 this.filteredSubmissions = submissions;
                 this.filteredSubmissions.forEach((sub) => {
-                    sub.results = sub.results!.filter((r) => r.assessmentType !== AssessmentType.AUTOMATIC);
+                    if (sub.results && sub.results.length > 0) {
+                        sub.results = sub.results.filter((r) => r.assessmentType !== AssessmentType.AUTOMATIC);
+                    }
                 });
                 this.busy = false;
             });

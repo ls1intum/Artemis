@@ -198,6 +198,21 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.isSavingWorkingTime).to.equal(false);
         expect(course.id).to.equal(1);
         expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
-        expect(studentExamDetailComponent.achievedTotalScore).to.equal(80);
+        expect(studentExamDetailComponent.achievedTotalScore).to.equal(40);
+        expect(studentExamDetailComponent.maxTotalScore).to.equal(100);
+    });
+
+    it('should not increase points when save working time is called more than once', () => {
+        const studentExamSpy = sinon.spy(studentExamService, 'updateWorkingTime');
+        studentExamDetailComponentFixture.detectChanges();
+        studentExamDetailComponent.saveWorkingTime();
+        studentExamDetailComponent.saveWorkingTime();
+        studentExamDetailComponent.saveWorkingTime();
+        expect(studentExamSpy).to.have.been.calledThrice;
+        expect(studentExamDetailComponent.isSavingWorkingTime).to.equal(false);
+        expect(course.id).to.equal(1);
+        expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
+        expect(studentExamDetailComponent.achievedTotalScore).to.equal(40);
+        expect(studentExamDetailComponent.maxTotalScore).to.equal(100);
     });
 });

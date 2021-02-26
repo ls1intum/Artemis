@@ -37,9 +37,10 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, FileService fileService,
-            AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository) {
+            AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository,
+            ParticipationRepository participationRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                courseRepository);
+                courseRepository, participationRepository);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileService = fileService;
     }
@@ -198,9 +199,10 @@ public class FileUploadSubmissionService extends SubmissionService {
      *
      * @param submissionId       the id of the file upload submission
      * @param fileUploadExercise the corresponding exercise
+     * @param correctionRound the correctionRound for which the submission should lock a result
      * @return the locked file upload submission
      */
-    public FileUploadSubmission lockAndGetFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise) {
+    public FileUploadSubmission lockAndGetFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise, int correctionRound) {
         FileUploadSubmission fileUploadSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
         if (fileUploadSubmission.getLatestResult() == null || fileUploadSubmission.getLatestResult().getAssessor() == null) {
@@ -208,7 +210,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
 
         // correctionRound always defaults to 0, as fileUpload exercises currently are not supported within exams
-        lockSubmission(fileUploadSubmission, 0);
+        lockSubmission(fileUploadSubmission, correctionRound);
         return fileUploadSubmission;
     }
 
