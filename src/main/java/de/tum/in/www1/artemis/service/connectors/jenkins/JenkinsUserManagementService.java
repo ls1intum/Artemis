@@ -88,7 +88,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
             restTemplate.exchange(uri, HttpMethod.POST, getCreateUserFormHttpEntity(user), Void.class);
 
             // Adds the user to groups of existing programming exercises
-            addUserToGroups(user, user.getGroups());
+            addUserToGroups(user.getLogin(), user.getGroups());
         }
         catch (RestClientException e) {
             throw new JenkinsException("Cannot create user: " + user.getLogin(), e);
@@ -117,20 +117,17 @@ public class JenkinsUserManagementService implements CIUserManagementService {
 
     @Override
     public void deleteUser(User user) throws ContinuousIntegrationException {
+        var userLogin = user.getLogin();
         // Only delete a user if it exists.
-        var jenkinsUser = getUser(user.getLogin());
+        var jenkinsUser = getUser(userLogin);
         if (jenkinsUser == null) {
             return;
         }
 
-        deleteUser(user.getLogin());
-    }
-
-    private void deleteUser(String userLogin) throws ContinuousIntegrationException {
         try {
             var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", userLogin, "doDelete").build().toUri();
-            var response = restTemplate.exchange(uri, HttpMethod.POST, null, Void.class);
-            log.info(response.toString());
+            restTemplate.exchange(uri, HttpMethod.POST, null, Void.class);
+            removeUserFromGroups(userLogin, user.getGroups());
         }
         catch (RestClientException e) {
             throw new JenkinsException("Cannot delete user: " + userLogin, e);
@@ -138,7 +135,8 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     }
 
     /**
-     * Updates the user in Jenkins with the user data from Artemis.
+     * Updates the user in Jenkins with the user data from Artemis. Creates
+     * the user if it doesn't exist.
      * <p>
      * Note that it's not possible to change the username of the Jenkins user.
      *
@@ -149,7 +147,8 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         // Only update a user if it exists.
         var jenkinsUser = getUser(user.getLogin());
         if (jenkinsUser == null) {
-            throw new JenkinsException("Cannot update user: " + user.getLogin() + " because it doesn't exist.");
+            createUser(user);
+            return;
         }
 
         try {
@@ -176,7 +175,14 @@ public class JenkinsUserManagementService implements CIUserManagementService {
             return;
         }
 
-        deleteUser(oldLogin);
+        // We create a new user object which has the old user login and groups.
+        // We do this to revoke the old permissions for that user before creating
+        // the new one.
+        var oldUser = new User();
+        oldUser.setLogin(oldLogin);
+        oldUser.setGroups(user.getGroups());
+        deleteUser(oldUser);
+
         createUser(user);
     }
 
@@ -188,8 +194,8 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         else {
             updateUser(user);
         }
-        addUserToGroups(user, groupsToAdd);
-        removeUserFromGroups(user, groupsToRemove);
+        removeUserFromGroups(user.getLogin(), groupsToRemove);
+        addUserToGroups(user.getLogin(), groupsToAdd);
     }
 
     /**
@@ -197,17 +203,16 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * groups so this function fetches all programming exercises belonging to
      * the groups and assigns the user permissions to them.
      *
-     * @param user   The Artemis user to add to the group
+     * @param userLogin   The user login to add to the group
      * @param groups The groups to add the user to
      */
     @Override
-    public void addUserToGroups(User user, Set<String> groups) throws ContinuousIntegrationException {
+    public void addUserToGroups(String userLogin, Set<String> groups) throws ContinuousIntegrationException {
         var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
         exercises.forEach(exercise -> {
             // The exercise's project key is also the name of the Jenkins job that groups all build plans
             // for students, solution, and template.
             var jobName = exercise.getProjectKey();
-            var userLogin = user.getLogin();
             var course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
             if (groups.contains(course.getInstructorGroupName())) {
@@ -238,12 +243,11 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * Removes the Artemis user from the specified groups. Jenkins doesn't support groups so this function fetches
      * all programming exercises belonging to the groups, and revokes the user's permissions from them.
      *
-     * @param user   The Artemis user to remove from the group
+     * @param userLogin   The login of the Artemis user to remove from the group
      * @param groups The groups to remove the user from
      */
     @Override
-    public void removeUserFromGroups(User user, Set<String> groups) throws ContinuousIntegrationException {
-        var userLogin = user.getLogin();
+    public void removeUserFromGroups(String userLogin, Set<String> groups) throws ContinuousIntegrationException {
         // Remove all permissions assigned to the user for each exercise that belongs to the specified groups.
         var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
         exercises.forEach(exercise -> {
@@ -257,11 +261,6 @@ public class JenkinsUserManagementService implements CIUserManagementService {
                 throw new JenkinsException("Cannot revoke permissions from user: " + userLogin, e);
             }
         });
-
-        // The same user can belong to a TA and instructor group. Adding the user to an instructor group
-        // automatically overwrites the TA permissions. If the user is removed from the instructor group,
-        // we need to re-apply TA permissions.
-        addUserToGroups(user, user.getGroups());
     }
 
     @Override

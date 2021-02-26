@@ -57,21 +57,21 @@ public interface CIUserManagementService {
      * Adds the user to the specified group in the CIS. Groups define who has access
      * to what programming exercises.
      *
-     * @param user The Artemis user to add to the group
+     * @param userLogin The user login of the Artemis user to add to the group
      * @param group The group
      * @throws ContinuousIntegrationException thrown when a job cannot be fetched/updated
      */
-    void addUserToGroups(User user, Set<String> group) throws ContinuousIntegrationException;
+    void addUserToGroups(String userLogin, Set<String> group) throws ContinuousIntegrationException;
 
     /**
      * Removes the user from the specified group in the CIS. This e.g revokes access
      * to certain programming exericses.
      *
-     * @param user The Artemis user to remove from the group
+     * @param userLogin The user login of the Artemis user to remove from the group
      * @param group The group
      * @throws ContinuousIntegrationException thrown when a job cannot be fetched/updated
      */
-    void removeUserFromGroups(User user, Set<String> group) throws ContinuousIntegrationException;
+    void removeUserFromGroups(String userLogin, Set<String> group) throws ContinuousIntegrationException;
 
     /**
      * Update permissions of all users that belong to the teaching assistant and instructor groups of the course. This
