@@ -15,6 +15,8 @@ import { Exam } from 'app/entities/exam.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
+import { Moment } from 'moment';
+import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -349,5 +351,10 @@ export class StudentExamsComponent implements OnInit {
 
     private onError(error: any) {
         this.jhiAlertService.error(error.errorKey);
+    }
+
+    formatDate(date: Moment | Date | undefined) {
+        // TODO: we should try to use the artemis date pipe here
+        return date ? moment(date).format(defaultLongDateTimeFormat) : '';
     }
 }

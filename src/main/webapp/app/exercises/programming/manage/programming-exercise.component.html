@@ -15,18 +15,18 @@
             <fa-icon [icon]="'plus'"></fa-icon>
             <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.importLabel"> Import new programming exercise </span>
         </button>
-        <button
+        <a
             jhiOrionFilter
             [showInOrionWindow]="false"
             *ngIf="course && course.isAtLeastInstructor"
             id="jh-create-entity"
             class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1"
-            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
             [routerLink]="['/course-management', courseId, 'programming-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
-            <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.generateLabel"> Generate new Programming Exercise </span>
-        </button>
+            <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">Generate new Programming Exercise</span>
+        </a>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
     <div class="row"></div>
@@ -237,32 +237,28 @@
                                 </a>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
-                                <button
+                                <a
                                     *ngIf="programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'scores']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'eye'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-                                </button>
-                                <button
-                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-                                    type="submit"
+                                </a>
+                                <a
+                                    [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'grading', 'test-cases']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
-                                </button>
+                                </a>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
-                                <!-- converting this and other buttons to anchors here leads to failed tests in programming-exercise.service.spec.ts.
-                                This should be adressed at some point. -->
-                                <button
-                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                                <a
+                                    [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     [attr.disabled]="false"
-                                    type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
                                     jhiOrionFilter
                                     [showInOrionWindow]="false"
@@ -278,7 +274,7 @@
                                 >
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
-                                </button>
+                                </a>
                                 <a
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'edit']"

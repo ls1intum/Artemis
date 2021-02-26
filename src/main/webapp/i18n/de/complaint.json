@@ -29,9 +29,9 @@
             "complaintAlreadyHandled": "Die Beschwerde wurde bereits bearbeitet",
             "listOfComplaints": {
                 "exercise": "Übung",
-                "submissionId": "Einreichung ID",
-                "reviewerLogin": "Reviewer Login",
-                "reviewerName": "Rewviewer Name",
+                "submissionId": "Einreichungs-ID",
+                "reviewerLogin": "Reviewerlogin",
+                "reviewerName": "Reviewername",
                 "studentLogin": "Login",
                 "studentName": "Name",
                 "actions": "Aktionen",
@@ -41,7 +41,7 @@
                 "accepted": "Angenommen",
                 "rejected": "Abgelehnt",
                 "showAddressedComplaints": "Adressierte Beschwerden anzeigen",
-                "noComplaintsToShow": "Es gibt im Moment keine Beschwerden zu zeigen."
+                "noComplaintsToShow": "Es gibt im Moment keine anzeigbaren Beschwerden."
             },
             "review": "Beschwerde überprüfen"
         },

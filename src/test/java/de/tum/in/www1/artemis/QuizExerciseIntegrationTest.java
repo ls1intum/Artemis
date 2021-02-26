@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.byLessThan;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -126,8 +127,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             }
             if (question instanceof DragAndDropQuestion) {
                 DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
-                assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(2);
-                assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(2);
+                assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(3);
+                assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(3);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
                 assertThat(dragAndDropQuestion.getText()).as("Drag and drop question text is correct").isEqualTo("Q2");
                 assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(3);
@@ -198,8 +199,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             }
             if (question instanceof DragAndDropQuestion) {
                 DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
-                assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(2);
-                assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(2);
+                assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(3);
+                assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(3);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
                 assertThat(dragAndDropQuestion.getText()).as("Drag and drop question text is correct").isEqualTo("Q2");
                 assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(3);
@@ -257,7 +258,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createTextExercise_InvalidMaxScore() throws Exception {
+    public void createQuizExercise_InvalidMaxScore() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
         quizExercise.setMaxPoints(0.0);
         request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
@@ -265,7 +266,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createTextExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
+    public void createQuizExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
         quizExercise.setMaxPoints(10.0);
         quizExercise.setBonusPoints(1.0);
@@ -275,7 +276,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createTextExercise_NotIncludedInvalidBonusPoints() throws Exception {
+    public void createQuizExercise_NotIncludedInvalidBonusPoints() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
         quizExercise.setMaxPoints(10.0);
         quizExercise.setBonusPoints(1.0);
@@ -330,8 +331,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             }
             if (question instanceof DragAndDropQuestion) {
                 DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
-                assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(1);
-                assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(1);
+                assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(2);
+                assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(2);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
                 assertThat(dragAndDropQuestion.getText()).as("Drag and drop question text is correct").isEqualTo("Q2");
                 assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(3);
@@ -410,8 +411,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             }
             if (question instanceof DragAndDropQuestion) {
                 DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
-                assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(1);
-                assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(1);
+                assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(2);
+                assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(2);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
                 assertThat(dragAndDropQuestion.getText()).as("Drag and drop question text is correct").isEqualTo("Q2");
                 assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(3);
@@ -669,6 +670,17 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         QuizExercise quizExerciseForStudent_Finished = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
         checkQuizExerciseForStudent(quizExerciseForStudent_Finished);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetQuizExercisesForExam() throws Exception {
+        quizExercise = createQuizOnServerForExam();
+        var examId = quizExercise.getExerciseGroup().getExam().getId();
+        List<LinkedHashMap<String, Object>> quizExercises = request.get("/api/" + examId + "/quiz-exercises", HttpStatus.OK, List.class);
+        assertThat(quizExercises).as("Quiz exercise was retrieved").isNotNull();
+        assertThat(quizExercises.size()).as("Quiz exercise was retrieved").isEqualTo(1L);
+        assertThat(quizExercise.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(Long.valueOf((Integer) quizExercises.get(0).get("id")));
     }
 
     @Test
@@ -996,6 +1008,44 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(pointCounter.getUnRatedCounter()).as(pointCounter.getPoints() + " should have a rated counter of 0").isEqualTo(0);
             }
         }
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateQuizQuestionWithMoreSolutions() throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2));
+        QuizQuestion question = quizExercise.getQuizQuestions().get(2);
+        if (question instanceof ShortAnswerQuestion) {
+            ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
+
+            // demonstrate that the initial shortAnswerQuestion has 2 correct mappings and 2 solutions
+            assertThat(shortAnswerQuestion.getCorrectMappings().size()).isEqualTo(2);
+            assertThat(shortAnswerQuestion.getCorrectMappings().size()).isEqualTo(2);
+
+            // add a solution with an mapping onto spot number 0
+            ShortAnswerSolution newSolution = new ShortAnswerSolution();
+            newSolution.setText("text");
+            newSolution.setId(3L);
+            shortAnswerQuestion.getSolutions().add(newSolution);
+            ShortAnswerMapping newMapping = new ShortAnswerMapping();
+            newMapping.setId(3L);
+            newMapping.setInvalid(false);
+            newMapping.setShortAnswerSolutionIndex(2);
+            newMapping.setSolution(newSolution);
+            newMapping.setSpot(shortAnswerQuestion.getSpots().get(0));
+            newMapping.setShortAnswerSpotIndex(0);
+            shortAnswerQuestion.getCorrectMappings().add(newMapping);
+            quizExercise.getQuizQuestions().remove(2);
+            quizExercise.getQuizQuestions().add(shortAnswerQuestion);
+        }
+        // PUT Request with the newly modified quizExercise
+        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, QuizExercise.class,
+                HttpStatus.OK);
+        // Check that the updatedQuizExercise is equal to the modified quizExercise with special focus on the newly added solution and mapping
+        assertThat(updatedQuizExercise).isEqualTo(quizExercise);
+        ShortAnswerQuestion receivedShortAnswerQuestion = (ShortAnswerQuestion) updatedQuizExercise.getQuizQuestions().get(2);
+        assertThat(receivedShortAnswerQuestion.getSolutions().size()).isEqualTo(3);
+        assertThat(receivedShortAnswerQuestion.getCorrectMappings().size()).isEqualTo(3);
     }
 
     @Test

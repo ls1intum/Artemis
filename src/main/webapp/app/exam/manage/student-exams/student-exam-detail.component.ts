@@ -27,6 +27,7 @@ export class StudentExamDetailComponent implements OnInit {
     isTestRun = false;
     maxTotalScore = 0;
     achievedTotalScore = 0;
+    bonusTotalScore = 0;
 
     constructor(
         private route: ActivatedRoute,
@@ -104,8 +105,12 @@ export class StudentExamDetailComponent implements OnInit {
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
         this.initWorkingTimeForm();
+        this.maxTotalScore = 0;
+        this.achievedTotalScore = 0;
+        this.bonusTotalScore = 0;
         studentExam.exercises!.forEach((exercise) => {
             this.maxTotalScore += exercise.maxPoints!;
+            this.bonusTotalScore += exercise.bonusPoints!;
             if (
                 exercise.studentParticipations?.length &&
                 exercise.studentParticipations.length > 0 &&

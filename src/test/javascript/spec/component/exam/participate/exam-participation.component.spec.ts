@@ -530,7 +530,7 @@ describe('ExamParticipationComponent', () => {
     it('should trigger save and initialize exercise when exercise changed', () => {
         const exercise = new ProgrammingExercise(new Course(), undefined);
         const triggerStub = stub(comp, 'triggerSave');
-        const exerciseChange = { exercise, force: true };
+        const exerciseChange = { exercise, forceSave: true };
         const createParticipationForExerciseStub = stub(comp, 'createParticipationForExercise').returns(of(new StudentParticipation()));
         comp.onExerciseChange(exerciseChange);
         expect(triggerStub).to.have.been.calledWith(true);

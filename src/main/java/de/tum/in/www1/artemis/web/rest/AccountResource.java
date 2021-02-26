@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
@@ -56,13 +57,17 @@ public class AccountResource {
 
     private final UserService userService;
 
+    private final UserCreationService userCreationService;
+
     private final PasswordService passwordService;
 
     private final MailService mailService;
 
-    public AccountResource(UserRepository userRepository, UserService userService, MailService mailService, PasswordService passwordService) {
+    public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, MailService mailService,
+            PasswordService passwordService) {
         this.userRepository = userRepository;
         this.userService = userService;
+        this.userCreationService = userCreationService;
         this.mailService = mailService;
         this.passwordService = passwordService;
     }
@@ -164,13 +169,13 @@ public class AccountResource {
     }
 
     /**
-     * {@code POST  /account} : update the current user information.
+     * {@code PUT  /account} : update the current user information.
      *
      * @param userDTO the current user information.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws RuntimeException {@code 500 (Internal Server Error)} if the user login wasn't found.
      */
-    @PostMapping("/account")
+    @PutMapping("/account")
     public void saveAccount(@Valid @RequestBody UserDTO userDTO) {
         if (isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
@@ -184,7 +189,7 @@ public class AccountResource {
         if (user.isEmpty()) {
             throw new InternalServerErrorException("User could not be found");
         }
-        userService.updateUser(userDTO.getFirstName(), userDTO.getLastName(), userDTO.getEmail(), userDTO.getLangKey(), userDTO.getImageUrl());
+        userCreationService.updateBasicInformationOfCurrentUser(userDTO.getFirstName(), userDTO.getLastName(), userDTO.getEmail(), userDTO.getLangKey(), userDTO.getImageUrl());
     }
 
     /**

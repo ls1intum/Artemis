@@ -74,10 +74,13 @@ public class ExamService {
 
     private final ResultRepository resultRepository;
 
+    private final SubmissionRepository submissionRepository;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService, ExerciseService exerciseService,
             InstanceMessageSendService instanceMessageSendService, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository,
             ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository,
+            SubmissionRepository submissionRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -91,6 +94,7 @@ public class ExamService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -303,7 +307,7 @@ public class ExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(final Exam examWithRegisteredUsersAndExerciseGroupsAndExercises) {
-        final var examWithExistingStudentExams = examRepository.findByIdWithStudentExamsElseThrow(examWithRegisteredUsersAndExerciseGroupsAndExercises.getId());
+        final var examWithExistingStudentExams = findWithStudentExams(examWithRegisteredUsersAndExerciseGroupsAndExercises.getId());
         // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
         studentExamRepository.deleteAll(examWithExistingStudentExams.getStudentExams());
 
@@ -524,24 +528,23 @@ public class ExamService {
             // number of complaints open
             numberOfComplaintsOpenByExercise.add(complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exercise.getId(), ComplaintType.COMPLAINT));
 
-            log.info("StatsTimeLog: number of complaints open done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            log.debug("StatsTimeLog: number of complaints open done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             // number of complaints finished
             numberOfComplaintResponsesByExercise.add(complaintResponseRepository
                     .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT));
 
-            log.info("StatsTimeLog: number of complaints finished done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            log.debug("StatsTimeLog: number of complaints finished done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             // number of assessments done
             numberOfAssessmentsFinishedOfCorrectionRoundsByExercise
                     .add(resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRound(exercise, numberOfCorrectionRoundsInExam));
 
-            log.info("StatsTimeLog: number of assessments done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            log.debug("StatsTimeLog: number of assessments done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             // get number of all generated participations
-            var countOfParticipations = studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId());
-            numberOfParticipationsGeneratedByExercise.add(countOfParticipations);
+            numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId()));
 
-            log.info("StatsTimeLog: number of generated participations in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            log.debug("StatsTimeLog: number of generated participations in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             if (!(exercise instanceof QuizExercise || exercise.getAssessmentType() == AssessmentType.AUTOMATIC)) {
-                numberOfParticipationsForAssessmentGeneratedByExercise.add(countOfParticipations);
+                numberOfParticipationsForAssessmentGeneratedByExercise.add(submissionRepository.countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exercise.getId()));
             }
         }));
 
@@ -582,13 +585,13 @@ public class ExamService {
         long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExamWithoutTestRuns(exam.getId());
         examChecklistDTO.setNumberOfGeneratedStudentExams(numberOfGeneratedStudentExams);
 
-        log.info("StatsTimeLog: number of generated student exams done in " + TimeLogUtil.formatDurationFrom(start));
+        log.debug("StatsTimeLog: number of generated student exams done in " + TimeLogUtil.formatDurationFrom(start));
 
         // set number of test runs
         long numberOfTestRuns = studentExamRepository.countTestRunsByExamId(exam.getId());
         examChecklistDTO.setNumberOfTestRuns(numberOfTestRuns);
 
-        log.info("StatsTimeLog: number of test runs done in " + TimeLogUtil.formatDurationFrom(start));
+        log.debug("StatsTimeLog: number of test runs done in " + TimeLogUtil.formatDurationFrom(start));
 
         // check if all exercises have been prepared for all students;
         boolean exercisesPrepared = numberOfGeneratedStudentExams != 0
@@ -597,13 +600,26 @@ public class ExamService {
 
         // set started and submitted exam properties
         long numberOfStudentExamsStarted = studentExamRepository.countStudentExamsStartedByExamIdIgnoreTestRuns(exam.getId());
-        log.info("StatsTimeLog: number of student exams started done in " + TimeLogUtil.formatDurationFrom(start));
+        log.debug("StatsTimeLog: number of student exams started done in " + TimeLogUtil.formatDurationFrom(start));
         long numberOfStudentExamsSubmitted = studentExamRepository.countStudentExamsSubmittedByExamIdIgnoreTestRuns(exam.getId());
-        log.info("StatsTimeLog: number of student exams submitted done in " + TimeLogUtil.formatDurationFrom(start));
+        log.debug("StatsTimeLog: number of student exams submitted done in " + TimeLogUtil.formatDurationFrom(start));
         examChecklistDTO.setNumberOfTotalParticipationsForAssessment(totalNumberOfParticipationsForAssessment);
         examChecklistDTO.setNumberOfExamsStarted(numberOfStudentExamsStarted);
         examChecklistDTO.setNumberOfExamsSubmitted(numberOfStudentExamsSubmitted);
         return examChecklistDTO;
+    }
+
+    /**
+     * Finds an exam based on the id with all student exams which are not marked as test runs.
+     *
+     * @param examId the id of the exam
+     * @return the exam with student exams loaded
+     */
+    public Exam findWithStudentExams(long examId) {
+        Exam exam = examRepository.findWithStudentExamsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id " + examId + " does not exist"));
+        // drop all test runs and set the remaining student exams to the exam
+        exam.setStudentExams(exam.getStudentExams().stream().dropWhile(StudentExam::isTestRun).collect(Collectors.toSet()));
+        return exam;
     }
 
     /**
@@ -719,5 +735,21 @@ public class ExamService {
         }
 
         return programmingExercises.size();
+    }
+
+    /**
+     * Returns a set containing all exercises that are defined in the
+     * specified exam.
+     *
+     * @param examId The id of the exam
+     * @return A set containing the exercises
+     */
+    public Set<Exercise> getAllExercisesOfExam(long examId) {
+        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId);
+        if (exam.isEmpty()) {
+            return Set.of();
+        }
+
+        return exam.get().getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
     }
 }

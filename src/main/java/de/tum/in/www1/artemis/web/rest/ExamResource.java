@@ -17,10 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -361,6 +358,29 @@ public class ExamResource {
             examService.setNumberOfRegisteredUsersForExams(exams);
             return ResponseEntity.ok(exams);
         });
+    }
+
+    /**
+     * GET /courses/{courseId}/exams-for-user : Find all exams the user is allowed to access (Is at least Instructor)
+     *
+     * @param courseId the course to which the exam belongs
+     * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
+     */
+    @GetMapping("/courses/{courseId}/exams-for-user")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<List<Exam>> getExamsForUser(@PathVariable Long courseId) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (authCheckService.isAdmin(user)) {
+            return ResponseEntity.ok(examRepository.findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises());
+        }
+        else {
+            Course course = courseRepository.findByIdElseThrow(courseId);
+            if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+                return forbidden();
+            }
+            var userGroups = new ArrayList<>(user.getGroups());
+            return ResponseEntity.ok(examRepository.getExamsWithQuizExercisesForWhichUserHasInstructorAccess(userGroups));
+        }
     }
 
     /**
