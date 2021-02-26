@@ -412,6 +412,7 @@ public class ExerciseService {
 
             if (exerciseType == QuizExercise.class) {
                 dto.setExerciseType("quiz");
+                dto.setQuizStatus(quizExerciseService.evaluateQuizStatus(exerciseId));
             }
             else if (exerciseType == ProgrammingExercise.class) {
                 dto.setExerciseType("programming");

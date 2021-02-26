@@ -121,12 +121,27 @@
 
             <div class="row-flex button-row">
                 <a
-                    *ngIf="course.isAtLeastInstructor"
+                    *ngIf="
+                        course.isAtLeastInstructor &&
+                        (!(details.exerciseType === exerciseType.QUIZ) || details.quizStatus === quizStatus.HIDDEN || details.quizStatus === quizStatus.VISIBLE)
+                    "
                     [routerLink]="['/course-management', course.id, details.exerciseType + '-exercises', details.exerciseId, 'edit']"
                     class="btn btn-warning mr-1 mb-1"
                     [ngbTooltip]="'entity.action.edit' | translate"
                 >
                     <fa-icon [icon]="'wrench'"></fa-icon>
+                </a>
+                <a
+                    *ngIf="
+                        course.isAtLeastInstructor &&
+                        details.exerciseType === exerciseType.QUIZ &&
+                        (details.quizStatus === quizStatus.CLOSED || details.quizStatus === quizStatus.OPEN_FOR_PRACTICE)
+                    "
+                    [routerLink]="['/course-management', course.id, details.exerciseType + '-exercises', details.exerciseId, 're-evaluate']"
+                    class="btn btn-warning mr-1 mb-1"
+                    [ngbTooltip]="'entity.action.re-evaluate' | translate"
+                >
+                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
                 </a>
                 <a
                     *ngIf="course.isAtLeastTutor"

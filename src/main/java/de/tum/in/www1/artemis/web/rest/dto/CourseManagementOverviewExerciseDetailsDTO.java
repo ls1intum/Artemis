@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.web.rest.dto;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
+import de.tum.in.www1.artemis.domain.enumeration.QuizStatus;
+
 public class CourseManagementOverviewExerciseDetailsDTO {
 
     private Long exerciseId;
@@ -20,6 +22,8 @@ public class CourseManagementOverviewExerciseDetailsDTO {
     private Set<String> categories;
 
     private boolean isTeamMode;
+
+    private QuizStatus quizStatus;
 
     public Long getExerciseId() {
         return exerciseId;
@@ -83,5 +87,13 @@ public class CourseManagementOverviewExerciseDetailsDTO {
 
     public void setTeamMode(boolean teamMode) {
         isTeamMode = teamMode;
+    }
+
+    public QuizStatus getQuizStatus() {
+        return quizStatus;
+    }
+
+    public void setQuizStatus(QuizStatus quizStatus) {
+        this.quizStatus = quizStatus;
     }
 }

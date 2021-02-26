@@ -26,6 +26,13 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
     // Expose enums to the template
     exerciseType = ExerciseType;
     exerciseRowType = ExerciseRowType;
+    quizStatus = {
+        CLOSED: 'CLOSED',
+        OPEN_FOR_PRACTICE: 'OPEN_FOR_PRACTICE',
+        ACTIVE: 'ACTIVE',
+        VISIBLE: 'VISIBLE',
+        HIDDEN: 'HIDDEN',
+    };
 
     JSON = JSON;
 

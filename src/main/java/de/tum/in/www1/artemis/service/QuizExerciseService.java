@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.QuizStatus;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
@@ -404,5 +405,20 @@ public class QuizExerciseService {
     public void cancelScheduledQuiz(Long quizExerciseId) {
         quizScheduleService.cancelScheduledQuizStart(quizExerciseId);
         quizScheduleService.clearQuizData(quizExerciseId);
+    }
+
+    public QuizStatus evaluateQuizStatus(Long exerciseId) {
+        QuizExercise quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
+        if (quizExercise.isIsPlannedToStart() && quizExercise.getRemainingTime() != null) {
+            if (quizExercise.getRemainingTime() <= 0) {
+                // the quiz is over
+                return quizExercise.isIsOpenForPractice() ? QuizStatus.OPEN_FOR_PRACTICE : QuizStatus.CLOSED;
+            }
+            else {
+                return QuizStatus.ACTIVE;
+            }
+        }
+        // the quiz hasn't started yet
+        return quizExercise.isIsVisibleBeforeStart() ? QuizStatus.VISIBLE : QuizStatus.HIDDEN;
     }
 }
