@@ -38,8 +38,6 @@ describe('MultipleChoiceQuestionComponent', () => {
         artemisMarkdownService = TestBed.inject(ArtemisMarkdownService);
     });
 
-    beforeEach(() => {});
-
     afterEach(function () {
         sinon.restore();
     });
