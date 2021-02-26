@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Graphs } from 'app/entities/statistics.model';
 import { ChartDataSets, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
     selector: 'jhi-course-management-statistics',
     templateUrl: './course-management-statistics.component.html',
 })
-export class CourseManagementStatisticsComponent implements OnChanges {
+export class CourseManagementStatisticsComponent implements OnInit {
     @Input()
     courseId: number;
 
@@ -17,7 +17,6 @@ export class CourseManagementStatisticsComponent implements OnChanges {
 
     @Input()
     initialStats: number[];
-    initialStatsReceived = false;
 
     graphType: Graphs = Graphs.ACTIVE_STUDENTS;
 
@@ -37,15 +36,8 @@ export class CourseManagementStatisticsComponent implements OnChanges {
 
     constructor(private translateService: TranslateService) {}
 
-    ngOnChanges() {
+    ngOnInit() {
         this.amountOfStudents = this.translateService.instant('courseStatistics.amountOfStudents');
-
-        // Only use the pre-loaded stats once
-        if (this.initialStatsReceived || !this.initialStats || this.amountOfStudentsInCourse < 1) {
-            return;
-        }
-
-        this.initialStatsReceived = true;
 
         for (let i = 0; i < 4; i++) {
             this.barChartLabels[i] = this.translateService.instant(`overview.${3 - i}_weeks_ago`);
@@ -54,6 +46,7 @@ export class CourseManagementStatisticsComponent implements OnChanges {
         for (const value of this.initialStats) {
             this.dataForSpanType.push((value * 100) / this.amountOfStudentsInCourse);
         }
+
         this.chartData = [
             {
                 label: this.amountOfStudents,
@@ -65,6 +58,8 @@ export class CourseManagementStatisticsComponent implements OnChanges {
                 pointHoverBorderColor: 'rgba(53,61,71,1)',
             },
         ];
+
+        // Store a reference for the label function
         const self = this;
         this.barChartOptions = {
             layout: {

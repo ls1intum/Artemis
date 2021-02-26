@@ -42,25 +42,14 @@ describe('CourseManagementExerciseStatisticsComponent', () => {
             });
     });
 
-    it('should initialize component', () => {
-        fixture.detectChanges();
-        expect(component).to.be.ok;
-    });
-
-    it('should change component on changes', () => {
-        fixture.detectChanges();
-
-        // Test that nothing breaks when no data is present yet
-        component.ngOnChanges();
-        fixture.detectChanges();
-        expect(component).to.be.ok;
-
+    it('should initialize component and load values', () => {
         // Provide the @Input data
         component.courseId = courseId;
         component.amountOfStudentsInCourse = amountOfStudentsInCourse;
         component.initialStats = initialStats;
 
-        component.ngOnChanges();
+        fixture.detectChanges();
+        expect(component).to.be.ok;
 
         expect(component.dataForSpanType).to.deep.equal([0, 44, 36, 92]);
         expect(component.chartData[0].label).to.equal(component.amountOfStudents);
