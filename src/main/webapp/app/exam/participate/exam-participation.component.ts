@@ -272,7 +272,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.initializeExercise(initialExercise);
         }
         this.examStartConfirmed = true;
-        console.log('this.examStartConfirmed: ' + this.examStartConfirmed);
         this.startAutoSaveTimer();
     }
 
@@ -483,15 +482,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // an error here should never lead to the wrong exercise being shown
             Sentry.captureException(error);
         }
-        this.initializeExercise(exerciseChange.exercise);
-    }
-
-    /**
-     * update the current exercise from the navigation
-     * @param exerciseChange
-     */
-    saveFileUpload(exerciseChange: { exercise: Exercise; forceSave: boolean }): void {
-        this.triggerSave(exerciseChange.forceSave);
         this.initializeExercise(exerciseChange.exercise);
     }
 

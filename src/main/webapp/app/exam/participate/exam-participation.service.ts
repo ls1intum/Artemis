@@ -192,7 +192,10 @@ export class ExamParticipationService {
 
     public wasLastSaveSuccessful(courseId: number, examId: number): boolean {
         const key = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId) + '-saved';
-        return this.localStorageService.retrieve(key);
+        const wasSaved = this.localStorageService.retrieve(key);
+
+        // Count as successful if there was no last save
+        return wasSaved === undefined || wasSaved;
     }
 
     private convertStudentExamFromServer(studentExam: StudentExam): StudentExam {
