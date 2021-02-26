@@ -132,11 +132,14 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createLecture_correctRequestBody_shouldCreateLecture() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(this.course1.getId());
+
         Lecture lecture = new Lecture();
         lecture.title("loremIpsum");
-        lecture.setCourse(this.course1);
+        lecture.setCourse(course);
         lecture.setDescription("loremIpsum");
         Lecture returnedLecture = request.postWithResponseBody("/api/lectures", lecture, Lecture.class, HttpStatus.CREATED);
+
         assertThat(returnedLecture).isNotNull();
         assertThat(returnedLecture.getId()).isNotNull();
         assertThat(returnedLecture.getTitle()).isEqualTo(lecture.getTitle());
