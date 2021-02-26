@@ -1508,7 +1508,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testSubmitAndUnSubmitStudentExamAfterExamIsOver() throws Exception {
         final var studentExams = prepareStudentExamsForConduction();
         var studentExam = studentExams.get(0);
-        final StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam2, studentExam.getUser().getLogin());
 
         // now we change to the point of time when the student exam needs to be submitted
         // IMPORTANT NOTE: this needs to be configured in a way that the individual student exam ended, but we are still in the grace period time
@@ -1546,5 +1545,3 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(studentExam.getSubmissionDate()).isNull();
     }
 }
-// exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
-// exam2 = examRepository.save(exam2);
