@@ -8,7 +8,7 @@
             "lockInformationYou": "Gesperrt von DIR bis {{endDate}}",
             "notUnlocked": "Nicht gesperrt",
             "lockStatus": "Status der Sperre",
-            "notAllowedToRespond": "Es ist Dir nicht erlaubt auf diese Anfrage zu antworten!\nBei Team Aufgaben ist der Team Tutor sowohl für Beschwerden als auch Mehr-Feedback Anfragen verantwortlich.\nBei individuellen Aufgaben werden Beschwerden von einem anderen Tutor beantwortet und mehr Feedback Anfragen von dem Tutor, welcher die Aufgabe bewertet hat.\nBei Testläufen für Klausuren darf auch dieser Tutor Beschwerden beantworten."
+            "notAllowedToRespond": "Es ist dir nicht erlaubt auf diese Anfrage zu antworten!\nBei Teamaufgaben ist der Teamtutor sowohl für Beschwerden als auch Mehr-Feedback Anfragen verantwortlich.\nBei individuellen Aufgaben werden Beschwerden von einem anderen Tutor beantwortet und Mehr-Feedback Anfragen von dem Tutor, welcher die Aufgabe bewertet hat.\nBei Testläufen für Klausuren darf auch dieser Tutor Beschwerden beantworten."
         },
         "complaintResponse": {
             "title": "Antwort auf die Beschwerde",
@@ -17,7 +17,7 @@
             "updateAssessmentTooltip": "Antwort senden and Bewertung aktualisieren",
             "rejectComplaint": "Beschwerde zurückweisen",
             "rejectComplaintTooltip": "Antwort senden und Beschwerde zurückweisen",
-            "noText": "Bitt gib eine Antwort auf die Beschwerde ein"
+            "noText": "Bitte gib eine Antwort auf die Beschwerde ein"
         },
         "moreFeedbackResponse": {
             "title": "Antwort auf die Anfrage",

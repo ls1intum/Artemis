@@ -202,7 +202,7 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        Set<Exercise> upcomingExercises = exerciseRepository.findAllExercisesWithUpcomingDueDate();
+        Set<Exercise> upcomingExercises = exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDate();
         return ResponseEntity.ok(upcomingExercises);
     }
 
