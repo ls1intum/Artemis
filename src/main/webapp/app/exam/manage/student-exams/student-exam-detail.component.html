@@ -78,19 +78,19 @@
             </button>
         </div>
         <div class="modal-body">
-            <p [jhiTranslate]="'artemisApp.studentExams.confirmDialog.question'">Are you sure you want to change the submission state?</p>
-            <p *ngIf="!studentExam.submitted" [jhiTranslate]="'artemisApp.studentExams.confirmDialog.submitText'">
+            <p jhiTranslate="'artemisApp.studentExams.confirmDialog.question'">Are you sure you want to change the submission state?</p>
+            <p *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.submitText">
                 This will set the submission date of the exam to this moment, and set the submitted status to 'Yes'. Un-submitting the student exam later is possible.
             </p>
-            <p *ngIf="studentExam.submitted" [jhiTranslate]="'artemisApp.studentExams.confirmDialog.unSubmitText'">
+            <p *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.unSubmitText">
                 This will remove the submission date and set the submitted status to 'No'.
             </p>
-            <p *ngIf="studentExam.submitted" [jhiTranslate]="'artemisApp.studentExams.confirmDialog.warningRemove'">Recovering those after the deletion is not possible!</p>
+            <p *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.warningRemove">Recovering those after the deletion is not possible!</p>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-danger" (click)="modal.close('confirm')">
-                <span *ngIf="!studentExam.submitted" [jhiTranslate]="'artemisApp.studentExams.confirmDialog.submit'"></span>
-                <span *ngIf="studentExam.submitted" [jhiTranslate]="'artemisApp.studentExams.confirmDialog.unsubmit'"></span>
+                <span *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.submit"></span>
+                <span *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.unsubmit"></span>
             </button>
         </div>
     </ng-template>
