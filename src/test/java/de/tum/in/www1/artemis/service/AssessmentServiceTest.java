@@ -210,7 +210,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         ZonedDateTime endDate = ZonedDateTime.now().plusHours(1);
 
         Exam exam = database.addExam(course1, visibleDate, startDate, endDate);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var exercise = exam.getExerciseGroups().get(0).getExercises().iterator().next();
 
         boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, null, null, false);
@@ -226,7 +226,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         ZonedDateTime publishResultDate = ZonedDateTime.now().minusMinutes(1);
 
         Exam exam = database.addExam(course1, visibleDate, startDate, endDate, publishResultDate);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var exercise = exam.getExerciseGroups().get(0).getExercises().iterator().next();
 
         boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, null, null, false);
