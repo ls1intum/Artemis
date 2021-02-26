@@ -174,13 +174,17 @@ export class StudentExamDetailComponent implements OnInit {
         return round(number, 1);
     }
 
+    /**
+     * switch the 'submitted' state of the studentExam.
+     */
     toggle() {
         this.busy = true;
         if (this.studentExam.exam && this.studentExam.exam.id) {
             this.studentExamService.toggleSubmittedState(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, this.studentExam!.submitted!).subscribe(
                 (res) => {
                     if (res.body) {
-                        this.setStudentExam(res.body);
+                        this.studentExam.submissionDate = res.body.submissionDate;
+                        this.studentExam.submitted = res.body.submitted;
                     }
                     this.alertService.success('artemisApp.studentExamDetail.toggleSuccessful');
                     this.busy = false;
