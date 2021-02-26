@@ -38,6 +38,12 @@ export class ExamParticipationService {
      * @param examId the id of the exam
      */
     public loadStudentExamWithExercisesForConduction(courseId: number, examId: number): Observable<StudentExam> {
+        // If the last save failed the local exam is more up-to-date
+        if (!this.wasLastSaveSuccessful(courseId, examId)) {
+            const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
+            return Observable.of(localStoredExam);
+        }
+
         const url = this.getResourceURL(courseId, examId) + '/student-exams/conduction';
         return this.getStudentExamFromServer(url, courseId, examId);
     }
@@ -177,6 +183,16 @@ export class ExamParticipationService {
     public updateQuizSubmission(exerciseId: number, quizSubmission: QuizSubmission): Observable<QuizSubmission> {
         const url = `${SERVER_API_URL}api/exercises/${exerciseId}/submissions/exam`;
         return this.httpClient.put<QuizSubmission>(url, quizSubmission);
+    }
+
+    public setLastSaveSubmissionSuccessful(wasSaved: boolean, courseId: number, examId: number): void {
+        const key = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId) + '-saved';
+        this.localStorageService.store(key, wasSaved);
+    }
+
+    public wasLastSaveSuccessful(courseId: number, examId: number): boolean {
+        const key = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId) + '-saved';
+        return this.localStorageService.retrieve(key);
     }
 
     private convertStudentExamFromServer(studentExam: StudentExam): StudentExam {

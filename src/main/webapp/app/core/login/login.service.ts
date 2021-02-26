@@ -11,6 +11,8 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 
 @Injectable({ providedIn: 'root' })
 export class LoginService {
+    logoutWasForceful = false;
+
     constructor(
         private accountService: AccountService,
         private websocketService: JhiWebsocketService,
@@ -60,6 +62,8 @@ export class LoginService {
      * Will redirect to home when done.
      */
     logout(wasInitiatedByUser: boolean) {
+        this.logoutWasForceful = !wasInitiatedByUser;
+
         this.authServerProvider
             // 1: Clear the auth tokens from the browser's caches.
             .removeAuthTokenFromCaches()
@@ -94,5 +98,9 @@ export class LoginService {
                 }),
             )
             .subscribe();
+    }
+
+    lastLogoutWasForceful(): boolean {
+        return this.logoutWasForceful;
     }
 }
