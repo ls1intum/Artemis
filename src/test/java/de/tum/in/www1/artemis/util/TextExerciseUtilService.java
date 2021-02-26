@@ -72,6 +72,8 @@ public class TextExerciseUtilService {
             }
             clusterSizes[clusterIndex]--;
             clusters.get(clusterIndex).addBlocks(textBlock);
+            clusters.get(clusterIndex).removeBlocks(textBlock);
+            clusters.get(clusterIndex).addBlocks(textBlock);
         });
         return clusters;
     }
