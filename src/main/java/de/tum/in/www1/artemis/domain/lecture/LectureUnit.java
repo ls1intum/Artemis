@@ -84,16 +84,6 @@ public abstract class LectureUnit extends DomainObject {
         this.learningGoals = learningGoals;
     }
 
-    public void addLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.add(learningGoal);
-        learningGoal.getLectureUnits().add(this);
-    }
-
-    public void removeLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.remove(learningGoal);
-        learningGoal.getLectureUnits().remove(this);
-    }
-
     @JsonProperty("visibleToStudents")
     public boolean isVisibleToStudents() {
         if (releaseDate == null) {
