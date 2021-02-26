@@ -70,13 +70,7 @@ public class ExerciseGroup extends DomainObject {
         this.exercises = exercises;
     }
 
-    public ExerciseGroup addExercise(Exercise exercise) {
+    public void addExercise(Exercise exercise) {
         this.exercises.add(exercise);
-        return this;
-    }
-
-    public ExerciseGroup removeExercise(Exercise exercise) {
-        this.exercises.remove(exercise);
-        return this;
     }
 }
