@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ProgrammingExerciseTestService;
@@ -80,6 +81,15 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     SubmissionVersionRepository submissionVersionRepository;
+
+    @Autowired
+    QuizExerciseRepository quizExerciseRepository;
+
+    @Autowired
+    ExamQuizService examQuizService;
+
+    @Autowired
+    QuizSubmissionRepository quizSubmissionRepository;
 
     @Autowired
     ObjectMapper objectMapper;
@@ -916,73 +926,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     assertVersionedSubmission(textSubmission);
                 }
                 else if (exercise instanceof QuizExercise) {
-                    // check that the submission was saved and that a submitted version was created
-                    var quizSubmission = (QuizSubmission) submission;
-                    int dragAndDropDragItemIndex = 1;
-                    int dragAndDropLocationIndex = 2;
-                    String shortAnswerText = "New Short Answer Text";
-                    int shortAnswerSpotIndex = 1;
-                    int multipleChoiceSelectedOptionIndex = 0;
-                    ((QuizExercise) exercise).getQuizQuestions().forEach(quizQuestion -> {
-                        if (quizQuestion instanceof DragAndDropQuestion) {
-                            DragAndDropSubmittedAnswer dndSubmittedAnswer = new DragAndDropSubmittedAnswer();
-                            DragAndDropMapping dndMapping = new DragAndDropMapping();
-                            dndMapping.setDragItemIndex(dragAndDropDragItemIndex);
-                            dndMapping.setDropLocationIndex(dragAndDropLocationIndex);
-                            dndSubmittedAnswer.getMappings().add(dndMapping);
-                            quizSubmission.getSubmittedAnswers().add(dndSubmittedAnswer);
-                        }
-                        else if (quizQuestion instanceof ShortAnswerQuestion) {
-                            ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
-                            ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
-                            shortAnswerSubmittedText.setText(shortAnswerText);
-                            shortAnswerSubmittedText.setSpot(((ShortAnswerQuestion) quizQuestion).getSpots().get(shortAnswerSpotIndex));
-                            shortAnswerSubmittedAnswer.getSubmittedTexts().add(shortAnswerSubmittedText);
-                            quizSubmission.getSubmittedAnswers().add(shortAnswerSubmittedAnswer);
-                        }
-                        else if (quizQuestion instanceof MultipleChoiceQuestion) {
-                            var answerOptions = ((MultipleChoiceQuestion) quizQuestion).getAnswerOptions();
-                            MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
-                            multipleChoiceSubmittedAnswer.addSelectedOptions(answerOptions.get(multipleChoiceSelectedOptionIndex));
-                            quizSubmission.getSubmittedAnswers().add(multipleChoiceSubmittedAnswer);
-                        }
-                    });
-                    QuizSubmission savedQuizSubmission = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/submissions/exam", quizSubmission,
-                            QuizSubmission.class, HttpStatus.OK);
-                    // check the submission
-                    assertThat(savedQuizSubmission.getSubmittedAnswers()).isNotNull();
-                    assertThat(savedQuizSubmission.getSubmittedAnswers().size()).isGreaterThan(0);
-                    ((QuizExercise) exercise).getQuizQuestions().forEach(quizQuestion -> {
-                        SubmittedAnswer submittedAnswer = savedQuizSubmission.getSubmittedAnswerForQuestion(quizQuestion);
-                        if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
-                            var multipleChoiceSubmittedAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
-                            assertThat(multipleChoiceSubmittedAnswer.getSelectedOptions()).isNotNull();
-                            assertThat(multipleChoiceSubmittedAnswer.getSelectedOptions().size()).isGreaterThan(0);
-                            assertThat(multipleChoiceSubmittedAnswer.getSelectedOptions().iterator().next()).isNotNull();
-                            assertThat(multipleChoiceSubmittedAnswer.getSelectedOptions().iterator().next())
-                                    .isEqualTo(((MultipleChoiceQuestion) quizQuestion).getAnswerOptions().get(multipleChoiceSelectedOptionIndex));
-                        }
-                        else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
-                            var shortAnswerSubmittedAnswer = (ShortAnswerSubmittedAnswer) submittedAnswer;
-                            assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts()).isNotNull();
-                            assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts().size()).isGreaterThan(0);
-                            assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts().iterator().next()).isNotNull();
-                            assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts().iterator().next().getText()).isEqualTo(shortAnswerText);
-                            assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts().iterator().next().getSpot())
-                                    .isEqualTo(((ShortAnswerQuestion) quizQuestion).getSpots().get(shortAnswerSpotIndex));
-                        }
-                        else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
-                            var dragAndDropSubmittedAnswer = (DragAndDropSubmittedAnswer) submittedAnswer;
-                            assertThat(dragAndDropSubmittedAnswer.getMappings()).isNotNull();
-                            assertThat(dragAndDropSubmittedAnswer.getMappings().size()).isGreaterThan(0);
-                            assertThat(dragAndDropSubmittedAnswer.getMappings().iterator().next()).isNotNull();
-                            assertThat(dragAndDropSubmittedAnswer.getMappings().iterator().next().getDragItem())
-                                    .isEqualTo(((DragAndDropQuestion) quizQuestion).getDragItems().get(dragAndDropDragItemIndex));
-                            assertThat(dragAndDropSubmittedAnswer.getMappings().iterator().next().getDropLocation())
-                                    .isEqualTo(((DragAndDropQuestion) quizQuestion).getDropLocations().get(dragAndDropLocationIndex));
-                        }
-                    });
-                    assertVersionedSubmission(quizSubmission);
+                    submitQuizInExam((QuizExercise) exercise, (QuizSubmission) submission);
                 }
             }
 
@@ -1073,6 +1017,76 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(studentExamsAfterFinish).hasSize(studentExamsAfterStart.size());
 
         deleteExam1WithInstructor();
+    }
+
+    private void submitQuizInExam(QuizExercise quizExercise, QuizSubmission quizSubmission) throws Exception {
+        // check that the submission was saved and that a submitted version was created
+        int dndDragItemIndex = 1;
+        int dndLocationIndex = 2;
+        String shortAnswerText = "New Short Answer Text";
+        int saSpotIndex = 1;
+        int mcSelectedOptionIndex = 0;
+        quizExercise.getQuizQuestions().forEach(quizQuestion -> {
+            if (quizQuestion instanceof DragAndDropQuestion) {
+                var submittedAnswer = new DragAndDropSubmittedAnswer();
+                DragAndDropMapping dndMapping = new DragAndDropMapping();
+                dndMapping.setDragItemIndex(dndDragItemIndex);
+                dndMapping.setDragItem(((DragAndDropQuestion) quizQuestion).getDragItems().get(dndDragItemIndex));
+                dndMapping.setDropLocationIndex(dndLocationIndex);
+                dndMapping.setDropLocation(((DragAndDropQuestion) quizQuestion).getDropLocations().get(dndLocationIndex));
+                submittedAnswer.getMappings().add(dndMapping);
+                submittedAnswer.setQuizQuestion(quizQuestion);
+                quizSubmission.getSubmittedAnswers().add(submittedAnswer);
+            }
+            else if (quizQuestion instanceof ShortAnswerQuestion) {
+                var submittedAnswer = new ShortAnswerSubmittedAnswer();
+                ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
+                shortAnswerSubmittedText.setText(shortAnswerText);
+                shortAnswerSubmittedText.setSpot(((ShortAnswerQuestion) quizQuestion).getSpots().get(saSpotIndex));
+                submittedAnswer.getSubmittedTexts().add(shortAnswerSubmittedText);
+                submittedAnswer.setQuizQuestion(quizQuestion);
+                quizSubmission.getSubmittedAnswers().add(submittedAnswer);
+            }
+            else if (quizQuestion instanceof MultipleChoiceQuestion) {
+                var answerOptions = ((MultipleChoiceQuestion) quizQuestion).getAnswerOptions();
+                var submittedAnswer = new MultipleChoiceSubmittedAnswer();
+                submittedAnswer.addSelectedOptions(answerOptions.get(mcSelectedOptionIndex));
+                submittedAnswer.setQuizQuestion(quizQuestion);
+                quizSubmission.getSubmittedAnswers().add(submittedAnswer);
+            }
+        });
+        QuizSubmission savedQuizSubmission = request.putWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, QuizSubmission.class,
+                HttpStatus.OK);
+        // check the submission
+        assertThat(savedQuizSubmission.getSubmittedAnswers()).isNotNull();
+        assertThat(savedQuizSubmission.getSubmittedAnswers().size()).isGreaterThan(0);
+        quizExercise.getQuizQuestions().forEach(quizQuestion -> {
+            SubmittedAnswer submittedAnswer = savedQuizSubmission.getSubmittedAnswerForQuestion(quizQuestion);
+            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
+                var answer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
+                assertThat(answer.getSelectedOptions()).isNotNull();
+                assertThat(answer.getSelectedOptions().size()).isGreaterThan(0);
+                assertThat(answer.getSelectedOptions().iterator().next()).isNotNull();
+                assertThat(answer.getSelectedOptions().iterator().next()).isEqualTo(((MultipleChoiceQuestion) quizQuestion).getAnswerOptions().get(mcSelectedOptionIndex));
+            }
+            else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+                var answer = (ShortAnswerSubmittedAnswer) submittedAnswer;
+                assertThat(answer.getSubmittedTexts()).isNotNull();
+                assertThat(answer.getSubmittedTexts().size()).isGreaterThan(0);
+                assertThat(answer.getSubmittedTexts().iterator().next()).isNotNull();
+                assertThat(answer.getSubmittedTexts().iterator().next().getText()).isEqualTo(shortAnswerText);
+                assertThat(answer.getSubmittedTexts().iterator().next().getSpot()).isEqualTo(((ShortAnswerQuestion) quizQuestion).getSpots().get(saSpotIndex));
+            }
+            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+                var answer = (DragAndDropSubmittedAnswer) submittedAnswer;
+                assertThat(answer.getMappings()).isNotNull();
+                assertThat(answer.getMappings().size()).isGreaterThan(0);
+                assertThat(answer.getMappings().iterator().next()).isNotNull();
+                assertThat(answer.getMappings().iterator().next().getDragItem()).isEqualTo(((DragAndDropQuestion) quizQuestion).getDragItems().get(dndDragItemIndex));
+                assertThat(answer.getMappings().iterator().next().getDropLocation()).isEqualTo(((DragAndDropQuestion) quizQuestion).getDropLocations().get(dndLocationIndex));
+            }
+        });
+        assertVersionedSubmission(quizSubmission);
     }
 
     private void assertVersionedSubmission(Submission submission) {
@@ -1299,44 +1313,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 request.put("/api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
             }
             else if (exercise instanceof QuizExercise) {
-                // check that the submission was saved and that a submitted version was created
-                var quizSubmission = (QuizSubmission) submission;
-                int dragAndDropDragItemIndex = 1;
-                int dragAndDropLocationIndex = 2;
-                String shortAnswerText = "New Short Answer Text";
-                int shortAnswerSpotIndex = 1;
-                int multipleChoiceSelectedOptionIndex = 0;
-                ((QuizExercise) exercise).getQuizQuestions().forEach(quizQuestion -> {
-                    if (quizQuestion instanceof DragAndDropQuestion) {
-                        DragAndDropSubmittedAnswer dndSubmittedAnswer = new DragAndDropSubmittedAnswer();
-                        DragAndDropMapping dndMapping = new DragAndDropMapping();
-                        dndMapping.setDragItemIndex(dragAndDropDragItemIndex);
-                        dndMapping.setDropLocationIndex(dragAndDropLocationIndex);
-                        dndMapping.setDropLocation(((DragAndDropQuestion) quizQuestion).getDropLocations().get(dragAndDropLocationIndex - 1));
-                        dndSubmittedAnswer.getMappings().add(dndMapping);
-                        dndSubmittedAnswer.setQuizQuestion(quizQuestion);
-                        quizSubmission.getSubmittedAnswers().add(dndSubmittedAnswer);
-                    }
-                    else if (quizQuestion instanceof ShortAnswerQuestion) {
-                        ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
-                        ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
-                        shortAnswerSubmittedText.setText(shortAnswerText);
-                        shortAnswerSubmittedText.setSpot(((ShortAnswerQuestion) quizQuestion).getSpots().get(shortAnswerSpotIndex));
-                        shortAnswerSubmittedAnswer.getSubmittedTexts().add(shortAnswerSubmittedText);
-                        shortAnswerSubmittedAnswer.setQuizQuestion(quizQuestion);
-                        quizSubmission.getSubmittedAnswers().add(shortAnswerSubmittedAnswer);
-                    }
-                    else if (quizQuestion instanceof MultipleChoiceQuestion) {
-                        var answerOptions = ((MultipleChoiceQuestion) quizQuestion).getAnswerOptions();
-                        MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
-                        multipleChoiceSubmittedAnswer.addSelectedOptions(answerOptions.get(multipleChoiceSelectedOptionIndex));
-                        multipleChoiceSubmittedAnswer.setQuizQuestion(quizQuestion);
-                        multipleChoiceSubmittedAnswer.setQuizQuestion(quizQuestion);
-                        quizSubmission.getSubmittedAnswers().add(multipleChoiceSubmittedAnswer);
-                    }
-
-                });
-                request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/submissions/exam", quizSubmission, QuizSubmission.class, HttpStatus.OK);
+                submitQuizInExam((QuizExercise) exercise, (QuizSubmission) submission);
             }
         }
         return studentExam;
@@ -1514,9 +1491,61 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testSubmitTestRun() throws Exception {
         var testRun = createTestRun();
         database.changeUser("instructor1");
-        // TODO: see testSubmitStudentExam_realistic how to add submissions so that the quiz evaluation actually takes place
-        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/submit", testRun, HttpStatus.OK, null);
-        // TODO: make sure the quiz was evaluated
+        var testRunResponse = request.get("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-run/" + testRun.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
+
+        QuizExercise quizExercise = null;
+        QuizSubmission quizSubmission = null;
+
+        for (var exercise : testRunResponse.getExercises()) {
+            var participation = exercise.getStudentParticipations().iterator().next();
+            var submission = participation.getSubmissions().iterator().next();
+            if (exercise instanceof QuizExercise) {
+                quizExercise = (QuizExercise) exercise;
+                quizSubmission = (QuizSubmission) submission;
+                submitQuizInExam(quizExercise, quizSubmission);
+            }
+        }
+
+        assertThat(quizExercise).isNotNull();
+        testRunResponse = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/submit", testRunResponse,
+                StudentExam.class, HttpStatus.OK, null);
+        checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
+
+        // reconnect references so that the following method works
+        testRunResponse.getExercises().forEach(exercise -> exercise.getStudentParticipations().forEach(studentParticipation -> studentParticipation.setExercise(exercise)));
+        // invoke a second time to test the else case in this method
+        SecurityUtils.setAuthorizationObject();
+        examQuizService.evaluateQuizParticipationsForTestRun(testRunResponse);
+        // make sure that no second result is created
+        checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
+    }
+
+    private void checkQuizSubmission(long quizExerciseId, long quizSubmissionId) {
+
+        assertThat(quizSubmissionRepository.count()).isEqualTo(1);
+
+        List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExerciseId);
+        assertThat(results.size()).isEqualTo(1);
+        var result = results.get(0);
+        assertThat(result.getSubmission().getId()).isEqualTo(quizSubmissionId);
+
+        assertThat(result.getResultString()).isEqualTo("4 of 9 points");
+        var resultQuizSubmission = (QuizSubmission) result.getSubmission();
+        assertThat(resultQuizSubmission.getScoreInPoints()).isEqualTo(4D);
+        var submittedAnswers = resultQuizSubmission.getSubmittedAnswers();
+        for (SubmittedAnswer submittedAnswer : submittedAnswers) {
+            // MC submitted answers 0 points as one correct and one false -> ALL_OR_NOTHING
+            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
+                assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(4D);
+            } // DND submitted answers 0 points as one correct and two false -> PROPORTIONAL_WITH_PENALTY
+            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+                assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(0D);
+            } // SA submitted answers 0 points as one correct and one false -> PROPORTIONAL_WITHOUT_PENALTY
+            else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+                assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(0D);
+            }
+        }
     }
 
     @Test
