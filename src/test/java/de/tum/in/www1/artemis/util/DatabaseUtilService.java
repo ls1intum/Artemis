@@ -960,7 +960,7 @@ public class DatabaseUtilService {
         return exam;
     }
 
-    public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise) {
+    public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise, boolean withQuizExercise) {
         ModelFactory.generateExerciseGroup(true, initialExam); // text
         ModelFactory.generateExerciseGroup(true, initialExam); // modeling
         initialExam.setNumberOfExercisesInExam(2);
@@ -992,6 +992,17 @@ public class DatabaseUtilService {
             addTemplateParticipationForProgrammingExercise(programmingExercise1);
             addSolutionParticipationForProgrammingExercise(programmingExercise1);
             exerciseGroup2.setExercises(Set.of(programmingExercise1));
+        }
+
+        if (withQuizExercise) {
+            ModelFactory.generateExerciseGroup(true, exam); // modeling
+            exam.setNumberOfExercisesInExam(3 + (withProgrammingExercise ? 1 : 0));
+            exam = examRepository.save(exam);
+            var exerciseGroup3 = exam.getExerciseGroups().get(2 + (withProgrammingExercise ? 1 : 0));
+            // Programming exercises need a proper setup for 'prepare exam start' to work
+            QuizExercise quizExercise = createQuizForExam(exerciseGroup3);
+            exerciseRepo.save(quizExercise);
+            exerciseGroup3.setExercises(Set.of(quizExercise));
         }
         return exam;
     }
@@ -2249,6 +2260,9 @@ public class DatabaseUtilService {
             DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
             dragItem2.setQuestion((DragAndDropQuestion) question);
             System.out.println(dragItem2.toString());
+            DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
+            dragItem3.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem3.toString());
 
             DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
             dropLocation1.setQuestion((DragAndDropQuestion) question);
@@ -2256,14 +2270,19 @@ public class DatabaseUtilService {
             DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
             dropLocation2.setQuestion((DragAndDropQuestion) question);
             System.out.println(dropLocation2.toString());
+            DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
+            dropLocation3.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation3.toString());
 
             if (correct) {
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3));
             }
             else {
-                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation1));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation3));
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation2));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation1));
             }
 
             return submittedAnswer;
@@ -2281,6 +2300,70 @@ public class DatabaseUtilService {
                 }
                 else {
                     submittedText.setText(correctText.toUpperCase());
+                }
+                submittedAnswer.addSubmittedTexts(submittedText);
+                // also invoke remove once
+                submittedAnswer.removeSubmittedTexts(submittedText);
+                submittedAnswer.addSubmittedTexts(submittedText);
+            }
+            return submittedAnswer;
+        }
+        return null;
+    }
+
+    public SubmittedAnswer generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(QuizQuestion question) {
+        if (question instanceof MultipleChoiceQuestion) {
+            var submittedAnswer = new MultipleChoiceSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            for (var answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
+                submittedAnswer.addSelectedOptions(answerOption);
+            }
+            return submittedAnswer;
+        }
+        else if (question instanceof DragAndDropQuestion) {
+            var submittedAnswer = new DragAndDropSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().get(0);
+            dragItem1.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem1.toString());
+            DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
+            dragItem2.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem2.toString());
+            DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
+            dragItem3.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem3.toString());
+
+            DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
+            dropLocation1.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation1.toString());
+            DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
+            dropLocation2.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation2.toString());
+            DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
+            dropLocation3.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation3.toString());
+
+            submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
+            submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation3));
+            submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation2));
+
+            return submittedAnswer;
+        }
+        else if (question instanceof ShortAnswerQuestion) {
+            var submittedAnswer = new ShortAnswerSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            for (var spot : ((ShortAnswerQuestion) question).getSpots()) {
+                ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
+                submittedText.setSpot(spot);
+                var correctText = ((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText();
+                if (spot.getSpotNr() == 2) {
+                    submittedText.setText(correctText);
+                }
+                else {
+                    submittedText.setText("wrong submitted text");
                 }
                 submittedAnswer.addSubmittedTexts(submittedText);
                 // also invoke remove once
@@ -2317,7 +2400,7 @@ public class DatabaseUtilService {
     @NotNull
     public ShortAnswerQuestion createShortAnswerQuestion() {
         ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(2).text("This is a long answer text");
-        sa.setScoringType(ScoringType.ALL_OR_NOTHING);
+        sa.setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
         // TODO: we should test different values here
         sa.setMatchLetterCase(true);
         sa.setSimilarityValue(100);
@@ -2376,22 +2459,28 @@ public class DatabaseUtilService {
         dropLocation1.setTempID(generateTempId());
         var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
         dropLocation2.setTempID(generateTempId());
+        var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
+        dropLocation3.setTempID(generateTempId());
         dnd.addDropLocation(dropLocation1);
         // also invoke remove once
         dnd.removeDropLocation(dropLocation1);
         dnd.addDropLocation(dropLocation1);
         dnd.addDropLocation(dropLocation2);
+        dnd.addDropLocation(dropLocation3);
 
         var dragItem1 = new DragItem().text("D1");
         dragItem1.setTempID(generateTempId());
         var dragItem2 = new DragItem().text("D2");
         dragItem2.setTempID(generateTempId());
+        var dragItem3 = new DragItem().text("D3");
+        dragItem3.setTempID(generateTempId());
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
         // also invoke remove once
         dnd.removeDragItem(dragItem1);
         dnd.addDragItem(dragItem1);
         dnd.addDragItem(dragItem2);
+        dnd.addDragItem(dragItem3);
 
         var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
         dragItem1.addMappings(mapping1);
@@ -2405,6 +2494,8 @@ public class DatabaseUtilService {
         dnd.addCorrectMapping(mapping1);
         var mapping2 = new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2);
         dnd.addCorrectMapping(mapping2);
+        var mapping3 = new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3);
+        dnd.addCorrectMapping(mapping3);
         dnd.setExplanation("Explanation");
         // invoke some util methods
         System.out.println("DnD: " + dnd.toString());

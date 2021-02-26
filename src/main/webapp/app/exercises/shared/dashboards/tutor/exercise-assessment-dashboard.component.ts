@@ -57,6 +57,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     // TODO fix tutorLeaderboard and side panel for exam exercises
     isExamMode = false;
     isTestRun = false;
+    isAtLeastInstructor = false;
 
     statsForDashboard = new StatsForDashboard();
 
@@ -169,6 +170,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
                 this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.gradingInstructions);
                 this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
+                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.exercise);
 
                 switch (this.exercise.type) {
                     case ExerciseType.TEXT:

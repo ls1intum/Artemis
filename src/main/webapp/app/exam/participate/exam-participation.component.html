@@ -1,4 +1,4 @@
-<jhi-test-run-ribbon *ngIf="!!testRunId"></jhi-test-run-ribbon>
+<jhi-test-run-ribbon id="testRunRibbon" *ngIf="!!testRunId"></jhi-test-run-ribbon>
 <ng-container *ngIf="exam">
     <jhi-exam-participation-cover
         *ngIf="isVisible() && !isGracePeriodOver() && !this.studentExam?.submitted && !examStartConfirmed"
@@ -41,7 +41,6 @@
                                     *ngSwitchCase="FILEUPLOAD"
                                     [exercise]="exercise"
                                     [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
-                                    (onExerciseChanged)="saveFileUpload($event)"
                                 ></jhi-file-upload-submission-exam>
                                 <jhi-text-editor-exam
                                     *ngSwitchCase="TEXT"

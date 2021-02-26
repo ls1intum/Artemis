@@ -15,6 +15,10 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategy;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyDragAndDropAllOrNothing;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyDragAndDropProportionalWithPenalty;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyDragAndDropProportionalWithoutPenalty;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -414,6 +418,20 @@ public class DragAndDropQuestion extends QuizQuestion {
     public void filterForStatisticWebsocket() {
         super.filterForStatisticWebsocket();
         setCorrectMappings(null);
+    }
+
+    /**
+     * creates an instance of ScoringStrategy with the appropriate type for the given drag and drop question (based on polymorphism)
+     *
+     * @return an instance of the appropriate implementation of ScoringStrategy
+     */
+    @Override
+    public ScoringStrategy makeScoringStrategy() {
+        return switch (getScoringType()) {
+            case ALL_OR_NOTHING -> new ScoringStrategyDragAndDropAllOrNothing();
+            case PROPORTIONAL_WITH_PENALTY -> new ScoringStrategyDragAndDropProportionalWithPenalty();
+            case PROPORTIONAL_WITHOUT_PENALTY -> new ScoringStrategyDragAndDropProportionalWithoutPenalty();
+        };
     }
 
     @Override

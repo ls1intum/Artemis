@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -95,6 +94,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private Exam exam2;
 
+    private Exam testRunExam;
+
     private StudentExam studentExam1;
 
     private final List<LocalRepository> studentRepos = new ArrayList<>();
@@ -131,9 +132,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testFindOne() {
-        assertThrows(EntityNotFoundException.class, () -> {
-            studentExamRepository.findByIdElseThrow(Long.MAX_VALUE);
-        });
+        assertThrows(EntityNotFoundException.class, () -> studentExamRepository.findByIdElseThrow(Long.MAX_VALUE));
         assertThat(studentExamRepository.findByIdElseThrow(studentExam1.getId())).isEqualTo(studentExam1);
     }
 
@@ -157,9 +156,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testFindMaxWorkingTimeById() {
-        assertThrows(EntityNotFoundException.class, () -> {
-            studentExamService.findMaxWorkingTimeByExamId(Long.MAX_VALUE);
-        });
+        assertThrows(EntityNotFoundException.class, () -> studentExamService.findMaxWorkingTimeByExamId(Long.MAX_VALUE));
         assertThat(studentExamService.findMaxWorkingTimeByExamId(exam1.getId())).isEqualTo(studentExam1.getWorkingTime());
     }
 
@@ -346,7 +343,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         course2 = database.addEmptyCourse();
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true);
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true, false);
         final var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         assertThat(testRun.isTestRun()).isTrue();
 
@@ -372,7 +369,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         course2 = database.addEmptyCourse();
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true);
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true, false);
         database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor2, exam.getExerciseGroups());
 
@@ -389,11 +386,11 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false);
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         List<Submission> response = request.getList("/api/exercises/" + testRun.getExercises().get(0).getId() + "/test-run-submissions", HttpStatus.OK, Submission.class);
         assertThat(response).isNotEmpty();
-        assertThat(((StudentParticipation) response.get(0).getParticipation()).isTestRun()).isTrue();
+        assertThat((response.get(0).getParticipation()).isTestRun()).isTrue();
     }
 
     @Test
@@ -413,7 +410,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false);
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         database.changeUser("student2");
         request.getList("/api/exercises/" + testRun.getExercises().get(0).getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
@@ -427,7 +424,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false);
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         final var latestSubmissions = request.getList("/api/exercises/" + exam.getExerciseGroups().get(0).getExercises().iterator().next().getId() + "/test-run-submissions",
                 HttpStatus.OK, Submission.class);
         assertThat(latestSubmissions).isEmpty();
@@ -1425,7 +1422,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testDeleteTestRun() throws Exception {
         var instructor = database.getUserByLogin("instructor1");
         var exam = database.addExam(course1);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);
     }
@@ -1435,7 +1432,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testDeleteTestRunWithReferencedParticipationsDeleteOneParticipation() throws Exception {
         var instructor = database.getUserByLogin("instructor1");
         var exam = database.addExam(course1);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var testRun1 = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         var testRun2 = new StudentExam();
         testRun2.setTestRun(true);
@@ -1456,7 +1453,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testDeleteTestRunWithReferencedParticipationsDeleteNoParticipation() throws Exception {
         var instructor = database.getUserByLogin("instructor1");
         var exam = database.addExam(course1);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var testRun1 = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         var testRun2 = new StudentExam();
         testRun2.setTestRun(true);
@@ -1483,23 +1480,42 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateTestRun() throws Exception {
-        var instructor = database.getUserByLogin("instructor1");
-        StudentExam testRunConfiguration = new StudentExam();
-        testRunConfiguration.setExercises(new ArrayList<>());
-        var exam = database.addExam(course1);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
-        exam.getExerciseGroups().forEach(exerciseGroup -> testRunConfiguration.getExercises().add(exerciseGroup.getExercises().iterator().next()));
-        testRunConfiguration.setExam(exam);
-        testRunConfiguration.setWorkingTime(6000);
-        testRunConfiguration.setUser(instructor);
+        createTestRun();
+    }
 
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/test-run", testRunConfiguration, StudentExam.class, HttpStatus.OK);
-        SecurityUtils.setAuthorizationObject();
-        var testRuns = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
-        assertThat(testRuns.size()).isEqualTo(1);
-        var testRun = testRuns.get(0);
-        assertThat(testRun.isTestRun()).isEqualTo(true);
-        assertThat(testRun.getWorkingTime()).isEqualTo(6000);
-        assertThat(testRun.getUser()).isEqualTo(instructor);
+    /**
+     * the server invokes SecurityUtils.setAuthorizationObject() so after invoking this method you need to "login" the user again
+     * @return the created test run
+     * @throws Exception if errors occur
+     */
+    private StudentExam createTestRun() throws Exception {
+        var instructor = database.getUserByLogin("instructor1");
+        StudentExam testRun = new StudentExam();
+        testRun.setExercises(new ArrayList<>());
+        testRunExam = database.addExam(course1);
+        testRunExam = database.addTextModelingProgrammingExercisesToExam(testRunExam, false, true);
+        testRunExam.getExerciseGroups().forEach(exerciseGroup -> testRun.getExercises().add(exerciseGroup.getExercises().iterator().next()));
+        testRun.setExam(testRunExam);
+        testRun.setWorkingTime(6000);
+        testRun.setUser(instructor);
+
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-run", testRun, StudentExam.class, HttpStatus.OK);
+        var testRunsInDb = studentExamRepository.findAllByExamId_AndTestRunIsTrue(testRunExam.getId());
+        assertThat(testRunsInDb.size()).isEqualTo(1);
+        var testRunInDb = testRunsInDb.get(0);
+        assertThat(testRunInDb.isTestRun()).isEqualTo(true);
+        assertThat(testRunInDb.getWorkingTime()).isEqualTo(6000);
+        assertThat(testRunInDb.getUser()).isEqualTo(instructor);
+        return testRunInDb;
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSubmitTestRun() throws Exception {
+        var testRun = createTestRun();
+        database.changeUser("instructor1");
+        // TODO: see testSubmitStudentExam_realistic how to add submissions so that the quiz evaluation actually takes place
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/submit", testRun, HttpStatus.OK, null);
+        // TODO: make sure the quiz was evaluated
     }
 }

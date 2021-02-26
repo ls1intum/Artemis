@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
@@ -45,13 +45,13 @@ public class CourseExportService {
 
     private final ModelingSubmissionExportService modelingSubmissionExportService;
 
-    private final ExamService examService;
+    private final ExamRepository examRepository;
 
     private final WebsocketMessagingService websocketMessagingService;
 
     public CourseExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
             CourseRepository courseRepository, FileUploadSubmissionExportService fileUploadSubmissionExportService, TextSubmissionExportService textSubmissionExportService,
-            ModelingSubmissionExportService modelingSubmissionExportService, WebsocketMessagingService websocketMessagingService, ExamService examService) {
+            ModelingSubmissionExportService modelingSubmissionExportService, WebsocketMessagingService websocketMessagingService, ExamRepository examRepository) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
         this.fileService = fileService;
@@ -60,7 +60,7 @@ public class CourseExportService {
         this.textSubmissionExportService = textSubmissionExportService;
         this.modelingSubmissionExportService = modelingSubmissionExportService;
         this.websocketMessagingService = websocketMessagingService;
-        this.examService = examService;
+        this.examRepository = examRepository;
     }
 
     /**
@@ -82,9 +82,7 @@ public class CourseExportService {
             Files.createDirectories(courseDirPath);
         }
         catch (IOException e) {
-            var error = "Failed to export course " + course.getId() + " because the temporary directory: " + courseDirPath + " cannot be created.";
-            exportErrors.add(error);
-            log.info(error);
+            logMessageAndAppendToList("Failed to export course " + course.getId() + " because the temporary directory: " + courseDirPath + " cannot be created.", exportErrors);
             return Optional.empty();
         }
 
@@ -100,9 +98,7 @@ public class CourseExportService {
             return exportedCoursePath;
         }
         catch (Exception e) {
-            var error = "Failed to export the entire course " + course.getTitle();
-            exportErrors.add(error);
-            log.info(error);
+            logMessageAndAppendToList("Failed to export the entire course " + course.getTitle(), exportErrors);
             return Optional.empty();
         }
         finally {
@@ -125,9 +121,7 @@ public class CourseExportService {
             exportExercises(course.getId(), course.getExercises(), exercisesDir.toString(), exportErrors);
         }
         catch (IOException e) {
-            var error = "Failed to create course exercise directory" + exercisesDir + ".";
-            log.info(error);
-            exportErrors.add(error);
+            logMessageAndAppendToList("Failed to create course exercise directory" + exercisesDir + ".", exportErrors);
         }
     }
 
@@ -151,15 +145,11 @@ public class CourseExportService {
                 exams.forEach(exam -> exportExam(exam.getId(), examsDir.toString(), exportErrors));
             }
             else {
-                var error = "Failed to export exams of course " + course.getId() + " because the course doesn't exist.";
-                log.info(error);
-                exportErrors.add(error);
+                logMessageAndAppendToList("Failed to export exams of course " + course.getId() + " because the course doesn't exist.", exportErrors);
             }
         }
         catch (IOException e) {
-            var error = "Failed to create course exams directory " + examsDir + ".";
-            log.info(error);
-            exportErrors.add(error);
+            logMessageAndAppendToList("Failed to create course exams directory " + examsDir + ".", exportErrors);
         }
     }
 
@@ -171,18 +161,16 @@ public class CourseExportService {
      * @param exportErrors List of failures that occurred during the export
      */
     private void exportExam(long examId, String outputDir, List<String> exportErrors) {
-        var exam = examService.findOneWithExerciseGroupsAndExercises(examId);
+        var exam = examRepository.findByIdElseThrow(examId);
         Path examDir = Path.of(outputDir, exam.getId() + "-" + exam.getTitle());
         try {
             Files.createDirectory(examDir);
             // We retrieve every exercise from each exercise group and flatten the list.
-            var exercises = examService.getAllExercisesOfExam(examId);
+            var exercises = examRepository.findAllExercisesByExamId(examId);
             exportExercises(exam.getCourse().getId(), exercises, examDir.toString(), exportErrors);
         }
         catch (IOException e) {
-            var error = "Failed to create exam directory " + examDir + ".";
-            log.info(error);
-            exportErrors.add(error);
+            logMessageAndAppendToList("Failed to create exam directory " + examDir + ".", exportErrors);
         }
     }
 
@@ -229,7 +217,7 @@ public class CourseExportService {
                     exportedSubmissionsFileOrEmpty = modelingSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions);
                 }
                 else if (exercise instanceof QuizExercise) {
-                    // TODO: Quiz submssions aren't supported yet
+                    // TODO: Quiz submissions aren't supported yet
                     return;
                 }
                 else {
@@ -238,9 +226,7 @@ public class CourseExportService {
                 }
             }
             catch (IOException e) {
-                var error = "Failed to export exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + "): " + e.getMessage();
-                log.info(error);
-                exportErrors.add(error);
+                logMessageAndAppendToList("Failed to export exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + "): " + e.getMessage(), exportErrors);
             }
 
             // Exported submissions are stored somewhere else so we move the generated zip file into the
@@ -253,9 +239,7 @@ public class CourseExportService {
                     FileUtils.deleteDirectory(Path.of(exportedSubmissionsFile.getParent()).toFile());
                 }
                 catch (IOException e) {
-                    var error = "Failed to move file " + exportedSubmissionsFile.toPath() + " to " + outputDir + ".";
-                    log.info(error);
-                    exportErrors.add(error);
+                    logMessageAndAppendToList("Failed to move file " + exportedSubmissionsFile.toPath() + " to " + outputDir + ".", exportErrors);
                 }
             }
         });
@@ -280,14 +264,17 @@ public class CourseExportService {
             return Optional.of(zippedFile);
         }
         catch (IOException e) {
-            var error = "Failed to create zip file at " + zippedFile + ".";
-            log.info(error);
-            exportErrors.add(error);
+            logMessageAndAppendToList("Failed to create zip file at " + zippedFile + ".", exportErrors);
             return Optional.empty();
         }
         finally {
             fileService.scheduleForDirectoryDeletion(courseDirPath, 1);
         }
+    }
+
+    private void logMessageAndAppendToList(String message, List<String> messageList) {
+        log.info(message);
+        messageList.add(message);
     }
 
     /***

@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -40,16 +39,16 @@ public class ComplaintService {
 
     private final UserRepository userRepository;
 
-    private final ExamService examService;
+    private final ExamRepository examRepository;
 
     public ComplaintService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository,
-            ResultService resultService, CourseRepository courseRepository, ExamService examService, UserRepository userRepository) {
+            ResultService resultService, CourseRepository courseRepository, ExamRepository examRepository, UserRepository userRepository) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
         this.resultService = resultService;
         this.courseRepository = courseRepository;
-        this.examService = examService;
+        this.examRepository = examRepository;
         this.userRepository = userRepository;
     }
 
@@ -70,7 +69,7 @@ public class ComplaintService {
         Long courseId = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
 
         if (examId.isPresent()) {
-            final Exam exam = examService.findOne(examId.getAsLong());
+            final Exam exam = examRepository.findByIdElseThrow(examId.getAsLong());
             final List<User> instructors = userRepository.getInstructors(exam.getCourse());
             boolean examTestRun = instructors.stream().anyMatch(instructor -> instructor.getLogin().equals(principal.getName()));
             if (!examTestRun && !isTimeOfComplaintValid(exam)) {

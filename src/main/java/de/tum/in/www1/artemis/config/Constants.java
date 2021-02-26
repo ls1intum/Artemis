@@ -61,8 +61,6 @@ public final class Constants {
 
     public static final String TUM_LDAP_MATRIKEL_NUMBER = "imMatrikelNr";
 
-    public static final double COMPASS_SCORE_EQUALITY_THRESHOLD = 0.0001;
-
     // NOTE: the following values for programming exercises are hard-coded at the moment
     public static final String TEST_REPO_NAME = "tests";
 
@@ -80,7 +78,7 @@ public final class Constants {
 
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
 
-    public static final long MAX_UPLOAD_FILESIZE_BYTES = 2 * 1024 * 1024; // 2 MiB
+    public static final long MAX_UPLOAD_FILESIZE_BYTES = 4 * 1024 * 1024; // 4 MB
 
     public static final String TEST_CASES_CHANGED_NOTIFICATION = "The test cases of this programming exercise were updated. The student submissions should be build and tested so that results with the updated settings can be created.";
 
@@ -145,6 +143,8 @@ public final class Constants {
     public static final String TRIGGER_INSTRUCTOR_BUILD = "TRIGGER_INSTRUCTOR_BUILD";
 
     public static final String INFO_BUILD_PLAN_URL_DETAIL = "buildPlanURLTemplate";
+
+    public static final String INFO_COMMIT_HASH_URL_DETAIL = "commitHashURLTemplate";
 
     public static final String INFO_SSH_CLONE_URL_DETAIL = "sshCloneURLTemplate";
 
