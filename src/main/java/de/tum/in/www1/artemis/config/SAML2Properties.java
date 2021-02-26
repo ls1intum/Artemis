@@ -13,9 +13,13 @@ import org.springframework.stereotype.Component;
 public class SAML2Properties {
 
     private String usernamePattern;
+
     private String firstNamePattern;
+
     private String lastNamePattern;
+
     private String emailPattern;
+
     private String registrationNumberPattern;
 
     private List<RelyingPartyProperties> identityProviders;
@@ -37,6 +41,7 @@ public class SAML2Properties {
     public void setUsernamePattern(String usernamePattern) {
         this.usernamePattern = usernamePattern;
     }
+
     /**
      * Gets the first name pattern.
      *
@@ -133,7 +138,9 @@ public class SAML2Properties {
     public static class RelyingPartyProperties {
 
         private String metadata;
+
         private String registrationId;
+
         private String entityId;
 
         /**
@@ -144,6 +151,7 @@ public class SAML2Properties {
         public String getMetadata() {
             return metadata;
         }
+
         /**
          * Gets the registration id.
          *
@@ -152,6 +160,7 @@ public class SAML2Properties {
         public String getRegistrationId() {
             return registrationId;
         }
+
         /**
          * Gets the entity id.
          *
@@ -160,6 +169,7 @@ public class SAML2Properties {
         public String getEntityId() {
             return entityId;
         }
+
         /**
          * Sets the url or path to a metadata XML config.
          *
@@ -168,6 +178,7 @@ public class SAML2Properties {
         public void setMetadata(String metadata) {
             this.metadata = metadata;
         }
+
         /**
          * Sets the registration identifier.
          *
@@ -176,6 +187,7 @@ public class SAML2Properties {
         public void setRegistrationId(String registrationId) {
             this.registrationId = registrationId;
         }
+
         /**
          * Sets the entity identifier.
          *

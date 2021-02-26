@@ -45,8 +45,7 @@ public class UserJWTController {
 
     private final Optional<SAML2Service> saml2Service;
 
-    public UserJWTController(TokenProvider tokenProvider, AuthenticationManagerBuilder authenticationManagerBuilder,
-            Optional<SAML2Service> saml2Service) {
+    public UserJWTController(TokenProvider tokenProvider, AuthenticationManagerBuilder authenticationManagerBuilder, Optional<SAML2Service> saml2Service) {
         this.tokenProvider = tokenProvider;
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.saml2Service = saml2Service;
@@ -93,9 +92,7 @@ public class UserJWTController {
 
         final boolean rememberMe = Boolean.parseBoolean(body);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null 
-            || !authentication.isAuthenticated() 
-            || !(authentication.getPrincipal() instanceof Saml2AuthenticatedPrincipal)) {
+        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof Saml2AuthenticatedPrincipal)) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
@@ -109,7 +106,6 @@ public class UserJWTController {
         httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
         return new ResponseEntity<>(new JWTToken(jwt), httpHeaders, HttpStatus.OK);
     }
-
 
     /**
      * Object to return as body in JWT Authentication.

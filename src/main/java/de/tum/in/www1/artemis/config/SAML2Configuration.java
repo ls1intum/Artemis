@@ -17,6 +17,7 @@ import org.springframework.security.saml2.provider.service.registration.RelyingP
 /**
  * This class describes the security configuration for SAML2.
  */
+// @formatter:off
 @Configuration
 @Order(1)
 @Profile("saml2")
@@ -41,7 +42,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
     @Bean
     RelyingPartyRegistrationRepository relyingPartyRegistrationRepository() {
         final List<RelyingPartyRegistration> relyingPartyRegistrations = new LinkedList<>();
-
+        // @formatter:off
         for (SAML2Properties.RelyingPartyProperties config : properties.getIdentityProviders()) {
             relyingPartyRegistrations.add(RelyingPartyRegistrations
                 .fromMetadataLocation(config.getMetadata())

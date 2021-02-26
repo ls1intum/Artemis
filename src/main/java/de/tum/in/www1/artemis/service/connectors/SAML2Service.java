@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -38,7 +37,9 @@ public class SAML2Service {
     private final Logger log = LoggerFactory.getLogger(SAML2Service.class);
 
     private final UserCreationService userCreationService;
+
     private final UserRepository userRepository;
+
     private final SAML2Properties properties;
 
     /**
@@ -48,8 +49,7 @@ public class SAML2Service {
      * @param      properties      The properties
      * @param      userCreationService The user creation service
      */
-    public SAML2Service(final UserRepository userRepository,
-            final SAML2Properties properties, final UserCreationService userCreationService) {
+    public SAML2Service(final UserRepository userRepository, final SAML2Properties properties, final UserCreationService userCreationService) {
         this.userRepository = userRepository;
         this.properties = properties;
         this.userCreationService = userCreationService;
@@ -74,9 +74,8 @@ public class SAML2Service {
             // create User
             user = Optional.of(createUser(username, principal));
         }
-        
-        auth = new UsernamePasswordAuthenticationToken(
-                 user.get().getLogin(), user.get().getPassword(), toGrantedAuthorities(user.get().getAuthorities()));
+
+        auth = new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), toGrantedAuthorities(user.get().getAuthorities()));
         return auth;
     }
 
@@ -96,10 +95,7 @@ public class SAML2Service {
     }
 
     private static Collection<GrantedAuthority> toGrantedAuthorities(final Collection<Authority> authorities) {
-        return authorities.stream()
-            .map(Authority::getName)
-            .map(SimpleGrantedAuthority::new)
-            .collect(Collectors.toSet());
+        return authorities.stream().map(Authority::getName).map(SimpleGrantedAuthority::new).collect(Collectors.toSet());
     }
 
     private static String substituteAttributes(final String input, final Saml2AuthenticatedPrincipal principal) {

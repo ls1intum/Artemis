@@ -82,7 +82,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
                 if (profileInfo.activeProfiles.includes('saml2')) {
                     this.saml2Enabled = true;
-                    this.saml2ButtonLabel = profileInfo.saml2?.["button-label"] || 'SAML2 Login';
+                    this.saml2ButtonLabel = profileInfo.saml2?.['button-label'] || 'SAML2 Login';
                 }
             }
         });

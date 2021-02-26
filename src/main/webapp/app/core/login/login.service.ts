@@ -46,10 +46,10 @@ export class LoginService {
     }
 
     /**
-     * Login the user with SAML2. 
+     * Login the user with SAML2.
      * @param callback The callback function to use (optional)
      */
-    loginSAML2(rememberMe: boolean,callback?: any) {
+    loginSAML2(rememberMe: boolean, callback?: any) {
         const cb = callback || function () {};
 
         return new Promise((resolve, reject) => {
