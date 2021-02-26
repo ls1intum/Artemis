@@ -130,7 +130,7 @@ public class CourseService {
             }
 
             // The Objects::nonNull is needed here because the relationship lecture -> lecture units is ordered and
-            // hibernate sometimes adds nulls to in the list of lecture units to keep the order
+            // hibernate sometimes adds nulls into the list of lecture units to keep the order
             List<LectureUnit> filteredLectureUnits = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(LectureUnit::isVisibleToStudents)
                     .map(LectureUnit::trimForDashboard).collect(Collectors.toList());
 

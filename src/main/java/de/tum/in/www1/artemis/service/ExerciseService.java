@@ -112,30 +112,34 @@ public class ExerciseService {
         if (exercises == null || user == null || exercises.isEmpty()) {
             return Set.of();
         }
-        List<Course> courses = exercises.stream().map(Exercise::getCourseViaExerciseGroupOrCourseMember).collect(Collectors.toList());
+        // Set is needed here to remove duplicates
+        Set<Course> courses = exercises.stream().map(Exercise::getCourseViaExerciseGroupOrCourseMember).collect(Collectors.toSet());
         if (courses.size() != 1) {
             throw new IllegalArgumentException("All exercises must be from the same course!");
         }
-        Course course = courses.get(0);
+        Course course = courses.stream().findFirst().get();
 
         Set<Exercise> exercisesUserIsAllowedToSee = new HashSet<>();
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             exercisesUserIsAllowedToSee = exercises;
         }
         else if (authCheckService.isStudentInCourse(course, user)) {
-            for (Exercise exercise : exercises) {
-                if (course.isOnlineCourse()) {
+            if (course.isOnlineCourse()) {
+                for (Exercise exercise : exercises) {
+                    if (!exercise.isVisibleToStudents()) {
+                        continue;
+                    }
                     // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
                     Optional<LtiOutcomeUrl> ltiOutcomeUrlOptional = ltiOutcomeUrlRepository.findByUserAndExercise(user, exercise);
                     if (ltiOutcomeUrlOptional.isPresent()) {
                         exercisesUserIsAllowedToSee.add(exercise);
                     }
                 }
-                else {
-                    exercisesUserIsAllowedToSee.add(exercise);
-                }
             }
-            exercisesUserIsAllowedToSee = exercisesUserIsAllowedToSee.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
+            else {
+                // disclaimer: untested syntax, something along those lines should do the job however
+                exercisesUserIsAllowedToSee.addAll(exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet()));
+            }
         }
         return exercisesUserIsAllowedToSee;
     }
@@ -155,11 +159,12 @@ public class ExerciseService {
             return new HashSet<>();
         }
         Set<Exercise> exercises = exerciseRepository.findByExerciseIdWithCategories(exerciseIds);
+        // Set is needed here to remove duplicates
         Set<Course> courses = exercises.stream().map(Exercise::getCourseViaExerciseGroupOrCourseMember).collect(Collectors.toSet());
         if (courses.size() != 1) {
             throw new IllegalArgumentException("All exercises must be from the same course!");
         }
-        Course course = exercises.stream().findFirst().get().getCourseViaExerciseGroupOrCourseMember();
+        Course course = courses.stream().findFirst().get();
         List<StudentParticipation> participationsOfUserInExercises = getAllParticipationsOfUserInExercises(user, exercises);
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         for (Exercise exercise : exercises) {
