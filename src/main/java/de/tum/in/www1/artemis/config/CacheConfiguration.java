@@ -46,7 +46,7 @@ public class CacheConfiguration {
 
     private Registration registration;
 
-    private ApplicationContext applicationContext;
+    private final ApplicationContext applicationContext;
 
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
@@ -60,19 +60,15 @@ public class CacheConfiguration {
     @Value("${spring.hazelcast.localInstances:true}")
     private boolean hazelcastLocalInstances;
 
-    public CacheConfiguration(ServerProperties serverProperties, DiscoveryClient discoveryClient) {
+    public CacheConfiguration(ServerProperties serverProperties, DiscoveryClient discoveryClient, ApplicationContext applicationContext) {
         this.serverProperties = serverProperties;
         this.discoveryClient = discoveryClient;
+        this.applicationContext = applicationContext;
     }
 
-    @Autowired(required = false)
+    @Autowired(required = false) // ok
     public void setRegistration(Registration registration) {
         this.registration = registration;
-    }
-
-    @Autowired
-    public void setApplicationContext(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
     }
 
     @PreDestroy
@@ -178,12 +174,12 @@ public class CacheConfiguration {
         config.setProperty("hazelcast.socket.client.bind.any", "false");
     }
 
-    @Autowired(required = false)
+    @Autowired(required = false) // ok
     public void setGitProperties(GitProperties gitProperties) {
         this.gitProperties = gitProperties;
     }
 
-    @Autowired(required = false)
+    @Autowired(required = false) // ok
     public void setBuildProperties(BuildProperties buildProperties) {
         this.buildProperties = buildProperties;
     }

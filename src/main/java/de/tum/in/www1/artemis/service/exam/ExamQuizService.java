@@ -18,10 +18,10 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -32,7 +32,7 @@ public class ExamQuizService {
 
     static final Logger log = LoggerFactory.getLogger(ExamQuizService.class);
 
-    private final QuizExerciseService quizExerciseService;
+    private final QuizExerciseRepository quizExerciseRepository;
 
     private final QuizStatisticService quizStatisticService;
 
@@ -45,11 +45,11 @@ public class ExamQuizService {
     private final SubmissionRepository submissionRepository;
 
     public ExamQuizService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            QuizExerciseService quizExerciseService, QuizStatisticService quizStatisticService, ResultService resultService) {
+            QuizExerciseRepository quizExerciseRepository, QuizStatisticService quizStatisticService, ResultService resultService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
-        this.quizExerciseService = quizExerciseService;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.quizStatisticService = quizStatisticService;
         this.resultService = resultService;
     }
@@ -64,7 +64,7 @@ public class ExamQuizService {
         log.info("Starting quiz evaluation for quiz " + quizExerciseId);
         // We have to load the questions and statistics so that we can evaluate and update and we also need the participations and submissions that exist for this exercise so that
         // they can be evaluated
-        var quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
+        var quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
         Set<Result> createdResults = evaluateSubmissions(quizExercise);
         log.info("Quiz evaluation for quiz {} finished after {} with {} created results", quizExercise.getId(), TimeLogUtil.formatDurationFrom(start), createdResults.size());
         quizStatisticService.updateStatistics(createdResults, quizExercise);
@@ -84,7 +84,7 @@ public class ExamQuizService {
             if (optionalExistingSubmission.isPresent()) {
                 QuizSubmission submission = (QuizSubmission) submissionRepository.findWithEagerResultAndFeedbackById(optionalExistingSubmission.get().getId())
                         .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + optionalExistingSubmission.get().getId() + "\" does not exist"));
-                participation.setExercise(quizExerciseService.findOneWithQuestions(participation.getExercise().getId()));
+                participation.setExercise(quizExerciseRepository.findOneWithQuestions(participation.getExercise().getId()));
                 Result result;
                 if (submission.getLatestResult() == null) {
                     result = new Result();
@@ -174,37 +174,38 @@ public class ExamQuizService {
                         resultExisting = true;
                         result = participation.getResults().iterator().next();
                     }
-                    // delete result from quizSubmission, to be able to set a new one
-                    if (quizSubmission.getLatestResult() != null) {
-                        resultService.deleteResultWithComplaint(quizSubmission.getLatestResult().getId());
-                    }
-                    result.setRated(true);
-                    result.setAssessmentType(AssessmentType.AUTOMATIC);
-                    result.setCompletionDate(ZonedDateTime.now());
-
-                    // set submission to calculate scores
-                    result.setSubmission(quizSubmission);
-                    // calculate scores and update result and submission accordingly
-                    quizSubmission.calculateAndUpdateScores(quizExercise);
-                    result.evaluateSubmission();
-                    // remove submission to follow save order for ordered collections
-                    result.setSubmission(null);
-
-                    // NOTE: we save participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
-                    submissionRepository.save(quizSubmission);
-                    result = resultRepository.save(result);
-
-                    // add result to participation
-                    participation.addResult(result);
-                    studentParticipationRepository.save(participation);
-
-                    // add result to submission
-                    result.setSubmission(quizSubmission);
-                    quizSubmission.addResult(result);
-                    submissionRepository.save(quizSubmission);
-
-                    // Add result so that it can be returned (and processed later)
+                    // Only create Results once after the first evaluation
                     if (!resultExisting) {
+                        // delete result from quizSubmission, to be able to set a new one
+                        if (quizSubmission.getLatestResult() != null) {
+                            resultService.deleteResultWithComplaint(quizSubmission.getLatestResult().getId());
+                        }
+                        result.setRated(true);
+                        result.setAssessmentType(AssessmentType.AUTOMATIC);
+                        result.setCompletionDate(ZonedDateTime.now());
+
+                        // set submission to calculate scores
+                        result.setSubmission(quizSubmission);
+                        // calculate scores and update result and submission accordingly
+                        quizSubmission.calculateAndUpdateScores(quizExercise);
+                        result.evaluateSubmission();
+                        // remove submission to follow save order for ordered collections
+                        result.setSubmission(null);
+
+                        // NOTE: we save participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
+                        submissionRepository.save(quizSubmission);
+                        result = resultRepository.save(result);
+
+                        // add result to participation
+                        participation.addResult(result);
+                        studentParticipationRepository.save(participation);
+
+                        // add result to submission
+                        result.setSubmission(quizSubmission);
+                        quizSubmission.addResult(result);
+                        submissionRepository.save(quizSubmission);
+
+                        // Add result so that it can be returned (and processed later)
                         createdResults.add(result);
                     }
                 }

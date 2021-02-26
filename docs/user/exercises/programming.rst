@@ -48,7 +48,7 @@ Setup
 
 The following sections describe the supported features and the process of creating a new programming exercise.
 
-.. include:: programming-exercise-setup.rst
+.. include:: programming-exercise-setup.inc
 
 Online Editor
 -------------

@@ -50,7 +50,7 @@
                 "progressUnavailable": "Die Fortschrittsberechnung ist momentan nur verfügbar für Lernziele, welche mit Aufgabeneinheiten verbunden sind.",
                 "noUnitsConnected": "Das Lernziel ist mit keinen Vorlesungseinheiten verbunden",
                 "progressExplanation": "Fortschritt: Momentan hast du <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht.",
-                "progressCourseExplanation": "Durcschnittlicher Kurs Fortschritt: Momentan hat der Kurs durchschnittlich <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht."
+                "progressCourseExplanation": "Durchschnittlicher Kurs Fortschritt: Momentan hat der Kurs durchschnittlich <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht."
             },
             "learningGoalPopover": {
                 "connectedLearningGoals": "Verbundene Lernziele",

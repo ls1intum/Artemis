@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -46,8 +47,11 @@ public class ExamRegistrationService {
 
     private final CourseRepository courseRepository;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public ExamRegistrationService(ExamRepository examRepository, UserService userService, ParticipationService participationService, UserRepository userRepository,
-            AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamService studentExamService) {
+            AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamService studentExamService,
+            StudentParticipationRepository studentParticipationRepository) {
         this.examRepository = examRepository;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -55,6 +59,7 @@ public class ExamRegistrationService {
         this.auditEventRepository = auditEventRepository;
         this.courseRepository = courseRepository;
         this.studentExamService = studentExamService;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -206,7 +211,7 @@ public class ExamRegistrationService {
 
             // Optionally delete participations and submissions
             if (deleteParticipationsAndSubmission) {
-                List<StudentParticipation> participations = participationService.findByStudentExamWithEagerSubmissionsResult(studentExam);
+                List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam);
                 for (var participation : participations) {
                     participationService.delete(participation.getId(), true, true);
                 }

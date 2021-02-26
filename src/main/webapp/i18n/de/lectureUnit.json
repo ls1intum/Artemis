@@ -16,10 +16,10 @@
         },
         "textUnit": {
             "created": "Eine neue Texteinheit erstellt",
-            "updated": "Texteinheit geupdated",
+            "updated": "Texteinheit aktualisiert",
             "tooltip": "Das ist eine Texteinheit.",
             "isolated": "Isoliert öffnen",
-            "notReleasedTooltip": "Text nur sichtbar für Tutoren und Dozenten. Veröffentlichkeitsdatum:",
+            "notReleasedTooltip": "Text nur sichtbar für Tutoren und Dozenten. Veröffentlichungsdatum:",
             "markdownHelp": "Hier kann Markdown eingegeben werden. Mehr informationen:",
             "cachedMarkdown": "Artemis fand ungespeichertes Markdown im local storage. Möchtest du es laden? Speicherdatum:",
             "createTextUnit": {
@@ -41,10 +41,10 @@
         },
         "videoUnit": {
             "created": "Eine neue Videoeinheit wurde erstellt",
-            "updated": "Videoeinheit geupdated",
+            "updated": "Videoeinheit aktualisiert",
             "tooltip": "Das ist eine Videoeinheit.",
             "description": "Beschreibung",
-            "notReleasedTooltip": "Video nur sichtbar für Tutoren und Dozenten. Veröffentlichkeitsdatum:",
+            "notReleasedTooltip": "Video nur sichtbar für Tutoren und Dozenten. Veröffentlichungsdatum:",
             "createVideoUnit": {
                 "title": "Erstelle Videoeinheit",
                 "name": "Name",
@@ -63,7 +63,7 @@
                 "urlHelperValidationError": "Automatische Formatumwandlung ist nicht möglich für diese URL"
             },
             "editVideoUnit": {
-                "title": "Bearbeite eine Videoeinheut"
+                "title": "Bearbeite eine Videoeinheit"
             },
             "delete": {
                 "question": "Willst du wirklich die Videoeinheit <strong>{{ title }}</strong> löschen?Du kannst diese Aktion nicht rückgängig machen!",
@@ -73,8 +73,8 @@
         },
         "attachmentUnit": {
             "created": "Eine neue Dateieinheit wurde erstellt",
-            "updated": "Dateieinheit bearbeitet",
-            "notReleasedTooltip": "Nur sichtbar für Tutoren und Dozenten. Veröffentlichkeitsdatum:",
+            "updated": "Dateieinheit aktualisiert",
+            "notReleasedTooltip": "Nur sichtbar für Tutoren und Dozenten. Veröffentlichungsdatum:",
             "createAttachmentUnit": {
                 "title": "Dateieinheit erstellen",
                 "name": "Name",
@@ -91,7 +91,7 @@
                 "version": "Version",
                 "fileRequiredValidationError": "Du musst eine Datei zum uploaden auswählen.",
                 "chooseFile": "Datei auswählen",
-                "fileLimitations": "Unterstützte Formate: \".png\", \".jpg\", \".jpeg\", \".svg\", \".pdf\", \".zip\". Max. Dateigrösse 10 mb"
+                "fileLimitations": "Unterstützte Formate: \".png\", \".jpg\", \".jpeg\", \".svg\", \".pdf\", \".zip\". Max. Dateigröße 10 mb"
             },
             "editAttachmentUnit": {
                 "title": "Bearbeite Dateieinheit"

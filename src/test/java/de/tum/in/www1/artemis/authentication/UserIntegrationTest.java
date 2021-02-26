@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -38,9 +37,6 @@ public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private UserRepository userRepository;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     PasswordService passwordService;
 
     @Autowired
@@ -48,8 +44,6 @@ public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     private JiraRequestMockProvider jiraRequestMockProvider;
-
-    private List<User> users;
 
     private User student;
 
@@ -61,7 +55,7 @@ public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     public void setUp() {
-        users = database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
+        List<User> users = database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
         student = users.get(0);
         users.forEach(user -> cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin()));
         jiraRequestMockProvider.enableMockingOfRequests();

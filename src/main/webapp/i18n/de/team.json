@@ -18,7 +18,7 @@
                 "students": {
                     "login": "Login",
                     "name": "Name",
-                    "email": "Email"
+                    "email": "E-Mail"
                 },
                 "noOwner": "Kein Tutor",
                 "participationsTable": {
@@ -73,7 +73,7 @@
                 "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen.",
                 "noResults": "Keine Tutoren im Kurs gefunden für Suche:"
             },
-            "teamSizeNote": "Empfohlene Team-Größe:",
+            "teamSizeNote": "Empfohlene Teamgröße:",
             "teamSizeUnit": "Studenten",
             "ignoreTeamSizeRecommendation": "Fortfahren gegen Empfehlung",
             "createTeam": {
@@ -127,11 +127,11 @@
                             "tooltip": "Dieses Team kann ohne Probleme importiert werden."
                         },
                         "teamShortNameConflict": {
-                            "label": "Team-Kurznamen Konflikt",
+                            "label": "Team-Kurznamen-Konflikt",
                             "tooltip": "Ein Team mit dem gleichen Kurznamen existiert bereits in dieser Übung."
                         },
                         "studentConflict": {
-                            "label": "Studenten Konflikt",
+                            "label": "Studenten-Konflikt",
                             "tooltip": "Der rot markierte Student ist bereits in einem Team dieser Übung."
                         }
                     }
