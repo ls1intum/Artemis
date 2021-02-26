@@ -12,7 +12,6 @@ import { JhiAlertService } from 'ng-jhipster';
 import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonSize } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -20,7 +19,6 @@ import { ButtonSize } from 'app/shared/components/button.component';
     providers: [ArtemisDurationFromSecondsPipe],
 })
 export class StudentExamDetailComponent implements OnInit {
-    readonly ButtonSize = ButtonSize;
     courseId: number;
     studentExam: StudentExam;
     course: Course;
