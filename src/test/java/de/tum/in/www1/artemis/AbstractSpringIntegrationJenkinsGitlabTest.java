@@ -92,7 +92,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         gitlabRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise);
-        jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey);
+        jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, TEMPLATE.getName());
+        jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, SOLUTION.getName());
         jenkinsRequestMockProvider.mockTriggerBuild();
 
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
@@ -127,6 +128,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
             jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
             jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey);
             jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey);
+            jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, templateBuildPlanId);
+            jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, solutionBuildPlanId);
             jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, templateBuildPlanId);
             jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, solutionBuildPlanId);
 
@@ -139,7 +142,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         else {
             // Mocks for recreating the build plans
             jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
-            jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey);
+            jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey, TEMPLATE.getName());
+            jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey, SOLUTION.getName());
             jenkinsRequestMockProvider.mockTriggerBuild();
         }
     }

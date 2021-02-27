@@ -12,10 +12,12 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -28,13 +30,18 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Optional;
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.client.JenkinsHttpClient;
 import com.offbytwo.jenkins.model.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.JenkinsUserDTO;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Component
 @Profile("jenkins")
@@ -56,6 +63,13 @@ public class JenkinsRequestMockProvider {
 
     @Mock
     private JenkinsHttpClient jenkinsClient;
+
+    @SpyBean
+    @InjectMocks
+    private PasswordService passwordService;
+
+    @Autowired
+    private ObjectMapper mapper;
 
     public JenkinsRequestMockProvider(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -81,15 +95,52 @@ public class JenkinsRequestMockProvider {
         doNothing().when(jenkinsServer).createFolder(null, exercise.getProjectKey(), useCrumb);
     }
 
-    public void mockCreateBuildPlan(String projectKey) throws IOException {
-        JobWithDetails job = new JobWithDetails();
-        job.setClient(jenkinsClient);
-        // return null for the first call (when we check if the project exists) and the actual job for the 2nd, 3rd, 4th, ... call (when the jobs will be created)
-        doReturn(null, job, job, job, job, job, job).when(jenkinsServer).getJob(anyString());
-        doReturn(job).when(jenkinsServer).getJob(any(FolderJob.class), anyString());
-        FolderJob folderJob = new FolderJob(projectKey, projectKey);
-        doReturn(com.google.common.base.Optional.of(folderJob)).when(jenkinsServer).getFolderJob(job);
-        doNothing().when(jenkinsServer).createJob(any(FolderJob.class), anyString(), anyString(), eq(useCrumb));
+    public void mockCreateBuildPlan(String projectKey, String planKey) throws IOException {
+        var jobFolder = projectKey;
+        var job = jobFolder + "-" + planKey;
+        mockCreateJobInFolder(jobFolder, job);
+        mockGivePlanPermissions(jobFolder, job);
+        mockTriggerBuild(jobFolder, job, mock(JobWithDetails.class));
+    }
+
+    public void mockCreateJobInFolder(String jobFolder, String job) throws IOException {
+        var folderJob = new FolderJob();
+        mockGetFolderJob(jobFolder, folderJob);
+        doNothing().when(jenkinsServer).createJob(any(FolderJob.class), eq(job), anyString(), eq(useCrumb));
+    }
+
+    public void mockGivePlanPermissions(String jobFolder, String job) throws IOException {
+        // jenkinsJobService.getJobConfig(folderName, jobName)
+        mockGetJobConfig(jobFolder, job);
+
+        // jenkinsJobService.updateJob(folderName, jobName, jobConfig);
+        mockUpdateJob(jobFolder, job);
+
+        // addInstructorAndTAPermissionsToUsersForFolder(taLogins, instructorLogins, folderName);
+        mockGetFolderConfig(jobFolder);
+        doNothing().when(jenkinsServer).updateJob(eq(jobFolder), anyString(), eq(useCrumb));
+    }
+
+    private void mockGetJobConfig(String folderName, String jobName) throws IOException {
+        doReturn(new JobWithDetails()).when(jenkinsServer).getJob(folderName);
+        doReturn(Optional.of(new FolderJob())).when(jenkinsServer).getFolderJob(any(JobWithDetails.class));
+        doReturn("").when(jenkinsServer).getJobXml(any(FolderJob.class), eq(jobName));
+    }
+
+    private void mockGetFolderConfig(String folderName) throws IOException {
+        doReturn(new JobWithDetails()).when(jenkinsServer).getJob(folderName);
+        doReturn("").when(jenkinsServer).getJobXml(eq(folderName));
+    }
+
+    private void mockUpdateJob(String folderName, String jobName) throws IOException {
+        if (folderName != null && !folderName.isEmpty()) {
+            doReturn(new JobWithDetails()).when(jenkinsServer).getJob(folderName);
+            mockGetFolderJob(folderName, new FolderJob());
+            doNothing().when(jenkinsServer).updateJob(any(FolderJob.class), eq(jobName), anyString(), eq(useCrumb));
+        }
+        else {
+            doNothing().when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
+        }
     }
 
     public void mockTriggerBuild() throws IOException {
@@ -202,5 +253,103 @@ public class JenkinsRequestMockProvider {
         doReturn(buildLogResponse).when(buildWithDetails).getConsoleOutputHtml();
         return buildWithDetails;
 
+    }
+
+    public void mockUpdateUserAndGroups(String oldLogin, User user, Set<String> groupsToAdd, Set<String> groupsToRemove, List<ProgrammingExercise> exercises)
+            throws IOException, URISyntaxException {
+        if (!oldLogin.equals(user.getLogin())) {
+            mockUpdateUserLogin(oldLogin, user, exercises);
+        }
+        else {
+            mockUpdateUser(user);
+        }
+        mockRemoveUserFromGroups(groupsToRemove, exercises);
+        mockAddUsersToGroups(user.getLogin(), groupsToAdd, exercises);
+    }
+
+    private void mockUpdateUser(User user) throws URISyntaxException, JsonProcessingException {
+        mockGetUser(user.getLogin(), true);
+
+        doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
+        doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
+
+        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("user", user.getLogin(), "configSubmit").build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.FOUND));
+    }
+
+    private void mockUpdateUserLogin(String oldLogin, User user, List<ProgrammingExercise> exercises) throws IOException, URISyntaxException {
+        if (oldLogin.equals(user.getLogin())) {
+            return;
+        }
+
+        var oldUser = new User();
+        oldUser.setLogin(oldLogin);
+        oldUser.setGroups(user.getGroups());
+        mockDeleteUser(oldUser, exercises);
+        mockCreateUser(user, exercises);
+    }
+
+    public void mockDeleteUser(User user, List<ProgrammingExercise> exercises) throws IOException, URISyntaxException {
+        mockGetUser(user.getLogin(), true);
+
+        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("user", user.getLogin(), "doDelete").build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.FOUND));
+
+        mockRemoveUserFromGroups(user.getGroups(), exercises);
+    }
+
+    private void mockGetUser(String userLogin, boolean userExists) throws URISyntaxException, JsonProcessingException {
+        var jenkinsUser = new JenkinsUserDTO();
+        jenkinsUser.id = userLogin;
+
+        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("user", userLogin, "api", "json").build().toUri();
+        if (userExists) {
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
+                    .andRespond(withStatus(HttpStatus.FOUND).body(mapper.writeValueAsString(jenkinsUser)).contentType(MediaType.APPLICATION_JSON));
+        }
+        else {
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.NOT_FOUND));
+        }
+    }
+
+    private void mockRemoveUserFromGroups(Set<String> groupsToRemove, List<ProgrammingExercise> exercises) throws IOException {
+        if (groupsToRemove.isEmpty()) {
+            return;
+        }
+
+        for (ProgrammingExercise exercise : exercises) {
+            var folderName = exercise.getProjectKey();
+            mockRemovePermissionsFromUserOfFolder(folderName);
+        }
+    }
+
+    private void mockRemovePermissionsFromUserOfFolder(String folderName) throws IOException {
+        mockGetFolderConfig(folderName);
+        doNothing().when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
+    }
+
+    public void mockCreateUser(User user, List<ProgrammingExercise> exercises) throws URISyntaxException, IOException {
+        mockGetUser(user.getLogin(), false);
+
+        doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
+        doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
+
+        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("securityRealm", "createAccountByAdmin").build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.FOUND));
+
+        mockAddUsersToGroups(user.getLogin(), user.getGroups(), exercises);
+    }
+
+    private void mockAddUsersToGroups(String login, Set<String> groups, List<ProgrammingExercise> exercises) throws IOException {
+        for (ProgrammingExercise exercise : exercises) {
+            var jobName = exercise.getProjectKey();
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+
+            if (groups.contains(course.getInstructorGroupName()) || groups.contains(course.getTeachingAssistantGroupName())) {
+                // jenkinsJobPermissionsService.addPermissionsForUserToFolder
+                mockGetFolderConfig(jobName);
+                doNothing().when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
+            }
+        }
     }
 }
