@@ -53,6 +53,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -128,6 +129,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(ProgrammingExerciseSimulationService),
                 MockProvider(TeamService),
                 MockProvider(QuizExerciseService),
+                MockProvider(ProgrammingSubmissionService),
             ],
         })
             .compileComponents()
