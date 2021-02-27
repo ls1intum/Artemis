@@ -111,7 +111,8 @@ During the exam creation and configuration, you can create your exam and configu
     - You can hide tests so that they are not executed during the exam conduction. Students can not receive feedback from hidden tests during the exam conduction.
 
         .. note::
-            If you hide all tests, the students will only be able to see if their submission compiles during the conduction. Set the due date after the exam end date to achieve this effect.
+            If you hide all tests, the students will only be able to see if their submission compiles during the conduction. Set the ``Run Tests once after Due Date`` after the
+            exam end date to achieve this effect.
 
         .. figure:: instructor/configure_grading.png
             :alt: Configure Grading
@@ -174,7 +175,7 @@ During the exam creation and configuration, you can create your exam and configu
     .. note::
        If you do not press this button, the students quiz exercises will not be graded.
 
-- After the :ref:`exam conduction <exam_conduction>` ends, you can click on |assess_unsubmitted_student_exams|. This action will automatically evaluate the text and modeling exercise submissions with 0 points for the unsubmitted student exams. Additionally, empty submissions will be automatically graded with 0 points.
+- After the :ref:`exam conduction <exam_conduction>` ends, you can click on |assess_unsubmitted_student_exams|. This action will automatically evaluate all submissions with 0 points for unsubmitted student exams. Additionally, empty submissions will be automatically graded with 0 points.
 
     .. note::
         If you do not press this button, the unsubmitted student submissions and the empty submissions will appear in the assessment dashboard of the exam, which leads to unnecessary effort during grading.

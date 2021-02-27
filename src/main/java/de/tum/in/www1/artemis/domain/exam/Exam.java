@@ -28,19 +28,19 @@ public class Exam extends DomainObject {
     private String title;
 
     /**
-     * student can see the exam in the UI from {@link #visibleDate} date onwards
+     * student can see the exam in the UI from this date onwards
      */
     @Column(name = "visible_date")
     private ZonedDateTime visibleDate;
 
     /**
-     * student can start working on exam from {@link #startDate}
+     * student can start working on exam from this date onwards
      */
     @Column(name = "start_date")
     private ZonedDateTime startDate;
 
     /**
-     * student can work on exam until {@link #endDate}
+     * student can work on exam until this date
      */
     @Column(name = "end_date")
     private ZonedDateTime endDate;
@@ -83,7 +83,7 @@ public class Exam extends DomainObject {
     private Boolean randomizeExerciseOrder;
 
     /**
-     * From all exercise groups connected to the exam, {@link #numberOfExercisesInExam} are randomly
+     * From all exercise groups connected to the exam, this number of exercises is randomly
      * chosen when generating the specific exam for the {@link #registeredUsers}
      */
     @Column(name = "number_of_exercises_in_exam")
@@ -124,12 +124,6 @@ public class Exam extends DomainObject {
 
     @Transient
     private Long numberOfRegisteredUsersTransient;
-
-    @Transient
-    private Long numberOfGeneratedStudentExamsTransient;
-
-    @Transient
-    private Long numberOfTestRunsTransient;
 
     public String getTitle() {
         return title;
@@ -299,16 +293,14 @@ public class Exam extends DomainObject {
         this.exerciseGroups = exerciseGroups;
     }
 
-    public Exam addExerciseGroup(ExerciseGroup exerciseGroup) {
+    public void addExerciseGroup(ExerciseGroup exerciseGroup) {
         this.exerciseGroups.add(exerciseGroup);
         exerciseGroup.setExam(this);
-        return this;
     }
 
-    public Exam removeExerciseGroup(ExerciseGroup exerciseGroup) {
+    public void removeExerciseGroup(ExerciseGroup exerciseGroup) {
         this.exerciseGroups.remove(exerciseGroup);
         exerciseGroup.setExam(null);
-        return this;
     }
 
     public Set<StudentExam> getStudentExams() {
@@ -319,16 +311,14 @@ public class Exam extends DomainObject {
         this.studentExams = studentExams;
     }
 
-    public Exam addStudentExam(StudentExam studentExam) {
+    public void addStudentExam(StudentExam studentExam) {
         this.studentExams.add(studentExam);
         studentExam.setExam(this);
-        return this;
     }
 
-    public Exam removeStudentExam(StudentExam studentExam) {
+    public void removeStudentExam(StudentExam studentExam) {
         this.studentExams.remove(studentExam);
         studentExam.setExam(null);
-        return this;
     }
 
     public Set<User> getRegisteredUsers() {
@@ -339,38 +329,21 @@ public class Exam extends DomainObject {
         this.registeredUsers = registeredUsers;
     }
 
-    public Exam addRegisteredUser(User user) {
+    public void addRegisteredUser(User user) {
         this.registeredUsers.add(user);
-        return this;
     }
 
-    public Exam removeRegisteredUser(User user) {
+    public void removeRegisteredUser(User user) {
         this.registeredUsers.remove(user);
-        return this;
     }
 
+    // needed for Jackson
     public Long getNumberOfRegisteredUsers() {
         return this.numberOfRegisteredUsersTransient;
     }
 
     public void setNumberOfRegisteredUsers(Long numberOfRegisteredUsers) {
         this.numberOfRegisteredUsersTransient = numberOfRegisteredUsers;
-    }
-
-    public Long getNumberOfGeneratedStudentExams() {
-        return this.numberOfGeneratedStudentExamsTransient;
-    }
-
-    public void setNumberOfGeneratedStudentExams(Long numberOfGeneratedStudentExams) {
-        this.numberOfGeneratedStudentExamsTransient = numberOfGeneratedStudentExams;
-    }
-
-    public Long getNumberOfTestRuns() {
-        return this.numberOfTestRunsTransient;
-    }
-
-    public void setNumberOfTestRuns(Long numberOfTestRuns) {
-        this.numberOfTestRunsTransient = numberOfTestRuns;
     }
 
     /**
