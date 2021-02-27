@@ -11,7 +11,7 @@
             "updated": "Kurs aktualisiert mit Titel {{ param }}",
             "deleted": "Kurs gelöscht mit Titel {{ param }}",
             "delete": {
-                "question": "Soll der Kurs <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente, inklusive der Klausuren, Aufgaben sowie Repositories und Buildpläne werden gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "question": "Soll der Kurs <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente, inklusive der Klausuren, Aufgaben sowie Repositories und Build-Pläne werden gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein."
             },
             "detail": {
@@ -44,21 +44,21 @@
                 "description": "Wenn du diese Option aktivierst, können sich Studierende über Ergebnisse beschweren."
             },
             "requestMoreFeedbackEnabled": {
-                "title": "Feedback Anfragen von Studierenden aktivieren",
+                "title": "Feedbackanfragen von Studierenden aktivieren",
                 "description": "Diese Option ermöglicht den Studierenden, erneut Feedback anzufragen, ohne dabei eine Beschwerde zu nutzen. Weiteres Feedback anzufragen wird nicht auf die Anzahl der Beschwerden angerechnet, erlaubt dafür jedoch keine Veränderung der Bewertung. Standardmäßig ist diese Option aktiviert, sie kann jedoch deaktiviert werden, wenn eine Korrektur der Bewertung immer möglich sein muss."
             },
             "maxRequestMoreFeedbackTimeDays": {
-                "title": "Frist für Feedback Anfragen von Studierenden in Tagen nach dem Ergebnis",
+                "title": "Frist für Feedbackanfragen von Studierenden in Tagen nach dem Ergebnis",
                 "description": "Diese Zahl bezieht sich auf die Tage, nachdem das Ergebnis verfügbar ist (Einreichungsfrist der Bewertung oder Ergebnisdatum, je nachdem, welches später liegt). Studierende können nach Ablauf dieser Frist nicht mehr Feedback anfragen."
             },
             "customizeGroupNames": {
-                "title": "Passe Gruppen Namen an",
+                "title": "Passe Gruppennamen an",
                 "description": "Stelle sicher, dass die Gruppen in der externen Nutzerverwaltung existieren, wenn du diese Option aktivierst. Die Gruppen werden dann nicht automatisch erzeugt."
             },
-            "studentGroupName": "Studierende Gruppe",
-            "teachingAssistantGroupName": "Tutoren Gruppe",
-            "instructorGroupName": "Dozenten Gruppe",
-            "description": "Kurs Beschreibung",
+            "studentGroupName": "Studierendengruppe",
+            "teachingAssistantGroupName": "Tutorengruppe",
+            "instructorGroupName": "Dozentengruppe",
+            "description": "Kursbeschreibung",
             "organizations": "Kurs Organisationen",
             "startDate": "Start",
             "endDate": "Ende",
@@ -70,11 +70,11 @@
             },
             "accessGroups": "Zugriffsrechte",
             "onlineCourse": {
-                "title": "Online Kurs",
-                "description": "Aktiviere diese Checkbox für externe Online Kurse (z.B. auf edX), damit Studierende diesen Artemis Kurs (über die LTI Schnittstelle) nutzen können. Dies ermöglicht auch eine automatische Account Erstellung, sofern dies vom Artemis System Administrator eingestellt ist."
+                "title": "Onlinekurs",
+                "description": "Aktiviere diese Checkbox für externe Onlinekurse (z.B. auf edX), damit Studierende diesen Artemis-Kurs (über die LTI Schnittstelle) nutzen können. Dies ermöglicht auch eine automatische Accounterstellung, sofern dies vom Artemis Systemadministrator eingestellt ist."
             },
             "registrationEnabled": {
-                "title": "Kurs Registrierung für Studierende aktiviert",
+                "title": "Kursregistrierung für Studierende aktiviert",
                 "description": "Aktiviere diese Checkbox, damit sich Studierende selbständig im Kurs registrieren können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Registrierung bestätigen müssen."
             },
             "registrationConfirmationMessage": "Nachricht zur Bestätigung der Registrierung",
@@ -85,7 +85,7 @@
             "textExercises": "Textaufgabe",
             "upload": "Hochladen",
             "uploading": "Lade hoch...",
-            "fileUploadExercises": "Datei Upload Aufgabe",
+            "fileUploadExercises": "Dateiupload-Aufgabe",
             "students": "Studierende",
             "tutors": "Tutoren",
             "instructors": "Dozenten",
@@ -98,7 +98,7 @@
                     "forbidden": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten."
                 }
             },
-            "instructorDashboard": "Dozenten Kurs Dashboard",
+            "instructorDashboard": "Dozenten-Kursdashboard",
             "presentationScoreEnabled": {
                 "title": "Präsentationsbewertung aktiviert",
                 "description": "Aktiviere diese Checkbox und definiere, wie viele Präsentationen ein Student halten muss, um den Notenbonus für die Vorlesung zu erhalten. Nach der Aktivierung kannst du bei der Erstellung jeder Übung definieren, ob dieses Feature dafür aktiviert sein soll."
@@ -108,17 +108,17 @@
                 "outOf": "von",
                 "usersPerPage": "{{number}} Benutzer pro Seite",
                 "showAllUsers": "Alle Benutzer anzeigen",
-                "searchForUsers": "Benutzer zu dieser Kurs-Gruppe hinzufügen durch Suchen nach Login oder Namen",
+                "searchForUsers": "Benutzer zu dieser Kursgruppe hinzufügen durch Suchen nach Login oder Namen",
                 "searchNoResults": "Keine Benutzer gefunden",
                 "login": "Login",
                 "name": "Name",
                 "email": "E-Mail",
                 "removeFromGroup": {
-                    "modalQuestion": "Soll der Nutzer mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Kurs-Gruppe entfernt werden?"
+                    "modalQuestion": "Soll der Nutzer mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Kursgruppe entfernt werden?"
                 }
             },
             "archive": {
-                "archiveCourse": "Kurs Archivieren",
+                "archiveCourse": "Kurs archivieren",
                 "archiveCourseSuccess": "Der Kurs wurde archiviert!",
                 "archiveCourseError": "Der Kurs konnte nicht archiviert werden",
                 "archiveDownloadError": "Beim Herunterladen des Archivs ist ein Problem aufgetreten",
@@ -133,7 +133,7 @@
             },
             "cleanup": {
                 "title": "Aufräumen",
-                "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studenten Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
+                "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studenten-Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
             }
         }
     }

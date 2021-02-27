@@ -228,7 +228,9 @@
             "exams": "Exams",
             "manageHints": "Manage Hints",
             "addExternalSubmission": "Add External Submission",
-            "questionsAndAnswers": "Q&A"
+            "questionsAndAnswers": "Q&A",
+            "toggleToUnsubmitted": "Change Student Exam to Unsubmitted",
+            "toggleToSubmitted": "Change Student Exam to Submitted"
         },
         "detail": {
             "field": "Field",
