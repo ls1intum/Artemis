@@ -291,14 +291,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Subscribe for incoming (late) submissions to show a message if the student submitted after the due date.
      */
     subscribeForNewSubmissions() {
-        this.submissionSubscription = this.submissionService
-            .getLatestPendingSubmissionByParticipationId(this.studentParticipation?.id!, this.exercise?.id!, true)
-            .subscribe(({ submission }) => {
-                // Notify about received late submission
-                if (submission && this.exercise?.dueDate && this.exercise.dueDate.isBefore(submission.submissionDate)) {
-                    this.jhiAlertService.success('artemisApp.exercise.lateSubmissionReceived');
-                }
-            });
+        if (this.studentParticipation) {
+            this.submissionSubscription = this.submissionService
+                .getLatestPendingSubmissionByParticipationId(this.studentParticipation!.id!, this.exercise?.id!, true)
+                .subscribe(({ submission }) => {
+                    // Notify about received late submission
+                    if (submission && this.exercise?.dueDate && this.exercise.dueDate.isBefore(submission.submissionDate)) {
+                        this.jhiAlertService.success('artemisApp.exercise.lateSubmissionReceived');
+                    }
+                });
+        }
     }
 
     backToCourse() {
