@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
@@ -897,7 +898,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testDeleteExamWithOneTestRun() throws Exception {
         var instructor = database.getUserByLogin("instructor1");
         var exam = database.addExam(course1);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
@@ -907,7 +908,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testGetExamForTestRunDashboard_ok() throws Exception {
         var instructor = database.getUserByLogin("instructor1");
         var exam = database.addExam(course1);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         exam = request.get("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.OK, Exam.class);
         assertThat(exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).collect(Collectors.toList())).isNotEmpty();
@@ -1591,4 +1592,34 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/instructor1", null, HttpStatus.FORBIDDEN, null);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testArchiveCourseWithExam() throws Exception {
+        Course course = database.addEmptyCourse();
+        course.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        course = courseRepo.save(course);
+
+        ExerciseGroup exerciseGroup1 = new ExerciseGroup();
+
+        Exam exam = database.addExam(course);
+        exam.addExerciseGroup(exerciseGroup1);
+        exam = examRepository.save(exam);
+
+        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
+        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+
+        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseGroup1.addExercise(programmingExercise);
+
+        exerciseGroupRepository.save(exerciseGroup1);
+
+        request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
+
+        final var courseId = course.getId();
+        await().until(() -> courseRepo.findById(courseId).get().getCourseArchivePath() != null);
+
+        var updatedCourse = courseRepo.findById(courseId).get();
+        assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
+    }
 }
