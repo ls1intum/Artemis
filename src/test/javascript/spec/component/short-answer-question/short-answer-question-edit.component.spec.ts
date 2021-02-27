@@ -32,9 +32,18 @@ question2.text = 'This is a second text regarding a question';
 const shortAnswerSolution1 = new ShortAnswerSolution();
 shortAnswerSolution1.id = 0;
 shortAnswerSolution1.text = 'solution 1';
+
 const shortAnswerSolution2 = new ShortAnswerSolution();
 shortAnswerSolution2.id = 1;
 shortAnswerSolution2.text = 'solution 2';
+
+question.solutions = [shortAnswerSolution1, shortAnswerSolution2];
+
+const spot1 = new ShortAnswerSpot();
+spot1.spotNr = 0;
+
+const spot2 = new ShortAnswerSpot();
+spot2.spotNr = 1;
 
 describe('ShortAnswerQuestionEditComponent', () => {
     let fixture: ComponentFixture<ShortAnswerQuestionEditComponent>;
@@ -78,12 +87,30 @@ describe('ShortAnswerQuestionEditComponent', () => {
         });
     });
 
+    it('should react to a solution being dropped on a spot', () => {
+        const questionUpdatedSpy = sinon.spy(component.questionUpdated, 'emit');
+        const solution = new ShortAnswerSolution();
+        solution.id = 2;
+        solution.text = 'solution text';
+        const spot = new ShortAnswerSpot();
+        spot.id = 2;
+        spot.spotNr = 2;
+        const spot3 = new ShortAnswerSpot();
+        const mapping1 = new ShortAnswerMapping(spot2, shortAnswerSolution1);
+        const mapping2 = new ShortAnswerMapping(spot3, shortAnswerSolution1);
+        const alternativeMapping = new ShortAnswerMapping(new ShortAnswerSpot(), new ShortAnswerSolution());
+        component.question.correctMappings = [mapping1, mapping2, alternativeMapping];
+        const event = { dragData: shortAnswerSolution1 };
+
+        fixture.detectChanges();
+        component.onDragDrop(spot, event);
+
+        const expectedMapping = new ShortAnswerMapping(spot, shortAnswerSolution1);
+        expect(component.question.correctMappings.pop()).to.deep.equal(expectedMapping);
+        expect(questionUpdatedSpy).to.have.been.calledOnce;
+    });
+
     it('should setup question editor', () => {
-        const spot1 = new ShortAnswerSpot();
-        spot1.spotNr = 0;
-        const spot2 = new ShortAnswerSpot();
-        spot2.spotNr = 1;
-        component.question.solutions = [shortAnswerSolution1, shortAnswerSolution2];
         component.question.spots = [spot1, spot2];
         const mapping1 = new ShortAnswerMapping(spot1, shortAnswerSolution1);
         const mapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
@@ -127,11 +154,6 @@ describe('ShortAnswerQuestionEditComponent', () => {
     });
 
     it('should add and delete text solution', () => {
-        const spot1 = new ShortAnswerSpot();
-        spot1.spotNr = 0;
-        const spot2 = new ShortAnswerSpot();
-        spot2.spotNr = 1;
-        component.question.solutions = [shortAnswerSolution1, shortAnswerSolution2];
         component.question.spots = [spot1, spot2];
         const mapping1 = new ShortAnswerMapping(spot1, shortAnswerSolution1);
         const mapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
@@ -139,31 +161,33 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         component.addTextSolution();
 
-        expect(component.question.solutions.length).to.equal(3);
+        expect(component.question.solutions!.length).to.equal(3);
 
         component.deleteSolution(shortAnswerSolution2);
 
-        expect(component.question.solutions.length).to.equal(2);
+        expect(component.question.solutions!.length).to.equal(2);
     });
 
-    it('should react to a solution being dropped on a spot', () => {
-        const questionUpdatedSpy = sinon.spy(component.questionUpdated, 'emit');
-        const solution = new ShortAnswerSolution();
-        solution.id = 2;
-        solution.text = 'solution text';
-        const spot = new ShortAnswerSpot();
-        spot.id = 2;
-        spot.spotNr = 2;
-        component.question.solutions = [solution];
-        const alternativeMapping = new ShortAnswerMapping(new ShortAnswerSpot(), new ShortAnswerSolution());
-        component.question.correctMappings = [alternativeMapping];
-        const event = { dragData: solution };
+    it('should delete question', () => {
+        const questionDeleted = sinon.spy(component.questionDeleted, 'emit');
+        component.deleteQuestion();
+        expect(questionDeleted).to.have.been.calledOnce;
+    });
 
-        fixture.detectChanges();
-        // component.onDragDrop(spot, event);
+    it('should toggle preview', () => {
+        component.question.text = 'This is the text of a question';
+        component.showVisualMode = false;
+        component.question.spots = [spot1, spot2];
+        component.question.correctMappings = [];
+        let mapping = new ShortAnswerMapping(spot1, shortAnswerSolution1);
+        component.question.correctMappings.push(mapping);
+        mapping = new ShortAnswerMapping(spot2, shortAnswerSolution2);
+        component.question.correctMappings.push(mapping);
 
-        const mapping = new ShortAnswerMapping(spot, solution);
-        // expect(component.question.correctMappings.pop()).to.deep.equal(mapping);
-        // expect(questionUpdatedSpy).to.have.been.calledOnce;
+        component.togglePreview();
+        expect(component.textParts.length).to.equal(1);
+        const firstElement = component.textParts.pop();
+        expect(firstElement!.length).to.equal(1);
+        expect(firstElement).to.deep.equal(['<p>This is the text of a question</p>']);
     });
 });
