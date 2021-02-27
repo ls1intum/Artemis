@@ -212,7 +212,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         try {
             // Go through all parts (children) of the route starting from the root
             this.addBreadcrumbForRouteChild(this.route.root.firstChild, '');
-        } catch (e) { }
+        } catch (e) {}
     }
 
     /**
