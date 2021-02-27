@@ -47,13 +47,14 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { User } from 'app/core/user/user.model';
 import { Result } from 'app/entities/result.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import * as moment from 'moment';
-import { ParticipationType } from 'app/entities/participation/participation.model';
 import { HttpResponse } from '@angular/common/http';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { cloneDeep } from 'lodash';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -82,10 +83,12 @@ describe('CourseExerciseDetailsComponent', () => {
     let exerciseService: ExerciseService;
     let teamService: TeamService;
     let participationService: ParticipationService;
+    let participationWebsocketService: ParticipationWebsocketService;
     let getProfileInfoStub: SinonStub;
     let getExerciseDetailsStub: SinonStub;
     let getTeamPayloadStub: SinonStub;
     let mergeStudentParticipationStub: SinonStub;
+    let subscribeForParticipationChangesStub: SinonStub;
     const exercise = ({ id: 42, type: ExerciseType.TEXT, studentParticipations: [] } as unknown) as Exercise;
     const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
 
@@ -158,6 +161,11 @@ describe('CourseExerciseDetailsComponent', () => {
                 // stub participationService, needed for team assignment
                 participationService = fixture.debugElement.injector.get(ParticipationService);
                 mergeStudentParticipationStub = stub(participationService, 'mergeStudentParticipations');
+
+                // stub participationService, needed for team assignment
+                participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
+                subscribeForParticipationChangesStub = stub(participationWebsocketService, 'subscribeForParticipationChanges');
+                subscribeForParticipationChangesStub.returns(new BehaviorSubject<Participation | undefined>(undefined));
             });
     }));
 
@@ -181,10 +189,18 @@ describe('CourseExerciseDetailsComponent', () => {
         result.id = 1;
         result.completionDate = moment();
         studentParticipation.results = [result];
+        studentParticipation.exercise = exercise;
+
         const exerciseDetail = { ...exercise, studentParticipations: [studentParticipation] };
         const exerciseDetailReponse = of({ body: exerciseDetail });
 
+        // return initial participation for websocketService
+        stub(participationWebsocketService, 'getParticipationForExercise').returns(studentParticipation);
+
         mergeStudentParticipationStub.returns(studentParticipation);
+        const changedParticipation = cloneDeep(studentParticipation);
+        changedParticipation.results = [{ ...result, id: 2 }];
+        subscribeForParticipationChangesStub.returns(new BehaviorSubject<Participation | undefined>(changedParticipation));
 
         fixture.detectChanges();
         tick(500);
@@ -196,7 +212,7 @@ describe('CourseExerciseDetailsComponent', () => {
         fixture.detectChanges();
         expect(comp.courseId).to.equal(1);
         expect(comp.studentParticipation?.exercise?.id).to.equal(exerciseDetail.id);
-        expect(comp.exercise!.studentParticipations![0].results![0]).to.deep.equal(result);
+        expect(comp.exercise!.studentParticipations![0].results![0]).to.deep.equal({ ...result, id: 2 });
         expect(comp.hasMoreResults).to.be.false;
         expect(comp.exerciseRatedBadge(result)).to.equal('badge-info');
 
