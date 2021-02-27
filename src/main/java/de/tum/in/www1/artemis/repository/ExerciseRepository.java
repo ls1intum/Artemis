@@ -3,8 +3,11 @@ package de.tum.in.www1.artemis.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -31,7 +34,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Set<Exercise> findAllTeamExercisesByCourseId(@Param("courseId") Long courseId);
 
     @Query("select e from Exercise e where e.course.testCourse = false and e.dueDate >= :#{#now} order by e.dueDate asc")
-    Set<Exercise> findAllExercisesWithUpcomingDueDate(@Param("now") ZonedDateTime now);
+    Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDate(@Param("now") ZonedDateTime now);
 
     /**
      * Select Exercise for Course ID WHERE there does exist an LtiOutcomeUrl for the current user (-> user has started exercise once using LTI)
@@ -140,6 +143,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
+    @NotNull
     default Exercise findByIdElseThrow(Long exerciseId) throws EntityNotFoundException {
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
@@ -150,18 +154,19 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @param exerciseId the exerciseId of the entity
      * @return the entity
      */
-    default Exercise findOneWithCategoriesAndTeamAssignmentConfig(Long exerciseId) {
+    @NotNull
+    default Exercise findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(Long exerciseId) {
         return findWithEagerCategoriesAndTeamAssignmentConfigById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
     /**
-     * Finds all exercises where the due date is in the future
+     * Finds all exercises where the due date is today or in the future
      * (does not return exercises belonging to test courses).
      *
      * @return set of exercises
      */
-    default Set<Exercise> findAllExercisesWithUpcomingDueDate() {
-        return findAllExercisesWithUpcomingDueDate(ZonedDateTime.now());
+    default Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDate() {
+        return findAllExercisesWithCurrentOrUpcomingDueDate(ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS));
     }
 
     /**
@@ -170,7 +175,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @param exerciseId the exerciseId of the exercise entity
      * @return the exercise entity
      */
-    default Exercise findOneWithStudentParticipations(Long exerciseId) {
+    @NotNull
+    default Exercise findByIdWithStudentParticipationsElseThrow(Long exerciseId) {
         return findByIdWithEagerParticipations(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
@@ -234,7 +240,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             int numberOfPossibleParticipants = exerciseStatistics[3] != null ? ((Number) exerciseStatistics[3]).intValue() : 0;
 
             if (numberOfPossibleParticipants != 0) {
-                Double participationRate = ((courseExerciseStatisticsDTO.getNoOfParticipatingStudentsOrTeams() * 1.0) / (numberOfPossibleParticipants * 1.0)) * 100.0;
+                double participationRate = ((courseExerciseStatisticsDTO.getNoOfParticipatingStudentsOrTeams() * 1.0) / (numberOfPossibleParticipants * 1.0)) * 100.0;
                 courseExerciseStatisticsDTO.setParticipationRateInPercent(Math.round(participationRate * 100.0) / 100.0);
             }
             else {

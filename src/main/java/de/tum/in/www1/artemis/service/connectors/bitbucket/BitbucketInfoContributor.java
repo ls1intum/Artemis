@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.config.Constants;
 
 @Component
 @Profile("bitbucket")
-public class BitbucketSshCloneLinkInfoContributor implements InfoContributor {
+public class BitbucketInfoContributor implements InfoContributor {
 
     @Value("${artemis.version-control.url}")
     private URL bitbucketServerUrl;
@@ -26,9 +26,15 @@ public class BitbucketSshCloneLinkInfoContributor implements InfoContributor {
 
     @Override
     public void contribute(Info.Builder builder) {
-
+        // Store server url
         builder.withDetail(Constants.VERSION_CONTROL_URL, bitbucketServerUrl);
 
+        // Store commit hash url template
+        String commitHashPathTemplate = "/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}";
+        String commitHashUrlTemplate = bitbucketServerUrl + commitHashPathTemplate;
+        builder.withDetail(Constants.INFO_COMMIT_HASH_URL_DETAIL, commitHashUrlTemplate);
+
+        // Store ssh url template
         if (bitbucketSshUrlTemplate.isPresent()) {
             builder.withDetail(Constants.INFO_SSH_CLONE_URL_DETAIL, bitbucketSshUrlTemplate);
             if (bitbucketSshKeysUrlPath.isPresent()) {

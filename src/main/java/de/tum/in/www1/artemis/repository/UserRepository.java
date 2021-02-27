@@ -209,10 +209,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @NotNull
     private User unwrapOptionalUser(Optional<User> optionalUser, String currentUserLogin) {
-        if (optionalUser.isPresent()) {
-            return optionalUser.get();
-        }
-        throw new EntityNotFoundException("No user found with login: " + currentUserLogin);
+        return optionalUser.orElseThrow(() -> new EntityNotFoundException("No user found with login: " + currentUserLogin));
     }
 
     private String getCurrentUserLogin() {
@@ -229,6 +226,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param username the username of the user who should be retrieved from the database
      * @return the user that belongs to the given principal with eagerly loaded groups and authorities
      */
+    @NotNull
     default User getUserWithGroupsAndAuthorities(@NotNull String username) {
         Optional<User> user = findOneWithGroupsAndAuthoritiesByLogin(username);
         return unwrapOptionalUser(user, username);
@@ -258,6 +256,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
             return Optional.empty();
         }
         return findOneWithGroupsAndAuthoritiesByLogin(login);
+    }
+
+    @NotNull
+    default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
+        return findOneWithGroupsAndAuthoritiesById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
 
     /**

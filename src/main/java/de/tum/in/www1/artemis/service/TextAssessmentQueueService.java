@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.util.stream.Collectors.*;
+
 import java.util.*;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,7 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 
 @Service
 @Profile("athene")
@@ -21,11 +23,11 @@ public class TextAssessmentQueueService {
 
     private final TextClusterRepository textClusterRepository;
 
-    private final TextSubmissionService textSubmissionService;
+    private final TextSubmissionRepository textSubmissionRepository;
 
-    public TextAssessmentQueueService(TextClusterRepository textClusterRepository, @Lazy TextSubmissionService textSubmissionService) {
+    public TextAssessmentQueueService(TextClusterRepository textClusterRepository, TextSubmissionRepository textSubmissionRepository) {
         this.textClusterRepository = textClusterRepository;
-        this.textSubmissionService = textSubmissionService;
+        this.textSubmissionRepository = textSubmissionRepository;
     }
 
     /**
@@ -53,13 +55,42 @@ public class TextAssessmentQueueService {
         if (!textExercise.isAutomaticAssessmentEnabled()) {
             throw new IllegalArgumentException("The TextExercise is not automatic assessable");
         }
-        List<TextSubmission> textSubmissionList = textSubmissionService.getAllOpenTextSubmissions(textExercise);
+        List<TextSubmission> textSubmissionList = getAllOpenTextSubmissions(textExercise);
         if (textSubmissionList.isEmpty()) {
             return Optional.empty();
         }
         Map<TextBlock, Double> smallerClusterMap = calculateSmallerClusterPercentageBatch(textSubmissionList);
         return textSubmissionList.stream().filter(textSubmission -> languages == null || languages.contains(textSubmission.getLanguage()))
                 .max(Comparator.comparingDouble(textSubmission -> calculateInformationGain(textSubmission, smallerClusterMap)));
+    }
+
+    /**
+     * Return all TextSubmission which are the latest TextSubmission of a Participation and doesn't have a Result so far
+     * The corresponding TextBlocks and Participations are retrieved from the database
+     * @param exercise Exercise for which all assessed submissions should be retrieved
+     * @return List of all TextSubmission which aren't assessed at the Moment, but need assessment in the future.
+     *
+     */
+    public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
+        final List<TextSubmission> submissions = textSubmissionRepository.findByParticipation_ExerciseIdAndResultsIsNullAndSubmittedIsTrue(exercise.getId());
+
+        final Set<Long> clusterIds = submissions.stream().flatMap(submission -> submission.getBlocks().stream()).map(TextBlock::getCluster).filter(Objects::nonNull)
+                .map(TextCluster::getId).collect(toSet());
+
+        // To prevent lazy loading many elements later on, we fetch all clusters with text blocks here.
+        final Map<Long, TextCluster> textClusterMap = textClusterRepository.findAllByIdsWithEagerTextBlocks(clusterIds).stream()
+                .collect(toMap(TextCluster::getId, textCluster -> textCluster));
+
+        // link up clusters with eager blocks
+        submissions.stream().flatMap(submission -> submission.getBlocks().stream()).forEach(textBlock -> {
+            if (textBlock.getCluster() != null) {
+                textBlock.setCluster(textClusterMap.get(textBlock.getCluster().getId()));
+            }
+        });
+
+        return submissions.stream()
+                .filter(submission -> submission.getParticipation().findLatestSubmission().isPresent() && submission == submission.getParticipation().findLatestSubmission().get())
+                .collect(toList());
     }
 
     /**

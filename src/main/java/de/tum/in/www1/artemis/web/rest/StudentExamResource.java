@@ -12,11 +12,14 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
@@ -25,9 +28,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
@@ -50,33 +51,36 @@ public class StudentExamResource {
 
     private final UserRepository userRepository;
 
+    private final AuditEventRepository auditEventRepository;
+
     private final StudentExamRepository studentExamRepository;
 
     private final ExamDateService examDateService;
 
     private final ExamSessionService examSessionService;
 
-    private final QuizExerciseService quizExerciseService;
+    private final QuizExerciseRepository quizExerciseRepository;
 
-    private final ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final ExamRepository examRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
-            UserRepository userRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
-            ParticipationService participationService, QuizExerciseService quizExerciseService, ExamRepository examRepository,
-            AuthorizationCheckService authorizationCheckService) {
+            UserRepository userRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService,
+            ExamSessionService examSessionService, StudentParticipationRepository studentParticipationRepository, QuizExerciseRepository quizExerciseRepository,
+            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
         this.userRepository = userRepository;
+        this.auditEventRepository = auditEventRepository;
         this.studentExamRepository = studentExamRepository;
         this.examDateService = examDateService;
         this.examSessionService = examSessionService;
-        this.participationService = participationService;
-        this.quizExerciseService = quizExerciseService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.examRepository = examRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
@@ -105,13 +109,14 @@ public class StudentExamResource {
 
         // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
-        List<StudentParticipation> participations = participationService.findByStudentExamWithEagerSubmissionsResult(studentExam);
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam);
 
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
             filterParticipation(studentExam, exercise, participations, true);
         }
+        studentExam.getUser().setVisibleRegistrationNumber();
 
         return ResponseEntity.ok(studentExam);
     }
@@ -509,7 +514,7 @@ public class StudentExamResource {
     private void fetchParticipationsSubmissionsAndResultsForStudentExam(StudentExam studentExam, User currentUser) {
         // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
-        List<StudentParticipation> participations = participationService.findByStudentExamWithEagerSubmissionsResult(studentExam);
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
 
@@ -600,7 +605,7 @@ public class StudentExamResource {
 
     /**
      * Loads the quiz questions as is not possible to load them in a generic way with the entity graph used.
-     * See {@link ParticipationService#findByStudentExamWithEagerSubmissionsResult}
+     * See {@link StudentParticipationRepository#findByStudentExamWithEagerSubmissionsResult}
      *
      * @param studentExam the studentExam for which to load exercises
      */
@@ -609,7 +614,7 @@ public class StudentExamResource {
             var exercise = studentExam.getExercises().get(i);
             if (exercise instanceof QuizExercise) {
                 // reload and replace the quiz exercise
-                var quizExercise = quizExerciseService.findOneWithQuestions(exercise.getId());
+                var quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
                 // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
                 if (!(studentExam.areResultsPublishedYet() || studentExam.isTestRun())) {
                     quizExercise.filterForStudentsDuringQuiz();
@@ -619,4 +624,70 @@ public class StudentExamResource {
         }
     }
 
+    /**
+     * PUT /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-submitted : Toggles the submission
+     * status of the specified studentExam to submitted.
+     *
+     * @param courseId      the course to which the student exams belong to
+     * @param examId        the exam to which the student exams belong to
+     * @param studentExamId the student exam id where we want to set to be submitted
+     * @return studentexam with the new state of submitted and submissionDate
+     * 200 if successful
+     */
+    @PutMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-submitted")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        User instructor = userRepository.getUser();
+        log.info("REST request by user: {} for exam with id {} to set student-exam {} to SUBMITTED", instructor.getLogin(), examId, studentExamId);
+        AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.TOGGLE_STUDENT_EXAM_SUBMITTED, "examId=" + examId, "user=" + instructor.getLogin(),
+                "studentExamId=" + studentExamId);
+        auditEventRepository.add(auditEvent);
+        Optional<ResponseEntity<StudentExam>> accessFailure = examAccessService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
+        if (accessFailure.isPresent()) {
+            // the user must be instructor for the exam
+            return accessFailure.get();
+        }
+        StudentExam studentExam = studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("studentExam", studentExamId));
+        if (studentExam.isSubmitted()) {
+            return badRequest();
+        }
+        ZonedDateTime submissionTime = ZonedDateTime.now();
+        studentExam.setSubmissionDate(submissionTime);
+        studentExam.setSubmitted(true);
+        studentExam = studentExamRepository.save(studentExam);
+        return ResponseEntity.ok(studentExam);
+    }
+
+    /**
+     * PUT /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-submitted : Toggles the submission
+     * status of the specified studentExam to unsubmitted.
+     *
+     * @param courseId      the course to which the student exams belong to
+     * @param examId        the exam to which the student exams belong to
+     * @param studentExamId the student exam id where we want to set it to be unsubmitted
+     * @return studentexam with the new state of submitted and submissionDate
+     * 200 if successful
+     */
+    @PutMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-unsubmitted")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<StudentExam> unsubmitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        User instructor = userRepository.getUser();
+        log.info("REST request by user: {} for exam with id {} to set student-exam {} to UNSUBMITTED", instructor.getLogin(), examId, studentExamId);
+        AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.TOGGLE_STUDENT_EXAM_UNSUBMITTED, "examId=" + examId, "user=" + instructor.getLogin(),
+                "studentExamId=" + studentExamId);
+        auditEventRepository.add(auditEvent);
+        Optional<ResponseEntity<StudentExam>> accessFailure = examAccessService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
+        if (accessFailure.isPresent()) {
+            // the user must be instructor for the exam
+            return accessFailure.get();
+        }
+        StudentExam studentExam = studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("studentExam", studentExamId));
+        if (!studentExam.isSubmitted()) {
+            return badRequest();
+        }
+        studentExam.setSubmissionDate(null);
+        studentExam.setSubmitted(false);
+        studentExam = studentExamRepository.save(studentExam);
+        return ResponseEntity.ok(studentExam);
+    }
 }
