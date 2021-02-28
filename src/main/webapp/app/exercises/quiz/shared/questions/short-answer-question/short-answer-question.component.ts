@@ -9,7 +9,7 @@ import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-ques
 @Component({
     selector: 'jhi-short-answer-question',
     templateUrl: './short-answer-question.component.html',
-    providers: [ArtemisMarkdownService, ShortAnswerQuestionUtil],
+    providers: [ShortAnswerQuestionUtil],
     styleUrls: ['./short-answer-question.component.scss', '../../../participate/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
 })

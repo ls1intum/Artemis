@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -10,9 +10,9 @@ import { round } from 'app/shared/util/utils';
 
 export const ABSOLUTE_SCORE = 'absoluteScore';
 export const RELATIVE_SCORE = 'relativeScore';
-export const MAX_SCORE = 'maxScore';
+export const MAX_POINTS = 'maxPoints';
 export const PRESENTATION_SCORE = 'presentationScore';
-export const REACHABLE_SCORE = 'reachableScore';
+export const REACHABLE_POINTS = 'reachableScore';
 export const CURRENT_RELATIVE_SCORE = 'currentRelativeScore';
 
 @Injectable({ providedIn: 'root' })
@@ -24,14 +24,18 @@ export class CourseScoreCalculationService {
 
     calculateTotalScores(courseExercises: Exercise[]): Map<string, number> {
         const scores = new Map<string, number>();
-        let absoluteScore = 0.0;
-        let maxScore = 0;
-        let reachableScore = 0;
+        let pointsAchievedByStudentInCourse = 0.0;
+        let maxPointsInCourse = 0;
+        let reachableMaxPointsInCourse = 0;
         let presentationScore = 0;
         for (const exercise of courseExercises) {
-            if (exercise.maxScore != undefined && (!exercise.dueDate || exercise.dueDate.isBefore(moment()))) {
-                const relevantMaxPoints = exercise.maxScore! > 0 ? exercise.maxScore! : exercise.bonusPoints ?? 0;
-                maxScore = maxScore + exercise.maxScore;
+            const isExerciseFinished = !exercise.dueDate || exercise.dueDate.isBefore(moment());
+            const isExerciseIncluded = exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED;
+            if (isExerciseFinished && isExerciseIncluded) {
+                const maxPointsReachableInExercise = exercise.maxPoints!;
+                if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                    maxPointsInCourse += maxPointsReachableInExercise;
+                }
                 const participation = this.getParticipationForExercise(exercise);
                 if (participation) {
                     const result = this.getResultForParticipation(participation, exercise.dueDate!);
@@ -41,34 +45,49 @@ export class CourseScoreCalculationService {
                         if (score == undefined) {
                             score = 0;
                         }
-                        absoluteScore = absoluteScore + score * this.SCORE_NORMALIZATION_VALUE * relevantMaxPoints;
-                        reachableScore += exercise.maxScore;
+                        pointsAchievedByStudentInCourse += score * this.SCORE_NORMALIZATION_VALUE * maxPointsReachableInExercise;
+                        if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                            reachableMaxPointsInCourse += maxPointsReachableInExercise;
+                        }
+                        // Quizzes should automatically have a result after due date but can have one that is not rated, this should still count into reachable scores
+                    } else if (exercise.type === ExerciseType.QUIZ) {
+                        if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                            reachableMaxPointsInCourse += maxPointsReachableInExercise;
+                        }
                     }
                     presentationScore += participation.presentationScore ? participation.presentationScore : 0;
 
-                    // programming exercises can be excluded here because their state is INITIALIZED even after the exercise is over
-                    if (participation.initializationState === InitializationState.INITIALIZED && exercise.type !== ExerciseType.PROGRAMMING) {
-                        reachableScore += exercise.maxScore;
+                    // programming exercises and quiz can be excluded here because their state is INITIALIZED even after the exercise is over
+                    if (
+                        participation.initializationState === InitializationState.INITIALIZED &&
+                        exercise.type !== ExerciseType.PROGRAMMING &&
+                        exercise.type !== ExerciseType.QUIZ
+                    ) {
+                        if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                            reachableMaxPointsInCourse += maxPointsReachableInExercise;
+                        }
                     }
                 } else {
-                    reachableScore += exercise.maxScore;
+                    if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                        reachableMaxPointsInCourse += maxPointsReachableInExercise;
+                    }
                 }
             }
         }
-        scores.set(ABSOLUTE_SCORE, round(absoluteScore, 1));
-        if (maxScore > 0) {
-            scores.set(RELATIVE_SCORE, round((absoluteScore / maxScore) * 100, 1));
+        scores.set(ABSOLUTE_SCORE, round(pointsAchievedByStudentInCourse, 1));
+        if (maxPointsInCourse > 0) {
+            scores.set(RELATIVE_SCORE, round((pointsAchievedByStudentInCourse / maxPointsInCourse) * 100, 1));
         } else {
             scores.set(RELATIVE_SCORE, 0);
         }
-        if (reachableScore > 0) {
-            scores.set(CURRENT_RELATIVE_SCORE, round((absoluteScore / reachableScore) * 100, 1));
+        if (reachableMaxPointsInCourse > 0) {
+            scores.set(CURRENT_RELATIVE_SCORE, round((pointsAchievedByStudentInCourse / reachableMaxPointsInCourse) * 100, 1));
         } else {
             scores.set(CURRENT_RELATIVE_SCORE, 0);
         }
-        scores.set(MAX_SCORE, maxScore);
+        scores.set(MAX_POINTS, maxPointsInCourse);
         scores.set(PRESENTATION_SCORE, presentationScore);
-        scores.set(REACHABLE_SCORE, reachableScore);
+        scores.set(REACHABLE_POINTS, reachableMaxPointsInCourse);
         return scores;
     }
 

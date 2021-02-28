@@ -21,7 +21,8 @@
                     "yourPoints": "Your points",
                     "maxPoints": "Points",
                     "bonus": "Bonus points",
-                    "sum": "Sum"
+                    "youAchieved": "You achieved {{achievedPoints}} points out of possible {{normalPoints}} normal points and {{bonusPoints}} bonus points",
+                    "maxPointsNotSet": "The exam max points is not set."
                 }
             },
             "title": "Exam",
@@ -53,6 +54,10 @@
             "validation": {
                 "startAndEndMustBeSet": "The start and end date must be set for the exam",
                 "atLeastOneExercisePerExerciseGroup": "All exercise groups must have at least one exercise.",
+                "allExercisesInExerciseGroupOfSameIncludedType": "All exercises in an exercise group need to have the same meaning for the exam score calculation (normal exercise, bonus exercise, not included).",
+                "allExercisesInExerciseGroupGiveSameNumberOfPoints": "All exercises in an exercise group need to give the same number of points or bonus points",
+                "tooManyMaxPoints": "Check that you set the exam max points correctly! The max points a student can earn in the mandatory exercise groups is too big",
+                "tooFewMaxPoints": "Check that you set the exam max points correctly! The max points a student can earn in the exercise groups is too low",
                 "numberOfExercisesMustBeSet": "The number of exercises must be set for the exam.",
                 "numberOfExercisesInExamNotSet": "The number of exercises in the exam is not set.",
                 "tooFewExerciseGroups": "The number of exercise groups is too small.",
@@ -112,6 +117,7 @@
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
+            "uploadFile": "Upload",
             "greeting": "Welcome to {{ title }}.",
             "finish": "This is the end of {{ title }}.",
             "nameDisplay": "Your full name is: {{ fullName }}",
@@ -183,7 +189,17 @@
             "unlockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were unlocked.",
             "unlockAllRepositoriesFailure": "There was an error during the unlocking of the programming exercises:\n {{message}}",
             "lockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were locked.",
-            "lockAllRepositoriesFailure": "There was an error during the locking of the programming exercises:\n {{message}}"
+            "lockAllRepositoriesFailure": "There was an error during the locking of the programming exercises:\n {{message}}",
+            "confirmDialog": {
+                "titleToUnsubmitted": "Change Student Exam to Unsubmitted",
+                "titleToSubmitted": "Change Student Exam to Submitted",
+                "question": "Are you sure you want to change the submission state?",
+                "submitText": "This will set the submission date of the exam to this moment, and set the Submitted status to 'Yes'. Un-submitting the student exam later is possible.\n",
+                "unSubmitText": "This will delete the submission date and set the Submitted status to 'No'.",
+                "warningRemove": "<strong class='text-danger'>Recovering the original submission date after the deletion is not possible!</strong>",
+                "submit": "Submit",
+                "unsubmit": "Unsubmit"
+            }
         },
         "examManagement": {
             "title": "Exam Management",
@@ -211,6 +227,7 @@
             "confirmationStartText": "Exam start confirmation text",
             "confirmationEndText": "Exam end confirmation text",
             "assessmentDashboard": "Assessment Dashboard",
+            "examChecklist": "Exam Checklist",
             "studentExams": "Student Exams",
             "students": "Students",
             "testRun": {
@@ -222,6 +239,8 @@
                 "assess": "Assess Your Test Runs",
                 "manage": "Manage Working Time",
                 "text": "Here you can create a test run for the exam. Pick which exercises your exam should contain and run the conduction. Afterwards you will be able to assess your submissions and grade them as a tutor. You have the option to view the results and complain as a student. Additionally, you can also respond to the complaints about the assessment as a tutor.\n<strong>Note:</strong> Submissions made within test runs do not count towards the exam scores.",
+                "reminderToDelete": "Make sure to delete all Test Runs before the exam conduction. All test runs are automatically deleted if you assess the unsubmitted student exams and empty submissions.",
+                "secondCorrectionHint": "Hint: The second correction does not apply to test runs.",
                 "createTestRunDisabled": "No exercises found",
                 "assessTestRunDisabled": "None of your test runs have ended",
                 "delete": {
@@ -242,6 +261,8 @@
                 "lastName": "Last name",
                 "email": "Email",
                 "registrationNumber": "Matriculation number",
+                "registerAllFromCourse": "Register course students",
+                "registerAllFromCourseTooltip": "Register all students enrolled in this course",
                 "removeFromExam": {
                     "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?",
                     "deleteParticipationsAndSubmission": "Delete participations and submissions of this student in the associated exam?"
@@ -289,10 +310,76 @@
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the Exam to confirm."
+            },
+            "checklist": {
+                "title": "Exam Conduction Checklist",
+                "introduction": "You can find a detailed documentation with screenshots about the exam mode in the",
+                "linkDescription": "Instructors Guide",
+                "checklistItem": "Task",
+                "description": "Description",
+                "status": "Current status",
+                "goTo": "Page",
+                "tableItem": {
+                    "register": "Register students to the exam",
+                    "exerciseGroups": "Create at least one exercise group with exercises",
+                    "generateStudentExams": "Generate all student exams",
+                    "prepareExerciseStart": "Prepare exercise start",
+                    "examDetails": "Fill out all exam details",
+                    "conductExam": "Conduct the exam",
+                    "assessAllSubmissions": "Assess all submissions",
+                    "publishResults": "Publish the exam results",
+                    "examReview": "Plan the exam review",
+                    "resolveComplaints": "Resolve all complaints",
+                    "testRun": "Conduct a test run",
+                    "exportResults": "Export the exam results"
+                },
+                "descriptionItem": {
+                    "register": "You can register students to the exam in three different ways: via a .csv file, by hand or you can import all students registered to the exam's course.",
+                    "exerciseGroups": "You can create exercise groups with multiple exercise variants to make cheating for students more difficult. The points in all exercises within a given exercise group must be identical, and the number of exercise groups must equal the exam's number of exercises.",
+                    "generateStudentExams": "Student exams must be generated for all registered students before starting the exam. Their working time can be adjusted individually.",
+                    "prepareExerciseStart": "Preparing the exercises can reduce load on the server during the exam.",
+                    "examDetails": "Before conducting an exam, please make sure to have filled out all exam details. (Start text, dates, etc.)",
+                    "conductExam": "On the student exam page you can see which students already submitted their exam.",
+                    "assessAllSubmissions": "The number of correction rounds per exercise depends on the exam's number of correction rounds.",
+                    "publishResults": "Publishing the results makes them available to students. Student exams are published on the publishing date for results within the exam.",
+                    "examReview": "Make sure to have all dates specified correctly.",
+                    "resolveComplaints": "Complaints can be resolved within the Assessment Dashboard.",
+                    "testRun": "Try out different combinations of exercise variants from the student perspective.",
+                    "exportResults": "Exports the exam results as a .csv file."
+                },
+                "textitems": {
+                    "leastoneexercisegroup": "At least one exercise group",
+                    "numberofexercisegroupsequal": "Number of exercise groups equals number of exercises in exam",
+                    "eachexercisegroup": "Each exercise group contains at least one exercise",
+                    "pointsexercisegroupequal": "Points in exercises of each exercise group are identical",
+                    "totalpointspossible": "Maximum number of points in exam can be realized with the exercise groups configuration",
+                    "hasExercises": "has",
+                    "zeroexercises": "0",
+                    "exerciseStart": "Exercise Group",
+                    "exercise": "exercise variant.",
+                    "exercises": "exercise variants.",
+                    "leastonestudent": "At least one student registered",
+                    "studentsregistered": "Current number of students registered:",
+                    "allexamsgenerated": "All exams generated for registered students",
+                    "pulishingdateset": "Publishing date for results set",
+                    "startdatereviewset": "Start date of exam review set",
+                    "enddatereviewset": "End date of exam review set",
+                    "testruns": "Current number of test runs:",
+                    "allExercisesPrepared": "All exercises prepared for all students",
+                    "noSubmissions": "There are currently no submitted exams.",
+                    "noComplaints": "There are currently no complaints.",
+                    "correctionRound": "Correction Round",
+                    "startedExam": "Started Exam",
+                    "submittedExam": "Submitted Exam",
+                    "exerciseTable": "Exercise",
+                    "points": "Points",
+                    "numberParticipants": "Number of participants"
+                }
             }
         },
         "studentExamDetail": {
             "studentExam": "Student exam ({{ examTitle }})",
+            "testRun": "Test Run ({{ examTitle }})",
             "exercises": "Exercises",
             "downloadPDF": " Download PDF",
             "student": "Student",
@@ -309,7 +396,9 @@
             "openAssessment": " Open Assessment",
             "cancelAssessment": " Cancel Assessment",
             "workingTimeCouldNotBeSaved": "The working time could not be saved.",
-            "saveWorkingTimeSuccessful": "The working time was saved successfully."
+            "saveWorkingTimeSuccessful": "The working time was saved successfully.",
+            "toggleSuccessful": "The submitted status was changed successfully.",
+            "togglefailed": "The submitted status was could not be changed!"
         }
     },
     "studentExam": {

@@ -106,6 +106,7 @@ public class StudentParticipation extends Participation {
      * Removes the student or team from the participation, can be invoked to make sure that sensitive information is not sent to the client.
      * E.g. tutors should not see information about the student.
      */
+    @Override
     public void filterSensitiveInformation() {
         setParticipant(null);
     }
@@ -122,23 +123,6 @@ public class StudentParticipation extends Participation {
     public String toString() {
         String participantString = getStudent().map(student -> "student=" + student).orElse("team=" + team);
         return "StudentParticipation{" + "id=" + getId() + ", presentationScore=" + presentationScore + ", " + participantString + "}";
-    }
-
-    /**
-     * Utility method to flag whether the participation is part of an exam test run.
-     * This is indicated by {@link StudentParticipation#student} equals {@link Result#getAssessor()}
-     * <b>Note:</b> Test runs are only available for exams and only instructors are eligable to create test runs.
-     * User permissions should therefore be checked before using this utility method.
-     * Requires submissions and results to be eagerly loaded
-     * @return returns whether the exam participation is a test run participation
-     */
-    @JsonIgnore
-    public boolean isTestRunParticipation() {
-        if (this.getExercise().isExamExercise() && this.getStudent().isPresent()) {
-            return this.getSubmissions().stream().filter(submission -> submission.getLatestResult() != null).map(Submission::getLatestResult)
-                    .anyMatch(result -> result.getAssessor() != null && result.getAssessor().equals(this.getStudent().get()));
-        }
-        return false;
     }
 
     @Override

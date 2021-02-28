@@ -20,11 +20,20 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { RouterModule } from '@angular/router';
 import { assessmentLocksRoute } from 'app/assessment/assessment-locks/assessment-locks.route';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 const ENTITY_STATES = [...assessmentLocksRoute];
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisComplaintsForTutorModule, ArtemisSharedComponentModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES)],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisComplaintsForTutorModule,
+        ArtemisSharedComponentModule,
+        MomentModule,
+        ClipboardModule,
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisMarkdownModule,
+    ],
     declarations: [
         AssessmentHeaderComponent,
         AssessmentLayoutComponent,

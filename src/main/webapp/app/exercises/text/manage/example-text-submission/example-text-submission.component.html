@@ -82,8 +82,13 @@
         (ngModelChange)="unsavedChanges = true"
         style="width: 100%; height: 50vh"
     ></textarea>
-
-    <jhi-score-display left-header *ngIf="state.ui === UIStates.ASSESSMENT" [maxScore]="exercise?.maxScore" [score]="totalScore"></jhi-score-display>
+    <jhi-score-display
+        left-header
+        *ngIf="state.ui === UIStates.ASSESSMENT"
+        [maxPoints]="exercise?.maxPoints"
+        [score]="totalScore"
+        [maxBonusPoints]="exercise?.bonusPoints"
+    ></jhi-score-display>
     <jhi-text-assessment-area
         left-body
         *ngIf="state.ui === UIStates.ASSESSMENT"

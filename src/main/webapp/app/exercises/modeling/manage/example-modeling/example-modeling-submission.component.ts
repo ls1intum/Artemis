@@ -18,6 +18,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 import { concatMap, tap } from 'rxjs/operators';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -327,7 +328,9 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             return;
         }
 
-        this.totalScore = credits.reduce((a, b) => a! + b!, 0)!;
+        const maxPoints = this.exercise.maxPoints! + this.exercise.bonusPoints!;
+        const creditsTotalScore = credits.reduce((a, b) => a! + b!, 0)!;
+        this.totalScore = getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints);
         this.assessmentsAreValid = true;
         this.invalidError = undefined;
     }

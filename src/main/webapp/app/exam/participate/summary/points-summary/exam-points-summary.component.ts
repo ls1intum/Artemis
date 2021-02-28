@@ -1,19 +1,21 @@
 import { Component, Input } from '@angular/core';
 import * as moment from 'moment';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
 import { round } from 'app/shared/util/utils';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-exam-points-summary',
     templateUrl: './exam-points-summary.component.html',
 })
 export class ExamPointsSummaryComponent {
+    readonly IncludedInOverallScore = IncludedInOverallScore;
     @Input() exercises: Exercise[];
     @Input() exam: Exam;
 
-    constructor(private serverDateService: ArtemisServerDateService) {}
+    constructor(private serverDateService: ArtemisServerDateService, public exerciseService: ExerciseService) {}
 
     /**
      * The points summary table will only be shown if:
@@ -31,18 +33,19 @@ export class ExamPointsSummaryComponent {
      */
     calculateAchievedPoints(exercise: Exercise): number {
         if (ExamPointsSummaryComponent.hasResultScore(exercise)) {
-            return round(exercise.maxScore! * (exercise.studentParticipations![0].results![0].score! / 100), 1);
+            return round(exercise.maxPoints! * (exercise.studentParticipations![0].results![0].score! / 100), 1);
         }
         return 0;
     }
 
     /**
-     * Calculate the sum of points the student achieved.
+     * Calculate the sum of points the student achieved in exercises that count towards his or her score.
      */
     calculatePointsSum(): number {
         if (this.exercises) {
+            const exercisesIncluded = this.exercises?.filter((exercise) => exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED);
             return round(
-                this.exercises.reduce((sum: number, nextExercise: Exercise) => sum + this.calculateAchievedPoints(nextExercise), 0),
+                exercisesIncluded.reduce((sum: number, nextExercise: Exercise) => sum + this.calculateAchievedPoints(nextExercise), 0),
                 1,
             );
         }
@@ -54,8 +57,23 @@ export class ExamPointsSummaryComponent {
      */
     calculateMaxPointsSum(): number {
         if (this.exercises) {
+            const exercisesIncluded = this.exercises?.filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
             return round(
-                this.exercises.reduce((sum: number, nextExercise: Exercise) => sum + ExamPointsSummaryComponent.getMaxScore(nextExercise), 0),
+                exercisesIncluded.reduce((sum: number, nextExercise: Exercise) => sum + ExamPointsSummaryComponent.getMaxScore(nextExercise), 0),
+                1,
+            );
+        }
+        return 0;
+    }
+
+    /**
+     * Calculate the max. achievable bonusPoints.
+     */
+    calculateMaxBonusPointsSum(): number {
+        if (this.exercises) {
+            const exercisesIncluded = this.exercises?.filter((exercise) => exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED);
+            return round(
+                exercisesIncluded.reduce((sum: number, nextExercise: Exercise) => sum + ExamPointsSummaryComponent.getBonusPoints(nextExercise), 0),
                 1,
             );
         }
@@ -79,7 +97,7 @@ export class ExamPointsSummaryComponent {
     private static hasResultScore(exercise: Exercise): boolean {
         return !!(
             exercise &&
-            exercise.maxScore &&
+            exercise.maxPoints &&
             exercise.studentParticipations &&
             exercise.studentParticipations.length > 0 &&
             exercise.studentParticipations[0].results &&
@@ -89,9 +107,19 @@ export class ExamPointsSummaryComponent {
     }
 
     private static getMaxScore(exercise: Exercise): number {
-        if (exercise && exercise.maxScore) {
-            return exercise.maxScore;
+        if (exercise && exercise.maxPoints) {
+            return exercise.maxPoints;
         }
         return 0;
+    }
+
+    private static getBonusPoints(exercise: Exercise): number {
+        if (exercise && exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS && exercise.maxPoints) {
+            return exercise.maxPoints;
+        } else if (exercise && exercise.bonusPoints) {
+            return exercise.bonusPoints;
+        } else {
+            return 0;
+        }
     }
 }

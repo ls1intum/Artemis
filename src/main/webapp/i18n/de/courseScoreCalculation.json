@@ -11,7 +11,7 @@
             "total": "Gesamtpunktzahl für diesen Kurs",
             "eist": {
                 "forHomework": "Punkte für Hausaufgaben",
-                "forInClass": "Punkte für die Präsenz-Aufgaben"
+                "forInClass": "Punkte für die Präsenzaufgaben"
             }
         }
     }

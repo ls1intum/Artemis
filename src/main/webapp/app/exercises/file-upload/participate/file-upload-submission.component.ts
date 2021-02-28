@@ -22,11 +22,13 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { addParticipationToResult } from 'app/exercises/shared/result/result-utils';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
 })
 export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeactivate {
+    readonly addParticipationToResult = addParticipationToResult;
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
     submission?: FileUploadSubmission;
     submittedFileName: string;
@@ -47,6 +49,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     readonly ButtonType = ButtonType;
 
     private submissionConfirmationText: string;
+    private examMode = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -87,6 +90,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.submission = submission;
                 this.result = tmpResult!;
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
+                this.examMode = !!this.fileUploadExercise.exerciseGroup;
                 this.fileUploadExercise.studentParticipations = [this.participation];
                 this.fileUploadExercise.participationStatus = participationStatus(this.fileUploadExercise);
 
@@ -210,7 +214,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return this.fileUploadExercise && (!this.fileUploadExercise.dueDate || moment(this.fileUploadExercise.dueDate).isSameOrAfter(moment()));
+        return !this.examMode && this.fileUploadExercise && (!this.fileUploadExercise.dueDate || moment(this.fileUploadExercise.dueDate).isSameOrAfter(moment()));
     }
 
     get submitButtonTooltip(): string {

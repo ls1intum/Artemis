@@ -21,15 +21,15 @@ import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -50,7 +50,9 @@ public class ExerciseResource {
 
     private final ExerciseService exerciseService;
 
-    private final UserService userService;
+    private final ExerciseRepository exerciseRepository;
+
+    private final UserRepository userRepository;
 
     private final ParticipationService participationService;
 
@@ -58,43 +60,44 @@ public class ExerciseResource {
 
     private final TutorParticipationService tutorParticipationService;
 
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
+    private final SubmissionRepository submissionRepository;
 
-    private final ComplaintRepository complaintRepository;
-
-    private final SubmissionService submissionService;
-
-    private final ExamService examService;
-
-    private final ComplaintResponseRepository complaintResponseRepository;
-
-    private final ResultService resultService;
+    private final ExamDateService examDateService;
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final GradingCriterionService gradingCriterionService;
 
-    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
-            TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository,
-            SubmissionService submissionService, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
-            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseService programmingExerciseService, GradingCriterionService gradingCriterionService,
-            ExamService examService) {
+    private final ComplaintRepository complaintRepository;
+
+    private final ComplaintResponseRepository complaintResponseRepository;
+
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
+
+    private final ResultRepository resultRepository;
+
+    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserRepository userRepository, ExamDateService examDateService,
+            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
+            ComplaintRepository complaintRepository, SubmissionRepository submissionRepository, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
+            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionService gradingCriterionService,
+            ExerciseRepository exerciseRepository, ResultRepository resultRepository) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.complaintRepository = complaintRepository;
-        this.submissionService = submissionService;
+        this.submissionRepository = submissionRepository;
         this.complaintResponseRepository = complaintResponseRepository;
-        this.resultService = resultService;
         this.tutorLeaderboardService = tutorLeaderboardService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.gradingCriterionService = gradingCriterionService;
-        this.examService = examService;
+        this.examDateService = examDateService;
+        this.exerciseRepository = exerciseRepository;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -109,8 +112,8 @@ public class ExerciseResource {
 
         log.debug("REST request to get Exercise : {}", exerciseId);
 
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Exercise exercise = exerciseRepository.findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(exerciseId);
 
         // Exam exercise
         if (exercise.isExamExercise()) {
@@ -121,7 +124,7 @@ public class ExerciseResource {
             }
             else if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                 // tutors should only be able to see exam exercises when the exercise has finished
-                ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndividualExamEndDate(exam);
+                ZonedDateTime latestIndiviudalExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
                 if (latestIndiviudalExamEndDate == null || latestIndiviudalExamEndDate.isAfter(ZonedDateTime.now())) {
                     // When there is no due date or the due date is in the future, we return forbidden here
                     return forbidden();
@@ -158,9 +161,9 @@ public class ExerciseResource {
     public ResponseEntity<Exercise> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
         log.debug("REST request to get Exercise for assessment dashboard : {}", exerciseId);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
         // Programming exercises with only automatic assessment should *NOT* be available on the assessment dashboard!
@@ -199,7 +202,7 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        Set<Exercise> upcomingExercises = exerciseService.findAllExercisesWithUpcomingDueDate();
+        Set<Exercise> upcomingExercises = exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDate();
         return ResponseEntity.ok(upcomingExercises);
     }
 
@@ -213,7 +216,7 @@ public class ExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForExerciseAssessmentDashboard(@PathVariable Long exerciseId) {
         log.debug("REST request to get exercise statistics for assessment dashboard : {}", exerciseId);
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
@@ -240,22 +243,31 @@ public class ExerciseResource {
         DueDateStat totalNumberOfAssessments;
 
         if (exercise instanceof ProgrammingExercise) {
-            numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId, examMode), 0L);
-            totalNumberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exerciseId, examMode), 0L);
+            numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exerciseId, examMode), 0L);
+            totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId, examMode), 0L);
         }
         else {
-            numberOfSubmissions = submissionService.countSubmissionsForExercise(exerciseId, examMode);
-            totalNumberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId, examMode);
+            numberOfSubmissions = submissionRepository.countSubmissionsForExercise(exerciseId, examMode);
+            totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId, examMode);
         }
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
         stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
-        final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = exerciseService.calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
-                totalNumberOfAssessments);
+        final DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
+        if (examMode) {
+            // set number of corrections specific to each correction round
+            int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+            numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRound(exercise, numberOfCorrectionRounds);
+        }
+        else {
+            // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
+            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+        }
+
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
-        final DueDateStat numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
+        final DueDateStat numberOfAutomaticAssistedAssessments = resultRepository.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);
 
         final long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
@@ -280,8 +292,11 @@ public class ExerciseResource {
 
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
 
-        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
-        stats.setTutorLeaderboardEntries(leaderboardEntries);
+        // tutor leaderboards are currently not supported for exams
+        if (!examMode) {
+            List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
+            stats.setTutorLeaderboardEntries(leaderboardEntries);
+        }
 
         return stats;
     }
@@ -322,7 +337,7 @@ public class ExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId) {
         log.debug("REST request to reset Exercise : {}", exerciseId);
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
@@ -342,7 +357,7 @@ public class ExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> cleanup(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean deleteRepositories) {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", exerciseId, deleteRepositories);
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
@@ -361,7 +376,7 @@ public class ExerciseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
         long start = System.currentTimeMillis();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug(user.getLogin() + " requested access for exercise with exerciseId " + exerciseId, exerciseId);
 
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
@@ -389,7 +404,9 @@ public class ExerciseResource {
             exercise.addParticipation(participation);
         }
 
-        this.programmingExerciseService.checksAndSetsIfProgrammingExerciseIsLocalSimulation(exercise);
+        if (exercise instanceof ProgrammingExercise) {
+            ((ProgrammingExercise) exercise).checksAndSetsIfProgrammingExerciseIsLocalSimulation();
+        }
         // TODO: we should also check that the submissions do not contain sensitive data
 
         // remove sensitive information for students
@@ -401,4 +418,25 @@ public class ExerciseResource {
 
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
+
+    /**
+     * GET /exercises/:exerciseId/toggle-second-correction
+     *
+     * @param exerciseId the exerciseId of the exercise to get the repos from
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     */
+    @PutMapping(value = "/exercises/{exerciseId}/toggle-second-correction")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Boolean> toggleSecondCorrectionEnabled(@PathVariable Long exerciseId) {
+        log.debug("toggleSecondCorrectionEnabled for exercise with id:" + exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        if (exercise == null) {
+            throw new EntityNotFoundException("Exercise not found with id " + exerciseId);
+        }
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            return forbidden();
+        }
+        return ResponseEntity.ok(exerciseRepository.toggleSecondCorrection(exercise));
+    }
+
 }

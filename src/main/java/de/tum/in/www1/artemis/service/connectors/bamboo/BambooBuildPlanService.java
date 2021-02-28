@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.bamboo;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
+import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.getDockerImageName;
 
 import java.io.IOException;
 import java.net.URL;
@@ -11,7 +12,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
@@ -48,13 +48,13 @@ import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
 import com.atlassian.bamboo.specs.model.task.TestParserTaskProperties;
 import com.atlassian.bamboo.specs.util.BambooServer;
 
-import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
+import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import io.github.jhipster.config.JHipsterConstants;
 
 @Service
@@ -79,18 +79,15 @@ public class BambooBuildPlanService {
 
     private final Environment env;
 
-    private final BambooService bambooService;
-
-    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env, @Lazy BambooService bambooService) {
+    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env) {
         this.resourceLoaderService = resourceLoaderService;
         this.bambooServer = bambooServer;
         this.env = env;
-        this.bambooService = bambooService;
     }
 
     /**
      * Creates a Build Plan for a Programming Exercise
-     * 
+     *
      * @param programmingExercise    programming exercise with the required
      *                               information to create the base build plan
      * @param planKey                the key of the build plan
@@ -120,7 +117,7 @@ public class BambooBuildPlanService {
 
     /**
      * Set Build Plan Permissions for admins, instructors and teaching assistants.
-     * 
+     *
      * @param programmingExercise a programming exercise with the required
      *                            information to set the needed build plan
      *                            permissions
@@ -333,7 +330,7 @@ public class BambooBuildPlanService {
     }
 
     private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage language) {
-        var dockerImage = bambooService.getDockerImageName(language);
+        var dockerImage = getDockerImageName(language);
         return new DockerConfiguration().image(dockerImage);
     }
 }

@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -123,7 +120,7 @@ public abstract class Submission extends DomainObject {
     @JsonIgnore
     public Result getResultForCorrectionRound(int correctionRound) {
         List<Result> filteredResults = filterNonAutomaticResults();
-        if (filteredResults.size() > correctionRound) {
+        if (correctionRound >= 0 && filteredResults.size() > correctionRound) {
             return filteredResults.get(correctionRound);
         }
         return null;
@@ -172,16 +169,14 @@ public abstract class Submission extends DomainObject {
      */
     @JsonIgnore
     public void removeNullResults() {
-        this.results = this.results.stream().filter(result -> result != null).collect(Collectors.toList());
+        this.results = this.results.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    @Nullable
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
     public List<Result> getResults() {
         return results;
     }
 
-    @Nullable
     @JsonIgnore
     public List<Result> getManualResults() {
         return results.stream().filter(result -> result != null && !result.isAutomatic()).collect(Collectors.toList());

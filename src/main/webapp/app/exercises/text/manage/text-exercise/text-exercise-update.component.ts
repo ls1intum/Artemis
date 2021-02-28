@@ -1,21 +1,21 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { JhiEventManager } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Exercise, ExerciseCategory, ExerciseMode } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, ExerciseMode, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { JhiAlertService } from 'ng-jhipster';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { NgForm } from '@angular/forms';
+import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -23,6 +23,10 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
     styleUrls: ['./text-exercise-update.scss'],
 })
 export class TextExerciseUpdateComponent implements OnInit {
+    readonly IncludedInOverallScore = IncludedInOverallScore;
+
+    @ViewChild('editForm') editForm: NgForm;
+
     examCourseId?: number;
     checkedFlag: boolean;
     isExamMode: boolean;
@@ -32,7 +36,6 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     textExercise: TextExercise;
     isSaving: boolean;
-    maxScorePattern = MAX_SCORE_PATTERN;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;
@@ -123,11 +126,15 @@ export class TextExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Returns to previous state, which is always exercise page
+     * Revert to the previous state, equivalent with pressing the back button on your browser
+     * Returns to the detail page if there is no previous state and we edited an existing exercise
+     * Returns to the overview page if there is no previous state and we created a new exercise
+     * Returns to the exercise group page if we are in exam mode
      */
     previousState() {
-        window.history.back();
+        navigateBackFromExerciseUpdate(this.router, this.textExercise);
     }
+
     /**
      * Validates if the date is correct
      */
@@ -199,6 +206,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
     }
+
     /**
      * gets the flag of the structured grading instructions slide toggle
      */

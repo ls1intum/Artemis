@@ -13,10 +13,7 @@ import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -25,9 +22,10 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
- * A Exercise.
+ * An Exercise.
  */
 @Entity
 @Table(name = "exercise")
@@ -64,8 +62,8 @@ public abstract class Exercise extends DomainObject {
     @JsonView(QuizView.Before.class)
     private ZonedDateTime assessmentDueDate;
 
-    @Column(name = "max_score")
-    private Double maxScore;
+    @Column(name = "max_points")
+    private Double maxPoints;
 
     @Column(name = "bonus_points")
     private Double bonusPoints;
@@ -73,6 +71,10 @@ public abstract class Exercise extends DomainObject {
     @Enumerated(EnumType.STRING)
     @Column(name = "assessment_type")
     private AssessmentType assessmentType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "included_in_overall_score")
+    private IncludedInOverallScore includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
 
     @Column(name = "problem_statement")
     @Lob
@@ -113,6 +115,10 @@ public abstract class Exercise extends DomainObject {
     @Nullable
     @Column(name = "presentation_score_enabled")
     private Boolean presentationScoreEnabled = false;
+
+    @Nullable
+    @Column(name = "second_correction_enabled")
+    private Boolean secondCorrectionEnabled = false;
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
@@ -184,6 +190,9 @@ public abstract class Exercise extends DomainObject {
     @Transient
     private boolean studentAssignedTeamIdComputedTransient = false; // set to true if studentAssignedTeamIdTransient was computed for the exercise
 
+    @Transient
+    private Long numberOfParticipationsTransient; // used for instructor exam checklist
+
     public String getTitle() {
         return title;
     }
@@ -254,12 +263,12 @@ public abstract class Exercise extends DomainObject {
         return this.assessmentDueDate == null || ZonedDateTime.now().isAfter(this.assessmentDueDate);
     }
 
-    public Double getMaxScore() {
-        return maxScore;
+    public Double getMaxPoints() {
+        return maxPoints;
     }
 
-    public void setMaxScore(Double maxScore) {
-        this.maxScore = maxScore;
+    public void setMaxPoints(Double maxPoints) {
+        this.maxPoints = maxPoints;
     }
 
     public Double getBonusPoints() {
@@ -354,10 +363,9 @@ public abstract class Exercise extends DomainObject {
         return this;
     }
 
-    public Exercise removeParticipation(StudentParticipation participation) {
+    public void removeParticipation(StudentParticipation participation) {
         this.studentParticipations.remove(participation);
         participation.setExercise(null);
-        return this;
     }
 
     public void setStudentParticipations(Set<StudentParticipation> studentParticipations) {
@@ -428,10 +436,9 @@ public abstract class Exercise extends DomainObject {
         return this;
     }
 
-    public Exercise removeExampleSubmission(ExampleSubmission exampleSubmission) {
+    public void removeExampleSubmission(ExampleSubmission exampleSubmission) {
         this.exampleSubmissions.remove(exampleSubmission);
         exampleSubmission.setExercise(null);
-        return this;
     }
 
     public void setExampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
@@ -479,18 +486,16 @@ public abstract class Exercise extends DomainObject {
         this.learningGoals = learningGoals;
     }
 
-    public void addLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.add(learningGoal);
-        learningGoal.getExercises().add(this);
-    }
-
-    public void removeLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.remove(learningGoal);
-        learningGoal.getExercises().remove(this);
-    }
-
     public boolean isTeamMode() {
         return mode == ExerciseMode.TEAM;
+    }
+
+    public Long getNumberOfParticipations() {
+        return numberOfParticipationsTransient;
+    }
+
+    public void setNumberOfParticipations(Long numberOfParticipationsTransient) {
+        this.numberOfParticipationsTransient = numberOfParticipationsTransient;
     }
 
     /**
@@ -520,6 +525,7 @@ public abstract class Exercise extends DomainObject {
      * @param participations the list of available participations
      * @return the found participation, or null, if none exist
      */
+    @Nullable
     public StudentParticipation findRelevantParticipation(List<StudentParticipation> participations) {
         StudentParticipation relevantParticipation = null;
         for (StudentParticipation participation : participations) {
@@ -666,6 +672,11 @@ public abstract class Exercise extends DomainObject {
             }
         }
         else if (submissionsWithUnratedResult.size() > 0) {
+            if (this instanceof ProgrammingExercise) {
+                // this is an edge case that is treated differently: the student has not submitted before the due date and the client would otherwise think
+                // that there is no result for the submission and would display a red trigger button.
+                return null;
+            }
             if (submissionsWithUnratedResult.size() == 1) {
                 return submissionsWithUnratedResult.get(0);
             }
@@ -791,14 +802,21 @@ public abstract class Exercise extends DomainObject {
         this.presentationScoreEnabled = presentationScoreEnabled;
     }
 
+    public boolean getSecondCorrectionEnabled() {
+        return Boolean.TRUE.equals(secondCorrectionEnabled);
+    }
+
+    public void setSecondCorrectionEnabled(boolean secondCorrectionEnabled) {
+        this.secondCorrectionEnabled = secondCorrectionEnabled;
+    }
+
     public List<GradingCriterion> getGradingCriteria() {
         return gradingCriteria;
     }
 
-    public Exercise addGradingCriteria(GradingCriterion gradingCriterion) {
+    public void addGradingCriteria(GradingCriterion gradingCriterion) {
         this.gradingCriteria.add(gradingCriterion);
         gradingCriterion.setExercise(this);
-        return this;
     }
 
     public void setGradingCriteria(List<GradingCriterion> gradingCriteria) {
@@ -808,9 +826,44 @@ public abstract class Exercise extends DomainObject {
     private void reconnectCriteriaWithExercise(List<GradingCriterion> gradingCriteria) {
         this.gradingCriteria = gradingCriteria;
         if (gradingCriteria != null) {
-            this.gradingCriteria.forEach(gradingCriterion -> {
-                gradingCriterion.setExercise(this);
-            });
+            this.gradingCriteria.forEach(gradingCriterion -> gradingCriterion.setExercise(this));
+        }
+    }
+
+    public IncludedInOverallScore getIncludedInOverallScore() {
+        return includedInOverallScore;
+    }
+
+    public void setIncludedInOverallScore(IncludedInOverallScore includedInOverallScore) {
+        this.includedInOverallScore = includedInOverallScore;
+    }
+
+    /**
+     * Check whether the exercise has either a course or an exerciseGroup.
+     *
+     * @param entityName name of the entity
+     * @throws BadRequestAlertException if course and exerciseGroup are set or course and exerciseGroup are not set
+     */
+    public void checkCourseAndExerciseGroupExclusivity(String entityName) throws BadRequestAlertException {
+        if (isCourseExercise() == isExamExercise()) {
+            throw new BadRequestAlertException("An exercise must have either a course or an exerciseGroup", entityName, "eitherCourseOrExerciseGroupSet");
+        }
+    }
+
+    /**
+     * Return the individual release date for the exercise of the participation's user
+     * <p>
+     * Currently, exercise start dates are the same for all users
+     *
+     * @return the time from which on access to the exercise is allowed, for exercises that are not part of an exam, this is just the release date.
+     */
+    @JsonIgnore
+    public ZonedDateTime getIndividualReleaseDate() {
+        if (isExamExercise()) {
+            return getExerciseGroup().getExam().getStartDate();
+        }
+        else {
+            return getReleaseDate();
         }
     }
 
@@ -822,7 +875,7 @@ public abstract class Exercise extends DomainObject {
 
         ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
 
-        private String mappedColumnName;
+        private final String mappedColumnName;
 
         ExerciseSearchColumn(String mappedColumnName) {
             this.mappedColumnName = mappedColumnName;

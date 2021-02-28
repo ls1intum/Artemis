@@ -38,6 +38,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -103,6 +104,7 @@ function sharedSetup(url: string[]) {
                 MockDirective(JhiTranslateDirective),
                 MockPipe(TranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
+                MockComponent(IncludedInScoreBadgeComponent),
             ],
             providers: [
                 {
@@ -131,28 +133,8 @@ function sharedSetup(url: string[]) {
     });
 }
 
-describe('ExamParticipationSummaryComponent for TestRuns', () => {
-    sharedSetup(['', 'test-runs']);
-
-    it('should initialize and display test run ribbon', function () {
-        fixture.detectChanges();
-        expect(fixture).to.be.ok;
-        expect(component.isTestRun).to.be.true;
-        const testRunRibbon = fixture.debugElement.query(By.css('#testRunRibbon'));
-        expect(testRunRibbon).to.exist;
-    });
-});
-
 describe('ExamParticipationSummaryComponent', () => {
     sharedSetup(['', '']);
-
-    it('should initialize and not display test run ribbon', function () {
-        fixture.detectChanges();
-        expect(fixture).to.be.ok;
-        expect(component.isTestRun).to.be.false;
-        const testRunRibbon = fixture.debugElement.query(By.css('#testRunRibbon'));
-        expect(testRunRibbon).to.not.exist;
-    });
 
     it('should expand all exercises and call print when Export PDF is clicked', fakeAsync(() => {
         const printWindowStub = sinon.stub(global.window, 'print').returns();

@@ -11,8 +11,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 
 /**
@@ -23,8 +26,6 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsD
 @RequestMapping("/api")
 public class ProgrammingExerciseGradingResource {
 
-    public static final String RESET = "/programming-exercise/{exerciseId}/grading/reset";
-
     public static final String RE_EVALUATE = "/programming-exercise/{exerciseId}/grading/re-evaluate";
 
     public static final String STATISTICS = "/programming-exercise/{exerciseId}/grading/statistics";
@@ -33,48 +34,21 @@ public class ProgrammingExerciseGradingResource {
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
-    private final ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
-
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final ResultRepository resultRepository;
 
-    public ProgrammingExerciseGradingResource(ProgrammingExerciseGradingService programmingExerciseGradingService,
-            ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseService programmingExerciseService,
-            AuthorizationCheckService authCheckService, UserService userService, ResultRepository resultRepository) {
+    public ProgrammingExerciseGradingResource(ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingExerciseRepository programmingExerciseRepository,
+            AuthorizationCheckService authCheckService, UserRepository userRepository, ResultRepository resultRepository) {
         this.programmingExerciseGradingService = programmingExerciseGradingService;
-        this.programmingExerciseTestCaseService = programmingExerciseTestCaseService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.resultRepository = resultRepository;
-    }
-
-    /**
-     * Use with care: Set the weight of all test cases of an exercise to 1.
-     *
-     * @param exerciseId the id of the exercise to reset the test case weights of.
-     * @return the updated set of test cases for the programming exercise.
-     */
-    @PatchMapping(RESET)
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<ProgrammingExerciseTestCase>> resetGradingConfiguration(@PathVariable Long exerciseId) {
-        log.debug("REST request to reset the weights of exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
-        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
-
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            return forbidden();
-        }
-
-        programmingExerciseGradingService.logResetGrading(user, programmingExercise, course);
-        List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(exerciseId);
-        return ResponseEntity.ok(testCases);
     }
 
     /**
@@ -87,9 +61,9 @@ public class ProgrammingExerciseGradingResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Integer> reEvaluateGradedResults(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the weights of exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
@@ -112,10 +86,10 @@ public class ProgrammingExerciseGradingResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExerciseGradingStatisticsDTO> getGradingStatistics(@PathVariable Long exerciseId) {
         log.debug("REST request to get test case statistics for programming exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();

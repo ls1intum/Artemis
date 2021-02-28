@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -540,6 +541,137 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
+    public void testSubmitAssessment_IncludedCompletelyWithBonusPointsExercise() throws Exception {
+        // setting up exercise
+        textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        textExercise.setMaxPoints(10.0);
+        textExercise.setBonusPoints(10.0);
+        exerciseRepo.save(textExercise);
+
+        // setting up student submission
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        database.saveTextSubmission(textExercise, textSubmission, "student1");
+        // ending exercise
+        exerciseDueDatePassed();
+
+        // getting submission from db
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, params);
+
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 150L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 200L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 200L);
+
+        Course course = request.get("/api/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
+        Exercise exercise = (Exercise) course.getExercises().toArray()[0];
+        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
+        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(1L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testSubmitAssessment_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
+        // setting up exercise
+        textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        textExercise.setMaxPoints(10.0);
+        textExercise.setBonusPoints(0.0);
+        exerciseRepo.save(textExercise);
+
+        // setting up student submission
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        database.saveTextSubmission(textExercise, textSubmission, "student1");
+        // ending exercise
+        exerciseDueDatePassed();
+
+        // getting submission from db
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, params);
+
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testSubmitAssessment_IncludedAsBonusExercise() throws Exception {
+        // setting up exercise
+        textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        textExercise.setMaxPoints(10.0);
+        textExercise.setBonusPoints(0.0);
+        exerciseRepo.save(textExercise);
+
+        // setting up student submission
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        database.saveTextSubmission(textExercise, textSubmission, "student1");
+        // ending exercise
+        exerciseDueDatePassed();
+
+        // getting submission from db
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, params);
+
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testSubmitAssessment_NotIncludedExercise() throws Exception {
+        // setting up exercise
+        textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        textExercise.setMaxPoints(10.0);
+        textExercise.setBonusPoints(0.0);
+        exerciseRepo.save(textExercise);
+
+        // setting up student submission
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        database.saveTextSubmission(textExercise, textSubmission, "student1");
+        // ending exercise
+        exerciseDueDatePassed();
+
+        // getting submission from db
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, params);
+
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void testSubmitAssessment_withResultOver100Percent() throws Exception {
         textExercise = (TextExercise) database.addMaxScoreAndBonusPointsToExercise(textExercise);
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -1010,5 +1142,15 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         feedbackConflictRepository.save(feedbackConflict);
 
         return asList(textSubmission1, textSubmission2);
+    }
+
+    public void addAssessmentFeedbackAndCheckScore(TextSubmission submissionWithoutAssessment, TextAssessmentDTO textAssessmentDTO, List<Feedback> feedbacks, double pointsAwarded,
+            long expectedScore) throws Exception {
+        feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj"));
+        textAssessmentDTO.setFeedbacks(feedbacks);
+        Result response = request.putWithResponseBody(
+                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
+                Result.class, HttpStatus.OK);
+        assertThat(response.getScore()).isEqualTo(expectedScore);
     }
 }

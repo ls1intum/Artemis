@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
@@ -33,7 +34,6 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      * @param complaintType - complaint type we want to filter by
      * @return number of complaints response associated to exercise exerciseId
      */
-
     long countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(long exerciseId, ComplaintType complaintType);
 
     /**
@@ -44,19 +44,14 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      * @return number of complaints associated to exercise exerciseId without test runs
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM StudentParticipation p
-            WHERE p.exercise.id = :#{#exerciseId}
-            AND EXISTS (Select s FROM p.submissions s
-                        WHERE s.results IS NOT EMPTY
-                        AND EXISTS (SELECT c FROM Complaint c
-                            WHERE EXISTS (SELECT r.id FROM s.results r
-                                WHERE r.id = c.result.id) AND c.complaintType = :#{#complaintType}
-                                AND EXISTS (SELECT cr FROM ComplaintResponse cr
-                                    WHERE cr.complaint.id = c.id AND cr.submittedTime IS NOT NULL)))
-            AND NOT EXISTS (SELECT prs FROM p.results prs
-            WHERE prs.assessor.id = p.student.id)
+            SELECT COUNT (DISTINCT cr) FROM ComplaintResponse cr
+            WHERE cr.submittedTime IS NOT NULL
+            AND cr.complaint.complaintType = :#{#complaintType}
+            AND cr.complaint.result.participation.exercise.id = :#{#exerciseId}
+            AND cr.complaint.result.participation.testRun = FALSE
             """)
-    long countByComplaintResultParticipationExerciseIdAndComplaintComplaintTypeIgnoreTestRuns(long exerciseId, ComplaintType complaintType);
+    long countByComplaintResultParticipationExerciseIdAndComplaintComplaintTypeIgnoreTestRuns(@Param("exerciseId") long exerciseId,
+            @Param("complaintType") ComplaintType complaintType);
 
     /**
      * Delete all complaint responses that belong to complaints of submission results of a given participation

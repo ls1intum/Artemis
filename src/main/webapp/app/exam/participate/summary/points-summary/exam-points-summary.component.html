@@ -5,32 +5,48 @@
             <tr>
                 <th scope="col">#</th>
                 <th scope="col">{{ 'artemisApp.exam.examSummary.points.exercise' | translate }}</th>
+                <th scope="col">{{ 'artemisApp.exercise.includedInOverallScore' | translate }}</th>
                 <th scope="col">{{ 'artemisApp.exam.examSummary.points.yourPoints' | translate }}</th>
                 <th scope="col">{{ 'artemisApp.exam.examSummary.points.maxPoints' | translate }}</th>
                 <th scope="col">{{ 'artemisApp.exam.examSummary.points.bonus' | translate }}</th>
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let exercise of exercises; let i = index">
+            <tr
+                *ngFor="let exercise of exercises; let i = index"
+                [ngClass]="{
+                    'font-italic text-danger font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED,
+                    'font-italic text-warning font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS
+                }"
+            >
                 <th scope="row">{{ i + 1 }}</th>
                 <td>
                     <span *ngIf="exercise.title">{{ exercise.title }}</span>
                 </td>
+                <td>{{ exerciseService.isIncludedInScore(exercise) }}</td>
                 <td>
                     {{ calculateAchievedPoints(exercise) }}
                 </td>
                 <td>
-                    <span *ngIf="exercise.maxScore != undefined">{{ exercise.maxScore }}</span>
+                    <span *ngIf="exercise.maxPoints != undefined">{{ exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 0 : exercise.maxPoints }}</span>
                 </td>
                 <td>
-                    <span *ngIf="exercise.bonusPoints != undefined">{{ exercise.bonusPoints }}</span>
+                    <span *ngIf="exercise.bonusPoints != undefined">{{
+                        exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? exercise.maxPoints : exercise.bonusPoints
+                    }}</span>
                 </td>
-            </tr>
-            <tr>
-                <th colspan="2" class="text-right">{{ 'artemisApp.exam.examSummary.points.sum' | translate }}</th>
-                <td>{{ calculatePointsSum() }}</td>
-                <td>{{ calculateMaxPointsSum() }}</td>
             </tr>
         </tbody>
     </table>
+    <h5>
+        {{
+            'artemisApp.exam.examSummary.points.youAchieved'
+                | translate
+                    : {
+                          achievedPoints: calculatePointsSum(),
+                          normalPoints: calculateMaxPointsSum(),
+                          bonusPoints: calculateMaxBonusPointsSum()
+                      }
+        }}
+    </h5>
 </div>

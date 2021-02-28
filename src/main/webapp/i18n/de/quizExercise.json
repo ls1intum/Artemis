@@ -4,7 +4,7 @@
             "home": {
                 "title": "Quiz",
                 "createLabel": "Quiz erstellen",
-                "createModelDragAndDrop": "Drag and Drop Model Quiz erstellen",
+                "createModelDragAndDrop": "Drag-And-Drop Model Quiz erstellen",
                 "createOrEditLabel": "Quiz erstellen oder bearbeiten",
                 "exportLabel": "Quizübungen exportieren"
             },
@@ -33,8 +33,8 @@
             },
             "export": {
                 "title": "Alle Quizfragen zum Kurs {{ param }}",
-                "export": "Ausfuhr",
-                "questionTitle": "Kurzer Frage Titel",
+                "export": "Export",
+                "questionTitle": "Kurzer Fragetitel",
                 "quizExerciseTitle": "Quiz Übungstitel"
             },
             "filter": {
@@ -68,7 +68,8 @@
             "minutesShort": "min",
             "secondsShort": "s",
             "questions": "Fragen",
-            "noQuestionsFound": "Keine Fragen in Kurs gefunden",
+            "noQuestionsFoundCourse": "Keine Fragen in Kurs gefunden",
+            "noQuestionsFoundExam": "Keine Fragen in Klausur gefunden",
             "noMatchingQuestionsFound": "Keine Fragen des Kurses entsprechen den Suchkriterien",
             "multipleChoiceQuestion": "Multiple-Choice Frage",
             "dragAndDropQuestion": "Drag-And-Drop Frage",
@@ -79,7 +80,9 @@
             "addExistingQuestions": "Vorhandene Fragen hinzufügen",
             "fromAFile": "Aus einer Datei",
             "fromACourse": "Von einem Kurs",
+            "fromAnExam": "Von einer Klausur",
             "selectCourse": "Wähle einen Kurs",
+            "selectExam": "Wähle eine Klausur",
             "selectQuizExercise": "Wähle eine Quiz Übung aus",
             "addSelectedQuestions": "Ausgewählte Fragen hinzufügen",
             "status": "Status",
@@ -107,7 +110,7 @@
             "statistics": "Statistiken",
             "practiceMode": "Übung",
             "previewMode": "Vorschau",
-            "preview": "Quiz Vorschau",
+            "preview": "Quiz-Vorschau",
             "solution": "Musterlösung",
             "quizIsOverText": "Das Quiz ist beendet. Bitte warte. Wenn die Ergebnisse nach 60s nicht automatisch angezeigt werden, dann lade die Seite bitte neu.",
             "notParticipatedText": "Das Quiz ist beendet und du hast nicht daran teilgenommen. Es gibt keine Ergebnisse anzuzeigen.",
@@ -136,7 +139,7 @@
                     "no_changes": "Keine Änderungen, welche die bestehenden Ergebnisse beeinflussen",
                     "quizStatistic": "Die bestehende Statistiken müssen neu berechnet werden!",
                     "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
-                    "exam": "Dieses Quiz ist eine Klausur Aufgabe. Stellen Sie sicher, dass das Quiz bereits evaluiert wurde bevor eine Überarbeitung vorgenommen wird!",
+                    "exam": "Dieses Quiz ist eine Klausuraufgabe. Stellen Sie sicher, dass das Quiz bereits evaluiert wurde bevor eine Überarbeitung vorgenommen wird!",
                     "resulttext": {
                         "element_deleted": "Das Frage-Element wird aus allen Ergebnissen entfernt",
                         "element_invalid": "Alle Teilnehmer erhalten die Punkte für das ungültige Frage-Element",
@@ -159,13 +162,13 @@
                 "invalidStartTime": "Quiz: Die Startzeit ist nicht gültig.",
                 "startTimeInPast": "Quiz: Die Startzeit liegt in der Vergangenheit.",
                 "questionTitle": "Frage {{index}}: Der Titel fehlt.",
-                "questionScore": "Frage {{index}}: Ungültige Punktzahl.",
+                "questionScore": "Frage {{index}}: Mindestens einen Punkt pro Aufgabe erforderlich.",
                 "questionCorrectAnswerOption": "Frage {{index}}: Es existiert keine korrekte Antwortmöglichkeit.",
                 "questionCorrectMapping": "Frage {{index}}: Es existiert keine korrekte Zuordnung.",
                 "questionUnsolvable": "Frage {{index}}: Es gibt Drag Items, die auf mehrere Drop Locations gleichzeitig platziert werden müssten um die Frage richtig zu beantworten.",
                 "misleadingCorrectMapping": "Frage {{index}}: Es gibt mindestens eine korrekte Zuordnung (oder Kombination an korrekten Zuordnungen), die wenn sie verwendet wird, keine korrekte Gesamtlösung mehr zulässt.",
                 "shortAnswerQuestionEverySpotHasASolution": "Frage {{index}}: Es gibt mindestens ein Eingabefeld, dass keine Lösung besitzt.",
-                "shortAnswerQuestionEveryMappedSolutionHasASpot": "Frage {{index}}: Es fehlt mindestes ein Eingabfeld, um eine Kombination an korrekten Zuordnungen zu erhalten.",
+                "shortAnswerQuestionEveryMappedSolutionHasASpot": "Frage {{index}}: Es fehlt mindestens ein Eingabefeld, um eine Kombination an korrekten Zuordnungen zu erhalten.",
                 "shortAnswerQuestionUnsolvable": "Frage {{index}}: Diese Frage kann nicht richtig beantwortet werden. Bitte überprüfe die zugeordneten Lösungen",
                 "shortAnswerQuestionSolutionHasNoValue": "Frage {{index}}: Es gibt mindestens eine Lösung die keinen Wert besitzt.",
                 "shortAnswerQuestionDuplicateMapping": "Frage {{index}}: Es gibt mindestens ein Mapping das doppelt ist.",
@@ -176,12 +179,14 @@
             },
             "scoringType": {
                 "all_or_nothing": "Alles-oder-Nichts",
-                "proportional_with_penalty": "Anteilig mit Abzügen"
+                "proportional_with_penalty": "Anteilig mit Abzügen",
+                "proportional_without_penalty": "Anteilig ohne Abzüge"
             },
             "scoringTypeExplanation": {
-                "title": "Bewertungs Typen",
+                "title": "Bewertungstypen",
                 "all_or_nothing": "Alle richtigen Auswahlmöglichkeiten müssen ausgewählt werden und alle falschen Auswahlmöglichkeiten müssen leer bleiben, um die volle Punktzahl zu erreichen. Wird eine falsche Antwortmöglichkeit ausgewählt gibt es 0 Punkte. Es gibt keine Punktzahl dazwischen.",
-                "proportional_with_penalty": "Jede richtige Antwort führt zu einem Bruchteil der Gesamtpunktzahl. Um Rätselraten zu vermeiden, wird für jeden Fehler der gleiche Anteil von den erreichten Punkten abgezogen. Beispiel: Wenn die gesamt Punktzahl der Frage 3 ist und es 5 Optionen gibt, ergibt jede richtige Antwortmöglichkeit 0,6 Punkte. Jede falsche Antwortmöglichkeit zieht 0,6 Punkte ab. Ein Student mit 4 richtigen und 1 falschen Auswahlmöglichkeit erhält dann 1,8 Punkte."
+                "proportional_with_penalty": "Jede richtige Antwort führt zu einem Bruchteil der Gesamtpunktzahl. Um Rätselraten zu vermeiden, wird für jeden Fehler der gleiche Anteil von den erreichten Punkten abgezogen. Beispiel: Wenn die Punktzahl der Frage 3 ist und es 5 Optionen gibt, ergibt jede richtige Antwortmöglichkeit 0,6 Punkte. Jede falsche Antwortmöglichkeit zieht 0,6 Punkte ab. Ein Student mit 3 richtigen und 2 falschen Antworten erhält dann 0,6 Punkte.",
+                "proportional_without_penalty": "Jede richtige Antwort führt zu einem Bruchteil der Gesamtpunktzahl. Bei falschen Antworten werden keine Punkte abgezogen. Beispiel: Wenn die Punktzahl der Frage 3 ist und es 5 Optionen gibt, ergibt jede richtige Antwortmöglichkeit 0,6 Punkte. Ein Student mit 3 richtigen und 2 falschen Antworten erhält dann 1,8 Punkte."
             },
             "importJSON": "Fragen importieren (JSON)",
             "importWarningShort": "Ungültige Fragen gefunden",
@@ -198,9 +203,11 @@
                 "options": "Antwortmöglichkeiten",
                 "scoringTitle": "Erklärung zur Punkteverteilung in Frage {{paramIndex}} {{paramTitle}}",
                 "scoringTypeProportional": "Verteilung Anteilig mit Abzügen: ",
+                "scoringTypeProportionalWithout": "Verteilung Anteilig ohne Abzügen: ",
                 "scoringTypeAllOrNothing": "Verteilung Alles-oder-Nichts: ",
                 "scoringTypeProportionalExplanation": "Jede richtige Antwort gibt positive Punkte, jeder Fehler gibt negative Punkte, um Rätselraten zu vermeiden. ",
-                "scoringTypeAllOrNothingExplanation": "Du erhälst entweder alle oder gar keine Punkte.",
+                "scoringTypeProportionalWithoutExplanation": "Jede richtige Antwort gibt positive Punkte. Für Fehler werden keine Punkte abgezogen. ",
+                "scoringTypeAllOrNothingExplanation": "Du erhältst entweder alle oder gar keine Punkte.",
                 "multipleChoiceAllOrNothingCorrect": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht. Da du alle Antwortoptionen richtig ausgewählt hast, hast du in dieser Übung alle Punkte erreicht. Tolle Arbeit!",
                 "multipleChoiceAllOrNothingNotCorrect": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht, da du {{paramInTotalWrongOptions}} {{wrongOption}} falsch und {{paramInTotalRightOptions}} {{rightOption}} richtig ausgewählt hast. Versuchen es weiter! ",
                 "multipleChoiceProp": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht. Jede der {{paramAmountOfAnswerOptions}} Antwortmöglichkeiten gewährt dir {{paramQuestionScore}}/{{paramAmountOfAnswerOptions}} Punkte, wenn du die Antwortmöglichkeiten richtig ausgewählt hast. Du hast {{paramInTotalWrongOptions}} {{wrongOption}} falsch und {{paramInTotalRightOptions}} {{rightOption}} korrekt ausgewählt. Insgesamt hast du",
@@ -217,9 +224,9 @@
             "explanationNotAnswered": "Du hast die Frage noch nicht beantwortet",
             "submissionWarning": "Bist du sicher, dass du einreichen willst? Du hast nicht alle Fragen beantwortet und hast noch etwas Zeit übrig!",
             "placeholder": {
-                "title": "Kurzer Quiz Titel",
-                "questionTitle": "Fragen Titel",
-                "shortQuestionTitle": "Kurzer Fragen Titel"
+                "title": "Kurzer Quiz-Titel",
+                "questionTitle": "Fragentitel",
+                "shortQuestionTitle": "Kurzer Fragentitel"
             },
             "matchLetterCase": {
                 "title": "Groß- und Kleinschreibung beachten",

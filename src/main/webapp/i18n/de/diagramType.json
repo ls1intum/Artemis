@@ -8,10 +8,11 @@
             "ActivityDiagram": "Aktivitätsdiagramm",
             "UseCaseDiagram": "Anwendungsfalldiagramm",
             "CommunicationDiagram": "Kommunikationsdiagramm",
-            "ComponentDiagram": "Komponentendiagram",
-            "DeploymentDiagram": "Verteilungsdiagram",
+            "ComponentDiagram": "Komponentendiagramm",
+            "DeploymentDiagram": "Verteilungsdiagramm",
             "PetriNet": "Petri-Netz",
-            "SyntaxTree": "Syntaxbaum"
+            "SyntaxTree": "Syntaxbaum",
+            "Flowchart": "Flussdiagramm"
         }
     }
 }

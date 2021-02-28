@@ -1,0 +1,12 @@
+<div class="btn-group">
+    <!-- Enable second correction with this button -->
+    <button *ngIf="!secondCorrectionEnabled" (click)="triggerSecondCorrectionButton()" class="btn btn-success float-right btn-sm">
+        <fa-icon [icon]="'toggle-on'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOn' | translate }}
+        <fa-icon *ngIf="toggelingSecondCorrectionButton" [icon]="'spinner'" [spin]="true"></fa-icon>
+    </button>
+    <!-- Disable second correction with this button -->
+    <button *ngIf="secondCorrectionEnabled" (click)="triggerSecondCorrectionButton()" class="btn btn-danger float-right btn-sm">
+        <fa-icon [icon]="'toggle-off'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOff' | translate }}
+        <fa-icon *ngIf="toggelingSecondCorrectionButton" [icon]="'spinner'" [spin]="true"></fa-icon>
+    </button>
+</div>

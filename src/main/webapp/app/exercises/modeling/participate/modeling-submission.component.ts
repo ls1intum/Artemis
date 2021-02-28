@@ -25,11 +25,12 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { ButtonType } from 'app/shared/components/button.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { cloneDeep, omit } from 'lodash';
+import { omit } from 'lodash';
 import * as moment from 'moment';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subject } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
+import { addParticipationToResult } from 'app/exercises/shared/result/result-utils';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -38,6 +39,7 @@ import { Subscription } from 'rxjs/Subscription';
 })
 // TODO CZ: move assessment functionality to separate assessment result view?
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    readonly addParticipationToResult = addParticipationToResult;
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
     ButtonType = ButtonType;
@@ -75,6 +77,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     isLoading: boolean;
     isLate: boolean; // indicates if the submission is late
     ComplaintType = ComplaintType;
+    private examMode = false;
 
     // submission sync with team members
     teamSyncInterval: number;
@@ -143,6 +146,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
         this.modelingExercise = this.participation.exercise as ModelingExercise;
         this.modelingExercise.studentParticipations = [this.participation];
+        this.examMode = !!this.modelingExercise.exerciseGroup;
         this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
         if (this.modelingExercise.diagramType == undefined) {
             this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
@@ -500,7 +504,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return true;
         }
         const model: UMLModel = this.modelingEditor.getCurrentModel();
-        const explanationIsUpToDate = this.explanation === this.submission.explanationText;
+        const explanationIsUpToDate = this.explanation === (this.submission.explanationText ?? '');
         return !this.modelHasUnsavedChanges(model) && explanationIsUpToDate;
     }
 
@@ -543,7 +547,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return this.modelingExercise && (!this.modelingExercise.dueDate || moment(this.modelingExercise.dueDate).isSameOrAfter(moment()));
+        return this.modelingExercise && !this.examMode && (!this.modelingExercise.dueDate || moment(this.modelingExercise.dueDate).isSameOrAfter(moment()));
     }
 
     get submitButtonTooltip(): string {
@@ -558,20 +562,5 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
 
         return 'entity.action.submitDeadlineMissedTooltip';
-    }
-
-    /**
-     * Prepare a result that contains a participation which is needed in the rating component
-     */
-    get resultForRating() {
-        const ratingResult = cloneDeep(this.result);
-        if (ratingResult) {
-            // remove circular dependency
-            const ratingParticipation = cloneDeep(this.participation);
-            ratingParticipation.exercise!.studentParticipations = [];
-
-            ratingResult.participation = ratingParticipation;
-        }
-        return ratingResult;
     }
 }

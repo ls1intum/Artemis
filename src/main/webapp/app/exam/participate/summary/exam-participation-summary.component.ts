@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
@@ -20,6 +20,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly AssessmentType = AssessmentType;
+    readonly IncludedInOverallScore = IncludedInOverallScore;
 
     @Input()
     studentExam: StudentExam;
@@ -33,6 +34,8 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     isTestRun = false;
 
+    testRunConduction = false;
+
     examWithOnlyIdAndStudentReviewPeriod: Exam;
 
     constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService) {}
@@ -41,8 +44,10 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * Initialise the courseId from the current url
      */
     ngOnInit(): void {
-        // courseId is not part of the exam or the exercise
+        // flags required to display test runs correctly
         this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
+        this.testRunConduction = this.isTestRun && this.route.snapshot.url[3]?.toString() === 'conduction';
+        // courseId is not part of the exam or the exercise
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.setExamWithOnlyIdAndStudentReviewPeriod();
     }
@@ -52,7 +57,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
     }
 
     get resultsPublished() {
-        if (this.isTestRun) {
+        if (this.testRunConduction) {
+            return false;
+        } else if (this.isTestRun) {
             return true;
         }
         return this.studentExam?.exam?.publishResultsDate && moment(this.studentExam.exam.publishResultsDate).isBefore(moment());

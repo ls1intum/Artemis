@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -28,14 +30,6 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         this.modelingExerciseRepository = modelingExerciseRepository;
     }
 
-    @Override
-    public Exercise importExercise(Exercise templateExercise, Exercise importedExercise) {
-        if (templateExercise instanceof ModelingExercise && importedExercise instanceof ModelingExercise) {
-            return importModelingExercise((ModelingExercise) templateExercise, (ModelingExercise) importedExercise);
-        }
-        return null;
-    }
-
     /**
      * Imports a modeling exercise creating a new entity, copying all basic values and saving it in the database.
      * All basic include everything except Student-, Tutor participations, and student questions. <br>
@@ -46,7 +40,8 @@ public class ModelingExerciseImportService extends ExerciseImportService {
      * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
      * @return The newly created exercise
      */
-    private ModelingExercise importModelingExercise(ModelingExercise templateExercise, ModelingExercise importedExercise) {
+    @NotNull
+    public ModelingExercise importModelingExercise(ModelingExercise templateExercise, ModelingExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise.getId());
         ModelingExercise newExercise = copyModelingExerciseBasis(importedExercise);
 
@@ -61,6 +56,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
      * @param importedExercise The exercise from which to copy the basis
      * @return the cloned TextExercise basis
      */
+    @NotNull
     private ModelingExercise copyModelingExerciseBasis(Exercise importedExercise) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         ModelingExercise newExercise = new ModelingExercise();
@@ -115,10 +111,12 @@ public class ModelingExerciseImportService extends ExerciseImportService {
             newSubmission.setParticipation(originalSubmission.getParticipation());
             newSubmission.setExplanationText(((ModelingSubmission) originalSubmission).getExplanationText());
             newSubmission.setModel(((ModelingSubmission) originalSubmission).getModel());
+
+            newSubmission = submissionRepository.saveAndFlush(newSubmission);
             if (originalSubmission.getLatestResult() != null) {
                 newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission));
             }
-            submissionRepository.save(newSubmission);
+            newSubmission = submissionRepository.saveAndFlush(newSubmission);
         }
         return newSubmission;
     }

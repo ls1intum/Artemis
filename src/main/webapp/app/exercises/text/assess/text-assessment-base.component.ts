@@ -7,11 +7,12 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { Feedback } from 'app/entities/feedback.model';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     template: '',
@@ -35,7 +36,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     protected constructor(
         protected jhiAlertService: JhiAlertService,
         protected accountService: AccountService,
-        protected assessmentsService: TextAssessmentsService,
+        protected assessmentsService: TextAssessmentService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {}
 
@@ -47,16 +48,11 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     }
 
     protected computeTotalScore(assessments: Feedback[]): number {
-        const maxPoints = this.exercise?.maxScore! + this.exercise?.bonusPoints! ?? 0.0;
+        const maxPoints = this.exercise?.maxPoints! + this.exercise?.bonusPoints! ?? 0.0;
         let totalScore = this.structuredGradingCriterionService.computeTotalScore(assessments);
+
         // Cap totalScore to maxPoints
-        if (totalScore > maxPoints) {
-            totalScore = maxPoints;
-        }
-        // Do not allow negative score
-        if (totalScore < 0) {
-            totalScore = 0;
-        }
+        totalScore = getPositiveAndCappedTotalScore(totalScore, maxPoints);
         return totalScore;
     }
 

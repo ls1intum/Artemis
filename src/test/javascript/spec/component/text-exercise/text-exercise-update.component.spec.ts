@@ -14,6 +14,8 @@ import { Course } from 'app/entities/course.model';
 import * as moment from 'moment';
 import { of } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -27,6 +29,7 @@ describe('TextExercise Management Update Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                MockProvider(TranslateService),
             ],
             declarations: [TextExerciseUpdateComponent],
         })
@@ -45,6 +48,7 @@ describe('TextExercise Management Update Component', () => {
             entity.id = 123;
             spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.textExercise = entity;
+            comp.textExercise.course = { id: 1 } as Course;
             // WHEN
             comp.save();
             tick(); // simulate async
@@ -59,6 +63,7 @@ describe('TextExercise Management Update Component', () => {
             const entity = new TextExercise(undefined, undefined);
             spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.textExercise = entity;
+            comp.textExercise.course = { id: 1 } as Course;
             // WHEN
             comp.save();
             tick(); // simulate async
@@ -73,6 +78,7 @@ describe('TextExercise Management Update Component', () => {
             const entity = new TextExercise(undefined, undefined);
             spyOn(service, 'import').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.textExercise = entity;
+            comp.textExercise.course = { id: 1 } as Course;
             comp.isImport = true;
             // WHEN
             comp.save();
@@ -89,6 +95,7 @@ describe('TextExercise Management Update Component', () => {
             entity.title = 'My Exercise   ';
             spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.textExercise = entity;
+            comp.textExercise.course = { id: 1 } as Course;
 
             // WHEN
             comp.save();

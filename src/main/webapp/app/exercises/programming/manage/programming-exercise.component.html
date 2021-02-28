@@ -15,18 +15,18 @@
             <fa-icon [icon]="'plus'"></fa-icon>
             <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.importLabel"> Import new programming exercise </span>
         </button>
-        <button
+        <a
             jhiOrionFilter
             [showInOrionWindow]="false"
             *ngIf="course && course.isAtLeastInstructor"
             id="jh-create-entity"
             class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1"
-            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
             [routerLink]="['/course-management', courseId, 'programming-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
-            <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.generateLabel"> Generate new Programming Exercise </span>
-        </button>
+            <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">Generate new Programming Exercise</span>
+        </a>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
     <div class="row"></div>
@@ -45,6 +45,10 @@
                     <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th class="d-none d-md-table-cell" jhiSortBy="maxScore">
                         <span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="includedInOverallScore">
+                        <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiOrionFilter [showInOrionWindow]="false"><span jhiTranslate="artemisApp.programmingExercise.repositories">Repositories</span></th>
                     <th jhiOrionFilter [showInOrionWindow]="false"><span jhiTranslate="artemisApp.programmingExercise.buildplans">Build Plans</span>&nbsp;</th>
@@ -80,7 +84,9 @@
                     <td class="d-none d-md-table-cell">{{ programmingExercise.shortName }}</td>
                     <td>{{ programmingExercise.releaseDate | artemisDate }}</td>
                     <td>{{ programmingExercise.dueDate | artemisDate }}</td>
-                    <td class="d-none d-md-table-cell">{{ programmingExercise.maxScore }}</td>
+                    <td class="d-none d-md-table-cell">{{ programmingExercise.maxPoints }}</td>
+                    <td>{{ programmingExercise.bonusPoints }}</td>
+                    <td>{{ exerciseService.isIncludedInScore(programmingExercise) }}</td>
                     <td *ngIf="!isOrion" class="d-flex flex-column">
                         <div class="d-flex justify-content-between">
                             <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
@@ -205,38 +211,54 @@
                     <td jhiOrionFilter [showInOrionWindow]="false" class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1">
-                                <button
-                                    type="submit"
+                                <a
                                     *ngIf="programmingExercise.isAtLeastTutor"
-                                    [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'scores']"
-                                    class="btn btn-info btn-sm mr-1 mb-1"
+                                    [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'assessment']"
+                                    class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'eye'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-                                </button>
-                                <button
-                                    type="submit"
+                                    <fa-icon [icon]="'list-alt'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
+                                </a>
+                                <a
                                     *ngIf="programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'participations']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'list-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-                                </button>
-                                <button
-                                    type="submit"
+                                </a>
+                                <a
                                     *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'teams']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'users'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
-                                </button>
+                                </a>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
-                                <button
-                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-                                    type="submit"
+                                <a
+                                    *ngIf="programmingExercise.isAtLeastTutor"
+                                    [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'scores']"
+                                    class="btn btn-info btn-sm mr-1 mb-1"
+                                >
+                                    <fa-icon [icon]="'eye'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+                                </a>
+                                <a
+                                    [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
+                                    *ngIf="programmingExercise.isAtLeastInstructor"
+                                    [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'grading', 'test-cases']"
+                                    class="btn btn-info btn-sm mr-1 mb-1"
+                                >
+                                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
+                                </a>
+                            </div>
+                            <div class="btn-group-vertical mr-1 mb-1">
+                                <a
+                                    [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
+                                    [attr.disabled]="false"
                                     *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
                                     jhiOrionFilter
                                     [showInOrionWindow]="false"
@@ -248,41 +270,19 @@
                                         'code-editor',
                                         programmingExercise.templateParticipation.id
                                     ]"
-                                    class="btn btn-info btn-sm mr-1 mb-1"
+                                    class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
-                                </button>
-                                <button
-                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-                                    type="submit"
-                                    *ngIf="programmingExercise.isAtLeastInstructor"
-                                    [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'grading', 'test-cases']"
-                                    class="btn btn-info btn-sm mr-1 mb-1"
-                                >
-                                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
-                                </button>
-                            </div>
-                            <div class="btn-group-vertical mr-1 mb-1">
-                                <button
-                                    type="submit"
-                                    *ngIf="programmingExercise.isAtLeastInstructor"
-                                    [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id]"
-                                    class="btn btn-info btn-sm mr-1 mb-1"
-                                >
-                                    <fa-icon [icon]="'eye'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                                </button>
-                                <button
-                                    type="submit"
+                                </a>
+                                <a
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'edit']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                                </button>
+                                </a>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button

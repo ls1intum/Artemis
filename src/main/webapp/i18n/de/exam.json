@@ -20,8 +20,8 @@
                     "overview": "Übersicht",
                     "yourPoints": "Deine Punkte",
                     "maxPoints": "Punkte",
-                    "bonus": "Bonus Punkte",
-                    "sum": "Summe"
+                    "bonus": "Bonuspunkte",
+                    "youAchieved": "Du hast {{achievedPoints}} Punkte von möglichen {{normalPoints}} normalen Punkten und {{bonusPoints}} Bonuspunkten erreicht"
                 }
             },
             "title": "Klausur",
@@ -53,10 +53,15 @@
             "validation": {
                 "startAndEndMustBeSet": "Start- und Enddatum der Klausur müssen festgelegt werden.",
                 "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",
-                "numberOfExercisesMustBeSet": "Die Anzahl der Aufgaben für die Klasur muss gesetzt sein.",
+                "allExercisesInExerciseGroupOfSameIncludedType": "Alle Aufgaben in einer Aufgabengruppe müssen alle die selbe Bedeutung haben für das Klausurergebnis (Normale Aufgabe, Bonusaufgabe, Keine Bedeutung).",
+                "allExercisesInExerciseGroupGiveSameNumberOfPoints": "Alle Aufgaben in einer Aufgabengruppe müssen dieselbe Anzahl an Punkte oder Bonuspunkte geben",
+                "tooManyMaxPoints": "Überprüfe die maximale Punkteanzahl in der Klausur! Die maximalen Punkte die ein Student in den verpflichtenden Aufgaben erreichen kann ist zu gross.",
+                "tooFewMaxPoints": "Überprüfe die maximale Punkteanzahl in der Klausur! Die maximalen Punkte die ein Student in den Aufgaben erreichen kann ist zu niedrig.",
+                "numberOfExercisesMustBeSet": "Die Anzahl der Aufgaben für die Klausur muss gesetzt sein.",
                 "numberOfExercisesInExamNotSet": "Die Anzahl an Aufgaben in der Klausur ist nicht gesetzt.",
                 "tooFewExerciseGroups": "Die Anzahl der Aufgabengruppen ist zu klein.",
-                "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß."
+                "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß.",
+                "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."
             },
             "error": {
                 "cannotRegisterInstructor": "Du kannst keine Dozenten oder Administratoren zu Klausuren anmelden."
@@ -66,9 +71,9 @@
             "xAxes": "Ergebnis in %",
             "yAxes": "Teilnehmeranzahl",
             "maxPoints": "Maximale Punktzahl",
-            "title": "Klausur Ergebnisse",
-            "examStatisticsTitle": "Klausur Statistik",
-            "studentResultsTitle": "Studenten Ergebnisse",
+            "title": "Klausurergebnisse",
+            "examStatisticsTitle": "Klausurstatistik",
+            "studentResultsTitle": "Studentenergebnisse",
             "titleExerciseGroupColumn": "Aufgabengruppe",
             "titleExerciseColumn": "Aufgabe",
             "averageColumn": "Durchschnitt",
@@ -101,7 +106,7 @@
             "ideConnected": "",
             "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
             "disconnectedCodeEditorAndOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterhin offline arbeiten, indem du das Repository klonst.",
-            "disconnectedCodeEditorNoOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte verbinde dich erneut, um im Online Code Editor weiterarbeiten zu können.",
+            "disconnectedCodeEditorNoOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte verbinde dich erneut, um im Online Code-Editor weiterarbeiten zu können.",
             "disconnectedNoCodeEditor": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung.",
             "waitForStart": "Bitte warte, bis die Klausur \"{{ title }}\" beginnt.",
             "timeUntilPlannedStart": "Verbleibende Zeit bis zum geplanten Start:",
@@ -112,6 +117,7 @@
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
+            "uploadFile": "Upload",
             "greeting": "Willkommen zu {{ title }}.",
             "finish": "Das ist das Ende von {{ title }}.",
             "nameDisplay": "Dein voller Name ist: {{ fullName }}",
@@ -151,7 +157,7 @@
             "lockAllRepositories": "Alle Repositories sperren",
             "unlockAllRepositoriesModalText": "Alle Repositories werden sofort entsperrt! Studenten können sofort klonen & pushen, auch wenn die Klausur noch nicht gestartet wurde!\n\nDiese Operation wird automatisch mit dem Sichtbar-Setzen der Klausur ausgeführt und sollte daher nur genutzt werden, falls das automatische Entsperren nicht korrekt ausgeführt wurde!",
             "lockAllRepositoriesModalText": "Alle Repositories werden sofort gesperrt! Studenten werden nicht mehr pushen können, auch wenn die Klausur noch läuft!\nDies betrifft auch Studenten mit Nachteilsausgleich!\n\nDie Operation wird automatisch mit dem Ende der Klausur ausgeführt und sollte daher nur genutzt werden, falls das automatische Sperren nicht korrekt ausgeführt wurde!",
-            "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
+            "searchForStudents": "Suche nach Studenten-Logins oder Namen (Komma getrennt)",
             "student": "Student",
             "workingTime": "Bearbeitungszeit (mm:ss)",
             "started": "Gestartet",
@@ -182,10 +188,20 @@
             "unlockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden entsperrt.",
             "unlockAllRepositoriesFailure": "Es gab einen Fehler beim Entsperren der Repositories:\n {{message}}",
             "lockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden gesperrt.",
-            "lockAllRepositoriesFailure": "Es gab einen Fehler beim Sperren der Repositories:\n {{message}}"
+            "lockAllRepositoriesFailure": "Es gab einen Fehler beim Sperren der Repositories:\n {{message}}",
+            "confirmDialog": {
+                "titleToUnsubmitted": "Setze Studentenklausur auf nicht abgegeben",
+                "titleToSubmitted": "Setze Studentenklausur auf abgegeben",
+                "question": "Sind Sie sich sicher, dass Sie den Abgabestatus ändern wollen?",
+                "submitText": "Das Abgabedatum wird auf diesen Zeitpunkt gesetzt, und der Abgabestatus wird auf 'Ja' gesetzt. Die Abgabe kann auch wieder rückgängig gemacht werden.\n",
+                "unSubmitText": "Das Abgabedatum wird gelöscht und der Abgabestatus wird auf 'Nein' gesetzt.",
+                "warningRemove": "<strong class='text-danger'>Wiederherstellen des ursprünglichen Abgabedatums ist nach der Löschung nicht möglich!</strong>",
+                "submit": "Abgeben",
+                "unsubmit": "Abgabe entfernen"
+            }
         },
         "examManagement": {
-            "title": "Klausur Verwaltung",
+            "title": "Klausurverwaltung",
             "createExam": "Erstelle eine neue Klausur",
             "editExam": "Bearbeite eine existierende Klausur",
             "courseTitle": "Kursname",
@@ -203,13 +219,14 @@
             "examStudentReviewEnd": "Ende der Klausureinsicht",
             "maxPoints": "Anzahl an erreichbaren Punkten",
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
-            "numberOfCorrectionRoundsInExam": "Anzahl der Korrektur Runden der Klausur",
+            "numberOfCorrectionRoundsInExam": "Anzahl der Korrekturrunden der Klausur",
             "randomizeQuestionOrder": "Zufällige Reihenfolge der Aufgabengruppen",
             "startText": "Klausurbeginn Text",
             "endText": "Klausurende Text",
             "confirmationStartText": "Klausurbeginn Bestätigungstext",
             "confirmationEndText": "Klausurende Bestätigungstext",
             "assessmentDashboard": "Bewertungs-Dashboard",
+            "examChecklist": "Klausurcheckliste",
             "studentExams": "Klausuren der Studenten",
             "students": "Studenten",
             "testRun": {
@@ -222,6 +239,8 @@
                 "manage": "Arbeitszeit verwalten",
                 "text": "Hier kannst du einen Testlauf für die Klausur erstellen. Wähle aus, welche Aufgaben die Klausur enthalten soll und führe sie aus. Anschließend, kannst du die Abgabe als Tutor bewerten. Das Ergebnis, kannst du als Student einsehen und dich beschweren. Diese Beschwerden kannst du dann als Tutor bewerten.\n<strong>Hinweis:</strong> Abgaben innerhalb von Testläufen werden nicht bei den Klausurergebnissen gezählt.",
                 "createTestRunDisabled": "Keine Aufgaben gefunden",
+                "reminderToDelete": "Achte darauf, dass du alle Testläufe vor der Durchführung der Klausur löschst. Alle Testläufe werden automatisch gelöscht, wenn du die nicht abgegebenen Klausuren und leeren Abgaben bewertest.",
+                "secondCorrectionHint": "Hinweis: Die zweite Korrektur gilt nicht für Testläufe.",
                 "assessTestRunDisabled": "Keiner deiner Testläufe ist beendet",
                 "delete": {
                     "question": "Soll der <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen elemente werden ebenfalls gelöscht, falls sie von keinem anderen Testlauf referenziert werden.",
@@ -241,6 +260,8 @@
                 "lastName": "Nachname",
                 "email": "E-Mail",
                 "registrationNumber": "Matrikelnummer",
+                "registerAllFromCourse": "Registriere Kurs Studierende",
+                "registerAllFromCourseTooltip": "Registriere alle zu diesem Kurs angemeldeten Studierende",
                 "removeFromExam": {
                     "modalQuestion": "Soll der Student mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Seine individuelle Klausur wird dabei gelöscht.",
                     "deleteParticipationsAndSubmission": "Participations und submissions des Studenten in der zugehörigen Klausur löschen?"
@@ -280,7 +301,7 @@
                 },
                 "addTextExercise": "Textaufgabe hinzufügen",
                 "addQuizExercise": "Quiz hinzufügen",
-                "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen",
+                "addFileUploadExercise": "Datei-Upload-Aufgabe hinzufügen",
                 "addModelingExercise": "Modellierungsaufgabe hinzufügen",
                 "addProgrammingExercise": "Programmieraufgabe hinzufügen",
                 "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden"
@@ -288,16 +309,82 @@
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studenten. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
+            },
+            "checklist": {
+                "title": "Checkliste für die Durchführung von Prüfungen",
+                "introduction": "Unter folgendem Link kannst du dich über den Ablauf einer Artemis Klausur informieren:",
+                "linkDescription": "Instructors Guide",
+                "checklistItem": "Aufgabe",
+                "description": "Beschreibung",
+                "status": "Aktueller Status",
+                "goTo": "Seite",
+                "tableItem": {
+                    "register": "Registrieren der Studierenden zur Klausur",
+                    "exerciseGroups": "Erstellen Sie mindestens eine Aufgaben Gruppe mit mindestens einer Aufgabe",
+                    "generateStudentExams": "Generieren aller Klausuren",
+                    "prepareExerciseStart": "Aufgabenstart vorbereiten",
+                    "examDetails": "Ausfüllen aller Klausurdetails",
+                    "conductExam": "Abhalten der Klausur",
+                    "assessAllSubmissions": "Alle Abgaben bewerten",
+                    "publishResults": "Veröffentlichen der Ergebnisse",
+                    "examReview": "Planung der Klausureinsicht ",
+                    "resolveComplaints": "Auflösen aller Beschwerden",
+                    "testRun": "Abhalten eines Testdurchlaufs",
+                    "exportResults": "Exportiere die Klausurergebnisse"
+                },
+                "descriptionItem": {
+                    "register": "Studierende können auf drei verschiedene Arten registriert werden: einzeln, per .csv Datei oder Sie können alle zum Kurs der Klausur angemeldeten Studierenden auf einmal anmelden",
+                    "exerciseGroups": "Du kannst Übungsgruppen mit mehreren Übungsvarianten erstellen, um Unterschleif für Studierende zu erschweren. Die Punkte aller Aufgaben einer Aufgabengruppe müssen identisch sein. Die Anzahl an Aufgabengruppen muss der Anzahl der Aufgaben in der Klausur entsprechen.",
+                    "generateStudentExams": "Die Klausuren der Studierenden müssen generiert worden sein, bevor die Klausur beginnt. Die Arbeitszeit kann dabei individuell angepasst werden.",
+                    "prepareExerciseStart": "Vorbereiten der Aufgaben kann die Serverlast während der Klausur reduzieren.",
+                    "examDetails": "Alle relevanten Details der Klausur müssen vor dem Start der Korrektur eingetragen sein.",
+                    "conductExam": "In der Studierenden-Klausurübersicht sieht man, welche Studierende ihre Klausur bereits abgegeben haben.",
+                    "assessAllSubmissions": "Die Anzahl der Korrekturrunden der Aufgaben entspricht der in der Klausur angegebenen Anzahl von Korrekturrunden.",
+                    "publishResults": "Das Veröffentlichen der Ergebnisse macht diese zugänglich für die Klausurteilnehmer.",
+                    "examReview": "Alle relevanten Daten müssen in der Klausur spezifiziert sein.",
+                    "resolveComplaints": "Beschwerden können im Bewertungs-Dashboard bearbeitet werden.",
+                    "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
+                    "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden."
+                },
+                "textitems": {
+                    "leastoneexercisegroup": "Mindestens eine Aufgabengruppe",
+                    "numberofexercisegroupsequal": "Anzahl der Aufgabengruppen entspricht Anzahl der Aufgaben der Klausur",
+                    "eachexercisegroup": "Jede Aufgabengruppe hat mindestens eine Aufgabe",
+                    "pointsexercisegroupequal": "Gleiche Anzahl Punkte in jeder Aufgabe in einer Aufgabengruppe",
+                    "totalpointspossible": "Gesamtpunktzahl der Klausur kann mit der aktuellen Aufgabenkonfiguration erreicht werden",
+                    "hasExercises": "hat",
+                    "zeroexercises": "0",
+                    "exerciseStart": "Aufgaben Gruppe",
+                    "exercise": "Aufgabenvariante.",
+                    "exercises": "Aufgabenvarianten.",
+                    "leastonestudent": "Mindestens ein Studierender angemeldet zur Klausur",
+                    "studentsregistered": "Aktuelle Anzahl angemeldeter Studierender:",
+                    "allexamsgenerated": "Alle Klausuren generiert für alle angemeldeten Studierenden",
+                    "pulishingdateset": "Veröffentlichungsdatum der Ergebnisse gesetzt",
+                    "startdatereviewset": "Startdatum der Klausureinsicht gesetzt",
+                    "enddatereviewset": "Enddatum der Klausureinsicht gesetzt",
+                    "testruns": "Aktuelle Anzahl an Testläufen:",
+                    "allExercisesPrepared": "Alle Aufgaben vorbereitet für alle Studierenden",
+                    "noSubmissions": "Es gibt aktuell keine abgegebenen Klausuren.",
+                    "noComplaints": "Es gibt aktuell keine Beschwerden",
+                    "correctionRound": "Korrektur Runde",
+                    "startedExam": "Klausur gestartet",
+                    "submittedExam": "Klausur abgegeben",
+                    "exerciseTable": "Aufgabe",
+                    "points": "Punkte",
+                    "numberParticipants": "Anzahl der Teilnehmenden"
+                }
             }
         },
         "studentExamDetail": {
             "studentExam": "Klausur ({{ examTitle }})",
+            "testRun": "Testlauf ({{ examTitle }})",
             "exercises": "Aufgaben",
             "downloadPDF": " PDF herunterladen",
             "student": "Student",
             "name": "Name: ",
             "login": "Login: ",
-            "email": "Email: ",
+            "email": "E-Mail: ",
             "matriculationNumber": "Matrikelnummer: ",
             "id": "ID",
             "type": "Typ",
@@ -308,7 +395,9 @@
             "openAssessment": " Bewertung öffnen",
             "cancelAssessment": " Bewertung abbrechen",
             "workingTimeCouldNotBeSaved": "Die Bearbeitungszeit konnte nicht gespeichert werden.",
-            "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert."
+            "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert.",
+            "toggleSuccessful": "Der Abgabestatus wurde erfolgreich geändert.",
+            "togglefailed": "Der Abgabestatus konnte nicht geändert werden!"
         }
     },
     "studentExam": {

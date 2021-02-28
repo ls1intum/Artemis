@@ -13,7 +13,7 @@ export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingSubmissionService {
-    private resourceUrl = SERVER_API_URL + 'api';
+    public resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {}
 
@@ -90,9 +90,16 @@ export class ModelingSubmissionService {
     /**
      * Get a submission with given Id
      * @param {number} submissionId - Id of the submission
+     * @param {correctionRound}
+
      */
-    getSubmission(submissionId: number): Observable<ModelingSubmission> {
-        return this.http.get<ModelingSubmission>(`api/modeling-submissions/${submissionId}`);
+    getSubmission(submissionId: number, correctionRound = 0): Observable<ModelingSubmission> {
+        const url = `api/modeling-submissions/${submissionId}`;
+        let params = new HttpParams();
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
+        }
+        return this.http.get<ModelingSubmission>(url, { params });
     }
 
     /**

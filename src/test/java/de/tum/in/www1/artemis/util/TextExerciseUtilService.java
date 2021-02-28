@@ -72,6 +72,8 @@ public class TextExerciseUtilService {
             }
             clusterSizes[clusterIndex]--;
             clusters.get(clusterIndex).addBlocks(textBlock);
+            clusters.get(clusterIndex).removeBlocks(textBlock);
+            clusters.get(clusterIndex).addBlocks(textBlock);
         });
         return clusters;
     }
@@ -101,7 +103,7 @@ public class TextExerciseUtilService {
             submission.setSubmissionDate(ZonedDateTime.now());
             textBlocks.subList(i * submissionSize, (i + 1) * submissionSize).forEach(textBlock -> textBlock.setSubmission(submission));
 
-            studentParticipation.addSubmissions(submission);
+            studentParticipation.addSubmission(submission);
             textSubmissionRepository.save(submission);
         }
         return textExercise;

@@ -16,6 +16,8 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { FileService } from 'app/shared/http/file.service';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { MockPipe } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -80,7 +82,7 @@ describe('LectureAttachmentsComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, TreeviewModule.forRoot(), RouterTestingModule.withRoutes([]), ArtemisSharedModule, FormDateTimePickerModule],
-            declarations: [LectureAttachmentsComponent],
+            declarations: [LectureAttachmentsComponent, MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 {
                     provide: ActivatedRoute,

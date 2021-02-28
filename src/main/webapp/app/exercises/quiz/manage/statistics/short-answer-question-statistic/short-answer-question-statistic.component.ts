@@ -8,7 +8,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerQuestionStatistic } from 'app/entities/quiz/short-answer-question-statistic.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -17,7 +16,7 @@ import { blueColor, greenColor, QuestionStatisticComponent } from 'app/exercises
 @Component({
     selector: 'jhi-short-answer-question-statistic',
     templateUrl: './short-answer-question-statistic.component.html',
-    providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdownService],
+    providers: [QuizStatisticUtil, ShortAnswerQuestionUtil],
     styleUrls: ['./short-answer-question-statistic.component.scss'],
 })
 export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent {
@@ -117,20 +116,5 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
             this.addData(spotCounter.ratedCounter!, spotCounter.unRatedCounter!);
         });
         this.updateData();
-    }
-
-    /**
-     * Get the solution that was mapped to the given spot in the sample solution
-     *
-     * @param spot {object} the spot that the solution should be mapped to
-     * @return the mapped solution or undefined if no solution has been mapped to this location
-     */
-    correctSolutionForSpot(spot: ShortAnswerSpot) {
-        const currMapping = this.shortAnswerQuestionUtil.solveShortAnswer(this.question).filter((mapping) => mapping.spot!.id === spot.id)[0];
-        if (currMapping) {
-            return currMapping.solution;
-        } else {
-            return undefined;
-        }
     }
 }

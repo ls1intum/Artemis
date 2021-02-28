@@ -1,7 +1,7 @@
 import { Component, EventEmitter, HostBinding, Input, Output } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { Complaint } from 'app/entities/complaint.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 
@@ -20,7 +20,7 @@ export class AssessmentLayoutComponent {
     @HostBinding('class.assessment-container') readonly assessmentContainerClass = true;
 
     @Output() navigateBack = new EventEmitter<void>();
-
+    MORE_FEEDBACK = ComplaintType.MORE_FEEDBACK;
     @Input() isLoading: boolean;
     @Input() saveBusy: boolean;
     @Input() submitBusy: boolean;

@@ -2,51 +2,101 @@
     <div class="col-8">
         <div *ngIf="course">
             <div>
-                <button type="button" [routerLink]="['/course-management', course.id, 'edit']" class="btn btn-warning mr-1 mb-1">
+                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'edit']" class="btn btn-warning mr-1 mb-1">
                     <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
-                </button>
+                </a>
 
-                <button *ngIf="course.isAtLeastInstructor" type="submit" [routerLink]="['/course-management', course.id, 'goal-management']" class="btn btn-primary mr-1 mb-1">
+                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'goal-management']" class="btn btn-primary mr-1 mb-1">
                     <fa-icon [icon]="'flag'"></fa-icon>
-                    <span class="d-none d-md-inline" [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | translate"></span>
-                </button>
+                    <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | translate" class="d-none d-md-inline"></span>
+                </a>
 
-                <button
+                <a
                     *ngIf="course?.studentQuestionsEnabled && course?.isAtLeastTutor"
-                    type="submit"
                     [routerLink]="['/course-management', course?.id, 'questions']"
                     class="btn btn-primary mr-1 mb-1"
                 >
                     <fa-icon [icon]="'comment'"></fa-icon>
                     <span jhiTranslate="entity.action.questionsAndAnswers">Q&A</span>
-                </button>
+                </a>
 
-                <button *ngIf="course.registrationEnabled" type="button" (click)="registerForCourse()" class="btn btn-warning mr-1 mb-1">
+                <button (click)="registerForCourse()" *ngIf="course.registrationEnabled" class="btn btn-warning mr-1 mb-1" type="button">
                     <fa-icon [icon]="'user-plus'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.registerForCourse">Register</span>
                 </button>
 
-                <button type="button" [routerLink]="['/course-management', course.id, 'exercises']" class="btn btn-primary mr-1 mb-1">
+                <a [routerLink]="['/course-management', course.id, 'exercises']" class="btn btn-primary mr-1 mb-1">
                     <fa-icon [icon]="'list-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.exercise">Exercises</span>
-                </button>
-                <button type="button" [routerLink]="['/course-management', course.id, 'lectures']" class="btn btn-primary mr-1 mb-1">
+                </a>
+                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'lectures']" class="btn btn-primary mr-1 mb-1">
                     <fa-icon [icon]="'list-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.lecture">Lectures</span>
-                </button>
-                <button type="button" [routerLink]="['/course-management', course.id, 'scores']" class="btn btn-info mr-1 mb-1">
+                </a>
+                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="btn btn-info mr-1 mb-1">
                     <fa-icon [icon]="'eye'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.scores">Scores</span>
-                </button>
-                <button type="button" [routerLink]="['/course-management', course.id, 'exams']" class="btn btn-info mr-1 mb-1">
-                    <fa-icon [icon]="'list-alt'"></fa-icon>&nbsp;<span>Exams</span>
-                </button>
-                <button type="button" [routerLink]="['/course-management', course.id, 'tutor-dashboard']" class="btn btn-info mr-1 mb-1">
+                </a>
+                <a [routerLink]="['/course-management', course.id, 'exams']" class="btn btn-info mr-1 mb-1"> <fa-icon [icon]="'list-alt'"></fa-icon>&nbsp;<span>Exams</span> </a>
+                <a [routerLink]="['/course-management', course.id, 'tutor-dashboard']" class="btn btn-info mr-1 mb-1">
                     <fa-icon [icon]="'th-list'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
-                </button>
-                <button type="button" [routerLink]="['/course-management', course.id, 'instructor-dashboard']" class="btn btn-info mr-1 mb-1">
+                </a>
+                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'instructor-dashboard']" class="btn btn-info mr-1 mb-1">
                     <fa-icon [icon]="'th-list'"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.course.instructorDashboard">Instructor Dashboard</span>
+                </a>
+                <ng-template #archiveCourseWarningPopup let-modal>
+                    <div class="modal-header">
+                        <h4 class="modal-title"><span [jhiTranslate]="'artemisApp.course.archive.popup.title'">Confirm Archive Course Operation</span></h4>
+                        <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p [jhiTranslate]="'artemisApp.course.archive.popup.question'" [translateValues]="{ title: course.title }">Are you sure you want to archive the course?</p>
+                        <p [jhiTranslate]="'artemisApp.course.archive.popup.statement1'">
+                            The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises for exercises and exams.
+                        </p>
+                        <p [jhiTranslate]="'artemisApp.course.archive.popup.statement2'">
+                            This process can take several hours depending on the number of students and programming exercises and will take up many server resources. Please start
+                            this process only once when the server load is low (e.g. early in the morning)
+                        </p>
+                        <p [jhiTranslate]="'artemisApp.course.archive.popup.footerStatement'">
+                            You will receive a notification when the process is finished. Then you can download the archive as zip file on this page.
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-warning" (click)="modal.close('archive')">Archive Course</button>
+                    </div>
+                </ng-template>
+                <button
+                    *ngIf="canArchiveCourse()"
+                    [disabled]="courseIsBeingArchived"
+                    type="button"
+                    class="btn btn-warning mr-1 mb-1"
+                    (click)="openArchieCourseModal(archiveCourseWarningPopup)"
+                >
+                    <fa-icon [hidden]="!courseIsBeingArchived" [spin]="true" [icon]="'circle-notch'"></fa-icon>
+                    <fa-icon [hidden]="courseIsBeingArchived" [icon]="'archive'"></fa-icon>&nbsp;
+                    <span>{{ archiveCourseButtonText }}</span>
+                </button>
+                <button *ngIf="canDownloadArchive()" [disabled]="courseIsBeingArchived" type="button" class="btn btn-primary mr-1 mb-1" (click)="downloadCourseArchive()">
+                    <fa-icon [icon]="'download'"></fa-icon>&nbsp;
+                    <span jhiTranslate="artemisApp.course.archive.downloadCourseArchive">Download Course Archive</span>
+                </button>
+                <button
+                    *ngIf="canCleanupCourse()"
+                    [disabled]="courseIsBeingArchived"
+                    jhiDeleteButton
+                    [buttonSize]="ButtonSize.MEDIUM"
+                    [actionType]="ActionType.Cleanup"
+                    [entityTitle]="course.title"
+                    deleteQuestion="artemisApp.course.cleanup.question"
+                    (delete)="cleanupCourse()"
+                    [dialogError]="dialogError$"
+                    deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
+                >
+                    <fa-icon [icon]="'eraser'"></fa-icon>
                 </button>
             </div>
             <hr />
             <div>
-                <jhi-secured-image *ngIf="course.courseIcon" [src]="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"></jhi-secured-image>
+                <jhi-secured-image *ngIf="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
                 <h2><span jhiTranslate="artemisApp.course.detail.title">Course</span> {{ course.id }}</h2>
             </div>
             <hr />
@@ -61,18 +111,36 @@
                 <dd>
                     <span>{{ course.shortName }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
-                <dd>
-                    <span>{{ course.studentGroupName }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></dt>
-                <dd>
-                    <span>{{ course.teachingAssistantGroupName }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.course.instructorGroupName">Instructor Group Name</span></dt>
-                <dd>
-                    <span>{{ course.instructorGroupName }}</span>
-                </dd>
+                <div *ngIf="course.isAtLeastInstructor">
+                    <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
+                    <dd>
+                        <a [routerLink]="['/course-management', course.id, 'groups', 'students']"> {{ course.studentGroupName }} ({{ course.numberOfStudents }})</a>
+                    </dd>
+                    <dt><span jhiTranslate="artemisApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></dt>
+                    <dd>
+                        <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']">
+                            {{ course.teachingAssistantGroupName }} ({{ course.numberOfTeachingAssistants }})</a
+                        >
+                    </dd>
+                    <dt><span jhiTranslate="artemisApp.course.instructorGroupName">Instructor Group Name</span></dt>
+                    <dd>
+                        <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']"> {{ course.instructorGroupName }} ({{ course.numberOfInstructors }})</a>
+                    </dd>
+                </div>
+                <div *ngIf="!course.isAtLeastInstructor">
+                    <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
+                    <dd>
+                        <span>{{ course.studentGroupName }}</span>
+                    </dd>
+                    <dt><span jhiTranslate="artemisApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></dt>
+                    <dd>
+                        <span>{{ course.teachingAssistantGroupName }}</span>
+                    </dd>
+                    <dt><span jhiTranslate="artemisApp.course.instructorGroupName">Instructor Group Name</span></dt>
+                    <dd>
+                        <span>{{ course.instructorGroupName }}</span>
+                    </dd>
+                </div>
                 <dt><span jhiTranslate="artemisApp.course.startDate">Start Date</span></dt>
                 <dd>
                     <span>{{ course.startDate | artemisDate }}</span>
@@ -105,6 +173,30 @@
                     <dt><span jhiTranslate="artemisApp.course.presentationScore">Presentation Score</span></dt>
                     <dd>
                         <span>{{ course.presentationScore }}</span>
+                    </dd>
+                </ng-container>
+                <ng-container *ngIf="course.maxComplaints !== 0">
+                    <dt><span jhiTranslate="artemisApp.course.maxComplaints.title">Maximum amount of complaints per student</span></dt>
+                    <dd>
+                        <span>{{ course.maxComplaints }}</span>
+                    </dd>
+                </ng-container>
+                <ng-container *ngIf="course.maxTeamComplaints !== 0">
+                    <dt><span jhiTranslate="artemisApp.course.maxTeamComplaints.title">Maximum amount of complaints per team</span></dt>
+                    <dd>
+                        <span>{{ course.maxTeamComplaints }}</span>
+                    </dd>
+                </ng-container>
+                <ng-container *ngIf="course.maxComplaintTimeDays !== 0">
+                    <dt><span jhiTranslate="artemisApp.course.maxComplaintTimeDays.title">Deadline for complaints in days after result date</span></dt>
+                    <dd>
+                        <span>{{ course.maxComplaintTimeDays }}</span>
+                    </dd>
+                </ng-container>
+                <ng-container *ngIf="course.maxRequestMoreFeedbackTimeDays !== 0">
+                    <dt><span jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title">Deadline for more feedback requests in days after result date</span></dt>
+                    <dd>
+                        <span>{{ course.maxRequestMoreFeedbackTimeDays }}</span>
                     </dd>
                 </ng-container>
             </dl>

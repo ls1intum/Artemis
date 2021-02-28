@@ -21,9 +21,16 @@ h4 {
 
 /* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
 a,
-a:hover {
+a:not(.btn):hover {
     color: $primary;
     font-weight: bold;
+    /* make sure browsers use the pointer cursor for anchors, even with no href */
+    cursor: pointer;
+}
+
+a.disabled {
+    pointer-events: none;
+    cursor: default;
 }
 
 .clickable {
@@ -46,6 +53,10 @@ a:hover {
  */
 .btn {
     white-space: nowrap;
+}
+
+a.btn {
+    -webkit-appearance: none !important;
 }
 
 .btn-default {
@@ -78,13 +89,6 @@ a:hover {
         padding-left: 12px;
         padding-right: 12px;
     }
-}
-
-a:not(.btn):hover {
-    color: $primary;
-    font-weight: bold;
-    /* make sure browsers use the pointer cursor for anchors, even with no href */
-    cursor: pointer;
 }
 
 .popover {
@@ -676,7 +680,6 @@ Course Info Bar
     background-color: $artemis-dark;
     padding: 1em 1em;
     margin: -1.25rem -1.25rem 0 -1.25rem;
-    min-height: 160px;
     display: flex;
     color: #ffffff;
     flex-direction: column;

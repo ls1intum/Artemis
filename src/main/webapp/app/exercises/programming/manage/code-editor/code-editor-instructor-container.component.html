@@ -18,7 +18,15 @@
     [buildable]="selectedRepository !== REPOSITORY.TEST"
     (onResizeEditorInstructions)="onResizeEditorInstructions()"
 >
-    <span editorTitle>{{ exercise?.title }}</span>
+    <div editorTitle>
+        <span>{{ exercise?.title }}</span>
+        <!-- prettier-ignore -->
+        <span>&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | translate }}<span
+            *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | translate }}</span>]
+            <jhi-included-in-score-badge
+                *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span>
+    </div>
     <div editorTitleActions class="d-flex align-items-center ml-2">
         <jhi-programming-exercise-instructor-exercise-status
             class="mr-2"

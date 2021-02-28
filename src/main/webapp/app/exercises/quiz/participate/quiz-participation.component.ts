@@ -444,7 +444,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // calculate score
         this.totalScore = this.quizExercise.quizQuestions
             ? this.quizExercise.quizQuestions.reduce((score, question) => {
-                  return score + question.score!;
+                  return score + question.points!;
               }, 0)
             : 0;
 
@@ -823,7 +823,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @return {boolean} true when student interacted with every question, false when not with every questions has an interaction
      */
     areAllQuestionsAnswered(): boolean {
-        this.quizExercise.quizQuestions!.forEach((question) => {
+        if (!this.quizExercise.quizQuestions) {
+            return true;
+        }
+
+        for (const question of this.quizExercise.quizQuestions) {
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const options = this.selectedAnswerOptions.get(question.id!);
                 if (options && options.length === 0) {
@@ -840,7 +844,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     return false;
                 }
             }
-        });
+        }
+
         return true;
     }
 

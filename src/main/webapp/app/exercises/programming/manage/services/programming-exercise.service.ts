@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as moment from 'moment';
+import { Moment } from 'moment';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
@@ -11,7 +12,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { Moment } from 'moment';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 
@@ -25,6 +25,8 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     buildAndTestStudentSubmissionsAfterDueDate?: Moment;
 };
 
+export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION' | 'TESTS';
+
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
@@ -36,7 +38,8 @@ export class ProgrammingExerciseService {
      * @param programmingExercise which should be setup
      */
     automaticSetup(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
-        const copy = this.convertDataFromClient(programmingExercise);
+        let copy = this.convertDataFromClient(programmingExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
@@ -91,7 +94,7 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Imports a programming exercise by cloning the entity itself plus all bas build plans and repositories
+     * Imports a programming exercise by cloning the entity itself plus all basic build plans and repositories
      * (template, solution, test).
      *
      * @param adaptedSourceProgrammingExercise The exercise that should be imported, including adapted values for the
@@ -103,8 +106,9 @@ export class ProgrammingExerciseService {
      */
     importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise, recreateBuildPlans: boolean, updateTemplate: boolean): Observable<EntityResponseType> {
         const options = createRequestOption({ recreateBuildPlans, updateTemplate });
+        const exercise = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(adaptedSourceProgrammingExercise);
         return this.http
-            .post<ProgrammingExercise>(`${this.resourceUrl}/import/${adaptedSourceProgrammingExercise.id}`, adaptedSourceProgrammingExercise, {
+            .post<ProgrammingExercise>(`${this.resourceUrl}/import/${adaptedSourceProgrammingExercise.id}`, exercise, {
                 params: options,
                 observe: 'response',
             })
@@ -118,9 +122,23 @@ export class ProgrammingExerciseService {
      */
     update(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        const copy = this.convertDataFromClient(programmingExercise);
+        let copy = this.convertDataFromClient(programmingExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
             .put<ProgrammingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    /**
+     * Updates the timeline of a programming exercise
+     * @param programmingExercise to update
+     * @param req optional request options
+     */
+    updateTimeline(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
+        const options = createRequestOption(req);
+        const copy = this.convertDataFromClient(programmingExercise);
+        return this.http
+            .put<ProgrammingExercise>(`${this.resourceUrl}/timeline`, copy, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
@@ -161,9 +179,11 @@ export class ProgrammingExerciseService {
      * Finds the programming exercise for the given exerciseId with the template and solution participation
      * @param programmingExerciseId of the programming exercise to retrieve
      */
-    findWithTemplateAndSolutionParticipation(programmingExerciseId: number): Observable<EntityResponseType> {
+    findWithTemplateAndSolutionParticipation(programmingExerciseId: number, withSubmissionResults = false): Observable<EntityResponseType> {
+        let params = new HttpParams();
+        params = params.set('withSubmissionResults', withSubmissionResults.toString());
         return this.http
-            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-template-and-solution-participation`, { observe: 'response' })
+            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-template-and-solution-participation`, { params, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
@@ -222,7 +242,7 @@ export class ProgrammingExerciseService {
             copy.solutionParticipation = _omit(copy.solutionParticipation, ['exercise', 'results']) as SolutionProgrammingExerciseParticipation;
         }
 
-        return copy;
+        return copy as ProgrammingExercise;
     }
 
     /**
@@ -256,5 +276,17 @@ export class ProgrammingExerciseService {
      */
     lockAllRepositories(exerciseId: number): Observable<HttpResponse<{}>> {
         return this.http.put<any>(`${this.resourceUrl}/${exerciseId}/lock-all-repositories`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Exports the solution, template or test repository for a given exercise.
+     * @param exerciseId
+     * @param repositoryType
+     */
+    exportInstructorRepository(exerciseId: number, repositoryType: ProgrammingExerciseInstructorRepositoryType): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-repository/${repositoryType}`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
     }
 }

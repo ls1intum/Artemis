@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
+import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 
 @Service
 public class StaticCodeAnalysisService {
@@ -33,7 +35,6 @@ public class StaticCodeAnalysisService {
     private final Logger log = LoggerFactory.getLogger(StaticCodeAnalysisService.class);
 
     @Qualifier("staticCodeAnalysisConfiguration")
-
     private final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
@@ -116,6 +117,39 @@ public class StaticCodeAnalysisService {
         programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
 
         return originalCategories;
+    }
+
+    /**
+     * Restore the default configuration for static code analysis categories of the given exercise.
+     * Categories without a default configuration are ignored.
+     * Returns the original categories if a default configuration could not be found.
+     *
+     * @param exercise exercise for which the static code analysis category configuration should be restored
+     * @return static code analysis categories with default configuration
+     */
+    public Set<StaticCodeAnalysisCategory> resetCategories(ProgrammingExercise exercise) {
+        Set<StaticCodeAnalysisCategory> categories = findByExerciseId(exercise.getId());
+        List<StaticCodeAnalysisDefaultCategory> defaultCategories = staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage());
+        if (defaultCategories == null) {
+            log.debug("Could not reset static code analysis categories for exercise " + exercise.getId() + ". Default configuration not available.");
+            return categories;
+        }
+
+        // Restore the default configuration. Ignore unknown categories by iterating over the default categories
+        for (var defaultCategory : defaultCategories) {
+            var matchingCategory = categories.stream().filter(category -> Objects.equals(defaultCategory.getName(), category.getName())).findFirst();
+            matchingCategory.ifPresent(cat -> {
+                cat.setPenalty(defaultCategory.getPenalty());
+                cat.setMaxPenalty(defaultCategory.getMaxPenalty());
+                cat.setState(defaultCategory.getState());
+            });
+        }
+        staticCodeAnalysisCategoryRepository.saveAll(categories);
+
+        // We use this flag to inform the instructor about outdated student results.
+        programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exercise.getId());
+
+        return categories;
     }
 
     /**

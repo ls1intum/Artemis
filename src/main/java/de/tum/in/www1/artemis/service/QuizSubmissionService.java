@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
@@ -18,6 +17,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
@@ -32,44 +32,22 @@ public class QuizSubmissionService {
 
     private final ResultRepository resultRepository;
 
-    private QuizExerciseService quizExerciseService;
+    private final QuizExerciseRepository quizExerciseRepository;
 
     private final QuizScheduleService quizScheduleService;
 
-    private ParticipationService participationService;
+    private final ParticipationService participationService;
 
     private final SubmissionVersionService submissionVersionService;
 
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService, ResultRepository resultRepository,
-            SubmissionVersionService submissionVersionService) {
+            SubmissionVersionService submissionVersionService, QuizExerciseRepository quizExerciseRepository, ParticipationService participationService) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
         this.quizScheduleService = quizScheduleService;
         this.submissionVersionService = submissionVersionService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setQuizExerciseService(QuizExerciseService quizExerciseService) {
-        this.quizExerciseService = quizExerciseService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setParticipationService(ParticipationService participationService) {
+        this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
-    }
-
-    public QuizSubmission findOne(Long id) {
-        return quizSubmissionRepository.findById(id).get();
-    }
-
-    public List<QuizSubmission> findAll() {
-        return quizSubmissionRepository.findAll();
-    }
-
-    public void delete(Long id) {
-        quizSubmissionRepository.deleteById(id);
     }
 
     /**
@@ -143,12 +121,7 @@ public class QuizSubmissionService {
         if (quizExercise == null) {
             // Fallback solution
             log.info("Quiz not in QuizScheduleService cache, fetching from DB");
-            Optional<QuizExercise> optionalQuizExercise = quizExerciseService.findById(exerciseId);
-            if (optionalQuizExercise.isEmpty()) {
-                log.warn(logText + "Could not executre for user {} in quiz {} because the quizExercise could not be found.", username, exerciseId);
-                throw new QuizSubmissionException("The quiz could not be found");
-            }
-            quizExercise = optionalQuizExercise.get();
+            quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
         }
         log.debug(logText + "Received quiz exercise for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
         if (!quizExercise.isSubmissionAllowed()) {
@@ -210,6 +183,8 @@ public class QuizSubmissionService {
         }
         StudentParticipation studentParticipation = optionalParticipation.get();
         quizSubmission.setParticipation(studentParticipation);
+        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+        quizSubmission.setResults(new ArrayList<>());
         quizSubmissionRepository.save(quizSubmission);
 
         // versioning of submission

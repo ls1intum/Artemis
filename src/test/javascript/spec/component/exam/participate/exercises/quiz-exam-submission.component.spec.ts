@@ -1,6 +1,7 @@
 import * as chai from 'chai';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
+import { stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -22,9 +23,9 @@ import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.mode
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { stub } from 'sinon';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -53,7 +54,7 @@ describe('QuizExamSubmissionComponent', () => {
 
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), MockModule(ArtemisQuizQuestionTypesModule), MockModule(NgbModule)],
-            declarations: [QuizExamSubmissionComponent, MockPipe(TranslatePipe)],
+            declarations: [QuizExamSubmissionComponent, MockPipe(TranslatePipe), MockComponent(IncludedInScoreBadgeComponent)],
             providers: [MockProvider(ArtemisQuizService)],
         })
             .compileComponents()

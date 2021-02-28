@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { Result } from 'app/entities/result.model';
-import { TextAssessmentsService } from '../text-assessments.service';
+import { TextAssessmentService } from '../text-assessment.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -11,25 +11,29 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { SortService } from 'app/shared/service/sort.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
 })
 export class TextAssessmentDashboardComponent implements OnInit {
+    ExerciseType = ExerciseType;
     exercise: TextExercise;
     submissions: TextSubmission[] = [];
     filteredSubmissions: TextSubmission[] = [];
     busy = false;
     predicate = 'id';
     reverse = false;
+    numberOfCorrectionrounds = 1;
 
     private cancelConfirmationText: string;
 
     constructor(
         private route: ActivatedRoute,
         private exerciseService: ExerciseService,
+        private accountService: AccountService,
         private textSubmissionService: TextSubmissionService,
-        private assessmentsService: TextAssessmentsService,
+        private assessmentsService: TextAssessmentService,
         private translateService: TranslateService,
         private sortService: SortService,
     ) {
@@ -54,6 +58,8 @@ export class TextAssessmentDashboardComponent implements OnInit {
             .subscribe((exercise) => {
                 this.exercise = exercise;
                 this.getSubmissions();
+                this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
+                this.setPermissions();
             });
     }
 
@@ -102,6 +108,13 @@ export class TextAssessmentDashboardComponent implements OnInit {
         }
         return 'artemisApp.AssessmentType.null';
     }
+    private setPermissions() {
+        if (this.exercise.course) {
+            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
+        } else {
+            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup?.exam?.course!);
+        }
+    }
 
     /**
      * Cancel the current assessment and reload the submissions to reflect the change.
@@ -112,6 +125,17 @@ export class TextAssessmentDashboardComponent implements OnInit {
             this.assessmentsService.cancelAssessment(this.exercise.id!, submission.id!).subscribe(() => {
                 this.getSubmissions();
             });
+        }
+    }
+    /**
+     * get the link for the assessment of a specific submission of the current exercise
+     * @param submissionId
+     */
+    getAssessmentLink(submissionId: number) {
+        if (this.exercise.exerciseGroup) {
+            return ['/course-management', this.exercise.exerciseGroup.exam?.course?.id, 'text-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
+        } else {
+            return ['/course-management', this.exercise.course?.id, 'text-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
         }
     }
 }

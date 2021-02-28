@@ -1,16 +1,19 @@
 package de.tum.in.www1.artemis.util;
 
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
-import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.*;
+import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,20 +40,18 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TeamService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUrl;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 
@@ -90,14 +91,23 @@ public class ProgrammingExerciseTestService {
     private ParticipationService participationService;
 
     @Autowired
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
+    private ParticipationRepository participationRepository;
+
+    @Autowired
     @Qualifier("staticCodeAnalysisConfiguration")
     private Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
 
     @Autowired
-    private UserService userService;
+    private PasswordService passwordService;
 
     @Value("${artemis.lti.user-prefix-edx:#{null}}")
     private Optional<String> userPrefixEdx;
+
+    @Autowired
+    private CourseService courseService;
 
     public Course course;
 
@@ -204,6 +214,7 @@ public class ProgrammingExerciseTestService {
                 true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(solutionRepoTestUrl, true);
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
 
         // we need separate mocks with VcsRepositoryUrl here because MockFileRepositoryUrl and VcsRepositoryUrl do not seem to be compatible here
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(exerciseRepoName, exerciseRepoTestUrl);
@@ -226,6 +237,7 @@ public class ProgrammingExerciseTestService {
         doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, participantRepoName);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participantRepoTestUrl,
                 true);
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(participantRepoName, participantRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, participantRepoTestUrl);
     }
@@ -545,7 +557,7 @@ public class ProgrammingExerciseTestService {
         // These will be updated when the participation is resumed.
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
-        participationService.save(participation);
+        programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         var participant = participation.getParticipant();
         mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
@@ -569,28 +581,31 @@ public class ProgrammingExerciseTestService {
         // These will be updated when pushing a commit
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
-        participationService.save(participation);
+        programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         // Mock REST Call from the VCS for a new programming submission (happens as part of the webhook after pushing code to git)
         request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), body, HttpStatus.OK, new HttpHeaders());
 
         // Fetch updated participation and assert
-        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationService.findOne(participation.getId());
+        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
         assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
     }
 
+    // TEST
     public void resumeProgrammingExerciseByTriggeringBuild_correctInitializationState(ExerciseMode exerciseMode, SubmissionType submissionType) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
 
         mockDelegate.mockTriggerParticipationBuild(participation);
+        // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
+        mockDelegate.mockTriggerParticipationBuild(participation);
 
         // These will be updated when triggering a build
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
-        participationService.save(participation);
+        programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         // Construct trigger-build url and execute request
         submissionType = submissionType == null ? SubmissionType.MANUAL : submissionType;
@@ -598,22 +613,30 @@ public class ProgrammingExerciseTestService {
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
 
         // Fetch updated participation and assert
-        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationService.findOne(participation.getId());
+        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
         assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
+
+        // Trigger the build again and make sure no new submission is created
+        request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
+        var submissions = database.submissionRepository.findAll();
+        assertThat(submissions.size()).isEqualTo(1);
     }
 
+    // TEST
     public void resumeProgrammingExerciseByTriggeringFailedBuild_correctInitializationState(ExerciseMode exerciseMode, boolean buildPlanExists) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
 
         mockDelegate.mockTriggerFailedBuild(participation);
+        // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
+        mockDelegate.mockTriggerFailedBuild(participation);
 
         // These will be updated triggering a failed build
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(!buildPlanExists ? null : participation.getBuildPlanId());
-        participationService.save(participation);
+        programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         if (!buildPlanExists) {
             mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
@@ -626,31 +649,118 @@ public class ProgrammingExerciseTestService {
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
 
         // Fetch updated participation and assert
-        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationService.findOne(participation.getId());
+        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
         assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
+
+        // Trigger the build again and make sure no new submission is created
+        request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
+        var submissions = database.submissionRepository.findAll();
+        assertThat(submissions.size()).isEqualTo(1);
     }
 
+    // TEST
     public void resumeProgrammingExerciseByTriggeringInstructorBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
 
         mockDelegate.mockTriggerInstructorBuildAll(participation);
+        // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
+        mockDelegate.mockTriggerInstructorBuildAll(participation);
 
         // These will be updated triggering a failed build
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
-        participationService.save(participation);
+        programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
-        request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all", null, HttpStatus.OK, new HttpHeaders());
+        var url = "/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all";
+        request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
         await().until(() -> programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exercise.getId()).isPresent());
 
         // Fetch updated participation and assert
-        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationService.findOne(participation.getId());
+        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
         assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
+
+        // Trigger the build again and make sure no new submission is created
+        request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
+        var submissions = database.submissionRepository.findAll();
+        assertThat(submissions.size()).isEqualTo(1);
+    }
+
+    // Test
+    public void exportInstructorRepositories_shouldReturnFile() throws Exception {
+        var zip = exportInstructorRepository("TEMPLATE", sourceExerciseRepo.localRepoFile.toPath(), HttpStatus.OK);
+        assertThat(zip).isNotNull();
+
+        zip = exportInstructorRepository("SOLUTION", sourceSolutionRepo.localRepoFile.toPath(), HttpStatus.OK);
+        assertThat(zip).isNotNull();
+
+        zip = exportInstructorRepository("TESTS", sourceTestRepo.localRepoFile.toPath(), HttpStatus.OK);
+        assertThat(zip).isNotNull();
+
+    }
+
+    // Test
+    public void exportInstructorRepositories_forbidden() throws Exception {
+        exportInstructorRepository("TEMPLATE", sourceExerciseRepo.localRepoFile.toPath(), HttpStatus.FORBIDDEN);
+        exportInstructorRepository("SOLUTION", sourceSolutionRepo.localRepoFile.toPath(), HttpStatus.FORBIDDEN);
+        exportInstructorRepository("TESTS", sourceTestRepo.localRepoFile.toPath(), HttpStatus.FORBIDDEN);
+    }
+
+    private String exportInstructorRepository(String repositoryType, Path localPathToRepository, HttpStatus expectedStatus) throws Exception {
+        exercise = programmingExerciseRepository.save(exercise);
+        exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
+
+        var vcsUrl = exercise.getRepositoryURL(RepositoryType.valueOf(repositoryType));
+        var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localPathToRepository, null);
+        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
+
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-repository/" + repositoryType;
+        // return request.postWithResponseBodyFile(url, null, expectedStatus);
+        return request.get(url, expectedStatus, String.class);
+    }
+
+    // Test
+    public void testArchiveCourseWithProgrammingExercise() throws Exception {
+        course.setEndDate(ZonedDateTime.now().minusMinutes(4));
+        course.setCourseArchivePath(null);
+        course.setExercises(Set.of(exercise));
+        courseRepository.save(course);
+
+        exercise = programmingExerciseRepository.save(exercise);
+        exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
+        database.addTestCasesToProgrammingExercise(exercise);
+
+        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, studentLogin);
+
+        // Mock student repo
+        var studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
+        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
+
+        // Mock template repo
+        var templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(sourceExerciseRepo.localRepoFile.toPath(), null);
+        doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), anyString(), anyBoolean());
+
+        // Mock solution repo
+        var solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(sourceSolutionRepo.localRepoFile.toPath(), null);
+        doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), anyString(), anyBoolean());
+
+        // Mock tests repo
+        var testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(sourceTestRepo.localRepoFile.toPath(), null);
+        doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
+
+        request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
+        await().until(() -> courseRepository.findById(course.getId()).get().getCourseArchivePath() != null);
+
+        var updatedCourse = courseRepository.findByIdElseThrow(course.getId());
+        assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
     }
 
     private ProgrammingExerciseStudentParticipation createStudentParticipationWithSubmission(ExerciseMode exerciseMode) throws Exception {
@@ -751,7 +861,7 @@ public class ProgrammingExerciseTestService {
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamService.save(exercise, team);
 
@@ -784,7 +894,7 @@ public class ProgrammingExerciseTestService {
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamService.save(exercise, team);
 
@@ -818,7 +928,7 @@ public class ProgrammingExerciseTestService {
         // create a team for the user (necessary condition before starting an exercise)
         final String edxUsername = userPrefixEdx.get() + "student";
         User edxStudent = ModelFactory.generateActivatedUsers(edxUsername, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(AuthoritiesConstants.USER)), 1).get(0);
-        edxStudent.setPassword(userService.encryptor().encrypt(edxStudent.getPassword()));
+        edxStudent.setPassword(passwordService.encryptPassword(edxStudent.getPassword()));
         edxStudent = userRepo.save(edxStudent);
         Team team = setupTeam(edxStudent);
 
@@ -831,35 +941,6 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void copyRepository_testInternalServerError() throws Exception {
-        exercise.setMode(TEAM);
-        programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
-
-        // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
-        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
-        team = teamService.save(exercise, team);
-
-        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
-
-        // test for internal server error
-        mockDelegate.mockForkRepositoryForParticipation(exercise, team.getParticipantIdentifier(), HttpStatus.INTERNAL_SERVER_ERROR);
-
-        // Start participation
-        try {
-            participationService.startExercise(exercise, team, false);
-        }
-        catch (VersionControlException e) {
-            // We cannot compare exception messages because each vcs has their
-            // own. Maybe simply checking that the exception is not empty is
-            // enough?
-            assertThat(e.getMessage()).isNotEmpty();
-        }
-    }
-
-    // TEST
     public void copyRepository_testNotCreatedError() throws Exception {
         exercise.setMode(TEAM);
         programmingExerciseRepository.save(exercise);
@@ -867,49 +948,29 @@ public class ProgrammingExerciseTestService {
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamService.save(exercise, team);
 
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
 
         // test for internal server error
-        mockDelegate.mockForkRepositoryForParticipation(exercise, team.getParticipantIdentifier(), HttpStatus.OK);
+        mockDelegate.mockCopyRepositoryForParticipation(exercise, team.getParticipantIdentifier());
+        mockDelegate.mockRepositoryWritePermissions(team, team.getStudents().stream().findFirst().get(), exercise, HttpStatus.BAD_REQUEST);
+        var participantRepoTestUrl = getMockFileRepositoryUrl(studentTeamRepo);
+        final var teamLocalPath = studentTeamRepo.localRepoFile.toPath();
+        doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
+        doThrow(new InterruptedException()).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
 
+        // the local repo should exist before startExercise()
+        assertThat(Files.exists(teamLocalPath)).isTrue();
         // Start participation
         try {
             participationService.startExercise(exercise, team, false);
         }
         catch (VersionControlException e) {
-            // We cannot compare exception messages because each vcs has their
-            // own. Maybe simply checking that the exception is not empty is
-            // enough?
-            assertThat(e.getMessage()).isNotEmpty();
-        }
-    }
-
-    // TEST
-    public void copyRepository_testBadRequestError() throws Exception {
-        exercise.setMode(TEAM);
-        programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
-
-        // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
-        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
-        team = teamService.save(exercise, team);
-
-        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
-
-        // test for internal server error
-        mockDelegate.mockForkRepositoryForParticipation(exercise, team.getParticipantIdentifier(), HttpStatus.BAD_REQUEST);
-
-        // Start participation
-        try {
-            participationService.startExercise(exercise, team, false);
-        }
-        catch (VersionControlException e) {
+            // the directory of the repo should be deleted
+            assertThat(Files.exists(teamLocalPath)).isFalse();
             // We cannot compare exception messages because each vcs has their
             // own. Maybe simply checking that the exception is not empty is
             // enough?
@@ -925,7 +986,7 @@ public class ProgrammingExerciseTestService {
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamService.save(exercise, team);
 
@@ -946,7 +1007,7 @@ public class ProgrammingExerciseTestService {
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamService.save(exercise, team);
 
@@ -954,8 +1015,7 @@ public class ProgrammingExerciseTestService {
 
         // test for internal server error
         final var username = team.getParticipantIdentifier();
-        mockDelegate.mockForkRepositoryForParticipation(exercise, username, HttpStatus.CREATED);
-        final var projectKey = exercise.getProjectKey();
+        mockDelegate.mockCopyRepositoryForParticipation(exercise, username);
         mockDelegate.mockRepositoryWritePermissions(team, team.getStudents().stream().findFirst().get(), exercise, HttpStatus.BAD_REQUEST);
 
         // Start participation

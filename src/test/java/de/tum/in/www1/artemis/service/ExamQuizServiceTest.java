@@ -24,12 +24,10 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
-import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.exam.ExamQuizService;
+import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -63,6 +61,9 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
     StudentExamRepository studentExamRepository;
@@ -156,7 +157,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
         assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
-        assertThat(examService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
+        assertThat(studentExamService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
             database.changeUser("student" + (i + 1));
@@ -252,7 +253,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
         assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
-        assertThat(examService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
+        assertThat(studentExamService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
             final var user = database.getUserByLogin("student" + (i + 1));
@@ -306,7 +307,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
         assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
-        assertThat(examService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
+        assertThat(studentExamService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
             database.changeUser("student" + (i + 1));
@@ -343,12 +344,12 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     private void checkStatistics(QuizExercise quizExercise) {
-        QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(0);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
 
-        int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getScore).reduce(0, Integer::sum);
-        Assertions.assertThat(quizExerciseWithStatistic.getMaxScore()).isEqualTo(questionScore);
+        int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
+        Assertions.assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
         Assertions.assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters().size()).isEqualTo(questionScore + 1);
         // check general statistics
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {

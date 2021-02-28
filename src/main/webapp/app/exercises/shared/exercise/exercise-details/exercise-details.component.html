@@ -71,11 +71,15 @@
 </dd>
 <dt><span jhiTranslate="artemisApp.exercise.points">Points</span></dt>
 <dd>
-    <span>{{ exercise.maxScore }}</span>
+    <span>{{ exercise.maxPoints }}</span>
 </dd>
 <dt *ngIf="exercise.bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus points</span></dt>
 <dd *ngIf="exercise.bonusPoints">
     <span>{{ exercise.bonusPoints }}</span>
+</dd>
+<dt><span jhiTranslate="artemisApp.exercise.includedInOverallScore">Score Calculation</span></dt>
+<dd>
+    <span>{{ exerciseService.isIncludedInScore(exercise) }}</span>
 </dd>
 <dt><span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span></dt>
 <dd>

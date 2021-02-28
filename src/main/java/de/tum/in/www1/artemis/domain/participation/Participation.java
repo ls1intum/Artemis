@@ -49,6 +49,10 @@ public abstract class Participation extends DomainObject implements Participatio
     @JsonView(QuizView.Before.class)
     private ZonedDateTime initializationDate;
 
+    // information whether this participation belongs to a test run exam, not relevant for course exercises
+    @Column(name = "test_run")
+    private Boolean testRun = false;
+
     // NOTE: Keep default of FetchType.EAGER because most of the times we want
     // to get a student participation, we also need the exercise. Dealing with Proxy
     // objects would cause more issues (Subclasses don't work properly for Proxy objects)
@@ -72,7 +76,7 @@ public abstract class Participation extends DomainObject implements Participatio
     /**
      * Because a submission has a reference to the participation and the participation has a collection of submissions, setting the cascade type to PERSIST would result in
      * exceptions, i.e., if you want to persist a submission, you have to follow these steps: 1. Set the participation of the submission: submission.setParticipation(participation)
-     * 2. Persist the submission: submissionRepository.save(submission) 3. Add the submission to the participation: participation.addSubmissions(submission) 4. Persist the
+     * 2. Persist the submission: submissionRepository.save(submission) 3. Add the submission to the participation: participation.addSubmission(submission) 4. Persist the
      * participation: participationRepository.save(participation) It is important that, if you want to persist the submission and the participation in the same transaction, you
      * have to use the save function and not the saveAndFlush function because otherwise an exception is thrown. We can think about adding orphanRemoval=true here, after adding the
      * participationId to all submissions.
@@ -124,6 +128,14 @@ public abstract class Participation extends DomainObject implements Participatio
         this.initializationDate = initializationDate;
     }
 
+    public boolean isTestRun() {
+        return Boolean.TRUE.equals(testRun);
+    }
+
+    public void setTestRun(boolean testRun) {
+        this.testRun = testRun;
+    }
+
     /**
      *
      * @return exercise object
@@ -168,15 +180,9 @@ public abstract class Participation extends DomainObject implements Participatio
         return this;
     }
 
-    public void addSubmissions(Submission submission) {
+    public void addSubmission(Submission submission) {
         this.submissions.add(submission);
         submission.setParticipation(this);
-    }
-
-    public Participation removeSubmissions(Submission submission) {
-        this.submissions.remove(submission);
-        submission.setParticipation(null);
-        return this;
     }
 
     public void setSubmissions(Set<Submission> submissions) {
@@ -245,4 +251,6 @@ public abstract class Participation extends DomainObject implements Participatio
      * @return an empty participation just including the id of the object
      */
     public abstract Participation copyParticipationId();
+
+    public abstract void filterSensitiveInformation();
 }

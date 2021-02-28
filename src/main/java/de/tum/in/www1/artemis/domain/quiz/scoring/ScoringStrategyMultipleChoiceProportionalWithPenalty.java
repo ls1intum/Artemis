@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.quiz.scoring;
 import de.tum.in.www1.artemis.domain.quiz.*;
 
 /**
- * Proportional with Penalty means that every correctly selected/unselected answer increases the score by x and every incorrectly selected/unselected answer the score by x where x
+ * Proportional with penalty means that every correctly selected/unselected answer increases the score by x and every incorrectly selected/unselected answer the score by x where x
  * = maxScore / numberOfAnswerOptions if the result is negative, a score of 0 is given instead
  */
 public class ScoringStrategyMultipleChoiceProportionalWithPenalty implements ScoringStrategy {
@@ -12,7 +12,7 @@ public class ScoringStrategyMultipleChoiceProportionalWithPenalty implements Sco
     public double calculateScore(QuizQuestion quizQuestion, SubmittedAnswer submittedAnswer) {
         // check if the quizQuestion is invalid: if true: -> return with full points
         if (quizQuestion.isInvalid()) {
-            return quizQuestion.getScore();
+            return quizQuestion.getPoints();
         }
 
         if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer && quizQuestion instanceof MultipleChoiceQuestion) {
@@ -41,7 +41,7 @@ public class ScoringStrategyMultipleChoiceProportionalWithPenalty implements Sco
             double fraction = ((correctSelections / totalOptions) - (incorrectSelections / totalOptions));
 
             // end result is maxScore * fraction, but at least 0
-            return Math.max(0, quizQuestion.getScore() * fraction);
+            return Math.max(0, quizQuestion.getPoints() * fraction);
         }
         // the submitted answer's type doesn't fit the quizQuestion's type => it cannot be correct
         return 0.0;

@@ -8,7 +8,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
@@ -34,6 +34,7 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 import { diff_match_patch } from 'diff-match-patch';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -45,6 +46,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
     readonly dmp = new diff_match_patch();
+    readonly IncludedInOverallScore = IncludedInOverallScore;
 
     paramSub: Subscription;
     participation: ProgrammingExerciseStudentParticipation;
@@ -148,7 +150,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             }
 
             this.programmingExerciseParticipationService
-                .getStudentParticipationWithLatestManualResult(participationId)
+                .getStudentParticipationWithResultOfCorrectionRound(participationId, this.correctionRound)
                 .pipe(
                     tap(
                         (participationWithResult: ProgrammingExerciseStudentParticipation) => {
@@ -264,7 +266,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     save(): void {
         this.saveBusy = true;
         this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, undefined, this.correctionRound).subscribe(
+        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, undefined).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         );
@@ -276,7 +278,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     submit(): void {
         this.submitBusy = true;
         this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, true, this.correctionRound).subscribe(
+        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, true).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         );
@@ -501,26 +503,34 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
+    private createResultString(totalScore: number, maxScore: number | undefined): string {
+        return `${totalScore} of ${maxScore} points`;
+    }
+
     private setAttributesForManualResult(totalScore: number) {
         this.setFeedbacksForManualResult();
         // Manual result is always rated and has feedback
         this.manualResult!.rated = true;
         this.manualResult!.hasFeedback = true;
         // Append the automatic result string which the manual result holds with the score part, to create the manual result string
+        // In the case no automatic result exists before the assessment, the resultString is undefined. In this case we just want to see the manual assessment.
         if (this.isFirstAssessment) {
-            this.manualResult!.resultString += this.exercise.maxScore ? `, ${totalScore} of ${this.exercise.maxScore} points` : `, ${totalScore} points`;
+            if (this.manualResult!.resultString) {
+                this.manualResult!.resultString += ', ' + this.createResultString(totalScore, this.exercise.maxPoints);
+            } else {
+                this.manualResult!.resultString = this.createResultString(totalScore, this.exercise.maxPoints);
+            }
             this.isFirstAssessment = false;
         } else {
             /* Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated,
              * as the points the student has achieved have changed
              */
             const resultStringParts: string[] = this.manualResult!.resultString!.split(', ');
-            // When no maxScore is set, then show only the achieved points
-            resultStringParts[resultStringParts.length - 1] = this.exercise.maxScore ? `${totalScore} of ${this.exercise.maxScore} points` : `${totalScore} points`;
+            resultStringParts[resultStringParts.length - 1] = this.createResultString(totalScore, this.exercise.maxPoints);
             this.manualResult!.resultString = resultStringParts.join(', ');
         }
 
-        this.manualResult!.score = this.exercise.maxScore ? Math.round((totalScore / this.exercise.maxScore!) * 100) : 100;
+        this.manualResult!.score = Math.round((totalScore / this.exercise.maxPoints!) * 100);
         // This is done to update the result string in result.component.ts
         this.manualResult = cloneDeep(this.manualResult);
     }
@@ -536,7 +546,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private calculateTotalScore() {
         const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
-        const maxPoints = this.exercise.maxScore! + (this.exercise.bonusPoints! ?? 0.0);
+        const maxPoints = this.exercise.maxPoints! + (this.exercise.bonusPoints! ?? 0.0);
         let totalScore = 0.0;
         let scoreAutomaticTests = 0.0;
         const gradingInstructions = {}; // { instructionId: noOfEncounters }
@@ -559,16 +569,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             scoreAutomaticTests = maxPoints;
         }
         totalScore += scoreAutomaticTests;
-        // Do not allow negative score
-        if (totalScore < 0) {
-            totalScore = 0;
-        }
-        // Cap totalScore to maxPoints
-        if (totalScore > maxPoints) {
-            totalScore = maxPoints;
-        }
-
-        totalScore = +totalScore.toFixed(2);
+        totalScore = getPositiveAndCappedTotalScore(totalScore, maxPoints);
 
         // Set attributes of manual result
         this.setAttributesForManualResult(totalScore);

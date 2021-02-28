@@ -112,7 +112,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private loadSubmission(submissionId: number): void {
-        this.modelingSubmissionService.getSubmission(submissionId).subscribe(
+        this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
             },
@@ -503,7 +503,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     calculateTotalScore() {
         this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
         // Cap totalScore to maxPoints
-        const maxPoints = this.modelingExercise!.maxScore! + this.modelingExercise!.bonusPoints! ?? 0.0;
+        const maxPoints = this.modelingExercise!.maxPoints! + this.modelingExercise!.bonusPoints! ?? 0.0;
         if (this.totalScore > maxPoints) {
             this.totalScore = maxPoints;
         }

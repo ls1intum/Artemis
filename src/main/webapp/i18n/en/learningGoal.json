@@ -27,10 +27,10 @@
                     "name": "Lecture Unit",
                     "releaseDate": "Release Date",
                     "lecture": "Lecture",
-                    "scoreAchievedByStudent": "Your Score",
-                    "averageScoreAchievedByStudent": "Average Score of Participant",
-                    "totalPointsAchievable": "Points achievable",
-                    "noOfParticipants": "Number of Participants",
+                    "scoreAchievedByStudent": "Your score",
+                    "averageScoreAchievedByStudent": "Average score of participant",
+                    "totalPointsAchievable": "Achievable points",
+                    "noOfParticipants": "Number of participants",
                     "participationRate": "Participation Rate"
                 }
             },

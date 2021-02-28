@@ -17,6 +17,7 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../../test.module';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -51,6 +52,7 @@ describe('ModelingExamSubmissionComponent', () => {
                 TranslatePipeMock,
                 MockPipe(HtmlForMarkdownPipe, (markdown) => markdown as SafeHtml),
                 MockDirective(NgbTooltip),
+                MockComponent(IncludedInScoreBadgeComponent),
             ],
             providers: [MockProvider(ChangeDetectorRef)],
         })
@@ -79,7 +81,7 @@ describe('ModelingExamSubmissionComponent', () => {
 
         it('should show exercise max score if any', () => {
             const maxScore = 30;
-            comp.exercise.maxScore = maxScore;
+            comp.exercise.maxPoints = maxScore;
             fixture.detectChanges();
             const el = fixture.debugElement.query((de) => de.nativeElement.textContent.includes(`[${maxScore} artemisApp.examParticipation.points]`));
             expect(el).to.exist;
@@ -87,7 +89,7 @@ describe('ModelingExamSubmissionComponent', () => {
 
         it('should show exercise bonus score if any', () => {
             const maxScore = 40;
-            comp.exercise.maxScore = maxScore;
+            comp.exercise.maxPoints = maxScore;
             const bonusPoints = 55;
             comp.exercise.bonusPoints = bonusPoints;
             fixture.detectChanges();

@@ -18,6 +18,8 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -35,10 +37,12 @@ public class TextSubmissionService extends SubmissionService {
     private final SubmissionVersionService submissionVersionService;
 
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, TextClusterRepository textClusterRepository, SubmissionRepository submissionRepository,
-            StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
-            Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService,
-            FeedbackRepository feedbackRepository) {
-        super(submissionRepository, userService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
+            StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository,
+            UserRepository userRepository, Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService,
+            SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository,
+            ParticipationRepository participationRepository) {
+        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
+                courseRepository, participationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.textClusterRepository = textClusterRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
@@ -93,6 +97,9 @@ public class TextSubmissionService extends SubmissionService {
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
         textSubmission.setParticipation(participation);
+
+        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+        textSubmission.setResults(new ArrayList<>());
         textSubmission = textSubmissionRepository.save(textSubmission);
 
         // versioning of submission
@@ -100,7 +107,7 @@ public class TextSubmissionService extends SubmissionService {
             if (textExercise.isTeamMode()) {
                 submissionVersionService.saveVersionForTeam(textSubmission, principal.getName());
             }
-            else {
+            else if (textExercise.isExamExercise()) {
                 submissionVersionService.saveVersionForIndividual(textSubmission, principal.getName());
             }
         }
@@ -108,7 +115,7 @@ public class TextSubmissionService extends SubmissionService {
             log.error("Text submission version could not be saved: " + ex);
         }
 
-        participation.addSubmissions(textSubmission);
+        participation.addSubmission(textSubmission);
         participation.setInitializationState(InitializationState.FINISHED);
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (textSubmission.getId() == null) {
@@ -177,34 +184,6 @@ public class TextSubmissionService extends SubmissionService {
     }
 
     /**
-     * Return all TextSubmission which are the latest TextSubmission of a Participation and doesn't have a Result so far
-     * The corresponding TextBlocks and Participations are retrieved from the database
-     * @param exercise Exercise for which all assessed submissions should be retrieved
-     * @return List of all TextSubmission which aren't assessed at the Moment, but need assessment in the future.
-     *
-     */
-    public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
-        final List<TextSubmission> submissions = textSubmissionRepository.findByParticipation_ExerciseIdAndResultsIsNullAndSubmittedIsTrue(exercise.getId());
-
-        final Set<Long> clusterIds = submissions.stream().flatMap(submission -> submission.getBlocks().stream()).map(TextBlock::getCluster).filter(Objects::nonNull)
-                .map(TextCluster::getId).collect(toSet());
-
-        // To prevent lazy loading many elements later on, we fetch all clusters with text blocks here.
-        final Map<Long, TextCluster> textClusterMap = textClusterRepository.findAllByIdsWithEagerTextBlocks(clusterIds).stream()
-                .collect(toMap(TextCluster::getId, textCluster -> textCluster));
-
-        // link up clusters with eager blocks
-        submissions.stream().flatMap(submission -> submission.getBlocks().stream()).forEach(textBlock -> {
-            if (textBlock.getCluster() != null) {
-                textBlock.setCluster(textClusterMap.get(textBlock.getCluster().getId()));
-            }
-        });
-
-        return submissions.stream().filter(tS -> tS.getParticipation().findLatestSubmission().isPresent() && tS == tS.getParticipation().findLatestSubmission().get())
-                .collect(toList());
-    }
-
-    /**
      * Given an exercise id and a tutor id, it returns all the text submissions where the tutor has a result associated
      *
      * @param exerciseId - the id of the exercise we are looking for
@@ -222,24 +201,19 @@ public class TextSubmissionService extends SubmissionService {
      * Given an exerciseId, returns all the submissions for that exercise, including their results. Submissions can be filtered to include only already submitted submissions
      *
      * @param exerciseId    - the id of the exercise we are interested into
-     * @param correctionRound - the correction round we want our submission to have results for
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
      * @param examMode - set flag to ignore test run submissions
      * @return a list of text submissions for the given exercise id
      */
-    public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly, boolean examMode, int correctionRound) {
-        // TODO Nicolas Rauscher and Simon Entholzer: the following query for the exam mode does not work. Instructors assume to see all submissions on the submissions
-        // page independent whether they already have results or not.
-        // List<StudentParticipation> participations;
-        // if (examMode) {
-        // participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(exerciseId,
-        // (long) correctionRound);
-        // }
-        // else {
-        // participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
-        // }
-        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
-        ;
+    public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly, boolean examMode) {
+        // Instructors assume to see all submissions on the submissions page independent whether they already have results or not.
+        List<StudentParticipation> participations;
+        if (examMode) {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+        }
+        else {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+        }
 
         List<TextSubmission> textSubmissions = new ArrayList<>();
 
@@ -283,6 +257,18 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmission findAndLockTextSubmissionToBeAssessed(TextExercise textExercise, boolean ignoreTestRunParticipations, int correctionRound) {
         TextSubmission textSubmission = getRandomTextSubmissionEligibleForNewAssessment(textExercise, ignoreTestRunParticipations, correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission for exercise " + textExercise.getId() + " could not be found"));
+        lockSubmission(textSubmission, correctionRound);
+        return textSubmission;
+    }
+
+    /**
+     * Lock a given text submission that still needs to be assessed to prevent other tutors from receiving and assessing it.
+     *
+     * @param textSubmission textSubmission to be locked
+     * @param correctionRound get submission with results in the correction round
+     * @return a locked modeling submission that needs an assessment
+     */
+    public TextSubmission lockTextSubmissionToBeAssessed(TextSubmission textSubmission, int correctionRound) {
         lockSubmission(textSubmission, correctionRound);
         return textSubmission;
     }

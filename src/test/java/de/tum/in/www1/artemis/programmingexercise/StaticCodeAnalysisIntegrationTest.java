@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -23,10 +26,10 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.StaticCodeAnalysisResource;
 
@@ -52,6 +55,10 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     ProgrammingExerciseTestCaseRepository testCaseRepository;
+
+    @Autowired
+    @Qualifier("staticCodeAnalysisConfiguration")
+    private Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
 
     @Autowired
     private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
@@ -149,6 +156,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         ProgrammingExercise exerciseWithSolutionParticipation = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExSCAEnabled.getId()).get();
         bambooRequestMockProvider.mockTriggerBuild(exerciseWithSolutionParticipation.getSolutionParticipation());
+        bambooRequestMockProvider.mockTriggerBuild(exerciseWithSolutionParticipation.getTemplateParticipation());
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExSCAEnabled);
         // Change the first category
         var categoryIterator = programmingExSCAEnabled.getStaticCodeAnalysisCategories().iterator();
@@ -173,6 +181,53 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
                 .containsExactlyInAnyOrderElementsOf(programmingExSCAEnabled.getStaticCodeAnalysisCategories());
         assertThat(savedCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("exercise")
                 .containsExactlyInAnyOrderElementsOf(programmingExSCAEnabled.getStaticCodeAnalysisCategories());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void testResetCategories_staticCodeAnalysisNotEnabled_badRequest() throws Exception {
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.RESET, programmingExercise);
+        request.patch(endpoint, "{}", HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "other-instructor1", roles = "INSTRUCTOR")
+    public void testResetCategories_instructorInWrongCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "other-instructor");
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.RESET, programmingExerciseSCAEnabled);
+        request.patch(endpoint, "{}", HttpStatus.FORBIDDEN);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testResetCategories(ProgrammingLanguage programmingLanguage) throws Exception {
+        // Create a programming exercise with real categories
+        var course = database.addCourseWithOneProgrammingExercise(true, programmingLanguage);
+        ProgrammingExercise exercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(course.getExercises().iterator().next().getId()).get();
+        bambooRequestMockProvider.mockTriggerBuild(exercise.getSolutionParticipation());
+        bambooRequestMockProvider.mockTriggerBuild(exercise.getTemplateParticipation());
+        staticCodeAnalysisService.createDefaultCategories(exercise);
+        var originalCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(exercise.getId());
+
+        // Alter the categories
+        var alteredCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(exercise.getId()).stream().peek(category -> {
+            category.setPenalty(5D);
+            category.setMaxPenalty(15D);
+            category.setState(CategoryState.GRADED);
+        }).collect(Collectors.toList());
+        staticCodeAnalysisCategoryRepository.saveAll(alteredCategories);
+
+        // Perform the request and assert that the original state was restored
+        final var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.RESET, exercise);
+        final var categoriesResponse = request.patchWithResponseBody(endpoint, "{}", new TypeReference<Set<StaticCodeAnalysisCategory>>() {
+        }, HttpStatus.OK);
+        final var categoriesInDB = staticCodeAnalysisCategoryRepository.findByExerciseId(exercise.getId());
+
+        assertThat(categoriesResponse).usingElementComparatorIgnoringFields("exercise").containsExactlyInAnyOrderElementsOf(categoriesInDB);
+        assertThat(categoriesInDB).usingElementComparatorIgnoringFields("exercise").containsExactlyInAnyOrderElementsOf(originalCategories);
+        assertThat(categoriesInDB).usingElementComparatorIgnoringFields("id", "exercise").isEqualTo(staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()));
     }
 
     @Test

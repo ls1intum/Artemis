@@ -62,7 +62,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     public TextExercise createTextExerciseWithSGI(Course course) {
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
-        textExercise.setMaxScore(7.0);
+        textExercise.setMaxPoints(7.0);
         database.addGradingInstructionsToExercise(textExercise);
         exerciseRepository.save(textExercise);
         textExercise.getCategories().add("Text");
@@ -72,7 +72,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     public ModelingExercise createModelingExerciseWithSGI(Course course) {
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
-        modelingExercise.setMaxScore(7.0);
+        modelingExercise.setMaxPoints(7.0);
         database.addGradingInstructionsToExercise(modelingExercise);
         exerciseRepository.save(modelingExercise);
         modelingExercise.getCategories().add("Modeling");
@@ -82,7 +82,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     public FileUploadExercise createFileuploadExerciseWithSGI(Course course) {
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course);
-        fileUploadExercise.setMaxScore(7.0);
+        fileUploadExercise.setMaxPoints(7.0);
         database.addGradingInstructionsToExercise(fileUploadExercise);
         fileUploadExercise.getCategories().add("File");
         exerciseRepository.save(fileUploadExercise);
@@ -151,7 +151,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         result.setFeedbacks(feedbacks);
         submissionWithoutResult.addResult(result);
 
-        var calculatedScore = assessmentService.calculateTotalScore(feedbacks);
+        var calculatedScore = assessmentService.calculateTotalPoints(feedbacks);
         assessmentService.submitResult(result, exercise, calculatedScore);
         resultRepository.save(result);
 
@@ -173,7 +173,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         result.setFeedbacks(feedbacks);
         submissionWithoutResult.addResult(result);
 
-        var calculatedScore = assessmentService.calculateTotalScore(feedbacks);
+        var calculatedScore = assessmentService.calculateTotalPoints(feedbacks);
         assessmentService.submitResult(result, exercise, calculatedScore);
         resultRepository.save(result);
 
@@ -195,7 +195,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         result.setFeedbacks(feedbacks);
         submissionWithoutResult.addResult(result);
 
-        var calculatedScore = assessmentService.calculateTotalScore(feedbacks);
+        var calculatedScore = assessmentService.calculateTotalPoints(feedbacks);
         assessmentService.submitResult(result, exercise, calculatedScore);
         resultRepository.save(result);
 
@@ -210,7 +210,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         ZonedDateTime endDate = ZonedDateTime.now().plusHours(1);
 
         Exam exam = database.addExam(course1, visibleDate, startDate, endDate);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var exercise = exam.getExerciseGroups().get(0).getExercises().iterator().next();
 
         boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, null, null, false);
@@ -226,7 +226,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         ZonedDateTime publishResultDate = ZonedDateTime.now().minusMinutes(1);
 
         Exam exam = database.addExam(course1, visibleDate, startDate, endDate, publishResultDate);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var exercise = exam.getExerciseGroups().get(0).getExercises().iterator().next();
 
         boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, null, null, false);

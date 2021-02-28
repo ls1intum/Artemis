@@ -19,7 +19,9 @@ import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -34,6 +36,9 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     UserService userService;
 
     @Autowired
+    UserRepository userRepository;
+
+    @Autowired
     GroupNotificationRepository groupNotificationRepository;
 
     @Autowired
@@ -41,9 +46,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     NotificationRepository notificationRepository;
-
-    @Autowired
-    UserRepository userRepository;
 
     @Autowired
     CourseService courseService;
@@ -115,7 +117,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetNotifications_recipientEvaluation() throws Exception {
-        User recipient = userService.getUser();
+        User recipient = userRepository.getUser();
         SingleUserNotification notification1 = ModelFactory.generateSingleUserNotification(ZonedDateTime.now(), recipient);
         notificationRepository.save(notification1);
         SingleUserNotification notification2 = ModelFactory.generateSingleUserNotification(ZonedDateTime.now(), users.get(1));
@@ -134,7 +136,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         GroupNotification notification1 = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
         notificationRepository.save(notification1);
         course2.setStudentGroupName("some-group");
-        courseService.save(course2);
+        courseRepository.save(course2);
         GroupNotification notification2 = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course2, GroupNotificationType.STUDENT);
         notificationRepository.save(notification2);
 

@@ -15,11 +15,11 @@ module.exports = {
     collectCoverageFrom: ['src/main/webapp/**/*.{js,jsx,ts,tsx}', '!src/main/webapp/**/*.module.{js,jsx,ts,tsx}'],
     coverageThreshold: {
         global: {
-            // TODO: in the future, the following values should be increase to 80%
-            statements: 63,
-            branches: 45,
-            functions: 52,
-            lines: 62,
+            // TODO: in the future, the following values should be increase to at least 80%
+            statements: 70,
+            branches: 52,
+            functions: 60,
+            lines: 69,
         },
     },
     preset: 'jest-preset-angular',

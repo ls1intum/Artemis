@@ -138,9 +138,16 @@
         }
     }
 
+    .existing-question-container {
+        flex-direction: column;
+        max-width: 1600px;
+        margin: auto;
+    }
+
     .existing-question-select-course {
         display: flex;
         align-items: center;
+        padding-bottom: 10px;
     }
 
     .existing-question-filter {
@@ -182,6 +189,10 @@
                 }
             }
         }
+    }
+
+    .existing-question-table {
+        padding-top: 10px;
     }
 }
 

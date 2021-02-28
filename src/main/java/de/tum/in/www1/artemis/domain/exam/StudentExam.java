@@ -66,11 +66,11 @@ public class StudentExam extends AbstractAuditingEntity {
         return submitted;
     }
 
-    public Boolean isTestRun() {
-        return testRun;
+    public boolean isTestRun() {
+        return Boolean.TRUE.equals(testRun);
     }
 
-    public void setTestRun(Boolean testRun) {
+    public void setTestRun(boolean testRun) {
         this.testRun = testRun;
     }
 
@@ -150,16 +150,6 @@ public class StudentExam extends AbstractAuditingEntity {
 
     public void setExamSessions(Set<ExamSession> examSessions) {
         this.examSessions = examSessions;
-    }
-
-    public StudentExam addExercise(ExamSession examSession) {
-        this.examSessions.add(examSession);
-        return this;
-    }
-
-    public StudentExam removeExercise(ExamSession examSession) {
-        this.examSessions.remove(examSession);
-        return this;
     }
 
     /**

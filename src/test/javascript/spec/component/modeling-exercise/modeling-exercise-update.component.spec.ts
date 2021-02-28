@@ -6,7 +6,7 @@ import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { UMLDiagramType, ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
@@ -14,6 +14,8 @@ import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('ModelingExercise Management Update Component', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -28,6 +30,7 @@ describe('ModelingExercise Management Update Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                MockProvider(TranslateService),
             ],
         })
             .overrideTemplate(ModelingExerciseUpdateComponent, '')
@@ -45,6 +48,7 @@ describe('ModelingExercise Management Update Component', () => {
             entity.id = 123;
             spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.modelingExercise = entity;
+            comp.modelingExercise.course = { id: 1 } as Course;
             // WHEN
             comp.save();
             tick(); // simulate async
@@ -59,6 +63,7 @@ describe('ModelingExercise Management Update Component', () => {
             const entity = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
             spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.modelingExercise = entity;
+            comp.modelingExercise.course = { id: 1 } as Course;
             // WHEN
             comp.save();
             tick(); // simulate async
@@ -74,6 +79,7 @@ describe('ModelingExercise Management Update Component', () => {
             entity.title = 'My Exercise   ';
             spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.modelingExercise = entity;
+            comp.modelingExercise.course = { id: 1 } as Course;
             // WHEN
             comp.save();
             tick(); // simulate async
