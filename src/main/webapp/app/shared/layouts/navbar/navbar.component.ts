@@ -203,6 +203,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private buildBreadcrumbs(fullURI: string): void {
         this.breadcrumbs = [];
 
+        if (!fullURI) {
+            return;
+        }
+
         // Temporarily restrict routes
         if (!fullURI.startsWith('/admin') && !fullURI.startsWith('/course-management')) {
             return;
@@ -210,67 +214,46 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
         // try catch for extra safety measures
         try {
-            // Go through all parts (children) of the route starting from the root
-            this.addBreadcrumbForRouteChild(this.route.root.firstChild, '');
+            let currentPath = '/';
+
+            // Go through all segments of the route starting from the root
+            for (const segment of fullURI.substring(1).split('/')) {
+                currentPath += segment + '/';
+
+                // If we parse an entity ID we need to check the previous segment which entity the ID refers to
+                if (!isNaN(Number(segment))) {
+                    this.addBreadcrumbForNumberSegment(currentPath, segment);
+                } else {
+                    this.addBreadcrumbForUrlSegment(currentPath, segment);
+                }
+
+                // Special case: Don't add invalid breadcrumbs for the exercise group segments
+                if ('exercise-groups' === segment) {
+                    return;
+                }
+
+                this.lastRouteUrlSegment = segment;
+            }
         } catch (e) {}
-    }
-
-    /**
-     * Recursively adds a breadcrumb for every segment in the url of the child route
-     *
-     * @param child the part of the route to be parsed at this moment
-     * @param completePath the complete path up until the child (excluding the child's path)
-     */
-    private addBreadcrumbForRouteChild(child: ActivatedRoute | null, completePath: string): void {
-        if (!child) {
-            return;
-        }
-
-        // This child is not part of a route, skip to the next
-        if (!child.snapshot.url || child.snapshot.url.length === 0) {
-            this.addBreadcrumbForRouteChild(child!.firstChild, completePath);
-            return;
-        }
-
-        for (const urlSegment of child.snapshot.url) {
-            const segment = urlSegment.toString();
-            completePath += segment + '/';
-
-            // If we parse an entity ID we need to check the previous segment which entity the ID refers to
-            if (!isNaN(Number(segment))) {
-                this.addBreadcrumbForNumberSegment(completePath, segment);
-            } else {
-                this.addBreadcrumbForUrlSegment(completePath, segment);
-            }
-
-            // Special case: Don't add invalid breadcrumbs for the exercise group segments
-            if ('exercise-groups' === segment) {
-                return;
-            }
-
-            this.lastRouteUrlSegment = segment;
-        }
-
-        this.addBreadcrumbForRouteChild(child.firstChild, completePath);
     }
 
     /**
      * Adds a breadcrumb depending on the given entityID as string
      *
-     * @param completePath the complete path up until the child (excluding the child's path)
+     * @param currentPath the complete path up until the breadcrumb to add
      * @param segment the current url segment (string representation of an entityID) to add a crumb for
      */
-    private addBreadcrumbForNumberSegment(completePath: string, segment: string): void {
+    private addBreadcrumbForNumberSegment(currentPath: string, segment: string): void {
         switch (this.lastRouteUrlSegment) {
             // Displays the path segment as breadcrumb (no other title exists)
             case 'system-notification-management':
             case 'teams':
             case 'code-editor':
-                this.addBreadcrumb(completePath, segment, false);
+                this.addBreadcrumb(currentPath, segment, false);
                 break;
             case 'course-management':
                 this.routeCourseId = Number(segment);
-                this.addResolvedTitleAsCrumb<Course>(this.courseManagementService.find(this.routeCourseId), completePath, segment);
+                this.addResolvedTitleAsCrumb<Course>(this.courseManagementService.find(this.routeCourseId), currentPath, segment);
                 break;
             case 'exercises':
             case 'text-exercises':
@@ -278,33 +261,33 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'file-upload-exercises':
             case 'programming-exercises':
             case 'quiz-exercises':
-                this.addResolvedTitleAsCrumb<Exercise>(this.exerciseService.find(Number(segment)), completePath, segment);
+                this.addResolvedTitleAsCrumb<Exercise>(this.exerciseService.find(Number(segment)), currentPath, segment);
                 break;
             case 'hints':
-                this.addResolvedTitleAsCrumb<ExerciseHint>(this.hintService.find(Number(segment)), completePath, segment);
+                this.addResolvedTitleAsCrumb<ExerciseHint>(this.hintService.find(Number(segment)), currentPath, segment);
                 break;
             case 'apollon-diagrams':
-                this.addResolvedTitleAsCrumb<ApollonDiagram>(this.apollonDiagramService.find(Number(segment), this.routeCourseId), completePath, segment);
+                this.addResolvedTitleAsCrumb<ApollonDiagram>(this.apollonDiagramService.find(Number(segment), this.routeCourseId), currentPath, segment);
                 break;
             case 'lectures':
-                this.addResolvedTitleAsCrumb<Lecture>(this.lectureService.find(Number(segment)), completePath, segment);
+                this.addResolvedTitleAsCrumb<Lecture>(this.lectureService.find(Number(segment)), currentPath, segment);
                 break;
             case 'exams':
                 this.routeExamId = Number(segment);
-                this.addResolvedTitleAsCrumb<Exam>(this.examService.find(this.routeCourseId, this.routeExamId), completePath, segment);
+                this.addResolvedTitleAsCrumb<Exam>(this.examService.find(this.routeCourseId, this.routeExamId), currentPath, segment);
                 break;
             case 'import':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
                 // This has to go in the future
-                this.addTranslationAsCrumb(completePath, 'import');
+                this.addTranslationAsCrumb(currentPath, 'import');
                 break;
             case 'example-submissions':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
-                this.addTranslationAsCrumb(completePath, 'example-submissions');
+                this.addTranslationAsCrumb(currentPath, 'example-submissions');
                 break;
             case 'text-feedback-conflict':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
-                this.addTranslationAsCrumb(completePath, 'text-feedback-conflict');
+                this.addTranslationAsCrumb(currentPath, 'text-feedback-conflict');
                 break;
             // No breadcrumbs for those segments
             case 'goal-management':
@@ -320,10 +303,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     /**
      * Adds a breadcrumb for the given url segment
      *
-     * @param completePath the complete path up until the child (excluding the child's path)
+     * @param currentPath the complete path up until the breadcrumb to add
      * @param segment the current url segment to add a (translated) crumb for
      */
-    private addBreadcrumbForUrlSegment(completePath: string, segment: string): void {
+    private addBreadcrumbForUrlSegment(currentPath: string, segment: string): void {
         // When we're not dealing with an ID we need to translate the current part
         // The translation might still depend on the previous parts
         switch (segment) {
@@ -345,15 +328,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 // Special cases:
                 if (this.lastRouteUrlSegment === 'user-management') {
                     // - Users display their login name directly as crumb
-                    this.addBreadcrumb(completePath, segment, false);
+                    this.addBreadcrumb(currentPath, segment, false);
                     break;
                 } else if (this.lastRouteUrlSegment === 'example-submissions') {
                     // - Creating a new example submission should display the text for example submissions
-                    this.addTranslationAsCrumb(completePath, 'example-submissions');
+                    this.addTranslationAsCrumb(currentPath, 'example-submissions');
                     break;
                 } else if (this.lastRouteUrlSegment === 'grading') {
                     // - Opening a grading tab should only display the text for grading
-                    this.addTranslationAsCrumb(completePath, 'grading');
+                    this.addTranslationAsCrumb(currentPath, 'grading');
                     break;
                 } else if (this.lastRouteUrlSegment === 'code-editor' && segment === 'new') {
                     // - This route is bogus an needs to be replaced in the future, display no crumb
@@ -363,7 +346,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     break;
                 }
 
-                this.addTranslationAsCrumb(completePath, segment);
+                this.addTranslationAsCrumb(currentPath, segment);
                 break;
         }
     }

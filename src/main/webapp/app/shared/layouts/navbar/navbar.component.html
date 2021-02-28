@@ -172,11 +172,13 @@
                     <li>
                         <h6 class="dropdown-header" jhiTranslate="global.menu.language">Language</h6>
                     </li>
-                    <li *ngFor="let language of languages">
-                        <a class="dropdown-item" [jhiActiveMenu]="language" href="javascript:void(0);" (click)="changeLanguage(language); collapseNavbar()">{{
-                            language | findLanguageFromKey
-                        }}</a>
-                    </li>
+                    <div *ngIf="languages && languages.length > 1">
+                        <li *ngFor="let language of languages">
+                            <a class="dropdown-item" [jhiActiveMenu]="language" href="javascript:void(0);" (click)="changeLanguage(language); collapseNavbar()">{{
+                                language | findLanguageFromKey
+                            }}</a>
+                        </li>
+                    </div>
                     <ng-template [ngIf]="isTourAvailable">
                         <div class="dropdown-divider"></div>
                         <li>
