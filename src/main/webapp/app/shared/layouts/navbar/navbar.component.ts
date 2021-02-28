@@ -413,7 +413,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.addBreadcrumb(uri, this.breadcrumbTranslation[key], true);
         } else {
             // If there is no valid entry in the mapping display the raw key instead of a "not found"
-            this.addBreadcrumb(uri, key, false);
+            this.addBreadcrumb(uri, translationKey, false);
         }
     }
 
