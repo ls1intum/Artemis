@@ -15,6 +15,22 @@
             {{ studentExam.workingTime | artemisDurationFromSeconds }}
         </span>
     </div>
+    <div class="mb-2">
+        <span class="mx-2" *ngIf="exam && exam.examStudentReviewStart && studentExam.ended">
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.examStudentReviewStart' | translate }}:</strong>
+            {{ exam.examStudentReviewStart | artemisDate: 'long-date' }}
+            -
+            {{ exam.examStudentReviewStart | artemisDate: 'time' }}
+        </span>
+    </div>
+    <div class="mb-2">
+        <span class="mx-2" *ngIf="exam && exam.examStudentReviewEnd && studentExam.ended">
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.examStudentReviewEnd' | translate }}:</strong>
+            {{ exam.examStudentReviewEnd | artemisDate: 'long-date' }}
+            -
+            {{ exam.examStudentReviewEnd | artemisDate: 'time' }}
+        </span>
+    </div>
     <div class="mb-2" *ngIf="exam && (exam.examiner || exam.moduleNumber || exam.courseName)">
         <span class="mx-2" *ngIf="exam.examiner">
             <strong class="font-weight-bold">{{ 'artemisApp.examManagement.examiner' | translate }}:</strong>

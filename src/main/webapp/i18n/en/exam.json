@@ -41,6 +41,7 @@
             "publishResultsDate": "Release Date of Results",
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
+            "studentReviewEnabled": "Review is open",
             "duration": "Duration",
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
