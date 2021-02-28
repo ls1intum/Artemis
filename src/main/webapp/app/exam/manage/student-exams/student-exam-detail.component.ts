@@ -11,6 +11,7 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
 import { JhiAlertService } from 'ng-jhipster';
 import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -28,6 +29,7 @@ export class StudentExamDetailComponent implements OnInit {
     maxTotalScore = 0;
     achievedTotalScore = 0;
     bonusTotalScore = 0;
+    busy = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -35,6 +37,7 @@ export class StudentExamDetailComponent implements OnInit {
         private courseService: CourseManagementService,
         private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
         private alertService: JhiAlertService,
+        private modalService: NgbModal,
     ) {}
 
     /**
@@ -151,6 +154,15 @@ export class StudentExamDetailComponent implements OnInit {
         return true;
     }
 
+    examIsOver(): boolean {
+        if (this.studentExam.exam) {
+            // only show the button when the exam is over
+            return moment(this.studentExam.exam.endDate).add(this.studentExam.exam.gracePeriod, 'seconds').isBefore(moment());
+        }
+        // if exam is undefined, we do not want to show the button
+        return false;
+    }
+
     getWorkingTimeToolTip(): string {
         return this.examIsVisible()
             ? 'You cannot change the individual working time after the exam has become visible.'
@@ -158,5 +170,43 @@ export class StudentExamDetailComponent implements OnInit {
     }
     rounding(number: number) {
         return round(number, 1);
+    }
+
+    /**
+     * switch the 'submitted' state of the studentExam.
+     */
+    toggle() {
+        this.busy = true;
+        if (this.studentExam.exam && this.studentExam.exam.id) {
+            this.studentExamService.toggleSubmittedState(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, this.studentExam!.submitted!).subscribe(
+                (res) => {
+                    if (res.body) {
+                        this.studentExam.submissionDate = res.body.submissionDate;
+                        this.studentExam.submitted = res.body.submitted;
+                    }
+                    this.alertService.success('artemisApp.studentExamDetail.toggleSuccessful');
+                    this.busy = false;
+                },
+                () => {
+                    this.alertService.error('artemisApp.studentExamDetail.togglefailed');
+                    this.busy = false;
+                },
+            );
+        }
+    }
+
+    /**
+     * Open a modal that requires the user's confirmation.
+     * @param content the modal content
+     */
+    openConfirmationModal(content: any) {
+        this.modalService.open(content).result.then(
+            (result: string) => {
+                if (result === 'confirm') {
+                    this.toggle();
+                }
+            },
+            () => {},
+        );
     }
 }
