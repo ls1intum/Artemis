@@ -20,6 +20,18 @@ import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-
 import { Router } from '@angular/router';
 import { Directive, Input } from '@angular/core';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
+import { of } from 'rxjs/internal/observable/of';
+import { HttpResponse } from '@angular/common/http';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { LectureService } from 'app/lecture/lecture.service';
+import { Lecture } from 'app/entities/lecture.model';
+import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
+import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -45,6 +57,8 @@ class MockBreadcrumb {
 describe('NavbarComponent', () => {
     let fixture: ComponentFixture<NavbarComponent>;
     let component: NavbarComponent;
+    let courseManagementStub: sinon.SinonStub;
+    let exerciseStub: sinon.SinonStub;
 
     const router = new MockRouter();
     router.setUrl('');
@@ -53,6 +67,18 @@ describe('NavbarComponent', () => {
         label: 'global.menu.course',
         translate: true,
         uri: '/course-management/',
+    } as MockBreadcrumb;
+
+    const testCourseCrumb = {
+        label: 'Test Course',
+        translate: false,
+        uri: '/course-management/1/',
+    } as MockBreadcrumb;
+
+    const programmingExercisesCrumb = {
+        label: 'artemisApp.course.exercises',
+        translate: true,
+        uri: '/course-management/1/programming-exercises/',
     } as MockBreadcrumb;
 
     beforeEach(() => {
@@ -84,6 +110,12 @@ describe('NavbarComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(NavbarComponent);
                 component = fixture.componentInstance;
+
+                const courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
+                courseManagementStub = sinon.stub(courseManagementService, 'find').returns(of({ body: { title: 'Test Course' } as Course } as HttpResponse<Course>));
+
+                const exerciseService = fixture.debugElement.injector.get(ExerciseService);
+                exerciseStub = sinon.stub(exerciseService, 'find').returns(of({ body: { title: 'Test Exercise' } as Exercise } as HttpResponse<Exercise>));
             });
     });
 
@@ -96,13 +128,284 @@ describe('NavbarComponent', () => {
         expect(component).to.be.ok;
     });
 
-    it('should build breadcrumbs for course management', () => {
-        const testUrl = '/course-management/';
+    it('should not build breadcrumbs for students', () => {
+        const testUrl = '/courses/1/exercises';
         router.setUrl(testUrl);
 
         fixture.detectChanges();
 
+        expect(component.breadcrumbs.length).to.equal(0);
+    });
+
+    it('should build breadcrumbs for course management', () => {
+        const testUrl = '/course-management';
+        router.setUrl(testUrl);
+
+        fixture.detectChanges();
+
+        expect(component.breadcrumbs.length).to.equal(1);
+
         // Use matching here to ignore non-semantic differences between objects
         sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
+    });
+
+    it('should build breadcrumbs for system notification management', () => {
+        const testUrl = '/admin/system-notification-management/1/edit';
+        router.setUrl(testUrl);
+
+        fixture.detectChanges();
+
+        expect(component.breadcrumbs.length).to.equal(3);
+
+        // Use matching here to ignore non-semantic differences between objects
+        const systemBreadcrumb = { label: 'artemisApp.systemNotification.systemNotifications', translate: true, uri: '/admin/system-notification-management/' } as MockBreadcrumb;
+        sinon.assert.match(component.breadcrumbs[0], systemBreadcrumb);
+        sinon.assert.match(component.breadcrumbs[1], { label: '1', translate: false, uri: '/admin/system-notification-management/1/' } as MockBreadcrumb);
+        sinon.assert.match(component.breadcrumbs[2], { label: 'global.generic.edit', translate: true, uri: '/admin/system-notification-management/1/edit/' } as MockBreadcrumb);
+    });
+
+    it('should build breadcrumbs for user management', () => {
+        const testUrl = '/admin/user-management/test_user';
+        router.setUrl(testUrl);
+
+        fixture.detectChanges();
+
+        expect(component.breadcrumbs.length).to.equal(2);
+
+        // Use matching here to ignore non-semantic differences between objects
+        sinon.assert.match(component.breadcrumbs[0], { label: 'userManagement.home.title', translate: true, uri: '/admin/user-management/' } as MockBreadcrumb);
+        sinon.assert.match(component.breadcrumbs[1], { label: 'test_user', translate: false, uri: '/admin/user-management/test_user/' } as MockBreadcrumb);
+    });
+
+    describe('Special Cases for Breadcrumbs', function () {
+        it('programming exercise import', () => {
+            const testUrl = '/course-management/1/programming-exercises/import/2';
+            router.setUrl(testUrl);
+
+            fixture.detectChanges();
+
+            expect(courseManagementStub).to.have.been.calledWith(1);
+
+            const importCrumb = {
+                label: 'artemisApp.exercise.import.table.doImport',
+                translate: true,
+                uri: '/course-management/1/programming-exercises/import/2/',
+            } as MockBreadcrumb;
+
+            expect(component.breadcrumbs.length).to.equal(4);
+
+            // Use matching here to ignore non-semantic differences between objects
+            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
+            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
+            sinon.assert.match(component.breadcrumbs[2], programmingExercisesCrumb);
+            sinon.assert.match(component.breadcrumbs[3], importCrumb);
+        });
+
+        it('programming exercise grading', () => {
+            const testUrl = '/course-management/1/programming-exercises/2/grading/test-cases';
+            router.setUrl(testUrl);
+
+            fixture.detectChanges();
+
+            expect(courseManagementStub).to.have.been.calledWith(1);
+            expect(exerciseStub).to.have.been.calledWith(2);
+
+            const gradingCrumb = {
+                label: 'artemisApp.programmingExercise.configureGrading.shortTitle',
+                translate: true,
+                uri: '/course-management/1/programming-exercises/2/grading/test-cases/',
+            } as MockBreadcrumb;
+
+            expect(component.breadcrumbs.length).to.equal(5);
+
+            // Use matching here to ignore non-semantic differences between objects
+            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
+            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
+            sinon.assert.match(component.breadcrumbs[2], programmingExercisesCrumb);
+            sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exercise', translate: false, uri: '/course-management/1/programming-exercises/2/' } as MockBreadcrumb);
+            sinon.assert.match(component.breadcrumbs[4], gradingCrumb);
+        });
+
+        it('programming exercise new assessment', () => {
+            const testUrl = '/course-management/1/programming-exercises/2/code-editor/new/assessment';
+            router.setUrl(testUrl);
+
+            fixture.detectChanges();
+
+            expect(courseManagementStub).to.have.been.calledWith(1);
+            expect(exerciseStub).to.have.been.calledWith(2);
+
+            const assessmentCrumb = {
+                label: 'artemisApp.assessment.assessment',
+                translate: true,
+                uri: '/course-management/1/programming-exercises/2/code-editor/new/assessment/',
+            } as MockBreadcrumb;
+
+            expect(component.breadcrumbs.length).to.equal(5);
+
+            // Use matching here to ignore non-semantic differences between objects
+            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
+            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
+            sinon.assert.match(component.breadcrumbs[2], programmingExercisesCrumb);
+            sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exercise', translate: false, uri: '/course-management/1/programming-exercises/2/' } as MockBreadcrumb);
+            sinon.assert.match(component.breadcrumbs[4], assessmentCrumb);
+        });
+
+        it('programming exercise hints', () => {
+            const testUrl = '/course-management/1/exercises/2/hints/3';
+            router.setUrl(testUrl);
+
+            const hintService = fixture.debugElement.injector.get(ExerciseHintService);
+            const hintsStub = sinon.stub(hintService, 'find').returns(of({ body: { title: 'Exercise Hint' } as ExerciseHint } as HttpResponse<ExerciseHint>));
+
+            fixture.detectChanges();
+
+            expect(courseManagementStub).to.have.been.calledWith(1);
+            expect(exerciseStub).to.have.been.calledWith(2);
+            expect(hintsStub).to.have.been.calledWith(3);
+
+            const hintsCrumb = {
+                label: 'artemisApp.exerciseHint.home.title',
+                translate: true,
+                uri: '/course-management/1/exercises/2/hints/',
+            } as MockBreadcrumb;
+
+            const hintCrumb = {
+                label: 'Exercise Hint',
+                translate: false,
+                uri: '/course-management/1/exercises/2/hints/3/',
+            } as MockBreadcrumb;
+
+            expect(component.breadcrumbs.length).to.equal(6);
+
+            // Use matching here to ignore non-semantic differences between objects
+            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
+            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
+            sinon.assert.match(component.breadcrumbs[2], { label: 'artemisApp.course.exercises', translate: true, uri: '/course-management/1/exercises/' } as MockBreadcrumb);
+            sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exercise', translate: false, uri: '/course-management/1/exercises/2/' } as MockBreadcrumb);
+            sinon.assert.match(component.breadcrumbs[4], hintsCrumb);
+            sinon.assert.match(component.breadcrumbs[5], hintCrumb);
+        });
+
+        it('text exercise feedback conflict', () => {
+            const testUrl = '/course-management/1/text-exercises/2/submissions/3/text-feedback-conflict/4';
+            router.setUrl(testUrl);
+
+            fixture.detectChanges();
+
+            expect(courseManagementStub).to.have.been.calledWith(1);
+            expect(exerciseStub).to.have.been.calledWith(2);
+
+            const submissionsCrumb = {
+                label: 'artemisApp.exercise.submissions',
+                translate: true,
+                uri: '/course-management/1/text-exercises/2/submissions/',
+            } as MockBreadcrumb;
+
+            const conflictCrumb = {
+                label: 'artemisApp.textAssessment.title',
+                translate: true,
+                uri: '/course-management/1/text-exercises/2/submissions/3/text-feedback-conflict/4/',
+            } as MockBreadcrumb;
+
+            expect(component.breadcrumbs.length).to.equal(6);
+
+            // Use matching here to ignore non-semantic differences between objects
+            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
+            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
+            sinon.assert.match(component.breadcrumbs[2], { label: 'artemisApp.course.exercises', translate: true, uri: '/course-management/1/text-exercises/' } as MockBreadcrumb);
+            sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exercise', translate: false, uri: '/course-management/1/text-exercises/2/' } as MockBreadcrumb);
+            sinon.assert.match(component.breadcrumbs[4], submissionsCrumb);
+            sinon.assert.match(component.breadcrumbs[5], conflictCrumb);
+        });
+
+        it('modeling exercise example submission', () => {
+            const testUrl = '/course-management/1/modeling-exercises/2/example-submissions/3';
+            router.setUrl(testUrl);
+
+            fixture.detectChanges();
+
+            expect(courseManagementStub).to.have.been.calledWith(1);
+            expect(exerciseStub).to.have.been.calledWith(2);
+
+            const submissionCrumb = {
+                label: 'artemisApp.exampleSubmission.home.title',
+                translate: true,
+                uri: '/course-management/1/modeling-exercises/2/example-submissions/3/',
+            } as MockBreadcrumb;
+
+            expect(component.breadcrumbs.length).to.equal(5);
+
+            // Use matching here to ignore non-semantic differences between objects
+            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
+            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
+            sinon.assert.match(component.breadcrumbs[2], {
+                label: 'artemisApp.course.exercises',
+                translate: true,
+                uri: '/course-management/1/modeling-exercises/',
+            } as MockBreadcrumb);
+            sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exercise', translate: false, uri: '/course-management/1/modeling-exercises/2/' } as MockBreadcrumb);
+            sinon.assert.match(component.breadcrumbs[4], submissionCrumb);
+        });
+
+        it('lecture units', () => {
+            const testUrl = '/course-management/1/lectures/2/unit-management/text-units/create';
+            router.setUrl(testUrl);
+
+            const lectureService = fixture.debugElement.injector.get(LectureService);
+            const lectureStub = sinon.stub(lectureService, 'find').returns(of({ body: { title: 'Test Lecture' } as Lecture } as HttpResponse<Lecture>));
+
+            fixture.detectChanges();
+
+            expect(courseManagementStub).to.have.been.calledWith(1);
+            expect(lectureStub).to.have.been.calledWith(2);
+
+            const unitManagementCrumb = {
+                label: 'artemisApp.lectureUnit.home.title',
+                translate: true,
+                uri: '/course-management/1/lectures/2/unit-management/',
+            } as MockBreadcrumb;
+
+            const createCrumb = {
+                label: 'global.generic.create',
+                translate: true,
+                uri: '/course-management/1/lectures/2/unit-management/text-units/create/',
+            };
+
+            expect(component.breadcrumbs.length).to.equal(6);
+
+            // Use matching here to ignore non-semantic differences between objects
+            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
+            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
+            sinon.assert.match(component.breadcrumbs[2], { label: 'artemisApp.lecture.home.title', translate: true, uri: '/course-management/1/lectures/' } as MockBreadcrumb);
+            sinon.assert.match(component.breadcrumbs[3], { label: 'Test Lecture', translate: false, uri: '/course-management/1/lectures/2/' } as MockBreadcrumb);
+            sinon.assert.match(component.breadcrumbs[4], unitManagementCrumb);
+            sinon.assert.match(component.breadcrumbs[5], createCrumb);
+        });
+
+        it('apollon diagrams', () => {
+            const testUrl = '/course-management/1/apollon-diagrams/2';
+            router.setUrl(testUrl);
+
+            const apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
+            const apollonStub = sinon.stub(apollonDiagramService, 'find').returns(of({ body: { title: 'Apollon Diagram' } as ApollonDiagram } as HttpResponse<ApollonDiagram>));
+
+            fixture.detectChanges();
+
+            expect(courseManagementStub).to.have.been.calledWith(1);
+            expect(apollonStub).to.have.been.calledWith(2);
+
+            expect(component.breadcrumbs.length).to.equal(4);
+
+            // Use matching here to ignore non-semantic differences between objects
+            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
+            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
+            sinon.assert.match(component.breadcrumbs[2], {
+                label: 'artemisApp.apollonDiagram.home.title',
+                translate: true,
+                uri: '/course-management/1/apollon-diagrams/',
+            } as MockBreadcrumb);
+            sinon.assert.match(component.breadcrumbs[3], { label: 'Apollon Diagram', translate: false, uri: '/course-management/1/apollon-diagrams/2/' } as MockBreadcrumb);
+        });
     });
 });
