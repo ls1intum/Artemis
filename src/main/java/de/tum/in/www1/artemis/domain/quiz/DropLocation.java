@@ -125,18 +125,6 @@ public class DropLocation extends TempIdObject {
         this.invalid = invalid;
     }
 
-    public DropLocation addMappings(DragAndDropMapping mapping) {
-        this.mappings.add(mapping);
-        mapping.setDropLocation(this);
-        return this;
-    }
-
-    public DropLocation removeMappings(DragAndDropMapping mapping) {
-        this.mappings.remove(mapping);
-        mapping.setDropLocation(null);
-        return this;
-    }
-
     /**
      * check if the DropLocation is solved correctly
      *

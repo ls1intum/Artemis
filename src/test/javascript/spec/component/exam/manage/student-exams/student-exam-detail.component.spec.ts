@@ -45,6 +45,7 @@ describe('StudentExamDetailComponent', () => {
     let course: Course;
     let student: User;
     let studentExam: StudentExam;
+    let studentExam2: StudentExam;
     let exercise: Exercise;
     let exam: Exam;
     let studentParticipation: StudentParticipation;
@@ -86,6 +87,15 @@ describe('StudentExamDetailComponent', () => {
             user: student,
             exercises: [exercise],
         };
+        studentExam2 = {
+            id: 1,
+            workingTime: 3600,
+            exam,
+            user: student,
+            submitted: true,
+            submissionDate: moment(),
+            exercises: [exercise],
+        };
 
         return TestBed.configureTestingModule({
             imports: [
@@ -110,6 +120,14 @@ describe('StudentExamDetailComponent', () => {
                         return of(
                             new HttpResponse({
                                 body: studentExam,
+                                status: 200,
+                            }),
+                        );
+                    },
+                    toggleSubmittedState: () => {
+                        return of(
+                            new HttpResponse({
+                                body: studentExam2,
                                 status: 200,
                             }),
                         );
@@ -214,5 +232,30 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
         expect(studentExamDetailComponent.achievedTotalScore).to.equal(40);
         expect(studentExamDetailComponent.maxTotalScore).to.equal(100);
+    });
+
+    it('should get examIsOver', () => {
+        studentExamDetailComponent.studentExam = studentExam;
+        studentExam.exam!.gracePeriod = 100;
+        expect(studentExamDetailComponent.examIsOver()).to.equal(false);
+        studentExam.exam!.endDate = moment().add(-20, 'seconds');
+        expect(studentExamDetailComponent.examIsOver()).to.equal(false);
+        studentExam.exam!.endDate = moment().add(-200, 'seconds');
+        expect(studentExamDetailComponent.examIsOver()).to.equal(true);
+        studentExam.exam = undefined;
+        expect(studentExamDetailComponent.examIsOver()).to.equal(false);
+    });
+
+    it('should toggle to unsubmitted', () => {
+        const toggleSubmittedStateSpy = sinon.spy(studentExamService, 'toggleSubmittedState');
+        studentExamDetailComponentFixture.detectChanges();
+        expect(studentExamDetailComponent.studentExam.submitted).to.equal(undefined);
+        expect(studentExamDetailComponent.studentExam.submissionDate).to.equal(undefined);
+
+        studentExamDetailComponent.toggle();
+
+        expect(toggleSubmittedStateSpy).to.have.been.calledOnce;
+        expect(studentExamDetailComponent.studentExam.submitted).to.equal(true);
+        expect(studentExamDetailComponent.studentExam.submissionDate).to.not.equal(undefined);
     });
 });
