@@ -6,6 +6,7 @@ const SimpleProgressWebpackPlugin = require('simple-progress-webpack-plugin');
 const WebpackNotifierPlugin = require('webpack-notifier');
 const path = require('path');
 const sass = require('sass');
+const ESLintPlugin = require('eslint-webpack-plugin');
 
 const utils = require('./utils.js');
 const commonConfig = require('./webpack.common.js');
@@ -49,12 +50,6 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
     },
     module: {
         rules: [{
-            test: /\.([jt])s$/,
-            enforce: 'pre',
-            loader: 'eslint-loader',
-            exclude: /node_modules/
-        },
-        {
             test: /\.scss$/,
             use: [
                 'to-string-loader',
@@ -93,6 +88,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
             : new SimpleProgressWebpackPlugin({
                 format: options.stats === 'minimal' ? 'compact' : 'expanded'
               }),
+        new ESLintPlugin(),
         new FriendlyErrorsWebpackPlugin(),
         new BrowserSyncPlugin({
             https: options.tls,
