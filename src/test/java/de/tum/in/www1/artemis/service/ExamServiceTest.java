@@ -179,6 +179,10 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         exam.setStartDate(ZonedDateTime.now().plusDays(1));
         exam.setEndDate(ZonedDateTime.now().plusDays(2));
         exam.setNumberOfCorrectionRoundsInExam(1);
+        exam.setModuleNumber("IN0001");
+        exam.setNumberOfRegisteredUsers(10L);
+        assertThat(exam.getNumberOfRegisteredUsers()).isEqualTo(10);
+        assertThat(exam.getModuleNumber()).isEqualTo("IN0001");
         return exam;
     }
 

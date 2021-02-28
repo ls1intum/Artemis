@@ -79,6 +79,8 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @Query("SELECT studentExam FROM StudentExam studentExam LEFT JOIN FETCH studentExam.exercises exercises WHERE studentExam.exam.id = :#{#examId} AND studentExam.submitted = FALSE AND studentExam.testRun = FALSE")
     Set<StudentExam> findAllUnsubmittedWithExercisesByExamId(Long examId);
 
+    List<StudentExam> findAllByExamId_AndTestRunIsTrue(@Param("examId") Long examId);
+
     @NotNull
     default StudentExam findByIdElseThrow(Long studentExamId) throws EntityNotFoundException {
         return findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student Exam", studentExamId));

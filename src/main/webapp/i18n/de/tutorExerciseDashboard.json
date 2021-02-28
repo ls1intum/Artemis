@@ -8,7 +8,7 @@
                 "instructionsReviewed": "Du hast die Anweisungen gelesen, du kannst nun die Beispielabgaben lesen."
             },
             "pageHeader": "Bewertungs-Dashboard für die Übung",
-            "testRunPageHeader": "Testlauf Übungs-dashboard für die Übung:",
+            "testRunPageHeader": "Testlaufübungs-Dashboard für die Übung:",
             "yourStatus": "Dein Status",
             "toggleSecondCorrectionOn": "Zweitkorrektur erlauben",
             "toggleSecondCorrectionOff": "Zweitkorrektur verbieten",
@@ -18,7 +18,7 @@
             "startYourParticipation": "Beginne deine Teilnahme an der Übung.",
             "gradingInstructions": "Bewertungsanweisungen",
             "problemStatement": "Aufgabenstellung",
-            "exampleSolution": "Beispiel Lösung",
+            "exampleSolution": "Beispiellösung",
             "close": "Schließen",
             "readAndUnderstood": "Ich habe die Anleitung gelesen und verstanden.",
             "totalExampleSubmissions": "Es gibt {{total}} Beispielabgaben: {{toReview}} zur Überprüfung und {{toAssess}} zur Bewertung.",

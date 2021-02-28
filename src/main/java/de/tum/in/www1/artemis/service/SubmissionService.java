@@ -343,7 +343,7 @@ public class SubmissionService {
     }
 
     /**
-     * Add a result to the last {@link Submission} of a {@link StudentParticipation}, see {@link StudentParticipation#findLatestSubmission()}, with a feedback of type {@link FeedbackType#AUTOMATIC}.
+     * Add a result to the last {@link Submission} of a {@link StudentParticipation} if it does not exist yet, see {@link StudentParticipation#findLatestSubmission()}, with a feedback of type {@link FeedbackType#AUTOMATIC}.
      * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment, see {@link StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation}.
      * Sets the feedback text and result score.
      *
@@ -351,32 +351,33 @@ public class SubmissionService {
      * @param assessor the assessor
      * @param score the score which should be set
      * @param feedbackText the feedback text for the
-     * @param correctionRound the currectCorrection round
+     * @param correctionRound the correction round (1 or 2)
      */
     public void addResultWithFeedbackByCorrectionRound(StudentParticipation studentParticipation, User assessor, long score, String feedbackText, int correctionRound) {
-        if (studentParticipation.getExercise().isExamExercise() && studentParticipation.findLatestSubmission().isPresent()
-                && studentParticipation.findLatestSubmission().get().getResultForCorrectionRound(correctionRound) == null) {
-            final var latestSubmission = studentParticipation.findLatestSubmission().get();
-            Result result = new Result();
-            result.setParticipation(studentParticipation);
-            result.setAssessor(assessor);
-            result.setCompletionDate(ZonedDateTime.now());
-            result.setScore(score);
-            result.rated(true);
-            // we set the assessment type to semi automatic so that it does not appear to the tutors for manual assessment
-            // if we would use AssessmentType.AUTOMATIC, it would be eligable for manual assessment
-            result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-            result = saveNewResult(latestSubmission, result);
+        if (studentParticipation.getExercise().isExamExercise()) {
+            var latestSubmission = studentParticipation.findLatestSubmission();
+            if (latestSubmission.isPresent() && latestSubmission.get().getResultForCorrectionRound(correctionRound) == null) {
+                Result result = new Result();
+                result.setParticipation(studentParticipation);
+                result.setAssessor(assessor);
+                result.setCompletionDate(ZonedDateTime.now());
+                result.setScore(score);
+                result.rated(true);
+                // we set the assessment type to semi automatic so that it does not appear to the tutors for manual assessment
+                // if we would use AssessmentType.AUTOMATIC, it would be eligible for manual assessment
+                result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+                result = saveNewResult(latestSubmission.get(), result);
 
-            var feedback = new Feedback();
-            feedback.setCredits(0.0);
-            feedback.setDetailText(feedbackText);
-            feedback.setPositive(false);
-            feedback.setType(FeedbackType.AUTOMATIC);
-            feedback = feedbackRepository.save(feedback);
-            feedback.setResult(result);
-            result.setFeedbacks(List.of(feedback));
-            resultRepository.save(result);
+                var feedback = new Feedback();
+                feedback.setCredits(0.0);
+                feedback.setDetailText(feedbackText);
+                feedback.setPositive(false);
+                feedback.setType(FeedbackType.AUTOMATIC);
+                feedback = feedbackRepository.save(feedback);
+                feedback.setResult(result);
+                result.setFeedbacks(List.of(feedback));
+                resultRepository.save(result);
+            }
         }
     }
 

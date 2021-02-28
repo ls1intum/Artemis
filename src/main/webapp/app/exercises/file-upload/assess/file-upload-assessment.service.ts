@@ -37,6 +37,7 @@ export class FileUploadAssessmentsService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
+    // TODO refactor all asssessment.service getAssessment calls to make similar REST calls
     getAssessment(submissionId: number): Observable<Result> {
         return this.http.get<Result>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/result`);
     }

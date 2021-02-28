@@ -202,7 +202,7 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        Set<Exercise> upcomingExercises = exerciseRepository.findAllExercisesWithUpcomingDueDate();
+        Set<Exercise> upcomingExercises = exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDate();
         return ResponseEntity.ok(upcomingExercises);
     }
 
@@ -254,8 +254,17 @@ public class ExerciseResource {
         stats.setNumberOfSubmissions(numberOfSubmissions);
         stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
-        final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
-                totalNumberOfAssessments);
+        final DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
+        if (examMode) {
+            // set number of corrections specific to each correction round
+            int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+            numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRound(exercise, numberOfCorrectionRounds);
+        }
+        else {
+            // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
+            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+        }
+
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
         final DueDateStat numberOfAutomaticAssistedAssessments = resultRepository.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);

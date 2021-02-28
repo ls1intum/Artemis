@@ -61,7 +61,7 @@
             },
             "reviewAssessment": {
                 "headline": "Beispielbewertung",
-                "content": "Das ist eine Beispielbewertung der Abgabe. Jeder markierte Textblock wurde mit der Punktzahlt '1' bewertet."
+                "content": "Das ist eine Beispielbewertung der Abgabe. Jeder markierte Textblock wurde mit der Punktzahl '1' bewertet."
             },
             "confirm": {
                 "headline": "Bestätigen",

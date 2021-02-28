@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -31,8 +32,8 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     List<Exam> findByCourseId(Long courseId);
 
-    @Query("select exam from Exam exam where exam.course.testCourse = false and exam.startDate >= :#{#date} order by exam.startDate asc")
-    List<Exam> findAllByStartDateGreaterThanEqual(@Param("date") ZonedDateTime date);
+    @Query("select exam from Exam exam where exam.course.testCourse = false and exam.endDate >= :#{#date} order by exam.startDate asc")
+    List<Exam> findAllByEndDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups" })
     Optional<Exam> findWithExerciseGroupsById(Long examId);
@@ -53,11 +54,18 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     Optional<Exam> findWithStudentExamsExercisesById(Long id);
 
     @Query("""
-            select e
-            from Exam e, User u
-            where u.id = :#{#userId} and e.course.instructorGroupName member of u.groups
+            select distinct e
+            from Exam e left join fetch e.exerciseGroups eg left join fetch eg.exercises ex
+            where e.course.instructorGroupName in :#{#userGroups} and TYPE(ex) = QuizExercise
             """)
-    List<Exam> getExamsForWhichUserHasInstructorAccess(@Param("userId") Long userId);
+    List<Exam> getExamsWithQuizExercisesForWhichUserHasInstructorAccess(@Param("userGroups") List<String> userGroups);
+
+    @Query("""
+            select distinct e
+            from Exam e left join fetch e.exerciseGroups eg left join fetch eg.exercises ex
+            where TYPE(ex) = QuizExercise
+            """)
+    List<Exam> findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises();
 
     // IMPORTANT: NEVER use the following EntityGraph because it will lead to crashes for exams with many users
     // The problem is that 2000 student Exams with 10 exercises and 2000 existing participations would load 2000*10*2000 = 40 mio objects
@@ -143,7 +151,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return the list of all exams
      */
     default List<Exam> findAllCurrentAndUpcomingExams() {
-        return findAllByStartDateGreaterThanEqual(ZonedDateTime.now());
+        return findAllByEndDateGreaterThanEqual(ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS));
     }
 
     /**
