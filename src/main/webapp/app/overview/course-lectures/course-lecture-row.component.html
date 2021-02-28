@@ -20,22 +20,6 @@
             </div>
         </div>
         <div class="row">
-            <div class="col">
-                <span *ngIf="noOfExerciseUnits > 0">
-                    {{ 'artemisApp.courseOverview.lectureDetails.exerciseUnits' | translate: { count: noOfExerciseUnits } }}
-                </span>
-
-                <span *ngIf="noOfVideoUnits > 0">
-                    {{ 'artemisApp.courseOverview.lectureDetails.videoUnits' | translate: { count: noOfVideoUnits } }}
-                </span>
-                <span *ngIf="noOfAttachmentUnits > 0">
-                    {{ 'artemisApp.courseOverview.lectureDetails.attachmentUnits' | translate: { count: noOfAttachmentUnits } }}
-                </span>
-                <span *ngIf="noOfTextUnits > 0">
-                    {{ 'artemisApp.courseOverview.lectureDetails.textUnits' | translate: { count: noOfTextUnits } }}
-                </span>
-            </div>
-
             <div class="col-auto mb-2" *ngIf="lecture?.startDate; else noDate" [ngClass]="getUrgentClass(lecture.startDate)">
                 <span class="d-none d-sm-inline"> {{ lecture.startDate | artemisDate: 'long-date' }} </span>
                 ({{ lecture.startDate | amTimeAgo }})

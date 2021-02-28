@@ -39,16 +39,4 @@ public class ExerciseUnit extends LectureUnit {
             return exercise.isVisibleToStudents();
         }
     }
-
-    /**
-     * Removes information from a lecture unit that is not needed in the course dashboard
-     *
-     * @return trimmed exercise unit
-     */
-    @Override
-    public ExerciseUnit trimForDashboard() {
-        super.trimForDashboard();
-        this.exercise = null;
-        return this;
-    }
 }

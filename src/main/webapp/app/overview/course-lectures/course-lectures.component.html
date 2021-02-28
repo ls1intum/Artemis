@@ -65,10 +65,6 @@
                 <div class="col-8">{{ 'artemisApp.courseOverview.lectureList.totalLectures' | translate }}</div>
                 <div class="col-4">{{ course?.lectures ? course?.lectures.length : 0 }}</div>
             </div>
-            <div class="row mb-1">
-                <div class="col-8">{{ 'artemisApp.courseOverview.lectureList.totalUnits' | translate }}</div>
-                <div class="col-4">{{ totalUnitCount }}</div>
-            </div>
             <div class="row mb-1" *ngIf="course?.startDate">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.startDate' | translate }}</div>
                 <div class="col-4">{{ course?.startDate | artemisDate }}</div>

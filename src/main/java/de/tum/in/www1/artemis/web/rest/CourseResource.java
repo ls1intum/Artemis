@@ -476,7 +476,7 @@ public class CourseResource {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        Course course = courseService.findOneWithExercisesAndLecturesAndLectureUnitsAndExamsForUser(courseId, user);
+        Course course = courseService.findOneWithExercisesAndLecturesAndExamsForUser(courseId, user);
         fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, start);
         return course;
     }
@@ -525,7 +525,7 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // get all courses with exercises for this user
-        List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndLectureUnitsAndExamsForUser(user);
+        List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
         fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, start);
         return courses;
     }

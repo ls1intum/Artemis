@@ -92,15 +92,4 @@ public abstract class LectureUnit extends DomainObject {
         return releaseDate.isBefore(ZonedDateTime.now());
     }
 
-    /**
-     * Removes information from a lecture unit that is not needed in the course dashboard
-     *
-     * @return trimmed lecture unit
-     */
-    public LectureUnit trimForDashboard() {
-        this.learningGoals = Set.of();
-        this.lecture = null;
-        return this;
-    }
-
 }

@@ -35,17 +35,4 @@ public class VideoUnit extends LectureUnit {
     public void setDescription(String description) {
         this.description = description;
     }
-
-    /**
-     * Removes information from a lecture unit that is not needed in the course dashboard
-     *
-     * @return trimmed video unit
-     */
-    @Override
-    public VideoUnit trimForDashboard() {
-        super.trimForDashboard();
-        this.source = "";
-        this.description = "";
-        return this;
-    }
 }

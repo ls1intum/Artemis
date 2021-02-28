@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
@@ -31,7 +30,6 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import io.sentry.Sentry;
 
 /**
  * Service Implementation for managing Course.
@@ -93,25 +91,14 @@ public class CourseService {
     }
 
     /**
-     * Get one course with exercises, lectures, lecture units and exams (filtered for given user)
+     * Get one course with exercises, lectures and exams (filtered for given user)
      *
      * @param courseId the course to fetch
      * @param user     the user entity
-     * @return the course including exercises, lectures, lecture units and exams for the user
+     * @return the course including exercises, lectures and exams for the user
      */
-    public Course findOneWithExercisesAndLecturesAndLectureUnitsAndExamsForUser(Long courseId, User user) {
-        Course course = courseRepository.findByIdWithLecturesAndLectureUnitsAndExamsElseThrow(courseId);
-
-        // try catch requested by stephan krusche for extra safety to prevent application crash
-        try {
-            filterLectureUnits(course);
-        }
-        catch (Exception e) {
-            log.error(e.getMessage());
-            if (Sentry.isEnabled()) {
-                Sentry.captureException(e);
-            }
-        }
+    public Course findOneWithExercisesAndLecturesAndExamsForUser(Long courseId, User user) {
+        Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -121,21 +108,6 @@ public class CourseService {
             course.setExams(examService.filterVisibleExams(course.getExams()));
         }
         return course;
-    }
-
-    private void filterLectureUnits(Course course) {
-        for (Lecture lecture : course.getLectures()) {
-            if (lecture.getLectureUnits() == null) {
-                return;
-            }
-
-            // The Objects::nonNull is needed here because the relationship lecture -> lecture units is ordered and
-            // hibernate sometimes adds nulls into the list of lecture units to keep the order
-            List<LectureUnit> filteredLectureUnits = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(LectureUnit::isVisibleToStudents)
-                    .map(LectureUnit::trimForDashboard).collect(Collectors.toList());
-
-            lecture.setLectureUnits(filteredLectureUnits);
-        }
     }
 
     /**
@@ -150,27 +122,17 @@ public class CourseService {
     }
 
     /**
-     * Get all courses with exercises, lectures, lecture units and exams (filtered for given user)
+     * Get all courses with exercises, lectures  and exams (filtered for given user)
      *
      * @param user the user entity
-     * @return the list of all courses including exercises, lectures, lecture units and exams for the user
+     * @return the list of all courses including exercises, lectures and exams for the user
      */
-    public List<Course> findAllActiveWithExercisesAndLecturesAndLectureUnitsAndExamsForUser(User user) {
-        return courseRepository.findAllActiveWithLecturesAndLectureUnitsAndExams().stream()
+    public List<Course> findAllActiveWithExercisesAndLecturesAndExamsForUser(User user) {
+        return courseRepository.findAllActiveWithLecturesAndExams().stream()
                 // filter old courses and courses the user should not be able to see
                 // skip old courses that have already finished
                 .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now())).filter(course -> isActiveCourseVisibleForUser(user, course))
                 .peek(course -> {
-                    // try catch requested by stephan krusche for extra safety to prevent application crash
-                    try {
-                        filterLectureUnits(course);
-                    }
-                    catch (Exception e) {
-                        log.error(e.getMessage());
-                        if (Sentry.isEnabled()) {
-                            Sentry.captureException(e);
-                        }
-                    }
                     course.setExercises(exerciseService.findAllForCourse(course, user));
                     course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
                     if (authCheckService.isOnlyStudentInCourse(course, user)) {
