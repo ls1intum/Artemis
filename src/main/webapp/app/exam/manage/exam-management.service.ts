@@ -13,6 +13,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
+import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -77,6 +78,15 @@ export class ExamManagementService {
      */
     getExamStatistics(courseId: number, examId: number): Observable<HttpResponse<ExamChecklist>> {
         return this.http.get<ExamChecklist>(`${this.resourceUrl}/${courseId}/exams/${examId}/statistics`, { observe: 'response' });
+    }
+
+    /**
+     * returns the stats of the exam with the provided unique identifiers for the assessment dashboard
+     * @param courseId - the id of the course
+     * @param examId   - the id of the exam
+     */
+    getStatsForExamAssessmentDashboard(courseId: number, examId: number): Observable<HttpResponse<StatsForDashboard>> {
+        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/exams/${examId}/stats-for-exam-assessment-dashboard`, { observe: 'response' });
     }
 
     /**

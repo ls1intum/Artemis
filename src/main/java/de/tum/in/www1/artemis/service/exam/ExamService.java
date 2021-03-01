@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -751,5 +752,43 @@ public class ExamService {
         }
 
         return exam.get().getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
+    }
+
+    /**
+     * Gets a collection of useful statistics for the tutor exam-assessment-dashboard, including: - number of submissions to the course - number of
+     * assessments - number of assessments assessed by the tutor - number of complaints
+     *
+     * @param courseId  - the id of course to retrieve
+     * @param examId    - the id of the exam to retrieve stats from
+     * @return data about a exam including all exercises, plus some data for the tutor as tutor status for assessment
+     */
+    public StatsForInstructorDashboardDTO getStatsForExamAssessmentDashboard(Long courseId, Long examId) {
+        StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
+
+        final long numberOfInTimeSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
+                + programmingExerciseRepository.countSubmissionsByCourseIdSubmitted(courseId);
+        final long numberOfLateSubmissions = submissionRepository.countByCourseIdSubmittedAfterDueDate(courseId);
+
+        DueDateStat totalNumberOfAssessments = resultRepository.countNumberOfAssessments(courseId);
+        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
+
+        // no examMode here, so its the same as totalNumberOfAssessments
+        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = { totalNumberOfAssessments };
+        stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
+
+        stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
+
+        final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(courseId);
+        stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+
+        final long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
+        stats.setNumberOfComplaints(numberOfComplaints);
+
+        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
+        stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
+
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course);
+        stats.setTutorLeaderboardEntries(leaderboardEntries);
+
     }
 }

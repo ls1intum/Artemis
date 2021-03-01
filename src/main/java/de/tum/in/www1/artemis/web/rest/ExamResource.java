@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -340,6 +341,27 @@ public class ExamResource {
         }
 
         return ResponseEntity.ok(exam);
+    }
+
+    /**
+     * GET /courses/:courseId/exams/:examId/stats-for-exam-assessment-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course - number of
+     * assessments - number of assessments assessed by the tutor - number of complaints
+     *
+     * @param courseId - the id of the course
+     * @param examId   - the id of the exam to retrieve stats from
+     * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/stats-for-exam-assessment-dashboard")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForExamAssessmentDashboard(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request /courses/{courseId}/stats-for-exam-assessment-dashboard");
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            return forbidden();
+        }
+        return ResponseEntity.ok(examService.getStatsForExamAssessmentDashboard(courseId, examId));
     }
 
     /**
