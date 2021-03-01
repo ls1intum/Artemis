@@ -151,6 +151,18 @@ describe('NavbarComponent', () => {
         sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
     });
 
+    it('should ignore query parameters', () => {
+        const testUrl = '/course-management?query=param';
+        router.setUrl(testUrl);
+
+        fixture.detectChanges();
+
+        expect(component.breadcrumbs.length).to.equal(1);
+
+        // Use matching here to ignore non-semantic differences between objects
+        sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
+    });
+
     it('should build breadcrumbs for system notification management', () => {
         const testUrl = '/admin/system-notification-management/1/edit';
         router.setUrl(testUrl);

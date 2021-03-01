@@ -216,8 +216,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
         try {
             let currentPath = '/';
 
+            // Remove the leading slash
+            let uri = fullURI.substring(1);
+
+            // Remove any query parameters
+            const questionMark = uri.indexOf('?');
+            if (questionMark >= 0) {
+                uri = uri.substring(0, questionMark);
+            }
+
             // Go through all segments of the route starting from the root
-            for (const segment of fullURI.substring(1).split('/')) {
+            for (const segment of uri.split('/')) {
                 currentPath += segment + '/';
 
                 // If we parse an entity ID we need to check the previous segment which entity the ID refers to
