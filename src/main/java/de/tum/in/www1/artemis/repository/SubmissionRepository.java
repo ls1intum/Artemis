@@ -63,13 +63,28 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of currently locked submissions for a specific user in the given course
      */
     @Query("""
-            SELECT COUNT (DISTINCT submission) FROM Submission submission
-            WHERE EXISTS (select r1.assessor.id from submission.results r1 where r1.assessor.id = :#{#userId})
-            AND NOT EXISTS (select r2.completionDate from submission.results r2
-                where r2.completionDate is not null and r2.assessor is not null)
-            AND submission.participation.exercise.course.id = :#{#courseId}
+            SELECT COUNT (DISTINCT s) FROM Submission s left join s.results r
+                WHERE r.assessor.id = :userId
+                AND r.completionDate IS NULL
+                AND  s.participation.exercise.course.id = :courseId
             """)
     long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /**
+     * Get the number of currently locked submissions for a specific user in the given exam. These are all submissions for which the user started, but has not yet finished the
+     * assessment.
+     *
+     * @param userId   the id of the user
+     * @param examId the id of the exam
+     * @return the number of currently locked submissions for a specific user in the given course
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT s) FROM Submission s left join s.results r
+                WHERE r.assessor.id = :userId
+                AND r.completionDate IS NULL
+                AND s.participation.exercise.exerciseGroup.exam.id= :examId
+            """)
+    long countLockedSubmissionsByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
 
     /**
      * Get currently locked submissions for a specific user in the given course.
@@ -127,8 +142,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
                 AND submission.participation.exercise.exerciseGroup.exam.id = :#{#examId}
                 AND submission.submitted = TRUE
+                AND submission.participation.testRun = FALSE
             """)
-    long countByExamIdSubmittedSubmissions(@Param("examId") long examId);
+    long countByExamIdSubmittedSubmissionsIgnoreTestRuns(@Param("examId") long examId);
 
     /**
      * Count number of late submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
