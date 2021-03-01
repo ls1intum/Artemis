@@ -18,7 +18,7 @@ export class ProfileInfo {
     public externalUserManagementName: string;
     public imprint: string;
     public contact: string;
-    public testServer: boolean;
+    public testServer?: boolean;
     public allowedMinimumOrionVersion: string;
     public registrationEnabled?: boolean;
     public allowedEmailPattern?: string;
