@@ -185,11 +185,6 @@ public abstract class Participation extends DomainObject implements Participatio
         submission.setParticipation(this);
     }
 
-    public void removeSubmission(Submission submission) {
-        this.submissions.remove(submission);
-        submission.setParticipation(null);
-    }
-
     public void setSubmissions(Set<Submission> submissions) {
         this.submissions = submissions;
     }
@@ -256,4 +251,6 @@ public abstract class Participation extends DomainObject implements Participatio
      * @return an empty participation just including the id of the object
      */
     public abstract Participation copyParticipationId();
+
+    public abstract void filterSensitiveInformation();
 }

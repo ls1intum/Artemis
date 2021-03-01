@@ -80,11 +80,13 @@ public class ExamQuizService {
         final var participations = testRun.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream().filter(StudentParticipation::isTestRun)
                 .filter(participation -> participation.getExercise() instanceof QuizExercise)).collect(Collectors.toSet());
         for (final var participation : participations) {
+            var quizExercise = (QuizExercise) participation.getExercise();
             final var optionalExistingSubmission = participation.findLatestSubmission();
             if (optionalExistingSubmission.isPresent()) {
                 QuizSubmission submission = (QuizSubmission) submissionRepository.findWithEagerResultAndFeedbackById(optionalExistingSubmission.get().getId())
                         .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + optionalExistingSubmission.get().getId() + "\" does not exist"));
-                participation.setExercise(quizExerciseRepository.findOneWithQuestions(participation.getExercise().getId()));
+                participation.setExercise(quizExerciseRepository.findOneWithQuestions(quizExercise.getId()));
+                quizExercise = (QuizExercise) participation.getExercise();
                 Result result;
                 if (submission.getLatestResult() == null) {
                     result = new Result();
@@ -93,7 +95,7 @@ public class ExamQuizService {
                     // set submission to calculate scores
                     result.setSubmission(submission);
                     // calculate scores and update result and submission accordingly
-                    submission.calculateAndUpdateScores((QuizExercise) participation.getExercise());
+                    submission.calculateAndUpdateScores(quizExercise);
                     result.evaluateSubmission();
                     // remove submission to follow save order for ordered collections
                     result.setSubmission(null);
@@ -108,7 +110,9 @@ public class ExamQuizService {
                     // set submission to calculate scores
                     result.setSubmission(submission);
                     // calculate scores and update result and submission accordingly
-                    submission.calculateAndUpdateScores((QuizExercise) participation.getExercise());
+                    submission.calculateAndUpdateScores(quizExercise);
+                    // prevent a lazy exception in the evaluateSubmission method
+                    result.setParticipation(participation);
                     result.evaluateSubmission();
                     resultRepository.save(result);
                 }
