@@ -121,6 +121,11 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                 this.exam.exerciseGroups!.forEach((exerciseGroup) => {
                     if (exerciseGroup.exercises) {
                         exercises.push(...exerciseGroup.exercises);
+
+                        // Set the exercise group since it is undefined by default here
+                        exerciseGroup.exercises.forEach((exercise: Exercise) => {
+                            exercise.exerciseGroup = exerciseGroup;
+                        });
                     }
                 });
 
@@ -243,5 +248,23 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                 this.onError(err);
             },
         );
+    }
+
+    getTutorDashboardLinkForExercise(exercise: Exercise): string[] {
+        if (!this.isExamMode) {
+            return ['/course-management', this.courseId.toString(), 'exercises', exercise.id!.toString(), 'tutor-dashboard'];
+        }
+
+        return [
+            '/course-management',
+            this.courseId.toString(),
+            'exams',
+            this.examId.toString(),
+            'exercise-groups',
+            exercise.exerciseGroup!.id!.toString(),
+            'exercises',
+            exercise.id!.toString(),
+            this.isTestRun ? 'tutor-dashboard' : 'test-run-exercise-assessment-dashboard',
+        ];
     }
 }

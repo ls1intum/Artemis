@@ -164,24 +164,15 @@
 
                     <td>
                         <ng-container *ngIf="!exercise.teamMode; else teamsLink">
-                            <ng-container *ngIf="!isTestRun; else testRun">
+                            <ng-container>
                                 <a
-                                    [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'tutor-dashboard']"
+                                    [routerLink]="getTutorDashboardLinkForExercise(exercise)"
                                     class="btn btn-info btn-sm mr-1"
                                     [class.guided-tour]="exercise === exerciseForGuidedTour"
                                 >
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
                                 </a>
                             </ng-container>
-                            <ng-template #testRun>
-                                <a
-                                    [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'test-run-exercise-assessment-dashboard']"
-                                    class="btn btn-info btn-sm mr-1"
-                                    [class.guided-tour]="exercise === exerciseForGuidedTour"
-                                >
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
-                                </a>
-                            </ng-template>
                         </ng-container>
 
                         <ng-template #teamsLink>
