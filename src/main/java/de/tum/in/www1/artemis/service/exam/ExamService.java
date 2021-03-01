@@ -765,7 +765,7 @@ public class ExamService {
     public StatsForInstructorDashboardDTO getStatsForExamAssessmentDashboard(Long courseId, Long examId) {
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        final long numberOfInTimeSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
+        final long numberOfInTimeSubmissions = submissionRepository.countByExamIdSubmittedSubmissions(examId)
                 + programmingExerciseRepository.countSubmissionsByCourseIdSubmitted(courseId);
         final long numberOfLateSubmissions = submissionRepository.countByCourseIdSubmittedAfterDueDate(courseId);
 

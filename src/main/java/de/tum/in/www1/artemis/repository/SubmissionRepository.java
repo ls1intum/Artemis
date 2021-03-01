@@ -116,6 +116,21 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     long countByCourseIdSubmittedBeforeDueDate(@Param("courseId") long courseId);
 
     /**
+     * Count the number of in-time submissions for an exam. Only submissions for Text, Modeling and File Upload exercises are included.
+     *
+     * @param examId -  the exam id we are interested in
+     * @return the number of submissions belonging to the exam id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
+     *         due date at all
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT submission) FROM Submission submission
+                WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+                AND submission.participation.exercise.exerciseGroup.exam.id = :#{#examId}
+                AND submission.submitted = TRUE
+            """)
+    long countByExamIdSubmittedSubmissions(@Param("examId") long examId);
+
+    /**
      * Count number of late submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
      *
      * @param courseId the course id we are interested in
