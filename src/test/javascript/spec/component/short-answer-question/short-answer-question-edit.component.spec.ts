@@ -17,6 +17,9 @@ import { SimpleChange } from '@angular/core';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
+import { ScoringType } from 'app/entities/quiz/quiz-question.model';
+import { cloneDeep } from 'lodash';
+import { stub } from 'sinon';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -189,5 +192,80 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const firstElement = component.textParts.pop();
         expect(firstElement!.length).to.equal(1);
         expect(firstElement).to.deep.equal(['<p>This is the text of a question</p>']);
+    });
+
+    it('should move the question in different ways', () => {
+        const eventUpSpy = sinon.spy(component.questionMoveUp, 'emit');
+        const eventDownSpy = sinon.spy(component.questionMoveDown, 'emit');
+
+        component.moveUp();
+        component.moveDown();
+
+        expect(eventUpSpy).to.be.calledOnce;
+        expect(eventDownSpy).to.be.calledOnce;
+    });
+
+    it('should reset the question', () => {
+        const backup = new ShortAnswerQuestion();
+        backup.title = 'backupQuestion';
+        backup.invalid = false;
+        backup.randomizeOrder = false;
+        backup.scoringType = ScoringType.ALL_OR_NOTHING;
+        backup.solutions = [];
+        backup.correctMappings = [];
+        backup.spots = [];
+        backup.text = 'This is the text of a backup question';
+        backup.explanation = 'I dont know';
+        backup.hint = 'hinty';
+        component.backupQuestion = backup;
+
+        component.resetQuestion();
+
+        expect(component.question.title).to.equal(backup.title);
+        expect(component.question.text).to.equal(backup.text);
+    });
+
+    it('should reset spot', () => {
+        component.backupQuestion.spots = [spot1, spot2];
+        const modifiedSpot = cloneDeep(spot1);
+        modifiedSpot.spotNr = 10; // initial spotNr was 0
+        component.question.spots = [modifiedSpot, spot2];
+
+        component.resetSpot(modifiedSpot);
+
+        expect(component.question.spots[0].spotNr).to.equal(0);
+    });
+
+    it('should delete spot', () => {
+        component.question.spots = [spot1, spot2];
+
+        component.deleteSpot(spot1);
+
+        expect(component.question.spots.length).to.equal(1);
+        expect(component.question.spots[0]).to.deep.equal(spot2);
+    });
+
+    it('should set question text', () => {
+        const text = 'This is a text for a test';
+        const returnValue = ({ value: text } as unknown) as HTMLElement;
+        const getNavigationStub = stub(document, 'getElementById').returns(returnValue);
+        const array = ['0'];
+        component.textParts = [array, array];
+        fixture.detectChanges();
+
+        component.setQuestionText('0-0-0-0');
+
+        expect(getNavigationStub).to.have.been.calledOnce;
+        const splitString = ['This', 'is', 'a', 'text', 'for', 'a', 'test'];
+        expect(component.textParts.pop()).to.deep.equal(splitString);
+    });
+
+    it('should toggle exact match', () => {
+        const questionUpdated = sinon.spy(component.questionUpdated, 'emit');
+
+        component.toggleExactMatchCheckbox(true);
+
+        expect(component.question.similarityValue).to.equal(100);
+        expect(questionUpdated).to.be.calledOnce;
     });
 });
