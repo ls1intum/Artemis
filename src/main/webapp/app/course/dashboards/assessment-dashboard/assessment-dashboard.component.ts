@@ -264,7 +264,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
             exercise.exerciseGroup!.id!.toString(),
             'exercises',
             exercise.id!.toString(),
-            this.isTestRun ? 'tutor-dashboard' : 'test-run-exercise-assessment-dashboard',
+            this.isTestRun ? 'test-run-exercise-assessment-dashboard' : 'tutor-dashboard',
         ];
     }
 }
