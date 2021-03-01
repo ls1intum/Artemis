@@ -1280,10 +1280,10 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(overwrittenResult.hasComplaint()).isEqualTo(true); // Very important: It must not be overwritten whether the result actually had a complaint
 
         // Also check that its correctly saved in the database
-        // Optional<ModelingSubmission> savedSubmission = modelingSubmissionRepo.findByIdWithEagerResult(submission.getId());
-        // assertThat(savedSubmission).isNotNull();
-        // assertThat(savedSubmission.getLatestResult().getScore()).isEqualTo(40L);
-        // assertThat(savedSubmission.getLatestResult().hasComplaint()).isEqualTo(true);
+        ModelingSubmission savedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).orElse(null);
+        assertThat(savedSubmission).isNotNull();
+        assertThat(savedSubmission.getLatestResult().getScore()).isEqualTo(40L);
+        assertThat(savedSubmission.getLatestResult().hasComplaint()).isEqualTo(true);
 
     }
 
