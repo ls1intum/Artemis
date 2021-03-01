@@ -41,7 +41,7 @@
 
 <div *ngIf="course">
     <!-- TODO: also support this for the exam mode -->
-    <div *ngIf="!isExamMode || true" id="assessment-statistics" class="guided-tour-assessment-stats">
+    <div id="assessment-statistics" class="guided-tour-assessment-stats">
         <div class="container-fluid">
             <div class="row mt-3">
                 <div class="col-md-8">
@@ -50,7 +50,7 @@
                             <h4 class="card-title">{{ 'artemisApp.assessmentDashboard.informationAboutYourAssessments' | translate }}</h4>
                         </div>
                         <div class="card-body">
-                            <ul>
+                            <ul *ngIf="!isExamMode">
                                 <li>
                                     <b>{{ 'artemisApp.assessmentDashboard.yourAssessments' | translate }}:</b> {{ numberOfTutorAssessments }}
                                 </li>
@@ -65,12 +65,23 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a [routerLink]="['/course-management', course.id, 'assessment-locks']" [queryParams]="{ tutorId: tutor.id }">
-                                        <b>{{ 'artemisApp.instructorCourseDashboard.yourAssessmentLocks' | translate }}:</b> {{ stats.numberOfAssessmentLocks }}
+                                    <a [routerLink]="['/course-management', courseId, 'assessment-locks']" [queryParams]="{ tutorId: tutor.id }">
+                                        <b>{{ 'artemisApp.assessmentDashboard.yourAssessmentLocks' | translate }}:</b> {{ numberOfAssessmentLocks }}
+                                    </a>
+                                </li>
+                            </ul>
+                            <!-- Information about assessments for exam mode -->
+                            <ul *ngIf="isExamMode">
+                                <li>
+                                    <b>{{ 'artemisApp.assessmentDashboard.yourAssessments' | translate }}:</b> {{ numberOfTutorAssessments }}
+                                </li>
+                                <li>
+                                    <a [routerLink]="['/course-management', courseId, 'exams', examId, 'complaints']" [queryParams]="{ tutorId: tutor.id }">
+                                        <b> {{ 'artemisApp.assessmentDashboard.complaintsAboutYourAssessments' | translate }}:</b> {{ numberOfTutorComplaints }}
                                     </a>
                                 </li>
                                 <li>
-                                    <a [routerLink]="['/course-management', courseId, 'assessment-locks']" [queryParams]="{ tutorId: tutor.id }">
+                                    <a [routerLink]="['/course-management', courseId, 'exams', examId, 'assessment-locks']" [queryParams]="{ tutorId: tutor.id }">
                                         <b>{{ 'artemisApp.assessmentDashboard.yourAssessmentLocks' | translate }}:</b> {{ numberOfAssessmentLocks }}
                                     </a>
                                 </li>
@@ -89,10 +100,14 @@
                                     <b>{{ 'artemisApp.assessmentDashboard.totalAssessments' | translate }}:</b>
                                     {{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total }} ({{ totalAssessmentPercentage }}%)
                                 </li>
+                                <li *ngIf="isExamMode">
+                                    <b>{{ 'artemisApp.assessmentDashboard.totalAssessmentsForCorrectionrounds' | translate }}:</b>
+                                    {{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total }} ({{ totalAssessmentPercentage }}%)
+                                </li>
                                 <li>
                                     <b>{{ 'artemisApp.assessmentDashboard.totalComplaints' | translate }}:</b> {{ numberOfComplaints }}
                                 </li>
-                                <li>
+                                <li *ngIf="!isExamMode">
                                     <b>{{ 'artemisApp.assessmentDashboard.totalMoreFeedbackRequests' | translate }}:</b> {{ numberOfMoreFeedbackRequests }}
                                 </li>
                             </ul>
