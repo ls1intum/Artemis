@@ -1259,7 +1259,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ComplaintResponse complaintResponse = new ComplaintResponse();
         complaintResponse.setComplaint(complaint);
         complaintResponse.getComplaint().setAccepted(true);
-        // complaintResponse.setResponseText("Accepted");
         complaintResponseRepository.saveAndFlush(complaintResponse);
 
         // could throw exception
