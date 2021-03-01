@@ -28,16 +28,9 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
         return answerCounters;
     }
 
-    public MultipleChoiceQuestionStatistic addAnswerCounters(AnswerCounter answerCounter) {
+    public void addAnswerCounters(AnswerCounter answerCounter) {
         this.answerCounters.add(answerCounter);
         answerCounter.setMultipleChoiceQuestionStatistic(this);
-        return this;
-    }
-
-    public MultipleChoiceQuestionStatistic removeAnswerCounters(AnswerCounter answerCounter) {
-        this.answerCounters.remove(answerCounter);
-        answerCounter.setMultipleChoiceQuestionStatistic(null);
-        return this;
     }
 
     public void setAnswerCounters(Set<AnswerCounter> answerCounters) {

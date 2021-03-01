@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -172,7 +169,7 @@ public abstract class Submission extends DomainObject {
      */
     @JsonIgnore
     public void removeNullResults() {
-        this.results = this.results.stream().filter(result -> result != null).collect(Collectors.toList());
+        this.results = this.results.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)

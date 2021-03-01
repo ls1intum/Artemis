@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,7 +27,9 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.LectureService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -54,16 +57,16 @@ public class LectureResource {
 
     private final UserRepository userRepository;
 
-    private final CourseResource courseResource;
+    private final ExerciseService exerciseService;
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, CourseResource courseResource) {
+            AuthorizationCheckService authCheckService, ExerciseService exerciseService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
-        this.courseResource = courseResource;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -171,17 +174,30 @@ public class LectureResource {
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
+        lecture = filterLectureContentForUser(lecture, user);
+
+        return ResponseEntity.ok(lecture);
+    }
+
+    private Lecture filterLectureContentForUser(Lecture lecture, User user) {
         lecture = lectureService.filterActiveAttachments(lecture, user);
 
-        // to make sure that the information provided for lecture units is equal to the one in the course dashboard
-        // ToDo Improve performance by constructing a more precise call
-        course = this.courseResource.getCourseForDashboard(course.getId());
-        Set<Exercise> exercisesUserIsAllowedToSee = course.getExercises();
+        // The Objects::nonNull is needed here because the relationship lecture -> lecture units is ordered and
+        // hibernate sometimes adds nulls into the list of lecture units to keep the order
+        Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
+                .map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise()).collect(Collectors.toSet());
 
-        List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().parallelStream().filter(lectureUnit -> {
+        Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(relatedExercises, user);
+        Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
+                .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), user);
+
+        List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().stream().filter(lectureUnit -> {
+            if (lectureUnit == null) {
+                return false;
+            }
             if (lectureUnit instanceof ExerciseUnit) {
                 return ((ExerciseUnit) lectureUnit).getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
-                        && exercisesUserIsAllowedToSee.contains(((ExerciseUnit) lectureUnit).getExercise());
+                        && exercisesWithAllInformationNeeded.contains(((ExerciseUnit) lectureUnit).getExercise());
             }
             else if (lectureUnit instanceof AttachmentUnit) {
                 return ((AttachmentUnit) lectureUnit).getAttachment() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
@@ -189,17 +205,16 @@ public class LectureResource {
             else {
                 return authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
             }
-        }).map(lectureUnit -> {
+        }).peek(lectureUnit -> {
             if (lectureUnit instanceof ExerciseUnit) {
                 Exercise exercise = ((ExerciseUnit) lectureUnit).getExercise();
-                exercisesUserIsAllowedToSee.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
+                // we replace the exercise with one that contains all the information needed for correct display
+                exercisesWithAllInformationNeeded.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
             }
-            return lectureUnit;
         }).collect(Collectors.toList());
 
         lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
-
-        return ResponseEntity.ok(lecture);
+        return lecture;
     }
 
     /**

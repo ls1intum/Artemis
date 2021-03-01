@@ -446,7 +446,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetCourseForDashboard() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(true);
         Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class);
 
         // Test that the received course has five exercises
@@ -485,7 +485,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetAllCoursesForDashboard() throws Exception {
-        database.createCoursesWithExercisesAndLectures(true);
+        database.createCoursesWithExercisesAndLecturesAndLectureUnits(true);
 
         // Perform the request that is being tested here
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);

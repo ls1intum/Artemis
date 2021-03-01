@@ -489,7 +489,7 @@ public class CourseResource {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        Course course = courseService.findOneWithExercisesAndLecturesForUser(courseId, user);
+        Course course = courseService.findOneWithExercisesAndLecturesAndExamsForUser(courseId, user);
         fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, start);
         return course;
     }
@@ -502,40 +502,27 @@ public class CourseResource {
      * @param startTimeInMillis start time for logging purposes
      */
     public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, long startTimeInMillis) {
-        Map<ExerciseMode, List<Exercise>> activeExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.groupingBy(Exercise::getMode));
-        List<Exercise> activeIndividualExercises = Optional.ofNullable(activeExercises.get(ExerciseMode.INDIVIDUAL)).orElse(List.of());
-        List<Exercise> activeTeamExercises = Optional.ofNullable(activeExercises.get(ExerciseMode.TEAM)).orElse(List.of());
-
-        if (activeIndividualExercises.isEmpty() && activeTeamExercises.isEmpty()) {
+        Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
+        List<StudentParticipation> participationsOfUserInExercises = exerciseService.getAllParticipationsOfUserInExercises(user, exercises);
+        if (participationsOfUserInExercises.isEmpty()) {
             return;
         }
-
-        // Note: we need two database calls here, because of performance reasons: the entity structure for team is significantly different and a combined database call
-        // would lead to a SQL statement that cannot be optimized
-
-        // 1st: fetch participations, submissions and results for individual exercises
-        List<StudentParticipation> individualParticipations = studentParticipationRepository
-                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(), activeIndividualExercises);
-
-        // 2nd: fetch participations, submissions and results for team exercises
-        List<StudentParticipation> teamParticipations = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), activeTeamExercises);
-
-        // 3rd: merge both into one list for further processing
-        List<StudentParticipation> participations = Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toList());
-
         for (Course course : courses) {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with submission and result to each exercise
-                exerciseService.filterForCourseDashboard(exercise, participations, user.getLogin(), isStudent);
+                exerciseService.filterForCourseDashboard(exercise, participationsOfUserInExercises, user.getLogin(), isStudent);
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
                     exercise.filterSensitiveInformation();
                 }
             }
         }
-        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - startTimeInMillis) + "ms for " + courses.size() + " courses with "
-                + activeIndividualExercises.size() + " individual exercises and " + activeTeamExercises.size() + " team exercises for user " + user.getLogin());
+        Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
+        int noOfIndividualExercises = Optional.ofNullable(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL)).orElse(List.of()).size();
+        int noOfTeamExercises = Optional.ofNullable(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM)).orElse(List.of()).size();
+        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - startTimeInMillis) + "ms for " + courses.size() + " courses with " + noOfIndividualExercises
+                + " individual exercises and " + noOfTeamExercises + " team exercises for user " + user.getLogin());
     }
 
     /**
@@ -551,7 +538,7 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // get all courses with exercises for this user
-        List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
+        List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
         fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, start);
         return courses;
     }
@@ -918,7 +905,9 @@ public class CourseResource {
 
         // Get the course with all exercises
         final Course course = courseRepository.findWithEagerExercisesAndLecturesById(courseId);
-
+        if (course == null) {
+            return notFound();
+        }
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
