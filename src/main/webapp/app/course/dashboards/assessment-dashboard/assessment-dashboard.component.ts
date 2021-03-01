@@ -110,6 +110,11 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                 this.courseService.checkAndSetCourseRights(this.course);
                 this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
 
+                // No exercises exist yet
+                if (!this.exam.exerciseGroups) {
+                    return;
+                }
+
                 // get all exercises
                 const exercises: Exercise[] = [];
                 // eslint-disable-next-line chai-friendly/no-unused-expressions
