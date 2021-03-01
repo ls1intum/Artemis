@@ -60,7 +60,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     private String registrationNumber;
 
     // this value is typically null, except the registration number should be explicitly shown in the client
-    // currently this is only the case for the course scores page and its csv export
+    // currently this is only the case for the course scores page and its csv export, and also for the individual student exam detail
     @Transient
     private String visibleRegistrationNumberTransient = null;
 
@@ -243,6 +243,10 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setVisibleRegistrationNumber(String visibleRegistrationNumber) {
         this.visibleRegistrationNumberTransient = visibleRegistrationNumber;
+    }
+
+    public void setVisibleRegistrationNumber() {
+        this.visibleRegistrationNumberTransient = this.getRegistrationNumber();
     }
 
     public Set<String> getGroups() {

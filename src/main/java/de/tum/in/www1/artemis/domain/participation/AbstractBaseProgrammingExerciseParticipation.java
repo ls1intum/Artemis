@@ -55,6 +55,11 @@ public abstract class AbstractBaseProgrammingExerciseParticipation extends Parti
     }
 
     @Override
+    public void filterSensitiveInformation() {
+        // nothing to filter here
+    }
+
+    @Override
     public String toString() {
         return "Participation{" + "id=" + getId() + ", repositoryUrl='" + getRepositoryUrl() + "'" + ", buildPlanId='" + getBuildPlanId() + "}";
     }

@@ -1041,7 +1041,7 @@ public class DatabaseUtilService {
         return exam;
     }
 
-    public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise) {
+    public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise, boolean withQuizExercise) {
         ModelFactory.generateExerciseGroup(true, initialExam); // text
         ModelFactory.generateExerciseGroup(true, initialExam); // modeling
         initialExam.setNumberOfExercisesInExam(2);
@@ -1073,6 +1073,17 @@ public class DatabaseUtilService {
             addTemplateParticipationForProgrammingExercise(programmingExercise1);
             addSolutionParticipationForProgrammingExercise(programmingExercise1);
             exerciseGroup2.setExercises(Set.of(programmingExercise1));
+        }
+
+        if (withQuizExercise) {
+            ModelFactory.generateExerciseGroup(true, exam); // modeling
+            exam.setNumberOfExercisesInExam(3 + (withProgrammingExercise ? 1 : 0));
+            exam = examRepository.save(exam);
+            var exerciseGroup3 = exam.getExerciseGroups().get(2 + (withProgrammingExercise ? 1 : 0));
+            // Programming exercises need a proper setup for 'prepare exam start' to work
+            QuizExercise quizExercise = createQuizForExam(exerciseGroup3);
+            exerciseRepo.save(quizExercise);
+            exerciseGroup3.setExercises(Set.of(quizExercise));
         }
         return exam;
     }

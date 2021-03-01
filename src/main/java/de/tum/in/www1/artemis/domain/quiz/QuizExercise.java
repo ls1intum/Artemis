@@ -248,30 +248,9 @@ public class QuizExercise extends Exercise {
         return quizQuestions;
     }
 
-    /**
-     * 1. add the new QuizQuestion object to the QuizQuestion-List
-     * 2. add backward relation in the quizQuestion-object
-     *
-     * @param quizQuestion the new QuizQuestion object which will be added
-     * @return this QuizExercise-object
-     */
-    public QuizExercise addQuestions(QuizQuestion quizQuestion) {
+    public void addQuestions(QuizQuestion quizQuestion) {
         this.quizQuestions.add(quizQuestion);
         quizQuestion.setExercise(this);
-        return this;
-    }
-
-    /**
-     * 1. remove the given QuizQuestion object in the QuizQuestion-List
-     * 2. remove backward relation in the quizQuestion-object
-     *
-     * @param quizQuestion the QuizQuestion object which should be removed
-     * @return this QuizExercise-object
-     */
-    public QuizExercise removeQuestions(QuizQuestion quizQuestion) {
-        this.quizQuestions.remove(quizQuestion);
-        quizQuestion.setExercise(null);
-        return this;
     }
 
     public void setQuizQuestions(List<QuizQuestion> quizQuestions) {
