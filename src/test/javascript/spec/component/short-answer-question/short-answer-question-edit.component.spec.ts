@@ -20,6 +20,8 @@ import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { cloneDeep } from 'lodash';
 import { stub } from 'sinon';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -51,6 +53,7 @@ spot2.spotNr = 1;
 describe('ShortAnswerQuestionEditComponent', () => {
     let fixture: ComponentFixture<ShortAnswerQuestionEditComponent>;
     let component: ShortAnswerQuestionEditComponent;
+    let artemisMarkdown: ArtemisMarkdownService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -66,6 +69,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(ShortAnswerQuestionEditComponent);
         component = fixture.componentInstance;
+        artemisMarkdown = TestBed.inject(ArtemisMarkdownService);
     });
 
     beforeEach(() => {
@@ -148,14 +152,6 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.firstPressed).to.equal(2);
     });
 
-    it('should add spot at cursor visual mode', () => {
-        const element = document.createElement('test');
-        spyOn(document, 'getElementById').and.returnValue(element);
-
-        component.addSpotAtCursorVisualMode();
-        // TODO
-    });
-
     it('should add and delete text solution', () => {
         component.question.spots = [spot1, spot2];
         const mapping1 = new ShortAnswerMapping(spot1, shortAnswerSolution1);
@@ -169,6 +165,79 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.deleteSolution(shortAnswerSolution2);
 
         expect(component.question.solutions!.length).to.equal(2);
+    });
+
+    it('should add spot at cursor visual mode', () => {
+        const textParts = [['0'], ['0']];
+        const shortAnswerQuestionUtil = TestBed.inject(ShortAnswerQuestionUtil);
+        spyOn(shortAnswerQuestionUtil, 'divideQuestionTextIntoTextParts').and.returnValue(textParts);
+
+        const node = {} as Node;
+
+        const returnValue = ({
+            contains(other: Node | null): boolean {
+                return true;
+            },
+        } as unknown) as HTMLElement;
+        stub(document, 'getElementById').returns(returnValue);
+
+        const range = {
+            cloneRange(): Range {
+                return {
+                    selectNodeContents(node1: Node) {},
+                    setEnd(node2: Node, offset: number) {},
+                    cloneContents() {},
+                } as Range;
+            },
+            endContainer: {} as Node,
+            endOffset: 0,
+        } as Range;
+
+        const nodeValue = ({
+            anchorNode: node,
+            focusNode: {
+                parentNode: {
+                    parentElement: {
+                        id: '0-0-0-0',
+                        firstElementChild: {} as Element,
+                    },
+                },
+            },
+            getRangeAt(index: number): Range {
+                return range as Range;
+            },
+            toString() {
+                return [];
+            },
+        } as unknown) as Selection;
+        stub(window, 'getSelection').returns(nodeValue);
+
+        const returnHTMLDivElement = ({
+            appendChild(param: DocumentFragment) {
+                return {} as DocumentFragment;
+            },
+            innerHTML: 'innerHTML',
+        } as unknown) as HTMLDivElement;
+        stub(document, 'createElement').returns(returnHTMLDivElement);
+
+        const markdownHelper = {
+            length: 1,
+            substring(start: number, end?: number): string {
+                return '';
+            },
+        } as String;
+        spyOn(artemisMarkdown, 'markdownForHtml').and.returnValue(markdownHelper);
+        const questionUpdated = sinon.spy(component.questionUpdated, 'emit');
+
+        component.question.spots = [spot1, spot2];
+        component.question.correctMappings = [new ShortAnswerMapping(spot1, shortAnswerSolution1), new ShortAnswerMapping(spot2, shortAnswerSolution2)];
+        fixture.detectChanges();
+
+        component.addSpotAtCursorVisualMode();
+
+        expect(component.numberOfSpot).to.equal(2);
+        expect(component.firstPressed).to.equal(2);
+        expect(questionUpdated).to.be.calledThrice;
     });
 
     it('should delete question', () => {
