@@ -2,6 +2,7 @@
     "artemisApp": {
         "assessment": {
             "assessment": "Bewertung",
+            "testRunAssessment": "Bewertungstestlauf",
             "generalFeedback": "Allgemeines Feedback",
             "unreferencedFeedback": "Feedback für fehlende Elemente",
             "automaticGenerated": "Automatisch erstelltes Feedback",
@@ -24,7 +25,7 @@
             "detail": {
                 "feedback": "Feedback",
                 "scoreFor": "Bewertung für",
-                "tutorComment": "Tutor Kommentar:"
+                "tutorComment": "Tutorkommentar:"
             },
             "messages": {
                 "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutoren wieder zur Verfügung.",
@@ -36,19 +37,19 @@
                 "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen."
             },
             "dashboard": {
-                "warning": "Achtung: der Abgabetermin ist noch nicht abgelaufen und Studenten dürfen noch ihre Einreichungen abgeben. Bitte noch nicht mit der Korrektur anfangen",
+                "warning": "Achtung: die Einreichungsfrist ist noch nicht abgelaufen und Studenten dürfen noch ihre Einreichungen abgeben. Bitte noch nicht mit der Korrektur anfangen",
                 "empty": "Keine Abgabe für diese Aufgabe!",
                 "loading": "Laden..",
                 "columns": {
                     "submissionDate": "Einreichungsdatum",
-                    "result": "Ergebnis",
+                    "result": "Letztes Ergebnis",
                     "submissionCount": "Anzahl der Einreichungen",
                     "score": "Punkte",
                     "duration": "Dauer",
                     "assessmentType": "Bewertungsart",
                     "student": "Student",
                     "assessor": "Prüfer/in",
-                    "action": "Bewertung",
+                    "action": "Bewertungsaktionen",
                     "assessmentFirst": "Korrekturrunde 1",
                     "assessmentSecond": "Korrekturrunde 2"
                 },

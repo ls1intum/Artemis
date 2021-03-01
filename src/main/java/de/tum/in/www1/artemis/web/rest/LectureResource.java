@@ -23,11 +23,10 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.LectureService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -49,20 +48,20 @@ public class LectureResource {
 
     private final LectureService lectureService;
 
-    private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final CourseResource courseResource;
 
-    public LectureResource(LectureRepository lectureRepository, LectureService lectureService, CourseService courseService, UserService userService,
+    public LectureResource(LectureRepository lectureRepository, LectureService lectureService, CourseRepository courseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseResource courseResource) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
-        this.courseService = courseService;
-        this.userService = userService;
+        this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.courseResource = courseResource;
     }
@@ -81,7 +80,7 @@ public class LectureResource {
         if (lecture.getId() != null) {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(lecture.getCourse(), user) && !authCheckService.isAdmin(user)) {
             return forbidden();
         }
@@ -105,7 +104,7 @@ public class LectureResource {
         if (lecture.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(lecture.getCourse(), user) && !authCheckService.isAdmin(user)) {
             return forbidden();
         }
@@ -132,8 +131,8 @@ public class LectureResource {
     public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Course course = courseService.findOne(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
             return forbidden();
         }
@@ -168,7 +167,7 @@ public class LectureResource {
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
@@ -212,7 +211,7 @@ public class LectureResource {
     @DeleteMapping("/lectures/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<Lecture> optionalLecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(id);
         if (optionalLecture.isEmpty()) {
             return ResponseEntity.notFound().build();

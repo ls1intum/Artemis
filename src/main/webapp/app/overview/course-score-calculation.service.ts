@@ -10,9 +10,9 @@ import { round } from 'app/shared/util/utils';
 
 export const ABSOLUTE_SCORE = 'absoluteScore';
 export const RELATIVE_SCORE = 'relativeScore';
-export const MAX_SCORE = 'maxScore';
+export const MAX_POINTS = 'maxPoints';
 export const PRESENTATION_SCORE = 'presentationScore';
-export const REACHABLE_SCORE = 'reachableScore';
+export const REACHABLE_POINTS = 'reachableScore';
 export const CURRENT_RELATIVE_SCORE = 'currentRelativeScore';
 
 @Injectable({ providedIn: 'root' })
@@ -49,11 +49,20 @@ export class CourseScoreCalculationService {
                         if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                             reachableMaxPointsInCourse += maxPointsReachableInExercise;
                         }
+                        // Quizzes should automatically have a result after due date but can have one that is not rated, this should still count into reachable scores
+                    } else if (exercise.type === ExerciseType.QUIZ) {
+                        if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                            reachableMaxPointsInCourse += maxPointsReachableInExercise;
+                        }
                     }
                     presentationScore += participation.presentationScore ? participation.presentationScore : 0;
 
-                    // programming exercises can be excluded here because their state is INITIALIZED even after the exercise is over
-                    if (participation.initializationState === InitializationState.INITIALIZED && exercise.type !== ExerciseType.PROGRAMMING) {
+                    // programming exercises and quiz can be excluded here because their state is INITIALIZED even after the exercise is over
+                    if (
+                        participation.initializationState === InitializationState.INITIALIZED &&
+                        exercise.type !== ExerciseType.PROGRAMMING &&
+                        exercise.type !== ExerciseType.QUIZ
+                    ) {
                         if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                             reachableMaxPointsInCourse += maxPointsReachableInExercise;
                         }
@@ -76,9 +85,9 @@ export class CourseScoreCalculationService {
         } else {
             scores.set(CURRENT_RELATIVE_SCORE, 0);
         }
-        scores.set(MAX_SCORE, maxPointsInCourse);
+        scores.set(MAX_POINTS, maxPointsInCourse);
         scores.set(PRESENTATION_SCORE, presentationScore);
-        scores.set(REACHABLE_SCORE, reachableMaxPointsInCourse);
+        scores.set(REACHABLE_POINTS, reachableMaxPointsInCourse);
         return scores;
     }
 

@@ -19,12 +19,8 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
     styleUrls: ['./quiz-scoring-info-student-modal.component.scss'],
 })
 export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
-    readonly ALL_OR_NOTHING = ScoringType.ALL_OR_NOTHING;
-    readonly PROPORTIONAL_WITH_PENALTY = ScoringType.PROPORTIONAL_WITH_PENALTY;
+    QuizQuestionType = QuizQuestionType;
+    ScoringType = ScoringType;
 
     @Input() score: number; // Score of the student that has been achieved
     @Input() questionIndex: number; // Question Index of the question

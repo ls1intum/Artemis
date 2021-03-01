@@ -24,8 +24,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -37,15 +37,13 @@ public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private UserRepository userRepository;
 
     @Autowired
-    private UserService userService;
+    PasswordService passwordService;
 
     @Autowired
     private CacheManager cacheManager;
 
     @Autowired
     private JiraRequestMockProvider jiraRequestMockProvider;
-
-    private List<User> users;
 
     private User student;
 
@@ -57,7 +55,7 @@ public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     public void setUp() {
-        users = database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
+        List<User> users = database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
         student = users.get(0);
         users.forEach(user -> cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin()));
         jiraRequestMockProvider.enableMockingOfRequests();
@@ -96,10 +94,10 @@ public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         final var response = request.putWithResponseBody("/api/users", managedUserVM, User.class, HttpStatus.OK);
         final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();
-        updatedUserIndDB.setPassword(userService.decryptPasswordByLogin(updatedUserIndDB.getLogin()).get());
+        updatedUserIndDB.setPassword(passwordService.decryptPasswordByLogin(updatedUserIndDB.getLogin()).get());
 
         assertThat(response).isNotNull();
-        response.setPassword(userService.decryptPasswordByLogin(response.getLogin()).get());
+        response.setPassword(passwordService.decryptPasswordByLogin(response.getLogin()).get());
         assertThat(student).as("Returned user is equal to sent update").isEqualTo(response);
         assertThat(student).as("Updated user in DB is equal to sent update").isEqualTo(updatedUserIndDB);
     }
@@ -152,7 +150,7 @@ public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
         final var userInDB = userRepository.findById(response.getId()).get();
-        userInDB.setPassword(userService.decryptPasswordByLogin(userInDB.getLogin()).get());
+        userInDB.setPassword(passwordService.decryptPasswordByLogin(userInDB.getLogin()).get());
         student.setId(response.getId());
         response.setPassword("foobar");
 

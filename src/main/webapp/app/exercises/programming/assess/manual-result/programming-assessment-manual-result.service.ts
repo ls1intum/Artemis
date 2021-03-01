@@ -20,13 +20,10 @@ export class ProgrammingAssessmentManualResultService {
      * @param {submit} submit - Indicates whether submit or save is called
      */
     // TODO: make consistent with other *.assessment.service.ts file
-    saveAssessment(participationId: number, result: Result, submit = false, correctionRound = 0): Observable<EntityResponseType> {
+    saveAssessment(participationId: number, result: Result, submit = false): Observable<EntityResponseType> {
         let params = new HttpParams();
         if (submit) {
             params = params.set('submit', 'true');
-        }
-        if (correctionRound > 0) {
-            params = params.set('correction-round', correctionRound.toString());
         }
 
         const url = `${this.resourceUrl}/participations/${participationId}/manual-results`;

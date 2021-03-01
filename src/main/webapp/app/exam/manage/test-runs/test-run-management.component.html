@@ -21,15 +21,15 @@
                 </div>
 
                 <div [ngbTooltip]="'artemisApp.examManagement.testRun.assessTestRunDisabled' | translate" [disableTooltip]="testRunCanBeAssessed">
-                    <button
+                    <a
                         class="btn btn-primary btn-sm mr-1 mb-1"
-                        style="height: 40px"
+                        style="height: 40px; display: inline-flex; align-items: center"
                         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', 'assess']"
                         *ngIf="course?.isAtLeastInstructor"
-                        [disabled]="isLoading || !testRunCanBeAssessed"
+                        [class.disabled]="isLoading || !testRunCanBeAssessed"
                     >
                         <span jhiTranslate="artemisApp.examManagement.testRun.assess">Assess Your Test Runs</span>
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
@@ -38,7 +38,9 @@
     <div style="padding-bottom: 10px">
         <span jhiTranslate="artemisApp.examManagement.testRun.text"></span>
     </div>
-    <div class="alert alert-warning" jhiTranslate="artemisApp.examManagement.testRun.reminderToDelete">Make sure to delete all Test Runs before the exam conduction!</div>
+    <div class="alert alert-warning" jhiTranslate="artemisApp.examManagement.testRun.reminderToDelete">
+        Make sure to delete all Test Runs before the exam conduction. All test runs are automatically deleted if you assess the unsubmitted student exams and empty submissions.
+    </div>
     <div class="table-responsive" *ngIf="testRuns">
         <table class="table table-striped">
             <thead>
@@ -87,29 +89,29 @@
                             <div class="btn-group" *ngIf="course?.isAtLeastInstructor">
                                 <ng-container *ngIf="testRun.user.id == instructor.id; else notOwnerOfTestRun">
                                     <ng-container *ngIf="!testRun.submitted; else submitted">
-                                        <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
+                                        <a class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
                                             <span *ngIf="!testRun.started" jhiTranslate="artemisApp.course.startDate">Start</span>
                                             <span *ngIf="testRun.started" jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarly">Continue</span>
-                                        </button>
+                                        </a>
                                     </ng-container>
                                     <ng-template #submitted>
-                                        <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
+                                        <a class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
                                             <span jhiTranslate="artemisApp.exam.summary">Summary</span>
-                                        </button>
+                                        </a>
                                     </ng-template>
                                 </ng-container>
                                 <ng-template #notOwnerOfTestRun>
-                                    <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
+                                    <a class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
                                         <span jhiTranslate="artemisApp.exam.summary">Summary</span>
-                                    </button>
+                                    </a>
                                 </ng-template>
-                                <button
+                                <a
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                     [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', this.testRun.id]"
-                                    [disabled]="testRun.started"
+                                    [class.disabled]="testRun.started"
                                 >
                                     <span jhiTranslate="artemisApp.examManagement.testRun.manage">Manage Working Time</span>
-                                </button>
+                                </a>
                                 <button
                                     jhiDeleteButton
                                     [entityTitle]="'artemisApp.examManagement.testRun.testRun' | translate"

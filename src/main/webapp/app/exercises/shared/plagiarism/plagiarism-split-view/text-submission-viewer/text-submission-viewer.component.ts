@@ -100,6 +100,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
         this.currentFile = file;
         this.loading = true;
 
+        this.repositoryService.setDomain([DomainType.PARTICIPATION, { id: this.plagiarismSubmission.submissionId }]);
         this.repositoryService.getFile(file).subscribe(
             ({ fileContent }) => {
                 this.loading = false;

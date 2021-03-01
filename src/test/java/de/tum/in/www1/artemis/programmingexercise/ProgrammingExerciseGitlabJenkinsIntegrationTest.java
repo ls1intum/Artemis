@@ -253,5 +253,11 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseTestService.exportInstructorRepositories_forbidden();
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testArchiveCourseWithProgrammingExercise() throws Exception {
+        programmingExerciseTestService.testArchiveCourseWithProgrammingExercise();
+    }
+
     // TODO: add startProgrammingExerciseStudentSubmissionFailedWithBuildlog & copyRepository_testConflictError
 }

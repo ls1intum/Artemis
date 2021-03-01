@@ -150,7 +150,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             }
 
             this.programmingExerciseParticipationService
-                .getStudentParticipationWithLatestManualResult(participationId)
+                .getStudentParticipationWithResultOfCorrectionRound(participationId, this.correctionRound)
                 .pipe(
                     tap(
                         (participationWithResult: ProgrammingExerciseStudentParticipation) => {
@@ -266,7 +266,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     save(): void {
         this.saveBusy = true;
         this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, undefined, this.correctionRound).subscribe(
+        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, undefined).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         );
@@ -278,7 +278,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     submit(): void {
         this.submitBusy = true;
         this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, true, this.correctionRound).subscribe(
+        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, true).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         );
@@ -513,8 +513,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResult!.rated = true;
         this.manualResult!.hasFeedback = true;
         // Append the automatic result string which the manual result holds with the score part, to create the manual result string
+        // In the case no automatic result exists before the assessment, the resultString is undefined. In this case we just want to see the manual assessment.
         if (this.isFirstAssessment) {
-            this.manualResult!.resultString += ', ' + this.createResultString(totalScore, this.exercise.maxPoints);
+            if (this.manualResult!.resultString) {
+                this.manualResult!.resultString += ', ' + this.createResultString(totalScore, this.exercise.maxPoints);
+            } else {
+                this.manualResult!.resultString = this.createResultString(totalScore, this.exercise.maxPoints);
+            }
             this.isFirstAssessment = false;
         } else {
             /* Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated,

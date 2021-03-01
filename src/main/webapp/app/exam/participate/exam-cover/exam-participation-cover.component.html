@@ -106,6 +106,7 @@
                     <span jhiTranslate="artemisApp.examParticipation.handInEarlyNoticeSecondSentence"></span>
                 </div>
                 <button [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
+                    <fa-icon *ngIf="submitInProgress" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                     <span jhiTranslate="artemisApp.exam.endExam">Finish</span>
                 </button>
             </ng-template>
@@ -113,7 +114,7 @@
                 <div class="mb-2 font-weight-bold">
                     {{ 'artemisApp.examParticipation.continueAfterHandInEarlyDescription' | translate }}
                 </div>
-                <button class="btn btn-secondary mt-2" (click)="continueAfterHandInEarly()">
+                <button [disabled]="submitInProgress" class="btn btn-secondary mt-2" (click)="continueAfterHandInEarly()">
                     <fa-icon [icon]="'arrow-left'"></fa-icon>
                     {{ 'artemisApp.examParticipation.continueAfterHandInEarly' | translate }}
                 </button>

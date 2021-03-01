@@ -61,7 +61,7 @@
                 [readonly]="handled"
                 [disabled]="handled || isLockedForLoggedInUser"
             ></textarea>
-            <div *ngIf="!handled && complaint.complaintType === ComplaintType.COMPLAINT" class="row justify-content-end">
+            <div *ngIf="!handled && complaint.complaintType === ComplaintType.COMPLAINT" class="row justify-content-end mt-3">
                 <div class="col-12 col-lg-6">
                     <button
                         id="acceptComplaintButton"

@@ -16,10 +16,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -39,13 +41,13 @@ public class AssessmentService {
 
     protected final ResultService resultService;
 
-    private final ExamService examService;
+    private final ExamDateService examDateService;
 
     protected final SubmissionRepository submissionRepository;
 
     protected final GradingCriterionService gradingCriterionService;
 
-    private final UserService userService;
+    protected final UserRepository userRepository;
 
     private final SubmissionService submissionService;
 
@@ -55,7 +57,8 @@ public class AssessmentService {
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
-            SubmissionRepository submissionRepository, ExamService examService, GradingCriterionService gradingCriterionService, UserService userService, LtiService ltiService) {
+            SubmissionRepository submissionRepository, ExamDateService examDateService, GradingCriterionService gradingCriterionService, UserRepository userRepository,
+            LtiService ltiService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -64,14 +67,14 @@ public class AssessmentService {
         this.resultService = resultService;
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
-        this.examService = examService;
+        this.examDateService = examDateService;
         this.gradingCriterionService = gradingCriterionService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.ltiService = ltiService;
     }
 
-    Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
-        double maxScore = exercise.getMaxPoints();
+    Result submitResult(Result result, Exercise exercise, Double calculatedPoints) {
+        double maxPoints = exercise.getMaxPoints();
         double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
 
         // Exam results and manual results of programming exercises are always to rated
@@ -84,10 +87,10 @@ public class AssessmentService {
 
         result.setCompletionDate(ZonedDateTime.now());
         // Take bonus points into account to achieve a result score > 100%
-        double totalScore = calculateTotalScore(calculatedScore, maxScore + bonusPoints);
-        // Set score and resultString according to maxScore, to establish results with score > 100%
-        result.setScore(totalScore, maxScore);
-        result.setResultString(totalScore, maxScore);
+        double totalScore = calculateTotalPoints(calculatedPoints, maxPoints + bonusPoints);
+        // Set score and resultString according to maxPoints, to establish results with score > 100%
+        result.setScore(totalScore, maxPoints);
+        result.setResultString(totalScore, maxPoints);
 
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = result.getAssessor();
@@ -139,8 +142,8 @@ public class AssessmentService {
             return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).get(); // to eagerly load assessor
         }
         else {
-            Double calculatedScore = calculateTotalScore(originalResult.getFeedbacks());
-            return submitResult(originalResult, exercise, calculatedScore);
+            Double calculatedPoints = calculateTotalPoints(originalResult.getFeedbacks());
+            return submitResult(originalResult, exercise, calculatedPoints);
         }
     }
 
@@ -177,7 +180,7 @@ public class AssessmentService {
             // Tutors can assess exam exercises only after the last student has finished the exam and before the publish result date
             if (isExamMode && !isAtLeastInstructor) {
                 final Exam exam = exercise.getExerciseGroup().getExam();
-                ZonedDateTime latestExamDueDate = examService.getLatestIndividualExamEndDate(exam.getId());
+                ZonedDateTime latestExamDueDate = examDateService.getLatestIndividualExamEndDate(exam.getId());
                 if (latestExamDueDate.isAfter(ZonedDateTime.now()) || (exam.getPublishResultsDate() != null && exam.getPublishResultsDate().isBefore(ZonedDateTime.now()))) {
                     return false;
                 }
@@ -203,22 +206,15 @@ public class AssessmentService {
      */
     @Transactional // NOTE: As we use delete methods with underscores, we need a transactional context here!
     public void cancelAssessmentOfSubmission(Submission submission) {
-        StudentParticipation participation = studentParticipationRepository.findByIdWithEagerResults(submission.getParticipation().getId())
+        StudentParticipation participation = studentParticipationRepository.findWithEagerResultsById(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
         // cancel is only possible for the latest result.
         Result result = submission.getLatestResult();
 
         /*
-         * For programming exercises we need to delete the submission of the manual result as well, as for the first new manual result a new submission will be generated. For the
-         * following manual results this submission will be reused. The CascadeType.REMOVE of {@link Submission#result} will delete also the result and the corresponding feedbacks
-         * {@link Result#feedbacks}.
+         * We only want to be able to cancel a result if it is not of the AUTOMATIC AssessmentType
          */
-        if (participation instanceof ProgrammingExerciseStudentParticipation && submission.getResults().size() == 1) {
-            participation.removeSubmission(submission);
-            participation.removeResult(result);
-            submissionRepository.deleteById(submission.getId());
-        }
-        else {
+        if (result != null && result.getAssessmentType() != null && !result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
             participation.removeResult(result);
             feedbackRepository.deleteByResult_Id(result.getId());
             resultRepository.deleteById(result.getId());
@@ -257,33 +253,33 @@ public class AssessmentService {
         }
     }
 
-    public double calculateTotalScore(Double calculatedScore, Double maxScore) {
+    public double calculateTotalPoints(Double calculatedScore, Double maxScore) {
         double totalScore = Math.max(0, calculatedScore);
         return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
     }
 
     /**
-     * Helper function to calculate the total score of a feedback list. It loops through all assessed model elements and sums the credits up.
-     * The score of an assessment model is not summed up only in the case the usageCount limit is exceeded
+     * Helper function to calculate the total points of a feedback list. It loops through all assessed model elements and sums the credits up.
+     * The points of an assessment model is not summed up only in the case the usageCount limit is exceeded
      * meaning the structured grading instruction was applied on the assessment model more often than allowed
      *
      * @param assessments the List of Feedback
-     * @return the total score
+     * @return the total points
      */
-    public Double calculateTotalScore(List<Feedback> assessments) {
-        double totalScore = 0.0;
+    public Double calculateTotalPoints(List<Feedback> assessments) {
+        double totalPoints = 0.0;
         var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
 
         for (Feedback feedback : assessments) {
             if (feedback.getGradingInstruction() != null) {
-                totalScore = gradingCriterionService.computeTotalScore(feedback, totalScore, gradingInstructions);
+                totalPoints = gradingCriterionService.computeTotalScore(feedback, totalPoints, gradingInstructions);
             }
             else {
                 // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit
-                totalScore += feedback.getCredits();
+                totalPoints += feedback.getCredits();
             }
         }
-        return totalScore;
+        return totalPoints;
     }
 
     /**
@@ -315,8 +311,8 @@ public class AssessmentService {
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
         result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
-        Double calculatedScore = calculateTotalScore(result.getFeedbacks());
-        result = submitResult(result, exercise, calculatedScore);
+        Double calculatedPoints = calculateTotalPoints(result.getFeedbacks());
+        result = submitResult(result, exercise, calculatedPoints);
         // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system
         ltiService.onNewResult((StudentParticipation) result.getParticipation());
         return result;
@@ -334,7 +330,7 @@ public class AssessmentService {
      * @return result that was saved in the database
      */
     public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId) {
-        Result result = submission.getResults().stream().filter(tmp -> tmp.getId().equals(resultId)).findAny().orElse(null);
+        Result result = submission.getResults().stream().filter(res -> res.getId().equals(resultId)).findAny().orElse(null);
 
         if (result == null) {
             result = submissionService.saveNewEmptyResult(submission);
@@ -347,7 +343,7 @@ public class AssessmentService {
 
         result.setExampleResult(submission.isExampleSubmission());
         result.setAssessmentType(AssessmentType.MANUAL);
-        User user = userService.getUser();
+        User user = userRepository.getUser();
         result.setAssessor(user);
         // first save the feedback (that is not yet in the database) to prevent null index exception
         var savedFeedbackList = saveFeedbacks(feedbackList);

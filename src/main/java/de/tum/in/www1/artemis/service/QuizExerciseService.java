@@ -1,27 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 
@@ -36,52 +23,24 @@ public class QuizExerciseService {
 
     private final ShortAnswerMappingRepository shortAnswerMappingRepository;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final ResultRepository resultRepository;
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
-    private final UserService userService;
+    private final QuizScheduleService quizScheduleService;
 
-    private final ObjectMapper objectMapper;
+    private final QuizStatisticService quizStatisticService;
 
-    private final GroupNotificationService groupNotificationService;
-
-    private QuizScheduleService quizScheduleService;
-
-    private QuizStatisticService quizStatisticService;
-
-    private SimpMessageSendingOperations messagingTemplate;
-
-    public QuizExerciseService(UserService userService, QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
-            QuizSubmissionRepository quizSubmissionRepository, MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter,
-            GroupNotificationService groupNotificationService) {
-        this.userService = userService;
+    public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository, ResultRepository resultRepository,
+            ShortAnswerMappingRepository shortAnswerMappingRepository, QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService,
+            QuizStatisticService quizStatisticService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.shortAnswerMappingRepository = shortAnswerMappingRepository;
-        this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
-        this.objectMapper = mappingJackson2HttpMessageConverter.getObjectMapper();
-        this.groupNotificationService = groupNotificationService;
-    }
-
-    @Autowired
-    public void setQuizStatisticService(QuizStatisticService quizStatisticService) {
-        this.quizStatisticService = quizStatisticService;
-    }
-
-    @Autowired
-    public void setQuizScheduleService(QuizScheduleService quizScheduleService) {
         this.quizScheduleService = quizScheduleService;
-    }
-
-    @Autowired
-    public void setMessagingTemplate(SimpMessageSendingOperations messagingTemplate) {
-        this.messagingTemplate = messagingTemplate;
+        this.quizStatisticService = quizStatisticService;
     }
 
     /**
@@ -92,7 +51,7 @@ public class QuizExerciseService {
      */
     public QuizExercise save(QuizExercise quizExercise) {
 
-        quizExercise.setMaxPoints(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
 
         // create a quizPointStatistic if it does not yet exist
         if (quizExercise.getQuizPointStatistic() == null) {
@@ -216,97 +175,6 @@ public class QuizExerciseService {
     }
 
     /**
-     * Get all quiz exercises.
-     *
-     * @return the list of entities
-     */
-    public List<QuizExercise> findAll() {
-        log.debug("REST request to get all QuizExercises");
-        List<QuizExercise> quizExercises = quizExerciseRepository.findAll();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(exercise -> {
-            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin(user);
-        });
-        return authorizedExercises.collect(Collectors.toList());
-    }
-
-    /**
-     * Get one quiz exercise by id.
-     *
-     * @param quizExerciseId the id of the entity
-     * @return the entity
-     */
-    public Optional<QuizExercise> findById(Long quizExerciseId) {
-        log.debug("Request to find Quiz Exercise by id : {}", quizExerciseId);
-        return quizExerciseRepository.findById(quizExerciseId);
-    }
-
-    /**
-     * Get one quiz exercise
-     *
-     * @param quizExerciseId the id of the entity
-     * @return the entity
-     */
-    public QuizExercise findOne(Long quizExerciseId) {
-        log.debug("Request to find one Quiz Exercise : {}", quizExerciseId);
-        Optional<QuizExercise> quizExercise = quizExerciseRepository.findById(quizExerciseId);
-        return quizExercise.orElse(null);
-    }
-
-    /**
-     * Get one quiz exercise by id and eagerly load questions
-     *
-     * @param quizExerciseId the id of the entity
-     * @return the entity
-     */
-    public QuizExercise findOneWithQuestions(Long quizExerciseId) {
-        log.debug("Request to find one Quiz Exercise with questions : {}", quizExerciseId);
-        Optional<QuizExercise> quizExercise = quizExerciseRepository.findWithEagerQuestionsById(quizExerciseId);
-        return quizExercise.orElse(null);
-    }
-
-    /**
-     * Get one quiz exercise by id and eagerly load questions and statistics
-     *
-     * @param quizExerciseId the id of the entity
-     * @return the quiz exercise entity
-     */
-    public QuizExercise findOneWithQuestionsAndStatistics(Long quizExerciseId) {
-        log.debug("Find quiz exercise {} with questions and statistics", quizExerciseId);
-        Optional<QuizExercise> optionalQuizExercise = quizExerciseRepository.findWithEagerQuestionsAndStatisticsById(quizExerciseId);
-        return optionalQuizExercise.orElse(null);
-    }
-
-    /**
-     * Get all quiz exercises for the given course.
-     *
-     * @param courseId the id of the course
-     * @return the entity
-     */
-    public List<QuizExercise> findByCourseId(Long courseId) {
-        log.debug("Request to find all Quiz Exercises in Course : {}", courseId);
-        List<QuizExercise> quizExercises = quizExerciseRepository.findByCourseId(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (quizExercises.size() > 0) {
-            Course course = quizExercises.get(0).getCourseViaExerciseGroupOrCourseMember();
-            if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
-                return new LinkedList<>();
-            }
-        }
-        return quizExercises;
-    }
-
-    /**
-     * Get all quiz exercises that are planned to start in the future
-     *
-     * @return the list of quiz exercises
-     */
-    public List<QuizExercise> findAllPlannedToStartInTheFuture() {
-        return quizExerciseRepository.findByIsPlannedToStartAndReleaseDateIsAfter(true, ZonedDateTime.now());
-    }
-
-    /**
      * adjust existing results if an answer or and question was deleted and recalculate the scores
      *
      * @param quizExercise the changed quizExercise.
@@ -343,63 +211,6 @@ public class QuizExerciseService {
         quizSubmissionRepository.saveAll(submissions);
         resultRepository.saveAll(results);
         log.info(results.size() + " results have been updated successfully for quiz re-evaluate");
-    }
-
-    /**
-     * Sends a QuizExercise to all subscribed clients and creates notification if quiz has started.
-     * @param quizExercise the QuizExercise which will be sent
-     * @param quizChange the change that was applied to the quiz, which decides to which topic subscriptions the quiz exercise is sent
-     */
-    public void sendQuizExerciseToSubscribedClients(QuizExercise quizExercise, String quizChange) {
-        try {
-            long start = System.currentTimeMillis();
-            Class<?> view = viewForStudentsInQuizExercise(quizExercise);
-            byte[] payload = objectMapper.writerWithView(view).writeValueAsBytes(quizExercise);
-            // For each change we send the same message. The client needs to decide how to handle the date based on the quiz status
-            if (quizExercise.isVisibleToStudents() && quizExercise.isCourseExercise()) {
-                // Create a group notification if actions is 'start-now'.
-                if ("start-now".equals(quizChange)) {
-                    groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);
-                }
-                // Send quiz via websocket.
-                messagingTemplate.send("/topic/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quizExercises",
-                        MessageBuilder.withPayload(payload).build());
-                log.info("Sent '{}' for quiz {} to all listening clients in {} ms", quizChange, quizExercise.getId(), System.currentTimeMillis() - start);
-            }
-        }
-        catch (JsonProcessingException e) {
-            log.error("Exception occurred while serializing quiz exercise", e);
-        }
-    }
-
-    /**
-     * Check if the current user has at least TA-level permissions for the given exercise
-     *
-     * @param quizExercise the exercise to check permissions for
-     * @return true, if the user has the required permissions, false otherwise
-     */
-    public boolean userHasTAPermissions(QuizExercise quizExercise) {
-        Course course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin(user);
-    }
-
-    /**
-     * get the view for students in the given quiz
-     *
-     * @param quizExercise the quiz to get the view for
-     * @return the view depending on the current state of the quiz
-     */
-    public Class<?> viewForStudentsInQuizExercise(QuizExercise quizExercise) {
-        if (!quizExercise.isStarted()) {
-            return QuizView.Before.class;
-        }
-        else if (quizExercise.isSubmissionAllowed()) {
-            return QuizView.During.class;
-        }
-        else {
-            return QuizView.After.class;
-        }
     }
 
     /**
@@ -548,7 +359,7 @@ public class QuizExerciseService {
         boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
 
         // update QuizExercise
-        quizExercise.setMaxPoints(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.reconnectJSONIgnoreAttributes();
 
         // adjust existing results if an answer or a question was deleted and recalculate them
@@ -558,11 +369,11 @@ public class QuizExerciseService {
 
         if (updateOfResultsAndStatisticsNecessary) {
             // make sure we have all objects available before updating the statistics to avoid lazy / proxy issues
-            quizExercise = findOneWithQuestionsAndStatistics(quizExercise.getId());
+            quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
             quizStatisticService.recalculateStatistics(quizExercise);
         }
         // fetch the quiz exercise again to make sure the latest changes are included
-        return findOneWithQuestionsAndStatistics(quizExercise.getId());
+        return quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
     }
 
     /**
@@ -571,7 +382,7 @@ public class QuizExerciseService {
      */
     public void resetExercise(Long exerciseId) {
         // fetch exercise again to make sure we have an updated version
-        QuizExercise quizExercise = findOneWithQuestionsAndStatistics(exerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
 
         // for quizzes we need to delete the statistics and we need to reset the quiz to its original state
         quizExercise.setIsVisibleBeforeStart(Boolean.FALSE);

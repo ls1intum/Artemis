@@ -18,6 +18,8 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -35,10 +37,12 @@ public class TextSubmissionService extends SubmissionService {
     private final SubmissionVersionService submissionVersionService;
 
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, TextClusterRepository textClusterRepository, SubmissionRepository submissionRepository,
-            StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
-            Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService,
-            FeedbackRepository feedbackRepository) {
-        super(submissionRepository, userService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
+            StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository,
+            UserRepository userRepository, Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService,
+            SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository,
+            ParticipationRepository participationRepository) {
+        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
+                courseRepository, participationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.textClusterRepository = textClusterRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
@@ -103,7 +107,7 @@ public class TextSubmissionService extends SubmissionService {
             if (textExercise.isTeamMode()) {
                 submissionVersionService.saveVersionForTeam(textSubmission, principal.getName());
             }
-            else {
+            else if (textExercise.isExamExercise()) {
                 submissionVersionService.saveVersionForIndividual(textSubmission, principal.getName());
             }
         }
@@ -177,34 +181,6 @@ public class TextSubmissionService extends SubmissionService {
             return Optional.of(textSubmission);
         }
         return Optional.empty();
-    }
-
-    /**
-     * Return all TextSubmission which are the latest TextSubmission of a Participation and doesn't have a Result so far
-     * The corresponding TextBlocks and Participations are retrieved from the database
-     * @param exercise Exercise for which all assessed submissions should be retrieved
-     * @return List of all TextSubmission which aren't assessed at the Moment, but need assessment in the future.
-     *
-     */
-    public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
-        final List<TextSubmission> submissions = textSubmissionRepository.findByParticipation_ExerciseIdAndResultsIsNullAndSubmittedIsTrue(exercise.getId());
-
-        final Set<Long> clusterIds = submissions.stream().flatMap(submission -> submission.getBlocks().stream()).map(TextBlock::getCluster).filter(Objects::nonNull)
-                .map(TextCluster::getId).collect(toSet());
-
-        // To prevent lazy loading many elements later on, we fetch all clusters with text blocks here.
-        final Map<Long, TextCluster> textClusterMap = textClusterRepository.findAllByIdsWithEagerTextBlocks(clusterIds).stream()
-                .collect(toMap(TextCluster::getId, textCluster -> textCluster));
-
-        // link up clusters with eager blocks
-        submissions.stream().flatMap(submission -> submission.getBlocks().stream()).forEach(textBlock -> {
-            if (textBlock.getCluster() != null) {
-                textBlock.setCluster(textClusterMap.get(textBlock.getCluster().getId()));
-            }
-        });
-
-        return submissions.stream().filter(tS -> tS.getParticipation().findLatestSubmission().isPresent() && tS == tS.getParticipation().findLatestSubmission().get())
-                .collect(toList());
     }
 
     /**

@@ -8,6 +8,7 @@
             "405": "The HTTP verb you used is not supported for this URL.",
             "500": "Internal server error."
         },
+        "fileUploadSavingError": "Error! The upload failed. Make sure you are connected to the Internet!",
         "concurrencyFailure": "Another user modified this data at the same time as you. Your changes were rejected.",
         "validation": "Validation error on the server.",
         "resultStringNull": "Error! Result Text is required.",

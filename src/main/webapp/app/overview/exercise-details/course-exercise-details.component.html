@@ -18,7 +18,7 @@
             [showInOrionWindow]="false"
             [courseId]="courseId"
             [exercise]="exercise"
-            [showResult]="showResults && currentResult !== null"
+            [showResult]="showResults && latestRatedResult != undefined"
         >
         </jhi-exercise-details-student-actions>
         <!-- These buttons will be only shown in dev environment and if the programming exercise has no
@@ -38,69 +38,59 @@
         <div class="col-auto d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
             <span class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' | translate }}</span>
             <div class="btn-group flex-btn-group-container">
-                <button
-                    *ngIf="exercise.type !== QUIZ"
-                    type="submit"
-                    [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id]"
-                    class="btn btn-info btn-sm mr-1"
-                >
+                <a *ngIf="exercise.type !== QUIZ" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id]" class="btn btn-info btn-sm mr-1">
                     <fa-icon [icon]="'eye'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                </button>
-                <button type="submit" [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'scores']" class="btn btn-info btn-sm mr-1">
+                </a>
+                <a [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'scores']" class="btn btn-info btn-sm mr-1">
                     <fa-icon [icon]="'eye'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-                </button>
-                <button type="submit" *ngIf="exerciseRouterLink" [routerLink]="[exerciseRouterLink]" class="btn btn-primary btn-sm mr-1">
+                </a>
+                <a *ngIf="exerciseRouterLink" [routerLink]="[exerciseRouterLink]" class="btn btn-primary btn-sm mr-1">
                     <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
-                </button>
-                <button
-                    type="submit"
+                </a>
+                <a
                     *ngIf="exercise.type === MODELING"
                     [routerLink]="['/course-management', courseId, 'modeling-exercises', exercise.id, 'statistics']"
                     class="btn btn-info btn-sm mr-1"
                 >
                     <fa-icon [icon]="'signal'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics">Statistics</span>
-                </button>
-                <button
-                    type="submit"
+                </a>
+                <a
                     *ngIf="exercise.type === PROGRAMMING"
                     [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'participations']"
                     class="btn btn-primary btn-sm mr-1"
                 >
                     <fa-icon [icon]="'list-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-                </button>
-                <button
-                    type="submit"
+                </a>
+                <a
                     *ngIf="exercise.type === PROGRAMMING"
                     [routerLink]="['/course-management', courseId, 'programming-exercises', exercise.id, 'grading', 'test-cases']"
                     class="btn btn-info btn-sm mr-1"
                 >
                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
-                </button>
-                <button
-                    type="submit"
+                </a>
+                <a
                     *ngIf="!QUIZ_ENDED_STATUS.includes(quizExerciseStatus)"
-                    [disabled]="quizExerciseStatus === QuizStatus.ACTIVE"
+                    [class.disabled]="quizExerciseStatus === QuizStatus.ACTIVE"
                     [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'edit']"
                     class="btn btn-primary btn-sm mr-1"
                 >
                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                </button>
-                <button
-                    type="submit"
+                </a>
+                <a
                     *ngIf="QUIZ_ENDED_STATUS.includes(quizExerciseStatus)"
                     [routerLink]="['/course-management', courseId, 'quiz-exercises', exercise.id, 're-evaluate']"
                     class="btn btn-primary btn-sm mr-1"
                 >
                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -139,7 +129,7 @@
             </ng-template>
             <!-- PROBLEM STATEMENT END -->
             <!-- RESULTS START -->
-            <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex" *ngIf="showResults && (sortedHistoryResult?.length > 1 || !currentResult?.rated)">
+            <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex" *ngIf="showResults && (sortedHistoryResult?.length > 1 || !latestRatedResult?.rated)">
                 <div class="col-auto">
                     <h3>{{ 'artemisApp.courseOverview.exerciseDetails.recentResults' | translate }}</h3>
                 </div>
@@ -149,7 +139,7 @@
                     <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults" [maxScore]="exercise.maxPoints"></jhi-result-history>
                 </div>
             </div>
-            <div class="row justify-content-between" *ngIf="showResults && !currentResult?.rated && studentParticipation?.results?.length === 1">
+            <div class="row justify-content-between" *ngIf="showResults && !latestRatedResult?.rated && studentParticipation?.results?.length === 1">
                 <div class="col">
                     <h4>
                         <span class="badge w-100 badge-info">
@@ -217,13 +207,13 @@
                     exercise &&
                     exercise.type === PROGRAMMING &&
                     studentParticipation &&
-                    currentResult &&
-                    (currentResult.assessmentType === AssessmentType.MANUAL || currentResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
+                    latestRatedResult &&
+                    (latestRatedResult.assessmentType === AssessmentType.MANUAL || latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
                 "
                 class="mb-2 mt-2 ml-3"
                 [exercise]="exercise"
                 [participation]="studentParticipation"
-                [result]="currentResult"
+                [result]="latestRatedResult"
             >
             </jhi-complaint-interactions>
             <div
@@ -231,11 +221,11 @@
                 *ngIf="
                     exercise?.type === PROGRAMMING &&
                     studentParticipation &&
-                    currentResult &&
-                    (currentResult.assessmentType === AssessmentType.MANUAL || currentResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
+                    latestRatedResult &&
+                    (latestRatedResult.assessmentType === AssessmentType.MANUAL || latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
                 "
             >
-                <jhi-rating class="mt-2 alert alert-info" [result]="currentResult"></jhi-rating>
+                <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult"></jhi-rating>
             </div>
         </div>
         <router-outlet *ngIf="exercise.course && exercise.course.studentQuestionsEnabled" class="ml-3" (activate)="onChildActivate($event)"></router-outlet>

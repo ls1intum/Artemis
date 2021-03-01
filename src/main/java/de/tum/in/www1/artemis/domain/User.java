@@ -3,8 +3,10 @@ package de.tum.in.www1.artemis.domain;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.persistence.*;
 import javax.validation.constraints.Email;
@@ -16,6 +18,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -56,7 +60,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     private String registrationNumber;
 
     // this value is typically null, except the registration number should be explicitly shown in the client
-    // currently this is only the case for the course scores page and its csv export
+    // currently this is only the case for the course scores page and its csv export, and also for the individual student exam detail
     @Transient
     private String visibleRegistrationNumberTransient = null;
 
@@ -241,6 +245,10 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.visibleRegistrationNumberTransient = visibleRegistrationNumber;
     }
 
+    public void setVisibleRegistrationNumber() {
+        this.visibleRegistrationNumberTransient = this.getRegistrationNumber();
+    }
+
     public Set<String> getGroups() {
         return groups;
     }
@@ -279,6 +287,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnore
     public Set<User> getParticipants() {
         return Set.of(this);
+    }
+
+    @JsonIgnore
+    public List<GrantedAuthority> getGrantedAuthorities() {
+        return getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).collect(Collectors.toList());
     }
 
     @Override

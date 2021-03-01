@@ -3,20 +3,30 @@ package de.tum.in.www1.artemis.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+
+import javax.validation.constraints.NotNull;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the User entity.
@@ -27,8 +37,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     String USERS_CACHE = "users";
 
     Optional<User> findOneByActivationKey(String activationKey);
-
-    List<User> findAllByRegistrationNumberIsNull();
 
     Optional<User> findOneByResetKey(String resetKey);
 
@@ -47,6 +55,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
+    Optional<User> findOneWithGroupsAndAuthoritiesById(Long id);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings" })
     Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
@@ -130,4 +141,181 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("select distinct team.students from Team team where team.exercise.course.id = :#{#courseId} and team.shortName = :#{#teamShortName}")
     Set<User> findAllInTeam(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
+
+    /**
+     * Get all managed users
+     *
+     * @param userSearch used to find users
+     * @return all users
+     */
+    default Page<UserDTO> getAllManagedUsers(PageableSearchDTO<String> userSearch) {
+        final var searchTerm = userSearch.getSearchTerm();
+        var sorting = Sort.by(userSearch.getSortedColumn());
+        sorting = userSearch.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
+        final var sorted = PageRequest.of(userSearch.getPage(), userSearch.getPageSize(), sorting);
+        return searchByLoginOrNameWithGroups(searchTerm, sorted).map(UserDTO::new);
+    }
+
+    /**
+     * Search for all users by login or name
+     *
+     * @param pageable    Pageable configuring paginated access (e.g. to limit the number of records returned)
+     * @param loginOrName Search query that will be searched for in login and name field
+     * @return all users matching search criteria
+     */
+    default Page<UserDTO> searchAllUsersByLoginOrName(Pageable pageable, String loginOrName) {
+        Page<User> users = searchAllByLoginOrName(pageable, loginOrName);
+        users.forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
+        return users.map(UserDTO::new);
+    }
+
+    /**
+     * @return existing user object by current user login
+     */
+    @NotNull
+    default User getUser() {
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = findOneByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
+    }
+
+    /**
+     * Get user with user groups and authorities of currently logged in user
+     *
+     * @return currently logged in user
+     */
+    @NotNull
+    default User getUserWithGroupsAndAuthorities() {
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
+    }
+
+    /**
+     * Get user with user groups, authorities and guided tour settings of currently logged in user
+     * Note: this method should only be invoked if the guided tour settings are really needed
+     *
+     * @return currently logged in user
+     */
+    @NotNull
+    default User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
+    }
+
+    @NotNull
+    private User unwrapOptionalUser(Optional<User> optionalUser, String currentUserLogin) {
+        return optionalUser.orElseThrow(() -> new EntityNotFoundException("No user found with login: " + currentUserLogin));
+    }
+
+    private String getCurrentUserLogin() {
+        Optional<String> currentUserLogin = SecurityUtils.getCurrentUserLogin();
+        if (currentUserLogin.isPresent()) {
+            return currentUserLogin.get();
+        }
+        throw new EntityNotFoundException("ERROR: No current user login found!");
+    }
+
+    /**
+     * Get user with user groups and authorities with the username (i.e. user.getLogin() or principal.getName())
+     *
+     * @param username the username of the user who should be retrieved from the database
+     * @return the user that belongs to the given principal with eagerly loaded groups and authorities
+     */
+    @NotNull
+    default User getUserWithGroupsAndAuthorities(@NotNull String username) {
+        Optional<User> user = findOneWithGroupsAndAuthoritiesByLogin(username);
+        return unwrapOptionalUser(user, username);
+    }
+
+    /**
+     * Finds a single user with groups and authorities using the registration number
+     *
+     * @param registrationNumber user registration number as string
+     * @return the user with groups and authorities
+     */
+    default Optional<User> findUserWithGroupsAndAuthoritiesByRegistrationNumber(String registrationNumber) {
+        if (!StringUtils.hasText(registrationNumber)) {
+            return Optional.empty();
+        }
+        return findOneWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+    }
+
+    /**
+     * Finds a single user with groups and authorities using the login name
+     *
+     * @param login user login string
+     * @return the user with groups and authorities
+     */
+    default Optional<User> findUserWithGroupsAndAuthoritiesByLogin(String login) {
+        if (!StringUtils.hasText(login)) {
+            return Optional.empty();
+        }
+        return findOneWithGroupsAndAuthoritiesByLogin(login);
+    }
+
+    @NotNull
+    default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
+        return findOneWithGroupsAndAuthoritiesById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
+    }
+
+    /**
+     * Get students by given course
+     *
+     * @param course object
+     * @return list of students for given course
+     */
+    default List<User> getStudents(Course course) {
+        return findAllInGroupWithAuthorities(course.getStudentGroupName());
+    }
+
+    /**
+     * Get tutors by given course
+     *
+     * @param course object
+     * @return list of tutors for given course
+     */
+    default List<User> getTutors(Course course) {
+        return findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName());
+    }
+
+    /**
+     * Get all instructors for a given course
+     *
+     * @param course The course for which to fetch all instructors
+     * @return A list of all users that have the role of instructor in the course
+     */
+    default List<User> getInstructors(Course course) {
+        return findAllInGroupWithAuthorities(course.getInstructorGroupName());
+    }
+
+    /**
+     * Finds all users that are part of the specified group, but are not contained in the collection of excluded users
+     *
+     * @param groupName     The group by which all users should get filtered
+     * @param excludedUsers The users that should get ignored/excluded
+     * @return A list of filtered users
+     */
+    default List<User> findAllUserInGroupAndNotIn(String groupName, Collection<User> excludedUsers) {
+        // For an empty list, we have to use another query, because Hibernate builds an invalid query with empty lists
+        if (!excludedUsers.isEmpty()) {
+            return findAllInGroupContainingAndNotIn(groupName, new HashSet<>(excludedUsers));
+        }
+        return findAllInGroupWithAuthorities(groupName);
+    }
+
+    default Long countUserInGroup(String groupName) {
+        return countByGroupsIsContaining(groupName);
+    }
+
+    /**
+     * Update user notification read date for current user
+     *
+     * @param userId the user for which the notification read date should be updated
+     */
+    @Transactional // ok because of modifying query
+    default void updateUserNotificationReadDate(long userId) {
+        updateUserNotificationReadDate(userId, ZonedDateTime.now());
+    }
 }

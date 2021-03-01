@@ -7,7 +7,7 @@ import * as sinonChai from 'sinon-chai';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import * as sinon from 'sinon';
 import { MockPipe } from 'ng-mocks/dist/lib/mock-pipe/mock-pipe';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, Directive, Input } from '@angular/core';
 import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
@@ -30,20 +30,15 @@ import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
+import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-@Component({ selector: 'jhi-unit-creation-card', template: '' })
-class UnitCreationCardStubComponent {
-    @Output()
-    createTextUnit: EventEmitter<any> = new EventEmitter<any>();
-    @Output()
-    createExerciseUnit: EventEmitter<any> = new EventEmitter<any>();
-    @Output()
-    createVideoUnit: EventEmitter<any> = new EventEmitter<any>();
-    @Output()
-    createAttachmentUnit: EventEmitter<any> = new EventEmitter<any>();
+// tslint:disable-next-line:directive-selector
+@Directive({ selector: '[routerLink]' })
+export class MockRouterLinkDirective {
+    @Input('routerLink') data: any;
 }
 
 @Component({ selector: 'jhi-learning-goals-popover', template: '' })
@@ -58,7 +53,6 @@ class LearningGoalsPopoverStubComponent {
 describe('LectureUnitManagementComponent', () => {
     let lectureUnitManagementComponent: LectureUnitManagementComponent;
     let lectureUnitManagementComponentFixture: ComponentFixture<LectureUnitManagementComponent>;
-    let unitCreationCardStubComponent: UnitCreationCardStubComponent;
 
     let lectureService: LectureService;
     let lectureUnitService: LectureUnitService;
@@ -76,7 +70,7 @@ describe('LectureUnitManagementComponent', () => {
             imports: [],
             declarations: [
                 LectureUnitManagementComponent,
-                UnitCreationCardStubComponent,
+                MockComponent(UnitCreationCardComponent),
                 LearningGoalsPopoverStubComponent,
                 MockPipe(TranslatePipe),
                 MockComponent(ExerciseUnitComponent),
@@ -88,6 +82,7 @@ describe('LectureUnitManagementComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(RouterOutlet),
+                MockRouterLinkDirective,
             ],
             providers: [
                 MockProvider(LectureUnitService),
@@ -152,7 +147,6 @@ describe('LectureUnitManagementComponent', () => {
                 );
 
                 lectureUnitManagementComponentFixture.detectChanges();
-                unitCreationCardStubComponent = lectureUnitManagementComponentFixture.debugElement.query(By.directive(UnitCreationCardStubComponent)).componentInstance;
             });
     });
     it('should initialize', () => {
@@ -199,34 +193,15 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     it('should navigate to edit attachment unit page', () => {
-        const editButtonClickedSpy = sinon.spy(lectureUnitManagementComponent, 'editButtonClicked');
+        const editButtonClickedSpy = sinon.spy(lectureUnitManagementComponent, 'editButtonRouterLink');
         const buttons = lectureUnitManagementComponentFixture.debugElement.queryAll(By.css(`.edit`));
         for (const button of buttons) {
             button.nativeElement.click();
         }
+        lectureUnitManagementComponentFixture.detectChanges();
         expect(editButtonClickedSpy).to.have.been.called;
     });
 
-    it('should navigate to create exercise unit page', () => {
-        const createExerciseUnitSpy = sinon.spy(lectureUnitManagementComponent, 'createExerciseUnit');
-        unitCreationCardStubComponent.createExerciseUnit.emit();
-        expect(createExerciseUnitSpy).to.have.been.called;
-    });
-    it('should navigate to create text unit page', () => {
-        const createTextUnitSpy = sinon.spy(lectureUnitManagementComponent, 'createTextUnit');
-        unitCreationCardStubComponent.createTextUnit.emit();
-        expect(createTextUnitSpy).to.have.been.called;
-    });
-    it('should navigate to create video unit page', () => {
-        const createVideoUnitSpy = sinon.spy(lectureUnitManagementComponent, 'createVideoUnit');
-        unitCreationCardStubComponent.createVideoUnit.emit();
-        expect(createVideoUnitSpy).to.have.been.called;
-    });
-    it('should navigate to create attachment unit page', () => {
-        const createAttachmentUnitSpy = sinon.spy(lectureUnitManagementComponent, 'createAttachmentUnit');
-        unitCreationCardStubComponent.createAttachmentUnit.emit();
-        expect(createAttachmentUnitSpy).to.have.been.called;
-    });
     it('should give the correct delete question translation key', () => {
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new AttachmentUnit())).to.equal('artemisApp.attachmentUnit.delete.question');
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new ExerciseUnit())).to.equal('artemisApp.exerciseUnit.delete.question');

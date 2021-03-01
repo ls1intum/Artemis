@@ -42,8 +42,9 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     result: Result;
     generalFeedback: Feedback = new Feedback();
     // TODO: rename this, because right now there is no reference
-    referencedFeedback: Feedback[] = [];
+    unreferencedFeedback: Feedback[] = [];
     exercise: FileUploadExercise;
+    exerciseId: number;
     totalScore = 0;
     assessmentsAreValid: boolean;
     invalidError?: string;
@@ -59,6 +60,8 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     isTestRun = false;
     courseId: number;
     hasAssessmentDueDatePassed: boolean;
+    correctionRound = 0;
+    hasNewSubmissions = true;
 
     private cancelConfirmationText: string;
 
@@ -84,7 +87,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     get assessments(): Feedback[] {
-        return [this.generalFeedback, ...this.referencedFeedback];
+        return [this.generalFeedback, ...this.unreferencedFeedback];
     }
 
     public ngOnInit(): void {
@@ -97,11 +100,15 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
+            if (queryParams.get('correction-round')) {
+                this.correctionRound = parseInt(queryParams.get('correction-round')!, 10);
+            }
         });
 
         this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
+            this.exerciseId = exerciseId;
             const submissionValue = params['submissionId'];
             const submissionId = Number(submissionValue);
             if (submissionValue === 'new') {
@@ -121,7 +128,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     private loadOptimalSubmission(exerciseId: number): void {
-        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true).subscribe(
+        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound).subscribe(
             (submission: FileUploadSubmission) => {
                 this.initializePropertiesFromSubmission(submission);
                 // Update the url with the new id, without reloading the page, to make the history consistent
@@ -144,7 +151,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
     private loadSubmission(submissionId: number): void {
         this.fileUploadSubmissionService
-            .get(submissionId)
+            .get(submissionId, this.correctionRound)
             .pipe(filter((res) => !!res))
             .subscribe(
                 (res) => {
@@ -193,13 +200,13 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
     public addFeedback(): void {
         const feedback = new Feedback();
-        this.referencedFeedback.push(feedback);
+        this.unreferencedFeedback.push(feedback);
         this.validateAssessment();
     }
 
     public deleteAssessment(assessmentToDelete: Feedback): void {
-        const indexToDelete = this.referencedFeedback.indexOf(assessmentToDelete);
-        this.referencedFeedback.splice(indexToDelete, 1);
+        const indexToDelete = this.unreferencedFeedback.indexOf(assessmentToDelete);
+        this.unreferencedFeedback.splice(indexToDelete, 1);
         this.validateAssessment();
     }
 
@@ -210,8 +217,8 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
      */
     assessNext() {
         this.generalFeedback = new Feedback();
-        this.referencedFeedback = [];
-        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!).subscribe(
+        this.unreferencedFeedback = [];
+        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, false, this.correctionRound).subscribe(
             (response: FileUploadSubmission) => {
                 this.unassessedSubmission = response;
                 this.router.onSameUrlNavigation = 'reload';
@@ -225,6 +232,8 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
                     this.jhiAlertService.error('artemisApp.exerciseAssessmentDashboard.noSubmissions');
+                    this.isLoading = true;
+                    this.hasNewSubmissions = false;
                 } else {
                     this.onError(error.message);
                 }
@@ -320,22 +329,22 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     /**
      * Checks if the assessment is valid:
      *   - There must be at least one referenced feedback or a general feedback.
-     *   - Each reference feedback must have either a score or a feedback text or both.
+     *   - Each feedback must have either a score or a feedback text or both.
      *   - The score must be a valid number.
      *
      * Additionally, the total score is calculated for all numerical credits.
      */
-    public validateAssessment() {
+    public validateAssessment(): void {
         this.assessmentsAreValid = true;
         this.invalidError = undefined;
 
-        if ((!this.generalFeedback.detailText || this.generalFeedback.detailText.length === 0) && this.referencedFeedback && this.referencedFeedback.length === 0) {
+        if ((!this.generalFeedback.detailText || this.generalFeedback.detailText.length === 0) && this.unreferencedFeedback && this.unreferencedFeedback.length === 0) {
             this.totalScore = 0;
             this.assessmentsAreValid = false;
             return;
         }
 
-        let credits = this.referencedFeedback.map((assessment) => assessment.credits);
+        let credits = this.unreferencedFeedback.map((assessment) => assessment.credits);
 
         if (!this.invalidError && !credits.every((credit) => credit && !isNaN(credit))) {
             this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidScoreMustBeNumber';
@@ -343,7 +352,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             credits = credits.filter((credit) => credit && !isNaN(credit));
         }
 
-        if (!this.invalidError && !this.referencedFeedback.every((feedback) => feedback.credits !== 0)) {
+        if (!this.invalidError && !this.unreferencedFeedback.every((feedback) => feedback.credits !== 0)) {
             this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidNeedScore';
             this.assessmentsAreValid = false;
         }
@@ -441,7 +450,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         } else {
             this.generalFeedback = new Feedback();
         }
-        this.referencedFeedback = feedbacks;
+        this.unreferencedFeedback = feedbacks;
     }
 
     get readOnly(): boolean {

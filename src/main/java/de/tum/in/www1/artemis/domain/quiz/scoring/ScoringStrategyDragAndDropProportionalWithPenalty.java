@@ -5,7 +5,7 @@ import java.util.Set;
 import de.tum.in.www1.artemis.domain.quiz.*;
 
 /**
- * Proportional with Penalty means that every correct mapping increases the score by x and every incorrect mapping decreases the score by x where x = maxScore /
+ * Proportional with penalty means that every correct mapping increases the score by x and every incorrect mapping decreases the score by x where x = maxScore /
  * numberOfDropLocationsThatShouldHaveAMapping if the result is negative, a score of 0 is given instead
  */
 public class ScoringStrategyDragAndDropProportionalWithPenalty implements ScoringStrategy {

@@ -29,6 +29,7 @@ import { CourseLearningGoalsComponent } from './course-learning-goals/course-lea
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
+import { CourseExerciseDetailsModule } from 'app/overview/exercise-details/course-exercise-details.module';
 
 @NgModule({
     imports: [
@@ -51,6 +52,7 @@ import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/co
         ArtemisTeamModule,
         RatingModule,
         ArtemisLearningGoalsModule,
+        CourseExerciseDetailsModule, // Important: at the moment, we cannot lazy load this module, because otherwise the LTI integration won't work any more
     ],
     declarations: [
         CoursesComponent,

@@ -25,11 +25,11 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
@@ -61,13 +61,10 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     ProgrammingExerciseTestCaseService testCaseService;
 
     @Autowired
-    ProgrammingExerciseService programmingExerciseService;
+    ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
     StaticCodeAnalysisService staticCodeAnalysisService;
-
-    @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
     ProgrammingExerciseGradingService gradingService;
@@ -76,17 +73,23 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
     private ProgrammingExercise programmingExercise;
 
+    private ProgrammingExerciseStudentParticipation participation;
+
     private Result result;
 
     @BeforeEach
     public void setUp() {
         database.addUsers(5, 1, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
-        result = new Result();
+
         programmingExerciseSCAEnabled = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         database.addTestCasesToProgrammingExercise(programmingExerciseSCAEnabled);
         var programmingExercises = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations();
         programmingExercise = programmingExercises.get(0);
+
+        participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        result = new Result();
+        result.setParticipation(participation);
         bambooRequestMockProvider.enableMockingOfRequests();
     }
 
@@ -107,7 +110,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
-    public void shouldRecalculateScoreBasedOnTestCasesWeight() {
+    public void shouldRecalculateScoreBasedOnTestCasesWeightAutomatic() {
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
@@ -125,6 +128,33 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
+    }
+
+    @Test
+    public void shouldRecalculateScoreBasedOnTestCasesWeightManual() {
+        List<Feedback> feedbacks = new ArrayList<>();
+        // we deliberately don't set the credits here, null must work as well
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test4").positive(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("manual").positive(false).type(FeedbackType.MANUAL_UNREFERENCED));
+        result.feedbacks(feedbacks);
+        result.successful(false);
+        result.rated(true);
+        result.assessmentType(AssessmentType.SEMI_AUTOMATIC);
+        Long scoreBeforeUpdate = result.getScore();
+
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
+
+        Long expectedScore = 25L;
+
+        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
+        assertThat(result.getScore()).isEqualTo(expectedScore);
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        assertThat(result.getFeedbacks().stream().filter(f -> f.getType() == FeedbackType.MANUAL_UNREFERENCED)).isNotEmpty();
+        assertThat(result.getResultString()).isEqualTo(String.format("1 of 1 passed, %.1f of 42 points", 10.5));
     }
 
     @Test
@@ -392,7 +422,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(programmingExercise.getId());
 
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
@@ -418,7 +448,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         // Tests
-        programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(programmingExercise.getId());
 
         // template 0 %
         {

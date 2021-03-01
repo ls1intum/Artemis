@@ -27,6 +27,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
+import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 
 /**
  * Filter properties for a result
@@ -209,11 +210,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Opens the repository for a result
-     * @param result Result for which to open the repository
+     * Returns the link to the repository of a result
+     * @param result Result for which to get the link for
      */
-    goToRepository(result: Result) {
-        window.open((result.participation! as ProgrammingExerciseStudentParticipation).repositoryUrl);
+    getRepositoryLink(result: Result) {
+        return (result.participation! as ProgrammingExerciseStudentParticipation).repositoryUrl;
     }
 
     /**
@@ -326,6 +327,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     formatDate(date: Moment | Date | undefined) {
-        return date ? moment(date).format('MMM DD YYYY, HH:mm:ss') : '';
+        // TODO: we should try to use the artemis date pipe here
+        return date ? moment(date).format(defaultLongDateTimeFormat) : '';
     }
 }

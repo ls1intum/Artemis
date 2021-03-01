@@ -6,6 +6,7 @@ import java.util.*;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
@@ -247,30 +248,9 @@ public class QuizExercise extends Exercise {
         return quizQuestions;
     }
 
-    /**
-     * 1. add the new QuizQuestion object to the QuizQuestion-List
-     * 2. add backward relation in the quizQuestion-object
-     *
-     * @param quizQuestion the new QuizQuestion object which will be added
-     * @return this QuizExercise-object
-     */
-    public QuizExercise addQuestions(QuizQuestion quizQuestion) {
+    public void addQuestions(QuizQuestion quizQuestion) {
         this.quizQuestions.add(quizQuestion);
         quizQuestion.setExercise(this);
-        return this;
-    }
-
-    /**
-     * 1. remove the given QuizQuestion object in the QuizQuestion-List
-     * 2. remove backward relation in the quizQuestion-object
-     *
-     * @param quizQuestion the QuizQuestion object which should be removed
-     * @return this QuizExercise-object
-     */
-    public QuizExercise removeQuestions(QuizQuestion quizQuestion) {
-        this.quizQuestions.remove(quizQuestion);
-        quizQuestion.setExercise(null);
-        return this;
     }
 
     public void setQuizQuestions(List<QuizQuestion> quizQuestions) {
@@ -338,9 +318,9 @@ public class QuizExercise extends Exercise {
      */
     public Long getScoreForSubmission(QuizSubmission quizSubmission) {
         double score = getScoreInPointsForSubmission(quizSubmission);
-        double maxScore = getMaxTotalScore();
+        double maxPoints = getOverallQuizPoints();
         // map the resulting score to the 0 to 100 scale
-        return Math.round(100.0 * score / maxScore);
+        return Math.round(100.0 * score / maxPoints);
     }
 
     /**
@@ -524,15 +504,15 @@ public class QuizExercise extends Exercise {
      * @return the sum of all the quizQuestions' maximum scores
      */
     @JsonIgnore
-    public Double getMaxTotalScore() {
-        double maxScore = 0.0;
+    public Double getOverallQuizPoints() {
+        double maxPoints = 0.0;
         // iterate through all quizQuestions of this quiz and add up the score
         if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
             for (QuizQuestion quizQuestion : getQuizQuestions()) {
-                maxScore += quizQuestion.getPoints();
+                maxPoints += quizQuestion.getPoints();
             }
         }
-        return maxScore;
+        return maxPoints;
     }
 
     @Override
@@ -543,7 +523,7 @@ public class QuizExercise extends Exercise {
             return score;
         }
         else if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
-            return getMaxTotalScore();
+            return getOverallQuizPoints();
         }
         return null;
     }
@@ -558,17 +538,17 @@ public class QuizExercise extends Exercise {
             return;
         }
 
-        double quizScore = getMaxTotalScore();
+        double quizPoints = getOverallQuizPoints();
 
         // add new PointCounter
-        for (double i = 0.0; i <= quizScore; i++) {  // for variable ScoreSteps change: i++ into: i= i + scoreStep
+        for (double i = 0.0; i <= quizPoints; i++) {  // for variable ScoreSteps change: i++ into: i= i + scoreStep
             quizPointStatistic.addScore(i);
         }
         // delete old PointCounter
         Set<PointCounter> pointCounterToDelete = new HashSet<>();
         for (PointCounter pointCounter : quizPointStatistic.getPointCounters()) {
             if (pointCounter.getId() != null) {                                                                                        // for variable ScoreSteps add:
-                if (pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 || quizQuestions == null
+                if (pointCounter.getPoints() > quizPoints || pointCounter.getPoints() < 0 || quizQuestions == null
                         || quizQuestions.isEmpty()/* || (pointCounter.getPoints()% scoreStep) != 0 */) {
                     pointCounterToDelete.add(pointCounter);
                     pointCounter.setQuizPointStatistic(null);
@@ -675,6 +655,25 @@ public class QuizExercise extends Exercise {
             if (pointCounter.getId() != null) {
                 pointCounter.setQuizPointStatistic(getQuizPointStatistic());
             }
+        }
+    }
+
+    /**
+     * get the view for students in the given quiz
+     *
+     * @return the view depending on the current state of the quiz
+     */
+    @JsonIgnore
+    @NotNull
+    public Class<?> viewForStudentsInQuizExercise() {
+        if (!isStarted()) {
+            return QuizView.Before.class;
+        }
+        else if (isSubmissionAllowed()) {
+            return QuizView.During.class;
+        }
+        else {
+            return QuizView.After.class;
         }
     }
 
