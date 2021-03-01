@@ -1262,11 +1262,11 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         complaintResponseRepository.saveAndFlush(complaintResponse);
 
         // could throw exception
-        List<Feedback> feedback = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        List<Feedback> feedback = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");  // 1,5/10 points
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedback).complaintResponse(complaintResponse);
         Result resultAfterComplaint = assessmentService.updateAssessmentAfterComplaint(submission.getLatestResult(), modelingExercise, assessmentUpdate);
 
-        List<Feedback> overrideFeedback = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54745.json"); // 4pt
+        List<Feedback> overrideFeedback = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54745.json"); // 4/10 points
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
         Result overwrittenResult = request.putWithResponseBodyAndParams(
