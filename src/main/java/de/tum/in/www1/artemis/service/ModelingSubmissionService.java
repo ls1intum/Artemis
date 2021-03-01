@@ -12,9 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -160,13 +158,13 @@ public class ModelingSubmissionService extends SubmissionService {
 
         participation.addSubmission(modelingSubmission);
 
-        try {
-            notifyCompass(modelingSubmission, modelingExercise);
-        }
-        catch (Exception ex) {
-            log.warn("There was an exception when notifying Compass about a new modeling submission with error message: " + ex.getMessage()
-                    + ". Artemis will ignore this error and continue to save the modeling submission", ex);
-        }
+        // try {
+        // notifyCompass(modelingSubmission, modelingExercise);
+        // }
+        // catch (Exception ex) {
+        // log.warn("There was an exception when notifying Compass about a new modeling submission with error message: " + ex.getMessage()
+        // + ". Artemis will ignore this error and continue to save the modeling submission", ex);
+        // }
         participation.setInitializationState(InitializationState.FINISHED);
 
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
@@ -227,24 +225,24 @@ public class ModelingSubmissionService extends SubmissionService {
      * @return the updated modeling submission
      */
     private ModelingSubmission assignResultWithFeedbackSuggestionsToSubmission(ModelingSubmission modelingSubmission) {
-        var existingResult = modelingSubmission.getLatestResult();
-        if (existingResult != null && existingResult.getAssessmentType() != null && existingResult.getAssessmentType().equals(AssessmentType.MANUAL)) {
-            return modelingSubmission;
-        }
-        var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
-        long exerciseId = studentParticipation.getExercise().getId();
-        Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(modelingSubmission.getId(), exerciseId);
-        if (automaticResult != null) {
-            automaticResult.setSubmission(null);
-            automaticResult.setParticipation(modelingSubmission.getParticipation());
-            automaticResult = resultRepository.save(automaticResult);
-
-            automaticResult.setSubmission(modelingSubmission);
-            modelingSubmission.addResult(automaticResult);
-            modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
-
-            compassService.removeSemiAutomaticResultForSubmission(modelingSubmission.getId(), exerciseId);
-        }
+        // var existingResult = modelingSubmission.getLatestResult();
+        // if (existingResult != null && existingResult.getAssessmentType() != null && (existingResult.getAssessmentType().equals(AssessmentType.MANUAL))) {
+        // return modelingSubmission;
+        // }
+        // var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        // long exerciseId = studentParticipation.getExercise().getId();
+        // Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(modelingSubmission.getId(), exerciseId);
+        // if (automaticResult != null) {
+        // automaticResult.setSubmission(null);
+        // automaticResult.setParticipation(modelingSubmission.getParticipation());
+        // automaticResult = resultRepository.save(automaticResult);
+        //
+        // automaticResult.setSubmission(modelingSubmission);
+        // modelingSubmission.addResult(automaticResult);
+        // modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
+        //
+        // compassService.removeSemiAutomaticResultForSubmission(modelingSubmission.getId(), exerciseId);
+        // }
 
         return modelingSubmission;
     }
