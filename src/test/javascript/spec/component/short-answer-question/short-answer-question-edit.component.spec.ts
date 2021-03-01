@@ -160,11 +160,11 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         component.addTextSolution();
 
-        expect(component.question.solutions!.length).to.equal(3);
+        expect(component.question.solutions!.length).to.equal(3); // 2 -> 3
 
         component.deleteSolution(shortAnswerSolution2);
 
-        expect(component.question.solutions!.length).to.equal(2);
+        expect(component.question.solutions!.length).to.equal(2); // 3 -> 2
     });
 
     it('should add spot at cursor visual mode', () => {
