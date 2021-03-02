@@ -162,6 +162,17 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
+    public void testCreateTeam_InvalidShortName_BadRequest() throws Exception {
+        Team team = new Team();
+        team.setName("1 Invalid Name");
+        team.setShortName("1InvalidName");
+        team.setExercise(exercise);
+        team.setStudents(students);
+        request.postWithResponseBody(resourceUrl(), team, Team.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testUpdateTeam() throws Exception {
         final String TEAM_NAME_UPDATED = "Team Updated";
 

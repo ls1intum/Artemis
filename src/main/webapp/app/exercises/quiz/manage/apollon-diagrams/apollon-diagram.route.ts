@@ -14,7 +14,6 @@ export const apollonDiagramsRoutes: Routes = [
         },
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.apollonDiagram.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -27,7 +26,6 @@ export const apollonDiagramsRoutes: Routes = [
         },
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.apollonDiagram.detail.title',
         },
         canActivate: [UserRouteAccessService],
