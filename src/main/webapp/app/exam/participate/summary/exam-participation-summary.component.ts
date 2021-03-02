@@ -152,4 +152,14 @@ export class ExamParticipationSummaryComponent implements OnInit {
         }
         return false;
     }
+
+    isBeforeStudentReviewEnd() {
+        if (this.isTestRun) {
+            return true;
+        }
+        if (this.studentExam?.exam?.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
+            return this.serverDateService.now().isBefore(this.studentExam.exam.examStudentReviewEnd);
+        }
+        return false;
+    }
 }

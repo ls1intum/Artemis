@@ -217,6 +217,7 @@
             "courseName": "Kursname",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
+            "studentReviewEnabled": "Klausureinsicht ist offen",
             "maxPoints": "Anzahl an erreichbaren Punkten",
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
             "numberOfCorrectionRoundsInExam": "Anzahl der Korrekturrunden der Klausur",
