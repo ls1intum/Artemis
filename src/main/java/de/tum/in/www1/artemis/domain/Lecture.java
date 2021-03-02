@@ -102,10 +102,9 @@ public class Lecture extends DomainObject {
         return attachments;
     }
 
-    public Lecture addAttachments(Attachment attachment) {
+    public void addAttachments(Attachment attachment) {
         this.attachments.add(attachment);
         attachment.setLecture(this);
-        return this;
     }
 
     public void setAttachments(Set<Attachment> attachments) {
@@ -123,11 +122,6 @@ public class Lecture extends DomainObject {
     public void addLectureUnit(LectureUnit lectureUnit) {
         this.lectureUnits.add(lectureUnit);
         lectureUnit.setLecture(this);
-    }
-
-    public void removeLectureUnit(LectureUnit lectureUnit) {
-        this.lectureUnits.remove(lectureUnit);
-        lectureUnit.setLecture(null);
     }
 
     public Set<StudentQuestion> getStudentQuestions() {
