@@ -26,7 +26,6 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     public weeklyLecturesGrouped: object;
 
     public exerciseCountMap: Map<string, number>;
-    public totalAttachmentCount: number;
 
     constructor(
         private courseService: CourseManagementService,
@@ -65,7 +64,6 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
 
     private onCourseLoad() {
         this.groupLectures(this.DUE_DATE_DESC);
-        this.totalAttachmentCount = this.getAttachmentCount();
     }
 
     public groupLectures(selectedOrder: number): void {
@@ -127,9 +125,5 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
 
             return selectedOrder * (aValue - bValue);
         });
-    }
-
-    private getAttachmentCount() {
-        return this.course && this.course.lectures ? this.course.lectures.reduce((prev, el) => prev + (el.attachments ? el.attachments.length : 0), 0) : 0;
     }
 }

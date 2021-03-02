@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -129,7 +130,7 @@ public class CourseExportService {
      * Exports all exams of the course by zipping each one separately and adds them into the directory
      * outputDir/exams/
      *
-     * @param course       The course where the exercises are located
+     * @param course       The course where the exams are located
      * @param outputDir    The directory that will be used to store the exams
      * @param exportErrors List of failures that occurred during the export
      */
@@ -137,16 +138,9 @@ public class CourseExportService {
         Path examsDir = Path.of(outputDir, "exams");
         try {
             Files.createDirectory(examsDir);
+            List<Exam> exams = examRepository.findByCourseId(course.getId());
+            exams.forEach(exam -> exportExam(exam.getId(), examsDir.toString(), exportErrors));
 
-            // Lazy load the exams of the course.
-            var courseWithExams = courseRepository.findWithEagerLecturesAndExamsById(course.getId());
-            if (courseWithExams.isPresent()) {
-                var exams = courseWithExams.get().getExams();
-                exams.forEach(exam -> exportExam(exam.getId(), examsDir.toString(), exportErrors));
-            }
-            else {
-                logMessageAndAppendToList("Failed to export exams of course " + course.getId() + " because the course doesn't exist.", exportErrors);
-            }
         }
         catch (IOException e) {
             logMessageAndAppendToList("Failed to create course exams directory " + examsDir + ".", exportErrors);
