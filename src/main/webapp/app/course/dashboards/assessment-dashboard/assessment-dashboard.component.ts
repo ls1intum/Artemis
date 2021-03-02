@@ -36,6 +36,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
     numberOfSubmissions = new DueDateStat();
     totalNumberOfAssessments = new DueDateStat();
     numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()];
+    numberOfCorrectionRounds = 1;
     numberOfTutorAssessments = 0;
     numberOfComplaints = 0;
     numberOfOpenComplaints = 0;
@@ -125,26 +126,29 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                 (res: HttpResponse<StatsForDashboard>) => {
                     this.stats = StatsForDashboard.from(res.body!);
                     this.numberOfSubmissions = this.stats.numberOfSubmissions;
-                    this.totalNumberOfAssessments = this.stats.totalNumberOfAssessments;
                     this.numberOfAssessmentsOfCorrectionRounds = this.stats.numberOfAssessmentsOfCorrectionRounds;
+
+                    this.totalNumberOfAssessments = new DueDateStat();
+                    for (const dueDateStat of this.numberOfAssessmentsOfCorrectionRounds) {
+                        this.totalNumberOfAssessments.inTime += dueDateStat.inTime;
+                    }
+                    this.numberOfCorrectionRounds = this.numberOfAssessmentsOfCorrectionRounds.length;
+
                     this.numberOfComplaints = this.stats.numberOfComplaints;
                     this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
-                    this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
-                    this.numberOfOpenMoreFeedbackRequests = this.stats.numberOfOpenMoreFeedbackRequests;
                     this.numberOfAssessmentLocks = this.stats.numberOfAssessmentLocks;
+
                     const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor.id);
                     if (tutorLeaderboardEntry) {
                         this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
                         this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
-                        this.numberOfTutorMoreFeedbackRequests = tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests;
                     } else {
-                        this.numberOfTutorAssessments = 0;
-                        this.numberOfTutorComplaints = 0;
-                        this.numberOfTutorMoreFeedbackRequests = 0;
+                        this.numberOfTutorAssessments = 13;
+                        this.numberOfTutorComplaints = 13;
                     }
 
                     if (this.numberOfSubmissions.total > 0) {
-                        this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / this.numberOfSubmissions.total) * 100);
+                        this.totalAssessmentPercentage = Math.floor(((this.totalNumberOfAssessments.total * this.numberOfCorrectionRounds) / this.numberOfSubmissions.total) * 100);
                     }
                 },
                 (response: string) => this.onError(response),
