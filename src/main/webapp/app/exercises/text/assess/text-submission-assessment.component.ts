@@ -38,7 +38,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     participation?: StudentParticipation;
     result?: Result;
-    generalFeedback: Feedback;
     unreferencedFeedback: Feedback[];
     complaint?: Complaint;
     totalScore: number;
@@ -68,11 +67,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     private get assessments(): Feedback[] {
-        if (Feedback.hasDetailText(this.generalFeedback)) {
-            return [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback];
-        } else {
-            return [...this.referencedFeedback, ...this.unreferencedFeedback];
-        }
+        return [...this.referencedFeedback, ...this.unreferencedFeedback];
     }
 
     constructor(
@@ -102,7 +97,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.submission = undefined;
         this.exercise = undefined;
         this.result = undefined;
-        this.generalFeedback = new Feedback();
         this.unreferencedFeedback = [];
         this.textBlockRefs = [];
         this.unusedTextBlockRefs = [];
@@ -308,11 +302,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Validate the feedback of the assessment
      */
     validateFeedback(): void {
-        const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
-        const hasUnreferencedFeedback = this.unreferencedFeedback.filter(Feedback.isPresent).length > 0;
-        const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
-
-        this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback || hasUnreferencedFeedback;
+        const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
+        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
+        // When unreferenced feedback is set, it has to be valid (score + detailed text)
+        this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
 
         this.totalScore = this.computeTotalScore(this.assessments);
     }
@@ -323,13 +316,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
         const feedbacks = this.result.feedbacks || [];
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
-        const generalFeedbackIndex = feedbacks.findIndex((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
-        if (generalFeedbackIndex !== -1) {
-            this.generalFeedback = feedbacks[generalFeedbackIndex];
-            feedbacks.splice(generalFeedbackIndex, 1);
-        } else {
-            this.generalFeedback = new Feedback();
-        }
 
         const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
