@@ -117,9 +117,9 @@ public class OrganizationService {
      * @return the persisted organization entity
      */
     public Organization add(Organization organization) {
-        organization = save(organization);
-        indexing(organization);
-        return organization;
+        Organization addedOrganization = save(organization);
+        indexing(addedOrganization);
+        return addedOrganization;
     }
 
     /**

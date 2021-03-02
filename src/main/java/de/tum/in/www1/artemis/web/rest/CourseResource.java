@@ -468,13 +468,13 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
         List<Course> allRegistrable = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations();
-        return allRegistrable.stream().filter((course -> {
+        return allRegistrable.stream().filter(course -> {
             if (course.getOrganizations() != null && course.getOrganizations().size() > 0) {
                 return checkIfUserIsMemberOfCourseOrganizations(user, course);
             } else {
                 return true;
             }
-        })).collect(Collectors.toList());
+        }).collect(Collectors.toList());
     }
 
     /**
