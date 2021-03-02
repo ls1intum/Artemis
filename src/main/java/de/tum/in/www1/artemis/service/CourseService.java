@@ -275,13 +275,13 @@ public class CourseService {
     }
 
     /**
-     * Fetches Course Management data from repository and returns a list of Course DTOs
+     * Fetches Course Management data from repository and returns a list of Courses
      *
-     * @param isOnlyActive Whether or not to include courses with a past endDate
-     * @return A list of Course DTOs for the course management overview
+     * @param onlyActive Whether or not to include courses with a past endDate
+     * @return A list of Courses for the course management overview
      */
-    public List<Course> getAllCoursesForOverview(Boolean isOnlyActive) {
-        var dateTimeNow = isOnlyActive ? ZonedDateTime.now() : null;
+    public List<Course> getAllCoursesForOverview(Boolean onlyActive) {
+        var dateTimeNow = onlyActive ? ZonedDateTime.now() : null;
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var userGroups = new ArrayList<>(user.getGroups());
         return courseRepository.getAllCoursesForOverview(dateTimeNow, authCheckService.isAdmin(user), userGroups);
