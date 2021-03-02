@@ -93,7 +93,8 @@ export class TeamsImportFromFileFormComponent {
                 throw new Error(this.translate.instant('artemisApp.team.teamName.missingTeamName'));
             }
 
-            if (!student.teamName.match(shortNamePattern)) {
+            const shortName = student.teamName.replace(/[^0-9a-z]/gi, '').toLowerCase();
+            if (!shortName.match(shortNamePattern)) {
                 throw new Error(this.translate.instant('artemisApp.team.teamName.pattern'));
             }
 
@@ -102,7 +103,7 @@ export class TeamsImportFromFileFormComponent {
             if (index === -1) {
                 const newTeam = new Team();
                 newTeam.name = student.teamName;
-                newTeam.shortName = student.teamName.replace(/[^0-9a-z]/gi, '').toLowerCase();
+                newTeam.shortName = shortName;
                 newTeam.students = [newStudent];
                 teams.push(newTeam);
             } else {

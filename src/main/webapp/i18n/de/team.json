@@ -36,7 +36,7 @@
             },
             "teamName": {
                 "missingTeamName": "Jeder Student muss einen Teamnamen erhalten.",
-                "pattern": "Der Teamname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten."
+                "pattern": "Der Teamname muss mit einem Buchstaben beginnen."
             },
             "shortName": {
                 "label": "Kurzname",
