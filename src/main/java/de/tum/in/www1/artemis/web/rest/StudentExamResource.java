@@ -638,10 +638,7 @@ public class StudentExamResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         User instructor = userRepository.getUser();
-        log.info("REST request by user: {} for exam with id {} to set student-exam {} to SUBMITTED", instructor.getLogin(), examId, studentExamId);
-        AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.TOGGLE_STUDENT_EXAM_SUBMITTED, "examId=" + examId, "user=" + instructor.getLogin(),
-                "studentExamId=" + studentExamId);
-        auditEventRepository.add(auditEvent);
+
         Optional<ResponseEntity<StudentExam>> accessFailure = examAccessService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
         if (accessFailure.isPresent()) {
             // the user must be instructor for the exam
@@ -651,11 +648,20 @@ public class StudentExamResource {
         if (studentExam.isSubmitted()) {
             return badRequest();
         }
+        if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(ZonedDateTime.now())) {
+            return forbidden();
+        }
+
         ZonedDateTime submissionTime = ZonedDateTime.now();
         studentExam.setSubmissionDate(submissionTime);
         studentExam.setSubmitted(true);
-        studentExam = studentExamRepository.save(studentExam);
-        return ResponseEntity.ok(studentExam);
+
+        log.info("REST request by user: {} for exam with id {} to set student-exam {} to SUBMITTED", instructor.getLogin(), examId, studentExamId);
+        AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.TOGGLE_STUDENT_EXAM_SUBMITTED, "examId=" + examId, "user=" + instructor.getLogin(),
+                "studentExamId=" + studentExamId);
+        auditEventRepository.add(auditEvent);
+
+        return ResponseEntity.ok(studentExamRepository.save(studentExam));
     }
 
     /**
@@ -672,10 +678,7 @@ public class StudentExamResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> unsubmitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         User instructor = userRepository.getUser();
-        log.info("REST request by user: {} for exam with id {} to set student-exam {} to UNSUBMITTED", instructor.getLogin(), examId, studentExamId);
-        AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.TOGGLE_STUDENT_EXAM_UNSUBMITTED, "examId=" + examId, "user=" + instructor.getLogin(),
-                "studentExamId=" + studentExamId);
-        auditEventRepository.add(auditEvent);
+
         Optional<ResponseEntity<StudentExam>> accessFailure = examAccessService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
         if (accessFailure.isPresent()) {
             // the user must be instructor for the exam
@@ -685,9 +688,18 @@ public class StudentExamResource {
         if (!studentExam.isSubmitted()) {
             return badRequest();
         }
+        if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(ZonedDateTime.now())) {
+            return forbidden();
+        }
+
         studentExam.setSubmissionDate(null);
         studentExam.setSubmitted(false);
-        studentExam = studentExamRepository.save(studentExam);
-        return ResponseEntity.ok(studentExam);
+
+        log.info("REST request by user: {} for exam with id {} to set student-exam {} to UNSUBMITTED", instructor.getLogin(), examId, studentExamId);
+        AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.TOGGLE_STUDENT_EXAM_UNSUBMITTED, "examId=" + examId, "user=" + instructor.getLogin(),
+                "studentExamId=" + studentExamId);
+        auditEventRepository.add(auditEvent);
+
+        return ResponseEntity.ok(studentExamRepository.save(studentExam));
     }
 }
