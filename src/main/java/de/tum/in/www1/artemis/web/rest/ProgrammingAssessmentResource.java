@@ -167,7 +167,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
         // All not automatically generated result must have a detail text
         else if (!newManualResult.getFeedbacks().isEmpty()
-                && newManualResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getType() != FeedbackType.AUTOMATIC && feedback.getDetailText() == null)) {
+                && newManualResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getType() == FeedbackType.MANUAL_UNREFERENCED && feedback.getDetailText() == null)) {
             throw new BadRequestAlertException("In case tutor feedback is present, a feedback detail text is mandatory.", ENTITY_NAME, "feedbackDetailTextNull");
         }
         else if (!newManualResult.getFeedbacks().isEmpty() && newManualResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getCredits() == null)) {

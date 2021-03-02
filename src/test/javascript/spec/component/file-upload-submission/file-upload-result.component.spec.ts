@@ -45,14 +45,11 @@ describe('FileUploadResultComponent', () => {
         const f2 = new Feedback();
         f2.credits = 2;
         f2.text = 'Example2';
-        const generalFeedback = new Feedback();
-        generalFeedback.text = 'General';
-        comp.result = <Result>{ feedbacks: [f1, f2, generalFeedback] };
+        comp.result = <Result>{ feedbacks: [f1, f2] };
 
         // check that feedback items are correctly split in the component
         expect(comp.feedbacks[0]).to.be.equal(f1);
         expect(comp.feedbacks[1]).to.be.equal(f2);
-        expect(comp.generalFeedback).to.be.equal(generalFeedback);
 
         fixture.detectChanges();
 
