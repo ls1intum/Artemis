@@ -345,6 +345,8 @@ Exercise Creation
   Alternatively, instructors can alter the task/script that executes the tools in the build plan.
   PMD and PMD CPD are a special case as both tools share a common plugin. To disable one or the other, instructors must delete the execution of a tool from the build plan.
 
+- Refer to the description of the :doc:`default static code analysis configuration<programming-sca-default-configuration>` for more detailed information
+
 .. _interactive_problem_statement:
 
 6. Adapt the interactive problem statement
