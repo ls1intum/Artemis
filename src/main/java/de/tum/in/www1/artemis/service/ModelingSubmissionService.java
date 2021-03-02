@@ -194,9 +194,9 @@ public class ModelingSubmissionService extends SubmissionService {
         var modelingSubmission = getRandomModelingSubmissionEligibleForNewAssessment(modelingExercise, isExamMode, correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
         if (lockSubmission) {
-            if (compassService.isSupported(modelingExercise) && correctionRound == 0L) {
-                modelingSubmission = assignResultWithFeedbackSuggestionsToSubmission(modelingSubmission);
-            }
+            // if (compassService.isSupported(modelingExercise) && correctionRound == 0L) {
+            // modelingSubmission = assignResultWithFeedbackSuggestionsToSubmission(modelingSubmission);
+            // }
             lockSubmission(modelingSubmission, modelingExercise, correctionRound);
         }
         return modelingSubmission;

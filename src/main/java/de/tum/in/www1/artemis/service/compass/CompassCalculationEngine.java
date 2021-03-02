@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 
-public class CompassCalculationEngine{
+public class CompassCalculationEngine {
 
     private final Logger log = LoggerFactory.getLogger(CompassCalculationEngine.class);
 
@@ -226,6 +226,19 @@ public class CompassCalculationEngine{
                 buildModel(modelId, jsonElement.getAsJsonObject());
             }
         }
+    }
+
+    /**
+     * Add a new model
+     *
+     * @param submissions the list of submissions to get models and ids from
+     */
+    public void notifyNewModels(List<ModelingSubmission> submissions) {
+        lastUsed = LocalDateTime.now();
+        for (ModelingSubmission submission : submissions) {
+            notifyNewModel(submission.getModel(), submission.getId());
+        }
+
     }
 
     /**

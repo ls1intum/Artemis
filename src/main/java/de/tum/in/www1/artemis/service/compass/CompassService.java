@@ -222,6 +222,10 @@ public class CompassService {
         }
 
         CompassCalculationEngine engine = compassCalculationEngines.get(exerciseId);
+
+        List<ModelingSubmission> modelingSubmissions = modelingSubmissionRepository.findSubmittedByExerciseIdWithEagerResultsAndFeedback(exerciseId);
+        engine.notifyNewModels(modelingSubmissions);
+
         engine.notifyNewAssessment(modelingAssessment, submissionId);
 
         // Check all models for new automatic assessments
@@ -538,6 +542,9 @@ public class CompassService {
      * @return a list of modelIds that should be assessed next
      */
     public List<Long> getCalculationEngineModelsWaitingForAssessment(Long exerciseId) {
-        return compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
+        List<ModelingSubmission> modelingSubmissions = modelingSubmissionRepository.findSubmittedByExerciseIdWithEagerResultsAndFeedback(exerciseId);
+        CompassCalculationEngine engine = compassCalculationEngines.get(exerciseId);
+        engine.notifyNewModels(modelingSubmissions);
+        return engine.getModelsWaitingForAssessment();
     }
 }
