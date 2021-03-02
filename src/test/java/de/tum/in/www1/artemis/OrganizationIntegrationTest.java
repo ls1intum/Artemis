@@ -101,6 +101,13 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         Set<Organization> organizations = new HashSet<>();
         organizations.add(organization);
 
+        Organization otherOrganization = database.createOrganization();
+        otherOrganization.setName("other");
+        otherOrganization.setShortName("other");
+        otherOrganization.setEmailPattern("other");
+        Set<Organization> otherOrganizations = new HashSet<>();
+        otherOrganizations.add(otherOrganization);
+
         User student = ModelFactory.generateActivatedUser("ab12cde");
         student.setOrganizations(organizations);
         userRepo.save(student);
@@ -109,19 +116,29 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "instructor");
         Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "instructor");
+        Course course3 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "instructor");
+
         course1.setRegistrationEnabled(true);
         course2.setRegistrationEnabled(true);
         course1.setOrganizations(organizations);
+        course3.setOrganizations(otherOrganizations);
 
         course1 = courseRepo.save(course1);
         course2 = courseRepo.save(course2);
+        course3 = courseRepo.save(course3);
+
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course1.getStudentGroupName()));
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course2.getStudentGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course3.getStudentGroupName()));
+
 
         User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/register", null, User.class, HttpStatus.OK);
         assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
 
-        request.postWithResponseBody("/api/courses/" + course2.getId() + "/register", null, User.class, HttpStatus.BAD_REQUEST);
+        updatedStudent = request.postWithResponseBody("/api/courses/" + course2.getId() + "/register", null, User.class, HttpStatus.OK);
+        assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course2.getStudentGroupName());
+
+        request.postWithResponseBody("/api/courses/" + course3.getId() + "/register", null, User.class, HttpStatus.BAD_REQUEST);
     }
 
     /**
