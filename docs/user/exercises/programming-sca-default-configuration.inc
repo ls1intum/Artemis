@@ -1,23 +1,12 @@
-Static Code Analysis Default Configuration
-==========================================
-
-The following sections list the rules that are active in the default static code analysis configuration.
-
-.. contents:: Content of this document
-    :local:
-    :depth: 2
-
-|
-
 Java
-----
+^^^^
 
-1. Spotbugs
+1. **Spotbugs**
 
 All tool categories and their rules are active by default except for the NOISE and EXPERIMENTAL category.
-Refer to the `Spotbugs documentation <https://pmd.github.io/latest/pmd_rules_java.html>`__ for a description of all rules.
+Refer to the `Spotbugs documentation <https://spotbugs.readthedocs.io/en/stable/bugDescriptions.html#>`__ for a description of all rules.
 
-2. Checkstyle
+2. **Checkstyle**
 
 For a description of the rules refer to the `Checkstyle documentation <https://checkstyle.sourceforge.io/checks.html>`__.
 
@@ -73,8 +62,6 @@ For a description of the rules refer to the `Checkstyle documentation <https://c
 |                                        | FileLength                   |                                                                          |
 |                                        +------------------------------+--------------------------------------------------------------------------+
 |                                        | LineLength                   | max="120"                                                                |
-|                                        |                              +--------------------------------------------------------------------------+
-|                                        |                              | ignorePattern="^package.*|^import.*|a href|href|http://|https://|ftp://" |
 +----------------------------------------+------------------------------+--------------------------------------------------------------------------+
 | Imports/Naming & Formatting            | IllegalImport                |                                                                          |
 |                                        +------------------------------+--------------------------------------------------------------------------+
@@ -141,7 +128,7 @@ For a description of the rules refer to the `Checkstyle documentation <https://c
 |                                        | Translation                  |                                                                          |
 +----------------------------------------+------------------------------+--------------------------------------------------------------------------+
 
-3. PMD
+3. **PMD**
 
 For a description of the rules refer to the `PMD documentation <https://pmd.github.io/latest/pmd_rules_java.html>`__.
 
@@ -255,9 +242,9 @@ For a description of the rules refer to the `PMD documentation <https://pmd.gith
 | Security/Security             | All rules                                   |
 +-------------------------------+---------------------------------------------+
 
-4. PMD CPD
+4. **PMD CPD**
 
-Artemis uses the following configuration by default to detect code duplications for the category **Copy/Paste Detection**.
+Artemis uses the following default configuration to detect code duplications for the category **Copy/Paste Detection**.
 For a description of the various PMD CPD configuration parameters refer to the `PMD CPD documentation <https://pmd.github.io/latest/pmd_userdocs_cpd.html>`__.
 
 .. code-block:: xml
