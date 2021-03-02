@@ -23,8 +23,6 @@ import { stub } from 'sinon';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 
-/* tslint:disable:no-unused-variable */
-
 chai.use(sinonChai);
 const expect = chai.expect;
 
@@ -177,7 +175,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const node = {} as Node;
 
         const returnValue = ({
-            // tslint:disable-next-line:no-unused-vars
+            // tslint:disable-next-line:no-unused-variable
             contains(_other: Node | null): boolean {
                 return true;
             },
