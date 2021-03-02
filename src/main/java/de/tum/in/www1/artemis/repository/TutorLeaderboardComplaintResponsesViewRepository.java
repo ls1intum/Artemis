@@ -12,5 +12,7 @@ public interface TutorLeaderboardComplaintResponsesViewRepository extends JpaRep
 
     List<TutorLeaderboardComplaintResponsesView> findAllByCourseId(long courseId);
 
+    List<TutorLeaderboardComplaintResponsesView> findAllByExamId(long examId);
+
     List<TutorLeaderboardComplaintResponsesView> findAllByLeaderboardId_ExerciseId(long exerciseId);
 }

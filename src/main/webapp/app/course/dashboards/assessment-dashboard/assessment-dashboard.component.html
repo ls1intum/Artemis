@@ -98,11 +98,12 @@
                             <ul>
                                 <li>
                                     <b>{{ 'artemisApp.assessmentDashboard.totalAssessments' | translate }}:</b>
-                                    {{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total }} ({{ totalAssessmentPercentage }}%)
+                                    {{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total * numberOfCorrectionRounds }} ({{ totalAssessmentPercentage }}%)
                                 </li>
                                 <li *ngIf="isExamMode">
                                     <b>{{ 'artemisApp.assessmentDashboard.totalAssessmentsForCorrectionrounds' | translate }}:</b>
-                                    {{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total }} ({{ totalAssessmentPercentage }}%)
+                                    {{ numberOfAssessmentsOfCorrectionRounds[0].inTime }} -
+                                    <span *ngIf="numberOfAssessmentsOfCorrectionRounds[1]">{{ numberOfAssessmentsOfCorrectionRounds[1].inTime }}</span>
                                 </li>
                                 <li>
                                     <b>{{ 'artemisApp.assessmentDashboard.totalComplaints' | translate }}:</b> {{ numberOfComplaints }}

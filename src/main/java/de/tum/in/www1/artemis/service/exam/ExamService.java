@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.TutorLeaderboardService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
@@ -74,11 +75,13 @@ public class ExamService {
 
     private final SubmissionRepository submissionRepository;
 
+    private final TutorLeaderboardService tutorLeaderboardService;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService, ExerciseService exerciseService,
             InstanceMessageSendService instanceMessageSendService, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository,
             ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository,
-            SubmissionRepository submissionRepository) {
+            SubmissionRepository submissionRepository, TutorLeaderboardService tutorLeaderboardService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -93,6 +96,7 @@ public class ExamService {
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
+        this.tutorLeaderboardService = tutorLeaderboardService;
     }
 
     /**
@@ -755,11 +759,10 @@ public class ExamService {
      * Gets a collection of useful statistics for the tutor exam-assessment-dashboard, including: - number of submissions to the course - number of
      * assessments - number of assessments assessed by the tutor - number of complaints
      *
-     * @param courseId  - the id of course to retrieve
      * @param examId    - the id of the exam to retrieve stats from
      * @return data about a exam including all exercises, plus some data for the tutor as tutor status for assessment
      */
-    public StatsForInstructorDashboardDTO getStatsForExamAssessmentDashboard(Long courseId, Long examId) {
+    public StatsForInstructorDashboardDTO getStatsForExamAssessmentDashboard(Course course, Long examId) {
         Exam exam = examRepository.findById(examId).orElseThrow();
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
@@ -774,12 +777,11 @@ public class ExamService {
         final long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(examId, ComplaintType.COMPLAINT);
         stats.setNumberOfComplaints(numberOfComplaints);
 
-        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExamId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
+        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExamId(userRepository.getUserWithGroupsAndAuthorities().getId(), examId);
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
-        // todo: add leaderboard ?
-        // List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course);
-        // stats.setTutorLeaderboardEntries(leaderboardEntries);
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExamLeaderboard(course, exam);
+        stats.setTutorLeaderboardEntries(leaderboardEntries);
         return stats;
     }
 }

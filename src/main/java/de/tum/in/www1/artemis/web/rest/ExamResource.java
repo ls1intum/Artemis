@@ -361,7 +361,7 @@ public class ExamResource {
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
-        return ResponseEntity.ok(examService.getStatsForExamAssessmentDashboard(courseId, examId));
+        return ResponseEntity.ok(examService.getStatsForExamAssessmentDashboard(course, examId));
     }
 
     /**
