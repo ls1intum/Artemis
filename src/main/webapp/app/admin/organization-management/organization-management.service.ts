@@ -100,22 +100,4 @@ export class OrganizationManagementService {
     addUserToOrganization(organizationId: number, userLogin: String): Observable<HttpResponse<void>> {
         return this.http.post<void>(`${this.resourceUrl}/user/${userLogin}/organization/${organizationId}`, {}, { observe: 'response' });
     }
-
-    /**
-     *  Send a DELETE request to remove a course from an organization
-     * @param organizationId the id of the organization to remove the course from
-     * @param courseId the course id to remove from the organization
-     */
-    removeCourseFromOrganization(organizationId: number, courseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/course/${courseId}/organization/${organizationId}`, { observe: 'response' });
-    }
-
-    /**
-     * Send a POST request to add a course to an organization
-     * @param organizationId the id of the organization to add the course to
-     * @param courseId the id of the course to add
-     */
-    addCourseToOrganization(organizationId: number, courseId: number): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.resourceUrl}/course/${courseId}/organization/${organizationId}`, {}, { observe: 'response' });
-    }
 }
