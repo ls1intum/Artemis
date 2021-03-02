@@ -43,7 +43,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     generalFeedback: Feedback = new Feedback();
     // TODO: rename this, because right now there is no reference
     unreferencedFeedback: Feedback[] = [];
-    exercise: FileUploadExercise;
+    exercise?: FileUploadExercise;
     exerciseId: number;
     totalScore = 0;
     assessmentsAreValid: boolean;
@@ -218,13 +218,13 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     assessNext() {
         this.generalFeedback = new Feedback();
         this.unreferencedFeedback = [];
-        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, false, this.correctionRound).subscribe(
+        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise!.id!, false, this.correctionRound).subscribe(
             (response: FileUploadSubmission) => {
                 this.unassessedSubmission = response;
                 this.router.onSameUrlNavigation = 'reload';
                 // navigate to the new assessment page to trigger re-initialization of the components
                 this.router.navigateByUrl(
-                    `/course-management/${this.courseId}/file-upload-exercises/${this.exercise.id}/submissions/${this.unassessedSubmission.id}/assessment`,
+                    `/course-management/${this.courseId}/file-upload-exercises/${this.exercise!.id!}/submissions/${this.unassessedSubmission.id}/assessment`,
                     {},
                 );
             },
@@ -358,13 +358,15 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         }
         this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
         // Cap totalScore to maxPoints
-        const maxPoints = this.exercise.maxPoints! + this.exercise.bonusPoints! ?? 0.0;
-        if (this.totalScore > maxPoints) {
-            this.totalScore = maxPoints;
-        }
-        // Do not allow negative score
-        if (this.totalScore < 0) {
-            this.totalScore = 0;
+        if (this.exercise) {
+            const maxPoints = this.exercise.maxPoints! + this.exercise.bonusPoints! ?? 0.0;
+            if (this.totalScore > maxPoints) {
+                this.totalScore = maxPoints;
+            }
+            // Do not allow negative score
+            if (this.totalScore < 0) {
+                this.totalScore = 0;
+            }
         }
     }
 
