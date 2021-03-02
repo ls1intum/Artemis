@@ -15,6 +15,13 @@ public class ExerciseDateService {
         this.examDateService = examDateService;
     }
 
+    /**
+     * Check if due date of exercise has passed OR if the exam is over.
+     * An exam is over if all the last possible end date (e.g., extension) has passed.
+     *
+     * @param exercise Exercise in question
+     * @return exercise has ended
+     */
     public boolean hasEnded(Exercise exercise) {
         if (!exercise.isExamExercise()) {
             return exercise.isEnded();
