@@ -175,7 +175,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const node = {} as Node;
 
         const returnValue = ({
-            contains(other: Node | null): boolean {
+            contains(_other: Node | null): boolean {
                 return true;
             },
         } as unknown) as HTMLElement;
@@ -184,8 +184,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const range = {
             cloneRange(): Range {
                 return {
-                    selectNodeContents(node1: Node) {},
-                    setEnd(node2: Node, offset: number) {},
+                    selectNodeContents(_node1: Node) {},
+                    setEnd(_node2: Node, _offset: number) {},
                     cloneContents() {},
                 } as Range;
             },
@@ -203,7 +203,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
                     },
                 },
             },
-            getRangeAt(index: number): Range {
+            getRangeAt(_index: number): Range {
                 return range as Range;
             },
             toString() {
@@ -213,7 +213,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         stub(window, 'getSelection').returns(nodeValue);
 
         const returnHTMLDivElement = ({
-            appendChild(param: DocumentFragment) {
+            appendChild(_param: DocumentFragment) {
                 return {} as DocumentFragment;
             },
             innerHTML: 'innerHTML',
@@ -222,7 +222,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         const markdownHelper = {
             length: 1,
-            substring(start: number, end?: number): string {
+            substring(_start: number, _end?: number): string {
                 return '';
             },
         } as String;
