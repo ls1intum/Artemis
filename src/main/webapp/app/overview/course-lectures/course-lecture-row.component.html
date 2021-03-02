@@ -20,9 +20,6 @@
             </div>
         </div>
         <div class="row">
-            <div class="col">
-                <span *ngIf="lecture?.attachments">{{ lecture?.attachments?.length }} {{ 'artemisApp.courseOverview.lectureDetails.attachments' | translate }}</span>
-            </div>
             <div class="col-auto mb-2" *ngIf="lecture?.startDate; else noDate" [ngClass]="getUrgentClass(lecture.startDate)">
                 <span class="d-none d-sm-inline"> {{ lecture.startDate | artemisDate: 'long-date' }} </span>
                 ({{ lecture.startDate | amTimeAgo }})
