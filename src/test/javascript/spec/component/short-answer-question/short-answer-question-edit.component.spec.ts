@@ -23,6 +23,8 @@ import { stub } from 'sinon';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 
+/* tslint:disable:no-unused-variable */
+
 chai.use(sinonChai);
 const expect = chai.expect;
 
