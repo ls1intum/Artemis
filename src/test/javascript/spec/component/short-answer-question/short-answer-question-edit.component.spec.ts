@@ -175,7 +175,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const node = {} as Node;
 
         const returnValue = ({
-            // tslint:disable-next-line:no-unused-variable
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             contains(_other: Node | null): boolean {
                 return true;
             },
