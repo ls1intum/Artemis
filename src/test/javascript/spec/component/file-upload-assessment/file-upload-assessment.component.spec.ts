@@ -2,7 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { RouterTestingModule } from '@angular/router/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { cloneDeep } from 'lodash';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
@@ -14,7 +14,7 @@ import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/router';
 import { FileUploadAssessmentComponent } from 'app/exercises/file-upload/assess/file-upload-assessment.component';
 import { DebugElement } from '@angular/core';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -46,7 +46,6 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import * as sinon from 'sinon';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 
 chai.use(sinonChai);
 
@@ -64,10 +63,12 @@ describe('FileUploadAssessmentComponent', () => {
     let router: Router;
     let navigateByUrlStub: SinonStub;
     let alertService: JhiAlertService;
-
-    const activatedRouteMock: MockActivatedRoute = new MockActivatedRoute();
+    let route: ActivatedRoute;
 
     const exercise = { id: 20, type: ExerciseType.FILE_UPLOAD, maxPoints: 100, bonusPoints: 0 } as FileUploadExercise;
+    const map1 = new Map<string, Object>().set('testRun', true).set('correction-round', 1);
+    const params1 = { exerciseId: 20, courseId: 123, submissionId: 7 };
+    const params2 = { exerciseId: 20, courseId: 123, submissionId: 'new' };
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -92,6 +93,7 @@ describe('FileUploadAssessmentComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: ComplaintService, useClass: MockComplaintService },
+                { provide: ActivatedRoute, useValue: { queryParamMap: of(map1), params: of(params1) } },
             ],
         })
             .overrideModule(ArtemisTestModule, {
@@ -132,11 +134,9 @@ describe('FileUploadAssessmentComponent', () => {
     });
 
     describe('ngOnInit', () => {
-        it('AssessNextButton should be visible', () => {
-            activatedRouteMock.testParams = { exerciseId: 1, submissionId: 'new' };
+        it('AssessNextButton should be visible', fakeAsync(() => {
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ status: 404 }));
 
-            // set all attributes for comp
             comp.ngOnInit();
 
             comp.userId = 99;
@@ -155,14 +155,11 @@ describe('FileUploadAssessmentComponent', () => {
             expect(getFirstResult(comp.submission)).to.equal(comp.result);
             const assessNextButton = debugElement.query(By.css('#assessNextButton'));
             expect(assessNextButton).to.exist;
-        });
+        }));
 
-        it('should get correctionRound', () => {
-            activatedRouteMock.testParams = { exerciseId: 1, submissionId: 'new' };
-            activatedRouteMock.params = of({ 'correction-round': 1 });
+        it('should get correctionRound', fakeAsync(() => {
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ status: 404 }));
 
-            // set all attributes for comp
             comp.ngOnInit();
 
             comp.userId = 99;
@@ -181,29 +178,77 @@ describe('FileUploadAssessmentComponent', () => {
             expect(getFirstResult(comp.submission)).to.equal(comp.result);
             const assessNextButton = debugElement.query(By.css('#assessNextButton'));
             expect(assessNextButton).to.exist;
-            expect(comp.correctionRound).to.be.equal(0);
-        });
+            expect(comp.correctionRound).to.be.equal(1);
+        }));
     });
+    describe('loadSubmission', () => {
+        it('should load submission', fakeAsync(() => {
+            const submission = createSubmission(exercise);
+            const result = createResult(submission);
+            result.hasComplaint = true;
+            const complaint = new Complaint();
+            complaint.id = 0;
+            complaint.complaintText = 'complaint';
+            complaint.resultBeforeComplaint = 'result';
+            stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
+            stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
+            comp.submission = submission;
+            setLatestSubmissionResult(comp.submission, result);
 
-    it('should load submission', () => {
-        const submission = createSubmission(exercise);
-        const result = createResult(submission);
-        result.hasComplaint = true;
-        const complaint = new Complaint();
-        complaint.id = 0;
-        complaint.complaintText = 'complaint';
-        complaint.resultBeforeComplaint = 'result';
-        stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-        stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
-        comp.submission = submission;
-        setLatestSubmissionResult(comp.submission, result);
+            fixture.detectChanges();
+            expect(comp.result).to.equal(result);
+            expect(comp.submission).to.equal(submission);
+            expect(comp.complaint).to.equal(complaint);
+            expect(comp.result.feedbacks?.length === 0).to.equal(true);
+            expect(comp.busy).to.be.false;
+        }));
 
-        fixture.detectChanges();
-        expect(comp.result).to.equal(result);
-        expect(comp.submission).to.equal(submission);
-        expect(comp.complaint).to.equal(complaint);
-        expect(comp.result.feedbacks?.length === 0).to.equal(true);
-        expect(comp.busy).to.be.false;
+        it('should load optimal submission', () => {
+            let activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+            activatedRoute.params = of(params2);
+            TestBed.inject(ActivatedRoute);
+            const submission = createSubmission(exercise);
+            const result = createResult(submission);
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(of(submission));
+            stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
+            // stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
+
+            fixture.detectChanges();
+            expect(comp.result).to.not.equal(result);
+            expect(comp.submission).to.equal(submission);
+            expect(comp.busy).to.be.true;
+        });
+
+        it('should get 404 error when loading optimal submission', () => {
+            navigateByUrlStub.returns(Promise.resolve(true));
+            let activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+            activatedRoute.params = of(params2);
+            TestBed.inject(ActivatedRoute);
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ status: 404 }));
+            fixture.detectChanges();
+            expect(navigateByUrlStub).to.have.been.called;
+            expect(comp.busy).to.be.true;
+        });
+        it('should get lock limit reached error when loading optimal submission', () => {
+            navigateByUrlStub.returns(Promise.resolve(true));
+            let activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+            activatedRoute.params = of(params2);
+            TestBed.inject(ActivatedRoute);
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ error: { errorKey: 'lockedSubmissionsLimitReached' } }));
+            fixture.detectChanges();
+            expect(navigateByUrlStub).to.have.been.called;
+            expect(comp.busy).to.be.true;
+        });
+        it('should fail to load optimal submission', () => {
+            navigateByUrlStub.returns(Promise.resolve(true));
+            let activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+            activatedRoute.params = of(params2);
+            TestBed.inject(ActivatedRoute);
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ status: 403 }));
+            fixture.detectChanges();
+            expect(navigateByUrlStub).to.have.been.called;
+            expect(comp.busy).to.be.true;
+        });
     });
 
     it('should load correct feedbacks and update general feedback', () => {
