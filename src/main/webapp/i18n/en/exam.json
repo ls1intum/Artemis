@@ -399,7 +399,7 @@
             "workingTimeCouldNotBeSaved": "The working time could not be saved.",
             "saveWorkingTimeSuccessful": "The working time was saved successfully.",
             "toggleSuccessful": "The submitted status was changed successfully.",
-            "togglefailed": "The submitted status was could not be changed!"
+            "togglefailed": "The submitted status could not be changed!"
         }
     },
     "studentExam": {
