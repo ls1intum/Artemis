@@ -9,6 +9,9 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import jplag.JPlagComparison;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 
@@ -23,7 +26,8 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
      * The result this comparison belongs to.
      */
     @ManyToOne(targetEntity = PlagiarismResult.class)
-    private PlagiarismResult<E> result;
+    @JsonIgnore
+    private PlagiarismResult<E> plagiarismResult;
 
     /**
      * First submission involved in this comparison.
@@ -87,12 +91,12 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         this.submissionB = submissionB;
     }
 
-    public PlagiarismResult<E> getResult() {
-        return result;
+    public PlagiarismResult<E> getPlagiarismResult() {
+        return plagiarismResult;
     }
 
-    public void setResult(PlagiarismResult<E> result) {
-        this.result = result;
+    public void setPlagiarismResult(PlagiarismResult<E> plagiarismResult) {
+        this.plagiarismResult = plagiarismResult;
     }
 
     public List<PlagiarismMatch> getMatches() {

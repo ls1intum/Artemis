@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import javax.persistence.Transient;
+
 import jplag.Submission;
 
 import org.slf4j.Logger;
@@ -27,6 +29,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
     /**
      * List of elements the related submission consists of.
      */
+    @Transient
     private List<E> elements;
 
     /**

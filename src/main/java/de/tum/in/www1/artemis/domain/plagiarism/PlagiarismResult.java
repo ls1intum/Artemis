@@ -40,7 +40,7 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
     /**
      * List of detected comparisons whose similarity is above the specified threshold.
      */
-    @OneToMany(mappedBy = "result", cascade = CascadeType.REMOVE, orphanRemoval = true, targetEntity = PlagiarismComparison.class)
+    @OneToMany(mappedBy = "plagiarismResult", cascade = CascadeType.ALL, orphanRemoval = true, targetEntity = PlagiarismComparison.class)
     protected List<PlagiarismComparison<E>> comparisons;
 
     /**
