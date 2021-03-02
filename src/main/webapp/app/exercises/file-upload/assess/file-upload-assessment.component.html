@@ -46,7 +46,6 @@
         <div class="col-md-6">
             <div *ngIf="invalidError" class="col-8 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
             <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateAssessment()" [readOnly]="readOnly"></jhi-unreferenced-feedback>
-            <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateAssessment()" [readOnly]="readOnly"></jhi-assessment-general-feedback>
         </div>
     </div>
 </ng-template>
