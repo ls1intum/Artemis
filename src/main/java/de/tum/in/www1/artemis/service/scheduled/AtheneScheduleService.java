@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.scheduled;
 
 import static java.time.Instant.now;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +21,7 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
 import de.tum.in.www1.artemis.service.connectors.AtheneService;
 import io.github.jhipster.config.JHipsterConstants;
@@ -44,13 +44,16 @@ public class AtheneScheduleService {
 
     private final TaskScheduler scheduler;
 
+    private final ExerciseDateService exerciseDateService;
+
     public AtheneScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseRepository textExerciseRepository,
-            @Qualifier("taskScheduler") TaskScheduler scheduler, Environment env, AtheneService atheneService) {
+            @Qualifier("taskScheduler") TaskScheduler scheduler, Environment env, AtheneService atheneService, ExerciseDateService exerciseDateService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
         this.textExerciseRepository = textExerciseRepository;
         this.scheduler = scheduler;
         this.env = env;
         this.atheneService = atheneService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     @PostConstruct
@@ -75,8 +78,9 @@ public class AtheneScheduleService {
             cancelScheduledAthene(exercise.getId());
             return;
         }
-        // ToDo Needs to be adapted for exam exercises (@Jan Philip Bernius)
-        if (exercise.getDueDate() == null || exercise.getDueDate().compareTo(ZonedDateTime.now()) < 0) {
+
+        // Cannot schedule for Exercises that have already ended
+        if (!exerciseDateService.hasEnded(exercise)) {
             return;
         }
 
@@ -99,8 +103,10 @@ public class AtheneScheduleService {
      * @param exercise exercise to schedule Athene for
      */
     public void scheduleExerciseForInstantAthene(TextExercise exercise) {
-        // TODO: sanity checks.
-        scheduler.schedule(atheneRunnableForExercise(exercise), now());
+        // Can only run Athene for Exercises that have already ended
+        if (exerciseDateService.hasEnded(exercise)) {
+            scheduler.schedule(atheneRunnableForExercise(exercise), now());
+        }
     }
 
     @NotNull
