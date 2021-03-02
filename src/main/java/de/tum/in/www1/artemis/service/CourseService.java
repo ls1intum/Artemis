@@ -346,7 +346,8 @@ public class CourseService {
     /**
      * Gets a list of maps, each map describing an entry in the database. The map has the two keys "day" and "amount",
      * which map to the date and the amount of the findings. This Map-List is taken and converted into a Integer array,
-     * containing the values for each bar of the graph
+     * containing the values for each point of the graph. In the course management overview, we want to display the last
+     * 4 weeks, each week represented by one point in the graph (Beginning with the current week)
      *
      * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
      * @param endDate the endDate
