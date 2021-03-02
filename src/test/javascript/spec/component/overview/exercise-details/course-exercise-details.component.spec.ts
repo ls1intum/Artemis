@@ -37,7 +37,7 @@ import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interac
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { SinonStub, stub } from 'sinon';
+import { restore, SinonStub, stub } from 'sinon';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -169,6 +169,10 @@ describe('CourseExerciseDetailsComponent', () => {
             });
     }));
 
+    afterEach(() => {
+        restore();
+    });
+
     it('should initialize', fakeAsync(() => {
         fixture.detectChanges();
         tick(500);
@@ -199,7 +203,8 @@ describe('CourseExerciseDetailsComponent', () => {
 
         mergeStudentParticipationStub.returns(studentParticipation);
         const changedParticipation = cloneDeep(studentParticipation);
-        changedParticipation.results = [{ ...result, id: 2 }];
+        const changedResult = { ...result, id: 2 };
+        changedParticipation.results = [changedResult];
         subscribeForParticipationChangesStub.returns(new BehaviorSubject<Participation | undefined>(changedParticipation));
 
         fixture.detectChanges();
@@ -212,7 +217,7 @@ describe('CourseExerciseDetailsComponent', () => {
         fixture.detectChanges();
         expect(comp.courseId).to.equal(1);
         expect(comp.studentParticipation?.exercise?.id).to.equal(exerciseDetail.id);
-        expect(comp.exercise!.studentParticipations![0].results![0]).to.deep.equal({ ...result, id: 2 });
+        expect(comp.exercise!.studentParticipations![0].results![0]).to.deep.equal(changedResult);
         expect(comp.hasMoreResults).to.be.false;
         expect(comp.exerciseRatedBadge(result)).to.equal('badge-info');
 
