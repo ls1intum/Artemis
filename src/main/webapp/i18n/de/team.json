@@ -34,6 +34,10 @@
                 "label": "Name",
                 "minlength": "Der Name muss mindestens 3 Zeichen lang sein."
             },
+            "teamName": {
+                "missingTeamName": "Jeder Student muss einen Teamnamen erhalten.",
+                "pattern": "Der Teamname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten."
+            },
             "shortName": {
                 "label": "Kurzname",
                 "tooltip": "Der Kurzname des Teams kann NICHT im Nachhinein bearbeitet werden! Er wird als eindeutiger Schlüssel für die Repositories und Build Pläne verwendet.",
@@ -53,6 +57,7 @@
                 "all": "Alle Teams",
                 "own": "Eigene Teams"
             },
+            "missingUserNameOrId": "Studenten müssen entweder einen Benutzernamen oder eine Matrikelnummer haben.",
             "noStudentsAddedYet": "Noch keine Studenten hinzugefügt.",
             "addStudentToTeam": "Studenten zum Team hinzufügen (nach Login oder Name suchen)",
             "studentSearch": {
@@ -65,7 +70,8 @@
                 "registrationNumbersNotFound": "Studierende mit folgenden Matrikelnummern konnten nicht gefunden werden: {{ registrationNumbers }}",
                 "loginsNotFound": "Studierende mit folgenden Benutzernamen konnten nicht gefunden werden: {{ logins }}",
                 "studentsWithoutRegistrationNumbers": "Folgende Studenten haben keine Matrikelnummern: {{ students }}",
-                "studentsAppearMultipleTimes": "Folgende Studenten erscheinen mehrmals in importierten Teams: {{ students }}"
+                "studentsAppearMultipleTimes": "Folgende Studenten erscheinen mehrmals in importierten Teams: {{ students }}",
+                "importFailed": "Team-Import Fehlgeschlagen! Ungültige Team-Datei."
             },
             "selectOwnerForTeam": "Tutor auswählen (nach Login oder Name suchen)",
             "ownerSearch": {
