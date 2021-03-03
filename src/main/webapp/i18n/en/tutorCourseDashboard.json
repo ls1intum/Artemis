@@ -4,6 +4,7 @@
             "home": {
                 "title": "Assessment Dashboard"
             },
+            "submissions": "Submissions",
             "pageHeader": "Assessment Dashboard for course",
             "pageHeaderExam": "Assessment Dashboard for exam",
             "pageHeaderExamTestRun": "Test Run Assessment Dashboard",

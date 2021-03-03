@@ -4,6 +4,7 @@
             "home": {
                 "title": "Tutor Kurse Dashboard"
             },
+            "submissions": "Einreichugen",
             "pageHeader": "Bewertungs-Dashboard für den Kurs",
             "pageHeaderExam": "Tutor Klausur Dashboard für die Klausur",
             "pageHeaderExamTestRun": "Testlauf Bewertungs-Dashboard",
