@@ -12,7 +12,7 @@ public interface TutorLeaderboardComplaintsViewRepository extends JpaRepository<
 
     List<TutorLeaderboardComplaintsView> findAllByCourseId(long courseId);
 
-    List<TutorLeaderboardComplaintsView> findAllByExamId(long examId);
+    // TODO: add when examId is added to the view: List<TutorLeaderboardComplaintsView> findAllByExamId(long examId);
 
     List<TutorLeaderboardComplaintsView> findAllByLeaderboardId_ExerciseId(long exerciseId);
 }
