@@ -13,11 +13,17 @@ import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/entities/organization.model';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
+import { UserService } from 'app/core/user/user.service';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 
 describe('OrganizationManagementDetailComponent', () => {
     let component: OrganizationManagementDetailComponent;
     let fixture: ComponentFixture<OrganizationManagementDetailComponent>;
     let organizationService: OrganizationManagementService;
+    let userService: UserService;
+    let dataTable: DataTableComponent;
+
     const organization1 = new Organization();
     organization1.id = 5;
     const route = ({
@@ -26,21 +32,25 @@ describe('OrganizationManagementDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, NgxDatatableModule],
             declarations: [OrganizationManagementDetailComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
+                { provide: DataTableComponent, useClass: DataTableComponent },
             ],
         })
             .overrideTemplate(OrganizationManagementDetailComponent, '')
+            .overrideTemplate(DataTableComponent, '')
             .compileComponents();
 
         fixture = TestBed.createComponent(OrganizationManagementDetailComponent);
         component = fixture.componentInstance;
         organizationService = TestBed.inject(OrganizationManagementService);
+        dataTable = TestBed.inject(DataTableComponent);
+        userService = TestBed.inject(UserService);
     });
 
     afterEach(async () => {
@@ -127,5 +137,28 @@ describe('OrganizationManagementDetailComponent', () => {
         component.loadAll();
         expect(component.organization.users?.length).toEqual(2);
         expect(component.organization.courses?.length).toEqual(1);
+    }));
+
+    it('should search users in the used DataTable component', fakeAsync(() => {
+        const user1 = { id: 11, login: 'user1' } as User;
+        const user2 = { id: 12, login: 'user2' } as User;
+
+        spyOn(userService, 'search').and.returnValue(of(new HttpResponse({ body: [user1, user2] })));
+
+        component.dataTable = dataTable;
+
+        const result = component.searchAllUsers(of({ text: 'user', entities: [] }));
+
+        result.subscribe((a) => {
+            expect(a).toStrictEqual([
+                { id: user1.id, login: user1.login },
+                { id: user2.id, login: user2.login },
+            ]);
+            expect(component.searchNoResults).toEqual(false);
+            expect(component.searchFailed).toEqual(false);
+        });
+
+        tick();
+        expect(userService.search).toHaveBeenCalled();
     }));
 });

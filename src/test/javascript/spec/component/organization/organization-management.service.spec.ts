@@ -8,6 +8,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
+import { User } from 'app/core/user/user.model';
 
 describe('Organization Service', () => {
     let injector: TestBed;
@@ -36,7 +37,7 @@ describe('Organization Service', () => {
         elemDefault.emailPattern = '.*@test';
     });
 
-    it('should return an element', async () => {
+    it('should return an Organization', async () => {
         service.getOrganizationById(0).subscribe((data) => expect(data).toMatchObject({ body: elemDefault }));
 
         const req = httpMock.expectOne({ method: 'GET' });
@@ -53,6 +54,30 @@ describe('Organization Service', () => {
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(JSON.stringify(returnElement));
+    });
+
+    it('should return all Organizations a course is assigned to', async () => {
+        const elem2 = new Organization();
+        elem2.id = 1;
+        elem2.name = 'test2';
+        elem2.shortName = 'test2';
+        const returnElement = [elemDefault, elem2];
+        service.getOrganizationsByCourse(1).subscribe((data) => expect(data).toMatchObject({ body: returnElement }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(JSON.stringify(elemDefault));
+    });
+
+    it('should return all Organizations a user is assigned to', async () => {
+        const elem2 = new Organization();
+        elem2.id = 1;
+        elem2.name = 'test2';
+        elem2.shortName = 'test2';
+        const returnElement = [elemDefault, elem2];
+        service.getOrganizationsByUser(1).subscribe((data) => expect(data).toMatchObject({ body: returnElement }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(JSON.stringify(elemDefault));
     });
 
     it('should add a new Organization', async () => {
@@ -75,6 +100,22 @@ describe('Organization Service', () => {
 
     it('should delete an Organization', async () => {
         service.deleteOrganization(elemDefault.id!).subscribe((resp) => expect(resp.ok));
+        const req = httpMock.expectOne({ method: 'DELETE' });
+        req.flush({ status: 200 });
+    });
+
+    it('should add a user to an Organization', async () => {
+        const user1 = new User();
+        user1.login = 'testUser';
+        service.addUserToOrganization(elemDefault.id!, user1.login).subscribe((resp) => expect(resp.ok));
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush(JSON.stringify(elemDefault));
+    });
+
+    it('should delete a user from an Organization', async () => {
+        const user1 = new User();
+        user1.login = 'testUser';
+        service.removeUserFromOrganization(elemDefault.id!, user1.login).subscribe((resp) => expect(resp.ok));
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
     });
