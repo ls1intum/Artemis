@@ -16,6 +16,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -53,10 +54,10 @@ public class AutomaticProgrammingExerciseCleanupService {
     @Scheduled(cron = "0 0 3 * * *") // execute this every night at 3:00:00 am
     public void cleanup() {
         try {
-            // cleanupBuildPlans();
+            cleanupBuildPlansOnContinuousIntegrationServer();
         }
         catch (Exception ex) {
-            log.error("Exception occurred during cleanupBuildPlans " + ex.getMessage(), ex);
+            log.error("Exception occurred during cleanupBuildPlansOnContinuousIntegrationServer " + ex.getMessage(), ex);
         }
         try {
             cleanupGitRepositoriesOnArtemisServer();
@@ -75,7 +76,8 @@ public class AutomaticProgrammingExerciseCleanupService {
 
         // Cleanup all student repos in the REPOS folder (based on the student participations) 8 weeks after the exercise due date
         var programmingExercises = programmingExerciseRepository.findAllWithStudentParticipationByRecentEndDate(endDate1, endDate2);
-        log.info("Found " + programmingExercises + " programming exercise to clean local student repositories");
+        log.info("Found " + programmingExercises.size() + " programming exercise to clean local student repositories: "
+                + programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.joining(", ")));
         for (var programmingExercise : programmingExercises) {
             for (var studentParticipation : programmingExercise.getStudentParticipations()) {
                 var programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
@@ -85,20 +87,20 @@ public class AutomaticProgrammingExerciseCleanupService {
 
         // Cleanup template, tests and solution repos in the REPOS folder 8 weeks after the course is over
         programmingExercises = programmingExerciseRepository.findAllByRecentCourseEndDate(endDate1, endDate2);
-        log.info("Found " + programmingExercises + " programming exercise to clean local template, test and solution");
+        log.info("Found " + programmingExercises.size() + " programming exercise to clean local template, test and solution: "
+                + programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.joining(", ")));
         for (var programmingExercise : programmingExercises) {
             gitService.deleteLocalRepository(programmingExercise.getVcsTemplateRepositoryUrl());
             gitService.deleteLocalRepository(programmingExercise.getVcsSolutionRepositoryUrl());
             gitService.deleteLocalRepository(programmingExercise.getVcsTestRepositoryUrl());
             gitService.deleteLocalProgrammingExerciseReposFolder(programmingExercise);
         }
-
     }
 
     /**
      *  Cleans up all build plans
      */
-    private void cleanupBuildPlans() {
+    private void cleanupBuildPlansOnContinuousIntegrationServer() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
             // only execute this on production server, i.e. when the prod profile is active
@@ -202,7 +204,7 @@ public class AutomaticProgrammingExerciseCleanupService {
         for (ProgrammingExerciseStudentParticipation participation : actualParticipationsToClean) {
             if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
                 try {
-                    log.info("Sleep for {}s during cleanupBuildPlans", EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS / 1000);
+                    log.info("Sleep for {}s during cleanupBuildPlansOnContinuousIntegrationServer", EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS / 1000);
                     Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
                 }
                 catch (InterruptedException ex) {
