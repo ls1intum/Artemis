@@ -111,7 +111,7 @@ public class GitLabService extends AbstractVersionControlService {
                 updateMemberPermissionInRepository(repositoryUrl, user.getLogin(), DEVELOPER);
             }
             else {
-                throw new GitLabException("Error while trying to add user " + user.getLogin() + " to repository: " + repositoryUrl, e);
+                throw new GitLabException("Error while trying to add user " + user.getLogin() + " to repository: " + repositoryUrl + " ex:" + e.getMessage() + e.getCause(), e);
             }
         }
     }
