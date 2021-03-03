@@ -614,7 +614,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             if (this.isTestRun) {
                 this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/test-runs/assess`]);
             } else {
-                this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/tutor-exam-dashboard`]);
+                this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/assessment-dashboard`]);
             }
         }
     }

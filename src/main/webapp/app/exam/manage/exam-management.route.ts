@@ -480,7 +480,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/tutor-exam-dashboard',
+        path: ':examId/assessment-dashboard',
         component: AssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
