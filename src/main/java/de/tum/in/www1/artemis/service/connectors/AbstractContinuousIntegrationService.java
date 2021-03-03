@@ -139,22 +139,11 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
         result.setScore(buildResult.getBuildScore());
         result.setParticipation((Participation) participation);
         addFeedbackToResult(result, buildResult);
-        // Overwrite timeout exception messages
-        overwriteTimeoutExceptionFeedback(result);
 
         // We assume the build has failed if no test case feedback has been sent. Static code analysis feedback might exist even though the build failed
         boolean hasTestCaseFeedback = result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isStaticCodeAnalysisFeedback());
         result.setResultString(hasTestCaseFeedback ? buildResult.getTestsPassedString() : "No tests found");
         return result;
-    }
-
-    private void overwriteTimeoutExceptionFeedback(Result result) {
-        String timeoutDetailText = "The test case execution timed out. This indicates issues in your code such as endless for / while loops or issues with recursion. Please carefully review your code to avoid such issues. In case you are absolutely sure that there are no issues like this, please contact your instructor to check the setup of the test.";
-        for (var feedback : result.getFeedbacks()) {
-            if (feedback.getDetailText().contains("execution timed out after")) {
-                feedback.setDetailText(timeoutDetailText);
-            }
-        }
     }
 
     /**
