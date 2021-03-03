@@ -100,20 +100,19 @@ public class GitLabService extends AbstractVersionControlService {
     public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         final var userId = gitLabUserManagementService.getUserId(user.getLogin());
-
+        var projectApi = gitlab.getProjectApi();
         try {
-            // Only add the member to the repository if it doesn't exist. Otherwise
-            // update the existing member.
-            var projectApi = gitlab.getProjectApi();
-            if (projectApi.getOptionalMember(repositoryId, userId).isPresent()) {
+            projectApi.addMember(repositoryId, userId, DEVELOPER);
+        }
+        catch (GitLabApiException e) {
+            // A resource conflict status code is returned if the member
+            // already exists in the repository
+            if (e.getHttpStatus() == 409) {
                 updateMemberPermissionInRepository(repositoryUrl, user.getLogin(), DEVELOPER);
             }
             else {
-                projectApi.addMember(repositoryId, userId, DEVELOPER);
+                throw new GitLabException("Error while trying to add user " + user.getLogin() + " to repository: " + repositoryUrl, e);
             }
-        }
-        catch (GitLabApiException e) {
-            throw new GitLabException("Error while trying to add user to repository: " + user.getLogin() + " to repo " + repositoryUrl, e);
         }
     }
 
