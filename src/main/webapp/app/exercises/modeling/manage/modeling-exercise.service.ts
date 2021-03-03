@@ -90,4 +90,17 @@ export class ModelingExerciseService {
             .get<ModelingPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response', params: { ...options?.toParams() } })
             .pipe(map((response: HttpResponse<ModelingPlagiarismResult>) => response.body!));
     }
+
+    /**
+     * Get the latest plagiarism result for the exercise with the given ID.
+     *
+     * @param exerciseId
+     */
+    getLatestPlagiarismResult(exerciseId: number): Observable<ModelingPlagiarismResult> {
+        return this.http
+            .get<ModelingPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/plagiarism-result`, {
+                observe: 'response',
+            })
+            .pipe(map((response: HttpResponse<ModelingPlagiarismResult>) => response.body!));
+    }
 }

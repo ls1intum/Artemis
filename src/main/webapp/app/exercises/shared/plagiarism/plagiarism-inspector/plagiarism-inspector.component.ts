@@ -92,7 +92,46 @@ export class PlagiarismInspectorComponent implements OnInit {
     ngOnInit() {
         this.route.data.subscribe(({ exercise }) => {
             this.exercise = exercise;
+
+            this.getLatestPlagiarismResult();
         });
+    }
+
+    /**
+     * Fetch the latest plagiarism result. There might be no plagiarism result for the given exercise yet.
+     */
+    getLatestPlagiarismResult() {
+        this.detectionInProgress = true;
+
+        switch (this.exercise.type) {
+            case ExerciseType.MODELING: {
+                console.log('modeling plagiarism result');
+                this.modelingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe(
+                    (result) => this.handlePlagiarismResult(result),
+                    () => (this.detectionInProgress = false),
+                );
+                return;
+            }
+            case ExerciseType.PROGRAMMING: {
+                console.log('programming plagiarism result');
+                this.programmingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe(
+                    (result) => this.handlePlagiarismResult(result),
+                    () => (this.detectionInProgress = false),
+                );
+                return;
+            }
+            case ExerciseType.TEXT: {
+                console.log('text plagiarism result');
+                this.textExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe(
+                    (result) => this.handlePlagiarismResult(result),
+                    () => (this.detectionInProgress = false),
+                );
+                return;
+            }
+            default: {
+                this.detectionInProgress = false;
+            }
+        }
     }
 
     checkPlagiarism() {
@@ -144,24 +183,15 @@ export class PlagiarismInspectorComponent implements OnInit {
 
         if (this.exercise.type === ExerciseType.TEXT) {
             this.textExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe(
-                (result) => this.handleTextPlagiarismResult(result),
+                (result) => this.handlePlagiarismResult(result),
                 () => (this.detectionInProgress = false),
             );
         } else {
             this.programmingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe(
-                (result) => this.handleTextPlagiarismResult(result),
+                (result) => this.handlePlagiarismResult(result),
                 () => (this.detectionInProgress = false),
             );
         }
-    }
-
-    handleTextPlagiarismResult(result: TextPlagiarismResult) {
-        this.detectionInProgress = false;
-
-        this.sortComparisonsForResult(result);
-
-        this.plagiarismResult = result;
-        this.selectedComparisonIndex = 0;
     }
 
     /**
@@ -171,16 +201,18 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.detectionInProgress = true;
 
         this.modelingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe(
-            (result: ModelingPlagiarismResult) => {
-                this.detectionInProgress = false;
-
-                this.sortComparisonsForResult(result);
-
-                this.plagiarismResult = result;
-                this.selectedComparisonIndex = 0;
-            },
+            (result: ModelingPlagiarismResult) => this.handlePlagiarismResult(result),
             () => (this.detectionInProgress = false),
         );
+    }
+
+    handlePlagiarismResult(result: ModelingPlagiarismResult | TextPlagiarismResult) {
+        this.detectionInProgress = false;
+
+        this.sortComparisonsForResult(result);
+
+        this.plagiarismResult = result;
+        this.selectedComparisonIndex = 0;
     }
 
     sortComparisonsForResult(result: PlagiarismResult<any>) {
