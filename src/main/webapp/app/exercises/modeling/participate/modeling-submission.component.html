@@ -105,8 +105,9 @@
         <div class="row">
             <jhi-additional-feedback
                 *ngIf="unreferencedFeedback && unreferencedFeedback.length != 0"
-                class="col-xl-8 alert unreferencedFeedback"
+                class="col-xl-8 mt-3 alert unreferencedFeedback"
                 [additionalFeedback]="unreferencedFeedback"
+                [additional]="true"
             >
             </jhi-additional-feedback>
         </div>

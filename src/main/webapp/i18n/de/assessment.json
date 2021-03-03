@@ -4,6 +4,7 @@
             "assessment": "Bewertung",
             "testRunAssessment": "Bewertungstestlauf",
             "additionalFeedback": "Zusätzliches Feedback",
+            "feedback": "Feedback",
             "automaticGenerated": "Automatisch erstelltes Feedback",
             "error": {
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."

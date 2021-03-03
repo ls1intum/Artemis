@@ -23,6 +23,7 @@ import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { addParticipationToResult } from 'app/exercises/shared/result/result-utils';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -183,6 +184,15 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
             } else {
                 this.submissionFile = submissionFile;
             }
+        }
+    }
+
+    /**
+     * Find "Unreferenced Feedback" item for Result, if it exists.
+     */
+    get unreferencedFeedback(): Feedback[] | undefined {
+        if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
+            return this.result.feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
         }
     }
 

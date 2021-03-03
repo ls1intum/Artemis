@@ -26,7 +26,6 @@ import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateModule } from '@ngx-translate/core';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import { FileUploadResultComponent } from 'app/exercises/file-upload/participate/file-upload-result.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import * as moment from 'moment';
 import { of } from 'rxjs';
@@ -41,6 +40,7 @@ import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -71,7 +71,7 @@ describe('FileUploadSubmissionComponent', () => {
                 ArtemisHeaderExercisePageWithDetailsModule,
                 RatingModule,
             ],
-            declarations: [FileUploadSubmissionComponent, MockComponent(ComplaintsForTutorComponent), MockComponent(FileUploadResultComponent), MockPipe(HtmlForMarkdownPipe)],
+            declarations: [FileUploadSubmissionComponent, MockComponent(ComplaintsForTutorComponent), MockComponent(AdditionalFeedbackComponent), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

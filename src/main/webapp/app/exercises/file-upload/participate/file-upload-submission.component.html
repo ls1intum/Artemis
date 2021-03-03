@@ -50,8 +50,16 @@
         </div>
         <div *ngIf="result && result.feedbacks && result.feedbacks.length > 0">
             <br />
-            <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission">Your assessed submission</span>:</h5>
-            <jhi-file-upload-result [result]="result"></jhi-file-upload-result>
+            <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission">Your Assessment</span>:</h5>
+            <div class="row">
+                <jhi-additional-feedback
+                    *ngIf="unreferencedFeedback && unreferencedFeedback.length != 0"
+                    class="col-xl-8 alert unreferencedFeedback"
+                    [additionalFeedback]="unreferencedFeedback"
+                    [additional]="false"
+                >
+                </jhi-additional-feedback>
+            </div>
             <div class="row">
                 <jhi-rating *ngIf="isOwnerOfParticipation" class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)"></jhi-rating>
             </div>

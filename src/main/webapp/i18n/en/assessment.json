@@ -4,6 +4,7 @@
             "assessment": "Assessment",
             "testRunAssessment": "Test Run Assessment",
             "additionalFeedback": "Additional feedback",
+            "feedback": "Feedback",
             "automaticGenerated": "Automatically generated feedback",
             "error": {
                 "assessmentDueDateOver": "The assessment due date of this exercise is over."

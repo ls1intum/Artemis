@@ -9,4 +9,6 @@ import { Feedback } from 'app/entities/feedback.model';
 export class AdditionalFeedbackComponent {
     @Input()
     additionalFeedback: Feedback[];
+    @Input()
+    additional: boolean;
 }
