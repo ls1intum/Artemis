@@ -6,7 +6,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ComplaintType } from 'app/entities/complaint.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -37,7 +37,6 @@ import { addParticipationToResult } from 'app/exercises/shared/result/result-uti
     templateUrl: './modeling-submission.component.html',
     styleUrls: ['./modeling-submission.component.scss'],
 })
-// TODO CZ: move assessment functionality to separate assessment result view?
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly addParticipationToResult = addParticipationToResult;
     @ViewChild(ModelingEditorComponent, { static: false })
@@ -469,7 +468,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     /**
      * Checks whether a model element in the modeling editor is selected.
      */
-    isSelected(feedback: Feedback): boolean {
+    shouldBeDisplayed(feedback: Feedback): boolean {
         if ((!this.selectedEntities || this.selectedEntities.length === 0) && (!this.selectedRelationships || this.selectedRelationships.length === 0)) {
             return true;
         }

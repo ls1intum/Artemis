@@ -72,9 +72,10 @@
                         <jhi-text-result [result]="result"></jhi-text-result>
                         <hr />
                     </div>
+                    <!-- TODO START: refactor the following code into a component that can be reused for modeling, text, file-upload and programming -->
                     <div *ngIf="unreferencedFeedback && unreferencedFeedback.length != 0" class="col-xl-8 alert unreferencedFeedback">
                         <b>
-                            <fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.unreferencedFeedback">
+                            <fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.additionalFeedback">
                                 Feedback for Missing Elements</span
                             >:</b
                         >
@@ -93,6 +94,7 @@
                             <span> {{ feedback.detailText }} </span>
                         </div>
                     </div>
+                    <!-- TODO END -->
                     <jhi-rating *ngIf="isOwnerOfParticipation" class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result"></jhi-rating>
                 </div>
             </ng-template>

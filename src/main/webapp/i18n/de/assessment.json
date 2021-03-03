@@ -3,7 +3,7 @@
         "assessment": {
             "assessment": "Bewertung",
             "testRunAssessment": "Bewertungstestlauf",
-            "unreferencedFeedback": "Feedback für fehlende Elemente",
+            "additionalFeedback": "Zusätzliches Feedback",
             "automaticGenerated": "Automatisch erstelltes Feedback",
             "error": {
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."

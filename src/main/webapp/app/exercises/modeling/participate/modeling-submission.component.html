@@ -82,8 +82,7 @@
                                 </tr>
                             </thead>
                             <tbody *ngIf="assessmentsNames">
-                                <!--TODO CZ: replace function call 'isSelected' in html-->
-                                <tr *ngFor="let feedback of assessmentResult?.feedbacks" [hidden]="!isSelected(feedback)">
+                                <tr *ngFor="let feedback of assessmentResult?.feedbacks" [hidden]="!shouldBeDisplayed(feedback)">
                                     <td>
                                         <span *ngIf="feedback.reference">{{ assessmentsNames[feedback.referenceId]['type'] }} </span>
                                         <code *ngIf="feedback.reference" class="text-primary">{{ assessmentsNames[feedback.referenceId]['name'] }}</code
