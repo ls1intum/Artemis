@@ -139,8 +139,8 @@ public class ModelingPlagiarismDetectionService {
                 PlagiarismComparison<ModelingSubmissionElement> comparison = new PlagiarismComparison<>();
 
                 comparison.setSimilarity(similarity * 100);
-                comparison.setSubmissionA(submissionA);
-                comparison.setSubmissionB(submissionB);
+                comparison.addSubmission(submissionA);
+                comparison.addSubmission(submissionB);
                 // TODO: Add matches to highlight similar modeling elements
                 comparison.setMatches(new ArrayList<>());
 
