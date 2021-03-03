@@ -14,11 +14,6 @@ export const listOfComplaintsRoute: Routes = [
         },
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            // HACK: The path is a composite, so we need to define both parts
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.complaint.listOfComplaints.title', path: 'complaints' },
-            ],
             pageTitle: 'artemisApp.complaint.listOfComplaints.title',
             complaintType: ComplaintType.COMPLAINT,
         },
@@ -47,7 +42,6 @@ export const listOfComplaintsRoute: Routes = [
         component: ListOfComplaintsComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.complaint.listOfComplaints.title',
             complaintType: ComplaintType.COMPLAINT,
         },
@@ -61,11 +55,6 @@ export const listOfComplaintsRoute: Routes = [
         },
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            // HACK: The path is a composite, so we need to define both parts
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.moreFeedback.list.title', path: 'more-feedback-requests' },
-            ],
             pageTitle: 'artemisApp.moreFeedback.list.title',
             complaintType: ComplaintType.MORE_FEEDBACK,
         },
@@ -76,7 +65,6 @@ export const listOfComplaintsRoute: Routes = [
         component: ListOfComplaintsComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.moreFeedback.list.title',
             complaintType: ComplaintType.MORE_FEEDBACK,
         },

@@ -316,16 +316,14 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.automaticFeedback = [{ type: FeedbackType.AUTOMATIC, text: 'testCase1', detailText: 'testCase1 failed', credits: 0 }];
         comp.referencedFeedback = [{ type: FeedbackType.MANUAL, text: 'manual feedback', detailText: 'manual feedback for a file:1', credits: 2, reference: 'file:1_line:1' }];
         comp.unreferencedFeedback = [{ type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'unreferenced feedback', credits: 1 }];
-        comp.generalFeedback = { detailText: 'general feedback' };
         comp.validateFeedback();
         comp.save();
         const alertElement = debugElement.queryAll(By.css('jhi-alert'));
 
-        expect(comp.manualResult?.feedbacks?.length).to.be.equal(4);
+        expect(comp.manualResult?.feedbacks?.length).to.be.equal(3);
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).to.be.true;
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).to.be.true;
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).to.be.true;
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type !== FeedbackType.MANUAL_UNREFERENCED && feedback.reference == undefined)).to.be.true;
         expect(alertElement).to.exist;
 
         // Reset feedbacks
@@ -334,11 +332,10 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.submit();
         const alertElementSubmit = debugElement.queryAll(By.css('jhi-alert'));
 
-        expect(comp.manualResult?.feedbacks?.length).to.be.equal(4);
+        expect(comp.manualResult?.feedbacks?.length).to.be.equal(3);
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).to.be.true;
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).to.be.true;
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).to.be.true;
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type !== FeedbackType.MANUAL_UNREFERENCED && feedback.reference == undefined)).to.be.true;
         expect(alertElementSubmit).to.exist;
         flush();
     }));

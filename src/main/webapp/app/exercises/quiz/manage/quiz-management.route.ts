@@ -17,7 +17,6 @@ export const quizManagementRoute: Routes = [
         component: QuizExerciseDetailComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -28,7 +27,6 @@ export const quizManagementRoute: Routes = [
         component: QuizReEvaluateComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -38,7 +36,6 @@ export const quizManagementRoute: Routes = [
         component: QuizExerciseDetailComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -49,7 +46,6 @@ export const quizManagementRoute: Routes = [
         component: QuizExerciseDetailComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -60,7 +56,6 @@ export const quizManagementRoute: Routes = [
         component: QuizExerciseExportComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -70,7 +65,6 @@ export const quizManagementRoute: Routes = [
         component: QuizParticipationComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'preview',
         },
@@ -81,7 +75,6 @@ export const quizManagementRoute: Routes = [
         component: QuizParticipationComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'solution',
         },
