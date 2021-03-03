@@ -918,6 +918,19 @@ public class GitService {
         }
     }
 
+    public void deleteLocalProgrammingExerciseReposFolder(ProgrammingExercise programmingExercise) {
+        var folderPath = Paths.get(repoClonePath, programmingExercise.getProjectKey());
+        try {
+            FileUtils.deleteDirectory(folderPath.toFile());
+        }
+        catch (IOException ex) {
+            log.error("Exception during deleteLocalProgrammingExerciseReposFolder " + ex, ex);
+            // cleanup the folder to avoid problems in the future.
+            // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid a try-catch block.
+            FileUtils.deleteQuietly(folderPath.toFile());
+        }
+    }
+
     /**
      * Zip the content of a git repository that contains a participation.
      *

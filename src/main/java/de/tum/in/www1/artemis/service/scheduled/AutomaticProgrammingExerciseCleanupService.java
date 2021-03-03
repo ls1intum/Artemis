@@ -4,28 +4,32 @@ import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BA
 import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS;
 import static java.time.ZonedDateTime.now;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import io.github.jhipster.config.JHipsterConstants;
 
 @Service
-@Profile("scheduling")
-public class AutomaticBuildPlanCleanupService {
+// @Profile("scheduling")
+public class AutomaticProgrammingExerciseCleanupService {
 
-    private static final Logger log = LoggerFactory.getLogger(AutomaticBuildPlanCleanupService.class);
+    private static final Logger log = LoggerFactory.getLogger(AutomaticProgrammingExerciseCleanupService.class);
 
     private final Environment env;
 
@@ -33,18 +37,68 @@ public class AutomaticBuildPlanCleanupService {
 
     private final ParticipationService participationService;
 
-    public AutomaticBuildPlanCleanupService(Environment env, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ParticipationService participationService) {
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final GitService gitService;
+
+    public AutomaticProgrammingExerciseCleanupService(Environment env, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService) {
         this.env = env;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.participationService = participationService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.gitService = gitService;
+    }
+
+    @Scheduled(cron = "0 0 3 * * *") // execute this every night at 3:00:00 am
+    public void cleanup() {
+        try {
+            // cleanupBuildPlans();
+        }
+        catch (Exception ex) {
+            log.error("Exception occurred during cleanupBuildPlans " + ex.getMessage(), ex);
+        }
+        try {
+            cleanupGitRepositoriesOnArtemisServer();
+        }
+        catch (Exception ex) {
+            log.error("Exception occurred during cleanupGitRepositoriesOnArtemisServer " + ex.getMessage(), ex);
+        }
+    }
+
+    public void cleanupGitRepositoriesOnArtemisServer() {
+        SecurityUtils.setAuthorizationObject();
+        // we are specifically interested in one whole day 8 weeks ago
+        var endDate2 = ZonedDateTime.now().minusWeeks(8).truncatedTo(ChronoUnit.DAYS);
+        // NOTE: for now we would like to cover more cases to also cleanup older repositories
+        var endDate1 = endDate2.minusYears(1).truncatedTo(ChronoUnit.DAYS);
+
+        // Cleanup all student repos in the REPOS folder (based on the student participations) 8 weeks after the exercise due date
+        var programmingExercises = programmingExerciseRepository.findAllWithStudentParticipationByRecentEndDate(endDate1, endDate2);
+        log.info("Found " + programmingExercises + " programming exercise to clean local student repositories");
+        for (var programmingExercise : programmingExercises) {
+            for (var studentParticipation : programmingExercise.getStudentParticipations()) {
+                var programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
+                gitService.deleteLocalRepository(programmingExerciseParticipation.getVcsRepositoryUrl());
+            }
+        }
+
+        // Cleanup template, tests and solution repos in the REPOS folder 8 weeks after the course is over
+        programmingExercises = programmingExerciseRepository.findAllByRecentCourseEndDate(endDate1, endDate2);
+        log.info("Found " + programmingExercises + " programming exercise to clean local template, test and solution");
+        for (var programmingExercise : programmingExercises) {
+            gitService.deleteLocalRepository(programmingExercise.getVcsTemplateRepositoryUrl());
+            gitService.deleteLocalRepository(programmingExercise.getVcsSolutionRepositoryUrl());
+            gitService.deleteLocalRepository(programmingExercise.getVcsTestRepositoryUrl());
+            gitService.deleteLocalProgrammingExerciseReposFolder(programmingExercise);
+        }
+
     }
 
     /**
      *  Cleans up all build plans
      */
-    @Scheduled(cron = "0 0 3 * * *") // execute this every night at 3:00:00 am
-    public void cleanupBuildPlans() {
+    private void cleanupBuildPlans() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
             // only execute this on production server, i.e. when the prod profile is active
