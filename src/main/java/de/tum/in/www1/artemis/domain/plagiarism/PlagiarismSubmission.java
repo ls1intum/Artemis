@@ -124,7 +124,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
         this.elements = elements;
     }
 
-    public long getSubmission() {
+    public long getSubmissionId() {
         return submissionId;
     }
 

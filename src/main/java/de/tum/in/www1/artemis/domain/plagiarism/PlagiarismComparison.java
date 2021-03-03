@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.ManyToMany;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -33,10 +32,18 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     private PlagiarismResult<E> plagiarismResult;
 
     /**
-     * List of the two submissions compared.
+     * First submission compared.
      */
-    @ManyToMany(targetEntity = PlagiarismSubmission.class, cascade = CascadeType.ALL)
-    private List<PlagiarismSubmission<E>> submissions = new ArrayList<>();
+    @ManyToOne(targetEntity = PlagiarismSubmission.class, cascade = CascadeType.ALL)
+    @JoinColumn(name = "submission_a_id")
+    private PlagiarismSubmission<E> submissionA;
+
+    /**
+     * Second submission compared.
+     */
+    @ManyToOne(targetEntity = PlagiarismSubmission.class, cascade = CascadeType.ALL)
+    @JoinColumn(name = "submission_b_id")
+    private PlagiarismSubmission<E> submissionB;
 
     /**
      * List of matches between both submissions involved in this comparison.
@@ -63,8 +70,8 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     public static PlagiarismComparison<TextSubmissionElement> fromJPlagComparison(JPlagComparison jplagComparison) {
         PlagiarismComparison<TextSubmissionElement> comparison = new PlagiarismComparison<>();
 
-        comparison.addSubmission(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.subA));
-        comparison.addSubmission(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.subB));
+        comparison.setSubmissionA(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.subA));
+        comparison.setSubmissionB(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.subB));
         comparison.setMatches(jplagComparison.matches.stream().map(PlagiarismMatch::fromJPlagMatch).collect(Collectors.toList()));
         comparison.setSimilarity(jplagComparison.percent());
         comparison.setStatus(PlagiarismStatus.NONE);
@@ -72,16 +79,20 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         return comparison;
     }
 
-    public void addSubmission(PlagiarismSubmission<E> submission) {
-        this.submissions.add(submission);
+    public void setSubmissionA(PlagiarismSubmission<E> submissionA) {
+        this.submissionA = submissionA;
+    }
+
+    public void setSubmissionB(PlagiarismSubmission<E> submissionB) {
+        this.submissionB = submissionB;
     }
 
     public PlagiarismSubmission<E> getSubmissionA() {
-        return this.submissions.get(0);
+        return submissionA;
     }
 
     public PlagiarismSubmission<E> getSubmissionB() {
-        return this.submissions.get(1);
+        return this.submissionB;
     }
 
     public PlagiarismResult<E> getPlagiarismResult() {

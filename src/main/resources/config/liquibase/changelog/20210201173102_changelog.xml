@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
-    <changeSet author="philippbauch" id="20210201173119">
+    <changeSet author="philippbauch" id="20210201173122">
         <createTable tableName="plagiarism_result">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"
@@ -32,6 +32,8 @@
                     primaryKeyName="plagiarism_comparisonPK"/>
             </column>
             <column name="plagiarism_result_id" type="BIGINT"/>
+            <column name="submission_a_id" type="BIGINT"/>
+            <column name="submission_b_id" type="BIGINT"/>
             <column name="similarity" type="FLOAT"/>
             <column name="status" type="INT"/>
         </createTable>
@@ -45,22 +47,6 @@
             <column name="size" type="INT"/>
             <column name="score" type="INT"/>
         </createTable>
-        <createTable tableName="plagiarism_comparison_submissions">
-            <column name="plagiarism_comparison_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="submissions_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-        <addForeignKeyConstraint baseColumnNames="plagiarism_comparison_id"
-            baseTableName="plagiarism_comparison_submissions"
-            constraintName="FK_plagiarism_comparison" deferrable="false" initiallyDeferred="false"
-            referencedColumnNames="id" referencedTableName="plagiarism_comparison"/>
-        <addForeignKeyConstraint baseColumnNames="submissions_id"
-            baseTableName="plagiarism_comparison_submissions"
-            constraintName="FK_plagiarism_submission" deferrable="false" initiallyDeferred="false"
-            referencedColumnNames="id" referencedTableName="plagiarism_submission"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="plagiarism_result"
             constraintName="fk_plagiarism_result_exercise" deferrable="false"
             initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise"/>
@@ -74,6 +60,16 @@
             constraintName="fk_plagiarism_result_comparison" deferrable="false"
             initiallyDeferred="false" referencedColumnNames="id"
             referencedTableName="plagiarism_result"/>
+        <addForeignKeyConstraint baseColumnNames="submission_a_id"
+            baseTableName="plagiarism_comparison"
+            constraintName="fk_plagiarism_comparison_submission_a" deferrable="false"
+            initiallyDeferred="false" referencedColumnNames="id"
+            referencedTableName="plagiarism_submission"/>
+        <addForeignKeyConstraint baseColumnNames="submission_b_id"
+            baseTableName="plagiarism_comparison"
+            constraintName="fk_plagiarism_comparison_submission_b" deferrable="false"
+            initiallyDeferred="false" referencedColumnNames="id"
+            referencedTableName="plagiarism_submission"/>
         <addForeignKeyConstraint baseColumnNames="submission_id"
             baseTableName="plagiarism_submission"
             constraintName="fk_submission_plagiarism_submission" deferrable="false"
