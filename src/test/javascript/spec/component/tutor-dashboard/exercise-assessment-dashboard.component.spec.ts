@@ -436,7 +436,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.isExamMode = true;
             comp.exercise = exercise;
             comp.back();
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/exams/${exercise!.exerciseGroup!.exam!.id}/tutor-exam-dashboard`]);
+            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/exams/${exercise!.exerciseGroup!.exam!.id}/assessment-dashboard`]);
         });
     });
 
