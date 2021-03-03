@@ -106,6 +106,22 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<Submission> getLockedSubmissionsAndResultsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**
+     * Get all currently locked submissions for all users in the given exam.
+     * These are all submissions for which users started, but did not yet finish the assessment.
+     *
+     * @param examId the id of the course
+     * @return currently locked submissions for the given exam
+     */
+    @Query("""
+            SELECT DISTINCT s FROM Submission s LEFT JOIN FETCH s.results r
+                WHERE r.assessor.id IS NOT NULL
+                AND r.assessmentType <> 'AUTOMATIC'
+                AND r.completionDate IS NULL
+                AND s.participation.exercise.exerciseGroup.exam.id = :examId
+            """)
+    List<Submission> getLockedSubmissionsAndResultsByExamId(@Param("examId") Long examId);
+
+    /**
      * Checks if a submission for the given participation exists.
      *
      * @param participationId the id of the participation to check
@@ -286,5 +302,4 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
         }
         return new DueDateStat(countByExerciseIdSubmittedBeforeDueDate(exerciseId), countByExerciseIdSubmittedAfterDueDate(exerciseId));
     }
-
 }

@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.TutorLeaderboardService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -77,11 +78,13 @@ public class ExamService {
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
+    private final SubmissionService submissionService;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService, ExerciseService exerciseService,
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, AuditEventRepository auditEventRepository,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository) {
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, SubmissionService submissionService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -97,6 +100,7 @@ public class ExamService {
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
         this.tutorLeaderboardService = tutorLeaderboardService;
+        this.submissionService = submissionService;
     }
 
     /**
@@ -783,5 +787,22 @@ public class ExamService {
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExamLeaderboard(course, exam);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
         return stats;
+    }
+
+    /**
+     * Get all currently locked submissions for all users in the given exam.
+     * These are all submissions for which users started, but did not yet finish the assessment.
+     *
+     * @param examId  - the exam id
+     * @param user    - the user trying to access the locked submissions
+     * @return        - list of submissions that have locked results in the exam
+     */
+    public List<Submission> getLockedSubmissions(Long examId, User user) {
+        List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExamId(examId);
+
+        for (Submission submission : submissions) {
+            submissionService.hideDetails(submission, user);
+        }
+        return submissions;
     }
 }

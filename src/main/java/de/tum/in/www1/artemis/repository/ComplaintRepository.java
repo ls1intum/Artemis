@@ -143,6 +143,15 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<Complaint> getAllByResult_Participation_Exercise_Course_Id(Long courseId);
 
     /**
+     * Given a course id, retrieve all complaints related to assessments related to that course
+     *
+     * @param examId - the id of the course
+     * @return a list of complaints
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "result.participation", "result.submission", "result.assessor" })
+    List<Complaint> getAllByResult_Participation_Exercise_ExerciseGroup_Exam_Id(Long examId);
+
+    /**
      * Given a user id and an exercise id retrieve all complaints related to assessments made by that assessor in that exercise.
      *
      * @param assessorId - the id of the assessor
