@@ -385,6 +385,48 @@ public class ComplaintResource {
     }
 
     /**
+     * Get /courses/:courseId/exams/:examId/complaints/:complaintType
+     * <p>
+     * Get all the complaints filtered by courseId, complaintType and optionally tutorId.
+     * @param tutorId the id of the tutor by which we want to filter
+     * @param courseId the id of the course we are interested in
+     * @param complaintType the type of complaints we are interested in
+     * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/complaints")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Complaint>> getComplaintsByCourseIdAndExamId(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam ComplaintType complaintType,
+            @RequestParam(required = false) Long tutorId) {
+        // Filtering by courseId
+        Course course = courseRepository.findByIdElseThrow(courseId);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
+
+        if (!isAtLeastTutor) {
+            throw new AccessForbiddenException("Insufficient permission for these complaints");
+        }
+
+        if (!isAtLeastInstructor) {
+            tutorId = user.getId();
+        }
+
+        List<Complaint> complaints;
+
+        if (tutorId == null) {
+            complaints = complaintService.getAllComplaintsByCourseId(courseId);
+            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+        }
+        else {
+            complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId);
+            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+        }
+
+        return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
+    }
+
+    /**
      * Filter out all complaints that are not of a specified type.
      *
      * @param complaints    list of complaints

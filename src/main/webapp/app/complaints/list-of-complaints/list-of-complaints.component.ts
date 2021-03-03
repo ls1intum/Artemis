@@ -29,6 +29,7 @@ export class ListOfComplaintsComponent implements OnInit {
     private courseId: number;
     private exerciseId: number;
     private tutorId: number;
+    private examId?: number;
 
     complaintsSortingPredicate = 'id';
     complaintsReverseOrder = false;
@@ -53,6 +54,7 @@ export class ListOfComplaintsComponent implements OnInit {
         this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             this.exerciseId = Number(params['exerciseId']);
+            this.examId = Number(params['examId']);
         });
         this.route.queryParams.subscribe((queryParams) => {
             this.tutorId = Number(queryParams['tutorId']);
@@ -67,12 +69,17 @@ export class ListOfComplaintsComponent implements OnInit {
         if (this.tutorId) {
             if (this.exerciseId) {
                 complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, this.complaintType);
+            } else if (this.examId) {
+                // TODO make exam complaints visible for tutors too
+                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType);
             } else {
                 complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType);
             }
         } else {
             if (this.exerciseId) {
                 complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId, this.complaintType);
+            } else if (this.examId) {
+                complaintResponse = this.complaintService.findAllByCourseIdAndExamId(this.courseId, this.examId, this.complaintType);
             } else {
                 complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType);
             }

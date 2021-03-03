@@ -25,6 +25,24 @@ export const listOfComplaintsRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':courseId/exams/:examId/complaints',
+        component: ListOfComplaintsComponent,
+        resolve: {
+            course: CourseResolve,
+        },
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            // HACK: The path is a composite, so we need to define both parts
+            breadcrumbs: [
+                { variable: 'course.title', path: 'course.id' },
+                { label: 'artemisApp.complaint.listOfComplaints.title', path: 'complaints' },
+            ],
+            pageTitle: 'artemisApp.complaint.listOfComplaints.title',
+            complaintType: ComplaintType.COMPLAINT,
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':courseId/exercises/:exerciseId/complaints',
         component: ListOfComplaintsComponent,
         data: {

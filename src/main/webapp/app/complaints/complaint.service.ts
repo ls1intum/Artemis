@@ -164,6 +164,16 @@ export class ComplaintService implements IComplaintService {
     }
 
     /**
+     * Find all complaints by course id and complaintType.
+     * @param courseId
+     * @param complaintType
+     */
+    findAllByCourseIdAndExamId(courseId: number, examId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
+        const url = `${this.apiUrl}/courses/${courseId}/exams/${examId}/complaints?complaintType=${complaintType}`;
+        return this.requestComplaintsFromUrl(url);
+    }
+
+    /**
      * Find all complaints by exercise id and complaintType.
      * @param exerciseId
      * @param complaintType
