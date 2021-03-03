@@ -114,17 +114,14 @@ public class FeedbackService {
      * @return Feedback object for the test job
      */
     public Feedback createFeedbackFromTestCase(String testName, List<String> testErrors, boolean successful, final ProgrammingLanguage programmingLanguage) {
-
         Feedback feedback = new Feedback();
         feedback.setText(testName);
 
         if (!successful) {
-
             String errorMessageString = testErrors.stream().map(errorString -> processResultErrorMessage(programmingLanguage, errorString)).collect(Collectors.joining("\n\n"));
             if (errorMessageString.length() > FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS) {
                 errorMessageString = errorMessageString.substring(0, FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
             }
-
             feedback.setDetailText(errorMessageString);
         }
         else {
