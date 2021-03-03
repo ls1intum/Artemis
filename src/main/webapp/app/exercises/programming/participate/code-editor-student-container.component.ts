@@ -162,4 +162,13 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
         }
         this.hasTutorAssessment = isManualResult && hasTutorFeedback;
     }
+
+    /**
+     * Find "Unreferenced Feedback" item for Result, if it exists.
+     */
+    get unreferencedFeedback(): Feedback[] | undefined {
+        if (this.latestResult && this.latestResult.feedbacks && Array.isArray(this.latestResult.feedbacks)) {
+            return this.latestResult.feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
+        }
+    }
 }
