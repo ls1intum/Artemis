@@ -22,7 +22,9 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -346,7 +348,19 @@ public class ResultResource {
             return forbidden();
         }
 
-        return new ResponseEntity<>(result.getFeedbacks(), HttpStatus.OK);
+        Exercise exercise = participation.getExercise();
+        List<Feedback> feedbacks;
+        // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise) && !result.getAssessmentType().equals(AssessmentType.AUTOMATIC)
+                && exercise.getAssessmentDueDate() != null && ZonedDateTime.now().isBefore(exercise.getAssessmentDueDate())) {
+            // filter all non-automatic feedbacks
+            feedbacks = result.getFeedbacks().stream().filter(feedback -> feedback.getType().equals(FeedbackType.AUTOMATIC)).collect(Collectors.toList());
+        }
+        else {
+            feedbacks = result.getFeedbacks();
+        }
+
+        return new ResponseEntity<>(feedbacks, HttpStatus.OK);
     }
 
     /**
