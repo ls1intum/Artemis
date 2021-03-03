@@ -74,10 +74,7 @@ public class TutorLeaderboardService {
     public List<TutorLeaderboardDTO> getExamLeaderboard(Course course, Exam exam) {
 
         List<User> tutors = userRepository.getTutors(course);
-        // TODO: Those calls do not work yet as the view does not yet have the examId column.
-        // List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = tutorLeaderboardAssessmentViewRepository.findAllByExamId(exam.getId());
-        // List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByExamId(exam.getId());
-        // List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses = tutorLeaderboardComplaintResponsesViewRepository.findAllByExamId(exam.getId());
+        // TODO: get the exam leaderboard. We do not want to use the existing views. We do not yet support the exam leaderboard
         // TODO: remove as soon as the above calls work
         List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = new ArrayList<>();
         List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints = new ArrayList<>();

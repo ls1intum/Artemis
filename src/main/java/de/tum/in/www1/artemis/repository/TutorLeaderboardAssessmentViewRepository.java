@@ -12,7 +12,5 @@ public interface TutorLeaderboardAssessmentViewRepository extends JpaRepository<
 
     List<TutorLeaderboardAssessmentView> findAllByCourseId(long courseId);
 
-    // TODO: add when examId is added to the view: List<TutorLeaderboardAssessmentView> findAllByExamId(long examId);
-
     List<TutorLeaderboardAssessmentView> findAllByLeaderboardId_ExerciseId(long exerciseId);
 }

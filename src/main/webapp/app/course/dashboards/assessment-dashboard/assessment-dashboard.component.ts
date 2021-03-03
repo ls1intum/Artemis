@@ -139,6 +139,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                     this.numberOfAssessmentLocks = this.stats.numberOfAssessmentLocks;
 
                     const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor.id);
+                    this.stats.tutorLeaderboardEntries.sort(this.sortByPoints);
                     if (tutorLeaderboardEntry) {
                         this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
                         this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
@@ -177,6 +178,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                     this.numberOfOpenMoreFeedbackRequests = this.stats.numberOfOpenMoreFeedbackRequests;
                     this.numberOfAssessmentLocks = this.stats.numberOfAssessmentLocks;
                     const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor.id);
+                    this.stats.tutorLeaderboardEntries.sort(this.sortByPoints);
                     if (tutorLeaderboardEntry) {
                         this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
                         this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
@@ -253,6 +255,10 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
 
     sortRows() {
         this.sortService.sortByProperty(this.exercises, this.exercisesSortingPredicate, this.exercisesReverseOrder);
+    }
+
+    sortByPoints(entry1: any, entry2: any) {
+        return entry1.points < entry2.points ? 1 : -1;
     }
 
     toggleSecondCorrection(exerciseId: number) {
