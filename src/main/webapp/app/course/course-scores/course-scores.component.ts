@@ -174,15 +174,18 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         for (const courseScoreDTO of courseScoreDTOs) {
             this.studentIdToCourseScoreDTOs.set(courseScoreDTO.studentId!, courseScoreDTO);
         }
+        let noOfScoreDifferencesFound = 0;
+        let noOfPointDifferencesFound = 0;
         for (const student of this.students) {
             const overAllPoints = round(student.overallPoints, 1);
             const overallScore = round((student.overallPoints / this.maxNumberOfOverallPoints) * 100, 1);
 
             const regularCalculation = {
-                overallScore,
-                overAllPoints,
+                scoreAchieved: overallScore,
+                pointsAchieved: overAllPoints,
                 userId: student.user.id,
                 userLogin: student.user.login,
+                regularPointsAchievable: this.maxNumberOfOverallPoints,
             };
             // checking if the same as in the course scores map
             const courseScoreDTO = this.studentIdToCourseScoreDTOs.get(student.user.id!);
@@ -190,20 +193,27 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 const errorMessage = `User scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
                 this.logErrorOnSentry(errorMessage);
             } else {
-                if (courseScoreDTO.pointsAchieved !== regularCalculation.overAllPoints) {
+                courseScoreDTO.scoreAchieved = round(courseScoreDTO.scoreAchieved, 1);
+                courseScoreDTO.pointsAchieved = round(courseScoreDTO.pointsAchieved, 1);
+
+                if (Math.abs(courseScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 1) {
                     const errorMessage = `Different course points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
                         courseScoreDTO,
                     )}`;
+                    noOfPointDifferencesFound += 1;
                     this.logErrorOnSentry(errorMessage);
                 }
-                if (courseScoreDTO.scoreAchieved !== regularCalculation.overallScore) {
+                if (Math.abs(courseScoreDTO.scoreAchieved - regularCalculation.scoreAchieved) > 1) {
                     const errorMessage = `Different course score in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation : ${JSON.stringify(
                         courseScoreDTO,
                     )}`;
+                    noOfScoreDifferencesFound += 1;
                     this.logErrorOnSentry(errorMessage);
                 }
             }
         }
+        console.log(`Found ${noOfPointDifferencesFound} point differences between old and new calculation method.`);
+        console.log(`Found ${noOfScoreDifferencesFound} point differences between old and new calculation method.`);
     }
 
     logErrorOnSentry(errorMessage: string) {

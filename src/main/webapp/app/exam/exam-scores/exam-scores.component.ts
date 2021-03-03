@@ -25,7 +25,6 @@ import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import * as Sentry from '@sentry/browser';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -83,45 +82,48 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             // alternative exam scores calculation using participant scores table
             const findExamScoresObservable = this.participantScoresService.findExamScores(params['examId']);
 
-            forkJoin([getExamScoresObservable, findExamScoresObservable]).subscribe(
-                ([getExamScoresResponse, findExamScoresResponse]) => {
-                    this.examScoreDTO = getExamScoresResponse!.body!;
-                    if (this.examScoreDTO) {
-                        this.studentResults = this.examScoreDTO.studentResults;
-                        this.exerciseGroups = this.examScoreDTO.exerciseGroups;
+            forkJoin([getExamScoresObservable, findExamScoresObservable])
+                .finally(() => {
+                    this.isLoading = false;
+                })
+                .subscribe(
+                    ([getExamScoresResponse, findExamScoresResponse]) => {
+                        this.examScoreDTO = getExamScoresResponse!.body!;
+                        if (this.examScoreDTO) {
+                            this.studentResults = this.examScoreDTO.studentResults;
+                            this.exerciseGroups = this.examScoreDTO.exerciseGroups;
 
-                        const titleMap = new Map<string, number>();
-                        if (this.exerciseGroups) {
-                            for (const exerciseGroup of this.exerciseGroups) {
-                                if (titleMap.has(exerciseGroup.title)) {
-                                    const currentValue = titleMap.get(exerciseGroup.title);
-                                    titleMap.set(exerciseGroup.title, currentValue! + 1);
-                                } else {
-                                    titleMap.set(exerciseGroup.title, 1);
+                            const titleMap = new Map<string, number>();
+                            if (this.exerciseGroups) {
+                                for (const exerciseGroup of this.exerciseGroups) {
+                                    if (titleMap.has(exerciseGroup.title)) {
+                                        const currentValue = titleMap.get(exerciseGroup.title);
+                                        titleMap.set(exerciseGroup.title, currentValue! + 1);
+                                    } else {
+                                        titleMap.set(exerciseGroup.title, 1);
+                                    }
                                 }
-                            }
 
-                            // this workaround is necessary if the exam has exercise groups with the same title (we add the id to make it unique)
-                            for (const exerciseGroup of this.exerciseGroups) {
-                                if (titleMap.has(exerciseGroup.title) && titleMap.get(exerciseGroup.title)! > 1) {
-                                    exerciseGroup.title = `${exerciseGroup.title} (id=${exerciseGroup.id})`;
+                                // this workaround is necessary if the exam has exercise groups with the same title (we add the id to make it unique)
+                                for (const exerciseGroup of this.exerciseGroups) {
+                                    if (titleMap.has(exerciseGroup.title) && titleMap.get(exerciseGroup.title)! > 1) {
+                                        exerciseGroup.title = `${exerciseGroup.title} (id=${exerciseGroup.id})`;
+                                    }
                                 }
                             }
                         }
-                    }
-                    // Only try to calculate statistics if the exam has exercise groups and student results
-                    if (this.studentResults && this.exerciseGroups) {
-                        // Exam statistics must only be calculated once as they are not filter dependent
-                        this.calculateExamStatistics();
-                        this.calculateFilterDependentStatistics();
-                    }
-                    this.createChart();
-                    this.isLoading = false;
-                    this.changeDetector.detectChanges();
-                    this.compareNewExamScoresCalculationWithOldCalculation(findExamScoresResponse.body!);
-                },
-                (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
-            );
+                        // Only try to calculate statistics if the exam has exercise groups and student results
+                        if (this.studentResults && this.exerciseGroups) {
+                            // Exam statistics must only be calculated once as they are not filter dependent
+                            this.calculateExamStatistics();
+                            this.calculateFilterDependentStatistics();
+                        }
+                        this.createChart();
+                        this.changeDetector.detectChanges();
+                        this.compareNewExamScoresCalculationWithOldCalculation(findExamScoresResponse.body!);
+                    },
+                    (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+                );
         });
 
         // Update the view if the language was changed
@@ -462,14 +464,15 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         for (const examScoreDTO of examScoreDTOs) {
             this.studentIdToExamScoreDTOs.set(examScoreDTO.studentId!, examScoreDTO);
         }
-
+        let noOfScoreDifferencesFound = 0;
+        let noOfPointDifferencesFound = 0;
         for (const studentResult of this.studentResults) {
             const overAllPoints = round(studentResult.overallPointsAchieved, 1);
             const overallScore = round(studentResult.overallScoreAchieved, 1);
 
             const regularCalculation = {
-                overallScore,
-                overAllPoints,
+                scoreAchieved: overallScore,
+                pointsAchieved: overAllPoints,
                 userId: studentResult.userId,
                 userLogin: studentResult.login,
             };
@@ -479,24 +482,31 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 const errorMessage = `User scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
                 this.logErrorOnSentry(errorMessage);
             } else {
-                if (examScoreDTO.pointsAchieved !== regularCalculation.overAllPoints) {
-                    const errorMessage = `Different exam points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
+                examScoreDTO.scoreAchieved = round(examScoreDTO.scoreAchieved, 1);
+                examScoreDTO.pointsAchieved = round(examScoreDTO.pointsAchieved, 1);
+
+                if (Math.abs(examScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 1) {
+                    const errorMessage = `Different course points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
                         examScoreDTO,
                     )}`;
+                    noOfPointDifferencesFound += 1;
                     this.logErrorOnSentry(errorMessage);
                 }
-                if (examScoreDTO.scoreAchieved !== regularCalculation.overallScore) {
-                    const errorMessage = `Different exam score in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation : ${JSON.stringify(
+                if (Math.abs(examScoreDTO.scoreAchieved - regularCalculation.scoreAchieved) > 1) {
+                    const errorMessage = `Different course score in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation : ${JSON.stringify(
                         examScoreDTO,
                     )}`;
+                    noOfScoreDifferencesFound += 1;
                     this.logErrorOnSentry(errorMessage);
                 }
             }
         }
+        console.log(`Found ${noOfPointDifferencesFound} point differences between old and new calculation method.`);
+        console.log(`Found ${noOfScoreDifferencesFound} point differences between old and new calculation method.`);
     }
 
     logErrorOnSentry(errorMessage: string) {
         console.log(errorMessage);
-        Sentry.captureException(new Error(errorMessage));
+        // Sentry.captureException(new Error(errorMessage));
     }
 }
