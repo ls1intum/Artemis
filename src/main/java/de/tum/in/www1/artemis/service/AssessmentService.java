@@ -16,10 +16,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -39,13 +41,13 @@ public class AssessmentService {
 
     protected final ResultService resultService;
 
-    private final ExamService examService;
+    private final ExamDateService examDateService;
 
     protected final SubmissionRepository submissionRepository;
 
     protected final GradingCriterionService gradingCriterionService;
 
-    private final UserService userService;
+    protected final UserRepository userRepository;
 
     private final SubmissionService submissionService;
 
@@ -55,7 +57,8 @@ public class AssessmentService {
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
-            SubmissionRepository submissionRepository, ExamService examService, GradingCriterionService gradingCriterionService, UserService userService, LtiService ltiService) {
+            SubmissionRepository submissionRepository, ExamDateService examDateService, GradingCriterionService gradingCriterionService, UserRepository userRepository,
+            LtiService ltiService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -64,9 +67,9 @@ public class AssessmentService {
         this.resultService = resultService;
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
-        this.examService = examService;
+        this.examDateService = examDateService;
         this.gradingCriterionService = gradingCriterionService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.ltiService = ltiService;
     }
 
@@ -177,7 +180,7 @@ public class AssessmentService {
             // Tutors can assess exam exercises only after the last student has finished the exam and before the publish result date
             if (isExamMode && !isAtLeastInstructor) {
                 final Exam exam = exercise.getExerciseGroup().getExam();
-                ZonedDateTime latestExamDueDate = examService.getLatestIndividualExamEndDate(exam.getId());
+                ZonedDateTime latestExamDueDate = examDateService.getLatestIndividualExamEndDate(exam.getId());
                 if (latestExamDueDate.isAfter(ZonedDateTime.now()) || (exam.getPublishResultsDate() != null && exam.getPublishResultsDate().isBefore(ZonedDateTime.now()))) {
                     return false;
                 }
@@ -209,16 +212,9 @@ public class AssessmentService {
         Result result = submission.getLatestResult();
 
         /*
-         * For programming exercises we need to delete the submission of the manual result as well, as for the first new manual result a new submission will be generated. For the
-         * following manual results this submission will be reused. The CascadeType.REMOVE of {@link Submission#result} will delete also the result and the corresponding feedbacks
-         * {@link Result#feedbacks}.
+         * We only want to be able to cancel a result if it is not of the AUTOMATIC AssessmentType
          */
-        if (participation instanceof ProgrammingExerciseStudentParticipation && submission.getResults().size() == 1) {
-            participation.removeSubmission(submission);
-            participation.removeResult(result);
-            submissionRepository.deleteById(submission.getId());
-        }
-        else {
+        if (result != null && result.getAssessmentType() != null && !result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
             participation.removeResult(result);
             feedbackRepository.deleteByResult_Id(result.getId());
             resultRepository.deleteById(result.getId());
@@ -334,7 +330,7 @@ public class AssessmentService {
      * @return result that was saved in the database
      */
     public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId) {
-        Result result = submission.getResults().stream().filter(tmp -> tmp.getId().equals(resultId)).findAny().orElse(null);
+        Result result = submission.getResults().stream().filter(res -> res.getId().equals(resultId)).findAny().orElse(null);
 
         if (result == null) {
             result = submissionService.saveNewEmptyResult(submission);
@@ -347,7 +343,7 @@ public class AssessmentService {
 
         result.setExampleResult(submission.isExampleSubmission());
         result.setAssessmentType(AssessmentType.MANUAL);
-        User user = userService.getUser();
+        User user = userRepository.getUser();
         result.setAssessor(user);
         // first save the feedback (that is not yet in the database) to prevent null index exception
         var savedFeedbackList = saveFeedbacks(feedbackList);

@@ -10,6 +10,12 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.scores.StudentScore;
+import de.tum.in.www1.artemis.domain.scores.TeamScore;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.StudentScoreRepository;
+import de.tum.in.www1.artemis.repository.TeamScoreRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
@@ -17,28 +23,37 @@ import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
 @Service
 public class LearningGoalService {
 
-    private final ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
-    public LearningGoalService(ParticipationService participationService, ExerciseService exerciseService) {
-        this.exerciseService = exerciseService;
-        this.participationService = participationService;
+    private final StudentScoreRepository studentScoreRepository;
+
+    private final TeamScoreRepository teamScoreRepository;
+
+    public LearningGoalService(StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, StudentScoreRepository studentScoreRepository,
+            TeamScoreRepository teamScoreRepository) {
+        this.exerciseRepository = exerciseRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.studentScoreRepository = studentScoreRepository;
+        this.teamScoreRepository = teamScoreRepository;
     }
 
     /**
      * Calculates the progress of the given user in the given exercise units
-     *
+     * <p>
      * Note: In the case of two exercise units referencing the same exercise, only the first exercise unit will be used.
-     *
+     * <p>
      * Note: Please note that we take always the last submission into account here. Even submissions after the due date. This means for example that a student can improve his/her
      * progress by re-trying a quiz as often as you like. It is therefore normal, that the points here might differ from the points officially achieved in an exercise.
      *
-     * @param exerciseUnits exercise units to check
-     * @param user user to check for
+     * @param exerciseUnits            exercise units to check
+     * @param user                     user to check for
+     * @param useParticipantScoreTable use the participant score table instead of going through participation -> submission -> result
      * @return progress of the user in the exercise units
      */
-    public Set<IndividualLearningGoalProgress.IndividualLectureUnitProgress> calculateExerciseUnitsProgress(Set<ExerciseUnit> exerciseUnits, User user) {
+    public Set<IndividualLearningGoalProgress.IndividualLectureUnitProgress> calculateExerciseUnitsProgress(Set<ExerciseUnit> exerciseUnits, User user,
+            boolean useParticipantScoreTable) {
         // for each exercise unit, the exercise will be mapped to a freshly created lecture unit progress.
         Map<Exercise, IndividualLearningGoalProgress.IndividualLectureUnitProgress> exerciseToLectureUnitProgress = exerciseUnits.stream()
                 .filter(exerciseUnit -> exerciseUnit.getExercise() != null && exerciseUnit.getExercise().isAssessmentDueDateOver())
@@ -52,6 +67,19 @@ public class LearningGoalService {
         List<Exercise> individualExercises = exerciseToLectureUnitProgress.keySet().stream().filter(exercise -> !exercise.isTeamMode()).collect(Collectors.toList());
         List<Exercise> teamExercises = exerciseToLectureUnitProgress.keySet().stream().filter(Exercise::isTeamMode).collect(Collectors.toList());
 
+        if (useParticipantScoreTable) {
+            fillInScoreAchievedByStudentUsingParticipantScores(user, exerciseToLectureUnitProgress, individualExercises, teamExercises);
+        }
+        else {
+            fillInScoreAchievedByStudentUsingParticipationsSubmissionsResults(user, exerciseToLectureUnitProgress, individualExercises, teamExercises);
+        }
+
+        return new HashSet<>(exerciseToLectureUnitProgress.values());
+    }
+
+    private void fillInScoreAchievedByStudentUsingParticipationsSubmissionsResults(User user,
+            Map<Exercise, IndividualLearningGoalProgress.IndividualLectureUnitProgress> exerciseToLectureUnitProgress, List<Exercise> individualExercises,
+            List<Exercise> teamExercises) {
         // for all relevant exercises the participations with submissions and results will be batch loaded
         List<StudentParticipation> participationsOfTheStudent = getStudentParticipationsWithSubmissionsAndResults(user, individualExercises, teamExercises);
 
@@ -61,28 +89,43 @@ public class LearningGoalService {
             exerciseToLectureUnitProgress.get(exercise).scoreAchievedByStudentInLectureUnit = optionalResult.isEmpty() || optionalResult.get().getScore() == null ? 0.0
                     : optionalResult.get().getScore().doubleValue();
         }
+    }
 
-        return new HashSet<>(exerciseToLectureUnitProgress.values());
+    private void fillInScoreAchievedByStudentUsingParticipantScores(User user,
+            Map<Exercise, IndividualLearningGoalProgress.IndividualLectureUnitProgress> exerciseToLectureUnitProgress, List<Exercise> individualExercises,
+            List<Exercise> teamExercises) {
+        for (Exercise exercise : individualExercises) {
+            Optional<StudentScore> studentScoreOptional = studentScoreRepository.findStudentScoreByExerciseAndUserLazy(exercise, user);
+            exerciseToLectureUnitProgress.get(exercise).scoreAchievedByStudentInLectureUnit = studentScoreOptional.map(studentScore -> studentScore.getLastScore().doubleValue())
+                    .orElse(0.0);
+        }
+
+        for (Exercise exercise : teamExercises) {
+            Optional<TeamScore> teamScoreOptional = teamScoreRepository.findTeamScoreByExerciseAndUserLazy(exercise, user);
+            exerciseToLectureUnitProgress.get(exercise).scoreAchievedByStudentInLectureUnit = teamScoreOptional.map(teamScore -> teamScore.getLastScore().doubleValue())
+                    .orElse(0.0);
+        }
     }
 
     /**
      * Calculates the course progress in the given exercise units
-     *
+     * <p>
      * Note: In the case of two exercise units referencing the same exercise, only the first exercise unit will be used.
-     *
+     * <p>
      * Note: Please note that we take always the last submission into account here. Even submissions after the due date. This means for example that a student can improve his/her
      * progress by re-trying a quiz as often as you like. It is therefore normal, that the points here might differ from the points officially achieved in an exercise.
      *
-     * @param exerciseUnits exercise units to check
+     * @param exerciseUnits            exercise units to check
+     * @param useParticipantScoreTable use the participant score table instead of going through participation -> submission -> result
      * @return progress of the course in the exercise units
      */
-    private Set<CourseLearningGoalProgress.CourseLectureUnitProgress> calculateExerciseUnitsProgressForCourse(List<ExerciseUnit> exerciseUnits) {
+    private Set<CourseLearningGoalProgress.CourseLectureUnitProgress> calculateExerciseUnitsProgressForCourse(List<ExerciseUnit> exerciseUnits, boolean useParticipantScoreTable) {
         List<ExerciseUnit> filteredExerciseUnits = exerciseUnits.stream()
                 .filter(exerciseUnit -> exerciseUnit.getExercise() != null && exerciseUnit.getExercise().isAssessmentDueDateOver()).collect(Collectors.toList());
         List<Long> exerciseIds = filteredExerciseUnits.stream().map(exerciseUnit -> exerciseUnit.getExercise().getId()).distinct().collect(Collectors.toList());
 
-        Map<Long, CourseExerciseStatisticsDTO> exerciseIdToExerciseCourseStatistics = this.exerciseService.calculateExerciseStatistics(exerciseIds).stream()
-                .collect(Collectors.toMap(CourseExerciseStatisticsDTO::getExerciseId, courseExerciseStatisticsDTO -> courseExerciseStatisticsDTO));
+        Map<Long, CourseExerciseStatisticsDTO> exerciseIdToExerciseCourseStatistics = this.exerciseRepository.calculateExerciseStatistics(exerciseIds, useParticipantScoreTable)
+                .stream().collect(Collectors.toMap(CourseExerciseStatisticsDTO::getExerciseId, courseExerciseStatisticsDTO -> courseExerciseStatisticsDTO));
 
         // for each exercise unit, the exercise will be mapped to a freshly created lecture unit course progress.
         Map<Exercise, CourseLearningGoalProgress.CourseLectureUnitProgress> exerciseToLectureUnitCourseProgress = filteredExerciseUnits.stream()
@@ -113,12 +156,28 @@ public class LearningGoalService {
         if (relevantParticipation == null) {
             return Optional.empty();
         }
+
+        relevantParticipation.setSubmissions(relevantParticipation.getSubmissions().stream().filter(submission -> {
+            boolean hasFittingResult = false;
+            for (Result result : submission.getResults()) {
+                if (result.getScore() != null && result.getCompletionDate() != null) {
+                    hasFittingResult = true;
+                    break;
+                }
+            }
+            return hasFittingResult;
+        }).collect(Collectors.toSet()));
+
         // find the latest submission of the relevant participation
         Optional<Submission> latestSubmissionOptional = relevantParticipation.findLatestSubmission();
         if (latestSubmissionOptional.isEmpty()) {
             return Optional.empty();
         }
         Submission latestSubmission = latestSubmissionOptional.get();
+
+        latestSubmission
+                .setResults(latestSubmission.getResults().stream().filter(result -> result.getScore() != null && result.getCompletionDate() != null).collect(Collectors.toList()));
+
         // find the latest result of the latest submission
         Result latestResult = latestSubmission.getLatestResult();
         return latestResult == null ? Optional.empty() : Optional.of(latestResult);
@@ -133,11 +192,12 @@ public class LearningGoalService {
      */
     private List<StudentParticipation> getStudentParticipationsWithSubmissionsAndResults(User user, List<Exercise> individualExercises, List<Exercise> teamExercises) {
         // 1st: fetch participations, submissions and results for individual exercises
-        List<StudentParticipation> participationsOfIndividualExercises = participationService
+        List<StudentParticipation> participationsOfIndividualExercises = studentParticipationRepository
                 .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
 
         // 2nd: fetch participations, submissions and results for team exercises
-        List<StudentParticipation> participationsOfTeamExercises = participationService.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), teamExercises);
+        List<StudentParticipation> participationsOfTeamExercises = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(),
+                teamExercises);
 
         // 3rd: merge both into one list for further processing
         return Stream.concat(participationsOfIndividualExercises.stream(), participationsOfTeamExercises.stream()).collect(Collectors.toList());
@@ -146,11 +206,12 @@ public class LearningGoalService {
     /**
      * Calculate the progress in a learning goal for a specific user
      *
-     * @param learningGoal learning goal to get the progress for
-     * @param user user to get the progress for
+     * @param learningGoal             learning goal to get the progress for
+     * @param user                     user to get the progress for
+     * @param useParticipantScoreTable use the participant score table instead of going through participation -> submission -> result
      * @return progress of the user in the learning goal
      */
-    public IndividualLearningGoalProgress calculateLearningGoalProgress(LearningGoal learningGoal, User user) {
+    public IndividualLearningGoalProgress calculateLearningGoalProgress(LearningGoal learningGoal, User user, boolean useParticipantScoreTable) {
 
         IndividualLearningGoalProgress individualLearningGoalProgress = new IndividualLearningGoalProgress();
         individualLearningGoalProgress.studentId = user.getId();
@@ -163,7 +224,7 @@ public class LearningGoalService {
         Set<ExerciseUnit> exerciseUnitsUsableForProgressCalculation = learningGoal.getLectureUnits().parallelStream().filter(LectureUnit::isVisibleToStudents)
                 .filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).map(lectureUnit -> (ExerciseUnit) lectureUnit).collect(Collectors.toSet());
         Set<IndividualLearningGoalProgress.IndividualLectureUnitProgress> progressInLectureUnits = this.calculateExerciseUnitsProgress(exerciseUnitsUsableForProgressCalculation,
-                user);
+                user, useParticipantScoreTable);
 
         // updating learningGoalPerformance by summing up the points of the individual lecture unit performances
         individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal = progressInLectureUnits.stream()
@@ -181,10 +242,11 @@ public class LearningGoalService {
     /**
      * Calculate the progress in a learning goal for a whole course
      *
-     * @param learningGoal learning goal to get the progress for
+     * @param useParticipantScoreTable use the participant score table instead of going through participation -> submission -> result
+     * @param learningGoal             learning goal to get the progress for
      * @return progress of the course in the learning goal
      */
-    public CourseLearningGoalProgress calculateLearningGoalCourseProgress(LearningGoal learningGoal) {
+    public CourseLearningGoalProgress calculateLearningGoalCourseProgress(LearningGoal learningGoal, boolean useParticipantScoreTable) {
         CourseLearningGoalProgress courseLearningGoalProgress = new CourseLearningGoalProgress();
         courseLearningGoalProgress.courseId = learningGoal.getCourse().getId();
         courseLearningGoalProgress.learningGoalId = learningGoal.getId();
@@ -195,7 +257,8 @@ public class LearningGoalService {
         // The progress will be calculated from a subset of the connected lecture units (currently only from released exerciseUnits)
         List<ExerciseUnit> exerciseUnitsUsableForProgressCalculation = learningGoal.getLectureUnits().parallelStream().filter(LectureUnit::isVisibleToStudents)
                 .filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).map(lectureUnit -> (ExerciseUnit) lectureUnit).collect(Collectors.toList());
-        Set<CourseLearningGoalProgress.CourseLectureUnitProgress> progressInLectureUnits = this.calculateExerciseUnitsProgressForCourse(exerciseUnitsUsableForProgressCalculation);
+        Set<CourseLearningGoalProgress.CourseLectureUnitProgress> progressInLectureUnits = this.calculateExerciseUnitsProgressForCourse(exerciseUnitsUsableForProgressCalculation,
+                useParticipantScoreTable);
 
         // updating learningGoalPerformance by summing up the points of the individual lecture unit progress
         courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal = progressInLectureUnits.stream()

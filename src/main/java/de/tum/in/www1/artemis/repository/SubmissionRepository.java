@@ -11,8 +11,16 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
 /**
  * Spring Data repository for the Submission entity.
@@ -77,6 +85,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     boolean existsByParticipationId(long participationId);
 
     /**
+     * Count number of in-time submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
+     *
      * @param courseId the course id we are interested in
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
      *         due date at all
@@ -85,6 +95,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     long countByCourseIdSubmittedBeforeDueDate(@Param("courseId") long courseId);
 
     /**
+     * Count number of late submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
+     *
      * @param courseId the course id we are interested in
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date after the exercise due date
      */
@@ -106,15 +118,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      *         exercise due date at all
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM StudentParticipation p
+            SELECT COUNT (DISTINCT p) FROM StudentParticipation p join  p.submissions s
             WHERE p.exercise.id = :#{#exerciseId}
             AND p.testRun = FALSE
-            AND EXISTS (SELECT s
-                FROM Submission s
-                WHERE s.participation.id = p.id
-                AND s.submitted = TRUE
-                AND (p.exercise.dueDate IS NULL
-                    OR s.submissionDate <= p.exercise.dueDate))
+            AND s.participation.id = p.id
+            AND s.submitted = TRUE
+            AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
             """)
     long countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
@@ -144,5 +153,57 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the submission with its feedback and assessor
      */
     @Query("select distinct submission from Submission submission left join fetch submission.results r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
-    Optional<Submission> findWithEagerResultAndFeedbackById(long submissionId);
+    Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
+
+    /**
+     * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
+     * database.
+     *
+     * @param participation   the participation for which the submission should be initialized
+     * @param exercise        the corresponding exercise, should be either a text, modeling or file upload exercise, otherwise it will instantly return and not do anything
+     * @param submissionType  type for the submission to be initialized
+     * @return a new submission for the given type connected to the given participation
+     */
+    default Submission initializeSubmission(Participation participation, Exercise exercise, SubmissionType submissionType) {
+
+        Submission submission;
+        if (exercise instanceof ProgrammingExercise) {
+            submission = new ProgrammingSubmission();
+        }
+        else if (exercise instanceof ModelingExercise) {
+            submission = new ModelingSubmission();
+        }
+        else if (exercise instanceof TextExercise) {
+            submission = new TextSubmission();
+        }
+        else if (exercise instanceof FileUploadExercise) {
+            submission = new FileUploadSubmission();
+        }
+        else if (exercise instanceof QuizExercise) {
+            submission = new QuizSubmission();
+        }
+        else {
+            throw new RuntimeException("Unsupported exercise type: " + exercise);
+        }
+
+        submission.setType(submissionType);
+        submission.setParticipation(participation);
+        save(submission);
+        participation.addSubmission(submission);
+        return submission;
+    }
+
+    /**
+     * Count number of submissions for exercise.
+     * @param exerciseId the exercise id we are interested in
+     * @param examMode should be set to ignore the test run submissions
+     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true, separated into before and after the due date
+     */
+    default DueDateStat countSubmissionsForExercise(long exerciseId, boolean examMode) {
+        if (examMode) {
+            return new DueDateStat(countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exerciseId), 0L);
+        }
+        return new DueDateStat(countByExerciseIdSubmittedBeforeDueDate(exerciseId), countByExerciseIdSubmittedAfterDueDate(exerciseId));
+    }
+
 }

@@ -15,6 +15,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { TranslateService } from '@ngx-translate/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 type CourseArchiveState = {
     exportState: 'COMPLETED' | 'RUNNING';
@@ -47,6 +48,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         private jhiAlertService: JhiAlertService,
         private websocketService: JhiWebsocketService,
         private translateService: TranslateService,
+        private modalService: NgbModal,
     ) {}
 
     /**
@@ -141,6 +143,21 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         // A course can only be archived if it's over.
         const isCourseOver = this.course.endDate?.isBefore(moment()) ?? false;
         return !!this.course.isAtLeastInstructor && isCourseOver;
+    }
+
+    /**
+     * Open a modal that requires the user's confirmation.
+     * @param content the modal content
+     */
+    openArchieCourseModal(content: any) {
+        this.modalService.open(content).result.then(
+            (result: string) => {
+                if (result === 'archive') {
+                    this.archiveCourse();
+                }
+            },
+            () => {},
+        );
     }
 
     archiveCourse() {

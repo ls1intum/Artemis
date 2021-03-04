@@ -55,21 +55,21 @@ describe('ParticipantScoresTable', () => {
         participantScoreDTO.id = 1;
         participantScoreDTO.userId = 42;
         participantScoreDTO.userName = 'testUser';
-        participantScoreDTO.teamId = null;
-        participantScoreDTO.teamName = null;
         participantScoreDTO.exerciseId = 99;
         participantScoreDTO.exerciseTitle = 'testExercise';
         participantScoreDTO.lastResultId = 12;
         participantScoreDTO.lastResultScore = 50;
         participantScoreDTO.lastRatedResultId = 20;
         participantScoreDTO.lastRatedResultScore = 100;
+        participantScoreDTO.lastPoints = 13.3;
+        participantScoreDTO.lastRatedPoints = 44.4;
         component.isLoading = false;
         component.participantScores = [participantScoreDTO];
 
         fixture.detectChanges();
 
         const cellElements = fixture.debugElement.queryAll(By.css('.datatable-body-cell-label > span'));
-        expect(cellElements.length).to.equal(11);
+        expect(cellElements.length).to.equal(13);
         expect(cellElements[0].nativeElement.innerHTML).to.contain(participantScoreDTO.id);
         expect(cellElements[1].nativeElement.innerHTML).to.contain(participantScoreDTO.userId);
         expect(cellElements[2].nativeElement.innerHTML).to.contain(participantScoreDTO.userName);
@@ -79,20 +79,20 @@ describe('ParticipantScoresTable', () => {
         expect(cellElements[6].nativeElement.innerHTML).to.contain(participantScoreDTO.exerciseTitle);
         expect(cellElements[7].nativeElement.innerHTML).to.contain(participantScoreDTO.lastResultId);
         expect(cellElements[8].nativeElement.innerHTML).to.contain(participantScoreDTO.lastResultScore);
-        expect(cellElements[9].nativeElement.innerHTML).to.contain(participantScoreDTO.lastRatedResultId);
-        expect(cellElements[10].nativeElement.innerHTML).to.contain(participantScoreDTO.lastRatedResultScore);
+        expect(cellElements[9].nativeElement.innerHTML).to.contain(participantScoreDTO.lastPoints);
+        expect(cellElements[10].nativeElement.innerHTML).to.contain(participantScoreDTO.lastRatedResultId);
+        expect(cellElements[11].nativeElement.innerHTML).to.contain(participantScoreDTO.lastRatedResultScore);
+        expect(cellElements[12].nativeElement.innerHTML).to.contain(participantScoreDTO.lastRatedPoints);
     });
 
     it('should extract participant name correctly', () => {
         let participantScoreDTO = new ParticipantScoreDTO();
         participantScoreDTO.userName = 'testUser';
-        participantScoreDTO.teamName = null;
 
         expect(component.extractParticipantName(participantScoreDTO)).to.equal(participantScoreDTO.userName);
 
         participantScoreDTO = new ParticipantScoreDTO();
         participantScoreDTO.teamName = 'testTeam';
-        participantScoreDTO.userName = null;
         expect(component.extractParticipantName(participantScoreDTO)).to.equal(participantScoreDTO.teamName);
     });
 });

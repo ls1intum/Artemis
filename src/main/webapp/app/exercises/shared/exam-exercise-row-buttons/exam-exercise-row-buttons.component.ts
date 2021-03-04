@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -11,6 +11,7 @@ import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
@@ -138,5 +139,16 @@ export class ExamExerciseRowButtonsComponent {
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
+    }
+
+    /**
+     * Exports questions for the given quiz exercise in json file
+     * @param exportAll If true exports all questions, else exports only those whose export flag is true
+     */
+    exportQuizById(exportAll: boolean) {
+        this.quizExerciseService.find(this.exercise.id!).subscribe((res: HttpResponse<QuizExercise>) => {
+            const exercise = res.body!;
+            this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll);
+        });
     }
 }

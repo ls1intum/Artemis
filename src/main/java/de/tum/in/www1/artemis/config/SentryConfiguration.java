@@ -27,6 +27,9 @@ public class SentryConfiguration {
     @Value("${info.sentry.dsn}")
     private Optional<String> sentryDsn;
 
+    @Value("${info.test-server}")
+    private Optional<Boolean> isTestServer;
+
     /**
      * init sentry with the correct package name and Artemis version
      */
@@ -55,13 +58,16 @@ public class SentryConfiguration {
     }
 
     private String getEnvironment() {
-        return switch (artemisServerUrl) {
-            case "https://artemis.ase.in.tum.de" -> "prod";
-            case "https://artemistest.ase.in.tum.de" -> "test";
-            case "https://artemistest2.ase.in.tum.de" -> "test";
-            case "https://artemistest5.ase.in.tum.de" -> "test";
-            case "https://vmbruegge60.in.tum.de" -> "test";
-            default -> "local";
-        };
+        if (isTestServer.isPresent()) {
+            if (isTestServer.get()) {
+                return "test";
+            }
+            else {
+                return "prod";
+            }
+        }
+        else {
+            return "local";
+        }
     }
 }

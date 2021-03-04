@@ -45,7 +45,37 @@
                 <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'instructor-dashboard']" class="btn btn-info mr-1 mb-1">
                     <fa-icon [icon]="'th-list'"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.course.instructorDashboard">Instructor Dashboard</span>
                 </a>
-                <button *ngIf="canArchiveCourse()" [disabled]="courseIsBeingArchived" type="button" class="btn btn-warning mr-1 mb-1" (click)="archiveCourse()">
+                <ng-template #archiveCourseWarningPopup let-modal>
+                    <div class="modal-header">
+                        <h4 class="modal-title"><span [jhiTranslate]="'artemisApp.course.archive.popup.title'">Confirm Archive Course Operation</span></h4>
+                        <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p [jhiTranslate]="'artemisApp.course.archive.popup.question'" [translateValues]="{ title: course.title }">Are you sure you want to archive the course?</p>
+                        <p [jhiTranslate]="'artemisApp.course.archive.popup.statement1'">
+                            The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises for exercises and exams.
+                        </p>
+                        <p [jhiTranslate]="'artemisApp.course.archive.popup.statement2'">
+                            This process can take several hours depending on the number of students and programming exercises and will take up many server resources. Please start
+                            this process only once when the server load is low (e.g. early in the morning)
+                        </p>
+                        <p [jhiTranslate]="'artemisApp.course.archive.popup.footerStatement'">
+                            You will receive a notification when the process is finished. Then you can download the archive as zip file on this page.
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-warning" (click)="modal.close('archive')">Archive Course</button>
+                    </div>
+                </ng-template>
+                <button
+                    *ngIf="canArchiveCourse()"
+                    [disabled]="courseIsBeingArchived"
+                    type="button"
+                    class="btn btn-warning mr-1 mb-1"
+                    (click)="openArchieCourseModal(archiveCourseWarningPopup)"
+                >
                     <fa-icon [hidden]="!courseIsBeingArchived" [spin]="true" [icon]="'circle-notch'"></fa-icon>
                     <fa-icon [hidden]="courseIsBeingArchived" [icon]="'archive'"></fa-icon>&nbsp;
                     <span>{{ archiveCourseButtonText }}</span>

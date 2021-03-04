@@ -143,6 +143,19 @@
                     </span>
                 </ng-template>
             </ngx-datatable-column>
+            <ngx-datatable-column prop="lastPoints" [width]="300">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('lastPoints')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreDTO.lastPoints"> Last Points </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('lastPoints')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
             <ngx-datatable-column prop="lastRatedResultId" [width]="300">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('lastRatedResultId')">
@@ -165,6 +178,21 @@
                             Last Rated Result Score
                         </span>
                         <fa-icon [icon]="controls.iconForSortPropField('lastRatedResultScore')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="lastRatedPoints" [width]="300">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('lastRatedPoints')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreDTO.lastRatedPoints">
+                            Last Rated Points
+                        </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('lastRatedPoints')"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">

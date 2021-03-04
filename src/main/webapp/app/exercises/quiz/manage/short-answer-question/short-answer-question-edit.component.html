@@ -20,7 +20,7 @@
         <div class="question-card-header-inputs">
             <div class="form-group question-score">
                 <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.points" (ngModelChange)="questionUpdated.emit()" />
+                <input class="form-control" title="score" type="number" min="1" max="9999" [(ngModel)]="question.points" (ngModelChange)="questionUpdated.emit()" />
             </div>
             <div class="question-type">
                 <h3 class="mb-0"><span class="badge badge-success align-text-top">SA</span></h3>
@@ -68,6 +68,7 @@
                 <select class="form-control" [(ngModel)]="question.scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
                     <option value="ALL_OR_NOTHING">{{ 'artemisApp.quizExercise.scoringType.all_or_nothing' | translate }}</option>
                     <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | translate }}</option>
+                    <option value="PROPORTIONAL_WITHOUT_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_without_penalty' | translate }}</option>
                 </select>
                 <jhi-quiz-scoring-info-modal></jhi-quiz-scoring-info-modal>
             </div>
@@ -268,7 +269,7 @@
                         <div class="col">
                             <button class="btn btn-outline-secondary" (click)="addTextSolution()">
                                 <i class="fa fa-plus"></i>
-                                <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
+                                <span jhiTranslate="artemisApp.shortAnswerQuestion.addShortAnswerSolution"></span>
                             </button>
                         </div>
                     </div>

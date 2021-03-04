@@ -12,10 +12,6 @@ export class ParticipantScoresTableComponent {
     @Input()
     isLoading = false;
     extractParticipantName = (participantScoreDTO: ParticipantScoreDTO) => {
-        if (participantScoreDTO.userName) {
-            return `${participantScoreDTO.userName}`;
-        } else {
-            return `${participantScoreDTO.teamName}`;
-        }
+        return participantScoreDTO.userName ? String(participantScoreDTO.userName) : String(participantScoreDTO.teamName);
     };
 }

@@ -29,7 +29,7 @@
             },
             "exerciseTags": {
                 "headline": "Aufgabenkategorien",
-                "content": "Die gelisteten Kategorien klassifieren die Aufgabe beispielsweise durch die Angabe der Schwierigkeitsstufe noch zusätzlich."
+                "content": "Die gelisteten Kategorien klassifizieren die Aufgabe beispielsweise durch die Angabe der Schwierigkeitsstufe noch zusätzlich."
             },
             "courseInformation": {
                 "headline": "Kursinformation",
@@ -45,7 +45,7 @@
             },
             "statistics": {
                 "headline": "Statistiken",
-                "content": "In diesem Reiter kannst du deine bisherigen Ergebnisse und Leistungen in Form von Statisken einsehen."
+                "content": "In diesem Reiter kannst du deine bisherigen Ergebnisse und Leistungen in Form von Statistiken einsehen."
             },
             "startExercise": {
                 "headline": "Beginne mit deiner ersten Programmieraufgabe",

@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -43,6 +44,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 /** Service responsible for initializing the database with specific testdata for a testscenario */
@@ -123,6 +125,9 @@ public class DatabaseUtilService {
     TextSubmissionRepository textSubmissionRepo;
 
     @Autowired
+    ParticipationService participationService;
+
+    @Autowired
     TextBlockRepository textBlockRepo;
 
     @Autowired
@@ -181,6 +186,24 @@ public class DatabaseUtilService {
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    AttachmentUnitRepository attachmentUnitRepository;
+
+    @Autowired
+    AttachmentRepository attachmentRepository;
+
+    @Autowired
+    ExerciseUnitRepository exerciseUnitRepository;
+
+    @Autowired
+    TextUnitRepository textUnitRepository;
+
+    @Autowired
+    VideoUnitRepository videoUnitRepository;
 
     @Autowired
     private DatabaseCleanupService databaseCleanupService;
@@ -329,6 +352,83 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
+    public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        textExercise.setMaxPoints(10.0);
+        textExercise.setBonusPoints(0.0);
+        return exerciseRepo.save(textExercise);
+    }
+
+    public Team createTeam(Set<User> students, User owner, Exercise exercise) {
+        Team team = new Team();
+        for (User student : students) {
+            team.addStudents(student);
+        }
+        team.setOwner(owner);
+        team.setShortName("team1");
+        team.setName("team1");
+        team.setExercise(exercise);
+        return teamRepo.saveAndFlush(team);
+    }
+
+    public TextExercise createTeamTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
+        TextExercise teamTextExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        teamTextExercise.setMaxPoints(10.0);
+        teamTextExercise.setBonusPoints(0.0);
+        teamTextExercise.setMode(ExerciseMode.TEAM);
+        return exerciseRepo.save(teamTextExercise);
+    }
+
+    public Result createParticipationSubmissionAndResult(Long idOfExercise, Participant participant, Double pointsOfExercise, Double bonusPointsOfExercise, long scoreAwarded,
+            boolean rated) {
+        Exercise exercise = exerciseRepo.findById(idOfExercise).get();
+
+        if (!exercise.getMaxPoints().equals(pointsOfExercise)) {
+            exercise.setMaxPoints(pointsOfExercise);
+        }
+        if (!exercise.getBonusPoints().equals(bonusPointsOfExercise)) {
+            exercise.setBonusPoints(bonusPointsOfExercise);
+        }
+        exercise = exerciseRepo.saveAndFlush(exercise);
+
+        StudentParticipation studentParticipation = participationService.startExercise(exercise, participant, false);
+
+        return createSubmissionAndResult(studentParticipation, scoreAwarded, rated);
+    }
+
+    public Result createSubmissionAndResult(StudentParticipation studentParticipation, long scoreAwarded, boolean rated) {
+        Exercise exercise = studentParticipation.getExercise();
+        Submission submission;
+        if (exercise instanceof ProgrammingExercise) {
+            submission = new ProgrammingSubmission();
+        }
+        else if (exercise instanceof ModelingExercise) {
+            submission = new ModelingSubmission();
+        }
+        else if (exercise instanceof TextExercise) {
+            submission = new TextSubmission();
+        }
+        else if (exercise instanceof FileUploadExercise) {
+            submission = new FileUploadSubmission();
+        }
+        else if (exercise instanceof QuizExercise) {
+            submission = new QuizSubmission();
+        }
+        else {
+            throw new RuntimeException("Unsupported exercise type: " + exercise);
+        }
+
+        submission.setType(SubmissionType.MANUAL);
+        submission.setParticipation(studentParticipation);
+        submission = submissionRepository.saveAndFlush(submission);
+
+        Result result = ModelFactory.generateResult(rated, scoreAwarded);
+        result.setParticipation(studentParticipation);
+        result.setSubmission(submission);
+        result.completionDate(ZonedDateTime.now());
+        return resultRepo.saveAndFlush(result);
+    }
+
     public Course createCourseWithExamAndExerciseGroupAndExercises(User user, ZonedDateTime visible, ZonedDateTime start, ZonedDateTime end) {
         Course course = createCourse();
         Exam exam = addExam(course, user, visible, start, end);
@@ -343,6 +443,57 @@ public class DatabaseUtilService {
         course.addExam(exam);
         addExerciseGroupsAndExercisesToExam(exam, false);
         return courseRepo.save(course);
+    }
+
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticiptions) throws Exception {
+        List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticiptions);
+        Course course1 = this.courseRepo.findWithEagerExercisesAndLecturesById(courses.get(0).getId());
+        Lecture lecture1 = course1.getLectures().stream().findFirst().get();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
+        VideoUnit videoUnit = createVideoUnit();
+        TextUnit textUnit = createTextUnit();
+        AttachmentUnit attachmentUnit = createAttachmentUnit();
+        ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
+        addLectureUnitsToLecture(lecture1, Set.of(videoUnit, textUnit, attachmentUnit, exerciseUnit));
+        return courses;
+    }
+
+    public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
+        Lecture l = lectureRepo.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        for (LectureUnit lectureUnit : lectureUnits) {
+            l.addLectureUnit(lectureUnit);
+        }
+        return lectureRepo.save(l);
+    }
+
+    public ExerciseUnit createExerciseUnit(Exercise exercise) {
+        ExerciseUnit exerciseUnit = new ExerciseUnit();
+        exerciseUnit.setExercise(exercise);
+        return exerciseUnitRepository.save(exerciseUnit);
+    }
+
+    public AttachmentUnit createAttachmentUnit() {
+        Attachment attachmentOfAttachmentUnit = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
+        AttachmentUnit attachmentUnit = new AttachmentUnit();
+        attachmentUnit.setDescription("Lorem Ipsum");
+        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
+        attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
+        attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+        return attachmentUnitRepository.save(attachmentUnit);
+    }
+
+    public TextUnit createTextUnit() {
+        TextUnit textUnit = new TextUnit();
+        textUnit.setContent("Lorem Ipsum");
+        return textUnitRepository.save(textUnit);
+    }
+
+    public VideoUnit createVideoUnit() {
+        VideoUnit videoUnit = new VideoUnit();
+        videoUnit.setDescription("Lorem Ipsum");
+        videoUnit.setSource("Some URL");
+        return videoUnitRepository.save(videoUnit);
     }
 
     public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) throws Exception {
@@ -960,7 +1111,7 @@ public class DatabaseUtilService {
         return exam;
     }
 
-    public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise) {
+    public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise, boolean withQuizExercise) {
         ModelFactory.generateExerciseGroup(true, initialExam); // text
         ModelFactory.generateExerciseGroup(true, initialExam); // modeling
         initialExam.setNumberOfExercisesInExam(2);
@@ -992,6 +1143,17 @@ public class DatabaseUtilService {
             addTemplateParticipationForProgrammingExercise(programmingExercise1);
             addSolutionParticipationForProgrammingExercise(programmingExercise1);
             exerciseGroup2.setExercises(Set.of(programmingExercise1));
+        }
+
+        if (withQuizExercise) {
+            ModelFactory.generateExerciseGroup(true, exam); // modeling
+            exam.setNumberOfExercisesInExam(3 + (withProgrammingExercise ? 1 : 0));
+            exam = examRepository.save(exam);
+            var exerciseGroup3 = exam.getExerciseGroups().get(2 + (withProgrammingExercise ? 1 : 0));
+            // Programming exercises need a proper setup for 'prepare exam start' to work
+            QuizExercise quizExercise = createQuizForExam(exerciseGroup3);
+            exerciseRepo.save(quizExercise);
+            exerciseGroup3.setExercises(Set.of(quizExercise));
         }
         return exam;
     }
@@ -2249,6 +2411,9 @@ public class DatabaseUtilService {
             DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
             dragItem2.setQuestion((DragAndDropQuestion) question);
             System.out.println(dragItem2.toString());
+            DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
+            dragItem3.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem3.toString());
 
             DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
             dropLocation1.setQuestion((DragAndDropQuestion) question);
@@ -2256,14 +2421,19 @@ public class DatabaseUtilService {
             DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
             dropLocation2.setQuestion((DragAndDropQuestion) question);
             System.out.println(dropLocation2.toString());
+            DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
+            dropLocation3.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation3.toString());
 
             if (correct) {
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3));
             }
             else {
-                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation1));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation3));
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation2));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation1));
             }
 
             return submittedAnswer;
@@ -2281,6 +2451,70 @@ public class DatabaseUtilService {
                 }
                 else {
                     submittedText.setText(correctText.toUpperCase());
+                }
+                submittedAnswer.addSubmittedTexts(submittedText);
+                // also invoke remove once
+                submittedAnswer.removeSubmittedTexts(submittedText);
+                submittedAnswer.addSubmittedTexts(submittedText);
+            }
+            return submittedAnswer;
+        }
+        return null;
+    }
+
+    public SubmittedAnswer generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(QuizQuestion question) {
+        if (question instanceof MultipleChoiceQuestion) {
+            var submittedAnswer = new MultipleChoiceSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            for (var answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
+                submittedAnswer.addSelectedOptions(answerOption);
+            }
+            return submittedAnswer;
+        }
+        else if (question instanceof DragAndDropQuestion) {
+            var submittedAnswer = new DragAndDropSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().get(0);
+            dragItem1.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem1.toString());
+            DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
+            dragItem2.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem2.toString());
+            DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
+            dragItem3.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem3.toString());
+
+            DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
+            dropLocation1.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation1.toString());
+            DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
+            dropLocation2.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation2.toString());
+            DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
+            dropLocation3.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation3.toString());
+
+            submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
+            submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation3));
+            submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation2));
+
+            return submittedAnswer;
+        }
+        else if (question instanceof ShortAnswerQuestion) {
+            var submittedAnswer = new ShortAnswerSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            for (var spot : ((ShortAnswerQuestion) question).getSpots()) {
+                ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
+                submittedText.setSpot(spot);
+                var correctText = ((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText();
+                if (spot.getSpotNr() == 2) {
+                    submittedText.setText(correctText);
+                }
+                else {
+                    submittedText.setText("wrong submitted text");
                 }
                 submittedAnswer.addSubmittedTexts(submittedText);
                 // also invoke remove once
@@ -2317,7 +2551,7 @@ public class DatabaseUtilService {
     @NotNull
     public ShortAnswerQuestion createShortAnswerQuestion() {
         ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(2).text("This is a long answer text");
-        sa.setScoringType(ScoringType.ALL_OR_NOTHING);
+        sa.setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
         // TODO: we should test different values here
         sa.setMatchLetterCase(true);
         sa.setSimilarityValue(100);
@@ -2376,22 +2610,28 @@ public class DatabaseUtilService {
         dropLocation1.setTempID(generateTempId());
         var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
         dropLocation2.setTempID(generateTempId());
+        var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
+        dropLocation3.setTempID(generateTempId());
         dnd.addDropLocation(dropLocation1);
         // also invoke remove once
         dnd.removeDropLocation(dropLocation1);
         dnd.addDropLocation(dropLocation1);
         dnd.addDropLocation(dropLocation2);
+        dnd.addDropLocation(dropLocation3);
 
         var dragItem1 = new DragItem().text("D1");
         dragItem1.setTempID(generateTempId());
         var dragItem2 = new DragItem().text("D2");
         dragItem2.setTempID(generateTempId());
+        var dragItem3 = new DragItem().text("D3");
+        dragItem3.setTempID(generateTempId());
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
         // also invoke remove once
         dnd.removeDragItem(dragItem1);
         dnd.addDragItem(dragItem1);
         dnd.addDragItem(dragItem2);
+        dnd.addDragItem(dragItem3);
 
         var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
         dragItem1.addMappings(mapping1);
@@ -2405,6 +2645,8 @@ public class DatabaseUtilService {
         dnd.addCorrectMapping(mapping1);
         var mapping2 = new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2);
         dnd.addCorrectMapping(mapping2);
+        var mapping3 = new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3);
+        dnd.addCorrectMapping(mapping3);
         dnd.setExplanation("Explanation");
         // invoke some util methods
         System.out.println("DnD: " + dnd.toString());

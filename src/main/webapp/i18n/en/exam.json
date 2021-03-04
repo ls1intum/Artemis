@@ -41,6 +41,7 @@
             "publishResultsDate": "Release Date of Results",
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
+            "studentReviewEnabled": "Review is open",
             "duration": "Duration",
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
@@ -189,7 +190,17 @@
             "unlockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were unlocked.",
             "unlockAllRepositoriesFailure": "There was an error during the unlocking of the programming exercises:\n {{message}}",
             "lockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were locked.",
-            "lockAllRepositoriesFailure": "There was an error during the locking of the programming exercises:\n {{message}}"
+            "lockAllRepositoriesFailure": "There was an error during the locking of the programming exercises:\n {{message}}",
+            "confirmDialog": {
+                "titleToUnsubmitted": "Change Student Exam to Unsubmitted",
+                "titleToSubmitted": "Change Student Exam to Submitted",
+                "question": "Are you sure you want to change the submission state?",
+                "submitText": "This will set the submission date of the exam to this moment, and set the Submitted status to 'Yes'. Un-submitting the student exam later is possible.\n",
+                "unSubmitText": "This will delete the submission date and set the Submitted status to 'No'.",
+                "warningRemove": "<strong class='text-danger'>Recovering the original submission date after the deletion is not possible!</strong>",
+                "submit": "Submit",
+                "unsubmit": "Unsubmit"
+            }
         },
         "examManagement": {
             "title": "Exam Management",
@@ -345,7 +356,7 @@
                     "totalpointspossible": "Maximum number of points in exam can be realized with the exercise groups configuration",
                     "hasExercises": "has",
                     "zeroexercises": "0",
-                    "exerciseStart": "Exercise group",
+                    "exerciseStart": "Exercise Group",
                     "exercise": "exercise variant.",
                     "exercises": "exercise variants.",
                     "leastonestudent": "At least one student registered",
@@ -354,7 +365,16 @@
                     "pulishingdateset": "Publishing date for results set",
                     "startdatereviewset": "Start date of exam review set",
                     "enddatereviewset": "End date of exam review set",
-                    "testruns": "Current number of test runs:"
+                    "testruns": "Current number of test runs:",
+                    "allExercisesPrepared": "All exercises prepared for all students",
+                    "noSubmissions": "There are currently no submitted exams.",
+                    "noComplaints": "There are currently no complaints.",
+                    "correctionRound": "Correction Round",
+                    "startedExam": "Started Exam",
+                    "submittedExam": "Submitted Exam",
+                    "exerciseTable": "Exercise",
+                    "points": "Points",
+                    "numberParticipants": "Number of participants"
                 }
             }
         },
@@ -377,7 +397,9 @@
             "openAssessment": " Open Assessment",
             "cancelAssessment": " Cancel Assessment",
             "workingTimeCouldNotBeSaved": "The working time could not be saved.",
-            "saveWorkingTimeSuccessful": "The working time was saved successfully."
+            "saveWorkingTimeSuccessful": "The working time was saved successfully.",
+            "toggleSuccessful": "The submitted status was changed successfully.",
+            "togglefailed": "The submitted status could not be changed!"
         }
     },
     "studentExam": {

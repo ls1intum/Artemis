@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
  */
 abstract class QuizExerciseCache {
 
-    private Long exerciseId;
+    private final Long exerciseId;
 
     QuizExerciseCache(Long exerciseId) {
         this.exerciseId = exerciseId;

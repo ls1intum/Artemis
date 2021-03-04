@@ -12,14 +12,18 @@
                 "exerciseTitle": "Aufgabentitel",
                 "lastResultId": "Id letztes Ergebnis",
                 "lastResultScore": "Letztes Ergebnis (%)",
+                "lastPoints": "Letzten Punkte",
                 "lastRatedResultId": "Id letztes bewertetes Ergebnis",
-                "lastRatedResultScore": "Letztes bewertetes Ergebnis (%)"
+                "lastRatedResultScore": "Letztes bewertetes Ergebnis (%)",
+                "lastRatedPoints": "Letzten bewerteten Punkte"
             },
             "participantScoreAverageDTO": {
                 "userName": "Nutzername",
                 "teamName": "Team Name",
                 "averageScore": "Durchschnittliches Ergebnis",
-                "averageRatedScore": "Durchschnittliches bewertetes Ergebnis"
+                "averageRatedScore": "Durchschnittliches bewertetes Ergebnis",
+                "averagePoints": "Durchschnittliche Punkte",
+                "averageRatedPoints": "Durchschnittliche bewertete Punkte"
             },
             "average": "Durchschnittswerte",
             "individual": "Individuelle Werte",

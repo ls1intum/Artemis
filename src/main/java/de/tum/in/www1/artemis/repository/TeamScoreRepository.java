@@ -31,13 +31,28 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
     List<TeamScore> findAllByExerciseIn(Set<Exercise> exercises, Pageable pageable);
 
     @Query("""
-                    SELECT new de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO(t.team, AVG(t.lastScore), AVG(t.lastRatedScore))
+                    SELECT new de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO(t.team, AVG(t.lastScore), AVG(t.lastRatedScore), AVG(t.lastPoints), AVG(t.lastRatedPoints))
                     FROM TeamScore t
                     WHERE t.exercise IN :exercises
-                    GROUP BY t.team, t.exercise
+                    GROUP BY t.team
 
             """)
     List<ParticipantScoreAverageDTO> getAvgScoreOfTeamInExercises(@Param("exercises") Set<Exercise> exercises);
+
+    @Query("""
+                  SELECT DISTINCT t
+                  FROM TeamScore t
+                  WHERE t.exercise = :exercise AND :user MEMBER OF t.team.students
+            """)
+    Optional<TeamScore> findTeamScoreByExerciseAndUserLazy(@Param("exercise") Exercise exercise, @Param("user") User user);
+
+    @Query("""
+            SELECT ts.team, SUM(ts.lastRatedPoints)
+            FROM TeamScore ts
+            WHERE ts.exercise IN :exercises
+            GROUP BY ts.team
+            """)
+    List<Object[]> getAchievedPointsOfTeams(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
                     SELECT t

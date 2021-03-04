@@ -11,9 +11,9 @@ public interface VcsUserManagementService {
      * Creates a new user in the VCS based on a local Artemis user. Should be called if Artemis handles user creation
      * and management
      *
-     * @param user The local Artemis user, that should alos be available in the VCS
+     * @param user The local Artemis user, which will be available in the VCS after invoking this method
      */
-    void createUser(User user);
+    void createVcsUser(User user);
 
     /**
      * Updates a new user in the VCS based on a local Artemis user. Should be called if Artemis handles user management.
@@ -29,14 +29,14 @@ public interface VcsUserManagementService {
      * @param addedGroups               The new groups the Artemis user got added to
      * @param shouldSynchronizePassword whether the password should be synchronized between Artemis and the VcsUserManagementService
      */
-    void updateUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword);
+    void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword);
 
     /**
      * Deletes the user under the specified login from the VCS
      *
      * @param login The login of the user that should get deleted
      */
-    void deleteUser(String login);
+    void deleteVcsUser(String login);
 
     /**
      * Updates all exercises in a course based on the new instructors and teaching assistant groups. This entails removing

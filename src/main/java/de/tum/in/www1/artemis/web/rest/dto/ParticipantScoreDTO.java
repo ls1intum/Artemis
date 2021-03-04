@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ParticipantScoreDTO {
 
     public Long id;
@@ -24,12 +27,16 @@ public class ParticipantScoreDTO {
 
     public Long lastResultScore;
 
+    public Double lastPoints;
+
     public Long lastRatedResultId;
 
     public Long lastRatedResultScore;
 
+    public Double lastRatedPoints;
+
     public ParticipantScoreDTO(Long id, Long userId, String userName, Long teamId, String teamName, Long exerciseId, String exerciseTitle, Long lastResultId, Long lastResultScore,
-            Long lastRatedResultId, Long lastRatedResultScore) {
+            Long lastRatedResultId, Long lastRatedResultScore, Double lastPoints, Double lastRatedPoints) {
         this.id = id;
         this.userId = userId;
         this.userName = userName;
@@ -41,9 +48,12 @@ public class ParticipantScoreDTO {
         this.lastResultScore = lastResultScore;
         this.lastRatedResultId = lastRatedResultId;
         this.lastRatedResultScore = lastRatedResultScore;
+        this.lastPoints = lastPoints;
+        this.lastRatedPoints = lastRatedPoints;
     }
 
     public ParticipantScoreDTO() {
+        // for jackson
     }
 
     /**
@@ -60,15 +70,18 @@ public class ParticipantScoreDTO {
 
         if (participantScore.getClass().equals(StudentScore.class)) {
             StudentScore studentScore = (StudentScore) participantScore;
-            userName = studentScore.getUser() != null && studentScore.getUser().getLogin() != null ? studentScore.getUser().getLogin() : null;
-            userId = studentScore.getUser() != null ? studentScore.getUser().getId() : null;
+            if (studentScore.getUser() != null) {
+                userName = studentScore.getUser().getLogin();
+                userId = studentScore.getUser().getId();
+            }
         }
         else {
             TeamScore teamScore = (TeamScore) participantScore;
-            teamName = teamScore.getTeam() != null && teamScore.getTeam().getName() != null ? teamScore.getTeam().getName() : null;
-            teamId = teamScore.getTeam() != null ? teamScore.getTeam().getId() : null;
+            if (teamScore.getTeam() != null) {
+                teamName = teamScore.getTeam().getName();
+                teamId = teamScore.getTeam().getId();
+            }
         }
-
         Long id = participantScore.getId();
         String exerciseTitle = participantScore.getExercise() != null && participantScore.getExercise().getTitle() != null ? participantScore.getExercise().getTitle() : null;
         Long exerciseId = participantScore.getExercise() != null ? participantScore.getExercise().getId() : null;
@@ -76,7 +89,10 @@ public class ParticipantScoreDTO {
         Long lastResultScore = participantScore.getLastScore();
         Long lastRatedResultId = participantScore.getLastRatedResult() != null ? participantScore.getLastRatedResult().getId() : null;
         Long lastRatedResultScore = participantScore.getLastRatedScore();
+        Double lastPoints = participantScore.getLastPoints();
+        Double lastRatedPoints = participantScore.getLastRatedPoints();
 
-        return new ParticipantScoreDTO(id, userId, userName, teamId, teamName, exerciseId, exerciseTitle, lastResultId, lastResultScore, lastRatedResultId, lastRatedResultScore);
+        return new ParticipantScoreDTO(id, userId, userName, teamId, teamName, exerciseId, exerciseTitle, lastResultId, lastResultScore, lastRatedResultId, lastRatedResultScore,
+                lastPoints, lastRatedPoints);
     }
 }

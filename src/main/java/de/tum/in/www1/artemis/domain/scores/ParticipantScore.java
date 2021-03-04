@@ -6,6 +6,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.domain.Result;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of ParticipantScore when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = StudentScore.class, name = "studentScore"), @JsonSubTypes.Type(value = TeamScore.class, name = "teamScore") })
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class ParticipantScore extends DomainObject {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -46,8 +48,14 @@ public abstract class ParticipantScore extends DomainObject {
     @Column(name = "last_score")
     private Long lastScore;
 
+    @Column(name = "last_points")
+    private Double lastPoints;
+
     @Column(name = "last_rated_score")
     private Long lastRatedScore;
+
+    @Column(name = "last_rated_points")
+    private Double lastRatedPoints;
 
     public Exercise getExercise() {
         return exercise;
@@ -87,5 +95,21 @@ public abstract class ParticipantScore extends DomainObject {
 
     public void setLastRatedScore(Long lastRatedScore) {
         this.lastRatedScore = lastRatedScore;
+    }
+
+    public Double getLastPoints() {
+        return lastPoints;
+    }
+
+    public void setLastPoints(Double lastPoints) {
+        this.lastPoints = lastPoints;
+    }
+
+    public Double getLastRatedPoints() {
+        return lastRatedPoints;
+    }
+
+    public void setLastRatedPoints(Double lastRatedPoints) {
+        this.lastRatedPoints = lastRatedPoints;
     }
 }

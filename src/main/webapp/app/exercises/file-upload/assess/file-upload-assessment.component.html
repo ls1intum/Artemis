@@ -17,8 +17,12 @@
     (cancel)="onCancelAssessment()"
     (nextSubmission)="assessNext()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
+    [hidden]="!hasNewSubmissions"
 >
-    <jhi-resizeable-container *ngIf="!busy && exercise">
+    <ng-container *ngIf="hasNewSubmissions; then assessment; else noSubmission"></ng-container>
+</jhi-assessment-layout>
+<ng-template #assessment>
+    <jhi-resizeable-container *ngIf="!busy && exercise" class="col-12">
         <!--region Left Panel-->
         <span *ngIf="exercise.title" left-header>{{ exercise.title }}</span>
         <jhi-score-display left-header [score]="totalScore" [maxPoints]="exercise.maxPoints" [maxBonusPoints]="exercise.bonusPoints"></jhi-score-display>
@@ -29,34 +33,7 @@
                     <span class="ml-2 badge badge-info">{{ attachmentExtension(submission.filePath!) | uppercase }}</span>
                 </div>
             </div>
-            <ng-container *ngIf="!busy && !notFound">
-                <div class="row mt-3 mb-3">
-                    <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</h4>
-                    <div *ngIf="invalidError" class="col-12 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
-                    <div *ngIf="!referencedFeedback || referencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6">
-                        <div class="alert alert-secondary text-center" role="alert">
-                            <p>{{ 'artemisApp.fileUploadAssessment.assessInstruction' | translate }}</p>
-                        </div>
-                    </div>
-                    <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-lg-6 col-xl-6">
-                        <jhi-assessment-detail
-                            [(assessment)]="referencedFeedback[i]"
-                            (assessmentChange)="updateAssessment()"
-                            (deleteAssessment)="deleteAssessment($event)"
-                            [readOnly]="readOnly"
-                        ></jhi-assessment-detail>
-                    </div>
-                    <div class="col-12">
-                        <button class="btn btn-success" (click)="addFeedback()" [disabled]="readOnly">
-                            {{ 'artemisApp.fileUploadAssessment.addFeedback' | translate }}
-                        </button>
-                    </div>
-                </div>
-                <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateAssessment()" [readOnly]="readOnly"></jhi-assessment-general-feedback>
-            </ng-container>
         </div>
-        <!--endregion-->
-
         <!--region Right Panel-->
         <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
         <span right-header jhiTranslate="assessmentInstructions.instructions.instructions">Instructions</span>
@@ -64,4 +41,20 @@
         <jhi-assessment-instructions right-body [exercise]="exercise" class="markdown-preview"></jhi-assessment-instructions>
         <!--endregion-->
     </jhi-resizeable-container>
-</jhi-assessment-layout>
+    <!--Feedbacks-->
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <div *ngIf="invalidError" class="col-8 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
+            <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateAssessment()" [readOnly]="readOnly"></jhi-unreferenced-feedback>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #noSubmission>
+    <div class="alert alert-warning text-center mt-4" role="alert">
+        <p jhiTranslate="artemisApp.fileUploadAssessment.notFound">We haven't found any new text submission without an assessment, please go back.</p>
+        <button type="submit" [routerLink]="['../../../../../exercises', exerciseId, 'tutor-dashboard']" class="btn btn-info btn-sm mr-1 mb-1 tutor-dashboard">
+            <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+        </button>
+    </div>
+</ng-template>

@@ -42,6 +42,7 @@ export class ProfileService {
                         profileInfo.sentry = data.sentry;
                         profileInfo.features = data.features;
                         profileInfo.buildPlanURLTemplate = data.buildPlanURLTemplate;
+                        profileInfo.commitHashURLTemplate = data.commitHashURLTemplate;
                         profileInfo.sshCloneURLTemplate = data.sshCloneURLTemplate;
                         profileInfo.sshKeysURL = data.sshKeysURL;
                         profileInfo.externalUserManagementName = data.externalUserManagementName;

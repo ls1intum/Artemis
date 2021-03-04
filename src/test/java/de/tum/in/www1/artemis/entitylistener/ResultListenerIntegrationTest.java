@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.entitylistener;
 
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -7,6 +8,7 @@ import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,18 +16,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
@@ -33,7 +30,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ScoreService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -95,8 +91,36 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         // creating course
         Course course = this.database.createCourse();
         idOfCourse = course.getId();
-        createIndividualTextExercise(pastTimestamp, pastTimestamp, pastTimestamp);
-        createTeamTextExerciseAndTeam(pastTimestamp, pastTimestamp, pastTimestamp);
+        TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        idOfIndividualTextExercise = textExercise.getId();
+        Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        idOfTeamTextExercise = teamExercise.getId();
+        User tutor1 = userRepository.findOneByLogin("tutor1").get();
+        idOfTeam1 = database.createTeam(Set.of(student1), tutor1, teamExercise).getId();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    public void updateExercisePoints_ShouldUpdatePointsInParticipantScores(boolean isTeamTest) throws Exception {
+        setupTestScenarioWithOneResultSaved(true, isTeamTest);
+        Exercise exercise;
+        if (isTeamTest) {
+            exercise = exerciseRepository.findById(idOfTeamTextExercise).get();
+        }
+        else {
+            exercise = exerciseRepository.findById(idOfIndividualTextExercise).get();
+        }
+        exercise.setMaxPoints(100.0);
+        exercise.setBonusPoints(100.0);
+        database.changeUser("instructor1");
+        request.put("/api/text-exercises", exercise, HttpStatus.OK);
+        List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllEagerly();
+        SecurityContextHolder.getContext().setAuthentication(null);
+        assertThat(savedParticipantScores).isNotEmpty();
+        assertThat(savedParticipantScores).size().isEqualTo(1);
+        ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
+        assertThat(savedParticipantScore.getLastPoints()).isEqualTo(200.0);
+        assertThat(savedParticipantScore.getLastRatedPoints()).isEqualTo(200.0);
     }
 
     @ParameterizedTest
@@ -305,7 +329,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     private void assertParticipantScoreStructure(ParticipantScore participantScore, Long expectedExerciseId, Long expectedParticipantId, Long expectedLastResultId,
-            Long expectedLastScore, Long expectedLastRatedResultId, Long expectedLastRatedScore) {
+            Long expectedLastScore, Long expectedLastRatedResultId, Long expectedLastRatedScore, Double expectedLastPoints, Double expectedLastRatedPoints) {
         assertThat(participantScore.getExercise().getId()).isEqualTo(expectedExerciseId);
 
         if (participantScore.getClass().equals(StudentScore.class)) {
@@ -324,6 +348,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
             assertThat(participantScore.getLastResult().getId()).isEqualTo(expectedLastResultId);
         }
         assertThat(participantScore.getLastScore()).isEqualTo(expectedLastScore);
+        assertThat(participantScore.getLastPoints()).isEqualTo(expectedLastPoints);
 
         if (expectedLastRatedResultId == null) {
             assertThat(participantScore.getLastRatedResult()).isNull();
@@ -332,6 +357,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
             assertThat(participantScore.getLastRatedResult().getId()).isEqualTo(expectedLastRatedResultId);
         }
         assertThat(participantScore.getLastRatedScore()).isEqualTo(expectedLastRatedScore);
+        assertThat(participantScore.getLastRatedPoints()).isEqualTo(expectedLastRatedPoints);
     }
 
     public Result createNewResult(boolean isTeamTest, boolean isRated) {
@@ -344,92 +370,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
             studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1).get(0);
         }
         SecurityContextHolder.getContext().setAuthentication(null);
-        return createSubmissionAndResult(studentParticipation, 100, isRated);
-    }
-
-    private void createIndividualTextExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
-        Course course;
-        // creating text exercise with Result
-        course = courseRepository.findWithEagerExercisesById(idOfCourse);
-        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
-        textExercise.setMaxPoints(10.0);
-        textExercise.setBonusPoints(0.0);
-        textExercise = exerciseRepository.save(textExercise);
-
-        idOfIndividualTextExercise = textExercise.getId();
-    }
-
-    private void createTeamTextExerciseAndTeam(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
-        Course course;
-        // creating text exercise with Result
-        course = courseRepository.findWithEagerExercisesById(idOfCourse);
-        TextExercise teamTextExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
-        teamTextExercise.setMaxPoints(10.0);
-        teamTextExercise.setBonusPoints(0.0);
-        teamTextExercise.setMode(ExerciseMode.TEAM);
-        teamTextExercise = exerciseRepository.save(teamTextExercise);
-
-        User student1 = userRepository.findOneByLogin("student1").get();
-        User tutor1 = userRepository.findOneByLogin("tutor1").get();
-        Team team = new Team();
-        team.addStudents(student1);
-        team.setOwner(tutor1);
-        team.setShortName("team1");
-        team.setName("team1");
-        team = teamRepository.saveAndFlush(team);
-
-        idOfTeam1 = team.getId();
-        idOfTeamTextExercise = teamTextExercise.getId();
-    }
-
-    private Result createParticipationSubmissionAndResult(Long idOfExercise, Participant participant, Double pointsOfExercise, Double bonusPointsOfExercise, long scoreAwarded,
-            boolean rated) {
-        Exercise exercise = exerciseRepository.findById(idOfExercise).get();
-
-        if (!exercise.getMaxPoints().equals(pointsOfExercise)) {
-            exercise.setMaxPoints(pointsOfExercise);
-        }
-        if (!exercise.getBonusPoints().equals(bonusPointsOfExercise)) {
-            exercise.setBonusPoints(bonusPointsOfExercise);
-        }
-        exercise = exerciseRepository.saveAndFlush(exercise);
-
-        StudentParticipation studentParticipation = participationService.startExercise(exercise, participant, false);
-
-        return createSubmissionAndResult(studentParticipation, scoreAwarded, rated);
-    }
-
-    private Result createSubmissionAndResult(StudentParticipation studentParticipation, long scoreAwarded, boolean rated) {
-        Exercise exercise = studentParticipation.getExercise();
-        Submission submission;
-        if (exercise instanceof ProgrammingExercise) {
-            submission = new ProgrammingSubmission();
-        }
-        else if (exercise instanceof ModelingExercise) {
-            submission = new ModelingSubmission();
-        }
-        else if (exercise instanceof TextExercise) {
-            submission = new TextSubmission();
-        }
-        else if (exercise instanceof FileUploadExercise) {
-            submission = new FileUploadSubmission();
-        }
-        else if (exercise instanceof QuizExercise) {
-            submission = new QuizSubmission();
-        }
-        else {
-            throw new RuntimeException("Unsupported exercise type: " + exercise);
-        }
-
-        submission.setType(SubmissionType.MANUAL);
-        submission.setParticipation(studentParticipation);
-        submission = submissionRepository.saveAndFlush(submission);
-
-        Result result = ModelFactory.generateResult(rated, scoreAwarded);
-        result.setParticipation(studentParticipation);
-        result.setSubmission(submission);
-        result.completionDate(ZonedDateTime.now());
-        return resultRepository.saveAndFlush(result);
+        return database.createSubmissionAndResult(studentParticipation, 100, isRated);
     }
 
     public ParticipantScore setupTestScenarioWithOneResultSaved(boolean isRatedResult, boolean isTeam) {
@@ -449,19 +390,21 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
             idOfExercise = idOfIndividualTextExercise;
         }
 
-        Result persistedResult = createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
+        Result persistedResult = database.createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
         SecurityUtils.setAuthorizationObject();
         savedParticipantScores = participantScoreRepository.findAllEagerly();
         SecurityContextHolder.getContext().setAuthentication(null);
         assertThat(savedParticipantScores).isNotEmpty();
         assertThat(savedParticipantScores).size().isEqualTo(1);
         ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
+        Double pointsAchieved = round(persistedResult.getScore() * 0.01 * 10.0);
         if (isRatedResult) {
             assertParticipantScoreStructure(savedParticipantScore, idOfExercise, participant.getId(), persistedResult.getId(), persistedResult.getScore(), persistedResult.getId(),
-                    persistedResult.getScore());
+                    persistedResult.getScore(), pointsAchieved, pointsAchieved);
         }
         else {
-            assertParticipantScoreStructure(savedParticipantScore, idOfExercise, participant.getId(), persistedResult.getId(), persistedResult.getScore(), null, null);
+            assertParticipantScoreStructure(savedParticipantScore, idOfExercise, participant.getId(), persistedResult.getId(), persistedResult.getScore(), null, null,
+                    pointsAchieved, null);
 
         }
         verify(this.scoreService, times(1)).updateOrCreateParticipantScore(any());
@@ -486,8 +429,17 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(savedParticipantScore).isNotEmpty();
         assertThat(savedParticipantScore).size().isEqualTo(1);
         ParticipantScore updatedParticipantScore = savedParticipantScore.get(0);
+        Double lastPoints = null;
+        Double lastRatedPoints = null;
+        if (expectedLastScore != null) {
+            lastPoints = round(expectedLastScore * 0.01 * 10.0);
+        }
+        if (expectedLastRatedScore != null) {
+            lastRatedPoints = round(expectedLastRatedScore * 0.01 * 10.0);
+        }
+
         assertParticipantScoreStructure(updatedParticipantScore, idOfExercise, participant.getId(), expectedLastResultId, expectedLastScore, expectedLastRatedResultId,
-                expectedLastRatedScore);
+                expectedLastRatedScore, lastPoints, lastRatedPoints);
         verify(this.scoreService, times(2)).updateOrCreateParticipantScore(any(Result.class));
     }
 

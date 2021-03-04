@@ -20,9 +20,6 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
 
-    @Autowired
-    ProgrammingExerciseService programmingExerciseService;
-
     ProgrammingExercise programmingExercise1;
 
     ProgrammingExercise programmingExercise2;
@@ -50,7 +47,7 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
         programmingExercise2.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise2);
 
-        List<ProgrammingExercise> programmingExercises = programmingExerciseService.findAllWithBuildAndTestAfterDueDateInFuture();
+        List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllWithBuildAndTestAfterDueDateInFuture();
 
         assertThat(programmingExercises).hasSize(1);
         assertThat(programmingExercises.get(0)).isEqualTo(programmingExercise1);
