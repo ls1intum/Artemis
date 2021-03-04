@@ -40,89 +40,27 @@
 </div>
 
 <div *ngIf="course">
-    <!-- TODO: also support this for the exam mode -->
     <div id="assessment-statistics" class="guided-tour-assessment-stats">
         <div class="container-fluid">
-            <div class="row mt-3">
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-header bg-primary text-white">
-                            <h4 class="card-title">{{ 'artemisApp.assessmentDashboard.informationAboutYourAssessments' | translate }}</h4>
-                        </div>
-                        <div class="card-body">
-                            <ul *ngIf="!isExamMode">
-                                <li>
-                                    <b>{{ 'artemisApp.assessmentDashboard.yourAssessments' | translate }}:</b> {{ numberOfTutorAssessments }}
-                                </li>
-                                <li>
-                                    <a [routerLink]="['/course-management', courseId, 'complaints']" [queryParams]="{ tutorId: tutor.id }">
-                                        <b> {{ 'artemisApp.assessmentDashboard.complaintsAboutYourAssessments' | translate }}:</b> {{ numberOfTutorComplaints }}
-                                    </a>
-                                </li>
-                                <li>
-                                    <a [routerLink]="['/course-management', courseId, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor.id }">
-                                        <b> {{ 'artemisApp.assessmentDashboard.moreFeedbackRequestsForYourAssessments' | translate }}:</b> {{ numberOfTutorMoreFeedbackRequests }}
-                                    </a>
-                                </li>
-                                <li>
-                                    <a [routerLink]="['/course-management', courseId, 'assessment-locks']" [queryParams]="{ tutorId: tutor.id }">
-                                        <b>{{ 'artemisApp.assessmentDashboard.yourAssessmentLocks' | translate }}:</b> {{ numberOfAssessmentLocks }}
-                                    </a>
-                                </li>
-                            </ul>
-                            <!-- Information about assessments for exam mode -->
-                            <ul *ngIf="isExamMode">
-                                <li>
-                                    <b>{{ 'artemisApp.assessmentDashboard.yourAssessments' | translate }}:</b> {{ numberOfTutorAssessments }}
-                                </li>
-                                <li>
-                                    <a [routerLink]="['/course-management', courseId, 'exams', examId, 'complaints']" [queryParams]="{ tutorId: tutor.id }">
-                                        <b> {{ 'artemisApp.assessmentDashboard.complaintsAboutYourAssessments' | translate }}:</b> {{ numberOfTutorComplaints }}
-                                    </a>
-                                </li>
-                                <li>
-                                    <a [routerLink]="['/course-management', courseId, 'exams', examId, 'assessment-locks']" [queryParams]="{ tutorId: tutor.id }">
-                                        <b>{{ 'artemisApp.assessmentDashboard.yourAssessmentLocks' | translate }}:</b> {{ numberOfAssessmentLocks }}
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header bg-primary text-white">
-                            <h4 class="card-title">{{ 'artemisApp.instructorCourseDashboard.informationAboutCourse' | translate }}</h4>
-                        </div>
-                        <div class="card-body">
-                            <ul>
-                                <li>
-                                    <b>{{ 'artemisApp.assessmentDashboard.totalAssessments' | translate }}:</b>
-                                    {{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total * numberOfCorrectionRounds }} ({{ totalAssessmentPercentage }}%)
-                                </li>
-                                <li *ngIf="isExamMode">
-                                    <b>{{ 'artemisApp.assessmentDashboard.totalAssessmentsForCorrectionrounds' | translate }}:</b>
-                                    {{ numberOfAssessmentsOfCorrectionRounds[0].inTime }}
-                                    <span *ngIf="numberOfAssessmentsOfCorrectionRounds[1]"> - {{ numberOfAssessmentsOfCorrectionRounds[1].inTime }}</span>
-                                </li>
-                                <li *ngIf="isExamMode">
-                                    <a [routerLink]="['/course-management', courseId, 'exams', examId, 'complaints']" [class.disabled]="!isAtLeastInstructor">
-                                        <b>{{ 'artemisApp.assessmentDashboard.totalComplaints' | translate }}:</b> {{ numberOfComplaints }}
-                                    </a>
-                                </li>
-                                <li *ngIf="isExamMode">
-                                    <a [routerLink]="['/course-management', courseId, 'exams', examId, 'assessment-locks']" [class.disabled]="!isAtLeastInstructor">
-                                        <b>{{ 'artemisApp.assessmentDashboard.totalLocks' | translate }}:</b> {{ numberOfAssessmentLocks }}
-                                    </a>
-                                </li>
-                                <li *ngIf="!isExamMode">
-                                    <b>{{ 'artemisApp.assessmentDashboard.totalMoreFeedbackRequests' | translate }}:</b> {{ numberOfMoreFeedbackRequests }}
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <jhi-assessment-dashboard-information
+                [isExamMode]="isExamMode"
+                [numberOfTutorAssessments]="numberOfTutorAssessments"
+                [courseId]="courseId"
+                [tutorId]="tutor.id"
+                [numberOfTutorComplaints]="numberOfTutorComplaints"
+                [numberOfTutorMoreFeedbackRequests]="numberOfTutorMoreFeedbackRequests"
+                [numberOfAssessmentLocks]="numberOfAssessmentLocks"
+                [examId]="examId"
+                [totalNumberOfAssessments]="totalNumberOfAssessments"
+                [numberOfSubmissions]="numberOfSubmissions"
+                [numberOfCorrectionRounds]="numberOfCorrectionRounds"
+                [totalAssessmentPercentage]="totalAssessmentPercentage"
+                [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds"
+                [isAtLeastInstructor]="isAtLeastInstructor"
+                [numberOfComplaints]="numberOfComplaints"
+                [numberOfMoreFeedbackRequests]="numberOfMoreFeedbackRequests"
+            >
+            </jhi-assessment-dashboard-information>
         </div>
     </div>
 
@@ -207,7 +145,7 @@
                                     class="btn btn-info btn-sm mr-1"
                                     [class.guided-tour]="exercise === exerciseForGuidedTour"
                                 >
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+                                    <span class="d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
                                 </a>
                             </ng-container>
                             <ng-template #testRun>
@@ -232,20 +170,18 @@
                             </a>
                         </ng-template>
 
-                        <ng-container
-                            class="col-lg-3 col-md-6 col-sm-6 align-self-center"
-                            *ngIf="isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam > 1"
-                        >
-                            <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                        <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                            <ng-container class="col-lg-3 col-md-6 col-sm-6" *ngIf="isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam > 1">
                                 <jhi-second-correction-enable-button
+                                    class="mr-1"
                                     (ngModelChange)="toggleSecondCorrection(exercise.id)"
                                     [(secondCorrectionEnabled)]="exercise.secondCorrectionEnabled"
                                     [(toggelingSecondCorrectionButton)]="toggelingSecondCorrectionButton"
                                 ></jhi-second-correction-enable-button>
-                                <a class="btn btn-primary btn-sm ml-1" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'assessment']">
-                                    <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
-                                </a>
                             </ng-container>
+                            <a class="btn btn-primary btn-sm" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'assessment']">
+                                <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
+                            </a>
                         </ng-container>
                     </td>
                 </tr>

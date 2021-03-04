@@ -358,6 +358,13 @@
                     <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
                     <div class="alert alert-info" *ngIf="!exercise.teamMode; else teamAssessmentInfo">
                         {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissions' | translate }}
+                        <span *ngIf="numberOfAssessmentsOfCorrectionRounds[correctionRound] < numberOfSubmissions || true">
+                            {{ numberOfAssessmentsOfCorrectionRounds[correctionRound] }}
+                            {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseOfOtherLockedSubmissions' }}
+                        </span>
+                    </div>
+                    <div class="alert alert-info" *ngIf="correctionRound == 1">
+                        {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | translate }}
                     </div>
                     <ng-template #teamAssessmentInfo>
                         <div class="alert alert-warning">
