@@ -9,7 +9,6 @@ export const exerciseAssessmentDashboardRoute: Routes = [
         component: ExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -20,7 +19,6 @@ export const exerciseAssessmentDashboardRoute: Routes = [
         component: ExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],

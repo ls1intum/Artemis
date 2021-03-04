@@ -99,7 +99,7 @@ public class CourseExportService {
             return exportedCoursePath;
         }
         catch (Exception e) {
-            logMessageAndAppendToList("Failed to export the entire course " + course.getTitle(), exportErrors);
+            logMessageAndAppendToList("Failed to export the entire course " + course.getTitle() + ": " + e.getMessage(), exportErrors);
             return Optional.empty();
         }
         finally {
