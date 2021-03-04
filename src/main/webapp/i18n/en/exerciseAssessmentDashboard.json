@@ -41,7 +41,7 @@
             "openAssessment": "Open assessment",
             "startAssessment": "Start new assessment",
             "new": "NEW",
-            "noSubmissions": "There are currently no submissions for you to grade",
+            "noSubmissions": "There are currently no submissions for you to grade.",
             "startAssessmentFromTeamPages": "Assessments for team exercises are started from the pages of your teams.",
             "complaints": "Complaints",
             "noComplaints": "There are no complaints at this moment.",
@@ -81,8 +81,8 @@
             },
             "complaintHint": "Shows complaints about assessments of other tutors. Note: complaints about your assessments are not shown here.",
             "moreFeedbackRequestHint": "Shows more feedback requests for your assessments.",
-            "noSubmissionsBecauseOfOtherLockedSubmissions": "All other submissions are locked by other tutors.",
-            "noSubmissionsBecauseFirstAssessedByYourself": "You can not assess submissions in the second correction round, which you assessed in the first round."
+            "noSubmissionsBecauseOfOtherLockedSubmissions": "All submissions are locked by other tutors or you.",
+            "noSubmissionsBecauseFirstAssessedByYourself": "You can only assess submissions in the second correction round, which you have not assessed in the first round."
         }
     }
 }
