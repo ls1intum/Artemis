@@ -64,7 +64,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     averageNumberOfPointsPerExerciseTypes = new Map<ExerciseType, number>();
     averageNumberOfOverallPoints = 0;
 
-    // course score dtos
+    // note: these represent the course scores using the participation score table. We might switch to this new
+    // calculation method completely if it is confirmed that it produces correct results
     studentIdToCourseScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
 
     private languageChangeSubscription?: Subscription;
@@ -154,7 +155,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.calculateExerciseLevelStatistics();
             this.calculateStudentLevelStatistics();
 
-            // comparing with calculation from course scores
+            // comparing with calculation from course scores (using new participation score table)
             const courseScoreDTOs = courseScoresResult.body!;
             this.compareNewCourseScoresCalculationWithOldCalculation(courseScoreDTOs);
             this.changeDetector.detectChanges();
@@ -176,10 +177,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         }
         let noOfScoreDifferencesFound = 0;
         let noOfPointDifferencesFound = 0;
+        let noOfComparisons = 0;
         for (const student of this.students) {
             const overAllPoints = round(student.overallPoints, 1);
             const overallScore = round((student.overallPoints / this.maxNumberOfOverallPoints) * 100, 1);
-
             const regularCalculation = {
                 scoreAchieved: overallScore,
                 pointsAchieved: overAllPoints,
@@ -193,17 +194,18 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 const errorMessage = `User scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
                 this.logErrorOnSentry(errorMessage);
             } else {
+                noOfComparisons += 1;
                 courseScoreDTO.scoreAchieved = round(courseScoreDTO.scoreAchieved, 1);
                 courseScoreDTO.pointsAchieved = round(courseScoreDTO.pointsAchieved, 1);
 
-                if (Math.abs(courseScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 1) {
+                if (Math.abs(courseScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 0.1) {
                     const errorMessage = `Different course points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
                         courseScoreDTO,
                     )}`;
                     noOfPointDifferencesFound += 1;
                     this.logErrorOnSentry(errorMessage);
                 }
-                if (Math.abs(courseScoreDTO.scoreAchieved - regularCalculation.scoreAchieved) > 1) {
+                if (Math.abs(courseScoreDTO.scoreAchieved - regularCalculation.scoreAchieved) > 0.1) {
                     const errorMessage = `Different course score in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation : ${JSON.stringify(
                         courseScoreDTO,
                     )}`;
@@ -212,8 +214,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 }
             }
         }
+        console.log(`Performed ${noOfComparisons} comparisons between old and new calculation method.`);
         console.log(`Found ${noOfPointDifferencesFound} point differences between old and new calculation method.`);
-        console.log(`Found ${noOfScoreDifferencesFound} point differences between old and new calculation method.`);
+        console.log(`Found ${noOfScoreDifferencesFound} score differences between old and new calculation method.`);
     }
 
     logErrorOnSentry(errorMessage: string) {
