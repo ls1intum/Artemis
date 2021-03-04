@@ -8,7 +8,6 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         .package(name: "SwiftTestReporter", url: "https://github.com/allegro/swift-junit.git", from: "2.0.0"),
-        .package(name: "Runtime", url: "https://github.com/wickwirew/Runtime.git", .upToNextMajor(from: "2.1.2")),
         .package(url: "https://github.com/yanagiba/swift-ast.git", from: "0.19.9"),
     ],
     targets: [
@@ -19,6 +18,10 @@ let package = Package(
         .target(name: "${packageName}App", dependencies: ["${packageName}Lib"]),
         .testTarget(
             name: "${packageName}Tests",
-            dependencies: ["${packageName}Lib", "SwiftTestReporter", "Runtime", .product(name: "SwiftAST+Tooling", package: "swift-ast")]),
+            dependencies: [
+                "${packageName}Lib",
+                "SwiftTestReporter",
+                .product(name: "SwiftAST+Tooling", package: "swift-ast")
+            ]),
     ]
 )
