@@ -3,11 +3,9 @@
         "assessment": {
             "assessment": "Assessment",
             "testRunAssessment": "Test Run Assessment",
-            "generalFeedback": "General Feedback",
             "unreferencedFeedback": "Feedback for Missing Elements",
             "automaticGenerated": "Automatically generated feedback",
             "error": {
-                "moreThanOneGeneralFeedback": "There cannot be more than one general Feedback per Assessment.",
                 "assessmentDueDateOver": "The assessment due date of this exercise is over."
             },
             "assessmentLocked": "Assessment locked by: {{otherUser}}",

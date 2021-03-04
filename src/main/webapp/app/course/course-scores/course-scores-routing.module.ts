@@ -14,11 +14,6 @@ const routes: Routes = [
         },
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            // HACK: The path is a composite, so we need to define both parts
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'instructorDashboard.title', path: 'scores' },
-            ],
             pageTitle: 'instructorDashboard.title',
         },
         canActivate: [UserRouteAccessService],

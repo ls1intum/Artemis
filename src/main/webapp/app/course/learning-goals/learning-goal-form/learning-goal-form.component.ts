@@ -107,7 +107,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             return;
         }
         let initialTitle: string | undefined = undefined;
-        if (this.isEditMode && this.formData.title) {
+        if (this.isEditMode && this.formData && this.formData.title) {
             initialTitle = this.formData.title;
         }
         this.form = this.fb.group({

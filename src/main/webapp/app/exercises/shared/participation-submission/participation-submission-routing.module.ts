@@ -11,7 +11,6 @@ const participationSubmissionRoutes: Routes = [
         component: ParticipationSubmissionComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.participation.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -24,7 +23,6 @@ const participationSubmissionPopupRoutes: Routes = [
         component: ParticipationSubmissionDeletePopupComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.participation.home.title',
         },
         canActivate: [UserRouteAccessService],
