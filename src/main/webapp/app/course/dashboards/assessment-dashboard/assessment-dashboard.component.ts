@@ -45,6 +45,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
     numberOfOpenMoreFeedbackRequests = 0;
     numberOfTutorMoreFeedbackRequests = 0;
     numberOfAssessmentLocks = 0;
+    totalNumberOfAssessmentLocks = 0;
     totalAssessmentPercentage = 0;
     showFinishedExercises = false;
     isAtLeastInstructor = false;
@@ -137,6 +138,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                     this.numberOfComplaints = this.stats.numberOfComplaints;
                     this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
                     this.numberOfAssessmentLocks = this.stats.numberOfAssessmentLocks;
+                    this.totalNumberOfAssessmentLocks = this.stats.totalNumberOfAssessmentLocks;
 
                     // the received leaderboard from the server is still empty. TODO: fill on server side
                     const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor.id);

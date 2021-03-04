@@ -13,6 +13,8 @@ export class AssessmentDashboardInformationComponent {
     @Input() numberOfTutorComplaints: number;
     @Input() numberOfTutorMoreFeedbackRequests: number;
     @Input() numberOfAssessmentLocks: number;
+    @Input() totalNumberOfAssessmentLocks: number;
+
     @Input() examId?: number;
 
     @Input() totalNumberOfAssessments: DueDateStat;

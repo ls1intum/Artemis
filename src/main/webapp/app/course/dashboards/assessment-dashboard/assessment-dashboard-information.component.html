@@ -75,9 +75,9 @@
                             <b>{{ 'artemisApp.assessmentDashboard.totalComplaints' | translate }}:</b> {{ numberOfComplaints }}
                         </a>
                     </li>
-                    <li *ngIf="isExamMode">
-                        <a [routerLink]="['/course-management', courseId, 'exams', examId, 'assessment-locks']" [class.disabled]="!isAtLeastInstructor">
-                            <b>{{ 'artemisApp.assessmentDashboard.totalLocks' | translate }}:</b> {{ numberOfAssessmentLocks }}
+                    <li *ngIf="isExamMode && isAtLeastInstructor">
+                        <a [routerLink]="['/course-management', courseId, 'exams', examId, 'assessment-locks']">
+                            <b>{{ 'artemisApp.assessmentDashboard.totalLocks' | translate }}:</b> {{ totalNumberOfAssessmentLocks }}
                         </a>
                     </li>
                     <li *ngIf="!isExamMode">
