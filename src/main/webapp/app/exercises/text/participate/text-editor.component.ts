@@ -168,22 +168,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     /**
-     * Find "General Feedback" item for Result, if it exists.
-     * General Feedback is stored in the same Array as  the other Feedback, but does not have a reference.
-     * @return General Feedback item, if it exists and if it has a Feedback Text.
-     */
-    get generalFeedback(): Feedback | null {
-        if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
-            const feedbackWithoutReference = this.result.feedbacks.find((f) => f.reference == undefined && f.type !== FeedbackType.MANUAL_UNREFERENCED) || null;
-            if (feedbackWithoutReference != undefined && feedbackWithoutReference.detailText != undefined && feedbackWithoutReference.detailText.length > 0) {
-                return feedbackWithoutReference;
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Find "Unreferenced Feedback" item for Result, if it exists.
      */
     get unreferencedFeedback(): Feedback[] | null {

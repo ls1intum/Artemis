@@ -134,7 +134,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -168,7 +167,6 @@ export const examManagementRoute: Routes = [
         component: ExerciseGroupsComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -182,7 +180,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -196,7 +193,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -209,7 +205,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.examManagement.title',
             requestOptions: {
                 withStudents: true,
@@ -222,7 +217,6 @@ export const examManagementRoute: Routes = [
         component: StudentExamsComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -235,7 +229,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -245,7 +238,6 @@ export const examManagementRoute: Routes = [
         component: AssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.examManagement.assessmentDashboard',
         },
         canActivate: [UserRouteAccessService],
@@ -258,7 +250,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -271,7 +262,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -284,7 +274,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -294,7 +283,6 @@ export const examManagementRoute: Routes = [
         component: ExamParticipationComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.exam.title',
         },
         canActivate: [UserRouteAccessService],
@@ -308,7 +296,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -322,7 +309,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -336,7 +322,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -350,7 +335,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -364,7 +348,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -378,7 +361,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -392,7 +374,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -406,7 +387,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -420,7 +400,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -431,7 +410,6 @@ export const examManagementRoute: Routes = [
         component: QuizExerciseDetailComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -442,7 +420,6 @@ export const examManagementRoute: Routes = [
         component: QuizExerciseDetailComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -456,7 +433,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -470,7 +446,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.programmingExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -484,7 +459,6 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -494,7 +468,6 @@ export const examManagementRoute: Routes = [
         component: AssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.examManagement.assessmentDashboard',
         },
         canActivate: [UserRouteAccessService],
