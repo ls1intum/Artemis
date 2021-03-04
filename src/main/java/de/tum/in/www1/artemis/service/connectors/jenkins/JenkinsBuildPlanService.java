@@ -64,6 +64,13 @@ public class JenkinsBuildPlanService {
         this.jenkinsJobPermissionsService = jenkinsJobPermissionsService;
     }
 
+    /**
+     * Creates a build plan for the programming exercise
+     * @param exercise the programming exercise
+     * @param planKey the name of th eplan
+     * @param repositoryURL the url of the vcs repository
+     * @param testRepositoryURL the url of the tests vcs repository
+     */
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL) {
         // TODO support sequential test runs
         var programmingLanguage = exercise.getProgrammingLanguage();
@@ -186,10 +193,22 @@ public class JenkinsBuildPlanService {
         }
     }
 
+    /**
+     * Returns true if the build plan is enabled
+     * @param projectKey the project key
+     * @param planId the plan id
+     * @return whether the plan is enabled
+     */
     public boolean isBuildPlanEnabled(String projectKey, String planId) {
         return jenkinsJobService.getJobInFolder(projectKey, planId).isBuildable();
     }
 
+    /**
+     * Returns true if the build plan exists.
+     * @param projectKey the project key
+     * @param buildPlanId the build plan id
+     * @return whether the plan exists
+     */
     public boolean buildPlanExists(String projectKey, String buildPlanId) {
         try {
             var planExists = jenkinsJobService.getJobInFolder(projectKey, buildPlanId);
