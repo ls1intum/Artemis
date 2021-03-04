@@ -36,15 +36,16 @@
                     <li>
                         <b>{{ 'artemisApp.assessmentDashboard.yourAssessments' | translate }}:</b> {{ numberOfTutorAssessments }}
                     </li>
+                    <!-- TODO: make those links work (REST calls to fetch for individual students do not exist yet) -->
                     <li>
                         <!-- Complaints about your assessments: -->
-                        <a [routerLink]="['/course-management', courseId, 'exams', examId, 'complaints']" [queryParams]="{ tutorId: tutorId }">
+                        <a [routerLink]="['/course-management', courseId, 'exams', examId, 'complaints']" [queryParams]="{ tutorId: tutorId }" [class.disabled]="true">
                             <b> {{ 'artemisApp.assessmentDashboard.complaintsAboutYourAssessments' | translate }}:</b> {{ numberOfTutorComplaints }}
                         </a>
                     </li>
                     <!-- Assessments locked by you: -->
                     <li>
-                        <a [routerLink]="['/course-management', courseId, 'exams', examId, 'assessment-locks']" [queryParams]="{ tutorId: tutorId }">
+                        <a [routerLink]="['/course-management', courseId, 'exams', examId, 'assessment-locks']" [queryParams]="{ tutorId: tutorId }" [class.disabled]="true">
                             <b>{{ 'artemisApp.assessmentDashboard.yourAssessmentLocks' | translate }}:</b> {{ numberOfAssessmentLocks }}
                         </a>
                     </li>

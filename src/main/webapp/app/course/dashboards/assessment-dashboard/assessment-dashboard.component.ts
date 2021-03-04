@@ -138,18 +138,19 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                     this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
                     this.numberOfAssessmentLocks = this.stats.numberOfAssessmentLocks;
 
+                    // the received leaderboard from the server is still empty. TODO: fill on server side
                     const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor.id);
                     this.sortService.sortByProperty(this.stats.tutorLeaderboardEntries, 'points', false);
                     if (tutorLeaderboardEntry) {
                         this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
                         this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
                     } else {
-                        this.numberOfTutorAssessments = 13;
-                        this.numberOfTutorComplaints = 13;
+                        this.numberOfTutorAssessments = 0;
+                        this.numberOfTutorComplaints = 0;
                     }
 
                     if (this.numberOfSubmissions.total > 0) {
-                        this.totalAssessmentPercentage = Math.floor(((this.totalNumberOfAssessments.total * this.numberOfCorrectionRounds) / this.numberOfSubmissions.total) * 100);
+                        this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / (this.numberOfSubmissions.total * this.numberOfCorrectionRounds)) * 100);
                     }
                 },
                 (response: string) => this.onError(response),
