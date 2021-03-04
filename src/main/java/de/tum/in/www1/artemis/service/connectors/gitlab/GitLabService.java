@@ -105,7 +105,12 @@ public class GitLabService extends AbstractVersionControlService {
             gitlab.getProjectApi().addMember(repositoryId, userId, DEVELOPER);
         }
         catch (GitLabApiException e) {
-            if (e.getValidationErrors().containsKey("access_level")
+            // A resource conflict status code is returned if the member
+            // already exists in the repository
+            if (e.getHttpStatus() == 409) {
+                updateMemberPermissionInRepository(repositoryUrl, user.getLogin(), DEVELOPER);
+            }
+            else if (e.getValidationErrors().containsKey("access_level")
                     && e.getValidationErrors().get("access_level").stream().anyMatch(s -> s.contains("should be greater than or equal to"))) {
                 log.warn("Member already has the requested permissions! Permission stays the same");
             }
