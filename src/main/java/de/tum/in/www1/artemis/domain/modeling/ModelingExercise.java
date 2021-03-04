@@ -67,4 +67,14 @@ public class ModelingExercise extends Exercise {
                 + getSampleSolutionModel() + "'" + ", sampleSolutionExplanation='" + getSampleSolutionExplanation() + "'" + "}";
     }
 
+    /**
+     * Gets the type of the exercise as a string
+     *
+     * @return type of the exercise as a string
+     */
+    @Override
+    public String getStringRepresentationOfType() {
+        return "Modeling-Exercise";
+    }
+
 }

@@ -520,6 +520,15 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
+     * Gets the type of the exercise as a string
+     *
+     * @return type of the exercise as a string
+     */
+    public String getStringRepresentationOfType() {
+        return "Exercise";
+    }
+
+    /**
      * Find a relevant participation for this exercise (relevancy depends on InitializationState)
      *
      * @param participations the list of available participations

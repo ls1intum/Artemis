@@ -592,12 +592,23 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * This checks if the current result has a completion date and if the assessment is over
+     *
      * @param result The current result
      * @return true if the result is manual and the assessment is over or it is an automatic result, false otherwise
      */
     private boolean checkForAssessedResult(Result result) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
         return result.getCompletionDate() != null && ((result.isManual() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC));
+    }
+
+    /**
+     * Gets the type of the exercise as a string
+     *
+     * @return type of the exercise as a string
+     */
+    @Override
+    public String getStringRepresentationOfType() {
+        return "Programming-Exercise";
     }
 
     @Override

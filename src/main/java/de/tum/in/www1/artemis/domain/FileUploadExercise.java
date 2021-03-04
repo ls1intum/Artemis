@@ -42,4 +42,14 @@ public class FileUploadExercise extends Exercise {
     public String toString() {
         return "FileUploadExercise{" + "id=" + getId() + "}";
     }
+
+    /**
+     * Gets the type of the exercise as a string
+     *
+     * @return type of the exercise as a string
+     */
+    @Override
+    public String getStringRepresentationOfType() {
+        return "File-Upload-Exercise";
+    }
 }

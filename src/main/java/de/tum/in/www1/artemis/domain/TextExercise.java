@@ -50,4 +50,14 @@ public class TextExercise extends Exercise {
         return "TextExercise{" + "id=" + getId() + ", sampleSolution='" + getSampleSolution() + "'" + "}";
     }
 
+    /**
+     * Gets the type of the exercise as a string
+     *
+     * @return type of the exercise as a string
+     */
+    @Override
+    public String getStringRepresentationOfType() {
+        return "Text-Exercise";
+    }
+
 }

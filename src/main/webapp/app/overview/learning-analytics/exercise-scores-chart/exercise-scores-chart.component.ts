@@ -32,33 +32,33 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
             fill: false,
             data: [],
             label: this.translateService.instant('artemisApp.exercise-scores-chart.yourScoreLabel'),
-            pointRadius: 8,
             pointStyle: 'circle',
-            borderWidth: 5,
+            borderWidth: 3,
             lineTension: 0,
+            spanGaps: true,
         },
         {
             fill: false,
             data: [],
             label: this.translateService.instant('artemisApp.exercise-scores-chart.averageScoreLabel'),
-            pointRadius: 8,
             pointStyle: 'rect',
-            borderWidth: 5,
+            borderWidth: 3,
             lineTension: 0,
+            spanGaps: true,
             borderDash: [1, 1],
         },
         {
             fill: false,
             data: [],
             label: this.translateService.instant('artemisApp.exercise-scores-chart.maximumScoreLabel'),
-            pointRadius: 8,
             pointStyle: 'triangle',
-            borderWidth: 5,
+            borderWidth: 3,
             lineTension: 0,
+            spanGaps: true,
             borderDash: [15, 3, 3, 3],
         },
     ];
-    public lineChartLabels: Label[] = this.exerciseScores.map((exerciseScoreDTO) => exerciseScoreDTO.exercise.title!);
+    public lineChartLabels: Label[] = this.exerciseScores.map((exerciseScoreDTO) => exerciseScoreDTO.exerciseTitle!);
     public lineChartOptions: ChartOptions = {
         tooltips: {
             callbacks: {
@@ -73,9 +73,8 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
                 },
                 footer(tooltipItem, data) {
                     const dataset = data.datasets![tooltipItem[0].datasetIndex!].data![tooltipItem[0].index!];
-                    const exercise = (dataset as any).exercise;
-                    // damit translate funktioniert muss ich die strings schon im objekt speichern
-                    return [`Exercise Type: ${exercise.type}`];
+                    const exerciseType = (dataset as any).exerciseType;
+                    return [`Exercise Type: ${exerciseType}`];
                 },
             },
         },
@@ -85,7 +84,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
             display: false,
         },
         legend: {
-            position: 'bottom',
+            position: 'left',
         },
         scales: {
             yAxes: [
@@ -157,12 +156,12 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
         this.activatedRoute.parent!.params.subscribe((params) => {
             this.courseId = +params['courseId'];
             if (this.courseId) {
-                this.loadData();
+                this.loadDataAndInitializeChart();
             }
         });
     }
 
-    private loadData() {
+    private loadDataAndInitializeChart() {
         this.isLoading = true;
         this.learningAnalyticsService
             .getCourseExerciseScores(this.courseId)
@@ -181,29 +180,34 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     }
 
     private initializeChart() {
-        const sortedExerciseScores = _.sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.exercise.releaseDate);
+        const chartWidth = 150 * this.exerciseScores.length;
+        this.chartDiv.nativeElement.setAttribute('style', `width: ${chartWidth}px;`);
+        this.chartDirective.ngOnDestroy();
+        this.chartDirective.chart = this.chartDirective.getChartBuilder(this.chartDirective.ctx);
+        this.chartInstance = this.chartDirective.chart;
+        const sortedExerciseScores = _.sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
         this.addData(this.chartInstance, sortedExerciseScores);
     }
 
     private addData(chart: Chart, exerciseScoresDTOs: ExerciseScoresDTO[]) {
         for (const exerciseScoreDTO of exerciseScoresDTOs) {
-            chart.data.labels!.push(exerciseScoreDTO.exercise.title!);
+            chart.data.labels!.push(exerciseScoreDTO.exerciseTitle!);
             (chart.data.datasets![0].data as ChartPoint[])!.push({
                 y: exerciseScoreDTO.scoreOfStudent,
-                exercise: exerciseScoreDTO.exercise,
+                exerciseTitle: exerciseScoreDTO.exerciseTitle,
+                exerciseType: exerciseScoreDTO.exerciseType,
             } as Chart.ChartPoint);
             (chart.data.datasets![1].data as ChartPoint[])!.push({
                 y: exerciseScoreDTO.averageScoreAchieved,
-                exercise: exerciseScoreDTO.exercise,
+                exerciseTitle: exerciseScoreDTO.exerciseTitle,
+                exerciseType: exerciseScoreDTO.exerciseType,
             } as Chart.ChartPoint);
             (chart.data.datasets![2].data as ChartPoint[])!.push({
                 y: exerciseScoreDTO.maxScoreAchieved,
-                exercise: exerciseScoreDTO.exercise,
+                exerciseTitle: exerciseScoreDTO.exerciseTitle,
+                exerciseType: exerciseScoreDTO.exerciseType,
             } as Chart.ChartPoint);
         }
-
-        const chartWidth = 150 * this.exerciseScores.length;
-        this.chartDiv.nativeElement.setAttribute('style', `width: ${chartWidth}px;`);
-        chart.update();
+        this.chartInstance.update();
     }
 }

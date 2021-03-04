@@ -2,18 +2,21 @@ import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Exercise } from 'app/entities/exercise.model';
 import * as moment from 'moment';
+import { Moment } from 'moment';
 
 /**
  *  The server will always send all the properties and they are never null
  *
  */
 export class ExerciseScoresDTO {
-    public exercise: Exercise;
-    public scoreOfStudent: number;
-    public averageScoreAchieved: number;
-    public maxScoreAchieved: number;
+    public exerciseId?: number;
+    public exerciseTitle?: string;
+    public exerciseType?: string;
+    public releaseDate?: Moment;
+    public scoreOfStudent?: number;
+    public averageScoreAchieved?: number;
+    public maxScoreAchieved?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -28,9 +31,7 @@ export class LearningAnalyticsService {
             .map((response: HttpResponse<ExerciseScoresDTO[]>) => {
                 if (response.body) {
                     for (const exerciseScoreDTO of response.body) {
-                        exerciseScoreDTO.exercise.releaseDate = exerciseScoreDTO.exercise.releaseDate ? moment(exerciseScoreDTO.exercise.releaseDate) : undefined;
-                        exerciseScoreDTO.exercise.dueDate = exerciseScoreDTO.exercise.dueDate ? moment(exerciseScoreDTO.exercise.dueDate) : undefined;
-                        exerciseScoreDTO.exercise.assessmentDueDate = exerciseScoreDTO.exercise.assessmentDueDate ? moment(exerciseScoreDTO.exercise.assessmentDueDate) : undefined;
+                        exerciseScoreDTO.releaseDate = exerciseScoreDTO.releaseDate ? moment(exerciseScoreDTO.releaseDate) : undefined;
                     }
                 }
                 return response;

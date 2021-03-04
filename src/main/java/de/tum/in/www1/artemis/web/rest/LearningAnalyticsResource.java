@@ -21,9 +21,9 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LearningAnalyticsService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
 
 @RestController
@@ -36,16 +36,16 @@ public class LearningAnalyticsResource {
 
     private final CourseRepository courseRepository;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public LearningAnalyticsResource(LearningAnalyticsService learningAnalyticsService, CourseRepository courseRepository, UserService userService,
+    public LearningAnalyticsResource(LearningAnalyticsService learningAnalyticsService, CourseRepository courseRepository, UserRepository userRepository,
             AuthorizationCheckService authorizationCheckService) {
         this.learningAnalyticsService = learningAnalyticsService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -68,7 +68,7 @@ public class LearningAnalyticsResource {
             return notFound();
         }
         Course course = courseOptional.get();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }

@@ -62,7 +62,11 @@ public class LearningAnalyticsService {
 
         for (Exercise exercise : exercises) {
             ExerciseScoresDTO exerciseScoresDTO = new ExerciseScoresDTO();
-            exerciseScoresDTO.exercise = exercise;
+            exerciseScoresDTO.exerciseId = exercise.getId();
+            exerciseScoresDTO.exerciseTitle = exercise.getTitle();
+            exerciseScoresDTO.releaseDate = exercise.getReleaseDate();
+            exerciseScoresDTO.exerciseType = exercise.getStringRepresentationOfType();
+
             ExerciseScoresAggregatedInformation aggregatedInformation = exerciseIdToAggregatedInformation.get(exercise.getId());
 
             if (aggregatedInformation == null || aggregatedInformation.getAverageScoreAchieved() == null || aggregatedInformation.getMaxScoreAchieved() == null) {
