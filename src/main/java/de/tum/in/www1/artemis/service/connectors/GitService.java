@@ -918,6 +918,10 @@ public class GitService {
         }
     }
 
+    /**
+     * delete the folder in the file system that contains all repositories for the given programming exercise
+     * @param programmingExercise contains the project key which is used as the folder name
+     */
     public void deleteLocalProgrammingExerciseReposFolder(ProgrammingExercise programmingExercise) {
         var folderPath = Paths.get(repoClonePath, programmingExercise.getProjectKey());
         try {
