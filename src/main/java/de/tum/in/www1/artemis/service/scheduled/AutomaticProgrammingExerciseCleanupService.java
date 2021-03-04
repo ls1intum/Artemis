@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import io.github.jhipster.config.JHipsterConstants;
 
 @Service
-// @Profile("scheduling")
+@Profile("scheduling")
 public class AutomaticProgrammingExerciseCleanupService {
 
     private static final Logger log = LoggerFactory.getLogger(AutomaticProgrammingExerciseCleanupService.class);
