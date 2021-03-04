@@ -35,8 +35,7 @@ public class JenkinsJobPermissionsService {
      * @param jobName the name of the Jenkins job
      * @throws IOException exception thrown when retrieving/updating the Jenkins folder failed
      */
-    public void addInstructorAndTAPermissionsToUsersForJob(Set<String> taLogins, Set<String> instructorLogins, String folderName, String jobName)
-            throws JenkinsJobNotFoundException, IOException {
+    public void addInstructorAndTAPermissionsToUsersForJob(Set<String> taLogins, Set<String> instructorLogins, String folderName, String jobName) throws IOException {
         try {
             var jobConfig = jenkinsJobService.getJobConfig(folderName, jobName);
 

@@ -92,6 +92,17 @@ public class JenkinsBuildPlanService {
         };
     }
 
+    /**
+     * Copies a build plan to another.
+     *
+     * @param sourceProjectKey the source project key
+     * @param sourcePlanName the source plan name
+     * @param targetProjectKey the target project key
+     * @param targetProjectName the target project name
+     * @param targetPlanName the target plan name
+     * @param targetProjectExists if the project exists
+     * @return the key of the created build plan
+     */
     public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
         final var cleanTargetName = getCleanPlanName(targetPlanName);
@@ -107,6 +118,11 @@ public class JenkinsBuildPlanService {
         return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 
+    /**
+     * Triggers the build for the plan
+     * @param projectKey the project key of the plan
+     * @param planKey the plan key
+     */
     public void triggerBuild(String projectKey, String planKey) {
         try {
             jenkinsJobService.getJobInFolder(projectKey, planKey).build(useCrumb);
@@ -117,6 +133,11 @@ public class JenkinsBuildPlanService {
         }
     }
 
+    /**
+     * Deletes the build plan
+     * @param projectKey the project key of the plan
+     * @param planKey the plan key
+     */
     public void deleteBuildPlan(String projectKey, String planKey) {
         try {
             jenkinsServer.deleteJob(jenkinsJobService.getFolderJob(projectKey), planKey, useCrumb);
@@ -127,6 +148,13 @@ public class JenkinsBuildPlanService {
         }
     }
 
+    /**
+     * Retrieves the build status of the plan
+     * @param projectKey the project key of the plan
+     * @param planKey the plan key
+     * @return the build status
+     * @throws JenkinsException thrown in case of errors
+     */
     public ContinuousIntegrationService.BuildStatus getBuildStatusOfPlan(String projectKey, String planKey) throws JenkinsException {
         var job = jenkinsJobService.getJobInFolder(projectKey, planKey);
         if (job == null) {
@@ -167,7 +195,7 @@ public class JenkinsBuildPlanService {
             var planExists = jenkinsJobService.getJobInFolder(projectKey, buildPlanId);
             return planExists != null;
         }
-        catch (Exception emAll) {
+        catch (JenkinsException emAll) {
             return false;
         }
     }
@@ -197,6 +225,11 @@ public class JenkinsBuildPlanService {
         }
     }
 
+    /**
+     * Enables the build plan
+     * @param projectKey the project key of the plan
+     * @param planKey the plan key
+     */
     public void enablePlan(String projectKey, String planKey) {
         try {
             var uri = UriComponentsBuilder.fromHttpUrl(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "enable").build(true).toUri();

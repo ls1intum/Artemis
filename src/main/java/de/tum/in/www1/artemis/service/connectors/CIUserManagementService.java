@@ -46,6 +46,7 @@ public interface CIUserManagementService {
      * the user to/from the specified groups. Throws an exception if the user doesn't exist
      * in the CIS.
      *
+     * @param oldLogin the old login if it was updated
      * @param user the Artemis user
      * @param groupsToAdd groups to add the user to
      * @param groupsToRemove groups to remove the user from

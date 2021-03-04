@@ -40,6 +40,12 @@ public class JenkinsJobService {
         this.jenkinsServer = jenkinsServer;
     }
 
+    /**
+     * Retrieves the job inside a folder job.
+     * @param folderJobName the name of the folder job
+     * @param jobName the name of the job
+     * @return the job with details
+     */
     public JobWithDetails getJobInFolder(String folderJobName, String jobName) {
         if (folderJobName == null || jobName == null) {
             log.warn("Cannot get the job, because projectKey " + folderJobName + " or jobName " + jobName + " is null");
@@ -55,6 +61,11 @@ public class JenkinsJobService {
         }
     }
 
+    /**
+     * Gets the folder job
+     * @param folderName the name of the folder job
+     * @return the folder job
+     */
     public FolderJob getFolderJob(String folderName) {
         try {
             final var job = jenkinsServer.getJob(folderName);
@@ -73,6 +84,12 @@ public class JenkinsJobService {
         }
     }
 
+    /**
+     * Gets the xml config of the job that is inside a folder
+     * @param folderName the name of the folder
+     * @param jobName the name of the job
+     * @return the xml document
+     */
     public Document getJobConfigForJobInFolder(String folderName, String jobName) {
         try {
             var folder = getFolderJob(folderName);
@@ -85,6 +102,13 @@ public class JenkinsJobService {
         }
     }
 
+    /**
+     * Gets the xml config of the folder job.
+     * @param folderName the name of the folder
+     * @return the xml document
+     * @throws JenkinsJobNotFoundException if the job doesn't exist
+     * @throws IOException in case of errors
+     */
     public org.jsoup.nodes.Document getFolderConfig(String folderName) throws JenkinsJobNotFoundException, IOException {
         if (jenkinsServer.getJob(folderName) == null) {
             throw new JenkinsJobNotFoundException("The job " + folderName + " does not exist.");
@@ -99,6 +123,12 @@ public class JenkinsJobService {
         return document;
     }
 
+    /**
+     * Creates a job inside a folder
+     * @param jobConfig the config of the job to create
+     * @param folderName the name of the folder
+     * @param jobName the name of the job
+     */
     public void createJobInFolder(Document jobConfig, String folderName, String jobName) {
         try {
             var folder = getFolderJob(folderName);
@@ -110,6 +140,11 @@ public class JenkinsJobService {
         }
     }
 
+    /**
+     * Writes the xml document into a string.
+     * @param doc the xml document
+     * @return the xml as string
+     */
     public String writeXmlToString(Document doc) {
         try {
             final var tf = TransformerFactory.newInstance();
@@ -125,6 +160,14 @@ public class JenkinsJobService {
         }
     }
 
+    /**
+     * Gets the job config of a job that is inside a folder
+     * @param folderName the name of the folder
+     * @param jobName the name of the job
+     * @return the job config as an xml document
+     * @throws JenkinsJobNotFoundException if the job doesn't exist in Jenkins
+     * @throws IOException in case of errors
+     */
     public org.jsoup.nodes.Document getJobConfig(String folderName, String jobName) throws JenkinsJobNotFoundException, IOException {
         var job = jenkinsServer.getJob(folderName);
         if (job == null) {
@@ -139,6 +182,13 @@ public class JenkinsJobService {
         return document;
     }
 
+    /**
+     * Updates a job.
+     * @param folderName optional folder name where the job resides
+     * @param jobName the name of the job
+     * @param jobConfig the updated job config
+     * @throws IOException in case of errors
+     */
     public void updateJob(String folderName, String jobName, org.jsoup.nodes.Document jobConfig) throws IOException {
         if (folderName != null && !folderName.isEmpty()) {
             var job = jenkinsServer.getJob(folderName);

@@ -264,7 +264,7 @@ public class JenkinsRequestMockProvider {
             mockUpdateUser(user);
         }
         mockRemoveUserFromGroups(groupsToRemove, exercises);
-        mockAddUsersToGroups(user.getLogin(), groupsToAdd, exercises);
+        mockAddUsersToGroups(groupsToAdd, exercises);
     }
 
     private void mockUpdateUser(User user) throws URISyntaxException, JsonProcessingException {
@@ -337,10 +337,10 @@ public class JenkinsRequestMockProvider {
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("securityRealm", "createAccountByAdmin").build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.FOUND));
 
-        mockAddUsersToGroups(user.getLogin(), user.getGroups(), exercises);
+        mockAddUsersToGroups(user.getGroups(), exercises);
     }
 
-    private void mockAddUsersToGroups(String login, Set<String> groups, List<ProgrammingExercise> exercises) throws IOException {
+    private void mockAddUsersToGroups(Set<String> groups, List<ProgrammingExercise> exercises) throws IOException {
         for (ProgrammingExercise exercise : exercises) {
             var jobName = exercise.getProjectKey();
             var course = exercise.getCourseViaExerciseGroupOrCourseMember();

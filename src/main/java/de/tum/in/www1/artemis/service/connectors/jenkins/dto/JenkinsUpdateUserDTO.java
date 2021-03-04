@@ -24,9 +24,6 @@ public class JenkinsUpdateUserDTO {
 
     private final UserProperty12 userProperty12;
 
-    @JsonProperty("core:apply")
-    private final String coreApply;
-
     public JenkinsUpdateUserDTO() {
         userProperty2 = new UserProperty2();
         userProperty5 = new UserProperty5();
@@ -35,7 +32,6 @@ public class JenkinsUpdateUserDTO {
         userProperty9 = new UserProperty9();
         userProperty11 = new UserProperty11();
         userProperty12 = new UserProperty12();
-        coreApply = "true";
     }
 
     public String getFullName() {
@@ -115,9 +111,6 @@ public class JenkinsUpdateUserDTO {
 class UserProperty2 {
 
     private String address;
-
-    UserProperty2() {
-    }
 
     public String getAddress() {
         return address;
