@@ -14,7 +14,7 @@ public class MergeSort: SortStrategy {
     private func mergesort(_ input: [Date], _ low: Int, _ high: Int) -> [Date] {
         var sortedInput = input
         if (high - low) < 1 {
-            /// break recursion and last input
+            /// break recursion and return last input
             return input
         }
         let mid: Int = (low + high) / 2

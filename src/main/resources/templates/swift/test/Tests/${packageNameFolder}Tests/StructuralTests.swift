@@ -30,20 +30,17 @@ class StructuralTests: XCTestCase {
                 let info = try typeInfo(of: inferredClass.self)
                 /// sortAlgorithm
                 do {
-                    let property = try info.property(named: "sortAlgorithm")
-                    print("property:", property)
+                    let _ = try info.property(named: "sortAlgorithm")
                 } catch {
                     XCTFail("Property 'sortAlgorithm' of Context.swift is not implemented!")
                 }
                 /// dates
                 do {
-                    let property = try info.property(named: "dates")
-                    print("property:", property)
+                    let _ = try info.property(named: "dates")
                 } catch {
                     XCTFail("Property 'dates' of Context.swift is not implemented!")
                 }
             } catch {
-                print("Unexpected error: \(error).")
                 XCTFail("Context.swift is not implemented!")
             }
         } else {
@@ -61,8 +58,7 @@ class StructuralTests: XCTestCase {
                 print("----------------")
                 // context
                 do {
-                    let property = try info.property(named: "context")
-                    print("property:", property)
+                    let _ = try info.property(named: "context")
                 } catch {
                     XCTFail("Property 'context' of Policy.swift is not implemented!")
                 }
