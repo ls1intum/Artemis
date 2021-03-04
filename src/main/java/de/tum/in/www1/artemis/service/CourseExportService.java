@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -82,9 +83,7 @@ public class CourseExportService {
             Files.createDirectories(courseDirPath);
         }
         catch (IOException e) {
-            var error = "Failed to export course " + course.getId() + " because the temporary directory: " + courseDirPath + " cannot be created.";
-            exportErrors.add(error);
-            log.info(error);
+            logMessageAndAppendToList("Failed to export course " + course.getId() + " because the temporary directory: " + courseDirPath + " cannot be created.", exportErrors);
             return Optional.empty();
         }
 
@@ -100,9 +99,7 @@ public class CourseExportService {
             return exportedCoursePath;
         }
         catch (Exception e) {
-            var error = "Failed to export the entire course " + course.getTitle();
-            exportErrors.add(error);
-            log.info(error);
+            logMessageAndAppendToList("Failed to export the entire course " + course.getTitle() + ": " + e.getMessage(), exportErrors);
             return Optional.empty();
         }
         finally {
@@ -125,9 +122,7 @@ public class CourseExportService {
             exportExercises(course.getId(), course.getExercises(), exercisesDir.toString(), exportErrors);
         }
         catch (IOException e) {
-            var error = "Failed to create course exercise directory" + exercisesDir + ".";
-            log.info(error);
-            exportErrors.add(error);
+            logMessageAndAppendToList("Failed to create course exercise directory" + exercisesDir + ".", exportErrors);
         }
     }
 
@@ -135,7 +130,7 @@ public class CourseExportService {
      * Exports all exams of the course by zipping each one separately and adds them into the directory
      * outputDir/exams/
      *
-     * @param course       The course where the exercises are located
+     * @param course       The course where the exams are located
      * @param outputDir    The directory that will be used to store the exams
      * @param exportErrors List of failures that occurred during the export
      */
@@ -143,23 +138,12 @@ public class CourseExportService {
         Path examsDir = Path.of(outputDir, "exams");
         try {
             Files.createDirectory(examsDir);
+            List<Exam> exams = examRepository.findByCourseId(course.getId());
+            exams.forEach(exam -> exportExam(exam.getId(), examsDir.toString(), exportErrors));
 
-            // Lazy load the exams of the course.
-            var courseWithExams = courseRepository.findWithEagerLecturesAndExamsById(course.getId());
-            if (courseWithExams.isPresent()) {
-                var exams = courseWithExams.get().getExams();
-                exams.forEach(exam -> exportExam(exam.getId(), examsDir.toString(), exportErrors));
-            }
-            else {
-                var error = "Failed to export exams of course " + course.getId() + " because the course doesn't exist.";
-                log.info(error);
-                exportErrors.add(error);
-            }
         }
         catch (IOException e) {
-            var error = "Failed to create course exams directory " + examsDir + ".";
-            log.info(error);
-            exportErrors.add(error);
+            logMessageAndAppendToList("Failed to create course exams directory " + examsDir + ".", exportErrors);
         }
     }
 
@@ -180,9 +164,7 @@ public class CourseExportService {
             exportExercises(exam.getCourse().getId(), exercises, examDir.toString(), exportErrors);
         }
         catch (IOException e) {
-            var error = "Failed to create exam directory " + examDir + ".";
-            log.info(error);
-            exportErrors.add(error);
+            logMessageAndAppendToList("Failed to create exam directory " + examDir + ".", exportErrors);
         }
     }
 
@@ -238,9 +220,7 @@ public class CourseExportService {
                 }
             }
             catch (IOException e) {
-                var error = "Failed to export exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + "): " + e.getMessage();
-                log.info(error);
-                exportErrors.add(error);
+                logMessageAndAppendToList("Failed to export exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + "): " + e.getMessage(), exportErrors);
             }
 
             // Exported submissions are stored somewhere else so we move the generated zip file into the
@@ -253,9 +233,7 @@ public class CourseExportService {
                     FileUtils.deleteDirectory(Path.of(exportedSubmissionsFile.getParent()).toFile());
                 }
                 catch (IOException e) {
-                    var error = "Failed to move file " + exportedSubmissionsFile.toPath() + " to " + outputDir + ".";
-                    log.info(error);
-                    exportErrors.add(error);
+                    logMessageAndAppendToList("Failed to move file " + exportedSubmissionsFile.toPath() + " to " + outputDir + ".", exportErrors);
                 }
             }
         });
@@ -280,14 +258,17 @@ public class CourseExportService {
             return Optional.of(zippedFile);
         }
         catch (IOException e) {
-            var error = "Failed to create zip file at " + zippedFile + ".";
-            log.info(error);
-            exportErrors.add(error);
+            logMessageAndAppendToList("Failed to create zip file at " + zippedFile + ".", exportErrors);
             return Optional.empty();
         }
         finally {
             fileService.scheduleForDirectoryDeletion(courseDirPath, 1);
         }
+    }
+
+    private void logMessageAndAppendToList(String message, List<String> messageList) {
+        log.info(message);
+        messageList.add(message);
     }
 
     /***

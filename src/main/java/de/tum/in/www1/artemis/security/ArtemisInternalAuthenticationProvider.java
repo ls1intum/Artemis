@@ -50,7 +50,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         final var optionalUser = userRepository.findOneByLogin(authentication.getName().toLowerCase());
         final User user;
         if (optionalUser.isEmpty()) {
-            user = userCreationService.createUser(authentication.getName(), password, firstName, lastName, email, null, null, "en");
+            user = userCreationService.createInternalUser(authentication.getName(), password, null, firstName, lastName, email, null, null, "en");
         }
         else {
             user = optionalUser.get();

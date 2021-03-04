@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,11 +30,18 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("select e from Exercise e left join fetch e.categories where e.course.id = :#{#courseId}")
     Set<Exercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
+    @Query("""
+                SELECT e
+                FROM Exercise e LEFT JOIN FETCH e.categories WHERE
+                e.id IN :exerciseIds
+            """)
+    Set<Exercise> findByExerciseIdWithCategories(@Param("exerciseIds") Set<Long> exerciseIds);
+
     @Query("select e from Exercise e where e.course.id = :#{#courseId} and e.mode = 'TEAM'")
     Set<Exercise> findAllTeamExercisesByCourseId(@Param("courseId") Long courseId);
 
     @Query("select e from Exercise e where e.course.testCourse = false and e.dueDate >= :#{#now} order by e.dueDate asc")
-    Set<Exercise> findAllExercisesWithUpcomingDueDate(@Param("now") ZonedDateTime now);
+    Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDate(@Param("now") ZonedDateTime now);
 
     /**
      * Select Exercise for Course ID WHERE there does exist an LtiOutcomeUrl for the current user (-> user has started exercise once using LTI)
@@ -159,13 +167,13 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     }
 
     /**
-     * Finds all exercises where the due date is in the future
+     * Finds all exercises where the due date is today or in the future
      * (does not return exercises belonging to test courses).
      *
      * @return set of exercises
      */
-    default Set<Exercise> findAllExercisesWithUpcomingDueDate() {
-        return findAllExercisesWithUpcomingDueDate(ZonedDateTime.now());
+    default Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDate() {
+        return findAllExercisesWithCurrentOrUpcomingDueDate(ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS));
     }
 
     /**

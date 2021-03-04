@@ -13,11 +13,6 @@ const routes: Routes = [
         },
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            // HACK: The path is a composite, so we need to define both parts
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.studentQuestion.overview.title', path: 'questions' },
-            ],
             pageTitle: 'artemisApp.studentQuestion.overview.title',
         },
         canActivate: [UserRouteAccessService],
