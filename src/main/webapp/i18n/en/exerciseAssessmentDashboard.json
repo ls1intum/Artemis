@@ -80,7 +80,9 @@
                 "UNKNOWN": "Unknown"
             },
             "complaintHint": "Shows complaints about assessments of other tutors. Note: complaints about your assessments are not shown here.",
-            "moreFeedbackRequestHint": "Shows more feedback requests for your assessments."
+            "moreFeedbackRequestHint": "Shows more feedback requests for your assessments.",
+            "noSubmissionsBecauseOfOtherLockedSubmissions": "All other submissions are locked by other tutors.",
+            "noSubmissionsBecauseFirstAssessedByYourself": "You can not assess submissions in the second correction round, which you assessed in the first round."
         }
     }
 }

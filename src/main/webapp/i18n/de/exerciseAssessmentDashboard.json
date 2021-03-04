@@ -80,7 +80,9 @@
                 "UNKNOWN": "Unbekannt"
             },
             "complaintHint": "Zeigt Beschwerden über Bewertungen von anderen Tutoren. Beachte: Beschwerden über deine Bewertungen werden hier nicht angezeigt.",
-            "moreFeedbackRequestHint": "Zeigt Anfragen für weiteres Feedback von deinen Bewertungen an."
+            "moreFeedbackRequestHint": "Zeigt Anfragen für weiteres Feedback von deinen Bewertungen an.",
+            "noSubmissionsBecauseOfOtherLockedSubmissions": "Alle Einreichungen sind von anderen Tutoren gesperrt.",
+            "noSubmissionsBecauseFirstAssessedByYourself": "Nur Einreichungen die du nicht selbst in der ersten Korrekturrunde bearbeitet hast können korrigiert werden."
         }
     }
 }
