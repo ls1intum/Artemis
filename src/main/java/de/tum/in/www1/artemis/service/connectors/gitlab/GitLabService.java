@@ -110,10 +110,6 @@ public class GitLabService extends AbstractVersionControlService {
             if (e.getHttpStatus() == 409) {
                 updateMemberPermissionInRepository(repositoryUrl, user.getLogin(), DEVELOPER);
             }
-            else if (e.getValidationErrors().containsKey("access_level")
-                    && e.getValidationErrors().get("access_level").stream().anyMatch(s -> s.contains("should be greater than or equal to"))) {
-                log.warn("Member already has the requested permissions! Permission stays the same");
-            }
             else {
                 throw new GitLabException("Error while trying to add user " + user.getLogin() + /* " to repository: " + repositoryUrl + */ " ex:" + e.getMessage()
                         + e.getHttpStatus() + e.getReason(), e);
