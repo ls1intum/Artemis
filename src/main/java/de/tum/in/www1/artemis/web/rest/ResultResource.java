@@ -165,14 +165,14 @@ public class ResultResource {
         }
 
         // Process the new result from the build result.
-        Optional<Result> result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, requestBody);
+        Optional<Result> optResult = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, requestBody);
 
         // Only notify the user about the new result if the result was created successfully.
-        if (result.isPresent()) {
-            log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result.get(), result.get().getSubmission(),
-                    result.get().getParticipation());
+        if (optResult.isPresent()) {
+            Result result = optResult.get();
+            log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
             // notify user via websocket
-            messagingService.broadcastNewResult((Participation) participation, result.get());
+            messagingService.broadcastNewResult((Participation) participation, result);
             if (participation instanceof StudentParticipation) {
                 // do not try to report results for template or solution participations
                 ltiService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
