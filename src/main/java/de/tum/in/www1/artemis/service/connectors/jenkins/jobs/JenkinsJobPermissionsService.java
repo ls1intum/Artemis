@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.offbytwo.jenkins.JenkinsServer;
-import de.tum.in.www1.artemis.exception.JenkinsJobNotFoundException;
 
 @Service
 @Profile("jenkins")
@@ -36,24 +35,24 @@ public class JenkinsJobPermissionsService {
      * @throws IOException exception thrown when retrieving/updating the Jenkins folder failed
      */
     public void addInstructorAndTAPermissionsToUsersForJob(Set<String> taLogins, Set<String> instructorLogins, String folderName, String jobName) throws IOException {
-        try {
-            var jobConfig = jenkinsJobService.getJobConfig(folderName, jobName);
-
-            // Revoke previously-assigned permissions
-            var allPermissions = Set.of(JenkinsJobPermission.values());
-            JenkinsJobPermissionsUtils.removePermissionsFromJob(jobConfig, allPermissions, taLogins);
-            JenkinsJobPermissionsUtils.removePermissionsFromJob(jobConfig, allPermissions, instructorLogins);
-
-            JenkinsJobPermissionsUtils.addPermissionsToJob(jobConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), taLogins);
-            JenkinsJobPermissionsUtils.addPermissionsToJob(jobConfig, JenkinsJobPermission.getInstructorPermissions(), instructorLogins);
-
-            jenkinsJobService.updateJob(folderName, jobName, jobConfig);
-
-            addInstructorAndTAPermissionsToUsersForFolder(taLogins, instructorLogins, folderName);
+        var jobConfig = jenkinsJobService.getJobConfig(folderName, jobName);
+        if (jobConfig == null) {
+            // Job doesn't exist so do nothing.
+            return;
         }
-        catch (JenkinsJobNotFoundException e) {
-            // Do nothing since the job doesn't exist in Jenkins.
-        }
+
+        // Revoke previously-assigned permissions
+        var allPermissions = Set.of(JenkinsJobPermission.values());
+        JenkinsJobPermissionsUtils.removePermissionsFromJob(jobConfig, allPermissions, taLogins);
+        JenkinsJobPermissionsUtils.removePermissionsFromJob(jobConfig, allPermissions, instructorLogins);
+
+        JenkinsJobPermissionsUtils.addPermissionsToJob(jobConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), taLogins);
+        JenkinsJobPermissionsUtils.addPermissionsToJob(jobConfig, JenkinsJobPermission.getInstructorPermissions(), instructorLogins);
+
+        jenkinsJobService.updateJob(folderName, jobName, jobConfig);
+
+        addInstructorAndTAPermissionsToUsersForFolder(taLogins, instructorLogins, folderName);
+
     }
 
     /**
@@ -65,22 +64,20 @@ public class JenkinsJobPermissionsService {
      * @throws IOException exception thrown when retrieving/updating the Jenkins folder failed
      */
     public void addInstructorAndTAPermissionsToUsersForFolder(Set<String> taLogins, Set<String> instructorLogins, String folderName) throws IOException {
-        try {
-            var folderConfig = jenkinsJobService.getFolderConfig(folderName);
-
-            // Revoke previously-assigned permissions
-            JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), taLogins);
-            JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), instructorLogins);
-
-            // Assign teaching assistant permissions
-            JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), taLogins);
-            JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getInstructorPermissions(), instructorLogins);
-
-            jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);
+        var folderConfig = jenkinsJobService.getFolderConfig(folderName);
+        if (folderConfig == null) {
+            // Job doesn't exist so do nothing.
+            return;
         }
-        catch (JenkinsJobNotFoundException e) {
-            // Do nothing since the job doesn't exist in Jenkins.
-        }
+        // Revoke previously-assigned permissions
+        JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), taLogins);
+        JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), instructorLogins);
+
+        // Assign teaching assistant permissions
+        JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), taLogins);
+        JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getInstructorPermissions(), instructorLogins);
+
+        jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);
     }
 
     /**
@@ -92,20 +89,19 @@ public class JenkinsJobPermissionsService {
      * @throws IOException exception thrown when retrieving/updating the Jenkins folder failed
      */
     public void addTeachingAssistantPermissionsToUserForFolder(String userLogin, String folderName) throws IOException {
-        try {
-            var folderConfig = jenkinsJobService.getFolderConfig(folderName);
-
-            // Revoke previously-assigned permissions
-            JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), Set.of(userLogin));
-
-            // Assign teaching assistant permissions
-            JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), Set.of(userLogin));
-
-            jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);
+        var folderConfig = jenkinsJobService.getFolderConfig(folderName);
+        if (folderConfig == null) {
+            // Job doesn't exist so do nothing.
+            return;
         }
-        catch (JenkinsJobNotFoundException e) {
-            // Do nothing since the job doesn't exist in Jenkins.
-        }
+
+        // Revoke previously-assigned permissions
+        JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), Set.of(userLogin));
+
+        // Assign teaching assistant permissions
+        JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), Set.of(userLogin));
+
+        jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);
     }
 
     /**
@@ -131,14 +127,15 @@ public class JenkinsJobPermissionsService {
      * @throws IOException thrown when retrieving/updating the Jenkins folder failed
      */
     public void addPermissionsForUsersToFolder(Set<String> userLogins, String folderName, Set<JenkinsJobPermission> permissions) throws IOException {
-        try {
-            var folderConfig = jenkinsJobService.getFolderConfig(folderName);
-            JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, permissions, userLogins);
-            jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);
+        var folderConfig = jenkinsJobService.getFolderConfig(folderName);
+        if (folderConfig == null) {
+            // Job doesn't exist so do nothing.
+            return;
         }
-        catch (JenkinsJobNotFoundException e) {
-            // Do nothing since the job doesn't exist in Jenkins.
-        }
+
+        JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, permissions, userLogins);
+        jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);
+
     }
 
     /**
@@ -162,13 +159,14 @@ public class JenkinsJobPermissionsService {
      * @throws IOException thrown when retrieving/updating the Jenkins folder failed
      */
     public void removePermissionsFromUsersForFolder(Set<String> userLogins, String folderName, Set<JenkinsJobPermission> permissionsToRemove) throws IOException {
-        try {
-            var folderConfig = jenkinsJobService.getFolderConfig(folderName);
-            JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, permissionsToRemove, userLogins);
-            jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);
+        var folderConfig = jenkinsJobService.getFolderConfig(folderName);
+        if (folderConfig == null) {
+            // Job doesn't exist so do nothing.
+            return;
         }
-        catch (JenkinsJobNotFoundException e) {
-            // Do nothing since the job doesn't exist in Jenkins.
-        }
+
+        JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, permissionsToRemove, userLogins);
+        jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);
+
     }
 }

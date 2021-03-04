@@ -22,7 +22,6 @@ import com.offbytwo.jenkins.model.FolderJob;
 import com.offbytwo.jenkins.model.JobWithDetails;
 
 import de.tum.in.www1.artemis.exception.JenkinsException;
-import de.tum.in.www1.artemis.exception.JenkinsJobNotFoundException;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Service
@@ -105,13 +104,12 @@ public class JenkinsJobService {
     /**
      * Gets the xml config of the folder job.
      * @param folderName the name of the folder
-     * @return the xml document
-     * @throws JenkinsJobNotFoundException if the job doesn't exist
+     * @return the xml document or null if the folder doesn't exist
      * @throws IOException in case of errors
      */
-    public org.jsoup.nodes.Document getFolderConfig(String folderName) throws JenkinsJobNotFoundException, IOException {
+    public org.jsoup.nodes.Document getFolderConfig(String folderName) throws IOException {
         if (jenkinsServer.getJob(folderName) == null) {
-            throw new JenkinsJobNotFoundException("The job " + folderName + " does not exist.");
+            return null;
         }
 
         var folderXml = jenkinsServer.getJobXml(folderName);
@@ -164,14 +162,13 @@ public class JenkinsJobService {
      * Gets the job config of a job that is inside a folder
      * @param folderName the name of the folder
      * @param jobName the name of the job
-     * @return the job config as an xml document
-     * @throws JenkinsJobNotFoundException if the job doesn't exist in Jenkins
+     * @return the job config as an xml document or null if the job doesn't exist
      * @throws IOException in case of errors
      */
-    public org.jsoup.nodes.Document getJobConfig(String folderName, String jobName) throws JenkinsJobNotFoundException, IOException {
+    public org.jsoup.nodes.Document getJobConfig(String folderName, String jobName) throws IOException {
         var job = jenkinsServer.getJob(folderName);
         if (job == null) {
-            throw new JenkinsJobNotFoundException("The job " + folderName + " does not exist.");
+            return null;
         }
         var folder = jenkinsServer.getFolderJob(job);
         var jobXml = jenkinsServer.getJobXml(folder.orNull(), jobName);
