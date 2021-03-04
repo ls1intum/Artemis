@@ -45,9 +45,6 @@
     <changeSet author="daniels98it" id="20210218101120-4">
         <addPrimaryKey columnNames="organization_id, user_id" tableName="user_organization"/>
     </changeSet>
-    <changeSet author="daniels98it" id="20210218101120-5">
-        <addUniqueConstraint columnNames="id" constraintName="UC_TEXT_BLOCKID_COL" tableName="text_block"/>
-    </changeSet>
     <changeSet author="daniels98it" id="20210218101120-6">
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_organization" constraintName="FK71cxcwaglhos8x0qxs61vpxkb" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course" validate="true"/>
     </changeSet>
