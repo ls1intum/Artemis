@@ -25,6 +25,7 @@ export class AssessmentLocksComponent implements OnInit {
     courseId: number;
     tutorId: number;
     examId?: number;
+    showAll = false;
     exercises: Exercise[] = [];
 
     submissions: Submission[] = [];
@@ -67,6 +68,7 @@ export class AssessmentLocksComponent implements OnInit {
         let lockedSubmissionsObservable;
         if (this.examId) {
             lockedSubmissionsObservable = this.examManagementService.findAllLockedSubmissionsOfExam(this.courseId, this.examId);
+            this.showAll = true;
         } else {
             lockedSubmissionsObservable = this.courseService.findAllLockedSubmissionsOfCourse(this.courseId);
         }
