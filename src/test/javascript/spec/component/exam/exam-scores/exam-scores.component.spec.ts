@@ -19,7 +19,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import * as _ from 'lodash';
+import { cloneDeep } from 'lodash';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -205,11 +205,11 @@ describe('ExamScoresComponent', () => {
     });
     it('should log error on sentry when wrong points calculation', () => {
         spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
-        const cs1 = _.cloneDeep(examScoreStudent1);
+        const cs1 = cloneDeep(examScoreStudent1);
         cs1.pointsAchieved = 99;
-        const cs2 = _.cloneDeep(examScoreStudent2);
+        const cs2 = cloneDeep(examScoreStudent2);
         cs2.pointsAchieved = 99;
-        const cs3 = _.cloneDeep(examScoreStudent3);
+        const cs3 = cloneDeep(examScoreStudent3);
         cs3.pointsAchieved = 99;
         findExamScoresSpy.returns(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
         const errorSpy = sinon.spy(comp, 'logErrorOnSentry');
@@ -219,11 +219,11 @@ describe('ExamScoresComponent', () => {
 
     it('should log error on sentry when wrong score calculation', () => {
         spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
-        const cs1 = _.cloneDeep(examScoreStudent1);
+        const cs1 = cloneDeep(examScoreStudent1);
         cs1.scoreAchieved = 99;
-        const cs2 = _.cloneDeep(examScoreStudent2);
+        const cs2 = cloneDeep(examScoreStudent2);
         cs2.scoreAchieved = 99;
-        const cs3 = _.cloneDeep(examScoreStudent3);
+        const cs3 = cloneDeep(examScoreStudent3);
         cs3.scoreAchieved = 99;
         findExamScoresSpy.returns(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
         const errorSpy = sinon.spy(comp, 'logErrorOnSentry');
