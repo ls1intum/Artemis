@@ -143,14 +143,20 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
         {
             borderColor: 'skyBlue',
             backgroundColor: 'skyBlue',
+            hoverBackgroundColor: 'black',
+            hoverBorderColor: 'black',
         },
         {
             borderColor: 'salmon',
             backgroundColor: 'salmon',
+            hoverBackgroundColor: 'black',
+            hoverBorderColor: 'black',
         },
         {
             borderColor: 'limeGreen',
             backgroundColor: 'limeGreen',
+            hoverBackgroundColor: 'black',
+            hoverBorderColor: 'black',
         },
     ];
     public lineChartLegend = true;
