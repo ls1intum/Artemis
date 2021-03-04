@@ -46,9 +46,6 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'course-management/:courseId/programming-exercises/:exerciseId/code-editor',
                     loadChildren: () => import('./exercises/programming/manage/code-editor/code-editor-management.module').then((m) => m.ArtemisCodeEditorManagementModule),
-                    data: {
-                        usePathForBreadcrumbs: true,
-                    },
                 },
                 {
                     path: 'course-management/:courseId/text-exercises/:exerciseId',
@@ -87,9 +84,6 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'course-management/:courseId/exams',
                     loadChildren: () => import('./exam/manage/exam-management.module').then((m) => m.ArtemisExamManagementModule),
-                    data: {
-                        usePathForBreadcrumbs: true,
-                    },
                 },
                 {
                     path: 'features',

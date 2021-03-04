@@ -41,7 +41,7 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { UMLElement, UMLModel } from '@ls1intum/apollon';
@@ -237,16 +237,18 @@ describe('Component Tests', () => {
             sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
             const participationWebSocketService = debugElement.injector.get(ParticipationWebsocketService);
 
-            const generalFeedback = new Feedback();
-            generalFeedback.id = 1;
-            generalFeedback.detailText = 'General Feedback';
+            const unreferencedFeedback = new Feedback();
+            unreferencedFeedback.id = 1;
+            unreferencedFeedback.detailText = 'General Feedback';
+            unreferencedFeedback.credits = 5;
+            unreferencedFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
             const newResult = new Result();
             newResult.score = 50.0;
             newResult.assessmentType = AssessmentType.MANUAL;
             newResult.submission = submission;
             newResult.participation = submission.participation;
             newResult.completionDate = moment();
-            newResult.feedbacks = [generalFeedback];
+            newResult.feedbacks = [unreferencedFeedback];
             sinon.replace(participationWebSocketService, 'subscribeForLatestResultOfParticipation', sinon.fake.returns(of(newResult)));
             fixture.detectChanges();
             expect(comp.assessmentResult).to.deep.equal(newResult);

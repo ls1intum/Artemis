@@ -50,6 +50,13 @@ The following sections describe the supported features and the process of creati
 
 .. include:: programming-exercise-setup.inc
 
+Static Code Analysis Default Configuration
+------------------------------------------
+
+The following sections list the rules that are active for the default static code analysis configuration.
+
+.. include:: programming-sca-default-configuration.inc
+
 Online Editor
 -------------
 

@@ -16,6 +16,7 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import * as moment from 'moment';
 import { navigateBack } from 'app/utils/navigation.utils';
+import { shortNamePattern } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -44,8 +45,6 @@ export class CourseUpdateComponent implements OnInit {
     complaintsEnabled = true; // default value
     requestMoreFeedbackEnabled = true; // default value
     customizeGroupNames = false; // default value
-
-    shortNamePattern = /^[a-zA-Z][a-zA-Z0-9]{2,}$/; // must start with a letter and cannot contain special characters, at least 3 characters
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
 
@@ -104,7 +103,7 @@ export class CourseUpdateComponent implements OnInit {
                 id: new FormControl(this.course.id),
                 title: new FormControl(this.course.title, [Validators.required]),
                 shortName: new FormControl(this.course.shortName, {
-                    validators: [Validators.required, Validators.minLength(3), regexValidator(this.shortNamePattern)],
+                    validators: [Validators.required, Validators.minLength(3), regexValidator(shortNamePattern)],
                     updateOn: 'blur',
                 }),
                 // note: we still reference them here so that they are used in the update method when the course is retrieved from the course form
