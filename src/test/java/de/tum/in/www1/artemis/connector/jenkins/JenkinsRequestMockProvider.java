@@ -261,20 +261,20 @@ public class JenkinsRequestMockProvider {
             mockUpdateUserLogin(oldLogin, user, exercises);
         }
         else {
-            mockUpdateUser(user);
+            mockUpdateUser(user, exercises);
         }
         mockRemoveUserFromGroups(groupsToRemove, exercises);
         mockAddUsersToGroups(groupsToAdd, exercises);
     }
 
-    private void mockUpdateUser(User user) throws URISyntaxException, JsonProcessingException {
+    private void mockUpdateUser(User user, List<ProgrammingExercise> exercises) throws URISyntaxException, IOException {
         mockGetUser(user.getLogin(), true);
 
         doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
         doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
 
-        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("user", user.getLogin(), "configSubmit").build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.FOUND));
+        mockDeleteUser(user, exercises);
+        mockCreateUser(user, exercises);
     }
 
     private void mockUpdateUserLogin(String oldLogin, User user, List<ProgrammingExercise> exercises) throws IOException, URISyntaxException {
