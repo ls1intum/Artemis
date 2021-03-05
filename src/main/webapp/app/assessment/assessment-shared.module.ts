@@ -5,7 +5,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AssessmentHeaderComponent } from './assessment-header/assessment-header.component';
 import { AssessmentLayoutComponent } from './assessment-layout/assessment-layout.component';
 import { AssessmentComplaintAlertComponent } from './assessment-complaint-alert/assessment-complaint-alert.component';
-import { AssessmentGeneralFeedbackComponent } from './assessment-general-feedback/assessment-general-feedback.component';
 import { ScoreDisplayComponent } from '../shared/score-display/score-display.component';
 import { AssessmentDetailComponent } from './assessment-detail/assessment-detail.component';
 import { AssessmentFiltersComponent } from 'app/assessment/assessment-filters/assessment-filters.component';
@@ -38,7 +37,6 @@ const ENTITY_STATES = [...assessmentLocksRoute];
         AssessmentHeaderComponent,
         AssessmentLayoutComponent,
         AssessmentComplaintAlertComponent,
-        AssessmentGeneralFeedbackComponent,
         ScoreDisplayComponent,
         AssessmentDetailComponent,
         AssessmentFiltersComponent,
@@ -50,7 +48,6 @@ const ENTITY_STATES = [...assessmentLocksRoute];
     ],
     exports: [
         AssessmentLayoutComponent,
-        AssessmentGeneralFeedbackComponent,
         ScoreDisplayComponent,
         AssessmentDetailComponent,
         AssessmentFiltersComponent,

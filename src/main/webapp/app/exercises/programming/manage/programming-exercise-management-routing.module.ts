@@ -35,7 +35,6 @@ export const routes: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -48,7 +47,6 @@ export const routes: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -61,7 +59,6 @@ export const routes: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.programmingExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -74,7 +71,6 @@ export const routes: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -96,7 +92,6 @@ export const routes: Routes = [
         component: ProgrammingExerciseConfigureGradingComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
