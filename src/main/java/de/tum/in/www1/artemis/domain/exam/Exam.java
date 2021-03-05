@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -30,19 +31,19 @@ public class Exam extends DomainObject {
     /**
      * student can see the exam in the UI from this date onwards
      */
-    @Column(name = "visible_date")
+    @Column(name = "visible_date", nullable = false)
     private ZonedDateTime visibleDate;
 
     /**
      * student can start working on exam from this date onwards
      */
-    @Column(name = "start_date")
+    @Column(name = "start_date", nullable = false)
     private ZonedDateTime startDate;
 
     /**
      * student can work on exam until this date
      */
-    @Column(name = "end_date")
+    @Column(name = "end_date", nullable = false)
     private ZonedDateTime endDate;
 
     @Column(name = "publish_results_date")
@@ -133,6 +134,7 @@ public class Exam extends DomainObject {
         this.title = title;
     }
 
+    @NotNull
     public ZonedDateTime getVisibleDate() {
         return visibleDate;
     }
@@ -141,6 +143,7 @@ public class Exam extends DomainObject {
         this.visibleDate = visibleDate;
     }
 
+    @NotNull
     public ZonedDateTime getStartDate() {
         return startDate;
     }
@@ -149,6 +152,7 @@ public class Exam extends DomainObject {
         this.startDate = startDate;
     }
 
+    @NotNull
     public ZonedDateTime getEndDate() {
         return endDate;
     }

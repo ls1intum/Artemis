@@ -1571,7 +1571,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam1.setEndDate(now);
         exam1.setGracePeriod(180);
         final var exam = examRepository.save(exam1);
-        final var isOver = examDateService.isExamOver(exam.getId());
+        final var isOver = examDateService.isExamWithGracePeriodOver(exam.getId());
         assertThat(isOver).isFalse();
     }
 
