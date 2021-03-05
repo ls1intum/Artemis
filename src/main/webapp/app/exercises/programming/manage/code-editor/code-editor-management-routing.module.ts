@@ -25,7 +25,6 @@ const routes: Routes = [
         component: CodeEditorInstructorOrionContainerComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
@@ -39,7 +38,6 @@ const routes: Routes = [
         component: CodeEditorInstructorOrionContainerComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
@@ -53,7 +51,6 @@ const routes: Routes = [
         component: CodeEditorInstructorContainerComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},

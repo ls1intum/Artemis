@@ -33,14 +33,8 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
         return selectedOptions;
     }
 
-    public MultipleChoiceSubmittedAnswer addSelectedOptions(AnswerOption answerOption) {
+    public void addSelectedOptions(AnswerOption answerOption) {
         this.selectedOptions.add(answerOption);
-        return this;
-    }
-
-    public MultipleChoiceSubmittedAnswer removeSelectedOptions(AnswerOption answerOption) {
-        this.selectedOptions.remove(answerOption);
-        return this;
     }
 
     public void setSelectedOptions(Set<AnswerOption> answerOptions) {

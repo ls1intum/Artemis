@@ -25,12 +25,7 @@
             <button type="button" class="btn btn-secondary btn-sm" (click)="cancelFeedback()">
                 <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
-            <button
-                type="submit"
-                [disabled]="feedback.credits == null || (feedback.detailText ? feedback.detailText.trim().length === 0 : true)"
-                class="btn btn-primary btn-sm"
-                (click)="updateFeedback()"
-            >
+            <button type="submit" [disabled]="feedback.credits == null" class="btn btn-primary btn-sm" (click)="updateFeedback()">
                 <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
             </button>
         </div>

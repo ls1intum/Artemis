@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { Result } from 'app/entities/result.model';
-import { partition } from 'lodash';
 import { Feedback } from 'app/entities/feedback.model';
 
 @Component({
@@ -9,16 +8,13 @@ import { Feedback } from 'app/entities/feedback.model';
 })
 export class FileUploadResultComponent {
     public feedbacks: Feedback[];
-    public generalFeedback: Feedback | undefined;
 
     @Input()
     public set result(result: Result) {
-        if (!result) {
+        if (!result || !result.feedbacks) {
             return;
         }
-        const [feedbackWithCredits, feedbackWithoutCredits] = partition(result.feedbacks, (feedback) => feedback.credits !== 0);
-        this.feedbacks = feedbackWithCredits;
-        this.generalFeedback = feedbackWithoutCredits[0] || undefined;
+        this.feedbacks = result.feedbacks.filter((feedback) => feedback.credits != undefined);
     }
     constructor() {}
 }

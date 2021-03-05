@@ -106,6 +106,7 @@ public class StudentParticipation extends Participation {
      * Removes the student or team from the participation, can be invoked to make sure that sensitive information is not sent to the client.
      * E.g. tutors should not see information about the student.
      */
+    @Override
     public void filterSensitiveInformation() {
         setParticipant(null);
     }

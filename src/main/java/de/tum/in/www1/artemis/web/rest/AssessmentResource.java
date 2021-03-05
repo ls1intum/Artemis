@@ -116,12 +116,12 @@ public abstract class AssessmentResource {
         if (submit) {
             result = assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
+        var participation = result.getParticipation();
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
-            ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
+            participation.filterSensitiveInformation();
         }
-        if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
-                || (result.getParticipation()).getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
+        if (submit && (participation.getExercise().getAssessmentDueDate() == null || participation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
             messagingService.broadcastNewResult(result.getParticipation(), result);
         }
         return ResponseEntity.ok(result);

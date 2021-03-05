@@ -93,11 +93,6 @@
                             <span> {{ feedback.detailText }} </span>
                         </div>
                     </div>
-                    <div class="col-md-12 col-lg-10 col-xl-8 feedback-text mt-5 alert alert-info" *ngIf="generalFeedback">
-                        <b> <fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</span>:</b>
-                        <br />
-                        {{ generalFeedback.detailText }}
-                    </div>
                     <jhi-rating *ngIf="isOwnerOfParticipation" class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result"></jhi-rating>
                 </div>
             </ng-template>

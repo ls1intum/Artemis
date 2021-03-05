@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -508,7 +510,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void testQuizScoringTypes() throws Exception {
+    public void testQuizScoringTypes() {
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null);
         quizExercise.duration(60);
@@ -555,18 +557,16 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(ScoringType.class)
     @WithMockUser(value = "student1", roles = "USER")
-    public void testQuizScoringTypeWithoutPenalty() throws Exception {
+    public void testQuizScoringType(ScoringType scoringType) {
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null);
         quizExercise.duration(60);
         quizExercise.setIsPlannedToStart(true);
         quizExercise.setIsVisibleBeforeStart(true);
-        quizExercise.setQuizQuestions(quizExercise.getQuizQuestions().stream().map(quizQuestion -> {
-            quizQuestion.setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
-            return quizQuestion;
-        }).collect(Collectors.toList()));
+        quizExercise.setQuizQuestions(quizExercise.getQuizQuestions().stream().peek(quizQuestion -> quizQuestion.setScoringType(scoringType)).collect(Collectors.toList()));
         quizExercise = quizExerciseService.save(quizExercise);
 
         QuizSubmission quizSubmission = new QuizSubmission();
@@ -580,6 +580,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // End the quiz right now so that results can be processed
         quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        assert quizExercise != null;
         quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
         exerciseRepository.saveAndFlush(quizExercise);
 
@@ -591,7 +592,11 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(results.size()).isEqualTo(1);
         var result = results.get(0);
 
-        assertThat(result.getResultString()).isEqualTo("4 of 9 points");
+        var resultString = switch (scoringType) {
+            case ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY -> "0 of 9 points";
+            case PROPORTIONAL_WITHOUT_PENALTY -> "4 of 9 points";
+        };
+        assertThat(result.getResultString()).isEqualTo(resultString);
     }
 
     private void checkQuizNotStarted(String path) {

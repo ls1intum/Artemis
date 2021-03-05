@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -181,6 +182,24 @@ public class DatabaseUtilService {
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    AttachmentUnitRepository attachmentUnitRepository;
+
+    @Autowired
+    AttachmentRepository attachmentRepository;
+
+    @Autowired
+    ExerciseUnitRepository exerciseUnitRepository;
+
+    @Autowired
+    TextUnitRepository textUnitRepository;
+
+    @Autowired
+    VideoUnitRepository videoUnitRepository;
 
     @Autowired
     private DatabaseCleanupService databaseCleanupService;
@@ -343,6 +362,57 @@ public class DatabaseUtilService {
         course.addExam(exam);
         addExerciseGroupsAndExercisesToExam(exam, false);
         return courseRepo.save(course);
+    }
+
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticiptions) throws Exception {
+        List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticiptions);
+        Course course1 = this.courseRepo.findWithEagerExercisesAndLecturesById(courses.get(0).getId());
+        Lecture lecture1 = course1.getLectures().stream().findFirst().get();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
+        VideoUnit videoUnit = createVideoUnit();
+        TextUnit textUnit = createTextUnit();
+        AttachmentUnit attachmentUnit = createAttachmentUnit();
+        ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
+        addLectureUnitsToLecture(lecture1, Set.of(videoUnit, textUnit, attachmentUnit, exerciseUnit));
+        return courses;
+    }
+
+    public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
+        Lecture l = lectureRepo.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        for (LectureUnit lectureUnit : lectureUnits) {
+            l.addLectureUnit(lectureUnit);
+        }
+        return lectureRepo.save(l);
+    }
+
+    public ExerciseUnit createExerciseUnit(Exercise exercise) {
+        ExerciseUnit exerciseUnit = new ExerciseUnit();
+        exerciseUnit.setExercise(exercise);
+        return exerciseUnitRepository.save(exerciseUnit);
+    }
+
+    public AttachmentUnit createAttachmentUnit() {
+        Attachment attachmentOfAttachmentUnit = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
+        AttachmentUnit attachmentUnit = new AttachmentUnit();
+        attachmentUnit.setDescription("Lorem Ipsum");
+        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
+        attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
+        attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+        return attachmentUnitRepository.save(attachmentUnit);
+    }
+
+    public TextUnit createTextUnit() {
+        TextUnit textUnit = new TextUnit();
+        textUnit.setContent("Lorem Ipsum");
+        return textUnitRepository.save(textUnit);
+    }
+
+    public VideoUnit createVideoUnit() {
+        VideoUnit videoUnit = new VideoUnit();
+        videoUnit.setDescription("Lorem Ipsum");
+        videoUnit.setSource("Some URL");
+        return videoUnitRepository.save(videoUnit);
     }
 
     public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) throws Exception {
@@ -960,7 +1030,7 @@ public class DatabaseUtilService {
         return exam;
     }
 
-    public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise) {
+    public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise, boolean withQuizExercise) {
         ModelFactory.generateExerciseGroup(true, initialExam); // text
         ModelFactory.generateExerciseGroup(true, initialExam); // modeling
         initialExam.setNumberOfExercisesInExam(2);
@@ -992,6 +1062,17 @@ public class DatabaseUtilService {
             addTemplateParticipationForProgrammingExercise(programmingExercise1);
             addSolutionParticipationForProgrammingExercise(programmingExercise1);
             exerciseGroup2.setExercises(Set.of(programmingExercise1));
+        }
+
+        if (withQuizExercise) {
+            ModelFactory.generateExerciseGroup(true, exam); // modeling
+            exam.setNumberOfExercisesInExam(3 + (withProgrammingExercise ? 1 : 0));
+            exam = examRepository.save(exam);
+            var exerciseGroup3 = exam.getExerciseGroups().get(2 + (withProgrammingExercise ? 1 : 0));
+            // Programming exercises need a proper setup for 'prepare exam start' to work
+            QuizExercise quizExercise = createQuizForExam(exerciseGroup3);
+            exerciseRepo.save(quizExercise);
+            exerciseGroup3.setExercises(Set.of(quizExercise));
         }
         return exam;
     }
