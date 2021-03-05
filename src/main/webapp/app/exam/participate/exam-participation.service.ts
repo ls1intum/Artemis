@@ -43,7 +43,8 @@ export class ExamParticipationService {
     }
 
     /**
-     * Retrieves a {@link StudentExam} from server or localstorage. Will also mark the student exam as started
+     * Retrieves a {@link StudentExam} from the localstorage. Will also mark the student exam as started
+     *
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      */

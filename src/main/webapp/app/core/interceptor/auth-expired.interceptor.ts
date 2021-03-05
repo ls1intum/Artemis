@@ -33,7 +33,7 @@ export class AuthExpiredInterceptor implements HttpInterceptor {
                             // TODO: logging out the user automatically interferes with the canDeactivate functionality.
                             // In such a case the error message should be different or we should even send one additional message to the user
                             // store url so that the user could navigate directly to it after login
-                            // store the url in the session storage after the logout, because the logout will
+                            // store the url in the session storage after the logout, because the logout will redirect the user
                             this.stateStorageService.storeUrl(currentUrl);
                         }
                     }

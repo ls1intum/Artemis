@@ -173,8 +173,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                 .loadStudentExamWithExercisesForConductionFromLocalStorage(this.exam.course!.id!, this.exam.id!)
                                 .subscribe((localExam: StudentExam) => {
                                     this.studentExam = localExam;
-                                    this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, localExam);
-
                                     this.loadingExam = false;
                                     this.examStarted(this.studentExam);
                                 });
@@ -643,7 +641,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Therefore don't show errors because we are redirected to the login page
             this.loggedOut = true;
         } else {
-            // show an only one error for 5s - see constructor
+            // show only one error for 5s - see constructor
             this.synchronizationAlert$.next();
         }
     }
