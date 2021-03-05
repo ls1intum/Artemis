@@ -466,7 +466,7 @@ public class UserService {
         }
         // e.g. Gitlab
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(), Set.of(group), false));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUserAndGroups(user.getLogin(), user, Set.of(group), Set.of()));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.addUserToGroups(user.getLogin(), Set.of(group)));
     }
 
     /**
@@ -495,7 +495,10 @@ public class UserService {
         artemisAuthenticationProvider.removeUserFromGroup(user, group); // e.g. JIRA
         // e.g. Gitlab
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(group), Set.of(), false));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUserAndGroups(user.getLogin(), user, user.getGroups(), Set.of(group)));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> {
+            ciUserManagementService.removeUserFromGroups(user.getLogin(), Set.of(group));
+            ciUserManagementService.addUserToGroups(user.getLogin(), user.getGroups());
+        });
     }
 
     /**

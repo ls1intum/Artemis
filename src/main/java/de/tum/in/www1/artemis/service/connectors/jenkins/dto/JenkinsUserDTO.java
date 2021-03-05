@@ -24,6 +24,10 @@ public class JenkinsUserDTO {
         this.absoluteUrl = absoluteUrl;
     }
 
+    public List<Property> getProperty() {
+        return property;
+    }
+
     public Object getDescription() {
         return description;
     }

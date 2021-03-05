@@ -2,15 +2,10 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.parser.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -25,9 +20,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
@@ -35,7 +27,6 @@ import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.JenkinsUpdateUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.JenkinsUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermission;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
@@ -153,15 +144,10 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         var jenkinsUser = getUser(user.getLogin());
         if (jenkinsUser == null) {
             createUser(user);
-            return;
         }
-
-        try {
-            var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", user.getLogin(), "configSubmit").build().toUri();
-            restTemplate.exchange(uri, HttpMethod.POST, getUpdateUserFormHttpEntity(user), String.class);
-        }
-        catch (RestClientException | JsonProcessingException e) {
-            throw new JenkinsException("Cannot update user: " + user.getLogin(), e);
+        else {
+            deleteUser(user);
+            createUser(user);
         }
     }
 
@@ -343,85 +329,6 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     }
 
     /**
-     * Creates an HttpEntity containing the form data required by the POST request for updating an
-     * existing Jenkins user.
-     * <p>
-     * Note: This will overwrite various fields like "description, primary view, ..."
-     * <p>
-     * TODO: https://stackoverflow.com/questions/17716242/creating-user-in-jenkins-via-api this might help to update users correctly.
-     *
-     * @param user The user to update
-     * @return http entity with the user encoded as the form data
-     * @throws JsonProcessingException if the user can't be parsed into json.
-     */
-    private HttpEntity<MultiValueMap<String, String>> getUpdateUserFormHttpEntity(User user) throws JsonProcessingException {
-        var formData = new LinkedMultiValueMap<String, String>();
-        formData.add("user.password", passwordService.decryptPassword(user));
-        formData.add("user.password2", passwordService.decryptPassword(user));
-        formData.add("_.fullName", user.getName());
-        formData.add("email.address", user.getEmail());
-        formData.add("_.description", "");
-        formData.add("_.primaryViewName", "");
-        formData.add("providerId", "default");
-        formData.add("_.authorizedKeys", "");
-        formData.add("insensitiveSearch", "on");
-        formData.add("_.timeZoneName", "");
-        formData.add("core:apply", "true");
-        formData.add("json", getUpdateUserJson(user));
-
-        var headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        return new HttpEntity<>(formData, headers);
-    }
-
-    /**
-     * Returns json containing information about the user to update in Jenkins.
-     * This is required in addition to the form data.
-     *
-     * @param user The user to update
-     * @return Json for Jenkins
-     * @throws JsonProcessingException when something goes wrong writing the json content.
-     */
-    private String getUpdateUserJson(User user) throws JsonProcessingException {
-        var updateUserDto = new JenkinsUpdateUserDTO();
-        updateUserDto.setFullName(user.getName());
-        updateUserDto.setDescription("");
-        updateUserDto.setAddress(user.getEmail());
-        updateUserDto.setPrimaryViewName("");
-        updateUserDto.setProviderId("default");
-        updateUserDto.setPassword(user.getPassword());
-        updateUserDto.setAuthorizedKeys("");
-        updateUserDto.setInsensitiveSearch(true);
-        updateUserDto.setTimeZoneName("");
-        var jsonString = new ObjectMapper().writeValueAsString(updateUserDto);
-
-        var userXml = getUserAsXml(user.getLogin());
-        if (userXml == null) {
-            return jsonString;
-        }
-
-        // Set the correct user property number
-        var properties = userXml.children().stream().filter(element -> element.tagName().equals("property")).collect(Collectors.toList());
-        return jsonString.replace("userProperty2", getUserProperty(properties, "hudson.tasks.Mailer$UserProperty"))
-                .replace("userProperty5", getUserProperty(properties, "hudson.model.MyViewsProperty"))
-                .replace("userProperty6", getUserProperty(properties, "org.jenkinsci.plugins.displayurlapi.user.PreferredProviderUserProperty"))
-                .replace("userProperty8", getUserProperty(properties, "hudson.security.HudsonPrivateSecurityRealm$Details"))
-                .replace("userProperty9", getUserProperty(properties, "org.jenkinsci.main.modules.cli.auth.ssh.UserPropertyImpl"))
-                .replace("userProperty11", getUserProperty(properties, "hudson.search.UserSearchProperty"))
-                .replace("userProperty12", getUserProperty(properties, "hudson.model.TimeZoneProperty"));
-    }
-
-    private String getUserProperty(List<Element> properties, String propertyClass) {
-        for (int i = 0; i < properties.size(); i++) {
-            var property = properties.get(i);
-            if (property.className().equals(propertyClass)) {
-                return "userProperty" + i;
-            }
-        }
-        return "";
-    }
-
-    /**
      * Gets a Jenkins user if it exists. Otherwise returns
      * null.
      *
@@ -433,30 +340,6 @@ public class JenkinsUserManagementService implements CIUserManagementService {
             var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", userLogin, "api", "json").build().toUri();
             return restTemplate.exchange(uri, HttpMethod.GET, null, JenkinsUserDTO.class).getBody();
 
-        }
-        catch (HttpClientErrorException e) {
-            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-                return null;
-            }
-
-            var errorMessage = "Could not get user " + userLogin;
-            log.error(errorMessage + ": " + e);
-            throw new JenkinsException(errorMessage, e);
-        }
-    }
-
-    /**
-     * Gets a Jenkins user as an xml Document if it exists or null
-     * if it doesn' exist
-     * @param userLogin the login of the user look up
-     * @return the Jenkins user or null if the user doesn't exist
-     * @throws ContinuousIntegrationException in cause of http error
-     */
-    private Document getUserAsXml(String userLogin) throws ContinuousIntegrationException {
-        try {
-            var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", userLogin, "api", "xml").build().toUri();
-            var response = restTemplate.exchange(uri, HttpMethod.GET, null, String.class).getBody();
-            return Jsoup.parse(response, "", Parser.xmlParser());
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
