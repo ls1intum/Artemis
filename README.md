@@ -152,4 +152,3 @@ The following universities are activly using Artemis or are currently evaluating
 ##### Karlsruhe Institute of Technology
 
 * Evaluating Artemis
-
