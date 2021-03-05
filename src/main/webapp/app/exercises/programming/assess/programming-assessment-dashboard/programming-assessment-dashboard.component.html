@@ -30,7 +30,8 @@
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th *ngIf="newManualResultAllowed" jhiSortBy="latestResult.assessor.name">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
+                        <a *ngIf="numberOfCorrectionrounds == 1" class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
+                        <a *ngIf="numberOfCorrectionrounds == 2" class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessors">Reviewers</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <ng-container *ngIf="newManualResultAllowed">
