@@ -8,14 +8,14 @@
     <br />
     <div
         class="alert"
-        *ngFor="let feedback of additionalFeedback"
-        [class.positive-feedback]="feedback?.credits > 0"
-        [class.negative-feedback]="feedback?.credits < 0"
-        [class.neutral-feedback]="feedback?.credits === 0"
+        *ngFor="let singleFeedback of feedback"
+        [class.positive-feedback]="singleFeedback?.credits > 0"
+        [class.negative-feedback]="singleFeedback?.credits < 0"
+        [class.neutral-feedback]="singleFeedback?.credits === 0"
     >
         <strong>
-            <span> {{ feedback.credits + ' Points: ' }} </span>
+            <span> {{ singleFeedback.credits + ' Points: ' }} </span>
         </strong>
-        <span> {{ feedback.detailText }} </span>
+        <span> {{ singleFeedback.detailText }} </span>
     </div>
 </div>
