@@ -53,7 +53,7 @@
             <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission">Your Assessment</span>:</h5>
             <div class="row">
                 <jhi-additional-feedback
-                    *ngIf="unreferencedFeedback && unreferencedFeedback.length != 0"
+                    *ngIf="unreferencedFeedback?.length > 0"
                     class="col-xl-8 alert unreferencedFeedback"
                     [additionalFeedback]="unreferencedFeedback"
                     [additional]="false"

@@ -404,7 +404,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Find "Unreferenced Feedback" item for Result, if it exists.
      */
     get unreferencedFeedback(): Feedback[] | undefined {
-        if (this.assessmentResult && this.assessmentResult.feedbacks && Array.isArray(this.assessmentResult.feedbacks)) {
+        if (this.assessmentResult && this.assessmentResult.feedbacks) {
             return this.assessmentResult.feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
         }
     }
@@ -413,7 +413,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Find "Referenced Feedback" item for Result, if it exists.
      */
     get referencedFeedback(): Feedback[] | undefined {
-        if (this.assessmentResult && this.assessmentResult.feedbacks && Array.isArray(this.assessmentResult.feedbacks)) {
+        if (this.assessmentResult && this.assessmentResult.feedbacks) {
             return this.assessmentResult.feedbacks.filter((feedbackElement) => feedbackElement.reference !== undefined);
         }
     }

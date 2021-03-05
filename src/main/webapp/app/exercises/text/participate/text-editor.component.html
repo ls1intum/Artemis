@@ -72,9 +72,8 @@
                         <jhi-text-result [result]="result"></jhi-text-result>
                         <hr />
                     </div>
-                    <!-- TODO use following component also for modeling, text, file-upload and programming -->
                     <jhi-additional-feedback
-                        *ngIf="unreferencedFeedback && unreferencedFeedback.length != 0"
+                        *ngIf="unreferencedFeedback?.length > 0"
                         class="col-xl-8 alert unreferencedFeedback"
                         [additionalFeedback]="unreferencedFeedback"
                         [additional]="true"
