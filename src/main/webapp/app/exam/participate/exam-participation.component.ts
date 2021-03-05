@@ -163,14 +163,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // only show the summary if the student was able to submit on time.
                         if (this.isOver() && this.studentExam.submitted) {
                             this.examParticipationService
-                                .loadStudentExamWithExercisesForSummary(this.exam.course!.id!, this.exam.id!)
+                                .loadStudentExamWithExercisesForSummary(this.courseId, this.examId)
                                 .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
                         }
 
                         // Directly start the exam when we continue from a failed save
                         if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
                             this.examParticipationService
-                                .loadStudentExamWithExercisesForConductionFromLocalStorage(this.exam.course!.id!, this.exam.id!)
+                                .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId)
                                 .subscribe((localExam: StudentExam) => {
                                     this.studentExam = localExam;
                                     this.loadingExam = false;
