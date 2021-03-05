@@ -44,12 +44,14 @@
                 </div>
             </div>
         </div>
+        <!-- Always show failed build logs -->
+        <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : undefined"></ng-container>
     </ng-template>
     <!--
     Build logs container
 -->
     <ng-template #buildLogsContainer>
-        <ng-container *ngIf="buildLogs && buildLogs.length; else noFeedbacksContainer">
+        <ng-container *ngIf="buildLogs?.length; else noFeedbacksContainer">
             <dl class="buildoutput dl-horizontal">
                 <ng-container *ngFor="let logEntry of buildLogs; let i = index">
                     <!--Don't show the timestamp again if it is the same as the last entry's.-->
