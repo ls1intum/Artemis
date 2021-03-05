@@ -358,6 +358,42 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
+    public void mockCreateGroupInUserManagement(String groupName) throws Exception {
+        jiraRequestMockProvider.mockCreateGroup(groupName);
+    }
+
+    @Override
+    public void mockDeleteGroupInUserManagement(String groupName) throws Exception {
+        jiraRequestMockProvider.mockDeleteGroup(groupName);
+    }
+
+    @Override
+    public void mockDeleteRepository(String projectKey, String repostoryName) throws Exception {
+        bitbucketRequestMockProvider.mockDeleteRepository(projectKey, repostoryName);
+    }
+
+    @Override
+    public void mockDeleteProjectInVcs(String projectKey) throws Exception {
+        bitbucketRequestMockProvider.mockDeleteProject(projectKey);
+    }
+
+    @Override
+    public void mockDeleteBuildPlan(String projectKey, String planName) throws Exception {
+        var planKey = (projectKey + "-" + planName).toUpperCase();
+        bambooRequestMockProvider.mockDeleteBambooBuildPlan(planKey);
+    }
+
+    @Override
+    public void mockDeleteBuildPlanProject(String projectKey) throws Exception {
+        bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
+    }
+
+    @Override
+    public void mockAddUserToGroupInUserManagement(User user, String group) throws Exception {
+        jiraRequestMockProvider.mockAddUserToGroup(group);
+    }
+
+    @Override
     public void resetMockProvider() {
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();

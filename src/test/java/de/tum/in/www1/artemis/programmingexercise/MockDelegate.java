@@ -75,4 +75,19 @@ public interface MockDelegate {
     void mockCreateUserInUserManagement(User user) throws Exception;
 
     void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement) throws Exception;
+
+    void mockCreateGroupInUserManagement(String groupName) throws Exception;
+
+    void mockDeleteGroupInUserManagement(String groupName) throws Exception;
+
+    void mockAddUserToGroupInUserManagement(User user, String group) throws Exception;
+
+    void mockDeleteRepository(String projectKey, String repostoryName) throws Exception;
+
+    void mockDeleteProjectInVcs(String projectKey) throws Exception;
+
+    void mockDeleteBuildPlan(String projectKey, String planName) throws Exception;
+
+    void mockDeleteBuildPlanProject(String projectKey) throws Exception;
+
 }

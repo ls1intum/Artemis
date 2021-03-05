@@ -288,6 +288,41 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
+    public void mockCreateGroupInUserManagement(String groupName) throws Exception {
+
+    }
+
+    @Override
+    public void mockDeleteGroupInUserManagement(String groupName) throws Exception {
+
+    }
+
+    @Override
+    public void mockDeleteRepository(String projectKey, String repostoryName) throws Exception {
+
+    }
+
+    @Override
+    public void mockDeleteProjectInVcs(String projectKey) throws Exception {
+
+    }
+
+    @Override
+    public void mockDeleteBuildPlan(String projectKey, String planName) throws Exception {
+
+    }
+
+    @Override
+    public void mockDeleteBuildPlanProject(String projectKey) throws Exception {
+
+    }
+
+    @Override
+    public void mockAddUserToGroupInUserManagement(User user, String group) throws Exception {
+
+    }
+
+    @Override
     public void resetMockProvider() {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
