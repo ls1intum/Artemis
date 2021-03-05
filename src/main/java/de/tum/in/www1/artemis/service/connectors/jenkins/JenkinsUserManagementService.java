@@ -2,10 +2,15 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -388,7 +393,32 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         updateUserDto.setAuthorizedKeys("");
         updateUserDto.setInsensitiveSearch(true);
         updateUserDto.setTimeZoneName("");
-        return new ObjectMapper().writeValueAsString(updateUserDto);
+        var jsonString = new ObjectMapper().writeValueAsString(updateUserDto);
+
+        var userXml = getUserAsXml(user.getLogin());
+        if (userXml == null) {
+            return jsonString;
+        }
+
+        // Set the correct user property number
+        var properties = userXml.children().stream().filter(element -> element.tagName().equals("property")).collect(Collectors.toList());
+        return jsonString.replace("userProperty2", getUserProperty(properties, "hudson.tasks.Mailer$UserProperty"))
+                .replace("userProperty5", getUserProperty(properties, "hudson.model.MyViewsProperty"))
+                .replace("userProperty6", getUserProperty(properties, "org.jenkinsci.plugins.displayurlapi.user.PreferredProviderUserProperty"))
+                .replace("userProperty8", getUserProperty(properties, "hudson.security.HudsonPrivateSecurityRealm$Details"))
+                .replace("userProperty9", getUserProperty(properties, "org.jenkinsci.main.modules.cli.auth.ssh.UserPropertyImpl"))
+                .replace("userProperty11", getUserProperty(properties, "hudson.search.UserSearchProperty"))
+                .replace("userProperty12", getUserProperty(properties, "hudson.model.TimeZoneProperty"));
+    }
+
+    private String getUserProperty(List<Element> properties, String propertyClass) {
+        for (int i = 0; i < properties.size(); i++) {
+            var property = properties.get(i);
+            if (property.className().equals(propertyClass)) {
+                return "userProperty" + i;
+            }
+        }
+        return "";
     }
 
     /**
@@ -403,6 +433,30 @@ public class JenkinsUserManagementService implements CIUserManagementService {
             var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", userLogin, "api", "json").build().toUri();
             return restTemplate.exchange(uri, HttpMethod.GET, null, JenkinsUserDTO.class).getBody();
 
+        }
+        catch (HttpClientErrorException e) {
+            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                return null;
+            }
+
+            var errorMessage = "Could not get user " + userLogin;
+            log.error(errorMessage + ": " + e);
+            throw new JenkinsException(errorMessage, e);
+        }
+    }
+
+    /**
+     * Gets a Jenkins user as an xml Document if it exists or null
+     * if it doesn' exist
+     * @param userLogin the login of the user look up
+     * @return the Jenkins user or null if the user doesn't exist
+     * @throws ContinuousIntegrationException in cause of http error
+     */
+    private Document getUserAsXml(String userLogin) throws ContinuousIntegrationException {
+        try {
+            var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", userLogin, "api", "xml").build().toUri();
+            var response = restTemplate.exchange(uri, HttpMethod.GET, null, String.class).getBody();
+            return Jsoup.parse(response, "", Parser.xmlParser());
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
