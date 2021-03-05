@@ -6,7 +6,7 @@ import { CourseResolve } from 'app/course/manage/course-management.route';
 
 export const assessmentDashboardRoute: Routes = [
     {
-        path: ':courseId/tutor-dashboard',
+        path: ':courseId/assessment-dashboard',
         component: AssessmentDashboardComponent,
         resolve: {
             course: CourseResolve,
@@ -16,7 +16,7 @@ export const assessmentDashboardRoute: Routes = [
             // HACK: The path is a composite, so we need to define both parts
             breadcrumbs: [
                 { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.assessmentDashboard.home.title', path: 'tutor-dashboard' },
+                { label: 'artemisApp.assessmentDashboard.home.title', path: 'assessment-dashboard' },
             ],
             pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
