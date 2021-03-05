@@ -161,16 +161,14 @@ describe('Exam Participation Service', () => {
         });
     });
     it('should load StudentExam from localStorage', async () => {
-        const studentExam = new StudentExam();
         studentExam.exercises = [];
-
         service.saveStudentExamToLocalStorage(1, 1, studentExam);
 
         const stored = Object.assign({}, studentExam);
         spyOn(localStorage, 'retrieve').and.returnValues(JSON.stringify(stored));
 
-        const exam = service.loadStudentExamWithExercisesForConductionFromLocalStorage(1, 1).subscribe((exam) => {
-            expect(exam).toEqual(studentExam);
+        service.loadStudentExamWithExercisesForConductionFromLocalStorage(1, 1).subscribe((localExam: StudentExam) => {
+            expect(localExam).toEqual(studentExam);
         });
     });
 });
