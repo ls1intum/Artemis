@@ -82,6 +82,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
                         label += ': ';
                     }
                     label += Math.round((tooltipItem.yLabel as number) * 100) / 100;
+                    label += ' %';
                     return label;
                 },
                 footer(tooltipItem, data) {
