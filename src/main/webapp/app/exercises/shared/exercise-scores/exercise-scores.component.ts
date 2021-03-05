@@ -28,6 +28,7 @@ import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
+import { createAdjustedRepositoryUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 
 /**
  * Filter properties for a result
@@ -214,7 +215,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param result Result for which to get the link for
      */
     getRepositoryLink(result: Result) {
-        return (result.participation! as ProgrammingExerciseStudentParticipation).repositoryUrl;
+        return createAdjustedRepositoryUrl(result.participation! as ProgrammingExerciseStudentParticipation);
     }
 
     /**

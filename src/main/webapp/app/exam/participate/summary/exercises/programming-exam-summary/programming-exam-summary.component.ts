@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { createAdjustedRepositoryUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 
 @Component({
     selector: 'jhi-programming-exam-summary',
@@ -18,4 +19,8 @@ export class ProgrammingExamSummaryComponent {
     submission: ProgrammingSubmission;
 
     constructor() {}
+
+    adjustRepositoryUrl() {
+        return this.participation ? createAdjustedRepositoryUrl(this.participation) : '';
+    }
 }

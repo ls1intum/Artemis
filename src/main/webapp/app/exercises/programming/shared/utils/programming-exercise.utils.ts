@@ -8,6 +8,7 @@ import { isMoment } from 'moment';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
 
@@ -89,4 +90,18 @@ export const hasDeadlinePassed = (exercise: ProgrammingExercise) => {
         referenceDate = moment(referenceDate);
     }
     return referenceDate.isBefore(moment());
+};
+
+/**
+ * Removes the login from the repositoryURL
+ */
+export const createAdjustedRepositoryUrl = (participation: ProgrammingExerciseStudentParticipation) => {
+    let adjustedRepositoryURL = participation.repositoryUrl || '';
+    if (participation.student && participation.repositoryUrl) {
+        const userName = participation.student.login + '@';
+        if (participation.repositoryUrl.includes(userName)) {
+            adjustedRepositoryURL = participation.repositoryUrl.replace(userName, '');
+        }
+    }
+    return adjustedRepositoryURL;
 };

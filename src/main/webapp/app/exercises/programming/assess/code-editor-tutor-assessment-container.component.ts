@@ -35,6 +35,7 @@ import { diff_match_patch } from 'diff-match-patch';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
+import { createAdjustedRepositoryUrl } from '../shared/utils/programming-exercise.utils';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -170,7 +171,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                             if (this.manualResult && this.manualResult.hasComplaint) {
                                 this.getComplaint();
                             }
-                            this.createAdjustedRepositoryUrl();
+                            this.adjustedRepositoryURL = createAdjustedRepositoryUrl(this.participation);
                         },
                         (error: HttpErrorResponse) => {
                             this.participationCouldNotBeFetched = true;
@@ -419,19 +420,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     readOnly() {
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
-    }
-
-    /**
-     * Removes the login from the repositoryURL
-     */
-    private createAdjustedRepositoryUrl() {
-        this.adjustedRepositoryURL = this.participation.repositoryUrl || '';
-        if (this.participation.student && this.participation.repositoryUrl) {
-            const userName = this.participation.student.login + '@';
-            if (this.participation.repositoryUrl.includes(userName)) {
-                this.adjustedRepositoryURL = this.participation.repositoryUrl.replace(userName, '');
-            }
-        }
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
