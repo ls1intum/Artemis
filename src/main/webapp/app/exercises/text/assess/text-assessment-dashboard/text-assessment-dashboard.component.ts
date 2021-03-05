@@ -25,6 +25,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
     predicate = 'id';
     reverse = false;
     numberOfCorrectionrounds = 1;
+    courseId: number;
 
     private cancelConfirmationText: string;
 
@@ -57,6 +58,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
             })
             .subscribe((exercise) => {
                 this.exercise = exercise;
+                this.courseId = exercise.course ? exercise.course.id! : exercise.exerciseGroup!.exam!.course!.id!;
                 this.getSubmissions();
                 this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
                 this.setPermissions();
