@@ -62,7 +62,7 @@
 <ng-template #noSubmission>
     <div *ngIf="noNewSubmissions" class="alert alert-warning text-center mt-4" role="alert">
         <p jhiTranslate="artemisApp.textAssessment.notFound">We haven't found any new text submission without an assessment, please go back.</p>
-        <a [routerLink]="['../../../../../exercises', exerciseId, 'tutor-dashboard']" class="btn btn-info btn-sm mr-1 mb-1 tutor-dashboard">
+        <a [routerLink]="['../../../../../exercises', exerciseId, 'assessment-dashboard']" class="btn btn-info btn-sm mr-1 mb-1 assessment-dashboard">
             <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
         </a>
     </div>

@@ -481,7 +481,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/tutor-exam-dashboard',
+        path: ':examId/assessment-dashboard',
         component: AssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
@@ -491,7 +491,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exercise-groups/:groupId/exercises/:exerciseId/tutor-dashboard',
+        path: ':examId/exercise-groups/:groupId/assessment-dashboard/:exerciseId',
         component: ExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
@@ -501,7 +501,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exercise-groups/:groupId/exercises/:exerciseId/test-run-exercise-assessment-dashboard',
+        path: ':examId/exercise-groups/:groupId/test-assessment-dashboard/:exerciseId',
         component: ExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],

@@ -5,7 +5,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 
 export const exerciseAssessmentDashboardRoute: Routes = [
     {
-        path: ':courseId/exercises/:exerciseId/tutor-dashboard',
+        path: ':courseId/assessment-dashboard/:exerciseId',
         component: ExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],

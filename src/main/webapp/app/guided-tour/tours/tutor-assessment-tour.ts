@@ -9,7 +9,7 @@ export const tutorAssessmentTour: GuidedTour = {
     resetParticipation: ResetParticipation.TUTOR_ASSESSMENT,
     steps: [
         new UserInterActionTourStep({
-            highlightSelector: '.tutor-dashboard.guided-tour',
+            highlightSelector: '.assessment-dashboard.guided-tour',
             headlineTranslateKey: 'tour.courseAdministration.assessmentDashboardButton.headline',
             contentTranslateKey: 'tour.courseAdministration.assessmentDashboardButton.content',
             highlightPadding: 10,

@@ -310,9 +310,8 @@
                 <td class="d-none d-md-table-cell">
                     <a
                         *ngIf="isAtLeastInstructor"
-                        [routerLink]="getExamRoutesByIdentifier('tutor-exam-dashboard')"
+                        [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')"
                         class="btn btn-primary"
-                        id="tutor-dashboard-button-table-submission"
                     >
                         <fa-icon [icon]="'th-list'"></fa-icon>
                         <span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
@@ -397,9 +396,8 @@
                 <td class="d-none d-md-table-cell">
                     <a
                         *ngIf="isAtLeastInstructor"
-                        [routerLink]="getExamRoutesByIdentifier('tutor-exam-dashboard')"
+                        [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')"
                         class="btn btn-primary"
-                        id="tutor-exam-dashboard-button_table_complaints"
                     >
                         <fa-icon [icon]="'th-list'"></fa-icon>
                         <span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>

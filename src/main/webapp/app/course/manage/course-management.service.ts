@@ -156,7 +156,7 @@ export class CourseManagementService {
      * @param courseId - the id of the course
      */
     getCourseWithInterestingExercisesForTutors(courseId: number): Observable<EntityResponseType> {
-        const url = `${this.resourceUrl}/${courseId}/for-tutor-dashboard`;
+        const url = `${this.resourceUrl}/${courseId}/for-assessment-dashboard`;
         return this.http
             .get<Course>(url, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
@@ -167,7 +167,7 @@ export class CourseManagementService {
      * @param courseId - the id of the course
      */
     getStatsForTutors(courseId: number): Observable<HttpResponse<StatsForDashboard>> {
-        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/stats-for-tutor-dashboard`, { observe: 'response' });
+        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/stats-for-assessment-dashboard`, { observe: 'response' });
     }
 
     /**
