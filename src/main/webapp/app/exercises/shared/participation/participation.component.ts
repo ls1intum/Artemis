@@ -19,6 +19,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
+import { createAdjustedRepositoryUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 enum FilterProp {
     ALL = 'all',
@@ -266,5 +268,18 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      */
     searchTextFromParticipation = (participation: StudentParticipation): string => {
         return participation.student?.login || participation.team?.shortName || '';
+    };
+
+    /**
+     * Removes the login from the repositoryURL
+     *
+     * @param participation Student participation
+     * @param repoUrl original repository url
+     */
+    adjustRepositoryUrl = (participation: StudentParticipation, repoUrl: String) => {
+        if ((participation as ProgrammingExerciseStudentParticipation).repositoryUrl === repoUrl) {
+            return createAdjustedRepositoryUrl(participation);
+        }
+        return repoUrl;
     };
 }
