@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
@@ -41,9 +40,6 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
-
-    @Autowired
-    private UserService userService;
 
     @Autowired
     private PasswordService passwordService;
@@ -166,8 +162,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         course1.setRegistrationEnabled(true);
         course1 = courseRepository.save(course1);
 
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(student.getGroups());
-        jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, student.getGroups(), Set.of(), exercises);
+        jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, student.getGroups(), Set.of(), false);
         final var updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/register", null, User.class, HttpStatus.OK);
         assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
     }
@@ -189,7 +184,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         student.setAuthorities(authorities);
 
         var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(student.getGroups());
-        jenkinsRequestMockProvider.mockCreateUser(student, exercises);
+        jenkinsRequestMockProvider.mockCreateUser(student);
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
@@ -218,7 +213,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         student.setAuthorities(authorities);
 
         var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(student.getGroups());
-        jenkinsRequestMockProvider.mockCreateUser(student, exercises);
+        jenkinsRequestMockProvider.mockCreateUser(student);
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
@@ -247,7 +242,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         student.setAuthorities(authorities);
 
         var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(student.getGroups());
-        jenkinsRequestMockProvider.mockCreateUser(student, exercises);
+        jenkinsRequestMockProvider.mockCreateUser(student);
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
@@ -285,8 +280,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         student.setGroups(newGroups);
         final var managedUserVM = new ManagedUserVM(student);
 
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(student.getGroups());
-        jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, newGroups, oldGroups, exercises);
+        jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, newGroups, oldGroups, false);
 
         final var response = request.putWithResponseBody("/api/users", managedUserVM, User.class, HttpStatus.OK);
         final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();

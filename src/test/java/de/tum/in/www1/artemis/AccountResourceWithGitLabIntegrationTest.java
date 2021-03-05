@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -14,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import de.tum.in.www1.artemis.connector.gitlab.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -74,8 +74,9 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
         // Simulate creation of GitLab user
         gitlabRequestMockProvider.mockCreationOfUser(user.getLogin());
 
-        jenkinsRequestMockProvider.mockDeleteUser(user, List.of());
-        jenkinsRequestMockProvider.mockCreateUser(user, List.of());
+        SecurityUtils.setAuthorizationObject();
+        jenkinsRequestMockProvider.mockDeleteUser(user, true);
+        jenkinsRequestMockProvider.mockCreateUser(user);
 
         // make request and assert Status Created
         request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);

@@ -40,6 +40,7 @@ import com.offbytwo.jenkins.model.*;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.JenkinsUserDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
@@ -70,6 +71,9 @@ public class JenkinsRequestMockProvider {
 
     @Autowired
     private ObjectMapper mapper;
+
+    @Autowired
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     public JenkinsRequestMockProvider(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -255,29 +259,29 @@ public class JenkinsRequestMockProvider {
 
     }
 
-    public void mockUpdateUserAndGroups(String oldLogin, User user, Set<String> groupsToAdd, Set<String> groupsToRemove, List<ProgrammingExercise> exercises)
+    public void mockUpdateUserAndGroups(String oldLogin, User user, Set<String> groupsToAdd, Set<String> groupsToRemove, boolean userExistsInJenkins)
             throws IOException, URISyntaxException {
         if (!oldLogin.equals(user.getLogin())) {
-            mockUpdateUserLogin(oldLogin, user, exercises);
+            mockUpdateUserLogin(oldLogin, user);
         }
         else {
-            mockUpdateUser(user, exercises);
+            mockUpdateUser(user, userExistsInJenkins);
         }
-        mockRemoveUserFromGroups(groupsToRemove, exercises);
-        mockAddUsersToGroups(groupsToAdd, exercises);
+        mockRemoveUserFromGroups(groupsToRemove);
+        mockAddUsersToGroups(user.getLogin(), groupsToAdd);
     }
 
-    private void mockUpdateUser(User user, List<ProgrammingExercise> exercises) throws URISyntaxException, IOException {
-        mockGetUser(user.getLogin(), true);
+    private void mockUpdateUser(User user, boolean userExists) throws URISyntaxException, IOException {
+        mockGetUser(user.getLogin(), userExists);
 
         doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
         doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
 
-        mockDeleteUser(user, exercises);
-        mockCreateUser(user, exercises);
+        mockDeleteUser(user, userExists);
+        mockCreateUser(user);
     }
 
-    private void mockUpdateUserLogin(String oldLogin, User user, List<ProgrammingExercise> exercises) throws IOException, URISyntaxException {
+    private void mockUpdateUserLogin(String oldLogin, User user) throws IOException, URISyntaxException {
         if (oldLogin.equals(user.getLogin())) {
             return;
         }
@@ -285,17 +289,17 @@ public class JenkinsRequestMockProvider {
         var oldUser = new User();
         oldUser.setLogin(oldLogin);
         oldUser.setGroups(user.getGroups());
-        mockDeleteUser(oldUser, exercises);
-        mockCreateUser(user, exercises);
+        mockDeleteUser(oldUser, true);
+        mockCreateUser(user);
     }
 
-    public void mockDeleteUser(User user, List<ProgrammingExercise> exercises) throws IOException, URISyntaxException {
-        mockGetUser(user.getLogin(), true);
+    public void mockDeleteUser(User user, boolean userExistsInUserManagement) throws IOException, URISyntaxException {
+        mockGetUser(user.getLogin(), userExistsInUserManagement);
 
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("user", user.getLogin(), "doDelete").build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.FOUND));
 
-        mockRemoveUserFromGroups(user.getGroups(), exercises);
+        mockRemoveUserFromGroups(user.getGroups());
     }
 
     private void mockGetUser(String userLogin, boolean userExists) throws URISyntaxException, JsonProcessingException {
@@ -312,11 +316,12 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    private void mockRemoveUserFromGroups(Set<String> groupsToRemove, List<ProgrammingExercise> exercises) throws IOException {
+    private void mockRemoveUserFromGroups(Set<String> groupsToRemove) throws IOException {
         if (groupsToRemove.isEmpty()) {
             return;
         }
 
+        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groupsToRemove);
         for (ProgrammingExercise exercise : exercises) {
             var folderName = exercise.getProjectKey();
             mockRemovePermissionsFromUserOfFolder(folderName);
@@ -328,7 +333,7 @@ public class JenkinsRequestMockProvider {
         doNothing().when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
     }
 
-    public void mockCreateUser(User user, List<ProgrammingExercise> exercises) throws URISyntaxException, IOException {
+    public void mockCreateUser(User user) throws URISyntaxException, IOException {
         mockGetUser(user.getLogin(), false);
 
         doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
@@ -337,10 +342,11 @@ public class JenkinsRequestMockProvider {
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("securityRealm", "createAccountByAdmin").build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.FOUND));
 
-        mockAddUsersToGroups(user.getGroups(), exercises);
+        mockAddUsersToGroups(user.getLogin(), user.getGroups());
     }
 
-    private void mockAddUsersToGroups(Set<String> groups, List<ProgrammingExercise> exercises) throws IOException {
+    private void mockAddUsersToGroups(String login, Set<String> groups) throws IOException {
+        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
         for (ProgrammingExercise exercise : exercises) {
             var jobName = exercise.getProjectKey();
             var course = exercise.getCourseViaExerciseGroupOrCourseMember();

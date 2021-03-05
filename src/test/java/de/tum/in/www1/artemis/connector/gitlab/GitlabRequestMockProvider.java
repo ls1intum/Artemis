@@ -8,12 +8,14 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.gitlab4j.api.*;
 import org.gitlab4j.api.models.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -31,6 +33,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserDoesNotExistException;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Component
 @Profile("gitlab")
@@ -71,6 +76,12 @@ public class GitlabRequestMockProvider {
 
     @Mock
     private ProtectedBranchesApi protectedBranchesApi;
+
+    @InjectMocks
+    private PasswordService passwordService;
+
+    @Autowired
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     public GitlabRequestMockProvider(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate) {
@@ -194,7 +205,7 @@ public class GitlabRequestMockProvider {
                 }
                 else {
                     mockUserExists(loginName, false);
-                    mockImportUser();
+                    mockImportUser(new User());
                 }
 
             }
@@ -208,8 +219,8 @@ public class GitlabRequestMockProvider {
         doReturn(exists ? new User().withUsername(username) : null).when(userApi).getUser(username);
     }
 
-    private void mockImportUser() throws GitLabApiException {
-        doReturn(new User()).when(userApi).createUser(any(), anyString(), anyBoolean());
+    private void mockImportUser(User userToReturn) throws GitLabApiException {
+        doReturn(userToReturn).when(userApi).createUser(any(), anyString(), anyBoolean());
     }
 
     private void mockAddMemberToRepository(VcsRepositoryUrl repositoryUrl, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
@@ -255,5 +266,88 @@ public class GitlabRequestMockProvider {
     private void mockGitlabUserManagementServiceGetUserId(String username, int userIdToReturn) throws GitLabApiException {
         var gitlabUser = new User().withId(userIdToReturn).withUsername(username);
         doReturn(gitlabUser).when(userApi).getUser(username);
+    }
+
+    public void mockUpdateVcsUser(String login, de.tum.in.www1.artemis.domain.User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword)
+            throws GitLabApiException {
+        var gitlabUser = new User().withUsername(login);
+        doReturn(gitlabUser).when(userApi).getUser(login);
+        if (shouldSynchronizePassword) {
+            doReturn(gitlabUser).when(userApi).updateUser(gitlabUser, user.getPassword());
+        }
+        else {
+            doReturn(gitlabUser).when(userApi).updateUser(gitlabUser, null);
+        }
+
+        // Add as member to new groups
+        if (addedGroups != null && !addedGroups.isEmpty()) {
+            final var exercisesWithAddedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(addedGroups);
+            for (final var exercise : exercisesWithAddedGroups) {
+                final var accessLevel = addedGroups.contains(exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName()) ? MAINTAINER : GUEST;
+                doReturn(new Member()).when(groupApi).addMember(eq(exercise.getProjectKey()), anyInt(), eq(accessLevel));
+            }
+        }
+
+        // Update/remove old groups
+        if (removedGroups != null && !removedGroups.isEmpty()) {
+            final var exercisesWithOutdatedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(removedGroups);
+            for (final var exercise : exercisesWithOutdatedGroups) {
+                // If the the user is still in another group for the exercise (TA -> INSTRUCTOR or INSTRUCTOR -> TA),
+                // then we have to add him as a member with the new access level
+                final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+                if (user.getGroups().contains(course.getInstructorGroupName())) {
+                    doReturn(new Member()).when(groupApi).updateMember(eq(exercise.getProjectKey()), anyInt(), eq(MAINTAINER));
+                }
+                else if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
+                    doReturn(new Member()).when(groupApi).updateMember(eq(exercise.getProjectKey()), anyInt(), eq(GUEST));
+                }
+                else {
+                    // If the user is not a member of any relevant group any more, we can remove him from the exercise
+                    doNothing().when(groupApi).removeMember(eq(exercise.getProjectKey()), anyInt());
+                }
+            }
+        }
+    }
+
+    public void mockDeleteVcsUser(String login) throws GitLabApiException {
+        mockGetUserId(login, true);
+        doNothing().when(userApi).deleteUser(anyInt(), eq(true));
+    }
+
+    private void mockGetUserId(String username, boolean userExists) throws GitLabApiException {
+        if (userExists) {
+            doReturn(new User().withId(1)).when(userApi).getUser(username);
+        }
+        else {
+            throw new GitLabUserDoesNotExistException(username);
+        }
+    }
+
+    public void mockCreateVcsUser(de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
+        var userId = mockGetUserIdCreateIfNotExist(user, false);
+
+        // Add user to existing exercises
+        if (user.getGroups() != null && user.getGroups().size() > 0) {
+            final var instructorExercises = programmingExerciseRepository.findAllByCourse_InstructorGroupNameIn(user.getGroups());
+            final var teachingAssistantExercises = programmingExerciseRepository.findAllByCourse_TeachingAssistantGroupNameIn(user.getGroups()).stream()
+                    .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
+            mockAddUserToGroups(userId, instructorExercises, MAINTAINER);
+            mockAddUserToGroups(userId, teachingAssistantExercises, GUEST);
+        }
+    }
+
+    private int mockGetUserIdCreateIfNotExist(de.tum.in.www1.artemis.domain.User user, boolean userExists) throws GitLabApiException {
+        var userToReturn = new User().withId(1).withUsername(user.getLogin());
+        doReturn(userToReturn).when(userApi).getUser(user.getLogin());
+        if (!userExists) {
+            mockImportUser(userToReturn);
+        }
+        return userToReturn.getId();
+    }
+
+    private void mockAddUserToGroups(int userId, List<ProgrammingExercise> exercises, AccessLevel accessLevel) throws GitLabApiException {
+        for (final var exercise : exercises) {
+            doReturn(new Member()).when(groupApi).addMember(exercise.getProjectKey(), userId, accessLevel);
+        }
     }
 }

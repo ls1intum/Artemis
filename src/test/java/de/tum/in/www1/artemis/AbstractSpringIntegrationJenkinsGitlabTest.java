@@ -33,6 +33,7 @@ import com.offbytwo.jenkins.JenkinsServer;
 
 import de.tum.in.www1.artemis.connector.gitlab.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.connector.jenkins.JenkinsRequestMockProvider;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
@@ -261,6 +262,29 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
         jenkinsRequestMockProvider.mockTriggerBuild();
+    }
+
+    @Override
+    public void mockUpdateUserInUserManagement(String oldLogin, User user, Set<String> oldGroups) throws Exception {
+        jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), oldGroups, true);
+        gitlabRequestMockProvider.mockUpdateVcsUser(oldLogin, user, oldGroups, user.getGroups(), true);
+    }
+
+    @Override
+    public void mockCreateUserInUserManagement(User user) throws Exception {
+        gitlabRequestMockProvider.mockCreateVcsUser(user);
+        jenkinsRequestMockProvider.mockCreateUser(user);
+    }
+
+    @Override
+    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement) throws Exception {
+        gitlabRequestMockProvider.mockDeleteVcsUser(user.getLogin());
+        jenkinsRequestMockProvider.mockDeleteUser(user, userExistsInUserManagement);
+    }
+
+    @Override
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws Exception {
+
     }
 
     @Override

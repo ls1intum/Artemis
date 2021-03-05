@@ -12,10 +12,7 @@ import org.springframework.http.HttpStatus;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 
@@ -70,4 +67,12 @@ public interface MockDelegate {
     void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) throws Exception;
 
     void resetMockProvider();
+
+    void mockUpdateUserInUserManagement(String oldLogin, User user, Set<String> oldGroups) throws Exception;
+
+    void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws Exception;
+
+    void mockCreateUserInUserManagement(User user) throws Exception;
+
+    void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement) throws Exception;
 }

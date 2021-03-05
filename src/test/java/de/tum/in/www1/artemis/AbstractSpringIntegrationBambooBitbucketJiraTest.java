@@ -32,6 +32,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
+import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
@@ -48,6 +50,7 @@ import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
+import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 @SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
         "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=" })
@@ -80,6 +83,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Autowired
     protected BitbucketRequestMockProvider bitbucketRequestMockProvider;
+
+    @Autowired
+    protected JiraRequestMockProvider jiraRequestMockProvider;
 
     @AfterEach
     public void resetSpyBeans() {
@@ -324,6 +330,31 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
         bambooRequestMockProvider.mockTriggerBuild(participation);
+    }
+
+    @Override
+    public void mockUpdateUserInUserManagement(String oldLogin, User user, Set<String> oldGroups) throws URISyntaxException {
+        var managedUserVM = new ManagedUserVM(user);
+        jiraRequestMockProvider.mockIsGroupAvailableForMultiple(managedUserVM.getGroups());
+        jiraRequestMockProvider.mockRemoveUserFromGroup(oldGroups, managedUserVM.getLogin());
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(managedUserVM.getGroups());
+    }
+
+    @Override
+    public void mockCreateUserInUserManagement(User user) throws URISyntaxException {
+        var managedUserVM = new ManagedUserVM(user);
+        jiraRequestMockProvider.mockIsGroupAvailableForMultiple(managedUserVM.getGroups());
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(managedUserVM.getGroups());
+    }
+
+    @Override
+    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement) throws Exception {
+
+    }
+
+    @Override
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws Exception {
+
     }
 
     @Override
