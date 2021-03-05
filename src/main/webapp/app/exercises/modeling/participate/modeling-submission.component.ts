@@ -414,7 +414,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      */
     get referencedFeedback(): Feedback[] | undefined {
         if (this.assessmentResult && this.assessmentResult.feedbacks) {
-            return this.assessmentResult.feedbacks.filter((feedbackElement) => feedbackElement.reference !== undefined);
+            return this.assessmentResult.feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
         }
     }
 
