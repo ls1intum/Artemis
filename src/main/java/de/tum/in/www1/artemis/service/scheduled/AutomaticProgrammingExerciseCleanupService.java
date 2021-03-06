@@ -52,6 +52,9 @@ public class AutomaticProgrammingExerciseCleanupService {
         this.gitService = gitService;
     }
 
+    /**
+     * cleans up old build plans on the continuous integration server and old local git repositories on the Artemis server at 3:00:00 am in the night in form of a repeating "cron" job
+     */
     @Scheduled(cron = "0 0 3 * * *") // execute this every night at 3:00:00 am
     public void cleanup() {
         try {
@@ -68,6 +71,9 @@ public class AutomaticProgrammingExerciseCleanupService {
         }
     }
 
+    /**
+     * cleans up old local git repositories on the Artemis server
+     */
     public void cleanupGitRepositoriesOnArtemisServer() {
         SecurityUtils.setAuthorizationObject();
         // we are specifically interested in one whole day 8 weeks ago
@@ -99,7 +105,7 @@ public class AutomaticProgrammingExerciseCleanupService {
     }
 
     /**
-     *  Cleans up all build plans
+     *  Cleans up old build plans on the continuous integration server
      */
     private void cleanupBuildPlansOnContinuousIntegrationServer() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
