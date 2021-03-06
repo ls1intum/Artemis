@@ -1,6 +1,9 @@
-<table class="table table-striped">
+<table class="table tabel-striped table-bordered" style="background-color: white">
     <thead>
-        <tr>
+        <tr style="background-color: white">
+            <!-- <th style="max-width: 20px">
+                <span>#</span>
+            </th> -->
             <th style="max-width: 100px">
                 <span>
                     {{ 'artemisApp.examManagement.checklist.textitems.exerciseStart' | translate }}
@@ -8,46 +11,48 @@
             </th>
             <th>
                 <span>
-                    {{ 'artemisApp.examManagement.checklist.textitems.exerciseTable' | translate }}
+                    {{ 'artemisApp.examManagement.checklist.textitems.exerciseTableSingular' | translate }}
+                </span>
+            </th>
+            <th>
+                <span>
+                    {{ 'artemisApp.examManagement.checklist.textitems.points' | translate }}
+                </span>
+            </th>
+            <th>
+                <span>
+                    {{ 'artemisApp.examManagement.checklist.textitems.numberParticipants' | translate }}
                 </span>
             </th>
         </tr>
     </thead>
     <tbody>
-        <tr *ngFor="let exerciseGroup of exerciseGroups">
-            <td style="max-width: 100px">
-                {{ exerciseGroup.title }}
+        <tr *ngFor="let exercise of allExercises; let i = index">
+            <!-- <td style="max-width: 20px">
+                <div *ngIf="i ==  0 || i > 0 &&  allExercises[i-1].exerciseGroup !== exercise.exerciseGroup">{{i+1}}</div>
+            </td> -->
+            <td style="max-width: 100px; font-weight: bold">
+                <div *ngIf="i ==  0 || i > 0 &&  allExercises[i-1].exerciseGroup !== exercise.exerciseGroup">
+                    {{ exercise.exerciseGroup.title }}
+                    <fa-icon *ngIf="exercise.exerciseGroup.allPointsEqual" ngbTooltip="Exercises within this group do not have the same number of maximum points!"
+                             [icon]="'exclamation-triangle'" style="color: rgba(255, 193, 7, 0.6)" class="warning"></fa-icon>
+                </div>
             </td>
-            <td>
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>
-                                <span>
-                                    {{ 'artemisApp.examManagement.checklist.textitems.exerciseTable' | translate }}
-                                </span>
-                            </th>
-                            <th>
-                                <span>
-                                    {{ 'artemisApp.examManagement.checklist.textitems.points' | translate }}
-                                </span>
-                            </th>
-                            <th>
-                                <span>
-                                    {{ 'artemisApp.examManagement.checklist.textitems.numberParticipants' | translate }}
-                                </span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let exercise of exerciseGroup.exercises">
-                            <td class="d-none d-md-table-cell">{{ exercise.title }}</td>
-                            <td class="d-none d-md-table-cell">{{ exercise.maxPoints }}</td>
-                            <td class="d-none d-md-table-cell">{{ exercise.numberOfParticipations }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <td>{{ exercise.title }}</td>
+            <td>{{ exercise.maxPoints }}
             </td>
+            <td>{{ exercise.numberOfParticipations !== undefined ? exercise.numberOfParticipations : 0}}</td>
         </tr>
+        <tr *ngFor="let exerciseGroup of groupsWithoutExercises; let i = index">
+            <td style="max-width: 100px; font-weight: bold">
+                {{ exerciseGroup.title }}
+                <fa-icon ngbTooltip="This exercise group does not contain any exercises!"
+                         [icon]="'exclamation-triangle'" style="color: rgba(255, 193, 7, 0.6)" class="warning"></fa-icon>
+            </td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+        </tr>
+
     </tbody>
 </table>
