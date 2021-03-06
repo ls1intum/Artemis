@@ -371,9 +371,11 @@
                     "correctionRound": "Korrektur Runde",
                     "startedExam": "Klausur gestartet",
                     "submittedExam": "Klausur abgegeben",
-                    "exerciseTable": "Aufgabe",
+                    "exerciseTablePlural": "Aufgaben",
+                    "exerciseTableSingular": "Aufgabe",
                     "points": "Punkte",
-                    "numberParticipants": "Anzahl der Teilnehmenden"
+                    "numberParticipants": "Teilnehmende",
+                    "variants": "Varianten"
                 }
             }
         },
