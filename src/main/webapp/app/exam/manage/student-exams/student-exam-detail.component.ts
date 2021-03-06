@@ -46,6 +46,7 @@ export class StudentExamDetailComponent implements OnInit {
     ngOnInit(): void {
         this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
         this.loadStudentExam();
+        console.log(this.studentExam);
     }
 
     /**

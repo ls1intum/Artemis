@@ -133,6 +133,9 @@
                         <th>
                             <span jhiTranslate="artemisApp.studentExamDetail.reviewer">Reviewer</span>
                         </th>
+                        <th>
+                            <span jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -171,6 +174,7 @@
                             </ng-container>
                             <ng-template #noAssessor></ng-template>
                         </td>
+                        <td> empty</td>
                     </tr>
                     <tr>
                         <td></td>
@@ -187,6 +191,7 @@
                         <td class="align-middle">
                             <u> {{ bonusTotalScore }} </u>
                         </td>
+                        <td></td>
                         <td></td>
                     </tr>
                 </tbody>
