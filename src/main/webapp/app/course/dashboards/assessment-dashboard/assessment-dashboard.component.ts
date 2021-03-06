@@ -260,7 +260,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
             this.courseId.toString(),
             'exams',
             this.examId.toString(),
-            this.isTestRun ? 'test-run-exercise-assessment-dashboard' : 'assessment-dashboard',
+            this.isTestRun ? 'test-assessment-dashboard' : 'assessment-dashboard',
             exercise.id!.toString(),
         ];
     }

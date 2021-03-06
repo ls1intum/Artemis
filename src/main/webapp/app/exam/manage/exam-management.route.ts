@@ -34,9 +34,6 @@ import { ExamParticipationComponent } from 'app/exam/participate/exam-participat
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
-import { ExerciseScoresComponent } from 'app/exercises/shared/exercise-scores/exercise-scores.component';
-import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
-import { ParticipationSubmissionComponent } from 'app/exercises/shared/participation-submission/participation-submission.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
