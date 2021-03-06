@@ -13,7 +13,7 @@ public abstract class AbstractBuildResultNotificationDTO {
 
     public abstract boolean isBuildSuccessful();
 
-    public abstract Long getBuildScore();
+    public abstract Double getBuildScore();
 
     /**
      * Returns a string stating how much tests passed:

@@ -3,7 +3,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { initializedResultWithScore } from 'app/exercises/shared/result/result-utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
-import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
+import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import * as moment from 'moment';
@@ -331,10 +331,10 @@ export class ResultComponent implements OnInit, OnChanges {
             }
             return 'text-danger';
         }
-        if (result.score > MIN_POINTS_GREEN) {
+        if (result.score > MIN_SCORE_GREEN) {
             return 'text-success';
         }
-        if (result.score > MIN_POINTS_ORANGE) {
+        if (result.score > MIN_SCORE_ORANGE) {
             return 'result-orange';
         }
         return 'text-danger';

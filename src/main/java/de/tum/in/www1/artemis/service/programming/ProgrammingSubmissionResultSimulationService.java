@@ -126,7 +126,7 @@ public class ProgrammingSubmissionResultSimulationService {
         result.setParticipation(programmingExerciseStudentParticipation);
         result.setRated(true);
         result.resultString("7 of 13 passed");
-        result.score(54L);
+        result.score(7.0 / 13.0);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
         this.addFeedback(result);

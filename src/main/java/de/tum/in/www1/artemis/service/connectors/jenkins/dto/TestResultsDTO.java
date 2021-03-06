@@ -37,7 +37,7 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
         return new ObjectMapper().registerModule(new JavaTimeModule()).convertValue(someResult, TestResultsDTO.class);
     }
 
-    public int getSuccessful() {
+    public Integer getSuccessful() {
         return successful;
     }
 
@@ -107,9 +107,9 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     }
 
     @Override
-    public Long getBuildScore() {
+    public Double getBuildScore() {
         final var testSum = getSkipped() + getFailures() + getErrors() + getSuccessful();
-        return (long) (((1.0 * getSuccessful()) / testSum) * 100);
+        return (getSuccessful().doubleValue() / testSum) * 100D;
     }
 
     @Override

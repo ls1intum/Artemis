@@ -353,7 +353,7 @@ public class SubmissionService {
      * @param feedbackText the feedback text for the
      * @param correctionRound the correction round (1 or 2)
      */
-    public void addResultWithFeedbackByCorrectionRound(StudentParticipation studentParticipation, User assessor, long score, String feedbackText, int correctionRound) {
+    public void addResultWithFeedbackByCorrectionRound(StudentParticipation studentParticipation, User assessor, double score, String feedbackText, int correctionRound) {
         if (studentParticipation.getExercise().isExamExercise()) {
             var latestSubmission = studentParticipation.findLatestSubmission();
             if (latestSubmission.isPresent() && latestSubmission.get().getResultForCorrectionRound(correctionRound) == null) {

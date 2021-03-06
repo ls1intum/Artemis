@@ -45,7 +45,7 @@ export class CourseScoreCalculationService {
                         if (score == undefined) {
                             score = 0;
                         }
-                        pointsAchievedByStudentInCourse += score * this.SCORE_NORMALIZATION_VALUE * maxPointsReachableInExercise;
+                        pointsAchievedByStudentInCourse += round(score) * this.SCORE_NORMALIZATION_VALUE * maxPointsReachableInExercise;
                         if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                             reachableMaxPointsInCourse += maxPointsReachableInExercise;
                         }
