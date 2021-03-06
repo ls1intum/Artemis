@@ -68,7 +68,8 @@ public class TutorLeaderboardService {
     /**
      * Returns tutor leaderboards for the specified course.
      *
-     * @param course course for which leaderboard is created
+     * @param course - course for which leaderboard is fetched
+     * @param exam   - the exam for which the leaderboard will be fetched TODO
      * @return list of tutor leaderboard objects
      */
     public List<TutorLeaderboardDTO> getExamLeaderboard(Course course, Exam exam) {

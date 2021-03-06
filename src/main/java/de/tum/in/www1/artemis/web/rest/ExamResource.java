@@ -797,7 +797,8 @@ public class ExamResource {
     /**
      * GET /courses/:courseId/exams/:examId/lockedSubmissions Get locked submissions for exam for user
      *
-     * @param courseId the id of the course
+     * @param courseId  - the id of the course
+     * @param examId    - the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      * @throws AccessForbiddenException if the current user doesn't have the permission to access the course
      */

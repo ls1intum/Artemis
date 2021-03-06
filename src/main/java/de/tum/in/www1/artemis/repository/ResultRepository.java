@@ -214,6 +214,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         return convertDatabaseResponseToDueDateStats(countlist, numberOfCorrectionRounds);
     }
 
+    /**
+     * Takes the Long List database response and converts it to the according DueDateStats
+     *
+     * @param countlist                 - the lists returned from the database
+     * @param numberOfCorrectionRounds  - numbmer of the correction rounds which is set for the given exam
+     * @return an array of DueDateStats which contains a DueDateStat with the number of assessments for each correction round.
+     */
     default DueDateStat[] convertDatabaseResponseToDueDateStats(List<Long> countlist, int numberOfCorrectionRounds) {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
 

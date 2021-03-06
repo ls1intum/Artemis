@@ -388,7 +388,7 @@ public class ComplaintResource {
      * Get /courses/:courseId/exams/:examId/complaints/:complaintType
      * <p>
      * Get all the complaints filtered by courseId, complaintType and optionally tutorId.
-     * @param tutorId the id of the tutor by which we want to filter
+     * @param examId the id of the tutor by which we want to filter
      * @param courseId the id of the course we are interested in
      * @param complaintType the type of complaints we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
