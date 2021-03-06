@@ -71,7 +71,7 @@
                     </td>
                     <td>{{ assessmentTypeTranslationKey(submission.latestResult) | translate }}</td>
                     <td *ngIf="newManualResultAllowed">
-                        <div *ngIf="submission.results.length > 1 && submission.results[0].assessor">{{ submission.results[0].assessor!.name }}</div>
+                        <div *ngIf="submission.results?.length > 1 && submission.results[0].assessor">{{ submission.results[0].assessor!.name }}</div>
                         <div *ngIf="submission.latestResult && submission.latestResult!.assessor">{{ submission.latestResult!.assessor!.name }}</div>
                     </td>
                     <ng-container *ngIf="newManualResultAllowed">
