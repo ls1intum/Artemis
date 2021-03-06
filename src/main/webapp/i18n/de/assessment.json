@@ -47,6 +47,7 @@
                     "assessmentType": "Bewertungsart",
                     "student": "Student",
                     "assessor": "Prüfer/in",
+                    "assessors": "Prüfer/innen",
                     "action": "Bewertungsaktionen",
                     "assessmentFirst": "Korrekturrunde 1",
                     "assessmentSecond": "Korrekturrunde 2"

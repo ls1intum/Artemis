@@ -47,6 +47,7 @@
                     "assessmentType": "Assessment Type",
                     "student": "Student",
                     "assessor": "Reviewer",
+                    "assessors": "Reviewers",
                     "action": "Assessment Actions",
                     "assessmentFirst": "Correction Round 1",
                     "assessmentSecond": "Correction Round 2"
