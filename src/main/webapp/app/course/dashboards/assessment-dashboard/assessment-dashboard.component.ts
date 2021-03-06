@@ -250,7 +250,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
         );
     }
 
-    getTutorDashboardLinkForExercise(exercise: Exercise): string[] {
+    getAssessmentDashboardLinkForExercise(exercise: Exercise): string[] {
         if (!this.isExamMode) {
             return ['/course-management', this.courseId.toString(), 'assessment-dashboard', exercise.id!.toString()];
         }
@@ -260,8 +260,6 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
             this.courseId.toString(),
             'exams',
             this.examId.toString(),
-            'exercise-groups',
-            exercise.exerciseGroup!.id!.toString(),
             this.isTestRun ? 'test-run-exercise-assessment-dashboard' : 'assessment-dashboard',
             exercise.id!.toString(),
         ];
