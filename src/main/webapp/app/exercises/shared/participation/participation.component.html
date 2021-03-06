@@ -84,7 +84,7 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                         <span *ngIf="value !== null">
-                            <a href="{{ adjustRepositoryUrl(row, value) }}" target="_blank">Repository Link</a>
+                            <a href="{{ getRepositoryLink(row, value) }}" target="_blank" rel="noreferrer noopener">Repository Link</a>
                         </span>
                     </ng-template>
                 </ngx-datatable-column>

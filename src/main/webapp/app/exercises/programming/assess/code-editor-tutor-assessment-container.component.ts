@@ -35,7 +35,7 @@ import { diff_match_patch } from 'diff-match-patch';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
-import { createAdjustedRepositoryUrl } from '../shared/utils/programming-exercise.utils';
+import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -72,7 +72,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     participationCouldNotBeFetched = false;
     showEditorInstructions = true;
     hasAssessmentDueDatePassed: boolean;
-    adjustedRepositoryURL: string;
     correctionRound: number;
 
     private get course(): Course | undefined {
@@ -157,6 +156,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                             // Set domain to make file editor work properly
                             this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResult]);
                             this.participation = participationWithResult;
+                            addUserIndependentRepositoryUrl(this.participation);
                             this.manualResult = this.participation.results![0];
 
                             // Either submission from latest manual or automatic result
@@ -171,7 +171,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                             if (this.manualResult && this.manualResult.hasComplaint) {
                                 this.getComplaint();
                             }
-                            this.adjustedRepositoryURL = createAdjustedRepositoryUrl(this.participation);
                         },
                         (error: HttpErrorResponse) => {
                             this.participationCouldNotBeFetched = true;

@@ -1,7 +1,7 @@
 <h6>
     <span>Repository Link:</span>
     <span>
-        <a href="{{ adjustRepositoryUrl() }}" target="_blank" rel="noopener noreferrer">{{ adjustRepositoryUrl() || 'n.a' }}</a>
+        <a href="{{ participation?.userIndependentRepositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ participation?.userIndependentRepositoryUrl || 'n.a' }}</a>
     </span>
     <br />
     <span>{{ 'artemisApp.exam.examSummary.lastCommitHash' | translate }}:</span>

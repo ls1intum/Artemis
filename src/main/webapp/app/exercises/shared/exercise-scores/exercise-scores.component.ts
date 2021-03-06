@@ -28,7 +28,8 @@ import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
-import { createAdjustedRepositoryUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { ParticipationType } from 'app/entities/participation/participation.model';
+import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
 
 /**
  * Filter properties for a result
@@ -133,6 +134,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     this.results = res.body!.map((result) => {
                         result.participation!.results = [result];
                         (result.participation! as StudentParticipation).exercise = this.exercise;
+                        if (result.participation!.type === ParticipationType.PROGRAMMING) {
+                            addUserIndependentRepositoryUrl(result.participation!);
+                        }
                         result.durationInMinutes = this.durationInMinutes(
                             result.completionDate!,
                             result.participation!.initializationDate ? result.participation!.initializationDate : this.exercise.releaseDate!,
@@ -215,7 +219,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param result Result for which to get the link for
      */
     getRepositoryLink(result: Result) {
-        return createAdjustedRepositoryUrl(result.participation! as ProgrammingExerciseStudentParticipation);
+        return (result.participation! as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUrl;
     }
 
     /**
