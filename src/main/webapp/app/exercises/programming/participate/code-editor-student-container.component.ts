@@ -76,7 +76,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
                         const isEditingAfterDueAllowed = !this.exercise.buildAndTestStudentSubmissionsAfterDueDate && this.exercise.assessmentType === AssessmentType.AUTOMATIC;
                         this.repositoryIsLocked = !isEditingAfterDueAllowed && !!this.exercise.dueDate && dueDateHasPassed;
                         this.latestResult = this.participation.results ? this.participation.results[0] : undefined;
-                        this.checkForTutorAssessment();
+                        this.checkForTutorAssessment(dueDateHasPassed);
                     }),
                     switchMap(() => {
                         return this.loadExerciseHints();
@@ -150,7 +150,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
     canDeactivate() {
         return this.codeEditorContainer.canDeactivate();
     }
-    checkForTutorAssessment() {
+
+    checkForTutorAssessment(dueDateHasPassed: boolean) {
         let isManualResult = false;
         let hasTutorFeedback = false;
         if (!!this.latestResult) {
@@ -160,6 +161,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
                 hasTutorFeedback = this.latestResult.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL);
             }
         }
-        this.hasTutorAssessment = isManualResult && hasTutorFeedback;
+        // Also check for assessment due date to never show manual feedback before the deadline
+        this.hasTutorAssessment = dueDateHasPassed && isManualResult && hasTutorFeedback;
     }
 }
