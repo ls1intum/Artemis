@@ -25,6 +25,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -168,12 +169,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     /**
-     * Find "Unreferenced Feedback" item for Result, if it exists.
+     * Check whether or not a result exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] | undefined {
-        if (this.result && this.result.feedbacks) {
-            return this.result.feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
-        }
+        return this.result ? getUnreferencedFeedback(this.result.feedbacks) : undefined;
     }
 
     get wordCount(): number {

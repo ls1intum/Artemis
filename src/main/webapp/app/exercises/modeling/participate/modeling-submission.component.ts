@@ -30,7 +30,7 @@ import * as moment from 'moment';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subject } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
-import { addParticipationToResult } from 'app/exercises/shared/result/result-utils';
+import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -401,21 +401,17 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     /**
-     * Find "Unreferenced Feedback" item for Result, if it exists.
+     * Check whether or not a assessmentResult exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] | undefined {
-        if (this.assessmentResult && this.assessmentResult.feedbacks) {
-            return this.assessmentResult.feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
-        }
+        return this.assessmentResult ? getUnreferencedFeedback(this.assessmentResult.feedbacks) : undefined;
     }
 
     /**
      * Find "Referenced Feedback" item for Result, if it exists.
      */
     get referencedFeedback(): Feedback[] | undefined {
-        if (this.assessmentResult && this.assessmentResult.feedbacks) {
-            return this.assessmentResult.feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
-        }
+        return this.assessmentResult?.feedbacks?.filter((feedbackElement) => feedbackElement.reference != undefined);
     }
 
     /**

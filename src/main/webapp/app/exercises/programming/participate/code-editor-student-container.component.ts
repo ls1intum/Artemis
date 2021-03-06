@@ -22,6 +22,7 @@ import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -164,11 +165,9 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
     }
 
     /**
-     * Find "Unreferenced Feedback" item for Result, if it exists.
+     * Check whether or not a latestResult exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] | undefined {
-        if (this.latestResult && this.latestResult.feedbacks) {
-            return this.latestResult.feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
-        }
+        return this.latestResult ? getUnreferencedFeedback(this.latestResult.feedbacks) : undefined;
     }
 }

@@ -22,8 +22,8 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
-import { addParticipationToResult } from 'app/exercises/shared/result/result-utils';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
+import { Feedback } from 'app/entities/feedback.model';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -188,12 +188,10 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     }
 
     /**
-     * Find "Unreferenced Feedback" item for Result, if it exists.
+     * Check whether or not a result exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] | undefined {
-        if (this.result && this.result.feedbacks) {
-            return this.result.feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
-        }
+        return this.result ? getUnreferencedFeedback(this.result.feedbacks) : undefined;
     }
 
     private onError(error: HttpErrorResponse) {
