@@ -470,7 +470,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void cleanupBuildPlan() throws Exception {
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         bambooRequestMockProvider.enableMockingOfRequests();
-        bambooRequestMockProvider.mockDeleteBambooBuildPlan(participation.getBuildPlanId());
+        bambooRequestMockProvider.mockDeleteBambooBuildPlan(participation.getBuildPlanId(), false);
         var actualParticipation = request.putWithResponseBody("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, Participation.class, HttpStatus.OK);
         assertThat(actualParticipation).isEqualTo(participation);
     }

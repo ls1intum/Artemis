@@ -292,7 +292,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            bambooRequestMockProvider.mockDeleteBambooBuildPlan(projectKey + "-" + planName.toUpperCase());
+            bambooRequestMockProvider.mockDeleteBambooBuildPlan(projectKey + "-" + planName.toUpperCase(), false);
         }
         bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
 

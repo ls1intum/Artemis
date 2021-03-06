@@ -323,6 +323,11 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
+    public void mockRemoveUserFromGroup(User user, String group) throws Exception {
+
+    }
+
+    @Override
     public void resetMockProvider() {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();

@@ -379,8 +379,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockDeleteBuildPlan(String projectKey, String planName) throws Exception {
-        var planKey = (projectKey + "-" + planName).toUpperCase();
-        bambooRequestMockProvider.mockDeleteBambooBuildPlan(planKey);
+        // var planKey = (projectKey + "-" + planName).toUpperCase();
+        bambooRequestMockProvider.mockDeleteBambooBuildPlan(planName, false);
     }
 
     @Override
@@ -391,6 +391,11 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     @Override
     public void mockAddUserToGroupInUserManagement(User user, String group) throws Exception {
         jiraRequestMockProvider.mockAddUserToGroup(group);
+    }
+
+    @Override
+    public void mockRemoveUserFromGroup(User user, String group) throws Exception {
+        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(group), user.getLogin());
     }
 
     @Override

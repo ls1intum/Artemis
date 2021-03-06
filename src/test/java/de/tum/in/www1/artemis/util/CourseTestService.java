@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.util;
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,6 +34,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 
@@ -109,8 +109,11 @@ public class CourseTestService {
 
     private MockDelegate mockDelegate;
 
-    public void setup(MockDelegate mockDelegate) {
+    private GroupNotificationService groupNotificationService;
+
+    public void setup(MockDelegate mockDelegate, GroupNotificationService groupNotificationService) {
         this.mockDelegate = mockDelegate;
+        this.groupNotificationService = groupNotificationService;
 
         database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
 
@@ -121,6 +124,10 @@ public class CourseTestService {
 
     public void tearDown() {
         database.resetDatabase();
+    }
+
+    public CourseRepository getCourseRepo() {
+        return courseRepo;
     }
 
     // Test
@@ -294,6 +301,10 @@ public class CourseTestService {
                     final var templateRepoName = programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE);
                     final var solutionRepoName = programmingExercise.generateRepositoryName(RepositoryType.SOLUTION);
                     final var testsRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
+                    database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+                    database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+                    mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getTemplateBuildPlanId());
+                    mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getSolutionBuildPlanId());
                     mockDelegate.mockDeleteBuildPlanProject(projectKey);
                     mockDelegate.mockDeleteRepository(projectKey, templateRepoName);
                     mockDelegate.mockDeleteRepository(projectKey, solutionRepoName);
@@ -783,16 +794,6 @@ public class CourseTestService {
     }
 
     // Test
-    public void testUpdateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
-        var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
-        course = courseRepo.save(course);
-
-        request.put("/api/courses", course, HttpStatus.OK);
-
-        verifyNoInteractions(versionControlService);
-    }
-
-    // Test
     public void testUpdateCourse_instructorNotInCourse() throws Exception {
         var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
@@ -925,11 +926,11 @@ public class CourseTestService {
         User student = userRepo.findOneWithGroupsByLogin("student1").get();
         User tutor = userRepo.findOneWithGroupsByLogin("tutor1").get();
         User instructor = userRepo.findOneWithGroupsByLogin("instructor1").get();
+
         // Mock remove requests
-        // TODO: asd
-        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getStudentGroupName()), student.getLogin());
-        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getTeachingAssistantGroupName()), tutor.getLogin());
-        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getInstructorGroupName()), instructor.getLogin());
+        mockDelegate.mockRemoveUserFromGroup(student, course.getStudentGroupName());
+        mockDelegate.mockRemoveUserFromGroup(tutor, course.getTeachingAssistantGroupName());
+        mockDelegate.mockRemoveUserFromGroup(instructor, course.getInstructorGroupName());
 
         // Remove users from their group
         request.delete("/api/courses/" + course.getId() + "/students/" + student.getLogin(), httpStatus);
@@ -1079,7 +1080,8 @@ public class CourseTestService {
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
 
         mockDelegate.mockDeleteRepository(programmingExercise.getProjectKey(), (programmingExercise.getProjectKey()).toLowerCase() + "-student1");
-        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), "-student1");
+        var buildPlanId = (programmingExercise.getProjectKey() + "-student1").toUpperCase();
+        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), buildPlanId);
         request.delete("/api/courses/" + course.getId() + "/cleanup", HttpStatus.OK);
 
         course.getExercises().forEach(exercise -> {
