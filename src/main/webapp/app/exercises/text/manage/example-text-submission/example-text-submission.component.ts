@@ -229,7 +229,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             const examId = this.exercise.exerciseGroup.exam?.id;
             const exerciseGroupId = this.exercise.exerciseGroup.id;
             if (this.readOnly || this.toComplete) {
-                await this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId, 'assessment-dashboard']);
+                await this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
             } else {
                 await this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, 'text-exercises', this.exerciseId, 'edit']);
             }
