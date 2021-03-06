@@ -345,8 +345,8 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/:courseId/exams/:examId/stats-for-exam-assessment-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course - number of
-     * assessments - number of assessments assessed by the tutor - number of complaints
+     * GET /courses/:courseId/exams/:examId/stats-for-exam-assessment-dashboard A collection of useful statistics for the tutor course dashboard,
+     * including: - number of submissions to the course - number of assessments - number of assessments assessed by the tutor - number of complaints
      *
      * @param courseId - the id of the course
      * @param examId   - the id of the exam to retrieve stats from

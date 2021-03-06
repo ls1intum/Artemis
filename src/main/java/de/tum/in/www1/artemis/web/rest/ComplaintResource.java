@@ -385,7 +385,7 @@ public class ComplaintResource {
     }
 
     /**
-     * Get /courses/:courseId/exams/:examId/complaints/:complaintType
+     * Get /courses/:courseId/exams/:examId/complaints
      * <p>
      * Get all the complaints filtered by courseId, complaintType and optionally tutorId.
      * @param examId the id of the tutor by which we want to filter

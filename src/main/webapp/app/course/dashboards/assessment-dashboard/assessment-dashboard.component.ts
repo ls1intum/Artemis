@@ -141,9 +141,9 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                     this.totalNumberOfAssessmentLocks = this.stats.totalNumberOfAssessmentLocks;
 
                     // the received leaderboard from the server is still empty. TODO: fill on server side
-                    const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor.id);
-                    this.sortService.sortByProperty(this.stats.tutorLeaderboardEntries, 'points', false);
+                    const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor.id);
                     if (tutorLeaderboardEntry) {
+                        this.sortService.sortByProperty(this.stats.tutorLeaderboardEntries, 'points', false);
                         this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
                         this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
                     } else {
@@ -180,9 +180,9 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                     this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
                     this.numberOfOpenMoreFeedbackRequests = this.stats.numberOfOpenMoreFeedbackRequests;
                     this.numberOfAssessmentLocks = this.stats.numberOfAssessmentLocks;
-                    const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor.id);
-                    this.sortService.sortByProperty(this.stats.tutorLeaderboardEntries, 'points', false);
+                    const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor.id);
                     if (tutorLeaderboardEntry) {
+                        this.sortService.sortByProperty(this.stats.tutorLeaderboardEntries, 'points', false);
                         this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
                         this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
                         this.numberOfTutorMoreFeedbackRequests = tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests;
