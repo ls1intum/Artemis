@@ -139,7 +139,7 @@ public class Exam extends DomainObject {
         return visibleDate;
     }
 
-    public void setVisibleDate(ZonedDateTime visibleDate) {
+    public void setVisibleDate(@NotNull ZonedDateTime visibleDate) {
         this.visibleDate = visibleDate;
     }
 
@@ -148,7 +148,7 @@ public class Exam extends DomainObject {
         return startDate;
     }
 
-    public void setStartDate(ZonedDateTime startDate) {
+    public void setStartDate(@NotNull ZonedDateTime startDate) {
         this.startDate = startDate;
     }
 
@@ -157,7 +157,7 @@ public class Exam extends DomainObject {
         return endDate;
     }
 
-    public void setEndDate(ZonedDateTime endDate) {
+    public void setEndDate(@NotNull ZonedDateTime endDate) {
         this.endDate = endDate;
     }
 

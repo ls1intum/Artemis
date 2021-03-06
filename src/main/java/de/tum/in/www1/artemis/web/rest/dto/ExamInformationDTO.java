@@ -7,5 +7,17 @@ public class ExamInformationDTO {
     public ExamInformationDTO() {
     }
 
-    public ZonedDateTime latestIndividualEndDate;
+    public ExamInformationDTO(ZonedDateTime latestIndividualEndDate) {
+        this.latestIndividualEndDate = latestIndividualEndDate;
+    }
+
+    private ZonedDateTime latestIndividualEndDate;
+
+    public ZonedDateTime getLatestIndividualEndDate() {
+        return latestIndividualEndDate;
+    }
+
+    public void setLatestIndividualEndDate(ZonedDateTime latestIndividualEndDate) {
+        this.latestIndividualEndDate = latestIndividualEndDate;
+    }
 }
