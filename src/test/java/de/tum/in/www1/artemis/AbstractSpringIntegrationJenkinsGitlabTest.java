@@ -284,7 +284,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Override
     public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws Exception {
-
+        gitlabRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldTeachingAssistantGroup);
+        jenkinsRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldTeachingAssistantGroup);
     }
 
     @Override
@@ -299,22 +300,22 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Override
     public void mockDeleteRepository(String projectKey, String repostoryName) throws Exception {
-
+        gitlabRequestMockProvider.mockDeleteRepository(projectKey);
     }
 
     @Override
     public void mockDeleteProjectInVcs(String projectKey) throws Exception {
-
+        gitlabRequestMockProvider.mockDeleteProject(projectKey);
     }
 
     @Override
     public void mockDeleteBuildPlan(String projectKey, String planName) throws Exception {
-
+        jenkinsRequestMockProvider.mockDeleteBuildPlan(projectKey, planName);
     }
 
     @Override
     public void mockDeleteBuildPlanProject(String projectKey) throws Exception {
-
+        jenkinsRequestMockProvider.mockDeleteBuildPlanProject(projectKey);
     }
 
     @Override

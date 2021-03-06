@@ -37,6 +37,7 @@ import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.client.JenkinsHttpClient;
 import com.offbytwo.jenkins.model.*;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -357,5 +358,47 @@ public class JenkinsRequestMockProvider {
                 doNothing().when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
             }
         }
+    }
+
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws IOException {
+        var newInstructorGroup = updatedCourse.getInstructorGroupName();
+        var newTeachingAssistangGroup = updatedCourse.getTeachingAssistantGroupName();
+
+        // Don't do anything if the groups didn't change
+        if (newInstructorGroup.equals(oldInstructorGroup) && newTeachingAssistangGroup.equals(oldTeachingAssistantGroup)) {
+            return;
+        }
+
+        mockRemovePermissionsFromInstructorsAndTAsForCourse(updatedCourse);
+        mockAssignPermissionsToInstructorAndTAsForCourse(updatedCourse);
+    }
+
+    private void mockRemovePermissionsFromInstructorsAndTAsForCourse(Course course) throws IOException {
+        var exercises = programmingExerciseRepository.findAllByCourse(course);
+        for (var exercise : exercises) {
+            mockRemovePermissionsFromUserOfFolder(exercise.getProjectKey());
+        }
+    }
+
+    private void mockAssignPermissionsToInstructorAndTAsForCourse(Course course) throws IOException {
+        var exercises = programmingExerciseRepository.findAllByCourse(course);
+        for (var exercise : exercises) {
+            var job = exercise.getProjectKey();
+            mockAddInstructorAndTAPermissionsToUsersForFolder(job);
+        }
+    }
+
+    private void mockAddInstructorAndTAPermissionsToUsersForFolder(String folderName) throws IOException {
+        mockGetFolderConfig(folderName);
+        doNothing().when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
+    }
+
+    public void mockDeleteBuildPlan(String projectKey, String planName) throws IOException {
+        mockGetFolderJob(projectKey, new FolderJob());
+        doNothing().when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
+    }
+
+    public void mockDeleteBuildPlanProject(String projectKey) throws IOException {
+        doNothing().when(jenkinsServer).deleteJob(projectKey, useCrumb);
     }
 }

@@ -14,7 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.util.CourseTestService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     CourseTestService courseTestService;
@@ -127,6 +127,12 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testEditCourseWithPermission() throws Exception {
         courseTestService.testEditCourseWithPermission();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUpdateCourseGroups() throws Exception {
+        courseTestService.testUpdateCourseGroups();
     }
 
     @Test

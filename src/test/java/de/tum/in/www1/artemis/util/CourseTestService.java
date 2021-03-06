@@ -389,6 +389,22 @@ public class CourseTestService {
     }
 
     // Test
+    public void testUpdateCourseGroups() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        var oldInstructorGroup = course.getInstructorGroupName();
+        var oldTeachingAssistantGroup = course.getTeachingAssistantGroupName();
+
+        course.setInstructorGroupName("new-instructor-group");
+        course.setTeachingAssistantGroupName("new-ta-group");
+
+        mockDelegate.mockUpdateCoursePermissions(course, oldInstructorGroup, oldTeachingAssistantGroup);
+        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+
+        assertThat(updatedCourse.getInstructorGroupName()).isEqualTo("new-instructor-group");
+        assertThat(updatedCourse.getTeachingAssistantGroupName()).isEqualTo("new-ta-group");
+    }
+
+    // Test
     public void testGetCourseWithoutPermission() throws Exception {
         request.getList("/api/courses", HttpStatus.FORBIDDEN, Course.class);
     }
