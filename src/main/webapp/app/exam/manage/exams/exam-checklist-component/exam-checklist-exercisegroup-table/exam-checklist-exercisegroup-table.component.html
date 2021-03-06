@@ -32,27 +32,34 @@
                 <div *ngIf="i ==  0 || i > 0 &&  allExercises[i-1].exerciseGroup !== exercise.exerciseGroup">{{i+1}}</div>
             </td> -->
             <td style="max-width: 100px; font-weight: bold">
-                <div *ngIf="i ==  0 || i > 0 &&  allExercises[i-1].exerciseGroup !== exercise.exerciseGroup">
+                <div *ngIf="i == 0 || (i > 0 && allExercises[i - 1].exerciseGroup !== exercise.exerciseGroup)">
                     {{ exercise.exerciseGroup.title }}
-                    <fa-icon *ngIf="exercise.exerciseGroup.allPointsEqual" ngbTooltip="Exercises within this group do not have the same number of maximum points!"
-                             [icon]="'exclamation-triangle'" style="color: rgba(255, 193, 7, 0.6)" class="warning"></fa-icon>
+                    <fa-icon
+                        *ngIf="exercise.exerciseGroup.allPointsEqual"
+                        ngbTooltip="Exercises within this group do not have the same number of maximum points!"
+                        [icon]="'exclamation-triangle'"
+                        style="color: rgba(255, 193, 7, 0.6)"
+                        class="warning"
+                    ></fa-icon>
                 </div>
             </td>
             <td>{{ exercise.title }}</td>
-            <td>{{ exercise.maxPoints }}
-            </td>
-            <td>{{ exercise.numberOfParticipations !== undefined ? exercise.numberOfParticipations : 0}}</td>
+            <td>{{ exercise.maxPoints }}</td>
+            <td>{{ exercise.numberOfParticipations !== undefined ? exercise.numberOfParticipations : 0 }}</td>
         </tr>
         <tr *ngFor="let exerciseGroup of groupsWithoutExercises; let i = index">
             <td style="max-width: 100px; font-weight: bold">
                 {{ exerciseGroup.title }}
-                <fa-icon ngbTooltip="This exercise group does not contain any exercises!"
-                         [icon]="'exclamation-triangle'" style="color: rgba(255, 193, 7, 0.6)" class="warning"></fa-icon>
+                <fa-icon
+                    ngbTooltip="This exercise group does not contain any exercises!"
+                    [icon]="'exclamation-triangle'"
+                    style="color: rgba(255, 193, 7, 0.6)"
+                    class="warning"
+                ></fa-icon>
             </td>
             <td>-</td>
             <td>-</td>
             <td>-</td>
         </tr>
-
     </tbody>
 </table>
