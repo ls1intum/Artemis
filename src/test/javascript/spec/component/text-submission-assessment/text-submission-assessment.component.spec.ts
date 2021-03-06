@@ -30,7 +30,7 @@ import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/man
 import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TextBlock } from 'app/entities/text-block.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { JhiAlertService } from 'ng-jhipster';
 
@@ -220,11 +220,12 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should send update when complaint resolved and assessments are valid', () => {
-        const generalFeedback = new Feedback();
-        generalFeedback.credits = 5;
-        generalFeedback.detailText = 'gj';
-        generalFeedback.id = 1;
-        component.generalFeedback = generalFeedback;
+        const unreferencedFeedback = new Feedback();
+        unreferencedFeedback.credits = 5;
+        unreferencedFeedback.detailText = 'gj';
+        unreferencedFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        unreferencedFeedback.id = 1;
+        component.unreferencedFeedback = [unreferencedFeedback];
         textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
         spyOn(textAssessmentService, 'updateAssessmentAfterComplaint').and.returnValue(
             of(

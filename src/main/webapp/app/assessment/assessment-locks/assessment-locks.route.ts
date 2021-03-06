@@ -13,11 +13,6 @@ export const assessmentLocksRoute: Routes = [
         },
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            // HACK: The path is a composite, so we need to define both parts
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.assessment.locks.home.title', path: 'assessment-locks' },
-            ],
             pageTitle: 'artemisApp.assessment.locks.home.title',
         },
         canActivate: [UserRouteAccessService],

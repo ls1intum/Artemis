@@ -27,11 +27,11 @@ plugins {
     id "net.ltgt.apt"
     id "com.diffplug.spotless" version "5.10.2"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-    id "com.github.ben-manes.versions" version "0.35.0"
+    id "com.github.ben-manes.versions" version "0.36.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.10.4"
+version = "4.10.5"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -178,7 +178,7 @@ dependencies {
     implementation "io.sentry:sentry-logback:4.2.0"
     implementation "org.jsoup:jsoup:1.13.1"
 
-    implementation "org.springdoc:springdoc-openapi-ui:1.5.4"
+    implementation "org.springdoc:springdoc-openapi-ui:1.5.5"
 
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
@@ -197,13 +197,13 @@ dependencies {
     implementation "com.hazelcast:hazelcast-hibernate53:2.2.0"
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate:hibernate-core"
-    implementation "com.zaxxer:HikariCP:4.0.2"
+    implementation "com.zaxxer:HikariCP:4.0.3"
     implementation "org.apache.commons:commons-text:1.9"
     implementation "javax.transaction:javax.transaction-api:1.3"
     implementation "org.hibernate:hibernate-jcache:${hibernate_version}"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
     implementation "org.hibernate.validator:hibernate-validator:6.2.0.Final"
-    implementation "org.liquibase:liquibase-core:4.2.2"
+    implementation "org.liquibase:liquibase-core:4.3.1"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
@@ -242,8 +242,7 @@ dependencies {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
-    // at the moment, we cannot upgrade to 8.0.23 because of an error message in Liquibase java.lang.ClassCastException: class java.time.LocalDateTime cannot be cast to class java.lang.String
-    implementation "mysql:mysql-connector-java:8.0.22"
+    implementation "mysql:mysql-connector-java:8.0.23"
 
     implementation "org.zalando:problem-spring-web:0.26.2"
     implementation "com.ibm.icu:icu4j:68.2"
