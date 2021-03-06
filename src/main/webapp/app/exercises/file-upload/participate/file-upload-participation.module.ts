@@ -4,7 +4,6 @@ import { ArtemisFileUploadParticipationRoutingModule } from './file-upload-parti
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
-import { FileUploadResultComponent } from 'app/exercises/file-upload/participate/file-upload-result.component';
 import { FileUploadSubmissionComponent } from './file-upload-submission.component';
 import { MomentModule } from 'ngx-moment';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
@@ -23,6 +22,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
         RatingModule,
         ArtemisMarkdownModule,
     ],
-    declarations: [FileUploadSubmissionComponent, FileUploadResultComponent],
+    declarations: [FileUploadSubmissionComponent],
 })
 export class ArtemisFileUploadParticipationModule {}
