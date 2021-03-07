@@ -156,10 +156,9 @@ public class ExerciseResource {
      * @param exerciseId the exerciseId of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @GetMapping("/exercises/{exerciseId}/for-tutor-dashboard")
+    @GetMapping("/exercises/{exerciseId}/for-assessment-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exercise> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
-        log.debug("REST request to get Exercise for assessment dashboard : {}", exerciseId);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -207,15 +206,14 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/stats-for-tutor-dashboard A collection of useful statistics for the tutor exercise dashboard of the exercise with the given exerciseId
+     * GET /exercises/:exerciseId/stats-for-assessment-dashboard A collection of useful statistics for the tutor exercise dashboard of the exercise with the given exerciseId
      *
      * @param exerciseId the exerciseId of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the stats, or with status 404 (Not Found)
      */
-    @GetMapping("/exercises/{exerciseId}/stats-for-tutor-dashboard")
+    @GetMapping("/exercises/{exerciseId}/stats-for-assessment-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForExerciseAssessmentDashboard(@PathVariable Long exerciseId) {
-        log.debug("REST request to get exercise statistics for assessment dashboard : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {

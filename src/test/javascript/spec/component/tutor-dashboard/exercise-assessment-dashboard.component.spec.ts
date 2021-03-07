@@ -419,7 +419,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         it('should navigate back when not in exammode', () => {
             comp.courseId = 4;
             comp.back();
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/tutor-dashboard`]);
+            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/assessment-dashboard`]);
         });
 
         it('should navigate back in exammode and not testRun', () => {
@@ -436,7 +436,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.isExamMode = true;
             comp.exercise = exercise;
             comp.back();
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/exams/${exercise!.exerciseGroup!.exam!.id}/tutor-exam-dashboard`]);
+            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/exams/${exercise!.exerciseGroup!.exam!.id}/assessment-dashboard`]);
         });
     });
 
