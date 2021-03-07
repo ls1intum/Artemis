@@ -105,6 +105,7 @@
             <table class="table table-bordered table-sm body-striped">
                 <thead class="thead-dark">
                     <tr>
+                        <th>#</th>
                         <th>
                             {{ 'artemisApp.examScores.titleExerciseGroupColumn' | translate }}
                         </th>
@@ -129,8 +130,11 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody *ngFor="let exerciseGroupResult of aggregatedExerciseGroupResults">
+                <tbody *ngFor="let exerciseGroupResult of aggregatedExerciseGroupResults; let i = index">
                     <tr *ngFor="let exerciseResult of exerciseGroupResult.exerciseResults; first as isFirst">
+                        <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
+                            {{ i + 1 }}
+                        </td>
                         <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
                             {{ exerciseGroupResult.title }}
                         </td>
@@ -175,6 +179,7 @@
             <table class="table table-sm table-striped table-bordered">
                 <thead class="thead-dark">
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
+                        <th>#</th>
                         <th jhiSortBy="name">
                             <span jhiTranslate="artemisApp.examScores.nameColumn">Name</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
@@ -209,7 +214,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let studentResult of studentResults">
+                    <tr *ngFor="let studentResult of studentResults; let i = index">
+                        <td>{{ i + 1 }}</td>
                         <td>{{ studentResult.name }}</td>
                         <td>{{ studentResult.login }}</td>
                         <td>{{ studentResult.eMail ? studentResult.eMail : '-' }}</td>
@@ -221,7 +227,7 @@
                                 {{ roundAndPerformLocalConversion(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedPoints, 1) }}
 
                                 (
-                                {{ roundAndPerformLocalConversion(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedScore, 2, 2) }}
+                                {{ roundAndPerformLocalConversion(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedScore, 1, 2) }}
                                 %)
                             </td>
                             <ng-template #empty>
@@ -229,7 +235,7 @@
                             </ng-template>
                         </ng-container>
                         <td>{{ roundAndPerformLocalConversion(studentResult.overallPointsAchieved, 1) }}</td>
-                        <td>{{ roundAndPerformLocalConversion(studentResult.overallScoreAchieved, 2, 2) }}</td>
+                        <td>{{ roundAndPerformLocalConversion(studentResult.overallScoreAchieved, 1, 2) }}</td>
                     </tr>
                 </tbody>
             </table>
