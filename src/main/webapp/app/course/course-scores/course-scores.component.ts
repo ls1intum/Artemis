@@ -3,7 +3,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
-import { sum } from 'lodash';
+import { round, sum } from 'lodash';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExportToCsv } from 'export-to-csv';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -224,7 +224,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         console.warn('found more than one result for student ' + student.user.login + ' and exercise ' + exercise.title);
                     }
 
-                    const pointsAchievedByStudentInExercise = (result.score! * relevantMaxPoints) / 100;
+                    const pointsAchievedByStudentInExercise = round((result.score! * relevantMaxPoints) / 100, 1);
                     student.overallPoints += pointsAchievedByStudentInExercise;
                     student.pointsPerExercise.set(exercise.id!, pointsAchievedByStudentInExercise);
                     student.sumPointsPerExerciseType.set(exercise.type!, student.sumPointsPerExerciseType.get(exercise.type!)! + pointsAchievedByStudentInExercise);
