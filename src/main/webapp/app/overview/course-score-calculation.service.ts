@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/entities/participation/participation.model';
 import { round } from 'app/shared/util/utils';
 
 export const ABSOLUTE_SCORE = 'absoluteScore';
@@ -38,13 +38,14 @@ export class CourseScoreCalculationService {
                 if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                     maxPointsInCourse += maxPointsReachableInExercise;
                 }
+                // points are reachable if the exercise is released and the assessment is over --> It was possible for the student to get points
                 if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY && isAssessmentOver) {
                     reachableMaxPointsInCourse += maxPointsReachableInExercise;
                 }
                 const participation = this.getParticipationForExercise(exercise);
                 if (participation) {
                     const result = this.getResultForParticipation(participation, exercise.dueDate!);
-                    if (result) {
+                    if (result && result.rated) {
                         let score = result.score;
                         // this should cover score is undefined and score is null
                         if (score == undefined) {
