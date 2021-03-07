@@ -46,7 +46,7 @@ public class CompassCalculationEngine {
     CompassCalculationEngine(Long exerciseId, Set<ModelingSubmission> modelingSubmissions, HazelcastInstance hazelcastInstance) {
         lastUsed = LocalDateTime.now();
         modelIndex = new ModelIndex(exerciseId, hazelcastInstance);
-        automaticAssessmentController = new AutomaticAssessmentController();
+        automaticAssessmentController = new AutomaticAssessmentController(exerciseId, hazelcastInstance);
         modelSelector = new ModelSelector(automaticAssessmentController);
 
         for (Submission submission : modelingSubmissions) {
