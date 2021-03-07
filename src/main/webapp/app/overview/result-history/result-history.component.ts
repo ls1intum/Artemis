@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { Result } from 'app/entities/result.model';
+import { round } from 'app/shared/util/utils';
 
 // Modal -> Result details view
 @Component({
@@ -9,6 +10,8 @@ import { Result } from 'app/entities/result.model';
     styleUrls: ['./result-history.scss'],
 })
 export class ResultHistoryComponent {
+    readonly round = round;
+
     @Input() results: Result[];
     @Input() maxScore: number;
     @Input() showPreviousDivider = false;
