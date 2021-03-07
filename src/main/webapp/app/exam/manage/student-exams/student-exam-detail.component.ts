@@ -12,6 +12,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -123,6 +124,8 @@ export class StudentExamDetailComponent implements OnInit {
             ) {
                 this.achievedTotalScore += (exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100;
                 this.achievedTotalScore = this.rounding(this.achievedTotalScore);
+                exercise!.studentParticipations[0].submissions![0].results! = exercise.studentParticipations[0].results;
+                setLatestSubmissionResult(exercise!.studentParticipations[0].submissions![0], getLatestSubmissionResult(exercise!.studentParticipations[0].submissions![0]));
             }
         });
     }

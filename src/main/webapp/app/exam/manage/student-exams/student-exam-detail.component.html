@@ -134,6 +134,9 @@
                             <span jhiTranslate="artemisApp.studentExamDetail.reviewer">Reviewer</span>
                         </th>
                         <th>
+                            <span>Has Complaint</span>
+                        </th>
+                        <th>
                             <span jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</span>
                         </th>
                     </tr>
@@ -150,8 +153,8 @@
                             {{ exercise?.title }}
                         </td>
                         <td class="align-middle">
-                            <ng-container *ngIf="exercise?.studentParticipations && exercise?.studentParticipations.length > 0 && (exercise?.studentParticipations)![0].results">
-                                {{ rounding(((exercise?.studentParticipations)![0].results![0].score * exercise?.maxPoints) / 100) }}
+                            <ng-container *ngIf="exercise?.studentParticipations && exercise?.studentParticipations.length > 0 && (exercise?.studentParticipations)![0].submissions[0].results">
+                                {{ rounding(((exercise?.studentParticipations)![0].submissions[0].latestResult.score * exercise?.maxPoints) / 100) }}
                             </ng-container>
                         </td>
                         <td class="align-middle">
@@ -161,20 +164,33 @@
                             {{ exercise?.bonusPoints }}
                         </td>
                         <td class="align-middle">
+                            <span *ngIf="exercise?.studentParticipations?.submissions[0].latestResult.hasComplaint">Yes</span>
+                            <span *ngIf="!exercise?.studentParticipations?.submissions[0].latestResult.hasComplaint">No</span>
+                        </td>
+                        <td class="align-middle">
                             <ng-container
                                 *ngIf="
                                     exercise?.studentParticipations &&
                                         exercise?.studentParticipations.length > 0 &&
-                                        (exercise?.studentParticipations)![0].results &&
-                                        (exercise?.studentParticipations)![0].results[0].assessor;
+                                        (exercise?.studentParticipations)![0].submissions[0].results &&
+                                        (exercise?.studentParticipations)![0].submissions[0].latestResult.assessor;
                                     else noAssessor
                                 "
                             >
-                                {{ (exercise?.studentParticipations)![0].results[0].assessor.name }}
+                                {{ exercise?.studentParticipations![0].submissions[0].latestResult.assessor.name }}
                             </ng-container>
                             <ng-template #noAssessor></ng-template>
                         </td>
-                        <td>empty</td>
+                        <td >
+                            <!-- <button
+                                *ngIf="participation.lat[correctionRound]"
+                                (click)="openAssessmentEditor(submission, correctionRound)"
+                                class="btn btn-primary btn-sm"
+                            >
+                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                                &nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.openAssessment' | translate }}
+                            </button> -->
+                        </td>
                     </tr>
                     <tr>
                         <td></td>
