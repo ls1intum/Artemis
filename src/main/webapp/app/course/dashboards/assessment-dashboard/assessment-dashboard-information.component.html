@@ -39,8 +39,9 @@
                     <!-- TODO: make those links work (REST calls to fetch for individual students do not exist yet) -->
                     <li>
                         <!-- Complaints about your assessments: -->
+                        <!-- this value is not yet available for exam mode. As soon as the leaderboards exist add it agian. {{ numberOfTutorComplaints }} -->
                         <a [routerLink]="['/course-management', courseId, 'exams', examId, 'complaints']" [queryParams]="{ tutorId: tutorId }" [class.disabled]="true">
-                            <b> {{ 'artemisApp.assessmentDashboard.complaintsAboutYourAssessments' | translate }}:</b> {{ numberOfTutorComplaints }}
+                            <b> {{ 'artemisApp.assessmentDashboard.complaintsAboutYourAssessments' | translate }}</b>
                         </a>
                     </li>
                     <!-- Assessments locked by you: -->
