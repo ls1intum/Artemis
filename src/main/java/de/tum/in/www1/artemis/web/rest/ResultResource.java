@@ -22,7 +22,9 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -163,14 +165,14 @@ public class ResultResource {
         }
 
         // Process the new result from the build result.
-        Optional<Result> result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, requestBody);
+        Optional<Result> optResult = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, requestBody);
 
         // Only notify the user about the new result if the result was created successfully.
-        if (result.isPresent()) {
-            log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result.get(), result.get().getSubmission(),
-                    result.get().getParticipation());
+        if (optResult.isPresent()) {
+            Result result = optResult.get();
+            log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
             // notify user via websocket
-            messagingService.broadcastNewResult((Participation) participation, result.get());
+            messagingService.broadcastNewResult((Participation) participation, result);
             if (participation instanceof StudentParticipation) {
                 // do not try to report results for template or solution participations
                 ltiService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
@@ -183,10 +185,10 @@ public class ResultResource {
     @Nullable
     private ProgrammingExerciseParticipation getParticipationWithResults(String planKey) {
         // we have to support template, solution and student build plans here
-        if (planKey.contains(BuildPlanType.TEMPLATE.getName())) {
+        if (planKey.endsWith("-" + BuildPlanType.TEMPLATE.getName())) {
             return templateProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
         }
-        else if (planKey.contains(BuildPlanType.SOLUTION.getName())) {
+        else if (planKey.endsWith("-" + BuildPlanType.SOLUTION.getName())) {
             return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
         }
         List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findByBuildPlanId(planKey);
@@ -346,7 +348,20 @@ public class ResultResource {
             return forbidden();
         }
 
-        return new ResponseEntity<>(result.getFeedbacks(), HttpStatus.OK);
+        Exercise exercise = participation.getExercise();
+        List<Feedback> feedbacks;
+        // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise) && result.getAssessmentType() != null && !AssessmentType.AUTOMATIC.equals(result.getAssessmentType())
+                && exercise.getAssessmentDueDate() != null && ZonedDateTime.now().isBefore(exercise.getAssessmentDueDate())) {
+            // filter all non-automatic feedbacks
+            feedbacks = result.getFeedbacks().stream().filter(feedback -> feedback.getType() != null && FeedbackType.AUTOMATIC.equals(feedback.getType()))
+                    .collect(Collectors.toList());
+        }
+        else {
+            feedbacks = result.getFeedbacks();
+        }
+
+        return new ResponseEntity<>(feedbacks, HttpStatus.OK);
     }
 
     /**
