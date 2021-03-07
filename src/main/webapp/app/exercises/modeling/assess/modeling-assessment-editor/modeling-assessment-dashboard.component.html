@@ -41,7 +41,7 @@
                     <th>
                         <a class="th-link">#</a>
                     </th>
-                    <th>
+                    <th *ngIf="exercise.isAtLeastInstructor">
                         <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a>
                     </th>
                     <th>
@@ -56,7 +56,9 @@
             <tbody>
                 <tr *ngFor="let submission of optimalSubmissions; let i = index" [ngStyle]="submission.optimal && { 'font-weight': 'bold' }">
                     <td>{{ i + 1 }}</td>
-                    <td>{{ submission.participation.participantName }}</td>
+                    <td *ngIf="exercise.isAtLeastInstructor">
+                        {{ submission.participation.participantName }}
+                    </td>
                     <td>
                         <span *ngIf="submission.latestResult && submission.latestResult!.assessor">{{ submission.latestResult!.assessor!.name }} (lock)</span>
                     </td>
@@ -104,7 +106,7 @@
                         <a class="th-link" jhiTranslate="artemisApp.exercise.teamName">Team name</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th *ngIf="!exercise.teamMode" jhiSortBy="participation.student.name">
+                    <th *ngIf="!exercise.teamMode && exercise.isAtLeastInstructor" jhiSortBy="participation.student.name">
                         <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -148,7 +150,9 @@
             <tbody>
                 <tr *ngFor="let submission of otherSubmissions; let i = index" [ngStyle]="submission.optimal && { 'font-weight': 'bold' }">
                     <td>{{ i + 1 }}</td>
-                    <td>{{ submission.participation.participantName }}</td>
+                    <td *ngIf="exercise.isAtLeastInstructor">
+                        {{ submission.participation.participantName }}
+                    </td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>
                     <td>
                         <jhi-result [participation]="submission.participation"></jhi-result>

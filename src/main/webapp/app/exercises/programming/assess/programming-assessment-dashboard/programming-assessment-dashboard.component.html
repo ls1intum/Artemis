@@ -9,8 +9,9 @@
                     <th>
                         <a class="th-link">#</a>
                     </th>
-                     <th>
-                        <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a>
+                    <th jhiSortBy="participation.participantName" *ngIf="exercise.isAtLeastInstructor">
+                        <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="submissionDate">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</a>
@@ -54,7 +55,9 @@
             <tbody>
                 <tr *ngFor="let submission of filteredSubmissions; let i = index">
                     <td>{{ i + 1 }}</td>
-                    <td>{{ submission.participation.participantName }}</td>
+                    <td *ngIf="exercise.isAtLeastInstructor">
+                        {{ submission.participation.participantName }}
+                    </td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>
                     <td>
                         <jhi-result [participation]="submission.participation"></jhi-result>
