@@ -138,7 +138,7 @@ public class Result extends DomainObject {
      * @return String with result string in this format "2 of 13 points"
      */
     public String createResultString(Double totalPoints, Double maxPoints) {
-        DecimalFormat formatter = new DecimalFormat("#.##");
+        DecimalFormat formatter = new DecimalFormat("#.#");
         return formatter.format(totalPoints) + " of " + formatter.format(maxPoints) + " points";
     }
 
@@ -296,15 +296,13 @@ public class Result extends DomainObject {
         return this;
     }
 
-    public Result addFeedbacks(List<Feedback> feedbacks) {
+    public void addFeedbacks(List<Feedback> feedbacks) {
         feedbacks.forEach(this::addFeedback);
-        return this;
     }
 
-    public Result removeFeedback(Feedback feedback) {
+    public void removeFeedback(Feedback feedback) {
         this.feedbacks.remove(feedback);
         feedback.setResult(null);
-        return this;
     }
 
     public void setFeedbacks(List<Feedback> feedbacks) {
@@ -458,7 +456,7 @@ public class Result extends DomainObject {
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission));
             // update result string
-            setResultString(quizExercise.getScoreInPointsForSubmission(quizSubmission), quizExercise.getOverallQuizPoints().doubleValue());
+            setResultString(quizExercise.getScoreInPointsForSubmission(quizSubmission), quizExercise.getOverallQuizPoints());
         }
     }
 
