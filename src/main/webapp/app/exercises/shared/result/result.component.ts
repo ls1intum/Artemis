@@ -17,6 +17,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { round } from 'app/shared/util/utils';
 
 /**
  * Enumeration object representing the possible options that
@@ -45,6 +46,7 @@ enum ResultTemplateStatus {
 export class ResultComponent implements OnInit, OnChanges {
     // make constants available to html for comparison
     readonly ResultTemplateStatus = ResultTemplateStatus;
+    readonly round = round;
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
@@ -55,7 +57,6 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showTestDetails = false;
 
     ParticipationType = ParticipationType;
-
     textColorClass: string;
     hasFeedback: boolean;
     resultIconClass: string[];

@@ -14,7 +14,7 @@
             ><!-- we need to make sure that result is not null, otherwise the compiler complains below -->
             <span [ngClass]="textColorClass" class="guided-tour">
                 <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
-                <span class="score"> &nbsp;<span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score</span> {{ result.score }}%, </span>
+                <span class="score"> &nbsp;<span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score</span> {{ round(result.score) }} %, </span>
                 <span *ngIf="hasFeedback">
                     <span class="guided-tour result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip" container="body">{{ resultString }}</span>
                 </span>
