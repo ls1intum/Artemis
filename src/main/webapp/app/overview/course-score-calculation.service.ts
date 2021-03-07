@@ -30,47 +30,29 @@ export class CourseScoreCalculationService {
         let presentationScore = 0;
         for (const exercise of courseExercises) {
             const isExerciseFinished = !exercise.dueDate || exercise.dueDate.isBefore(moment());
+            const isAssessmentOver = !exercise.assessmentDueDate || exercise.assessmentDueDate.isBefore(moment());
             const isExerciseIncluded = exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED;
+
             if (isExerciseFinished && isExerciseIncluded) {
                 const maxPointsReachableInExercise = exercise.maxPoints!;
                 if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                     maxPointsInCourse += maxPointsReachableInExercise;
                 }
+                if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY && isAssessmentOver) {
+                    reachableMaxPointsInCourse += maxPointsReachableInExercise;
+                }
                 const participation = this.getParticipationForExercise(exercise);
                 if (participation) {
                     const result = this.getResultForParticipation(participation, exercise.dueDate!);
-                    if (result && result.rated) {
+                    if (result) {
                         let score = result.score;
                         // this should cover score is undefined and score is null
                         if (score == undefined) {
                             score = 0;
                         }
                         pointsAchievedByStudentInCourse += score * this.SCORE_NORMALIZATION_VALUE * maxPointsReachableInExercise;
-                        if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                            reachableMaxPointsInCourse += maxPointsReachableInExercise;
-                        }
-                        // Quizzes should automatically have a result after due date but can have one that is not rated, this should still count into reachable scores
-                    } else if (exercise.type === ExerciseType.QUIZ) {
-                        if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                            reachableMaxPointsInCourse += maxPointsReachableInExercise;
-                        }
                     }
                     presentationScore += participation.presentationScore ? participation.presentationScore : 0;
-
-                    // programming exercises and quiz can be excluded here because their state is INITIALIZED even after the exercise is over
-                    if (
-                        participation.initializationState === InitializationState.INITIALIZED &&
-                        exercise.type !== ExerciseType.PROGRAMMING &&
-                        exercise.type !== ExerciseType.QUIZ
-                    ) {
-                        if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                            reachableMaxPointsInCourse += maxPointsReachableInExercise;
-                        }
-                    }
-                } else {
-                    if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                        reachableMaxPointsInCourse += maxPointsReachableInExercise;
-                    }
                 }
             }
         }
