@@ -33,6 +33,7 @@ import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-m
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -459,6 +460,26 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.examManagement.assessmentDashboard',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/assessment-dashboard/:exerciseId',
+        component: ExerciseAssessmentDashboardComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            usePathForBreadcrumbs: true,
+            pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/test-assessment-dashboard/:exerciseId',
+        component: ExerciseAssessmentDashboardComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            usePathForBreadcrumbs: true,
+            pageTitle: 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader',
         },
         canActivate: [UserRouteAccessService],
     },

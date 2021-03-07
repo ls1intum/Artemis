@@ -545,15 +545,15 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:courseId/for-tutor-dashboard
+     * GET /courses/:courseId/for-assessment-dashboard
      *
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
-    @GetMapping("/courses/{courseId}/for-tutor-dashboard")
+    @GetMapping("/courses/{courseId}/for-assessment-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseForAssessmentDashboard(@PathVariable long courseId) {
-        log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
+        log.debug("REST request /courses/{courseId}/for-assessment-dashboard");
         Course course = courseRepository.findWithEagerExercisesById(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
@@ -571,17 +571,15 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:courseId/stats-for-tutor-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course - number of
+     * GET /courses/:courseId/stats-for-assessment-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course - number of
      * assessments - number of assessments assessed by the tutor - number of complaints
      *
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
-    @GetMapping("/courses/{courseId}/stats-for-tutor-dashboard")
+    @GetMapping("/courses/{courseId}/stats-for-assessment-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
-        log.debug("REST request /courses/{courseId}/stats-for-tutor-dashboard");
-
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {

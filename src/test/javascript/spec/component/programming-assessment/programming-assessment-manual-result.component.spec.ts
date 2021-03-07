@@ -363,13 +363,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
     }));
 
-    it('should create the correct repository url', fakeAsync(() => {
-        comp.ngOnInit();
-        tick(100);
-        expect(comp.adjustedRepositoryURL).to.be.equal('http://bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git');
-        flush();
-    }));
-
     it('should highlight lines that were changed', fakeAsync(() => {
         // Stub
         const getFilesWithContentStub = stub(repositoryFileService, 'getFilesWithContent');

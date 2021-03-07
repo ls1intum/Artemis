@@ -146,7 +146,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.isTestRun = this.route.snapshot.url[3]?.toString() === 'test-run-exercise-assessment-dashboard';
+        this.isTestRun = this.router.url.indexOf('test-assessment-dashboard') >= 0;
         this.unassessedSubmissionByCorrectionRound = new Map<number, Submission>();
 
         this.loadAll();
@@ -611,7 +611,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     back() {
         if (!this.isExamMode) {
-            this.router.navigate([`/course-management/${this.courseId}/tutor-dashboard`]);
+            this.router.navigate([`/course-management/${this.courseId}/assessment-dashboard`]);
         } else {
             if (this.isTestRun) {
                 this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/test-runs/assess`]);

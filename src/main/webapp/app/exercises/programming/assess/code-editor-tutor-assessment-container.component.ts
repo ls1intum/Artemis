@@ -71,7 +71,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     participationCouldNotBeFetched = false;
     showEditorInstructions = true;
     hasAssessmentDueDatePassed: boolean;
-    adjustedRepositoryURL: string;
     correctionRound: number;
 
     private get course(): Course | undefined {
@@ -170,7 +169,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                             if (this.manualResult && this.manualResult.hasComplaint) {
                                 this.getComplaint();
                             }
-                            this.createAdjustedRepositoryUrl();
                         },
                         (error: HttpErrorResponse) => {
                             this.participationCouldNotBeFetched = true;
@@ -419,19 +417,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     readOnly() {
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
-    }
-
-    /**
-     * Removes the login from the repositoryURL
-     */
-    private createAdjustedRepositoryUrl() {
-        this.adjustedRepositoryURL = this.participation.repositoryUrl || '';
-        if (this.participation.student && this.participation.repositoryUrl) {
-            const userName = this.participation.student.login + '@';
-            if (this.participation.repositoryUrl.includes(userName)) {
-                this.adjustedRepositoryURL = this.participation.repositoryUrl.replace(userName, '');
-            }
-        }
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {

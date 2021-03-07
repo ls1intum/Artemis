@@ -112,12 +112,22 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                 this.courseService.checkAndSetCourseRights(this.course);
                 this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
 
+                // No exercises exist yet
+                if (!this.exam.exerciseGroups) {
+                    return;
+                }
+
                 // get all exercises
                 const exercises: Exercise[] = [];
                 // eslint-disable-next-line chai-friendly/no-unused-expressions
                 this.exam.exerciseGroups!.forEach((exerciseGroup) => {
                     if (exerciseGroup.exercises) {
                         exercises.push(...exerciseGroup.exercises);
+
+                        // Set the exercise group since it is undefined by default here
+                        exerciseGroup.exercises.forEach((exercise: Exercise) => {
+                            exercise.exerciseGroup = exerciseGroup;
+                        });
                     }
                 });
 
@@ -274,5 +284,20 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                 this.onError(err);
             },
         );
+    }
+
+    getAssessmentDashboardLinkForExercise(exercise: Exercise): string[] {
+        if (!this.isExamMode) {
+            return ['/course-management', this.courseId.toString(), 'assessment-dashboard', exercise.id!.toString()];
+        }
+
+        return [
+            '/course-management',
+            this.courseId.toString(),
+            'exams',
+            this.examId.toString(),
+            this.isTestRun ? 'test-assessment-dashboard' : 'assessment-dashboard',
+            exercise.id!.toString(),
+        ];
     }
 }

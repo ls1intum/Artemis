@@ -20,9 +20,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -56,6 +54,9 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     SubmissionRepository submissionRepository;
+
+    @Autowired
+    UserRepository userRepository;
 
     private ProgrammingExercise programmingExercise;
 
@@ -298,7 +299,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(response.isRated().equals(Boolean.TRUE));
         assertThat(response.getCompletionDate().equals(ZonedDateTime.now()));
 
-        Course course = request.get("/api/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
+        Course course = request.get("/api/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard", HttpStatus.OK,
+                Course.class);
         Exercise exercise = (Exercise) course.getExercises().toArray()[0];
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(1L);
@@ -824,5 +826,84 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
                 paramsGetAssessedCR1);
 
         assertThat(assessedSubmissionList.size()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void overrideProgrammingAssessmentAfterComplaint() throws Exception {
+        User student1 = userRepository.findOneByLogin("student1").orElse(null);
+
+        // Starting participation
+        StudentParticipation participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, student1);
+        studentParticipationRepository.save(participation);
+
+        // Creating submission
+        ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
+        programmingSubmission.setType(SubmissionType.MANUAL);
+        programmingSubmission.setParticipation(participation);
+        programmingSubmission.setSubmitted(Boolean.TRUE);
+        programmingSubmission.setSubmissionDate(ZonedDateTime.now());
+        programmingSubmission = submissionRepository.save(programmingSubmission);
+
+        // assess this submission
+        User tutor1 = userRepository.findOneByLogin("tutor1").orElse(null);
+        Result initialResult = ModelFactory.generateResult(true, 50);
+        initialResult.setAssessor(tutor1);
+        initialResult.setHasComplaint(true);
+        initialResult.setHasFeedback(false);
+        initialResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        initialResult.setParticipation(participation);
+        initialResult.setResultString(50.0, 100.0);
+        initialResult = resultRepository.save(initialResult);
+
+        programmingSubmission.addResult(initialResult);
+        initialResult.setSubmission(programmingSubmission);
+        programmingSubmission = submissionRepository.save(programmingSubmission);
+
+        // complaining
+        Complaint complaint = new Complaint().result(initialResult).complaintText("This is not fair");
+        complaint = complaintRepo.save(complaint);
+        complaint.getResult().setParticipation(null); // Break infinite reference chain
+
+        // Creating complaint response
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(true);
+        complaintResponse.setResponseText("accepted");
+        List<Feedback> complaintFeedback = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(complaintFeedback, 40.0, 40L);
+        addAssessmentFeedbackAndCheckScore(complaintFeedback, 30.0, 70L);
+        addAssessmentFeedbackAndCheckScore(complaintFeedback, 30.0, 100L);
+        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(complaintFeedback).complaintResponse(complaintResponse);
+
+        // update assessment after Complaint, now 100%
+        Result resultAfterComplaint = request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
+                Result.class, HttpStatus.OK);
+        Long resultAfterComplaintScore = resultAfterComplaint.getScore();
+
+        // Now, override the complaint response with another assessment -> now 10%
+        List<Feedback> overrideFeedback = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(overrideFeedback, 10.0, 10L);
+        assertThat(resultAfterComplaint).isNotNull();
+        resultAfterComplaint.setFeedbacks(overrideFeedback);
+        resultAfterComplaint.setRated(true);
+        resultAfterComplaint.setHasFeedback(true);
+        resultAfterComplaint.setScore(10L);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("submit", "true");
+        Result overwrittenResult = request.putWithResponseBodyAndParams("/api/participations/" + programmingSubmission.getParticipation().getId() + "/manual-results",
+                resultAfterComplaint, Result.class, HttpStatus.OK, params);
+
+        assertThat(initialResult.getScore()).isEqualTo(50L); // first result was instantiated with a score of 50%
+        assertThat(resultAfterComplaintScore).isEqualTo(100L); // score after complaint evaluation got changed to 100%
+        assertThat(overwrittenResult.getScore()).isEqualTo(10L); // the instructor overwrote the score to 10%
+        assertThat(overwrittenResult.hasComplaint()).isEqualTo(true); // Very important: It must not be overwritten whether the result actually had a complaint
+
+        // Also check that its correctly saved in the database
+        ProgrammingSubmission savedSubmission = programmingSubmissionRepository.findWithEagerResultsById(programmingSubmission.getId()).orElse(null);
+        assertThat(savedSubmission).isNotNull();
+        assertThat(savedSubmission.getLatestResult().getScore()).isEqualTo(10L);
+        assertThat(savedSubmission.getLatestResult().hasComplaint()).isEqualTo(true);
+
     }
 }

@@ -363,11 +363,6 @@ public class ExamService {
         long numberOfExercises = exam.getNumberOfExercisesInExam() != null ? exam.getNumberOfExercisesInExam() : 0;
         long numberOfOptionalExercises = numberOfExercises - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
 
-        // Check that the start and end date of the exam is set
-        if (exam.getStartDate() == null || exam.getEndDate() == null) {
-            throw new BadRequestAlertException("The start and end date must be set for the exam", "Exam", "artemisApp.exam.validation.startAndEndMustBeSet");
-        }
-
         // Ensure that all exercise groups have at least one exercise
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             if (exerciseGroup.getExercises().isEmpty()) {
