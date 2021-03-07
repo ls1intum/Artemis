@@ -37,7 +37,7 @@
                         <b>{{ 'artemisApp.assessmentDashboard.yourAssessments' | translate }}:</b> {{ numberOfTutorAssessments }}
                     </li>
                     <!-- TODO: make those links work (REST calls to fetch for individual students do not exist yet) -->
-                    <li>
+                    <li *ngIf="false">
                         <!-- Complaints about your assessments: -->
                         <!-- this value is not yet available for exam mode. As soon as the leaderboards exist add it agian. {{ numberOfTutorComplaints }} -->
                         <a [routerLink]="['/course-management', courseId, 'exams', examId, 'complaints']" [queryParams]="{ tutorId: tutorId }" [class.disabled]="true">
