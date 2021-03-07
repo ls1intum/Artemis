@@ -37,10 +37,10 @@ export class CourseScoreCalculationService {
                 const maxPointsReachableInExercise = exercise.maxPoints!;
                 if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                     maxPointsInCourse += maxPointsReachableInExercise;
-                }
-                // points are reachable if the exercise is released and the assessment is over --> It was possible for the student to get points
-                if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY && isAssessmentOver) {
-                    reachableMaxPointsInCourse += maxPointsReachableInExercise;
+                    // points are reachable if the exercise is released and the assessment is over --> It was possible for the student to get points
+                    if (isAssessmentOver) {
+                        reachableMaxPointsInCourse += maxPointsReachableInExercise;
+                    }
                 }
                 const participation = this.getParticipationForExercise(exercise);
                 if (participation) {
