@@ -33,6 +33,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     readonly exerciseTypes = [ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
 
+    // Expose the function to the template
+    readonly round = round;
+
     course: Course;
     allParticipationsOfCourse: StudentParticipation[] = [];
     exercisesOfCourseThatAreIncludedInScoreCalculation: Exercise[] = [];
@@ -316,19 +319,19 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         const exercisePointsPerType = student.sumPointsPerExerciseType.get(exerciseType)!;
                         let exerciseScoresPerType = 0;
                         if (this.maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0) {
-                            exerciseScoresPerType = (student.sumPointsPerExerciseType.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100;
+                            exerciseScoresPerType = round((student.sumPointsPerExerciseType.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100);
                         }
                         const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                         const exercisePointValues = student.pointsPerExerciseType.get(exerciseType)!;
                         exerciseTitleKeys.forEach((title, index) => {
-                            rowData[title] = this.localeConversionService.toLocaleString(exercisePointValues[index]);
+                            rowData[title] = this.localeConversionService.toLocaleString(round(exercisePointValues[index], 1));
                         });
                         rowData[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(exercisePointsPerType);
                         rowData[exerciseTypeName + ' ' + SCORE_KEY] = this.localeConversionService.toLocalePercentageString(exerciseScoresPerType);
                     }
                 }
 
-                const overallScore = (student.overallPoints / this.maxNumberOfOverallPoints) * 100;
+                const overallScore = round((student.overallPoints / this.maxNumberOfOverallPoints) * 100);
                 rowData[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(student.overallPoints);
                 rowData[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(overallScore);
                 if (this.course.presentationScore) {
@@ -370,10 +373,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseAveragePoints = this.exerciseAveragePointsPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataAverage[title] = this.localeConversionService.toLocaleString(exerciseAveragePoints[index]);
+                        rowDataAverage[title] = this.localeConversionService.toLocaleString(round(exerciseAveragePoints[index], 1));
                     });
 
-                    const averageScore = (this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100;
+                    const averageScore = round((this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100);
 
                     rowDataAverage[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(
                         this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)!,
@@ -382,7 +385,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 }
             }
 
-            const averageOverallScore = (this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100;
+            const averageOverallScore = round((this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100);
             rowDataAverage[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.averageNumberOfOverallPoints);
             rowDataAverage[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(averageOverallScore);
             if (this.course.presentationScore) {
