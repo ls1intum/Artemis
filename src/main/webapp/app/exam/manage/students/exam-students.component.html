@@ -24,6 +24,25 @@
                 <fa-icon [icon]="'plus'" [fixedWidth]="true"></fa-icon>&nbsp;
                 <span jhiTranslate="artemisApp.examManagement.examStudents.registerAllFromCourse"></span>
             </button>
+            <button
+                [disabled]="isLoading"
+                [actionType]="ActionType.Remove"
+                [entityTitle]="exam.title"
+                [renderButtonText]="false"
+                jhiDeleteButton
+                class="btn btn-primary ml-1"
+                style="height: 40px"
+                deleteQuestion="artemisApp.studentExams.removeAllStudents.question"
+                (delete)="removeAllStudents($event)"
+                [dialogError]="dialogError$"
+                [additionalChecks]="{
+                                    deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission'
+                                }"
+                deleteConfirmationText="artemisApp.studentExams.removeAllStudents.confirmationText"
+            >
+                <span jhiTranslate="artemisApp.studentExams.removeAllStudents.title"></span>
+                <fa-icon [icon]="'user-slash'"></fa-icon>
+            </button>
         </div>
     </div>
     <jhi-alert></jhi-alert>
