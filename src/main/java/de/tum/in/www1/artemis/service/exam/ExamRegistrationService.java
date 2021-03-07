@@ -1,15 +1,5 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-
-import java.util.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.stereotype.Service;
-
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -24,6 +14,15 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+
+import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 
 /**
  * Service Implementation for registering students in the exam.
@@ -206,20 +205,7 @@ public class ExamRegistrationService {
 
         // The student exam might already be generated, then we need to delete it
         Optional<StudentExam> optionalStudentExam = studentExamService.findOneWithExercisesByUserIdAndExamIdOptional(student.getId(), exam.getId());
-        if (optionalStudentExam.isPresent()) {
-            StudentExam studentExam = optionalStudentExam.get();
-
-            // Optionally delete participations and submissions
-            if (deleteParticipationsAndSubmission) {
-                List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam);
-                for (var participation : participations) {
-                    participationService.delete(participation.getId(), true, true);
-                }
-            }
-
-            // Delete the student exam
-            studentExamService.deleteStudentExam(studentExam.getId());
-        }
+        optionalStudentExam.ifPresent(studentExam -> this.removeStudentExam(studentExam, deleteParticipationsAndSubmission));
 
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_USER_FROM_EXAM, "exam=" + exam.getTitle(), "user=" + student.getLogin());
@@ -227,6 +213,44 @@ public class ExamRegistrationService {
         log.info("User " + currentUser.getLogin() + " has removed user " + student.getLogin() + " from the exam " + exam.getTitle() + " with id " + exam.getId()
                 + ". This also deleted a potentially existing student exam with all its participations and submissions.");
     }
+
+    public void removeStudentExam(StudentExam studentExam, boolean deleteParticipationsAndSubmission){
+
+        // Optionally delete participations and submissions
+        if (deleteParticipationsAndSubmission) {
+            List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam);
+            for (var participation : participations) {
+                participationService.delete(participation.getId(), true, true);
+            }
+        }
+
+        // Delete the student exam
+        studentExamService.deleteStudentExam(studentExam.getId());
+    }
+
+    public void unregisterAllStudentFromExam(Long examId, boolean deleteParticipationsAndSubmission){
+        var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+
+        // remove all registered students
+        List<Long> userIds = new ArrayList<Long>();
+        exam.getRegisteredUsers().forEach((user -> userIds.add(user.getId())));
+        List<User> registeredStudentsList = userRepository.findAllById(userIds);
+        registeredStudentsList.forEach(exam::removeRegisteredUser);
+        examRepository.save(exam);
+
+        // remove all students exams
+        Set<StudentExam> studentExams = studentExamService.findAllWithExercisesByExamId(examId);
+        studentExams.forEach((studentExam -> {
+            this.removeStudentExam(studentExam, deleteParticipationsAndSubmission);
+        }));
+
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_ALL_USERs_FROM_EXAM, "exam=" + exam.getTitle());
+        auditEventRepository.add(auditEvent);
+        log.info("User " + currentUser.getLogin() + " has removed all users from the exam " + exam.getTitle() + " with id " + exam.getId()
+            + ". This also deleted a potentially existing student exams with all its participations and submissions.");
+    }
+
 
     /**
      * Adds all students registered in the course to the given exam
