@@ -98,3 +98,12 @@ Its main features are
 * utilities to test exercises using System.out and System.in comfortably
 
 **For more information see** `AJTS GitHub <https://github.com/ls1intum/artemis-java-test-sandbox>`__
+
+Best practices for writing test cases
+-------------------------------------
+
+The following sections describe best practices for writing test cases.
+The examples and explanations are specifically written for Java (using AJTS/JUnit5), but the practices can also be generalized
+for other programming languages.
+
+.. include:: test-case-best-practices.inc
