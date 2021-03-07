@@ -25,9 +25,9 @@ plugins {
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
-    id "com.diffplug.spotless" version "5.10.2"
+    id "com.diffplug.spotless" version "5.11.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-    id "com.github.ben-manes.versions" version "0.36.0"
+    id "com.github.ben-manes.versions" version "0.38.0"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -174,8 +174,8 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.3.1"
     implementation "com.atlassian.bamboo:bamboo-specs:7.1.2"
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
-    implementation "io.sentry:sentry-spring-boot-starter:4.2.0"
-    implementation "io.sentry:sentry-logback:4.2.0"
+    implementation "io.sentry:sentry-spring-boot-starter:4.3.0"
+    implementation "io.sentry:sentry-logback:4.3.0"
     implementation "org.jsoup:jsoup:1.13.1"
 
     implementation "org.springdoc:springdoc-openapi-ui:1.5.5"

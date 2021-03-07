@@ -1,6 +1,0 @@
-<div *ngFor="let feedback of feedbacks">
-    <p *ngIf="feedback.credits != undefined">
-        {{ 'artemisApp.fileUploadSubmission.feedbackResult' | translate: { credits: feedback.credits } }}
-        <span *ngIf="feedback.detailText">{{ 'artemisApp.fileUploadSubmission.feedbackResultDetail' | translate: { detailText: feedback.detailText } }} </span>
-    </p>
-</div>

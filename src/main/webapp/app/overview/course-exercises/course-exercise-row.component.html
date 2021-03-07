@@ -14,7 +14,7 @@
             <div class="col-sm col">
                 <h4>{{ exercise.title }}</h4>
             </div>
-            <jhi-submission-result-status *ngIf="!isPresentationMode" [exercise]="exercise" [short]="true"></jhi-submission-result-status>
+            <jhi-submission-result-status *ngIf="!isPresentationMode" [exercise]="exercise" [short]="true" [triggerLastGraded]="false"></jhi-submission-result-status>
         </div>
         <div class="row">
             <jhi-exercise-details-student-actions

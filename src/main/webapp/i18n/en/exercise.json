@@ -132,6 +132,8 @@
             "notificationText": "Optional: Notification about changes",
             "submissionSuccessful": "The submission was successful",
             "submissionUnsuccessful": "The submission was unsuccessful",
+            "lateSubmissionReceived": "Artemis received a late submission, please wait for the result and then scroll down to the result history to see more details.",
+            "lateSubmissionResultReceived": "Artemis received an ungraded result for a late submission, please scroll down to see the score in the result history.",
             "resultCreationSuccessful": "The result was created successfully",
             "resultCreationUnsuccessful": "The result was created unsuccessfully",
             "presentationScoreEnabled": {
