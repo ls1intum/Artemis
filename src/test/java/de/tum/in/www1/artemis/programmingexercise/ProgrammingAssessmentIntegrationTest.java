@@ -859,39 +859,39 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         complaintResponse.getComplaint().setAccepted(true);
         complaintResponse.setResponseText("accepted");
         List<Feedback> complaintFeedback = new ArrayList<>();
-        addAssessmentFeedbackAndCheckScore(complaintFeedback, 40.0, 40L);
-        addAssessmentFeedbackAndCheckScore(complaintFeedback, 30.0, 70L);
-        addAssessmentFeedbackAndCheckScore(complaintFeedback, 30.0, 100L);
+        addAssessmentFeedbackAndCheckScore(complaintFeedback, 40.0, 40D);
+        addAssessmentFeedbackAndCheckScore(complaintFeedback, 30.0, 70D);
+        addAssessmentFeedbackAndCheckScore(complaintFeedback, 30.0, 100D);
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(complaintFeedback).complaintResponse(complaintResponse);
 
         // update assessment after Complaint, now 100%
         Result resultAfterComplaint = request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
-        Long resultAfterComplaintScore = resultAfterComplaint.getScore();
+        Double resultAfterComplaintScore = resultAfterComplaint.getScore();
 
         // Now, override the complaint response with another assessment -> now 10%
         List<Feedback> overrideFeedback = new ArrayList<>();
-        addAssessmentFeedbackAndCheckScore(overrideFeedback, 10.0, 10L);
+        addAssessmentFeedbackAndCheckScore(overrideFeedback, 10.0, 10D);
         assertThat(resultAfterComplaint).isNotNull();
         resultAfterComplaint.setFeedbacks(overrideFeedback);
         resultAfterComplaint.setRated(true);
         resultAfterComplaint.setHasFeedback(true);
-        resultAfterComplaint.setScore(10L);
+        resultAfterComplaint.setScore(10D);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
         Result overwrittenResult = request.putWithResponseBodyAndParams("/api/participations/" + programmingSubmission.getParticipation().getId() + "/manual-results",
                 resultAfterComplaint, Result.class, HttpStatus.OK, params);
 
-        assertThat(initialResult.getScore()).isEqualTo(50L); // first result was instantiated with a score of 50%
-        assertThat(resultAfterComplaintScore).isEqualTo(100L); // score after complaint evaluation got changed to 100%
-        assertThat(overwrittenResult.getScore()).isEqualTo(10L); // the instructor overwrote the score to 10%
+        assertThat(initialResult.getScore()).isEqualTo(50D); // first result was instantiated with a score of 50%
+        assertThat(resultAfterComplaintScore).isEqualTo(100D); // score after complaint evaluation got changed to 100%
+        assertThat(overwrittenResult.getScore()).isEqualTo(10D); // the instructor overwrote the score to 10%
         assertThat(overwrittenResult.hasComplaint()).isEqualTo(true); // Very important: It must not be overwritten whether the result actually had a complaint
 
         // Also check that its correctly saved in the database
         ProgrammingSubmission savedSubmission = programmingSubmissionRepository.findWithEagerResultsById(programmingSubmission.getId()).orElse(null);
         assertThat(savedSubmission).isNotNull();
-        assertThat(savedSubmission.getLatestResult().getScore()).isEqualTo(10L);
+        assertThat(savedSubmission.getLatestResult().getScore()).isEqualTo(10D);
         assertThat(savedSubmission.getLatestResult().hasComplaint()).isEqualTo(true);
 
     }
