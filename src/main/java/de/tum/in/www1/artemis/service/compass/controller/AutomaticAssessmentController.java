@@ -8,6 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hazelcast.core.HazelcastInstance;
+
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
@@ -23,13 +25,19 @@ public class AutomaticAssessmentController {
 
     private Map<Long, CompassResult> lastAssessmentResultMapping;
 
-    private double totalCoverage;
+    HazelcastInstance hazelcastInstance;
 
-    private double totalConfidence;
+    static Map<Long, Double> totalCoverages;
 
-    public AutomaticAssessmentController() {
-        similarityIdAssessmentMapping = new ConcurrentHashMap<>();
-        lastAssessmentResultMapping = new ConcurrentHashMap<>();
+    static Map<Long, Double> totalConfidences;
+
+    private Long exerciseId;
+
+    public AutomaticAssessmentController(Long exerciseId, HazelcastInstance hazelcastInstance) {
+        similarityIdAssessmentMapping = hazelcastInstance.getMap("modelAssessments - " + exerciseId);
+        lastAssessmentResultMapping = hazelcastInstance.getMap("modelResults - " + exerciseId);
+        this.hazelcastInstance = hazelcastInstance;
+        this.exerciseId = exerciseId;
     }
 
     /**
@@ -101,8 +109,8 @@ public class AutomaticAssessmentController {
     // TODO CZ: only assess models automatically that do not already have a complete manual assessment?
     public void assessModelsAutomatically(ModelIndex modelIndex) {
 
-        totalCoverage = 0;
-        totalConfidence = 0;
+        double totalCoverage = 0;
+        double totalConfidence = 0;
 
         for (UMLDiagram model : modelIndex.getModelCollection()) {
 
@@ -115,6 +123,9 @@ public class AutomaticAssessmentController {
 
         totalConfidence /= modelIndex.getModelCollectionSize();
         totalCoverage /= modelIndex.getModelCollectionSize();
+
+        setTotalConfidence(totalConfidence);
+        setTotalCoverage(totalCoverage);
     }
 
     /**
@@ -127,7 +138,7 @@ public class AutomaticAssessmentController {
         double totalCount = 0;
         double missingCount = 0;
 
-        Map<UMLElement, Score> scoreHashMap = new ConcurrentHashMap<>();
+        Map<String, Score> scoreHashMap = new ConcurrentHashMap<>();
 
         for (UMLElement element : model.getAllModelElements()) {
             Optional<SimilaritySetAssessment> optionalAssessment = getAssessmentForSimilaritySet(element.getSimilarityID());
@@ -143,7 +154,7 @@ public class AutomaticAssessmentController {
                     log.debug("Unable to find score for element " + element.getJSONElementID() + " in model " + model.getModelSubmissionId() + " with the specific context");
                 }
                 else {
-                    scoreHashMap.put(element, score);
+                    scoreHashMap.put(element.getJSONElementID(), score);
                 }
             }
         }
@@ -164,12 +175,32 @@ public class AutomaticAssessmentController {
         return compassResult;
     }
 
+    public void setTotalCoverage(double totalCoverage) {
+        if (AutomaticAssessmentController.totalCoverages == null) {
+            AutomaticAssessmentController.totalCoverages = hazelcastInstance.getMap("totalCoverages");
+        }
+        AutomaticAssessmentController.totalCoverages.put(exerciseId, totalCoverage);
+    }
+
     public double getTotalCoverage() {
-        return totalCoverage;
+        if (AutomaticAssessmentController.totalCoverages == null) {
+            AutomaticAssessmentController.totalCoverages = hazelcastInstance.getMap("totalCoverages");
+        }
+        return AutomaticAssessmentController.totalCoverages.get(exerciseId);
+    }
+
+    public void setTotalConfidence(double totalConfidence) {
+        if (AutomaticAssessmentController.totalConfidences == null) {
+            AutomaticAssessmentController.totalConfidences = hazelcastInstance.getMap("totalCoverages");
+        }
+        AutomaticAssessmentController.totalConfidences.put(exerciseId, totalConfidence);
     }
 
     public double getTotalConfidence() {
-        return totalConfidence;
+        if (AutomaticAssessmentController.totalConfidences == null) {
+            AutomaticAssessmentController.totalConfidences = hazelcastInstance.getMap("totalCoverages");
+        }
+        return AutomaticAssessmentController.totalConfidences.get(exerciseId);
     }
 
     /**
