@@ -883,10 +883,6 @@ public class CourseTestService {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
 
-        mockDelegate.mockAddUserToGroupInUserManagement(null, course.getStudentGroupName());
-        mockDelegate.mockAddUserToGroupInUserManagement(null, course.getTeachingAssistantGroupName());
-        mockDelegate.mockAddUserToGroupInUserManagement(null, course.getInstructorGroupName());
-
         request.postWithoutLocation("/api/courses/" + course.getId() + "/students/maxMustermann", null, HttpStatus.NOT_FOUND, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/maxMustermann", null, HttpStatus.NOT_FOUND, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/instructors/maxMustermann", null, HttpStatus.NOT_FOUND, null);

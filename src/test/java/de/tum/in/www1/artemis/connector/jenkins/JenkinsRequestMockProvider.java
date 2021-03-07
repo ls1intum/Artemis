@@ -317,7 +317,7 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    private void mockRemoveUserFromGroups(Set<String> groupsToRemove) throws IOException {
+    public void mockRemoveUserFromGroups(Set<String> groupsToRemove) throws IOException {
         if (groupsToRemove.isEmpty()) {
             return;
         }
@@ -346,7 +346,7 @@ public class JenkinsRequestMockProvider {
         mockAddUsersToGroups(user.getLogin(), user.getGroups());
     }
 
-    private void mockAddUsersToGroups(String login, Set<String> groups) throws IOException {
+    public void mockAddUsersToGroups(String login, Set<String> groups) throws IOException {
         var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
         for (ProgrammingExercise exercise : exercises) {
             var jobName = exercise.getProjectKey();

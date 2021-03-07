@@ -349,12 +349,12 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement) throws Exception {
-
+        // Not needed here
     }
 
     @Override
     public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws Exception {
-
+        // Not needed here.
     }
 
     @Override

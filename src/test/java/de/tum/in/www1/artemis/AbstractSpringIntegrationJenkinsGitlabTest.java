@@ -290,12 +290,12 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Override
     public void mockCreateGroupInUserManagement(String groupName) throws Exception {
-
+        // Not needed here
     }
 
     @Override
     public void mockDeleteGroupInUserManagement(String groupName) throws Exception {
-
+        // Not needed here
     }
 
     @Override
@@ -320,12 +320,15 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Override
     public void mockAddUserToGroupInUserManagement(User user, String group) throws Exception {
-
+        gitlabRequestMockProvider.mockUpdateVcsUser(user.getLogin(), user, Set.of(), Set.of(group), false);
+        jenkinsRequestMockProvider.mockAddUsersToGroups(user.getLogin(), Set.of(group));
     }
 
     @Override
     public void mockRemoveUserFromGroup(User user, String group) throws Exception {
-
+        gitlabRequestMockProvider.mockUpdateVcsUser(user.getLogin(), user, Set.of(group), Set.of(), false);
+        jenkinsRequestMockProvider.mockRemoveUserFromGroups(Set.of(group));
+        jenkinsRequestMockProvider.mockAddUsersToGroups(user.getLogin(), Set.of(group));
     }
 
     @Override
