@@ -908,6 +908,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
+
         exerciseService.logDeletion(programmingExercise, course, user);
         exerciseService.delete(exerciseId, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).build();
