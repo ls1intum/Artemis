@@ -6,11 +6,8 @@ import static org.mockito.Mockito.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
@@ -23,9 +20,9 @@ class AutomaticAssessmentControllerTest {
     private AutomaticAssessmentController automaticAssessmentController;
 
     private Map<String, Feedback> elementIdFeedbackMap;
-
-    @Mock
-    AssessmentIndex assessmentIndex;
+    //
+    // @Mock
+    // AssessmentIndex assessmentIndex;
 
     @Mock
     ModelIndex modelIndex;
@@ -57,17 +54,17 @@ class AutomaticAssessmentControllerTest {
     @Mock
     SimilaritySetAssessment similaritySetAssessment;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-
-        automaticAssessmentController = new AutomaticAssessmentController();
-
-        elementIdFeedbackMap = Map.of("element1Id", feedback1, "element2Id", feedback2);
-        when(feedback2.getCredits()).thenReturn(0.5);
-        when(assessmentIndex.getAssessmentForSimilaritySet(1)).thenReturn(Optional.of(similaritySetAssessment));
-        when(assessmentIndex.getAssessmentForSimilaritySet(2)).thenReturn(Optional.empty());
-    }
+    // @BeforeEach
+    // void setUp() {
+    // MockitoAnnotations.openMocks(this);
+    //
+    // automaticAssessmentController = new AutomaticAssessmentController();
+    //
+    // elementIdFeedbackMap = Map.of("element1Id", feedback1, "element2Id", feedback2);
+    // when(feedback2.getCredits()).thenReturn(0.5);
+    // when(assessmentIndex.getAssessmentForSimilaritySet(1)).thenReturn(Optional.of(similaritySetAssessment));
+    // when(assessmentIndex.getAssessmentForSimilaritySet(2)).thenReturn(Optional.empty());
+    // }
 
     // @Test
     // void addFeedbacksToAssessment_ClassDiagram() {
@@ -223,39 +220,39 @@ class AutomaticAssessmentControllerTest {
         when(controlFlow3.getSimilarityID()).thenReturn(9);
     }
 
-    private void prepareAssessmentIndexForAutomaticAssessment() {
-        SimilaritySetAssessment similaritySetAssessment1 = mock(SimilaritySetAssessment.class);
-        SimilaritySetAssessment similaritySetAssessment2 = mock(SimilaritySetAssessment.class);
-        SimilaritySetAssessment similaritySetAssessment3 = mock(SimilaritySetAssessment.class);
-        SimilaritySetAssessment similaritySetAssessment4 = mock(SimilaritySetAssessment.class);
-        SimilaritySetAssessment similaritySetAssessment5 = mock(SimilaritySetAssessment.class);
-        SimilaritySetAssessment similaritySetAssessment6 = mock(SimilaritySetAssessment.class);
-
-        when(assessmentIndex.getAssessmentForSimilaritySet(1)).thenReturn(Optional.of(similaritySetAssessment1));
-        when(assessmentIndex.getAssessmentForSimilaritySet(2)).thenReturn(Optional.of(similaritySetAssessment2));
-        when(assessmentIndex.getAssessmentForSimilaritySet(3)).thenReturn(Optional.of(similaritySetAssessment3));
-        when(assessmentIndex.getAssessmentForSimilaritySet(4)).thenReturn(Optional.empty());
-        when(assessmentIndex.getAssessmentForSimilaritySet(5)).thenReturn(Optional.empty());
-        when(assessmentIndex.getAssessmentForSimilaritySet(6)).thenReturn(Optional.of(similaritySetAssessment4));
-        when(assessmentIndex.getAssessmentForSimilaritySet(7)).thenReturn(Optional.empty());
-        when(assessmentIndex.getAssessmentForSimilaritySet(8)).thenReturn(Optional.of(similaritySetAssessment5));
-        when(assessmentIndex.getAssessmentForSimilaritySet(9)).thenReturn(Optional.of(similaritySetAssessment6));
-        when(assessmentIndex.getAssessmentForSimilaritySet(10)).thenReturn(Optional.empty());
-
-        Score score1 = mockScore(-0.5, 0.5);
-        Score score2 = mockScore(-0.5, 0.6);
-        Score score3 = mockScore(0, 0.7);
-        Score score4 = mockScore(1.5, 0.8);
-        Score score5 = mockScore(1.0, 0.9);
-        Score score6 = mockScore(0.5, 1.0);
-
-        when(similaritySetAssessment1.getScore()).thenReturn(score1);
-        when(similaritySetAssessment2.getScore()).thenReturn(score2);
-        when(similaritySetAssessment3.getScore()).thenReturn(score3);
-        when(similaritySetAssessment4.getScore()).thenReturn(score4);
-        when(similaritySetAssessment5.getScore()).thenReturn(score5);
-        when(similaritySetAssessment6.getScore()).thenReturn(score6);
-    }
+    // private void prepareAssessmentIndexForAutomaticAssessment() {
+    // SimilaritySetAssessment similaritySetAssessment1 = mock(SimilaritySetAssessment.class);
+    // SimilaritySetAssessment similaritySetAssessment2 = mock(SimilaritySetAssessment.class);
+    // SimilaritySetAssessment similaritySetAssessment3 = mock(SimilaritySetAssessment.class);
+    // SimilaritySetAssessment similaritySetAssessment4 = mock(SimilaritySetAssessment.class);
+    // SimilaritySetAssessment similaritySetAssessment5 = mock(SimilaritySetAssessment.class);
+    // SimilaritySetAssessment similaritySetAssessment6 = mock(SimilaritySetAssessment.class);
+    //
+    // when(assessmentIndex.getAssessmentForSimilaritySet(1)).thenReturn(Optional.of(similaritySetAssessment1));
+    // when(assessmentIndex.getAssessmentForSimilaritySet(2)).thenReturn(Optional.of(similaritySetAssessment2));
+    // when(assessmentIndex.getAssessmentForSimilaritySet(3)).thenReturn(Optional.of(similaritySetAssessment3));
+    // when(assessmentIndex.getAssessmentForSimilaritySet(4)).thenReturn(Optional.empty());
+    // when(assessmentIndex.getAssessmentForSimilaritySet(5)).thenReturn(Optional.empty());
+    // when(assessmentIndex.getAssessmentForSimilaritySet(6)).thenReturn(Optional.of(similaritySetAssessment4));
+    // when(assessmentIndex.getAssessmentForSimilaritySet(7)).thenReturn(Optional.empty());
+    // when(assessmentIndex.getAssessmentForSimilaritySet(8)).thenReturn(Optional.of(similaritySetAssessment5));
+    // when(assessmentIndex.getAssessmentForSimilaritySet(9)).thenReturn(Optional.of(similaritySetAssessment6));
+    // when(assessmentIndex.getAssessmentForSimilaritySet(10)).thenReturn(Optional.empty());
+    //
+    // Score score1 = mockScore(-0.5, 0.5);
+    // Score score2 = mockScore(-0.5, 0.6);
+    // Score score3 = mockScore(0, 0.7);
+    // Score score4 = mockScore(1.5, 0.8);
+    // Score score5 = mockScore(1.0, 0.9);
+    // Score score6 = mockScore(0.5, 1.0);
+    //
+    // when(similaritySetAssessment1.getScore()).thenReturn(score1);
+    // when(similaritySetAssessment2.getScore()).thenReturn(score2);
+    // when(similaritySetAssessment3.getScore()).thenReturn(score3);
+    // when(similaritySetAssessment4.getScore()).thenReturn(score4);
+    // when(similaritySetAssessment5.getScore()).thenReturn(score5);
+    // when(similaritySetAssessment6.getScore()).thenReturn(score6);
+    // }
 
     private Score mockScore(double points, double confidence) {
         Score score = mock(Score.class);
