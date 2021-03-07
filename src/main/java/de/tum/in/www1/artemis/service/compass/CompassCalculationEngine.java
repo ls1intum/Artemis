@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
@@ -36,20 +37,17 @@ public class CompassCalculationEngine {
 
     private ModelIndex modelIndex;
 
-    private AssessmentIndex assessmentIndex;
-
     private AutomaticAssessmentController automaticAssessmentController;
 
     private ModelSelector modelSelector;
 
     private LocalDateTime lastUsed;
 
-    CompassCalculationEngine(Set<ModelingSubmission> modelingSubmissions) {
+    CompassCalculationEngine(Long exerciseId, Set<ModelingSubmission> modelingSubmissions, HazelcastInstance hazelcastInstance) {
         lastUsed = LocalDateTime.now();
-        modelIndex = new ModelIndex();
-        assessmentIndex = new AssessmentIndex();
+        modelIndex = new ModelIndex(exerciseId, hazelcastInstance);
         automaticAssessmentController = new AutomaticAssessmentController();
-        modelSelector = new ModelSelector();
+        modelSelector = new ModelSelector(automaticAssessmentController);
 
         for (Submission submission : modelingSubmissions) {
             // We have to unproxy here as sometimes the Submission is a Hibernate proxy resulting in a cast exception
@@ -149,7 +147,7 @@ public class CompassCalculationEngine {
     }
 
     private void assessModelsAutomatically() {
-        automaticAssessmentController.assessModelsAutomatically(modelIndex, assessmentIndex);
+        automaticAssessmentController.assessModelsAutomatically(modelIndex);
     }
 
     /**
@@ -177,10 +175,10 @@ public class CompassCalculationEngine {
         }
 
         UMLDiagram model = modelIndex.getModelMap().get(modelSubmissionId);
-        CompassResult compassResult = model.getLastAssessmentCompassResult();
+        CompassResult compassResult = automaticAssessmentController.getLastAssessmentCompassResult(modelSubmissionId);
 
         if (compassResult == null) {
-            return automaticAssessmentController.assessModelAutomatically(model, assessmentIndex);
+            return automaticAssessmentController.assessModelAutomatically(model);
         }
         return compassResult;
     }
@@ -378,8 +376,8 @@ public class CompassCalculationEngine {
         JsonObject models = new JsonObject();
         for (Map.Entry<Long, UMLDiagram> modelEntry : getModelMap().entrySet()) {
             JsonObject model = new JsonObject();
-            model.addProperty("coverage", modelEntry.getValue().getLastAssessmentCoverage());
-            model.addProperty("confidence", modelEntry.getValue().getLastAssessmentConfidence());
+            model.addProperty("coverage", automaticAssessmentController.getLastAssessmentCoverage(modelEntry.getValue().getModelSubmissionId()));
+            model.addProperty("confidence", automaticAssessmentController.getLastAssessmentConfidence(modelEntry.getValue().getModelSubmissionId()));
             int numberOfModelConflicts = 0;
             List<UMLElement> elements = new ArrayList<>(modelEntry.getValue().getAllModelElements());
             for (UMLElement element : elements) {
@@ -416,7 +414,7 @@ public class CompassCalculationEngine {
             return 0.0;
         }
 
-        Optional<SimilaritySetAssessment> optionalAssessment = assessmentIndex.getAssessmentForSimilaritySet(element.getSimilarityID());
+        Optional<SimilaritySetAssessment> optionalAssessment = automaticAssessmentController.getAssessmentForSimilaritySet(element.getSimilarityID());
         return optionalAssessment.map(assessment -> assessment.getScore().getConfidence()).orElse(0.0);
     }
 
@@ -428,29 +426,11 @@ public class CompassCalculationEngine {
      * @param model              the corresponding model
      */
     private void addNewManualAssessment(List<Feedback> modelingAssessment, UMLDiagram model) {
-        Map<String, Feedback> feedbackMapping = createElementIdFeedbackMapping(modelingAssessment);
-        automaticAssessmentController.addFeedbackToSimilaritySet(assessmentIndex, feedbackMapping, model);
-    }
-
-    /**
-     * Create a jsonModelId to Feedback mapping generated from the feedback list of a submission.
-     *
-     * @param feedbackList the feedbackList
-     * @return a map of elementIds to scores
-     */
-    private Map<String, Feedback> createElementIdFeedbackMapping(List<Feedback> feedbackList) {
-        Map<String, Feedback> elementIdFeedbackMap = new HashMap<>();
-        feedbackList.forEach(feedback -> {
-            String jsonElementId = feedback.getReferenceElementId();
-            if (jsonElementId != null) {
-                elementIdFeedbackMap.put(jsonElementId, feedback);
-            }
-        });
-        return elementIdFeedbackMap;
+        automaticAssessmentController.addFeedbacksToSimilaritySet(modelingAssessment, model);
     }
 
     private boolean hasConflict(int elementId) {
-        Optional<SimilaritySetAssessment> optionalAssessment = assessmentIndex.getAssessmentForSimilaritySet(elementId);
+        Optional<SimilaritySetAssessment> optionalAssessment = automaticAssessmentController.getAssessmentForSimilaritySet(elementId);
 
         if (optionalAssessment.isEmpty() || optionalAssessment.get().getFeedbackList() == null || optionalAssessment.get().getFeedbackList().isEmpty()) {
             return false;
@@ -536,7 +516,7 @@ public class CompassCalculationEngine {
         }
 
         long numberOfModels = modelIndex.getModelCollection().size();
-        Map<UMLElement, Integer> modelElementMapping = modelIndex.getModelElementMapping();
+        Map<UMLElement, Integer> modelElementMapping = modelIndex.getElementSimilarityMap();
         long numberOfModelElements = modelElementMapping.size();
         long numberOfClasses = 0;
         long numberOfAttrbutes = 0;
@@ -613,13 +593,13 @@ public class CompassCalculationEngine {
 
         // Note, that these two value refer to all similarity sets that have an assessment, i.e. it is not the total number as it excludes the sets without assessments. This might
         // distort the analysis values below.
-        long numberOfSimilaritySets = assessmentIndex.getAssessmentMap().size();
+        long numberOfSimilaritySets = automaticAssessmentController.getAssessmentMap().size();
         long numberOfElementsInSimilaritySets = 0;
 
         long numberOfSimilaritySetsPositiveScore = 0;
         long numberOfSimilaritySetsPositiveScoreRegardingConfidence = 0;
 
-        for (SimilaritySetAssessment similaritySetAssessment : assessmentIndex.getAssessmentMap().values()) {
+        for (SimilaritySetAssessment similaritySetAssessment : automaticAssessmentController.getAssessmentMap().values()) {
             numberOfElementsInSimilaritySets += similaritySetAssessment.getFeedbackList().size();
 
             Score score = similaritySetAssessment.getScore();

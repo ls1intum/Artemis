@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLNode;
 
-public abstract class UMLContainerElement extends UMLElement {
+public abstract class UMLContainerElement extends UMLElement implements Serializable {
 
     private List<UMLElement> subElements = new ArrayList<>();
 

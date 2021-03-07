@@ -16,6 +16,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.JsonObject;
+import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
@@ -55,13 +56,17 @@ public class CompassService {
      */
     private static Map<Long, CompassCalculationEngine> compassCalculationEngines = new ConcurrentHashMap<>();
 
+    private final HazelcastInstance hazelcastInstance;
+
     public CompassService(ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository,
-            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository) {
+            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, HazelcastInstance hazelcastInstance) {
         this.resultRepository = resultRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.feedbackRepository = feedbackRepository;
+        this.hazelcastInstance = hazelcastInstance;
+
     }
 
     /**
@@ -484,7 +489,7 @@ public class CompassService {
         log.info("Loading Compass calculation engine for exercise " + exerciseId);
 
         Set<ModelingSubmission> modelingSubmissions = getSubmissionsForExercise(exerciseId);
-        CompassCalculationEngine calculationEngine = new CompassCalculationEngine(modelingSubmissions);
+        CompassCalculationEngine calculationEngine = new CompassCalculationEngine(exerciseId, modelingSubmissions, hazelcastInstance);
         compassCalculationEngines.put(exerciseId, calculationEngine);
         // assessAllAutomatically(calculationEngine.getModelIds(), exerciseId);
     }

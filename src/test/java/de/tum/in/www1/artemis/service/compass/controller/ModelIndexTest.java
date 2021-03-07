@@ -31,17 +31,17 @@ class ModelIndexTest {
 
     @BeforeEach
     void setUp() {
-        modelIndex = new ModelIndex();
+        // modelIndex = new ModelIndex();
     }
 
     @Test
     void retrieveSimilarityId_sameElementTwice() {
-        int similarityId1 = modelIndex.retrieveSimilarityId(umlElement1);
-        int similarityId2 = modelIndex.retrieveSimilarityId(umlElement1);
+        int similarityId1 = modelIndex.setSimilarityId(umlElement1);
+        int similarityId2 = modelIndex.setSimilarityId(umlElement1);
 
         assertThat(similarityId1).isEqualTo(0);
         assertThat(similarityId2).isEqualTo(0);
-        assertThat(modelIndex.getModelElementMapping().keySet()).containsExactly(umlElement1);
+        assertThat(modelIndex.getElementSimilarityMap().keySet()).containsExactly(umlElement1);
         assertThat(modelIndex.getNumberOfUniqueElements()).isEqualTo(1);
     }
 
@@ -54,17 +54,17 @@ class ModelIndexTest {
         mockSimilarityBetweenElements(umlElement4, umlElement2, EQUALITY_THRESHOLD + 0.01);
         mockSimilarityBetweenElements(umlElement4, umlElement3, EQUALITY_THRESHOLD / 2);
 
-        int similarityId1 = modelIndex.retrieveSimilarityId(umlElement1);
-        int similarityId2 = modelIndex.retrieveSimilarityId(umlElement2);
+        int similarityId1 = modelIndex.setSimilarityId(umlElement1);
+        int similarityId2 = modelIndex.setSimilarityId(umlElement2);
         when(umlElement2.getSimilarityID()).thenReturn(similarityId2);
-        int similarityId3 = modelIndex.retrieveSimilarityId(umlElement3);
-        int similarityId4 = modelIndex.retrieveSimilarityId(umlElement4);
+        int similarityId3 = modelIndex.setSimilarityId(umlElement3);
+        int similarityId4 = modelIndex.setSimilarityId(umlElement4);
 
         assertThat(similarityId1).isEqualTo(0);
         assertThat(similarityId2).isEqualTo(1);
         assertThat(similarityId3).isEqualTo(2);
         assertThat(similarityId4).isEqualTo(1);
-        assertThat(modelIndex.getModelElementMapping().keySet()).containsExactlyInAnyOrder(umlElement1, umlElement2, umlElement3, umlElement4);
+        assertThat(modelIndex.getElementSimilarityMap().keySet()).containsExactlyInAnyOrder(umlElement1, umlElement2, umlElement3, umlElement4);
         assertThat(modelIndex.getNumberOfUniqueElements()).isEqualTo(3);
     }
 
@@ -77,17 +77,17 @@ class ModelIndexTest {
         mockSimilarityBetweenElements(umlElement4, umlElement2, EQUALITY_THRESHOLD + 0.03);
         mockSimilarityBetweenElements(umlElement4, umlElement3, EQUALITY_THRESHOLD + 0.02);
 
-        int similarityId1 = modelIndex.retrieveSimilarityId(umlElement1);
-        int similarityId2 = modelIndex.retrieveSimilarityId(umlElement2);
+        int similarityId1 = modelIndex.setSimilarityId(umlElement1);
+        int similarityId2 = modelIndex.setSimilarityId(umlElement2);
         when(umlElement2.getSimilarityID()).thenReturn(similarityId2);
-        int similarityId3 = modelIndex.retrieveSimilarityId(umlElement3);
-        int similarityId4 = modelIndex.retrieveSimilarityId(umlElement4);
+        int similarityId3 = modelIndex.setSimilarityId(umlElement3);
+        int similarityId4 = modelIndex.setSimilarityId(umlElement4);
 
         assertThat(similarityId1).isEqualTo(0);
         assertThat(similarityId2).isEqualTo(1);
         assertThat(similarityId3).isEqualTo(2);
         assertThat(similarityId4).isEqualTo(1);
-        assertThat(modelIndex.getModelElementMapping().keySet()).containsExactlyInAnyOrder(umlElement1, umlElement2, umlElement3, umlElement4);
+        assertThat(modelIndex.getElementSimilarityMap().keySet()).containsExactlyInAnyOrder(umlElement1, umlElement2, umlElement3, umlElement4);
         assertThat(modelIndex.getNumberOfUniqueElements()).isEqualTo(3);
     }
 

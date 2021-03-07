@@ -89,7 +89,7 @@ class SimilarityDetectorTest {
     private void prepareModelIndex(List<UMLElement> elements) {
         int similarityId = 1;
         for (UMLElement element : elements) {
-            when(modelIndex.retrieveSimilarityId(element)).thenReturn(similarityId);
+            when(modelIndex.setSimilarityId(element)).thenReturn(similarityId);
             similarityId++;
         }
     }
