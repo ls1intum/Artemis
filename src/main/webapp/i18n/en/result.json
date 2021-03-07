@@ -20,6 +20,7 @@
             "completionDate": "Completion Date",
             "successful": "Successful",
             "buildArtifact": "Build Artifact",
+            "buildError": "Build Error:",
             "score": "Score",
             "scorePercentage": "Score (in %)",
             "currentScore": "Current Score",

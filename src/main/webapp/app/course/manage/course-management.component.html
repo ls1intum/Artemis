@@ -174,8 +174,8 @@
                                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                         <a
                                             *ngIf="course.isAtLeastTutor"
-                                            [routerLink]="['/course-management', course.id, 'tutor-dashboard']"
-                                            class="btn btn-info btn-sm mr-1 mb-1 tutor-dashboard"
+                                            [routerLink]="['/course-management', course.id, 'assessment-dashboard']"
+                                            class="btn btn-info btn-sm mr-1 mb-1 assessment-dashboard"
                                             [class.guided-tour]="course === courseForGuidedTour"
                                         >
                                             <fa-icon [icon]="'th-list'"></fa-icon>
