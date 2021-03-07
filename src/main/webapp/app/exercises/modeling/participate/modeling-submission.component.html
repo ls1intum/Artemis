@@ -66,11 +66,6 @@
 
                 <div class="col-3 pt-5" *ngIf="submission?.submitted && (!isActive || result)">
                     <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title">Assessment</h4>
-                    <div class="alert alert-info" *ngIf="generalFeedbackText && generalFeedbackText.length >= 0">
-                        <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</span>:</b>
-                        <br />
-                        {{ generalFeedbackText }}
-                    </div>
                     <p
                         *ngIf="!assessmentResult || !assessmentResult.feedbacks || assessmentResult?.feedbacks.length === 0"
                         jhiTranslate="artemisApp.modelingSubmission.assessment.noAssessment"
@@ -87,8 +82,7 @@
                                 </tr>
                             </thead>
                             <tbody *ngIf="assessmentsNames">
-                                <!--TODO CZ: replace function call 'isSelected' in html-->
-                                <tr *ngFor="let feedback of assessmentResult?.feedbacks" [hidden]="(feedback.credits === 0 && !feedback.text) || !isSelected(feedback)">
+                                <tr *ngFor="let feedback of referencedFeedback" [hidden]="!shouldBeDisplayed(feedback)">
                                     <td>
                                         <span *ngIf="feedback.reference">{{ assessmentsNames[feedback.referenceId]['type'] }} </span>
                                         <code *ngIf="feedback.reference" class="text-primary">{{ assessmentsNames[feedback.referenceId]['name'] }}</code
@@ -108,10 +102,19 @@
                 </div>
             </div>
         </jhi-fullscreen>
-        <jhi-complaint-interactions *ngIf="modelingExercise" [exercise]="modelingExercise" [participation]="participation" [result]="result"> </jhi-complaint-interactions>
+        <div class="row">
+            <jhi-additional-feedback
+                *ngIf="unreferencedFeedback?.length > 0"
+                class="col-xl-8 mt-3 alert unreferencedFeedback"
+                [feedback]="unreferencedFeedback"
+                [additional]="true"
+            >
+            </jhi-additional-feedback>
+        </div>
         <div class="row" *ngIf="result">
             <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)"></jhi-rating>
         </div>
+        <jhi-complaint-interactions *ngIf="modelingExercise" [exercise]="modelingExercise" [participation]="participation" [result]="result"> </jhi-complaint-interactions>
     </div>
     <!--endregion-->
     <!--region Right Panel-->

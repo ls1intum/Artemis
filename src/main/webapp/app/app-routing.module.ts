@@ -13,23 +13,14 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'admin',
                     loadChildren: () => import('./admin/admin.module').then((m) => m.ArtemisAdminModule),
-                    data: {
-                        pageTitle: 'global.menu.admin.main',
-                    },
                 },
                 {
                     path: 'account',
                     loadChildren: () => import('./account/account.module').then((m) => m.ArtemisAccountModule),
-                    data: {
-                        pageTitle: 'global.menu.account.main',
-                    },
                 },
                 {
                     path: 'about',
                     loadChildren: () => import('./core/about-us/artemis-about-us.module').then((module) => module.ArtemisAboutUsModule),
-                    data: {
-                        pageTitle: 'aboutUs',
-                    },
                 },
                 {
                     path: 'courses/:courseId/lectures/:lectureId',
@@ -39,16 +30,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'course-management',
                     loadChildren: () => import('./course/manage/course-management.module').then((m) => m.ArtemisCourseManagementModule),
-                    data: {
-                        pageTitle: 'global.menu.course',
-                    },
                 },
                 {
                     path: 'course-management/:courseId/programming-exercises/:exerciseId/code-editor',
                     loadChildren: () => import('./exercises/programming/manage/code-editor/code-editor-management.module').then((m) => m.ArtemisCodeEditorManagementModule),
-                    data: {
-                        usePathForBreadcrumbs: true,
-                    },
                 },
                 {
                     path: 'course-management/:courseId/text-exercises/:exerciseId',
@@ -87,9 +72,6 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'course-management/:courseId/exams',
                     loadChildren: () => import('./exam/manage/exam-management.module').then((m) => m.ArtemisExamManagementModule),
-                    data: {
-                        usePathForBreadcrumbs: true,
-                    },
                 },
                 {
                     path: 'features',

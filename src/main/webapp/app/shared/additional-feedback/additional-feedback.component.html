@@ -1,0 +1,21 @@
+<div>
+    <b>
+        <fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;
+        <span *ngIf="additional" jhiTranslate="artemisApp.assessment.additionalFeedback"> Additional Feedback</span>
+        <span *ngIf="!additional" jhiTranslate="artemisApp.assessment.feedback"> Feedback</span>:</b
+    >
+    <br />
+    <br />
+    <div
+        class="alert"
+        *ngFor="let singleFeedback of feedback"
+        [class.positive-feedback]="singleFeedback?.credits > 0"
+        [class.negative-feedback]="singleFeedback?.credits < 0"
+        [class.neutral-feedback]="singleFeedback?.credits === 0"
+    >
+        <strong>
+            <span> {{ singleFeedback.credits + ' Points: ' }} </span>
+        </strong>
+        <span> {{ singleFeedback.detailText }} </span>
+    </div>
+</div>

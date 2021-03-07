@@ -71,14 +71,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     participationCouldNotBeFetched = false;
     showEditorInstructions = true;
     hasAssessmentDueDatePassed: boolean;
-    adjustedRepositoryURL: string;
     correctionRound: number;
 
     private get course(): Course | undefined {
         return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
     }
 
-    generalFeedback = new Feedback();
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
     automaticFeedback: Feedback[] = [];
@@ -171,7 +169,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                             if (this.manualResult && this.manualResult.hasComplaint) {
                                 this.getComplaint();
                             }
-                            this.createAdjustedRepositoryUrl();
                         },
                         (error: HttpErrorResponse) => {
                             this.participationCouldNotBeFetched = true;
@@ -409,11 +406,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     validateFeedback(): void {
         this.calculateTotalScore();
-        const hasReferencedFeedback = Feedback.haveCreditsAndComments(this.referencedFeedback);
+        const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
         const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
-        const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
-        this.assessmentsAreValid = ((hasReferencedFeedback || hasGeneralFeedback) && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
+        this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
     }
 
     /**
@@ -421,19 +417,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     readOnly() {
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
-    }
-
-    /**
-     * Removes the login from the repositoryURL
-     */
-    private createAdjustedRepositoryUrl() {
-        this.adjustedRepositoryURL = this.participation.repositoryUrl || '';
-        if (this.participation.student && this.participation.repositoryUrl) {
-            const userName = this.participation.student.login + '@';
-            if (this.participation.repositoryUrl.includes(userName)) {
-                this.adjustedRepositoryURL = this.participation.repositoryUrl.replace(userName, '');
-            }
-        }
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
@@ -483,24 +466,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
-        const generalFeedbackIndex = feedbacks.findIndex(
-            (feedbackElement) =>
-                feedbackElement.reference == undefined && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED && feedbackElement.type !== FeedbackType.AUTOMATIC,
-        );
-        if (generalFeedbackIndex !== -1) {
-            this.generalFeedback = feedbacks[generalFeedbackIndex];
-        } else {
-            this.generalFeedback = new Feedback();
-        }
         this.validateFeedback();
     }
 
     private setFeedbacksForManualResult() {
-        if (Feedback.hasDetailText(this.generalFeedback)) {
-            this.manualResult!.feedbacks = [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
-        } else {
-            this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
-        }
+        this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
     }
 
     private createResultString(totalScore: number, maxScore: number | undefined): string {

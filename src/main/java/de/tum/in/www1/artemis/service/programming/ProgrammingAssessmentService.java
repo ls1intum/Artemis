@@ -41,7 +41,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
         var participation = result.getParticipation();
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        result.setHasComplaint(false);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(user);
         result.setCompletionDate(null);

@@ -46,7 +46,6 @@
         <div class="col-md-6">
             <div *ngIf="invalidError" class="col-8 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
             <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateAssessment()" [readOnly]="readOnly"></jhi-unreferenced-feedback>
-            <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateAssessment()" [readOnly]="readOnly"></jhi-assessment-general-feedback>
         </div>
     </div>
 </ng-template>
@@ -54,7 +53,7 @@
 <ng-template #noSubmission>
     <div class="alert alert-warning text-center mt-4" role="alert">
         <p jhiTranslate="artemisApp.fileUploadAssessment.notFound">We haven't found any new text submission without an assessment, please go back.</p>
-        <button type="submit" [routerLink]="['../../../../../exercises', exerciseId, 'tutor-dashboard']" class="btn btn-info btn-sm mr-1 mb-1 tutor-dashboard">
+        <button type="submit" [routerLink]="['../../../../../exercises', exerciseId, 'assessment-dashboard']" class="btn btn-info btn-sm mr-1 mb-1 assessment-dashboard">
             <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
         </button>
     </div>

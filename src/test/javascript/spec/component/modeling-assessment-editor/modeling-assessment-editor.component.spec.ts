@@ -20,7 +20,7 @@ import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
 import { Complaint } from 'app/entities/complaint.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -238,7 +238,8 @@ describe('ModelingAssessmentEditorComponent', () => {
         feedback.text = 'This is a test feedback';
         feedback.detailText = 'Feedback';
         feedback.credits = 1;
-        component.generalFeedback = feedback;
+        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        component.unreferencedFeedback = [feedback];
 
         component.result = ({
             id: 2374,
@@ -283,7 +284,8 @@ describe('ModelingAssessmentEditorComponent', () => {
         feedback.text = 'This is a test feedback';
         feedback.detailText = 'Feedback';
         feedback.credits = 1;
-        component.generalFeedback = feedback;
+        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        component.unreferencedFeedback = [feedback];
 
         component.submission = ({
             id: 1,
