@@ -35,7 +35,6 @@ import { diff_match_patch } from 'diff-match-patch';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
-import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -156,7 +155,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                             // Set domain to make file editor work properly
                             this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResult]);
                             this.participation = participationWithResult;
-                            addUserIndependentRepositoryUrl(this.participation);
                             this.manualResult = this.participation.results![0];
 
                             // Either submission from latest manual or automatic result
