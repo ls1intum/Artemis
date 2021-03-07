@@ -148,6 +148,7 @@ public class FeedbackService {
      */
     private static String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final String message) {
         final String timeoutDetailText = "The test case execution timed out. This indicates issues in your code such as endless for / while loops or issues with recursion. Please carefully review your code to avoid such issues. In case you are absolutely sure that there are no issues like this, please contact your instructor to check the setup of the test.";
+        final String exceptionPrefix = "Exception message: ";
         // Overwrite timeout exception messages for Junit4, Junit5 and other
         List<String> exceptions = Arrays.asList("org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
                 "org.awaitility.core.ConditionTimeoutException", "Timed?OutException");
@@ -156,7 +157,7 @@ public class FeedbackService {
         Matcher matcher = findTimeoutPattern.matcher(message);
         if (matcher.find()) {
             String exceptionText = matcher.group(2);
-            return timeoutDetailText + "\n" + exceptionText.trim();
+            return timeoutDetailText + "\n" + exceptionPrefix + exceptionText.trim();
         }
         // Defining one pattern group, (1) the exception text
         Pattern findGeneralTimeoutPattern = Pattern.compile("^.*:(.*timed out after.*)", Pattern.CASE_INSENSITIVE);
@@ -164,7 +165,7 @@ public class FeedbackService {
         if (matcher.find()) {
             // overwrite AJTS: TimeoutException
             String generalTimeOutExceptionText = matcher.group(1);
-            return timeoutDetailText + "\n" + generalTimeOutExceptionText.trim();
+            return timeoutDetailText + "\n" + exceptionPrefix + generalTimeOutExceptionText.trim();
         }
 
         // Filter out unneeded Exception classnames
