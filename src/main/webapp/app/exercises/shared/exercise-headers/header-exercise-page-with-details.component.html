@@ -1,7 +1,7 @@
 <div class="course-info-bar" *ngIf="exercise">
     <div class="row">
         <div class="col general-info">
-            <h3>
+            <h3 *ngIf="displayBackButton">
                 <fa-icon [icon]="'arrow-left'" (click)="onBackClick()" class="back-button mr-2"></fa-icon>
                 <ng-content select="[pagetitle]"></ng-content>
             </h3>

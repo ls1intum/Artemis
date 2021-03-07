@@ -491,51 +491,58 @@ describe('FileUploadAssessmentComponent', () => {
         });
     });
 
-    describe('assessNexdt', () => {
+    describe('assessNext', () => {
         it('should assess next result if there is one', () => {
+            const navigateStub = stub(router, 'navigate');
             const returnedSubmission = createSubmission(exercise);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(of(returnedSubmission));
             comp.courseId = 77;
-            navigateByUrlStub.returns(Promise.resolve(true));
+            comp.exerciseId = comp.exercise!.id!;
+            comp.exerciseGroupId = 79;
+            comp.examId = 80;
+
             comp.assessNext();
-            expect(returnedSubmission.id).to.be.not.undefined;
-            expect(navigateByUrlStub).to.have.been.calledTwice;
-            // the first call comes from the initial navigation in the beforeEach
-            sinon.assert.calledWith(navigateByUrlStub.firstCall, ``, { replaceUrl: true });
-            sinon.assert.calledWith(
-                navigateByUrlStub.secondCall,
-                `/course-management/${comp.courseId}/file-upload-exercises/${comp.exercise!.id}/submissions/${returnedSubmission.id}/assessment`,
-                {},
-            );
+
+            const expectedUrl = [
+                '/course-management',
+                comp.courseId.toString(),
+                'exams',
+                comp.examId.toString(),
+                'exercise-groups',
+                comp.exerciseGroupId.toString(),
+                'file-upload-exercises',
+                comp.exerciseId.toString(),
+                'submissions',
+                returnedSubmission.id!.toString(),
+                'assessment'
+            ];
+            expect(navigateStub).to.have.been.calledWith(expectedUrl);
             expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).to.have.been.called;
         });
-        it('should alert when no next result is found', () => {
+
+        it('should not alert when no next result is found', () => {
             const alertServiceSpy = sinon.spy(alertService, 'error');
             const errorResponse = new HttpErrorResponse({ error: 'Not Found', status: 404 });
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError(errorResponse));
-            comp.courseId = 77;
-            navigateByUrlStub.returns(Promise.resolve(true));
+
             comp.assessNext();
-            expect(navigateByUrlStub).to.have.been.calledOnce;
-            // the first call comes from the initial navigation in the beforeEach
-            sinon.assert.calledWith(navigateByUrlStub.firstCall, ``, { replaceUrl: true });
+
             expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).to.have.been.called;
-            expect(alertServiceSpy).to.have.been.calledOnce;
+            expect(alertServiceSpy).to.not.have.been.called;
         });
+
         it('should alert when assess next is forbidden', () => {
             const alertServiceSpy = sinon.spy(alertService, 'error');
             const errorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError(errorResponse));
-            comp.courseId = 77;
-            navigateByUrlStub.returns(Promise.resolve(true));
+
             comp.assessNext();
-            expect(navigateByUrlStub).to.have.been.calledOnce;
-            // the first call comes from the initial navigation in the beforeEach
-            sinon.assert.calledWith(navigateByUrlStub.firstCall, ``, { replaceUrl: true });
+
             expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).to.have.been.called;
             expect(alertServiceSpy).to.have.been.calledOnce;
         });
     });
+
     describe('canOverride', () => {
         it('should not be able to override if tutor is assessor and result has a complaint', () => {
             comp.isAtLeastInstructor = false;
@@ -553,6 +560,7 @@ describe('FileUploadAssessmentComponent', () => {
             expect(comp.canOverride).to.be.equal(false);
         });
     });
+
     describe('getComplaint', () => {
         it('should get Complaint', () => {
             comp.result = createResult(comp.submission);

@@ -76,7 +76,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         component: TextAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            pageTitle: 'assessmentDashboard.title',
+            pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
     },

@@ -344,13 +344,15 @@ describe('ModelingAssessmentDashboardComponent', () => {
         it('should get assessment link for exam exercise', () => {
             const submissionId = 7;
             component.exercise = modelingExercise;
+            component.exerciseId = modelingExercise.id!;
+            component.courseId = modelingExercise.course!.id!;
             expect(component.getAssessmentLink(submissionId)).toEqual([
                 '/course-management',
-                component.exercise.course?.id,
+                component.exercise.course!.id!.toString(),
                 'modeling-exercises',
-                component.exercise.id,
+                component.exercise.id!.toString(),
                 'submissions',
-                submissionId,
+                submissionId.toString(),
                 'assessment',
             ]);
         });
@@ -358,13 +360,21 @@ describe('ModelingAssessmentDashboardComponent', () => {
         it('should get assessment link for normal exercise', () => {
             const submissionId = 8;
             component.exercise = modelingExerciseOfExam;
+            component.exerciseId = modelingExerciseOfExam.id!;
+            component.courseId = modelingExerciseOfExam.exerciseGroup!.exam!.course!.id!;
+            component.examId = modelingExerciseOfExam.exerciseGroup!.exam!.id!;
+            component.exerciseGroupId = modelingExerciseOfExam.exerciseGroup!.id!;
             expect(component.getAssessmentLink(submissionId)).toEqual([
                 '/course-management',
-                component.exercise.exerciseGroup?.exam?.course?.id,
+                component.exercise.exerciseGroup!.exam!.course!.id!.toString(),
+                'exams',
+                component.exercise.exerciseGroup!.exam!.id!.toString(),
+                'exercise-groups',
+                component.exercise.exerciseGroup!.id!.toString(),
                 'modeling-exercises',
-                component.exercise.id,
+                component.exercise.id!.toString(),
                 'submissions',
-                submissionId,
+                submissionId.toString(),
                 'assessment',
             ]);
         });

@@ -70,7 +70,7 @@
                                 canOverrideAssessments
                             "
                             [queryParams]="{ optimal: false, hideBackButton: true }"
-                            [routerLink]="['/course-management', exercise.course?.id, 'modeling-exercises', exercise.id, 'submissions', submission.id, 'assessment']"
+                            [routerLink]="getAssessmentRouterLink(submission.id)"
                             class="btn btn-success btn-sm"
                         >
                             <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;Assess model
@@ -161,7 +161,7 @@
                         <ng-container *ngIf="submission.participation.submissions">
                             <a
                                 *ngIf="exercise.isAtLeastInstructor"
-                                [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'participations', submission.participation.id, 'submissions']"
+                                [routerLink]="getParticipationsRouterLink(submission.participation.id)"
                             >
                                 {{ submission.participation.submissions.length }}
                             </a>

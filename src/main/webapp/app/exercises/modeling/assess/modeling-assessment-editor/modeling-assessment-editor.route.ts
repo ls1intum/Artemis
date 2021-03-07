@@ -11,7 +11,6 @@ const routes: Routes = [
         component: ModelingAssessmentEditorComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.apollonDiagram.detail.title',
         },
         canActivate: [UserRouteAccessService],
@@ -21,8 +20,7 @@ const routes: Routes = [
         component: ModelingAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            usePathForBreadcrumbs: true,
-            pageTitle: 'assessmentDashboard.title',
+            pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
     },

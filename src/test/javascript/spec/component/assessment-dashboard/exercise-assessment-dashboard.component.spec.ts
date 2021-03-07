@@ -413,33 +413,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(castedExercise).to.be.equal(exercise as ProgrammingExercise);
     });
 
-    describe('test navigate back', () => {
-        const courseId = 4;
-
-        it('should navigate back when not in exammode', () => {
-            comp.courseId = 4;
-            comp.back();
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/assessment-dashboard`]);
-        });
-
-        it('should navigate back in exammode and not testRun', () => {
-            comp.courseId = 4;
-            comp.isExamMode = true;
-            comp.isTestRun = true;
-            comp.exercise = exercise;
-            comp.back();
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/exams/${exercise!.exerciseGroup!.exam!.id}/test-runs/assess`]);
-        });
-
-        it('should navigate back in exammode and testRun', () => {
-            comp.courseId = 4;
-            comp.isExamMode = true;
-            comp.exercise = exercise;
-            comp.back();
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/exams/${exercise!.exerciseGroup!.exam!.id}/assessment-dashboard`]);
-        });
-    });
-
     describe('openExampleSubmission', () => {
         const courseId = 4;
 

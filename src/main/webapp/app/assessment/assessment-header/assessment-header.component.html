@@ -104,5 +104,9 @@
             <fa-icon *ngIf="nextSubmissionBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
             <span jhiTranslate="artemisApp.assessment.button.nextSubmission"> Next Submission</span>
         </button>
+
+        <a [routerLink]="exerciseDashboardLink" class="btn ml-2 btn-info">
+            <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+        </a>
     </div>
 </h3>
