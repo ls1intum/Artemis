@@ -35,6 +35,7 @@ import { diff_match_patch } from 'diff-match-patch';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -515,7 +516,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.manualResult!.resultString = resultStringParts.join(', ');
         }
 
-        this.manualResult!.score = Math.round((totalScore / this.exercise.maxPoints!) * 100);
+        this.manualResult!.score = round((totalScore / this.exercise.maxPoints!) * 100);
         // This is done to update the result string in result.component.ts
         this.manualResult = cloneDeep(this.manualResult);
     }
