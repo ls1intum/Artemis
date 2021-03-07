@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
@@ -446,7 +447,7 @@ public class ModelingExerciseResource {
      */
     @GetMapping("/modeling-exercises/{exerciseId}/plagiarism-result")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
+    public ResponseEntity<PlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the modeling exercise with id: {}", exerciseId);
         Optional<ModelingExercise> optionalModelingExercise = modelingExerciseRepository.findWithStudentParticipationsSubmissionsResultsById(exerciseId);
 
@@ -460,7 +461,7 @@ public class ModelingExerciseResource {
             return forbidden();
         }
 
-        Optional<ModelingPlagiarismResult> optionalResult = plagiarismService.getPlagiarismResult(modelingExercise);
+        Optional<PlagiarismResult> optionalResult = plagiarismService.getPlagiarismResult(modelingExercise);
 
         if (optionalResult.isEmpty()) {
             return notFound();

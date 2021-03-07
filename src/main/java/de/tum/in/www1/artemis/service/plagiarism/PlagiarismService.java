@@ -6,9 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.PlagiarismResultRepository;
@@ -25,33 +24,13 @@ public class PlagiarismService {
     }
 
     /**
-     * Return an Optional of the latest TextPlagiarismResult for the given ProgrammingExercise or
-     * empty, if no plagiarism was detected yet.
+     * Return an Optional of the latest PlagiarismResult for the given Exercise or empty, if no
+     * plagiarism was detected yet.
      *
-     * @param exercise ProgrammingExercise to get the latest plagiarism result for.
+     * @param exercise Exercise to get the latest plagiarism result for.
      */
-    public Optional<TextPlagiarismResult> getPlagiarismResult(ProgrammingExercise exercise) {
-        return Optional.empty();
-    }
-
-    /**
-     * Return an Optional of the latest TextPlagiarismResult for the given TextExercise or
-     * empty, if no plagiarism was detected yet.
-     *
-     * @param exercise TextExercise to get the latest plagiarism result for.
-     */
-    public Optional<TextPlagiarismResult> getPlagiarismResult(TextExercise exercise) {
-        return Optional.empty();
-    }
-
-    /**
-     * Return an Optional of the latest ModelingPlagiarismResult for the given ModelingExercise or
-     * empty, if no plagiarism was detected yet.
-     *
-     * @param exercise ModelingExercise to get the latest plagiarism result for.
-     */
-    public Optional<ModelingPlagiarismResult> getPlagiarismResult(ModelingExercise exercise) {
-        return Optional.empty();
+    public Optional<PlagiarismResult> getPlagiarismResult(Exercise exercise) {
+        return plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDesc(exercise.getId());
     }
 
     /**
@@ -60,7 +39,6 @@ public class PlagiarismService {
      * @param result TextPlagiarismResult to store in the database.
      */
     public void savePlagiarismResult(TextPlagiarismResult result) {
-        // TODO: Use `plagiarismResultRepository` to save the given result.
         plagiarismResultRepository.save(result);
     }
 
@@ -70,7 +48,6 @@ public class PlagiarismService {
      * @param result ModelingPlagiarismResult to store in the database.
      */
     public void savePlagiarismResult(ModelingPlagiarismResult result) {
-        // TODO: Use `plagiarismResultRepository` to save the given result.
         plagiarismResultRepository.save(result);
     }
 

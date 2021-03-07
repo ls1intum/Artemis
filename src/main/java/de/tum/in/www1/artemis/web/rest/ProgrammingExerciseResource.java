@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -1212,7 +1213,7 @@ public class ProgrammingExerciseResource {
     @GetMapping(Endpoints.PLAGIARISM_RESULT)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<TextPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
+    public ResponseEntity<PlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the programming exercise with id: {}", exerciseId);
 
         Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findById(exerciseId);
@@ -1227,7 +1228,7 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
 
-        Optional<TextPlagiarismResult> optionalResult = plagiarismService.getPlagiarismResult(programmingExercise);
+        Optional<PlagiarismResult> optionalResult = plagiarismService.getPlagiarismResult(programmingExercise);
 
         if (optionalResult.isEmpty()) {
             return notFound();

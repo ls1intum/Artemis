@@ -11,6 +11,7 @@ import javax.persistence.DiscriminatorType;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
@@ -66,7 +67,7 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
      */
     @CollectionTable(name = "plagiarism_result_similarity_distribution", joinColumns = @JoinColumn(name = "plagiarism_result_id"))
     @Column(name = "value")
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     protected List<Integer> similarityDistribution;
 
     public List<PlagiarismComparison<E>> getComparisons() {
