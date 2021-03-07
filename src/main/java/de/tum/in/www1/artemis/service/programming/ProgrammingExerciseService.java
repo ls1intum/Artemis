@@ -326,6 +326,7 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable String notificationText) {
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
+        // TODO: in case of an exam exercise, this is not necessary
         scheduleOperations(programmingExercise.getId());
 
         // Only send notification for course exercises
