@@ -26,7 +26,7 @@ public class ZipFileService {
      */
     public void createZipFile(Path zipFilePath, List<Path> paths, boolean createDirsInZipFile) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            paths.stream().filter(path -> !Files.isDirectory(path)).forEach(path -> {
+            paths.stream().filter(path -> !Files.isDirectory(path) && Files.exists(path)).forEach(path -> {
                 var zipPath = createDirsInZipFile ? path : path.getFileName();
                 ZipEntry zipEntry = new ZipEntry(zipPath.toString());
                 copyToZipFile(zipOutputStream, path, zipEntry);
@@ -44,7 +44,7 @@ public class ZipFileService {
      */
     public void createZipFile(Path zipFilePath, List<Path> paths, Path pathsRoot) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            paths.stream().filter(path -> !Files.isDirectory(path)).forEach(path -> {
+            paths.stream().filter(path -> !Files.isDirectory(path) && Files.exists(path)).forEach(path -> {
                 ZipEntry zipEntry = new ZipEntry(pathsRoot.relativize(path).toString());
                 copyToZipFile(zipOutputStream, path, zipEntry);
             });
@@ -61,7 +61,7 @@ public class ZipFileService {
      */
     public Path createZipFileWithFolderContent(Path zipFilePath, Path contentRootPath) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            Files.walk(contentRootPath).filter(path -> !Files.isDirectory(path)).forEach(path -> {
+            Files.walk(contentRootPath).filter(path -> !Files.isDirectory(path) && Files.exists(path)).forEach(path -> {
                 ZipEntry zipEntry = new ZipEntry(contentRootPath.relativize(path).toString());
                 copyToZipFile(zipOutputStream, path, zipEntry);
             });

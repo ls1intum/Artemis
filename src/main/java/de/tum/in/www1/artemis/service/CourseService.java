@@ -91,13 +91,13 @@ public class CourseService {
     }
 
     /**
-     * Get one course with exercises and lectures (filtered for given user)
+     * Get one course with exercises, lectures and exams (filtered for given user)
      *
      * @param courseId the course to fetch
      * @param user     the user entity
-     * @return the course including exercises and lectures for the user
+     * @return the course including exercises, lectures and exams for the user
      */
-    public Course findOneWithExercisesAndLecturesForUser(Long courseId, User user) {
+    public Course findOneWithExercisesAndLecturesAndExamsForUser(Long courseId, User user) {
         Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -122,12 +122,12 @@ public class CourseService {
     }
 
     /**
-     * Get all courses with exercises and lectures (filtered for given user)
+     * Get all courses with exercises, lectures  and exams (filtered for given user)
      *
      * @param user the user entity
-     * @return the list of all courses including exercises and lectures for the user
+     * @return the list of all courses including exercises, lectures and exams for the user
      */
-    public List<Course> findAllActiveWithExercisesAndLecturesForUser(User user) {
+    public List<Course> findAllActiveWithExercisesAndLecturesAndExamsForUser(User user) {
         return courseRepository.findAllActiveWithLecturesAndExams().stream()
                 // filter old courses and courses the user should not be able to see
                 // skip old courses that have already finished
@@ -286,7 +286,7 @@ public class CourseService {
             return;
         }
 
-        // This contains possible errors encountered during the archve process
+        // This contains possible errors encountered during the archive process
         ArrayList<String> exportErrors = new ArrayList<>();
 
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_STARTED, exportErrors);
@@ -332,9 +332,10 @@ public class CourseService {
             return;
         }
 
-        // Clean up exams
-        var exams = courseRepository.findByIdWithLecturesAndExamsElseThrow(course.getId()).getExams();
-        var examExercises = exams.stream().map(exam -> examRepository.findAllExercisesByExamId(exam.getId())).flatMap(Collection::stream).collect(Collectors.toSet());
+        // The Objects::nonNull is needed here because the relationship exam -> exercise groups is ordered and
+        // hibernate sometimes adds nulls to in the list of exercise groups to keep the order
+        Set<Exercise> examExercises = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId).stream().map(Exam::getExerciseGroups).flatMap(Collection::stream)
+                .filter(Objects::nonNull).map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
 
         var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());
         exercisesToCleanup.forEach(exercise -> {

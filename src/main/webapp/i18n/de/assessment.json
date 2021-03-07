@@ -3,11 +3,10 @@
         "assessment": {
             "assessment": "Bewertung",
             "testRunAssessment": "Bewertungstestlauf",
-            "generalFeedback": "Allgemeines Feedback",
-            "unreferencedFeedback": "Feedback für fehlende Elemente",
+            "additionalFeedback": "Zusätzliches Feedback",
+            "feedback": "Feedback",
             "automaticGenerated": "Automatisch erstelltes Feedback",
             "error": {
-                "moreThanOneGeneralFeedback": "Es kann nicht mehr als ein allgemeines Feedback pro Bewertung geben.",
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."
             },
             "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
@@ -49,6 +48,7 @@
                     "assessmentType": "Bewertungsart",
                     "student": "Student",
                     "assessor": "Prüfer/in",
+                    "assessors": "Prüfer/innen",
                     "action": "Bewertungsaktionen",
                     "assessmentFirst": "Korrekturrunde 1",
                     "assessmentSecond": "Korrekturrunde 2"

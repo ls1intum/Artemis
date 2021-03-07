@@ -95,7 +95,7 @@ public class ProgrammingExerciseGradingService {
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
         }
         catch (ContinuousIntegrationException ex) {
-            log.error("Result for participation " + participation.getId() + " could not be created due to the following exception: " + ex);
+            log.error("Result for participation " + participation.getId() + " could not be created due to the following exception: " + ex, ex);
             return Optional.empty();
         }
 
@@ -124,6 +124,8 @@ public class ProgrammingExerciseGradingService {
                 // Note: in this case, we do not want to save the newResult, but we only want to update the latest semi-automatic one
                 Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), newResult,
                         programmingExercise);
+                // Adding back dropped submission
+                updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
                 programmingSubmissionRepository.save(programmingSubmission);
                 return Optional.of(updatedLatestSemiAutomaticResult);
             }
