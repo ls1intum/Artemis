@@ -9,7 +9,7 @@ export const tutorAssessmentTour: GuidedTour = {
     resetParticipation: ResetParticipation.TUTOR_ASSESSMENT,
     steps: [
         new UserInterActionTourStep({
-            highlightSelector: '.tutor-dashboard.guided-tour',
+            highlightSelector: '.assessment-dashboard.guided-tour',
             headlineTranslateKey: 'tour.courseAdministration.assessmentDashboardButton.headline',
             contentTranslateKey: 'tour.courseAdministration.assessmentDashboardButton.content',
             highlightPadding: 10,
@@ -26,7 +26,7 @@ export const tutorAssessmentTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.TOP,
             permission: [Authority.TA],
-            pageUrl: '/course-management/(\\d+)+/tutor-dashboard',
+            pageUrl: '/course-management/(\\d+)+/assessment-dashboard',
         }),
         new TextTourStep({
             highlightSelector: '.guided-tour-form-check',
@@ -69,7 +69,7 @@ export const tutorAssessmentTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.TOP,
             permission: [Authority.TA],
-            pageUrl: '/course-management/(\\d+)+/exercises/(\\d+)+/tutor-dashboard',
+            pageUrl: '/course-management/(\\d+)+/exercises/(\\d+)+/assessment-dashboard',
         }),
         new UserInterActionTourStep({
             highlightSelector: '.guided-tour-instructions-button',
@@ -124,7 +124,7 @@ export const tutorAssessmentTour: GuidedTour = {
             orientation: Orientation.TOP,
             userInteractionEvent: UserInteractionEvent.CLICK,
             permission: [Authority.TA],
-            pageUrl: '/course-management/(\\d+)+/exercises/(\\d+)+/tutor-dashboard',
+            pageUrl: '/course-management/(\\d+)+/exercises/(\\d+)+/assessment-dashboard',
         }),
         // new page
         new AssessmentTaskTourStep({
@@ -174,7 +174,7 @@ export const tutorAssessmentTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.TOP,
             permission: [Authority.TA],
-            pageUrl: '/course-management/(\\d+)+/exercises/(\\d+)+/tutor-dashboard',
+            pageUrl: '/course-management/(\\d+)+/exercises/(\\d+)+/assessment-dashboard',
         }),
         new TextTourStep({
             highlightSelector: '.guided-tour-exercise-table button.guided-tour',
