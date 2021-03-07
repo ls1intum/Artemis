@@ -151,14 +151,20 @@ public class FeedbackService {
         // Overwrite timeout exception messages for Junit4, Junit5 and other
         List<String> exceptions = Arrays.asList("org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
                 "org.awaitility.core.ConditionTimeoutException", "Timed?OutException");
-        Pattern findPattern = Pattern.compile("^.*(" + String.join("|", exceptions) + ").*");
-        Matcher matcher = findPattern.matcher(message);
+        // Defining two pattern groups, (1) the exception name and (2) the exception text
+        Pattern findTimeoutPattern = Pattern.compile("^.*(" + String.join("|", exceptions) + "):?(.*)");
+        Matcher matcher = findTimeoutPattern.matcher(message);
         if (matcher.find()) {
-            return matcher.group(1) + ": " + timeoutDetailText;
+            String exceptionText = matcher.group(2);
+            return timeoutDetailText + "\n" + exceptionText.trim();
         }
-        else if (message.contains("timed out after")) {
+        // Defining one pattern group, (1) the exception text
+        Pattern findGeneralTimeoutPattern = Pattern.compile("^.*:(.*timed out after.*)", Pattern.CASE_INSENSITIVE);
+        matcher = findGeneralTimeoutPattern.matcher(message);
+        if (matcher.find()) {
             // overwrite AJTS: TimeoutException
-            return timeoutDetailText;
+            String generalTimeOutExceptionText = matcher.group(1);
+            return timeoutDetailText + "\n" + generalTimeOutExceptionText.trim();
         }
 
         // Filter out unneeded Exception classnames
