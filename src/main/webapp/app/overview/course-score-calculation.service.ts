@@ -51,6 +51,7 @@ export class CourseScoreCalculationService {
                         if (score == undefined) {
                             score = 0;
                         }
+                        // Note: It is important that we round on the individual exercise level first and then sum up.
                         pointsAchievedByStudentInCourse += round(score * this.SCORE_NORMALIZATION_VALUE * maxPointsReachableInExercise, 1);
                     }
                     presentationScore += participation.presentationScore ? participation.presentationScore : 0;

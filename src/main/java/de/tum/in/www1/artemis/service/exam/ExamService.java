@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.*;
@@ -228,11 +230,12 @@ public class ExamService {
                 // Relevant Result is already calculated
                 if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                     Result relevantResult = studentParticipation.getResults().iterator().next();
-                    double achievedPoints = relevantResult.getScore() / 100.0 * exercise.getMaxPoints();
+                    // Note: It is important that we round on the individual exercise level first and then sum up!
+                    double achievedPoints = round(relevantResult.getScore() / 100.0 * exercise.getMaxPoints());
 
                     // points earned in NOT_INCLUDED exercises do not count towards the students result in the exam
                     if (!exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
-                        studentResult.overallPointsAchieved += Math.round(achievedPoints * 10) / 10.0;
+                        studentResult.overallPointsAchieved += achievedPoints;
                     }
 
                     // Check whether the student attempted to solve the exercise
