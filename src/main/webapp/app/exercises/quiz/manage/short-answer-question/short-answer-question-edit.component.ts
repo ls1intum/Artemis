@@ -96,7 +96,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const textForEachLine = this.question.text!.split(/\n+/g);
         this.textParts = textForEachLine.map((t) => {
             const indentation = this.shortAnswerQuestionUtil.getIndentation(t);
-            const lineParts = t.split(/\s+(?![^[]]*])/g);
+            const lineParts = t.split(/\s+(?![^[]?[\d]]*])/g);
             lineParts[1] = indentation.concat(lineParts[1]);
             return lineParts;
         });
