@@ -227,6 +227,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         console.warn('found more than one result for student ' + student.user.login + ' and exercise ' + exercise.title);
                     }
 
+                    // Note: It is important that we round on the individual exercise level first and then sum up.
                     const pointsAchievedByStudentInExercise = round((result.score! * relevantMaxPoints) / 100, 1);
                     student.overallPoints += pointsAchievedByStudentInExercise;
                     student.pointsPerExercise.set(exercise.id!, pointsAchievedByStudentInExercise);
