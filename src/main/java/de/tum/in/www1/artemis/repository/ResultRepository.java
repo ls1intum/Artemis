@@ -29,7 +29,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                     FROM Result r LEFT JOIN FETCH r.assessor
                     WHERE r.id = :resultId
             """)
-    Optional<Result> findByIdWithEagerAssessor(Long resultId);
+    Optional<Result> findByIdWithEagerAssessor(@Param("resultId") Long resultId);
 
     List<Result> findByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
