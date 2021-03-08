@@ -331,7 +331,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     }
                 }
 
-                const overallScore = round((student.overallPoints / this.maxNumberOfOverallPoints) * 100);
+                const overallScore = round((student.overallPoints / this.maxNumberOfOverallPoints) * 100, 1);
                 rowData[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(student.overallPoints);
                 rowData[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(overallScore);
                 if (this.course.presentationScore) {
@@ -385,7 +385,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 }
             }
 
-            const averageOverallScore = round((this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100);
+            const averageOverallScore = round((this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100, 1);
             rowDataAverage[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.averageNumberOfOverallPoints);
             rowDataAverage[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(averageOverallScore);
             if (this.course.presentationScore) {
