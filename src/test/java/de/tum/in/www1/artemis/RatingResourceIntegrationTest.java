@@ -70,7 +70,7 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
 
         submission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
         submission = database.saveTextSubmission(exercise, submission, student1.getLogin());
-        submission = (TextSubmission) database.addResultToSubmission(submission, null, null, 0L, true);
+        submission = (TextSubmission) database.addResultToSubmission(submission, null, null, 0D, true);
         result = submission.getLatestResult();
         rating = new Rating();
         rating.setResult(submission.getLatestResult());

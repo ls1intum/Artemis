@@ -287,7 +287,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         database.createAndSaveParticipationForExercise(classExercise, "student1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, false);
         Result result = new Result();
-        result.setScore(100L);
+        result.setScore(100D);
         result.setRated(true);
         result.setAssessor(user);
         submission.addResult(result);

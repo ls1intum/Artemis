@@ -16,7 +16,7 @@
         <div *ngIf="!loadingFailed && filteredFeedbackList && filteredFeedbackList.length; else buildLogsContainer" class="result-detail-container">
             <div *ngIf="showScoreChart && result.participation?.exercise" class="result-score-chart">
                 <span class="result-score-chart-title"
-                    ><span jhiTranslate="artemisApp.result.score">Score</span>: {{ result.score }}%
+                    ><span jhiTranslate="artemisApp.result.score">Score</span>: {{ round(result.score) }}%
                     <span
                         *ngIf="resultIsPreliminary()"
                         class="badge badge-warning"
