@@ -26,6 +26,7 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
     busy = false;
     predicate = 'id';
     reverse = false;
+    courseId: number;
     numberOfCorrectionrounds = 1;
     newManualResultAllowed: boolean;
     automaticType = AssessmentType.AUTOMATIC;
@@ -59,6 +60,7 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
             })
             .subscribe((exercise) => {
                 this.exercise = exercise;
+                this.courseId = exercise.course ? exercise.course.id! : exercise.exerciseGroup!.exam!.course!.id!;
                 this.getSubmissions();
                 this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
                 this.setPermissions();

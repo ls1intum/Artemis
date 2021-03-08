@@ -31,6 +31,7 @@ export class TutorLeaderboardComponent implements OnInit {
         if (this.exercise && this.exercise.course) {
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
         }
+        this.sortRows();
     }
 
     sortRows() {
