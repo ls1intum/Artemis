@@ -204,6 +204,23 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldReturnOnlyAutomaticFeedbackForAProgrammingExerciseStudentParticipationBeforeAssessDueDate() throws Exception {
+        Result result = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation);
+        Feedback feedback1 = new Feedback().detailText("automatic1").type(FeedbackType.AUTOMATIC);
+        Feedback feedback2 = new Feedback().detailText("automatic2").type(FeedbackType.AUTOMATIC);
+        Feedback feedback3 = new Feedback().detailText("manual1").type(FeedbackType.MANUAL);
+        result = database.addFeedbackToResult(feedback1, result);
+        result = database.addFeedbackToResult(feedback2, result);
+        result = database.addFeedbackToResult(feedback3, result);
+
+        List<Feedback> feedbacks = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
+
+        assertThat(feedbacks).isEqualTo(result.getFeedbacks().stream().filter(f -> f.getType().equals(FeedbackType.AUTOMATIC)).collect(Collectors.toList()));
+        assertThat(feedbacks.size()).isEqualTo(2);
+    }
+
+    @Test
     @WithMockUser(value = "student2", roles = "USER")
     public void shouldReturnTheResultDetailsForAStudentParticipation() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);

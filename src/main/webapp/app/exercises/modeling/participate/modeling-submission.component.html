@@ -82,8 +82,7 @@
                                 </tr>
                             </thead>
                             <tbody *ngIf="assessmentsNames">
-                                <!--TODO CZ: replace function call 'isSelected' in html-->
-                                <tr *ngFor="let feedback of assessmentResult?.feedbacks" [hidden]="!isSelected(feedback)">
+                                <tr *ngFor="let feedback of referencedFeedback" [hidden]="!shouldBeDisplayed(feedback)">
                                     <td>
                                         <span *ngIf="feedback.reference">{{ assessmentsNames[feedback.referenceId]['type'] }} </span>
                                         <code *ngIf="feedback.reference" class="text-primary">{{ assessmentsNames[feedback.referenceId]['name'] }}</code
@@ -103,10 +102,19 @@
                 </div>
             </div>
         </jhi-fullscreen>
-        <jhi-complaint-interactions *ngIf="modelingExercise" [exercise]="modelingExercise" [participation]="participation" [result]="result"> </jhi-complaint-interactions>
+        <div class="row">
+            <jhi-additional-feedback
+                *ngIf="unreferencedFeedback?.length > 0"
+                class="col-xl-8 mt-3 alert unreferencedFeedback"
+                [feedback]="unreferencedFeedback"
+                [additional]="true"
+            >
+            </jhi-additional-feedback>
+        </div>
         <div class="row" *ngIf="result">
             <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)"></jhi-rating>
         </div>
+        <jhi-complaint-interactions *ngIf="modelingExercise" [exercise]="modelingExercise" [participation]="participation" [result]="result"> </jhi-complaint-interactions>
     </div>
     <!--endregion-->
     <!--region Right Panel-->

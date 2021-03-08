@@ -133,6 +133,8 @@ public class ProgrammingExerciseGradingService {
                 // Note: in this case, we do not want to save the newResult, but we only want to update the latest semi-automatic one
                 Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), newResult,
                         programmingExercise);
+                // Adding back dropped submission
+                updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
                 programmingSubmissionRepository.save(programmingSubmission);
                 return Optional.of(updatedLatestSemiAutomaticResult);
             }
