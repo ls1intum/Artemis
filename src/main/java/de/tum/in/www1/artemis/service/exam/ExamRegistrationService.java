@@ -214,7 +214,7 @@ public class ExamRegistrationService {
                 + ". This also deleted a potentially existing student exam with all its participations and submissions.");
     }
 
-    public void removeStudentExam(StudentExam studentExam, boolean deleteParticipationsAndSubmission){
+    private void removeStudentExam(StudentExam studentExam, boolean deleteParticipationsAndSubmission){
 
         // Optionally delete participations and submissions
         if (deleteParticipationsAndSubmission) {
